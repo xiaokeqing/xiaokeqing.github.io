@@ -1,4 +1,4 @@
-<#
+﻿<#
   deploy.ps1 — 构建博客并发布到 GitHub Pages 的 gh-pages 分支
 
   用法（在 blog 目录下）：
