@@ -1,0 +1,385 @@
+/* ============================================================
+   交互式靶场样式
+   ------------------------------------------------------------
+   只用 PaperMod 已经定义的 CSS 变量（--theme / --primary /
+   --content / --border / --entry），这样亮色和暗色主题都能
+   自动跟上，不需要为暗色模式单独写一套。
+   ============================================================ */
+
+.labs-app {
+    margin: 1.5rem 0 3rem;
+}
+
+/* ---------- 顶部页签 ---------- */
+.labs-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .5rem;
+    margin-bottom: 1.25rem;
+}
+
+.labs-tab {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    padding: .7rem .8rem;
+    text-align: left;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--entry);
+    color: var(--primary);
+    font: inherit;
+    line-height: 1.35;
+    transition: border-color .15s ease, transform .15s ease;
+}
+
+.labs-tab:hover {
+    border-color: var(--primary);
+}
+
+.labs-tab.is-active {
+    border-color: var(--primary);
+    box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+.labs-tab-title {
+    font-size: .95rem;
+    font-weight: 600;
+}
+
+.labs-tab-sub {
+    font-size: .72rem;
+    color: var(--secondary);
+}
+
+/* ---------- 面板 ---------- */
+.labs-panel {
+    display: none;
+}
+
+.labs-panel.is-active {
+    display: block;
+}
+
+/* ---------- 预设按钮 ---------- */
+.labs-presets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .8rem;
+}
+
+.labs-presets-label {
+    font-size: .82rem;
+    color: var(--secondary);
+}
+
+.labs-preset {
+    padding: .3rem .6rem;
+    font-size: .78rem;
+    cursor: pointer;
+    border: 1px dashed var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--primary);
+    font-family: inherit;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.labs-preset:hover {
+    border-style: solid;
+    border-color: var(--primary);
+    background: var(--entry);
+}
+
+/* ---------- 输入 ---------- */
+.labs-input,
+.labs-textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: .7rem .8rem;
+    margin-bottom: 1rem;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .88rem;
+    color: var(--primary);
+    background: var(--entry);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    resize: vertical;
+}
+
+.labs-input:focus,
+.labs-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* ---------- 输出区 ---------- */
+.labs-out {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+}
+
+.labs-row {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.labs-row-label {
+    padding: .45rem .8rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--secondary);
+    background: var(--entry);
+    border-bottom: 1px solid var(--border);
+}
+
+.labs-row-value {
+    padding: .8rem;
+}
+
+.labs-row-note {
+    padding: .5rem .8rem;
+    font-size: .78rem;
+    color: var(--secondary);
+    border-top: 1px dashed var(--border);
+}
+
+/* ---------- 代码块 ---------- */
+.labs-codeblock {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .84rem;
+    line-height: 1.7;
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+
+.labs-codeblock.labs-pre {
+    white-space: pre;
+    overflow-x: auto;
+}
+
+.labs-code {
+    font-family: inherit;
+}
+
+.labs-mark {
+    padding: .05em .2em;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.labs-mark.danger {
+    background: rgba(220, 38, 38, .18);
+    color: #dc2626;
+}
+
+.labs-mark.warn {
+    background: rgba(217, 119, 6, .18);
+    color: #d97706;
+}
+
+.labs-mark.info {
+    background: rgba(37, 99, 235, .15);
+    color: #2563eb;
+}
+
+.labs-mark.safe {
+    background: rgba(22, 163, 74, .18);
+    color: #16a34a;
+}
+
+:root[data-theme="dark"] .labs-mark.danger { color: #f87171; }
+:root[data-theme="dark"] .labs-mark.warn   { color: #fbbf24; }
+:root[data-theme="dark"] .labs-mark.info   { color: #60a5fa; }
+:root[data-theme="dark"] .labs-mark.safe   { color: #4ade80; }
+
+/* ---------- 判定条 ---------- */
+.labs-verdict {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    padding: .65rem .8rem;
+    font-size: .86rem;
+    line-height: 1.5;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.labs-verdict-dot {
+    flex: none;
+    width: .55rem;
+    height: .55rem;
+    margin-top: .42rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.labs-verdict-bad {
+    color: #dc2626;
+    background: rgba(220, 38, 38, .08);
+    border-color: rgba(220, 38, 38, .35);
+}
+
+.labs-verdict-ok {
+    color: #16a34a;
+    background: rgba(22, 163, 74, .08);
+    border-color: rgba(22, 163, 74, .35);
+}
+
+:root[data-theme="dark"] .labs-verdict-bad { color: #f87171; }
+:root[data-theme="dark"] .labs-verdict-ok  { color: #4ade80; }
+
+/* ---------- 提示块 ---------- */
+.labs-tip {
+    padding: .8rem;
+    font-size: .84rem;
+    line-height: 1.65;
+    border-left: 3px solid var(--primary);
+    background: var(--entry);
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.labs-tip code {
+    font-size: .82rem;
+}
+
+.labs-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: .84rem;
+    line-height: 1.7;
+}
+
+.labs-list code {
+    font-weight: 600;
+}
+
+/* ---------- 表格 ---------- */
+.labs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .82rem;
+}
+
+.labs-table th,
+.labs-table td {
+    padding: .45rem .6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.labs-table th {
+    font-weight: 600;
+    color: var(--secondary);
+    white-space: nowrap;
+}
+
+.labs-table code {
+    font-size: .78rem;
+    word-break: break-all;
+}
+
+.labs-badge {
+    display: inline-block;
+    padding: .1rem .45rem;
+    font-size: .72rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.labs-badge-high   { background: rgba(220, 38, 38, .15); color: #dc2626; }
+.labs-badge-medium { background: rgba(217, 119, 6, .15); color: #d97706; }
+.labs-badge-low    { background: rgba(37, 99, 235, .12); color: #2563eb; }
+
+:root[data-theme="dark"] .labs-badge-high   { color: #f87171; }
+:root[data-theme="dark"] .labs-badge-medium { color: #fbbf24; }
+:root[data-theme="dark"] .labs-badge-low    { color: #60a5fa; }
+
+/* ---------- 引导卡片（指向真实后端） ---------- */
+.labs-cta {
+    margin: 1.2rem 0;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius);
+    background: var(--entry);
+}
+
+.labs-cta-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: .35rem;
+}
+
+.labs-cta-desc {
+    font-size: .86rem;
+    line-height: 1.7;
+    color: var(--secondary);
+    margin-bottom: .85rem;
+}
+
+.labs-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.labs-cta-btn {
+    display: inline-block;
+    padding: .42rem .9rem;
+    font-size: .84rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: var(--theme);
+    text-decoration: none;
+    transition: opacity .15s ease;
+}
+
+.labs-cta-btn:hover {
+    opacity: .85;
+}
+
+.labs-cta-btn.is-ghost {
+    background: transparent;
+    color: var(--primary);
+}
+
+.labs-cta-btn.is-disabled {
+    background: transparent;
+    border-style: dashed;
+    color: var(--secondary);
+    border-color: var(--border);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ---------- 窄屏 ---------- */
+@media (max-width: 640px) {
+    .labs-tabs {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .labs-tab-sub {
+        display: none;
+    }
+
+    .labs-codeblock,
+    .labs-input,
+    .labs-textarea {
+        font-size: .78rem;
+    }
+
+    .labs-table th:nth-child(4),
+    .labs-table td:nth-child(4) {
+        display: none;
+    }
+}
