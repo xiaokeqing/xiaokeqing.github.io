@@ -19,8 +19,8 @@ body,
 body.list {
     background-color: var(--theme);
     background-image:
-        linear-gradient(rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.93)),
-        url("/images/bg-blur.jpg");
+        linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)),
+        url("/images/bg.jpg");
     background-size: cover;
     background-position: center top;
     background-repeat: no-repeat;
@@ -37,8 +37,8 @@ body.list {
 :root[data-theme="dark"] body,
 :root[data-theme="dark"] body.list {
     background-image:
-        linear-gradient(rgba(29, 30, 32, 0.94), rgba(29, 30, 32, 0.94)),
-        url("/images/bg-blur.jpg");
+        linear-gradient(rgba(29, 30, 32, 0.91), rgba(29, 30, 32, 0.91)),
+        url("/images/bg.jpg");
 }
 
 /* ---------- 2. 首页顶部大图 ---------- */
