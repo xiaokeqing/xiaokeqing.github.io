@@ -1,0 +1,53 @@
+{{/*
+  站点级覆盖：PaperMod 的 baseof.html
+  ============================================================
+  为什么需要这个文件：
+
+  主题原版写的是
+      <html lang="{{ site.Language }}" dir="{{ .Language.LanguageDirection | default "auto" }}">
+  在 Hugo 0.158+ 上这两处都出了问题：
+    · {{ site.Language }} 渲染成空字符串 → <html lang="">，丢失语言标记
+    · .Language.LanguageDirection 已废弃 → 每次构建都告警
+
+  修正为：
+    · lang 用 .Language.Lang（长期稳定的 API）
+    · dir  用 .Language.Direction（0.158+ 推荐的新 API）
+
+  为什么放在 site 的 layouts/ 而不是直接改主题文件：
+    Hugo 的模板查找顺序是「站点 layouts/ > 主题 layouts/」，
+    这样将来更新主题时，这个修正不会被覆盖掉。
+    本文件除上面两处外，与主题原版保持一致。
+*/}}
+{{- if lt hugo.Version "0.146.0" }}
+{{- errorf "=> hugo v0.146.0 or greater is required for hugo-PaperMod to build " }}
+{{- end -}}
+
+<!DOCTYPE html>
+{{- $theme := site.Params.defaultTheme | default "auto" }}
+{{- $lang := site.Language.Lang | default "zh-cn" }}
+{{- $dir := .Language.Direction | default "auto" }}
+{{- if eq $theme "dark" }}
+<html lang="{{ $lang }}" dir="{{ $dir }}" data-theme="dark">
+{{- else if eq $theme "light" }}
+<html lang="{{ $lang }}" dir="{{ $dir }}" data-theme="light">
+{{- else }}
+<html lang="{{ $lang }}" dir="{{ $dir }}" data-theme="auto">
+{{- end }}
+
+<head>
+    {{- partial "head.html" . }}
+</head>
+
+{{- if (or (ne .Kind `page` ) (eq .Layout `archives`) (eq .Layout `search`)) }}
+<body class="list" id="top">
+{{- else }}
+<body id="top">
+{{- end }}
+    {{ partialCached "header.html" . .Page -}}
+    <main class="main">
+        {{- block "main" . }}{{ end }}
+    </main>
+    {{ partialCached "footer.html" . .Layout .Kind (.Param "hideFooter") (.Param "ShowCodeCopyButtons") -}}
+</body>
+
+</html>

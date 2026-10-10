@@ -1,0 +1,111 @@
+# ============================================================
+# 博客站点配置（Hugo + PaperMod）
+# ------------------------------------------------------------
+# ⚠️ 部署前必须改的三处（已用 TODO 标出）：
+#    1. baseURL —— 换成你的 GitHub Pages 地址
+#    2. title / 作者 / 简介
+#    3. socialIcons 里的 GitHub 链接
+# ============================================================
+
+baseURL = "https://xiaokeqing.github.io/"
+title = "安全实验室"
+# Hugo 0.158 起 languageCode 已废弃，改用 locale
+locale = "zh-cn"
+defaultContentLanguage = "zh-cn"
+theme = "PaperMod"
+paginate = 10
+enableRobotsTXT = true
+enableEmoji = true
+# 让 Hugo 正确处理中文分词与字数统计
+hasCJKLanguage = true
+
+# ---------- 站点参数 ----------
+[params]
+  env = "production"
+  # TODO 2：简介与关键词
+  description = "网络安全方向的学习与技术记录：AI 安全运营、应急响应、Linux 加固"
+  keywords = ["网络安全", "AI 安全", "安全运营", "应急响应", "RAG", "多 Agent", "SOC"]
+  author = "xiaokeqing"
+
+  DateFormat = "2006-01-02"
+  # auto = 跟随系统；也可固定为 light / dark
+  defaultTheme = "auto"
+  disableThemeToggle = false
+
+  # ---------- 文章页显示项 ----------
+  ShowReadingTime = true
+  ShowWordCount = true
+  ShowCodeCopyButtons = true
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowToc = true
+  TocOpen = false
+  UseHugoToc = true
+  # 关闭第三方分享按钮：不引入外部脚本，保持零第三方依赖
+  ShowShareButtons = false
+  # 评论后续用 Giscus 接入（基于 GitHub Discussions，无自建后端）
+  comments = false
+
+  # 首页简介
+  [params.homeInfoParams]
+    Title = "安全实验室"
+    Content = """
+这里记录我在网络安全方向的实践：把 RAG 与多 Agent 落到安全运营场景、在公网环境里做加固与响应、以及踩过的坑。
+
+可交互的防护演示和真实攻击数据正在陆续补齐。
+"""
+
+  # 社交图标。注意：这里只能用 [[params.socialIcons]] 数组写法，
+  # 不能再写一行 [params.socialIcons]，否则 TOML 会报"表与数组表冲突"。
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/xiaokeqing"
+  [[params.socialIcons]]
+    name = "rss"
+    url = "index.xml"
+
+# ---------- 导航菜单 ----------
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "文章"
+    url = "/posts/"
+    weight = 10
+  [[menu.main]]
+    identifier = "labs"
+    name = "靶场"
+    url = "/labs/"
+    weight = 20
+  [[menu.main]]
+    identifier = "projects"
+    name = "项目"
+    url = "/projects/"
+    weight = 30
+  [[menu.main]]
+    identifier = "about"
+    name = "关于"
+    url = "/about/"
+    weight = 40
+
+# ---------- Markdown 与代码高亮 ----------
+[markup]
+  [markup.highlight]
+    noClasses = false
+    codeFences = true
+    guessSyntax = true
+    lineNos = false
+    lineNumbersInTable = true
+  [markup.goldmark.renderer]
+    # 允许文章内嵌原始 HTML。
+    # 做「交互式安全演示」时需要在 Markdown 里写 iframe / form 等标签。
+    # 本站内容全部由仓库自行维护、无用户投稿，因此风险可控。
+    unsafe = true
+
+# ---------- 输出格式 ----------
+[outputs]
+  home = ["HTML", "RSS"]
+  section = ["HTML", "RSS"]
+
+[sitemap]
+  changefreq = "weekly"
+  priority = 0.5

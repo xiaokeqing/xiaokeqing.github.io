@@ -1,0 +1,18 @@
+# 统一换行符。CI 在 Linux 上构建，本地在 Windows 上编辑，
+# 没有这个文件的话每次提交都会产生"整文件改动"的噪音。
+* text=auto eol=lf
+
+# 二进制文件不做换行转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+
+# 锁文件与生成物在 diff 中折叠
+*.min.js -diff
+*.min.css -diff

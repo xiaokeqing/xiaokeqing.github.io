@@ -1,0 +1,30 @@
+# ============================================================
+# 博客仓库 .gitignore
+# ============================================================
+
+# Hugo 构建产物（由 Actions 在 CI 里生成，不入库）
+public/
+resources/_gen/
+
+# Hugo 运行时锁文件
+.hugo_build.lock
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+*~
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 敏感信息
+.env
+.env.*
+!.env.example
+
+# 临时文件
+*.bak
+*.tmp
+*.log
