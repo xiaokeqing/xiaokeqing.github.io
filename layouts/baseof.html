@@ -48,6 +48,13 @@
         {{- block "main" . }}{{ end }}
     </main>
     {{ partialCached "footer.html" . .Layout .Kind (.Param "hideFooter") (.Param "ShowCodeCopyButtons") -}}
+
+    {{/*
+      项目速查助手：固定在右下角的浮层，全站加载。
+      defer 保证不阻塞首屏；脚本内部自己判断当前页面是否需要挂载
+      （靶场页已经很长，不叠加浮层）。
+    */}}
+    <script src="/js/guide.js" defer></script>
 </body>
 
 </html>
