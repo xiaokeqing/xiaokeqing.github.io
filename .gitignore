@@ -28,3 +28,6 @@ Thumbs.db
 *.bak
 *.tmp
 *.log
+
+# 本地排查用的截图，不入库
+_shot_*.png
