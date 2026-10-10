@@ -8,7 +8,14 @@
    设计取舍：
      首页用大图做 hero，视觉冲击最强；
      但全站如果直接铺原图，正文会看不清 —— 所以全站底图做了
-     高斯模糊 + 高透明度遮罩，只留一点纹理，保证阅读舒适。
+     轻微模糊 + 高透明度遮罩，只留一点纹理，保证阅读舒适。
+
+   ⚠️ 图片格式用 WebP 而不是 JPEG，这是一次实测后的修正：
+     初版 hero 用 JPEG 2560 宽 / quality 90，单张 621 KB。
+     从国内（杭州）实测，这张图 30 秒都下载不完 —— GitHub Pages
+     的带宽对国内本来就不宽裕，图片一大就彻底卡住。
+     换成 WebP 1600 宽 / quality 76 之后只有 81 KB，降了 87%，
+     在 720px 宽的正文容器里肉眼几乎看不出差别。
    ============================================================ */
 
 /* ---------- 1. 全站底图 ---------- */
@@ -20,7 +27,7 @@ body.list {
     background-color: var(--theme);
     background-image:
         linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)),
-        url("/images/bg.jpg");
+        url("/images/bg.webp");
     background-size: cover;
     background-position: center top;
     background-repeat: no-repeat;
@@ -38,7 +45,7 @@ body.list {
 :root[data-theme="dark"] body.list {
     background-image:
         linear-gradient(rgba(29, 30, 32, 0.91), rgba(29, 30, 32, 0.91)),
-        url("/images/bg.jpg");
+        url("/images/bg.webp");
 }
 
 /* ---------- 2. 首页顶部大图 ---------- */
@@ -53,7 +60,7 @@ body.list .home-info {
             rgba(8, 12, 22, 0.80) 0%,
             rgba(8, 12, 22, 0.50) 55%,
             rgba(8, 12, 22, 0.28) 100%),
-        url("/images/hero.jpg");
+        url("/images/hero.webp");
     background-size: cover;
     background-position: center 20%;
     background-repeat: no-repeat;
