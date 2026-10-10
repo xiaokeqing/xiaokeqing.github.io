@@ -1,0 +1,110 @@
+/* ============================================================
+   404 页面样式
+   ============================================================ */
+
+.nf {
+    max-width: 640px;
+    margin: 2.5rem auto 3rem;
+}
+
+.nf-code {
+    font-size: clamp(3.5rem, 14vw, 6rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.04em;
+    color: var(--primary);
+    opacity: .18;
+    user-select: none;
+}
+
+.nf-title {
+    margin: .2rem 0 .8rem;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    color: var(--primary);
+}
+
+.nf-lead {
+    margin: 0 0 1.1rem;
+    font-size: .95rem;
+    line-height: 1.8;
+    color: var(--content);
+}
+
+.nf-reasons {
+    margin: 0 0 1.4rem;
+    padding-left: 1.15rem;
+    font-size: .88rem;
+    line-height: 1.9;
+    color: var(--secondary);
+}
+
+/* ---------- 去处按钮 ---------- */
+.nf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1.6rem;
+}
+
+.nf-btn {
+    display: inline-block;
+    padding: .45rem .95rem;
+    font-size: .86rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--entry);
+    color: var(--primary);
+    transition: border-color .15s ease, opacity .15s ease;
+}
+
+.nf-btn:hover {
+    border-color: var(--primary);
+}
+
+.nf-btn.is-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--theme);
+}
+
+.nf-btn.is-primary:hover {
+    opacity: .88;
+}
+
+/* ---------- 说明块 ---------- */
+.nf-note {
+    padding: .85rem 1rem;
+    margin-bottom: 1.4rem;
+    font-size: .85rem;
+    line-height: 1.8;
+    border-left: 3px solid var(--primary);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    background: var(--entry);
+    color: var(--content);
+}
+
+.nf-note strong {
+    color: var(--primary);
+}
+
+.nf-foot {
+    font-size: .82rem;
+    line-height: 1.8;
+    color: var(--secondary);
+}
+
+.nf-foot a {
+    color: var(--primary);
+}
+
+@media (max-width: 640px) {
+    .nf {
+        margin-top: 1.5rem;
+    }
+
+    .nf-code {
+        font-size: 3.2rem;
+    }
+}
