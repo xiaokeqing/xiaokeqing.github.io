@@ -1,7 +1,7 @@
 ---
 title: "靶场与演示"
 description: "把安全概念做成可以亲手试的东西——不是读文章，而是自己动手看结果"
-date: 2026-10-11
+date: 2026-10-10
 layout: "single"
 ShowToc: false
 ShowReadingTime: false

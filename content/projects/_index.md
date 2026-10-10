@@ -1,7 +1,7 @@
 ---
 title: "项目"
 description: "做过的系统——每个都写清：解决什么问题、我的贡献是什么、结果如何"
-date: 2026-10-11
+date: 2026-10-10
 layout: "single"
 ShowToc: false
 ShowReadingTime: false

@@ -1,7 +1,7 @@
 ---
 title: "关于我"
 description: "网络安全方向 · 重点在安全运营与 AI 应用安全"
-date: 2026-10-11
+date: 2026-10-10
 layout: "single"
 ShowToc: false
 ShowReadingTime: false
