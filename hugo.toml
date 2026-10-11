@@ -8,7 +8,7 @@
 # ============================================================
 
 baseURL = "https://xiaokeqing.github.io/"
-title = "安全实验室"
+title = "知微安全实验室"
 # Hugo 0.158 起 languageCode 已废弃，改用 locale
 locale = "zh-cn"
 defaultContentLanguage = "zh-cn"
@@ -23,7 +23,7 @@ hasCJKLanguage = true
 [params]
   env = "production"
   # TODO 2：简介与关键词
-  description = "网络安全方向的学习与技术记录：AI 安全运营、应急响应、Linux 加固"
+  description = "知微安全实验室 —— 网络安全方向的学习与技术记录：AI 安全运营、应急响应、Linux 加固"
   keywords = ["网络安全", "AI 安全", "安全运营", "应急响应", "RAG", "多 Agent", "SOC"]
   author = "xiaokeqing"
 
@@ -48,10 +48,11 @@ hasCJKLanguage = true
 
   # 首页简介
   [params.homeInfoParams]
-    Title = "安全实验室"
+    Title = "知微安全实验室"
     Content = """
+**知微** —— 取「见微知著」：从细微的异常里，看出真正的攻击。
 
-这里记录我在网络安全方向的实践：把 RAG 与多 Agent 落到安全运营场景、在公网环境里做加固与响应、以及踩过的坑。
+这里记录我在网络安全方向的实践：把 RAG 与多 Agent 落到安全运营场景、在公网环境里做加固与响应、以及一路踩过的坑。
 
 可交互的防护演示和真实攻击数据正在陆续补齐。
 """
