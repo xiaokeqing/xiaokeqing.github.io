@@ -1,0 +1,142 @@
+{{/*
+  知微安全实验室 · 工作台首页
+  ----------------------------------------------------------------------------
+  这个文件取代了 PaperMod 默认的"文章列表首页"。
+
+  为什么改：原来的首页第一屏是一串文章标题，看不出这个站点是干什么的。
+  改成工作台之后，第一屏直接回答三个问题：
+    1. 这站是什么（hero 一句话）
+    2. 现在在不在跑（顶部状态条）
+    3. 能看什么（下面的入口卡片）
+
+  关于状态条的数据：这一期先用静态占位（标了待接入），
+  P1 建好 /api/public/* 只读端点后换成真实 fetch。
+  我特意把"待接入"写在页面上，而不是假装它是真的 —— 避免又出现
+  "看起来有数据、其实是假的"那种情况。
+*/}}
+
+{{- define "main" -}}
+
+{{/* ===================== HERO ===================== */}}
+<section class="wb-hero">
+  <img class="wb-hero__img" src="{{ "images/hero-anime.jpg" | relURL }}" alt="" aria-hidden="true" loading="eager" fetchpriority="high">
+  <div class="wb-hero__veil"></div>
+  <div class="wb-hero__inner">
+    <p class="wb-hero__eyebrow">Security Operations Workbench</p>
+    <h1 class="wb-hero__title">知微安全实验室</h1>
+    <p class="wb-hero__sub">
+      见微知著 —— 从细微的异常里，看出真正的攻击。<br>
+      这里放着我日常在用的安全工作台：真实的告警、真实在跑的蜜罐、
+      以及一套带护栏和审计的 AI 研判处置链路。
+    </p>
+    <div class="wb-hero__actions">
+      <a class="wb-btn wb-btn--primary" href="{{ "alerts/" | relURL }}">查看告警</a>
+      <a class="wb-btn" href="{{ "labs/" | relURL }}">动手试试</a>
+      <a class="wb-btn" href="{{ "projects/" | relURL }}">项目说明</a>
+    </div>
+  </div>
+</section>
+
+{{/* ===================== 状态条 ===================== */}}
+<div class="wb-statusbar">
+  <div class="wb-statusbar__inner">
+    <span class="wb-stat">
+      <span class="wb-dot wb-dot--ok"></span>
+      服务机 <span class="wb-stat__val">在线</span>
+    </span>
+    <span class="wb-stat">
+      <span class="wb-dot wb-dot--ok"></span>
+      数据机 <span class="wb-stat__val">在线</span>
+    </span>
+    <span class="wb-stat">
+      今日告警 <span class="wb-stat__val wb-stat__val--accent" id="wb-alert-count">—</span>
+    </span>
+    <span class="wb-stat">
+      蜜罐 <span class="wb-stat__val">运行中</span>
+    </span>
+    <span class="wb-stat" style="margin-left:auto">
+      <span class="wb-badge wb-badge--warn" id="wb-live-badge">数据接入中</span>
+    </span>
+  </div>
+</div>
+
+<div class="wb-wrap">
+
+  {{/* ===================== 入口卡片 ===================== */}}
+  <section class="wb-section">
+    <div class="wb-section__head">
+      <h2 class="wb-section__title">工作台入口</h2>
+      <p class="wb-section__hint">告警、蜜罐、评测、处置记录 —— 都来自真实在跑的系统</p>
+    </div>
+    <div class="wb-grid">
+
+      <a class="wb-card" href="{{ "alerts/" | relURL }}">
+        <div class="wb-card__icon">◈</div>
+        <h3 class="wb-card__title">实时告警看板</h3>
+        <p class="wb-card__desc">主机与网络两个层面的告警聚合去重，按级别和来源分布，可下钻到原始明细。</p>
+        <div class="wb-card__foot"><span>Wazuh + Suricata</span><span>P1</span></div>
+      </a>
+
+      <a class="wb-card" href="{{ "honeypot/" | relURL }}">
+        <div class="wb-card__icon">◎</div>
+        <h3 class="wb-card__title">蜜罐战报</h3>
+        <p class="wb-card__desc">真实攻击者试过的账号口令、敲下的命令、来源分布。IP 一律做掩码处理。</p>
+        <div class="wb-card__foot"><span>Cowrie</span><span>P2</span></div>
+      </a>
+
+      <a class="wb-card" href="{{ "eval/" | relURL }}">
+        <div class="wb-card__icon">▤</div>
+        <h3 class="wb-card__title">红队评测</h3>
+        <p class="wb-card__desc">对 AI 研判能力的对抗测试结果：绕过率、误报率，都带置信区间，不做美化。</p>
+        <div class="wb-card__foot"><span>27 例</span><span>P2</span></div>
+      </a>
+
+      <a class="wb-card" href="{{ "labs/" | relURL }}">
+        <div class="wb-card__icon">⚗</div>
+        <h3 class="wb-card__title">靶场与演示</h3>
+        <p class="wb-card__desc">SQL 注入、路径穿越、DLP、提示注入 —— 输入即见结果，前四个完全跑在你自己的浏览器里。</p>
+        <div class="wb-card__foot"><span>已上线</span><span>✓</span></div>
+      </a>
+
+      <a class="wb-card" href="{{ "notes/" | relURL }}">
+        <div class="wb-card__icon">⌘</div>
+        <h3 class="wb-card__title">知识库</h3>
+        <p class="wb-card__desc">安全笔记、CVE 复现、命令速查。全站可搜索。</p>
+        <div class="wb-card__foot"><span>Markdown</span><span>P3</span></div>
+      </a>
+
+      <a class="wb-card" href="{{ "projects/" | relURL }}">
+        <div class="wb-card__icon">◆</div>
+        <h3 class="wb-card__title">项目说明</h3>
+        <p class="wb-card__desc">架构怎么设计的、为什么这么取舍、哪些地方踩过坑。</p>
+        <div class="wb-card__foot"><span>SecAgent</span><span>✓</span></div>
+      </a>
+
+    </div>
+  </section>
+
+  {{/* ===================== 最新文章 ===================== */}}
+  {{- $posts := where site.RegularPages "Section" "posts" -}}
+  {{- if $posts }}
+  <section class="wb-section">
+    <div class="wb-section__head">
+      <h2 class="wb-section__title">最近写的</h2>
+      <p class="wb-section__hint"><a href="{{ "posts/" | relURL }}">全部文章 →</a></p>
+    </div>
+    <div class="wb-grid">
+      {{- range first 3 $posts }}
+      <a class="wb-card" href="{{ .RelPermalink }}">
+        <h3 class="wb-card__title">{{ .Title }}</h3>
+        <p class="wb-card__desc">{{ with .Summary }}{{ . | plainify | truncate 70 }}{{ else }}{{ .Description }}{{ end }}</p>
+        <div class="wb-card__foot">
+          <span>{{ .Date.Format "2006-01-02" }}</span>
+          <span>{{ .ReadingTime }} 分钟</span>
+        </div>
+      </a>
+      {{- end }}
+    </div>
+  </section>
+  {{- end }}
+
+</div>
+{{- end -}}
