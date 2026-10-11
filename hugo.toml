@@ -41,8 +41,13 @@ hasCJKLanguage = true
   wbApiBase = "https://demo.xiaokeqing.cn"
 
   DateFormat = "2006-01-02"
-  # auto = 跟随系统；也可固定为 light / dark
-  defaultTheme = "auto"
+  # 站点默认深色。
+  # 为什么不是 auto：工作台（首页 / /alerts/）是深色运营台，
+  # 若跟随系统且系统是浅色，导航栏、页脚、页面留白会全是浅色 ——
+  # 出现"深色数据面板浮在白底上"的割裂感（实测截图就是这样）。
+  # 写成 dark 后 PaperMod 的外壳也走深色；访客仍可用右上角开关切浅色，
+  # 切换只影响站点外壳，工作台内容区始终是深色（见 workbench-app.css 的作用域令牌）。
+  defaultTheme = "dark"
   disableThemeToggle = false
 
   # ---------- 文章页显示项 ----------

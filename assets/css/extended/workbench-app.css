@@ -52,6 +52,34 @@ body:has(.wb-app) {
   padding-right: var(--wb-s5);
 }
 
+/* ---------- 工作台页面的站点外壳也压成深色 ----------
+   站点外壳（body 底色 + 页脚）在 custom.css 里用了 bg.webp 装饰图 + --theme 底色，
+   浅色下就是一条白带 / 一块浅色页脚。工作台是深色界面，
+   只把内容区做深就会出现"深色面板浮在白底上"的割裂感。
+   这里用 :has() 只作用于"包含工作台的页面"，文章页不受影响。
+   （站点已默认深色，这里是兜底：访客手动切浅色时外壳仍然协调。） */
+body:has(.wb-app) {
+  background-color: #0b0f14;
+  background-image: none;
+}
+
+body:has(.wb-app) .footer {
+  background-color: #0b0f14;
+  background-image: none;
+  border-top: 1px solid #1a2534;
+  color: #5c7186;
+}
+
+body:has(.wb-app) .footer a {
+  color: #8ba0b8;
+}
+
+body:has(.wb-app) .header,
+body:has(.wb-app) .nav {
+  background-color: #0b0f14;
+  border-bottom: 1px solid #1a2534;
+}
+
 /* ---------- 页头 ---------- */
 .wb-app__head {
   display: flex;
