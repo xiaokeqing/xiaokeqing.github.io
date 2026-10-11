@@ -17,6 +17,10 @@
 
 {{- define "main" -}}
 
+{{/* 工作台外壳：全宽 + 固定深色（见 workbench-app.css）。
+     data-wb-page="home" 是给 /js/workbench.js 的开关：只有带这个属性的页面才去取数。 */}}
+<div class="wb-app" data-wb-page="home">
+
 {{/* ===================== HERO ===================== */}}
 <section class="wb-hero">
   <img class="wb-hero__img" src="{{ "images/hero-anime.jpg" | relURL }}" alt="" aria-hidden="true" loading="eager" fetchpriority="high">
@@ -37,25 +41,27 @@
   </div>
 </section>
 
-{{/* ===================== 状态条 ===================== */}}
+{{/* ===================== 状态条 =====================
+     数据全部来自 /api/public/overview，首屏占位一律是 "—"。
+     注意这里【没有】"蜜罐 运行中"这类写死的状态 —— 那属于"没探测却宣称在跑"，
+     等 P2 有了蜜罐的真实探针再放回来。 */}}
 <div class="wb-statusbar">
   <div class="wb-statusbar__inner">
-    <span class="wb-stat">
-      <span class="wb-dot wb-dot--ok"></span>
-      服务机 <span class="wb-stat__val">在线</span>
+    <span class="wb-stat" data-wb-node="srv1">
+      <span class="wb-dot"></span>
+      服务机 <span class="wb-stat__val" data-wb-node-val>—</span>
     </span>
-    <span class="wb-stat">
-      <span class="wb-dot wb-dot--ok"></span>
-      数据机 <span class="wb-stat__val">在线</span>
+    <span class="wb-stat" data-wb-node="srv2">
+      <span class="wb-dot"></span>
+      数据机 <span class="wb-stat__val" data-wb-node-val>—</span>
     </span>
     <span class="wb-stat">
       今日告警 <span class="wb-stat__val wb-stat__val--accent" id="wb-alert-count">—</span>
+      <span class="wb-stat__note" id="wb-alert-note"></span>
     </span>
-    <span class="wb-stat">
-      蜜罐 <span class="wb-stat__val">运行中</span>
-    </span>
-    <span class="wb-stat" style="margin-left:auto">
-      <span class="wb-badge wb-badge--warn" id="wb-live-badge">数据接入中</span>
+    <span class="wb-stat wb-stat__spacer">
+      <span class="wb-sync">同步于 <b id="wb-synced">—</b></span>
+      <span class="wb-badge wb-badge--warn" id="wb-live-badge">连接中…</span>
     </span>
   </div>
 </div>
@@ -74,22 +80,22 @@
         <div class="wb-card__icon">◈</div>
         <h3 class="wb-card__title">实时告警看板</h3>
         <p class="wb-card__desc">主机与网络两个层面的告警聚合去重，按级别和来源分布，可下钻到原始明细。</p>
-        <div class="wb-card__foot"><span>Wazuh + Suricata</span><span>P1</span></div>
+        <div class="wb-card__foot"><span>Wazuh + Suricata</span><span>已上线</span></div>
       </a>
 
-      <a class="wb-card" href="{{ "honeypot/" | relURL }}">
+      <div class="wb-card wb-card--soon" title="P2 交付：先有数据通路与脱敏口径，再放页面">
         <div class="wb-card__icon">◎</div>
         <h3 class="wb-card__title">蜜罐战报</h3>
         <p class="wb-card__desc">真实攻击者试过的账号口令、敲下的命令、来源分布。IP 一律做掩码处理。</p>
-        <div class="wb-card__foot"><span>Cowrie</span><span>P2</span></div>
-      </a>
+        <div class="wb-card__foot"><span>Cowrie</span><span>未上线 · P2</span></div>
+      </div>
 
-      <a class="wb-card" href="{{ "eval/" | relURL }}">
+      <div class="wb-card wb-card--soon" title="P2 交付：评测仪表盘">
         <div class="wb-card__icon">▤</div>
         <h3 class="wb-card__title">红队评测</h3>
         <p class="wb-card__desc">对 AI 研判能力的对抗测试结果：绕过率、误报率，都带置信区间，不做美化。</p>
-        <div class="wb-card__foot"><span>27 例</span><span>P2</span></div>
-      </a>
+        <div class="wb-card__foot"><span>27 例</span><span>未上线 · P2</span></div>
+      </div>
 
       <a class="wb-card" href="{{ "labs/" | relURL }}">
         <div class="wb-card__icon">⚗</div>
@@ -98,12 +104,12 @@
         <div class="wb-card__foot"><span>已上线</span><span>✓</span></div>
       </a>
 
-      <a class="wb-card" href="{{ "notes/" | relURL }}">
+      <div class="wb-card wb-card--soon" title="P3 交付：内容中心（双仓库 + 脱敏门禁 + 全文搜索）">
         <div class="wb-card__icon">⌘</div>
         <h3 class="wb-card__title">知识库</h3>
         <p class="wb-card__desc">安全笔记、CVE 复现、命令速查。全站可搜索。</p>
-        <div class="wb-card__foot"><span>Markdown</span><span>P3</span></div>
-      </a>
+        <div class="wb-card__foot"><span>Markdown</span><span>未上线 · P3</span></div>
+      </div>
 
       <a class="wb-card" href="{{ "projects/" | relURL }}">
         <div class="wb-card__icon">◆</div>
@@ -138,5 +144,6 @@
   </section>
   {{- end }}
 
-</div>
+</div>{{/* /.wb-wrap */}}
+</div>{{/* /.wb-app */}}
 {{- end -}}

@@ -7,6 +7,13 @@
 #    3. socialIcons 里的 GitHub 链接
 # ============================================================
 
+# ⚠️ 暂用 github.io：apex 域名 xiaokeqing.cn 目前在 Cloudflare 里【没有任何解析记录】
+# （zone 只有 demo.xiaokeqing.cn → tunnel 一条），公共 DNS 查 A/CNAME 全部 ENODATA。
+# 顺序不能颠倒 —— 一旦 Pages 绑定自定义域，github.io 会被 301 到那个死域名，
+# 连唯一能访问的地址都会挂。所以：
+#   ① 先加 apex + www 的 DNS 记录并验证解析
+#   ② 再部署 static/CNAME（Pages 绑定自定义域）
+#   ③ 同一批把 baseURL 换成 https://xiaokeqing.cn/
 baseURL = "https://xiaokeqing.github.io/"
 title = "知微安全实验室"
 # Hugo 0.158 起 languageCode 已废弃，改用 locale
@@ -26,6 +33,12 @@ hasCJKLanguage = true
   description = "知微安全实验室 —— 网络安全方向的学习与技术记录：AI 安全运营、应急响应、Linux 加固"
   keywords = ["网络安全", "AI 安全", "安全运营", "应急响应", "RAG", "多 Agent", "SOC"]
   author = "xiaokeqing"
+
+  # 工作台（首页 / /alerts/）取数的【公开只读】接口基址。
+  # 这一层刻意与"写操作"分开：页面里只调用 /api/public/*，
+  # 匿名、只读、IP 掩码、独立限流，因此前端不含任何 Token。
+  # 换机器/换域名时只改这一处。
+  wbApiBase = "https://demo.xiaokeqing.cn"
 
   DateFormat = "2006-01-02"
   # auto = 跟随系统；也可固定为 light / dark

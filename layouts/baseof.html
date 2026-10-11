@@ -24,6 +24,15 @@
 
 <!DOCTYPE html>
 {{- $theme := site.Params.defaultTheme | default "auto" }}
+{{- /*
+     工作台页面（首页 / /alerts/）强制深色。
+     为什么不在 CSS 里做：工作台的深色只包住了 .wb-app 那一块，
+     而导航栏、main 的背景、页面留白都在容器之外 —— 浅色主题下就会出现
+     "深色面板浮在白底上"的割裂感。深色必须在 <html data-theme> 这一层给，
+     PaperMod 的整套深色样式才会跟着生效。
+     站点主题开关仍然可用：访客手动切浅色时，工作台内容区保持深色（.wb-app 自带令牌）。
+*/}}
+{{- if or .IsHome (eq .Section "alerts") }}{{ $theme = "dark" }}{{ end }}
 {{- $lang := site.Language.Lang | default "zh-cn" }}
 {{- $dir := .Language.Direction | default "auto" }}
 {{- if eq $theme "dark" }}
@@ -36,6 +45,15 @@
 
 <head>
     {{- partial "head.html" . }}
+
+    {{/*
+      工作台接口基址：页面里的实时数据全部从这个公开只读接口取。
+      刻意放在这里而不是写进 JS —— 换域名/换机器时只改 hugo.toml 一处，
+      不会出现"某个页面还指向旧地址"的情况。
+      说明：这是【公开只读】接口（/api/public/*，匿名可访问、IP 掩码、独立限流），
+      页面里因此不含任何 Token。
+    */}}
+    <meta name="wb-api" content="{{ site.Params.wbApiBase | default "https://demo.xiaokeqing.cn" }}">
 </head>
 
 {{- if (or (ne .Kind `page` ) (eq .Layout `archives`) (eq .Layout `search`)) }}
@@ -55,6 +73,12 @@
       （靶场页已经很长，不叠加浮层）。
     */}}
     <script src="/js/guide.js" defer></script>
+
+    {{/*
+      工作台数据层：只有带 data-wb-page 的页面（首页 / /alerts/）会真正取数，
+      其他页面在脚本第一行就 return，不产生任何请求。
+    */}}
+    <script src="/js/workbench.js" defer></script>
 </body>
 
 </html>
