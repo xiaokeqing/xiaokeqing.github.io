@@ -369,6 +369,225 @@
     pointer-events: none;
 }
 
+/* ---------- 「试着攻击我」：调真实后端那一项 ---------- */
+
+/* 警告条：必须显眼，因为这一项和上面四项的性质完全不同 */
+.labs-warn {
+    margin-bottom: 1rem;
+    padding: .8rem .9rem;
+    font-size: .84rem;
+    line-height: 1.75;
+    color: #b45309;
+    background: rgba(217, 119, 6, .10);
+    border: 1px solid rgba(217, 119, 6, .38);
+    border-radius: var(--radius);
+}
+
+.labs-warn strong {
+    display: block;
+    margin-bottom: .35rem;
+    color: #b45309;
+}
+
+.labs-warn div + div {
+    margin-top: .3rem;
+}
+
+:root[data-theme="dark"] .labs-warn,
+:root[data-theme="dark"] .labs-warn strong {
+    color: #fbbf24;
+}
+
+/* 执行条 */
+.labs-runbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .7rem;
+    margin-bottom: 1rem;
+}
+
+.labs-run {
+    padding: .5rem 1.15rem;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    background: var(--primary);
+    color: var(--theme);
+    font-family: inherit;
+    transition: opacity .15s ease;
+}
+
+.labs-run:hover:not(:disabled) {
+    opacity: .88;
+}
+
+.labs-run:disabled {
+    opacity: .5;
+    cursor: progress;
+}
+
+.labs-status {
+    font-size: .82rem;
+    color: var(--secondary);
+}
+
+.labs-status-ok  { color: #16a34a; }
+.labs-status-bad { color: #dc2626; }
+
+:root[data-theme="dark"] .labs-status-ok  { color: #4ade80; }
+:root[data-theme="dark"] .labs-status-bad { color: #f87171; }
+
+/* 元信息 chip 行 */
+.labs-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.labs-chip {
+    padding: .2rem .55rem;
+    font-size: .74rem;
+    color: var(--secondary);
+    background: var(--entry);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+}
+
+/* 单个检测项卡片 */
+.labs-check {
+    padding: .75rem .85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--entry);
+}
+
+.labs-check.is-na {
+    opacity: .62;
+}
+
+.labs-check-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px dashed var(--border);
+}
+
+.labs-check-name {
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.labs-check-comp {
+    padding: .1rem .4rem;
+    font-size: .72rem;
+    color: var(--secondary);
+    background: var(--theme);
+    border-radius: 3px;
+}
+
+.labs-check-row {
+    display: flex;
+    gap: .5rem;
+    margin-top: .35rem;
+    font-size: .82rem;
+    line-height: 1.7;
+}
+
+.labs-check-k {
+    flex: none;
+    width: 6.6em;
+    color: var(--secondary);
+}
+
+.labs-check-v {
+    flex: 1;
+    min-width: 0;
+    color: var(--content);
+    word-break: break-word;
+}
+
+.labs-check-v .labs-list {
+    margin: .2rem 0 0;
+    padding-left: 1.05rem;
+    font-size: .78rem;
+}
+
+.labs-badge-na {
+    background: var(--border);
+    color: var(--secondary);
+}
+
+.labs-badge-ok {
+    background: rgba(22, 163, 74, .15);
+    color: #16a34a;
+}
+
+:root[data-theme="dark"] .labs-badge-ok { color: #4ade80; }
+
+/* 中性判定（未覆盖 / 可疑） */
+.labs-verdict-info {
+    color: #2563eb;
+    background: rgba(37, 99, 235, .08);
+    border-color: rgba(37, 99, 235, .35);
+}
+
+:root[data-theme="dark"] .labs-verdict-info { color: #60a5fa; }
+
+/* 重点提示（「未命中 ≠ 安全」那段） */
+.labs-tip-strong {
+    border-left-width: 4px;
+}
+
+.labs-tip-strong strong {
+    color: var(--primary);
+}
+
+.labs-note {
+    font-size: .76rem;
+    line-height: 1.7;
+    color: var(--secondary);
+}
+
+.labs-err {
+    padding: .8rem .9rem;
+    font-size: .84rem;
+    line-height: 1.75;
+    color: #dc2626;
+    background: rgba(220, 38, 38, .08);
+    border: 1px solid rgba(220, 38, 38, .35);
+    border-radius: var(--radius);
+}
+
+.labs-err strong {
+    display: block;
+    margin-bottom: .3rem;
+}
+
+.labs-err div + div {
+    margin-top: .25rem;
+}
+
+:root[data-theme="dark"] .labs-err { color: #f87171; }
+
+@media (max-width: 640px) {
+    .labs-check-row {
+        flex-direction: column;
+        gap: .1rem;
+    }
+
+    .labs-check-k {
+        width: auto;
+        font-size: .76rem;
+    }
+}
+
 /* ---------- 窄屏 ---------- */
 @media (max-width: 640px) {
     .labs-tabs {
