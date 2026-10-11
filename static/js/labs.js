@@ -529,13 +529,13 @@
        演示 5：试着攻击我（唯一会调用真实后端的一项）
        ============================================================ */
 
-    /* 后端地址。取舍说明：
-       隧道是临时地址，重启会变，所以域名接入前这个常量要跟着改。
-       域名接好之后（demo.xiaokeqing.cn）就不用再动了 —— 这正是买域名
-       要解决的问题之一。
-       不做自动探测：博客跑在 GitHub Pages 上拿不到任何后端线索，
-       而把地址藏进构建期变量只会让「为什么调不通」更难排查。 */
-    var PLAYGROUND_API = 'https://exhibits-lions-stockholm-interviews.trycloudflare.com';
+    /* 后端地址。
+       这里已经从 Cloudflare 的临时隧道地址换成了命名隧道的固定域名。
+       区别很大：
+         临时隧道   地址随机分配，每次重启都换一个 —— 简历上的链接根本没法用
+         命名隧道   绑定在 Cloudflare 账号下，地址固定，而且重启/迁移都不会变
+       所以这个常量从现在起不用再动了。 */
+    var PLAYGROUND_API = 'https://demo.xiaokeqing.cn';
 
     function playgroundDemo() {
         var ta = h('textarea', { className: 'labs-textarea' });
