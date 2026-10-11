@@ -1,87 +1,37 @@
 {{/*
-  /alerts/ —— 实时告警看板
+  /alerts/ —— 实时告警看板（独立页）
   ----------------------------------------------------------------------------
-  这个模板只负责"骨架"：完整的 HTML 结构 + 三态占位（加载中 / 空 / 出错）。
-  所有数字都由 /js/workbench.js 从 /api/public/alerts 取回后填进去。
+  面板标记与首页共用 layouts/partials/wb-board-alerts.html：
+  同一份数据在两处显示不同数字，是最容易失去信任的一类 bug，所以不重复实现。
 
-  为什么骨架里一个数字都不写死：
-    只要模板里出现一个像样的数字，就一定会有人（包括我自己）在接口挂掉时
-    把它当成真数据看。宁可首屏是骨架屏，也不要一个看起来正常的假数字。
-
-  数据来源：https://demo.xiaokeqing.cn/api/public/alerts
-    · 匿名只读，不需要 Token
-    · 源 IP 已在服务端掩码到网段（45.205.***.***），前端拿不到完整地址
-    · 15 秒缓存，页面标注"同步于"时间
+  首页现在可以内联切换到同一个面板（导航点"实时告警看板"不跳页）；
+  这个独立页保留下来，是为了能被直接分享/收藏一个稳定链接。
 */}}
 
 {{- define "main" -}}
 
-<div class="wb-app" id="wb-app" data-wb-page="alerts">
+<div class="wb-app" data-wb-page="alerts">
+  <div class="wb-app__inner">
 
-  <header class="wb-app__head">
-    <div class="wb-app__headline">
-      <p class="wb-eyebrow">Security Operations · Live</p>
-      <h1 class="wb-app__title">实时告警看板</h1>
-      <p class="wb-app__sub">
-        主机层（Wazuh）与网络层（Suricata）的告警，按「同源 IP + 同类型 + 时间窗」聚合去重后倒序展示。
-        源 IP 掩码到网段，页面匿名可读、只读。
-      </p>
-    </div>
-    <div class="wb-app__meta">
-      <span class="wb-badge wb-badge--muted" id="wb-mode-badge">连接中…</span>
-      <span class="wb-sync">同步于 <b id="wb-synced">—</b></span>
-      <button class="wb-btn wb-btn--sm" id="wb-refresh" type="button">刷新</button>
-    </div>
-  </header>
+    <header class="wb-app__head">
+      <div>
+        <p class="wb-eyebrow">Security Operations · Live</p>
+        <h1 class="wb-app__title">实时告警看板</h1>
+        <p class="wb-app__sub">
+          主机层（Wazuh）与网络层（Suricata）的告警，按「同源 IP + 同类型 + 时间窗」聚合去重后展示。
+          源 IP 掩码到网段，页面匿名只读。
+        </p>
+      </div>
+    </header>
 
-  {{/* ---------- 提示条：降级 / 快照 / 错误 ---------- */}}
-  <div class="wb-notice" id="wb-notice" hidden></div>
+    {{ partial "wb-board-alerts.html" . }}
 
-  {{/* ---------- KPI ---------- */}}
-  <section class="wb-kpis" id="wb-kpis" aria-busy="true">
-    <div class="wb-kpi wb-kpi--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
-    <div class="wb-kpi wb-kpi--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
-    <div class="wb-kpi wb-kpi--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
-    <div class="wb-kpi wb-kpi--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
-    <div class="wb-kpi wb-kpi--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
-  </section>
+    <p class="wb-app__foot">
+      数据源：Wazuh indexer（经最小权限 SSH 隧道读取）｜ 聚合口径与自用界面一致 ｜
+      本页不返回内网拓扑、完整源 IP 与原始 payload。
+    </p>
 
-  {{/* ---------- 分布 + 趋势 ---------- */}}
-  <section class="wb-panels">
-    <div class="wb-panel">
-      <h2 class="wb-panel__title">级别分布</h2>
-      <div class="wb-dist" id="wb-by-severity"><span class="wb-skeleton wb-skeleton--bar"></span></div>
-    </div>
-    <div class="wb-panel">
-      <h2 class="wb-panel__title">来源分布</h2>
-      <div class="wb-dist" id="wb-by-source"><span class="wb-skeleton wb-skeleton--bar"></span></div>
-    </div>
-    <div class="wb-panel wb-panel--wide">
-      <h2 class="wb-panel__title">最近 24 小时趋势</h2>
-      <div class="wb-trend" id="wb-trend"><span class="wb-skeleton wb-skeleton--bar"></span></div>
-    </div>
-  </section>
-
-  {{/* ---------- 告警流 ---------- */}}
-  <section class="wb-panel wb-panel--flush">
-    <div class="wb-panel__head">
-      <h2 class="wb-panel__title">告警流</h2>
-      <span class="wb-hint" id="wb-stream-note"></span>
-    </div>
-    <div class="wb-stream" id="wb-stream">
-      <div class="wb-row wb-row--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--bar"></span></div>
-      <div class="wb-row wb-row--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--bar"></span></div>
-      <div class="wb-row wb-row--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--bar"></span></div>
-      <div class="wb-row wb-row--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--bar"></span></div>
-      <div class="wb-row wb-row--skeleton"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--bar"></span></div>
-    </div>
-  </section>
-
-  <p class="wb-app__foot">
-    数据源：Wazuh indexer（经最小权限 SSH 隧道读取）｜聚合口径与自用界面一致｜
-    本页不展示内网拓扑、完整源 IP 与原始 payload。
-  </p>
-
+  </div>
 </div>
 
 {{- end -}}

@@ -1,149 +1,197 @@
 {{/*
-  知微安全实验室 · 工作台首页
+  小刻晴的博客 · 首页（三栏）
   ----------------------------------------------------------------------------
-  这个文件取代了 PaperMod 默认的"文章列表首页"。
+  定位：这是【博客】。首屏是博客身份，项目是博客里的一个内容板块。
+    左栏：笔记分类 + 站点统计（头像已挪到顶栏右上角，这里不再占位）
+    中栏：当前栏目内容（顶栏是唯一的栏目切换器）
+    右栏：实时状态 + 最近更新 + 系统状态
 
-  为什么改：原来的首页第一屏是一串文章标题，看不出这个站点是干什么的。
-  改成工作台之后，第一屏直接回答三个问题：
-    1. 这站是什么（hero 一句话）
-    2. 现在在不在跑（顶部状态条）
-    3. 能看什么（下面的入口卡片）
-
-  关于状态条的数据：这一期先用静态占位（标了待接入），
-  P1 建好 /api/public/* 只读端点后换成真实 fetch。
-  我特意把"待接入"写在页面上，而不是假装它是真的 —— 避免又出现
-  "看起来有数据、其实是假的"那种情况。
+  栏目：主页 / 笔记 / 实时告警 / 战报评测（蜜罐+评测合并）/ 知识库，
+        另有靶场、项目、关于三个独立页。
 */}}
 
 {{- define "main" -}}
 
-{{/* 工作台外壳：全宽 + 固定深色（见 workbench-app.css）。
-     data-wb-page="home" 是给 /js/workbench.js 的开关：只有带这个属性的页面才去取数。 */}}
-<div class="wb-app" data-wb-page="home">
+<div class="wb-home" data-wb-page="home">
 
-{{/* ===================== HERO ===================== */}}
-<section class="wb-hero">
-  <img class="wb-hero__img" src="{{ "images/hero-anime.jpg" | relURL }}" alt="" aria-hidden="true" loading="eager" fetchpriority="high">
-  <div class="wb-hero__veil"></div>
-  <div class="wb-hero__inner">
-    <p class="wb-hero__eyebrow">Security Operations Workbench</p>
-    <h1 class="wb-hero__title">知微安全实验室</h1>
-    <p class="wb-hero__sub">
-      见微知著 —— 从细微的异常里，看出真正的攻击。<br>
-      这里放着我日常在用的安全工作台：真实的告警、真实在跑的蜜罐、
-      以及一套带护栏和审计的 AI 研判处置链路。
-    </p>
-    <div class="wb-hero__actions">
-      <a class="wb-btn wb-btn--primary" href="{{ "alerts/" | relURL }}">查看告警</a>
-      <a class="wb-btn" href="{{ "labs/" | relURL }}">动手试试</a>
-      <a class="wb-btn" href="{{ "projects/" | relURL }}">项目说明</a>
+  {{/* ===================== 首屏 ===================== */}}
+  <section class="wb-hero">
+    <div class="wb-hero__inner">
+      <div class="wb-hero__copy">
+        <h1 class="wb-hero__title">小刻晴的博客</h1>
+        <p class="wb-hero__sub">
+          见微知著 —— 记录我的安全学习与实践，也放着我真在用的安全运营工作台。
+        </p>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-{{/* ===================== 状态条 =====================
-     数据全部来自 /api/public/overview，首屏占位一律是 "—"。
-     注意这里【没有】"蜜罐 运行中"这类写死的状态 —— 那属于"没探测却宣称在跑"，
-     等 P2 有了蜜罐的真实探针再放回来。 */}}
-<div class="wb-statusbar">
-  <div class="wb-statusbar__inner">
-    <span class="wb-stat" data-wb-node="srv1">
-      <span class="wb-dot"></span>
-      服务机 <span class="wb-stat__val" data-wb-node-val>—</span>
-    </span>
-    <span class="wb-stat" data-wb-node="srv2">
-      <span class="wb-dot"></span>
-      数据机 <span class="wb-stat__val" data-wb-node-val>—</span>
-    </span>
-    <span class="wb-stat">
-      今日告警 <span class="wb-stat__val wb-stat__val--accent" id="wb-alert-count">—</span>
-      <span class="wb-stat__note" id="wb-alert-note"></span>
-    </span>
-    <span class="wb-stat wb-stat__spacer">
-      <span class="wb-sync">同步于 <b id="wb-synced">—</b></span>
-      <span class="wb-badge wb-badge--warn" id="wb-live-badge">连接中…</span>
-    </span>
+  {{/* ===================== 三栏 ===================== */}}
+  <div class="wb-layout">
+
+    {{/* ---------- 左：分类 + 统计 ---------- */}}
+    <aside class="wb-col wb-col--left">
+      <section class="wb-card">
+        <h3 class="wb-card__title wb-card__title--bar">笔记分类</h3>
+        {{- $cats := site.Taxonomies.categories -}}
+        {{- if $cats }}
+        <ul class="wb-stats" style="margin-top:8px">
+          {{- range $name, $items := $cats }}
+          <li>
+            <span><a class="wb-link" href="{{ "/categories/" | relURL }}{{ $name | urlize }}/">{{ $name }}</a></span>
+            <b>{{ len $items }}</b>
+          </li>
+          {{- end }}
+        </ul>
+        {{- else }}
+        <p class="wb-hint" style="margin:8px 0 0">还没有分类 —— 上传笔记时在 front matter 写 categories 即可。</p>
+        {{- end }}
+      </section>
+
+      <section class="wb-card">
+        <h3 class="wb-card__title wb-card__title--bar">站点统计</h3>
+        {{- $posts := where site.RegularPages "Section" "posts" -}}
+        <ul class="wb-stats">
+          <li><span>笔记</span><b>{{ len $posts }} 篇</b></li>
+          <li><span>靶场演示</span><b>5 个</b></li>
+          <li><span>在线栏目</span><b>2 个</b></li>
+          <li><span>规划中</span><b>3 个</b></li>
+        </ul>
+      </section>
+    </aside>
+
+    {{/* ---------- 中：栏目内容 ---------- */}}
+    <main class="wb-col wb-col--main">
+
+      {{/* 主页：博客介绍 + 内容模块总览 */}}
+      <section class="wb-view" id="view-home">
+        <div class="wb-card">
+          <h2 class="wb-card__title">关于这个博客</h2>
+          <p class="wb-lead" style="margin-top:12px">
+            我是小刻晴，这里放的是我在网络安全方向的学习与实践记录：应急响应、Linux 加固、AI 安全运营，
+            以及一路踩过的坑。笔记按分类整理，方便我自己随时回来复习，也方便你按兴趣挑着看。
+            另外，这个博客里还挂着我日常在用的一个安全运营工作台 —— 真实的告警、真实在跑的蜜罐，
+            以及一条带护栏和审计的 AI 研判处置链路。它不是一个演示页面，是每天在用的东西。
+          </p>
+        </div>
+
+        <section class="wb-card">
+          <h2 class="wb-card__title">内容模块</h2>
+          <ul class="wb-list" style="margin-top:8px">
+            <li>
+              <b>笔记</b><span>按分类整理的学习记录：应急响应、安全运营、AI 安全、CVE 复现。</span>
+              <button class="wb-link" type="button" data-wb-tab="notes" style="background:none;border:0;cursor:pointer">进入</button>
+            </li>
+            <li>
+              <b>实时告警</b><span>主机（Wazuh）与网络（Suricata）告警实时聚合去重，按级别过滤、可展开原始明细，并附处置记录。</span>
+              <button class="wb-link" type="button" data-wb-tab="alerts" style="background:none;border:0;cursor:pointer">进入</button>
+            </li>
+            <li>
+              <b>战报评测</b><span>蜜罐战报（攻击者试过的账号口令、命令时间线）＋ 红队评测（27 例绕过率与误伤，带置信区间）。</span>
+              <button class="wb-link" type="button" data-wb-tab="report" style="background:none;border:0;cursor:pointer">进入</button>
+            </li>
+            <li>
+              <b>知识库</b><span>对着 318 条向量的语义检索，把散落的经验串起来。</span>
+              <span class="wb-badge wb-badge--muted">规划中 P4</span>
+            </li>
+            <li>
+              <b>靶场</b><span>SQL 注入、路径穿越、DLP、提示注入，浏览器里直接试。</span>
+              <a class="wb-link" href="{{ "labs/" | relURL }}">进入</a>
+            </li>
+            <li>
+              <b>项目</b><span>SecAgent 的架构取舍、护栏设计与实测数据。</span>
+              <a class="wb-link" href="{{ "projects/" | relURL }}">进入</a>
+            </li>
+          </ul>
+        </section>
+      </section>
+
+      {{/* 笔记：分类 + 列表 */}}
+      {{- $posts := where site.RegularPages "Section" "posts" -}}
+      <section class="wb-view" id="view-notes" hidden>
+        <div class="wb-card">
+          <h2 class="wb-card__title">笔记</h2>
+          <ul class="wb-list" style="margin-top:8px">
+            {{- range $posts }}
+            <li>
+              <b style="min-width:auto">
+                <a class="wb-link" href="{{ .RelPermalink }}" style="font-size:14px;color:var(--wb-fg)">{{ .Title }}</a>
+              </b>
+              <span>{{ with .Summary }}{{ . | plainify | truncate 68 }}{{ else }}{{ .Description }}{{ end }}</span>
+              <span class="wb-hint">
+                {{- with .Params.categories }}{{ delimit . " / " }} · {{ end }}{{ .Date.Format "2006-01-02" }}
+              </span>
+            </li>
+            {{- end }}
+          </ul>
+          <p style="margin-top:12px"><a class="wb-link" href="{{ "posts/" | relURL }}">全部笔记 →</a></p>
+        </div>
+      </section>
+
+      {{/* 实时告警 */}}
+      <section class="wb-view" id="view-alerts" hidden>
+        {{ partial "wb-board-alerts.html" . }}
+      </section>
+
+      {{/* 战报评测：蜜罐 + 红队（合并栏目） */}}
+      <section class="wb-view" id="view-report" hidden>
+        <div class="wb-placeholder" style="margin-bottom:16px">
+          <p class="wb-placeholder__title">蜜罐战报 · 规划中（P2）</p>
+          <p>攻击者试过的账号口令 Top、命令时间线、来源分布，IP 一律掩码。
+             Cowrie 已经在服务器上跑着并持续产生数据 —— 等的是脱敏口径与数据通路，不是蜜罐本身。</p>
+        </div>
+        <div class="wb-placeholder">
+          <p class="wb-placeholder__title">红队评测 · 规划中（P2）</p>
+          <p>27 例对抗测试的绕过率、误伤率与置信区间，不做美化。</p>
+        </div>
+      </section>
+
+      {{/* 知识库（规划中） */}}
+      <section class="wb-view" id="view-kb" hidden>
+        <div class="wb-placeholder">
+          <p class="wb-placeholder__title">知识库 · 规划中（P4）</p>
+          <p>318 条向量的语义检索。需要先做公开只读检索端点，并加限流与配额 ——
+             这个功能要调模型，不能像告警那样无成本地开放。</p>
+        </div>
+      </section>
+    </main>
+
+    {{/* ---------- 右：实时状态 / 最近更新 / 系统 ---------- */}}
+    <aside class="wb-col wb-col--right">
+      <section class="wb-card" id="wb-status">
+        <h3 class="wb-card__title wb-card__title--bar">实时状态</h3>
+        <ul class="wb-stats" style="margin-top:8px">
+          <li data-wb-node="srv1"><span><span class="wb-dot"></span>服务机</span><b data-wb-node-val>—</b></li>
+          <li data-wb-node="srv2"><span><span class="wb-dot"></span>数据机</span><b data-wb-node-val>—</b></li>
+          <li><span>最近告警</span><b id="wb-alert-count">—</b></li>
+          <li><span>数据源</span><span class="wb-badge wb-badge--muted" id="wb-live-badge">连接中</span></li>
+        </ul>
+      </section>
+
+      <section class="wb-card">
+        <h3 class="wb-card__title wb-card__title--bar">最近更新</h3>
+        <ul class="wb-stats" style="margin-top:8px">
+          {{- range first 3 $posts }}
+          <li>
+            <span><a class="wb-link" href="{{ .RelPermalink }}">{{ .Title | truncate 18 }}</a></span>
+            <b>{{ .Date.Format "01-02" }}</b>
+          </li>
+          {{- end }}
+        </ul>
+      </section>
+
+      <section class="wb-card">
+        <h3 class="wb-card__title wb-card__title--bar">系统状态</h3>
+        <ul class="wb-stats" style="margin-top:8px">
+          <li><span>后端版本</span><b id="wb-build">—</b></li>
+          <li><span>知识库向量</span><b>318</b></li>
+          <li><span>告警窗口</span><b id="wb-window">—</b></li>
+        </ul>
+      </section>
+    </aside>
+
   </div>
+
 </div>
 
-<div class="wb-wrap">
-
-  {{/* ===================== 入口卡片 ===================== */}}
-  <section class="wb-section">
-    <div class="wb-section__head">
-      <h2 class="wb-section__title">工作台入口</h2>
-      <p class="wb-section__hint">告警、蜜罐、评测、处置记录 —— 都来自真实在跑的系统</p>
-    </div>
-    <div class="wb-grid">
-
-      <a class="wb-card" href="{{ "alerts/" | relURL }}">
-        <div class="wb-card__icon">◈</div>
-        <h3 class="wb-card__title">实时告警看板</h3>
-        <p class="wb-card__desc">主机与网络两个层面的告警聚合去重，按级别和来源分布，可下钻到原始明细。</p>
-        <div class="wb-card__foot"><span>Wazuh + Suricata</span><span>已上线</span></div>
-      </a>
-
-      <div class="wb-card wb-card--soon" title="P2 交付：先有数据通路与脱敏口径，再放页面">
-        <div class="wb-card__icon">◎</div>
-        <h3 class="wb-card__title">蜜罐战报</h3>
-        <p class="wb-card__desc">真实攻击者试过的账号口令、敲下的命令、来源分布。IP 一律做掩码处理。</p>
-        <div class="wb-card__foot"><span>Cowrie</span><span>未上线 · P2</span></div>
-      </div>
-
-      <div class="wb-card wb-card--soon" title="P2 交付：评测仪表盘">
-        <div class="wb-card__icon">▤</div>
-        <h3 class="wb-card__title">红队评测</h3>
-        <p class="wb-card__desc">对 AI 研判能力的对抗测试结果：绕过率、误报率，都带置信区间，不做美化。</p>
-        <div class="wb-card__foot"><span>27 例</span><span>未上线 · P2</span></div>
-      </div>
-
-      <a class="wb-card" href="{{ "labs/" | relURL }}">
-        <div class="wb-card__icon">⚗</div>
-        <h3 class="wb-card__title">靶场与演示</h3>
-        <p class="wb-card__desc">SQL 注入、路径穿越、DLP、提示注入 —— 输入即见结果，前四个完全跑在你自己的浏览器里。</p>
-        <div class="wb-card__foot"><span>已上线</span><span>✓</span></div>
-      </a>
-
-      <div class="wb-card wb-card--soon" title="P3 交付：内容中心（双仓库 + 脱敏门禁 + 全文搜索）">
-        <div class="wb-card__icon">⌘</div>
-        <h3 class="wb-card__title">知识库</h3>
-        <p class="wb-card__desc">安全笔记、CVE 复现、命令速查。全站可搜索。</p>
-        <div class="wb-card__foot"><span>Markdown</span><span>未上线 · P3</span></div>
-      </div>
-
-      <a class="wb-card" href="{{ "projects/" | relURL }}">
-        <div class="wb-card__icon">◆</div>
-        <h3 class="wb-card__title">项目说明</h3>
-        <p class="wb-card__desc">架构怎么设计的、为什么这么取舍、哪些地方踩过坑。</p>
-        <div class="wb-card__foot"><span>SecAgent</span><span>✓</span></div>
-      </a>
-
-    </div>
-  </section>
-
-  {{/* ===================== 最新文章 ===================== */}}
-  {{- $posts := where site.RegularPages "Section" "posts" -}}
-  {{- if $posts }}
-  <section class="wb-section">
-    <div class="wb-section__head">
-      <h2 class="wb-section__title">最近写的</h2>
-      <p class="wb-section__hint"><a href="{{ "posts/" | relURL }}">全部文章 →</a></p>
-    </div>
-    <div class="wb-grid">
-      {{- range first 3 $posts }}
-      <a class="wb-card" href="{{ .RelPermalink }}">
-        <h3 class="wb-card__title">{{ .Title }}</h3>
-        <p class="wb-card__desc">{{ with .Summary }}{{ . | plainify | truncate 70 }}{{ else }}{{ .Description }}{{ end }}</p>
-        <div class="wb-card__foot">
-          <span>{{ .Date.Format "2006-01-02" }}</span>
-          <span>{{ .ReadingTime }} 分钟</span>
-        </div>
-      </a>
-      {{- end }}
-    </div>
-  </section>
-  {{- end }}
-
-</div>{{/* /.wb-wrap */}}
-</div>{{/* /.wb-app */}}
 {{- end -}}

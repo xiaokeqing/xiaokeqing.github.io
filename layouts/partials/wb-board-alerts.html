@@ -1,0 +1,61 @@
+{{/*
+  实时告警看板 · 面板（可复用）
+  ----------------------------------------------------------------------------
+  首页的功能面板与 /alerts/ 独立页共用这一份标记，避免两处各写一遍导致口径不一致
+  （同一份数据在两个页面上显示不同数字，是最容易失去信任的一类 bug）。
+
+  所有数字由 static/js/workbench.js 从 /api/public/alerts 填充，模板里不写死任何值。
+*/}}
+
+<div class="wb-board" id="wb-board-alerts">
+
+  <div class="wb-board__bar">
+    <span class="wb-badge wb-badge--muted" id="wb-mode-badge">连接中</span>
+    <span class="wb-sync">同步于 <b id="wb-synced">—</b></span>
+    <button class="wb-btn wb-btn--sm" id="wb-refresh" type="button">刷新</button>
+  </div>
+
+  <div class="wb-notice" id="wb-notice" hidden></div>
+
+  <section class="wb-kpis" id="wb-kpis" aria-busy="true">
+    <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+    <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+    <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+    <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+    <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+  </section>
+
+  <section class="wb-panels">
+    <div class="wb-panel">
+      <h3 class="wb-panel__title" id="wb-sev-title">级别分布</h3>
+      <div class="wb-dist" id="wb-by-severity"><span class="wb-skeleton wb-skeleton--bar"></span></div>
+    </div>
+    <div class="wb-panel">
+      <h3 class="wb-panel__title" id="wb-src-title">来源分布</h3>
+      <div class="wb-dist" id="wb-by-source"><span class="wb-skeleton wb-skeleton--bar"></span></div>
+    </div>
+    <div class="wb-panel wb-panel--wide">
+      <h3 class="wb-panel__title">最近 24 小时趋势</h3>
+      <div class="wb-trend__meta">
+        <span>合计 <b id="wb-trend-total">—</b></span>
+        <span>峰值 <b id="wb-trend-peak">—</b></span>
+      </div>
+      <div class="wb-trend" id="wb-trend"><span class="wb-skeleton wb-skeleton--bar"></span></div>
+      <div class="wb-trend__axis" id="wb-trend-axis"></div>
+    </div>
+  </section>
+
+  <section class="wb-panel wb-panel--flush">
+    <div class="wb-panel__head">
+      <h3 class="wb-panel__title">告警流</h3>
+      <span class="wb-hint" id="wb-stream-note"></span>
+    </div>
+    <div class="wb-filters" id="wb-filters"></div>
+    <div class="wb-stream" id="wb-stream">
+      <div class="wb-row"><span class="wb-skeleton wb-skeleton--bar"></span></div>
+      <div class="wb-row"><span class="wb-skeleton wb-skeleton--bar"></span></div>
+      <div class="wb-row"><span class="wb-skeleton wb-skeleton--bar"></span></div>
+    </div>
+  </section>
+
+</div>

@@ -23,16 +23,13 @@
 {{- end -}}
 
 <!DOCTYPE html>
-{{- $theme := site.Params.defaultTheme | default "auto" }}
+{{- $theme := site.Params.defaultTheme | default "light" }}
 {{- /*
-     工作台页面（首页 / /alerts/）强制深色。
-     为什么不在 CSS 里做：工作台的深色只包住了 .wb-app 那一块，
-     而导航栏、main 的背景、页面留白都在容器之外 —— 浅色主题下就会出现
-     "深色面板浮在白底上"的割裂感。深色必须在 <html data-theme> 这一层给，
-     PaperMod 的整套深色样式才会跟着生效。
-     站点主题开关仍然可用：访客手动切浅色时，工作台内容区保持深色（.wb-app 自带令牌）。
+     主题固定为浅色（hugo.toml 里 defaultTheme = "light" 且关闭了切换按钮）。
+     这里不再对工作台页面做任何"强制深色"处理 —— 站点现在只有一套浅色视觉。
+     workbench.css 另外把 :root[data-theme="dark"] 也覆盖成浅色值：
+     访客浏览器里残留的旧偏好不会把页面翻成深色。
 */}}
-{{- if or .IsHome (eq .Section "alerts") }}{{ $theme = "dark" }}{{ end }}
 {{- $lang := site.Language.Lang | default "zh-cn" }}
 {{- $dir := .Language.Direction | default "auto" }}
 {{- if eq $theme "dark" }}
@@ -68,11 +65,9 @@
     {{ partialCached "footer.html" . .Layout .Kind (.Param "hideFooter") (.Param "ShowCodeCopyButtons") -}}
 
     {{/*
-      项目速查助手：固定在右下角的浮层，全站加载。
-      defer 保证不阻塞首屏；脚本内部自己判断当前页面是否需要挂载
-      （靶场页已经很长，不叠加浮层）。
+      右下角"项目速查"浮层已按布局要求撤掉（悬浮按钮和导航/刷新抢位置）。
+      脚本本身留着，需要时可以再挂回来。
     */}}
-    <script src="/js/guide.js" defer></script>
 
     {{/*
       工作台数据层：只有带 data-wb-page 的页面（首页 / /alerts/）会真正取数，

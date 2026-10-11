@@ -1,86 +1,48 @@
 /* ============================================================================
-   知微安全实验室 · 工作台应用样式（Workbench App）
+   知微安全实验室 · 工作台应用样式（浅色）
    ----------------------------------------------------------------------------
    与 workbench.css 的分工：
-     workbench.css      —— 设计令牌 + 通用组件（卡片/徽标/按钮/KPI/骨架屏），全站共用
-     workbench-app.css  —— 工作台页面的版式：全宽深色、状态条、分布条、趋势图、
-                           告警流与下钻明细
+     workbench.css      —— 设计令牌 + 通用组件（卡片/徽标/按钮/hero）
+     workbench-app.css  —— 工作台页面的版式：KPI、分布条、趋势图、告警流、下钻
 
-   【两个刻意的决定】
-   1. 全宽：工作台是"看数据"的界面，1120px 的阅读宽度会把表格和趋势图挤变形。
-      这里用标准的 full-bleed 写法（左右负 margin 抵消父容器宽度限制），
-      内容仍然收在 1680px 内 —— 宽屏不空、窄屏不挤。
-   2. 固定深色：安全运营台的语义就是深色。跟随站点浅色主题会变成
-      "仪表盘的复印件"，而且深浅切换时对比度最容易出问题。
-      所以 .wb-app 内部重新定义一套深色令牌，与站点主题解耦。
+   【配色语义，全站一致】
+     蓝 (#2563EB)     —— 可点击元素、关键数字、主机告警
+     浅蓝 (#93B4F5)   —— 网络告警（同色系靠明度区分，不用第二种颜色）
+     蓝灰 (#5B8DB8)   —— 低危 / 提示（刻意不用绿色）
+     琥珀 / 橙 / 红    —— 中危 / 高危 / 严重
+     绿 (#12B76A)     —— 【只在表示"在线"时出现】，绝不用于分布条
+       理由：绿在告警语境里会被读成"安全"，
+       而"低危"不等于"安全"；两种语义共用一个颜色，图就会骗人。
    ========================================================================== */
 
-/* ---------- 全宽 + 固定深色 ---------- */
-.wb-app {
-  /* 深色令牌（作用域只在本容器内，不污染全站） */
-  --wb-bg:          #0b0f14;
-  --wb-bg-soft:     #111823;
-  --wb-bg-elev:     #16202c;
-  --wb-line:        #223044;
-  --wb-line-soft:   #1a2534;
-  --wb-fg:          #dbe6f3;
-  --wb-fg-dim:      #8ba0b8;
-  --wb-fg-faint:    #5c7186;
-  --wb-accent:      #4ea1ff;
-  --wb-accent-dim:  #2b6cb0;
-  --wb-accent-glow: rgba(78, 161, 255, .14);
-
+/* ---------- 页面容器 ----------
+   PaperMod 的 .main 宽度是给文章阅读用的（--main-width: 720px）。
+   工作台要的是全宽浅灰底 + 1180 居中内容，所以这里用负 margin 抵消父容器限宽，
+   再把内层收在 1180 —— 背景铺满视口，内容不散。 */
+.wb-app,
+.wb-home {
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   background: var(--wb-bg);
-  color: var(--wb-fg);
-  padding: var(--wb-s6) 0 var(--wb-s7);
 }
 
-/* full-bleed 左右各超出 50vw，窄屏会出现横向滚动条 —— 这里只裁掉溢出，
-   不用 overflow-x:hidden 加在 body 上（那会让 sticky 头部失效） */
-body:has(.wb-app) {
+/* full-bleed 会带来 100vw vs 实际宽度的一点横向溢出，这里只裁掉溢出，
+   不把 overflow-x:hidden 加在 body 上（那会让 sticky 头部失效） */
+body:has(.wb-app),
+body:has(.wb-home) {
   overflow-x: hidden;
 }
 
-/* 内容收在 1680px 内 */
-.wb-app > * {
-  max-width: 1680px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--wb-s5);
-  padding-right: var(--wb-s5);
+.wb-app {
+  padding: var(--wb-s7) 0 var(--wb-s8);
 }
 
-/* ---------- 工作台页面的站点外壳也压成深色 ----------
-   站点外壳（body 底色 + 页脚）在 custom.css 里用了 bg.webp 装饰图 + --theme 底色，
-   浅色下就是一条白带 / 一块浅色页脚。工作台是深色界面，
-   只把内容区做深就会出现"深色面板浮在白底上"的割裂感。
-   这里用 :has() 只作用于"包含工作台的页面"，文章页不受影响。
-   （站点已默认深色，这里是兜底：访客手动切浅色时外壳仍然协调。） */
-body:has(.wb-app) {
-  background-color: #0b0f14;
-  background-image: none;
+.wb-app__inner {
+  max-width: var(--wb-maxw);
+  margin: 0 auto;
+  padding: 0 var(--wb-s5);
 }
 
-body:has(.wb-app) .footer {
-  background-color: #0b0f14;
-  background-image: none;
-  border-top: 1px solid #1a2534;
-  color: #5c7186;
-}
-
-body:has(.wb-app) .footer a {
-  color: #8ba0b8;
-}
-
-body:has(.wb-app) .header,
-body:has(.wb-app) .nav {
-  background-color: #0b0f14;
-  border-bottom: 1px solid #1a2534;
-}
-
-/* ---------- 页头 ---------- */
 .wb-app__head {
   display: flex;
   align-items: flex-end;
@@ -90,26 +52,18 @@ body:has(.wb-app) .nav {
   margin-bottom: var(--wb-s5);
 }
 
-.wb-eyebrow {
-  margin: 0 0 var(--wb-s2);
-  font: 600 11px/1 var(--wb-mono);
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--wb-fg-faint);
-}
-
 .wb-app__title {
   margin: 0 0 var(--wb-s2);
-  font-size: clamp(22px, 3vw, 30px);
-  letter-spacing: -.01em;
+  font-size: 28px;
+  letter-spacing: -.02em;
 }
 
 .wb-app__sub {
   margin: 0;
   max-width: 720px;
-  color: var(--wb-fg-dim);
   font-size: 14px;
-  line-height: 1.65;
+  line-height: 1.75;
+  color: var(--wb-fg-2);
 }
 
 .wb-app__meta {
@@ -120,98 +74,108 @@ body:has(.wb-app) .nav {
 }
 
 .wb-sync {
-  font: 12px/1 var(--wb-mono);
-  color: var(--wb-fg-faint);
+  font-size: 12px;
+  color: var(--wb-fg-3);
+  font-variant-numeric: tabular-nums;
 }
 
 .wb-app__foot {
-  margin-top: var(--wb-s5);
+  margin-top: var(--wb-s6);
   font-size: 12px;
-  color: var(--wb-fg-faint);
-  line-height: 1.7;
+  line-height: 1.8;
+  color: var(--wb-fg-3);
 }
 
-/* ---------- 提示条（降级 / 快照 / 错误） ---------- */
-.wb-notice {
-  margin-bottom: var(--wb-s5);
-  padding: var(--wb-s3) var(--wb-s4);
+/* ---------- 级别过滤（胶囊） ---------- */
+.wb-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-s2);
+  flex-wrap: wrap;
+  margin-bottom: var(--wb-s4);
+}
+
+.wb-chip {
+  padding: 5px 12px;
   border: 1px solid var(--wb-line);
-  border-left: 3px solid var(--wb-accent);
-  border-radius: var(--wb-r2);
-  background: var(--wb-bg-soft);
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--wb-fg-dim);
+  border-radius: var(--wb-r-pill);
+  background: var(--wb-card);
+  color: var(--wb-fg-2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
 
-.wb-notice b { color: var(--wb-fg); }
+.wb-chip:hover { border-color: #D3DCE8; color: var(--wb-fg); }
 
-.wb-notice--warn   { border-left-color: var(--wb-warn); }
-.wb-notice--danger { border-left-color: var(--wb-danger); }
+.wb-chip.is-active {
+  border-color: #D3E0FB;
+  background: var(--wb-accent-bg);
+  color: var(--wb-accent);
+}
 
 /* ---------- KPI ---------- */
 .wb-kpis {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--wb-s3);
+  gap: var(--wb-s4);
   margin-bottom: var(--wb-s5);
 }
 
 .wb-kpi {
-  padding: var(--wb-s4);
-  border: 1px solid var(--wb-line);
-  border-radius: var(--wb-r3);
-  background: var(--wb-bg-soft);
-  min-height: 86px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: var(--wb-s2);
+  min-height: 96px;
+  padding: var(--wb-s5);
+  border: 1px solid var(--wb-line);
+  border-radius: var(--wb-r-card);
+  background: var(--wb-card);
+  box-shadow: var(--wb-shadow);
 }
 
-.wb-kpi__label {
-  font-size: 12px;
-  color: var(--wb-fg-faint);
-}
+.wb-kpi__label { font-size: 12px; color: var(--wb-fg-2); }
 
 .wb-kpi__value {
-  font: 700 26px/1.1 var(--wb-mono);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
   letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;   /* 数字等宽，位数变化时不跳动 */
+  color: var(--wb-fg);
 }
 
-.wb-kpi__value--crit  { color: var(--wb-danger); }
-.wb-kpi__value--high  { color: var(--wb-warn); }
-.wb-kpi__value--accent{ color: var(--wb-accent); }
+.wb-kpi__value--crit { color: var(--wb-crit); }
+.wb-kpi__value--high { color: var(--wb-high); }
+.wb-kpi__value--accent { color: var(--wb-accent); }
 
-.wb-kpi__note {
-  font-size: 11px;
-  color: var(--wb-fg-faint);
-}
+.wb-kpi__note { font-size: 11px; color: var(--wb-fg-3); }
 
-/* ---------- 面板网格 ---------- */
+/* ---------- 面板 ---------- */
 .wb-panels {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--wb-s3);
+  gap: var(--wb-s4);
   margin-bottom: var(--wb-s5);
 }
 
 .wb-panel {
-  padding: var(--wb-s4);
+  padding: var(--wb-s5);
   border: 1px solid var(--wb-line);
-  border-radius: var(--wb-r3);
-  background: var(--wb-bg-soft);
+  border-radius: var(--wb-r-card);
+  background: var(--wb-card);
+  box-shadow: var(--wb-shadow);
 }
 
 .wb-panel--wide { grid-column: span 2; }
-
 .wb-panel--flush { padding: 0; overflow: hidden; }
 
 .wb-panel__title {
-  margin: 0 0 var(--wb-s3);
-  font-size: 13px;
+  margin: 0 0 var(--wb-s4);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--wb-fg-dim);
-  letter-spacing: .02em;
+  color: var(--wb-fg);
 }
 
 .wb-panel__head {
@@ -219,125 +183,151 @@ body:has(.wb-app) .nav {
   align-items: center;
   justify-content: space-between;
   gap: var(--wb-s3);
-  padding: var(--wb-s4) var(--wb-s4) 0;
   flex-wrap: wrap;
+  padding: var(--wb-s5) var(--wb-s5) 0;
 }
 
 .wb-panel__head .wb-panel__title { margin: 0; }
 
-.wb-hint {
-  font-size: 12px;
-  color: var(--wb-fg-faint);
+/* 级别过滤放在流面板里时，和面板内部对齐 */
+.wb-panel--flush .wb-filters {
+  padding: var(--wb-s3) var(--wb-s5) var(--wb-s2);
+  margin-bottom: 0;
 }
 
 /* ---------- 分布条 ---------- */
-.wb-dist { display: flex; flex-direction: column; gap: var(--wb-s2); }
+.wb-dist { display: flex; flex-direction: column; gap: var(--wb-s3); }
 
 .wb-dist__row {
   display: grid;
-  grid-template-columns: 74px 1fr 46px;
+  grid-template-columns: 62px 1fr 44px;
   align-items: center;
   gap: var(--wb-s3);
   font-size: 12px;
 }
 
-.wb-dist__label { color: var(--wb-fg-dim); white-space: nowrap; }
+.wb-dist__label { color: var(--wb-fg-2); white-space: nowrap; }
 
 .wb-dist__track {
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--wb-r-pill);
   background: var(--wb-line-soft);
   overflow: hidden;
 }
 
 .wb-dist__bar {
   height: 100%;
-  border-radius: 999px;
-  background: var(--wb-accent-dim);
+  border-radius: var(--wb-r-pill);
+  background: var(--wb-low);
   transition: width .3s ease;
 }
 
-.wb-dist__bar--crit { background: var(--wb-danger); }
-.wb-dist__bar--high { background: var(--wb-warn); }
-.wb-dist__bar--med  { background: var(--wb-accent); }
-.wb-dist__bar--low  { background: var(--wb-ok); }
-.wb-dist__bar--net  { background: #9b8cff; }
+.wb-dist__bar--crit { background: var(--wb-crit); }
+.wb-dist__bar--high { background: var(--wb-high); }
+.wb-dist__bar--med  { background: var(--wb-med); }
+.wb-dist__bar--low  { background: var(--wb-low); }     /* 低危/提示：蓝灰，不用绿 */
+.wb-dist__bar--host { background: var(--wb-accent); }
+.wb-dist__bar--net  { background: var(--wb-net); }
 
 .wb-dist__num {
-  font: 600 12px/1 var(--wb-mono);
-  color: var(--wb-fg);
+  font-size: 12px;
+  font-weight: 600;
   text-align: right;
+  color: var(--wb-fg);
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---------- 趋势（纯 CSS 柱状） ---------- */
+/* ---------- 24h 趋势 ---------- */
+.wb-trend__meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--wb-s5);
+  margin-bottom: var(--wb-s3);
+  font-size: 12px;
+  color: var(--wb-fg-3);
+}
+
+.wb-trend__meta b {
+  color: var(--wb-fg);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
 .wb-trend {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
-  height: 104px;
-  padding-top: var(--wb-s2);
+  gap: 3px;
+  height: 120px;
 }
 
 .wb-trend__col {
   flex: 1 1 0;
   min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  gap: 4px;
-  height: 100%;
+  gap: 6px;
 }
 
 .wb-trend__bar {
   width: 100%;
-  min-height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: var(--wb-accent-dim);
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--wb-accent);
 }
 
-.wb-trend__bar--peak { background: var(--wb-accent); }
+/* 0 值的时段：极淡灰底纹柱（原来是 2px 的虚线，看不出"这段没数据"还是"没告警"） */
+.wb-trend__bar--zero {
+  background: #EEF1F6;
+  min-height: 4px;
+}
+
+/* 时间轴：整点横排（每 4 小时一个刻度） */
+.wb-trend__axis {
+  display: flex;
+  gap: 3px;
+  margin-top: var(--wb-s2);
+  padding-top: var(--wb-s2);
+  border-top: 1px solid var(--wb-line-soft);
+}
 
 .wb-trend__tick {
-  font: 9px/1 var(--wb-mono);
-  color: var(--wb-fg-faint);
-  transform: rotate(-90deg);
-  transform-origin: center;
-  height: 22px;
-  display: flex;
-  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 10px;
+  color: var(--wb-fg-3);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 /* ---------- 告警流 ---------- */
 .wb-stream { display: flex; flex-direction: column; }
 
-.wb-row {
-  border-top: 1px solid var(--wb-line-soft);
-}
-
+.wb-row { border-top: 1px solid var(--wb-line-soft); }
 .wb-row:first-child { border-top: 0; }
 
 .wb-row > summary {
   display: grid;
-  grid-template-columns: 116px 78px 92px minmax(0, 1fr) 128px 54px;
+  grid-template-columns: 62px 66px 60px minmax(0, 1fr) 120px 52px;
   align-items: center;
   gap: var(--wb-s3);
-  padding: var(--wb-s3) var(--wb-s4);
+  padding: var(--wb-s3) var(--wb-s5);
   cursor: pointer;
   list-style: none;
   font-size: 13px;
 }
 
 .wb-row > summary::-webkit-details-marker { display: none; }
-
-.wb-row > summary:hover { background: var(--wb-bg-elev); }
-
-.wb-row[open] > summary { background: var(--wb-bg-elev); }
+.wb-row > summary:hover { background: #FAFBFD; }
+.wb-row[open] > summary { background: #FAFBFD; }
 
 .wb-row__time {
-  font: 12px/1 var(--wb-mono);
-  color: var(--wb-fg-dim);
+  font-size: 12px;
+  color: var(--wb-fg-2);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -350,27 +340,30 @@ body:has(.wb-app) .nav {
 }
 
 .wb-row__ip {
-  font: 12px/1 var(--wb-mono);
-  color: var(--wb-fg-dim);
+  font-size: 12px;
+  color: var(--wb-fg-2);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .wb-row__count {
-  font: 600 12px/1 var(--wb-mono);
-  color: var(--wb-accent);
+  font-size: 12px;
+  font-weight: 600;
   text-align: right;
+  color: var(--wb-accent);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .wb-row__body {
-  padding: var(--wb-s3) var(--wb-s4) var(--wb-s4);
-  background: #0d131a;
-  border-top: 1px dashed var(--wb-line);
+  padding: var(--wb-s3) var(--wb-s5) var(--wb-s4);
+  background: #FBFCFE;
+  border-top: 1px solid var(--wb-line-soft);
 }
 
 .wb-member {
   display: grid;
-  grid-template-columns: 116px 92px minmax(0, 1fr) 128px;
+  grid-template-columns: 62px 66px minmax(0, 1fr) 150px;
   gap: var(--wb-s3);
   align-items: center;
   padding: var(--wb-s2) 0;
@@ -379,91 +372,39 @@ body:has(.wb-app) .nav {
 }
 
 .wb-member:last-child { border-bottom: 0; }
-.wb-member__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wb-fg-dim); }
 
-/* ---------- 徽标：级别 / 来源 ---------- */
-.wb-badge--crit { color: #ffd9dd; background: rgba(255, 95, 109, .18); border-color: rgba(255, 95, 109, .45); }
-.wb-badge--high { color: #ffe6c2; background: rgba(255, 180, 84, .16); border-color: rgba(255, 180, 84, .42); }
-.wb-badge--med  { color: #d8e8ff; background: rgba(78, 161, 255, .16); border-color: rgba(78, 161, 255, .42); }
-.wb-badge--low  { color: #d3f7e6; background: rgba(61, 220, 151, .14); border-color: rgba(61, 220, 151, .38); }
-.wb-badge--info { color: var(--wb-fg-dim); background: rgba(139, 160, 184, .12); border-color: rgba(139, 160, 184, .3); }
-.wb-badge--net  { color: #e4dcff; background: rgba(155, 140, 255, .16); border-color: rgba(155, 140, 255, .42); }
-.wb-badge--host { color: #d8e8ff; background: rgba(78, 161, 255, .12); border-color: rgba(78, 161, 255, .3); }
-
-/* ---------- 空状态 / 骨架屏 ---------- */
-.wb-empty {
-  padding: var(--wb-s6) var(--wb-s4);
-  text-align: center;
-  color: var(--wb-fg-faint);
-  font-size: 13px;
-  line-height: 1.7;
+.wb-member__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--wb-fg-2);
 }
 
-.wb-skeleton {
-  display: block;
-  border-radius: var(--wb-r1);
-  background: linear-gradient(90deg, var(--wb-line-soft) 25%, var(--wb-line) 37%, var(--wb-line-soft) 63%);
-  background-size: 400% 100%;
-  animation: wb-shimmer 1.4s ease infinite;
+/* ---------- 三栏布局的中栏（约 750px）里的告警面板 ----------
+   面板整体是按整页宽度设计的，放进中栏要各自收一档，否则 5 个 KPI 会挤成一条。 */
+.wb-col--main .wb-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--wb-s3);
 }
 
-.wb-skeleton--sm  { height: 12px; width: 42%; }
-.wb-skeleton--lg  { height: 26px; width: 62%; }
-.wb-skeleton--bar { height: 10px; width: 100%; }
+.wb-col--main .wb-kpi { min-height: 86px; padding: var(--wb-s4); }
+.wb-col--main .wb-kpi__value { font-size: 28px; }
+.wb-col--main .wb-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wb-col--main .wb-panel--wide { grid-column: span 2; }
+.wb-col--main .wb-panel { padding: var(--wb-s4); }
+.wb-col--main .wb-panel--flush { padding: 0; }
+.wb-col--main .wb-panel__head { padding: var(--wb-s4) var(--wb-s4) 0; }
+.wb-col--main .wb-panel--flush .wb-filters { padding: var(--wb-s3) var(--wb-s4) var(--wb-s2); }
 
-@keyframes wb-shimmer {
-  0%   { background-position: 100% 0; }
-  100% { background-position: 0 0; }
+.wb-col--main .wb-row > summary {
+  grid-template-columns: 54px 60px 54px minmax(0, 1fr) 100px 42px;
+  gap: var(--wb-s2);
+  padding: var(--wb-s3) var(--wb-s4);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wb-skeleton { animation: none; }
-  .wb-dist__bar { transition: none; }
-}
-
-/* ---------- 按钮（小号） ---------- */
-.wb-btn--sm {
-  padding: 5px 12px;
-  font-size: 12px;
-}
-
-/* ---------- 入口卡片"未上线"态 ---------- */
-.wb-card--soon {
-  opacity: .62;
-  cursor: not-allowed;
-}
-
-.wb-card--soon:hover {
-  transform: none;
-  border-color: var(--wb-line);
-  background: var(--wb-bg-soft);
-}
-
-/* ---------- 状态条（首页） ---------- */
-.wb-statusbar__inner {
-  display: flex;
-  align-items: center;
-  gap: var(--wb-s5);
-  flex-wrap: wrap;
-}
-
-.wb-statusbar {
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-  padding: var(--wb-s2) 0;
-  background: #0d131a;
-  border-top: 1px solid var(--wb-line-soft);
-  border-bottom: 1px solid var(--wb-line-soft);
-  color: var(--wb-fg);
-}
-
-.wb-statusbar > .wb-statusbar__inner {
-  max-width: 1680px;
-  margin: 0 auto;
-  padding: 0 var(--wb-s5);
-}
-
-.wb-stat__spacer { margin-left: auto; }
+.wb-col--main .wb-row__body { padding: var(--wb-s3) var(--wb-s4) var(--wb-s4); }
+.wb-col--main .wb-member { grid-template-columns: 54px 60px minmax(0, 1fr) 116px; gap: var(--wb-s2); }
 
 /* ---------- 响应式 ---------- */
 @media (max-width: 1180px) {
@@ -471,12 +412,12 @@ body:has(.wb-app) .nav {
   .wb-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 860px) {
   .wb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wb-panels { grid-template-columns: 1fr; }
   .wb-panel--wide { grid-column: span 1; }
 
-  /* 窄屏：告警行改为两行排布，不横向滚动 */
+  /* 窄屏：告警行改两行排布，不横向滚动 */
   .wb-row > summary {
     grid-template-columns: 1fr auto;
     grid-template-areas:
@@ -488,15 +429,16 @@ body:has(.wb-app) .nav {
   .wb-row__time  { grid-area: time; }
   .wb-row__count { grid-area: count; }
   .wb-row__title { grid-area: title; white-space: normal; }
-  .wb-row__sev   { grid-area: meta; }
-  .wb-row__src   { grid-area: meta; }
-  .wb-row__ip    { grid-area: meta; }
-
-  .wb-member { grid-template-columns: 1fr; row-gap: 2px; }
-  .wb-trend__tick { display: none; }
+  .wb-row__sev, .wb-row__src, .wb-row__ip { grid-area: meta; }
+  .wb-member { grid-template-columns: 1fr; row-gap: 4px; }
 }
 
 @media (max-width: 560px) {
-  .wb-kpis { grid-template-columns: 1fr; }
-  .wb-dist__row { grid-template-columns: 64px 1fr 38px; }
+  /* 窄屏 KPI 保持两列：一张一行会让首屏变成 5 屏长，扫一眼反而看不清重点 */
+  .wb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wb-s3); }
+  .wb-kpi { min-height: 84px; padding: var(--wb-s4); }
+  .wb-kpi__value { font-size: 26px; }
+  .wb-dist__row { grid-template-columns: 56px 1fr 38px; }
+  .wb-app { padding-left: var(--wb-s4); padding-right: var(--wb-s4); }
+  .wb-app__inner { padding: 0 var(--wb-s4); }
 }

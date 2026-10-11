@@ -15,7 +15,7 @@
 #   ② 再部署 static/CNAME（Pages 绑定自定义域）
 #   ③ 同一批把 baseURL 换成 https://xiaokeqing.cn/
 baseURL = "https://xiaokeqing.github.io/"
-title = "知微安全实验室"
+title = "小刻晴的博客"
 # Hugo 0.158 起 languageCode 已废弃，改用 locale
 locale = "zh-cn"
 defaultContentLanguage = "zh-cn"
@@ -30,7 +30,7 @@ hasCJKLanguage = true
 [params]
   env = "production"
   # TODO 2：简介与关键词
-  description = "知微安全实验室 —— 网络安全方向的学习与技术记录：AI 安全运营、应急响应、Linux 加固"
+  description = "小刻晴的博客 —— 网络安全方向的学习与实践记录：应急响应、Linux 加固、AI 安全运营，以及一个真在跑的安全运营工作台"
   keywords = ["网络安全", "AI 安全", "安全运营", "应急响应", "RAG", "多 Agent", "SOC"]
   author = "xiaokeqing"
 
@@ -41,14 +41,13 @@ hasCJKLanguage = true
   wbApiBase = "https://demo.xiaokeqing.cn"
 
   DateFormat = "2006-01-02"
-  # 站点默认深色。
-  # 为什么不是 auto：工作台（首页 / /alerts/）是深色运营台，
-  # 若跟随系统且系统是浅色，导航栏、页脚、页面留白会全是浅色 ——
-  # 出现"深色数据面板浮在白底上"的割裂感（实测截图就是这样）。
-  # 写成 dark 后 PaperMod 的外壳也走深色；访客仍可用右上角开关切浅色，
-  # 切换只影响站点外壳，工作台内容区始终是深色（见 workbench-app.css 的作用域令牌）。
-  defaultTheme = "dark"
-  disableThemeToggle = false
+  # 固定浅色，并且【关掉日夜切换】。
+  # 只有一套主题：维护两套意味着每个组件都要在两个底色下各自验证一次对比度，
+  # 而安全站点最不能出的问题就是"某个状态文字在深色下看不见"。
+  # 光设 light 还不够 —— 访客浏览器里可能残留旧的偏好（localStorage），
+  # 所以 workbench.css 里同时把 :root[data-theme="dark"] 也覆盖成浅色值。
+  defaultTheme = "light"
+  disableThemeToggle = true
 
   # ---------- 文章页显示项 ----------
   ShowReadingTime = true
@@ -90,31 +89,49 @@ hasCJKLanguage = true
 
 # ---------- 导航菜单 ----------
 [menu]
+  # 顶栏 = 栏目切换器：logo 与头像在两端，导航项居中（不放右边）。
+  # 功能项用 /#xxx 锚点：点它【不跳页】，只在中栏换成对应栏目。
+  # 「战报评测」= 蜜罐战报 + 红队评测 合并（都是效果数据，体量都不大）。
   [[menu.main]]
-    identifier = "posts"
-    name = "文章"
-    url = "/posts/"
+    identifier = "home"
+    name = "主页"
+    url = "/#home"
+    weight = 5
+  [[menu.main]]
+    identifier = "notes"
+    name = "笔记"
+    url = "/#notes"
     weight = 10
+  [[menu.main]]
+    identifier = "alerts"
+    name = "实时告警"
+    url = "/#alerts"
+    weight = 20
+  [[menu.main]]
+    identifier = "report"
+    name = "战报评测"
+    url = "/#report"
+    weight = 30
+  [[menu.main]]
+    identifier = "kb"
+    name = "知识库"
+    url = "/#kb"
+    weight = 40
   [[menu.main]]
     identifier = "labs"
     name = "靶场"
     url = "/labs/"
-    weight = 20
-  [[menu.main]]
-    identifier = "demo"
-    name = "在线 Demo"
-    url = "/demo/"
-    weight = 25
+    weight = 50
   [[menu.main]]
     identifier = "projects"
     name = "项目"
     url = "/projects/"
-    weight = 30
+    weight = 60
   [[menu.main]]
     identifier = "about"
     name = "关于"
     url = "/about/"
-    weight = 40
+    weight = 70
 
 # ---------- Markdown 与代码高亮 ----------
 [markup]
