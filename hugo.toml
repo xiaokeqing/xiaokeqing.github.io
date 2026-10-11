@@ -54,7 +54,11 @@ hasCJKLanguage = true
 
 这里记录我在网络安全方向的实践：把 RAG 与多 Agent 落到安全运营场景、在公网环境里做加固与响应、以及一路踩过的坑。
 
-可交互的防护演示和真实攻击数据正在陆续补齐。
+<div class="hero-cta">
+<a class="hero-btn is-primary" href="/demo/">在线 Demo</a>
+<a class="hero-btn" href="/labs/">试试靶场</a>
+<a class="hero-btn" href="/projects/">看项目</a>
+</div>
 """
 
   # 社交图标。注意：这里只能用 [[params.socialIcons]] 数组写法，
@@ -78,6 +82,11 @@ hasCJKLanguage = true
     name = "靶场"
     url = "/labs/"
     weight = 20
+  [[menu.main]]
+    identifier = "demo"
+    name = "在线 Demo"
+    url = "/demo/"
+    weight = 25
   [[menu.main]]
     identifier = "projects"
     name = "项目"

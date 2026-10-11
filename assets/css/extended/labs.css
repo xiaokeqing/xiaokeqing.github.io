@@ -142,6 +142,10 @@
 
 .labs-row-value {
     padding: .8rem;
+    /* 兜底：万一某个单元格内容还是撑宽了（比如超长的命中内容），
+       让这一格自己横向滚动，而不是把整个页面撑出横向滚动条。
+       页面级横向滚动是最难用的，局部滚动可以接受。 */
+    overflow-x: auto;
 }
 
 .labs-row-note {
@@ -278,7 +282,10 @@
 .labs-table th {
     font-weight: 600;
     color: var(--secondary);
-    white-space: nowrap;
+    /* 这里【不能】写 white-space: nowrap。
+       实测：加了之后表头无法换行，表格的最小宽度被表头文字撑死，
+       在 390px 的手机视口里表格宽度变成 585px，直接横向溢出。
+       宁可让表头折成两行，也不要整页横向滚动。 */
 }
 
 .labs-table code {
@@ -378,8 +385,36 @@
         font-size: .78rem;
     }
 
+    /* 表格在手机上要主动瘦身，不能指望它自己缩。
+       实测数据：不处理时敏感信息结果表宽 585px，视口只有 390px。
+       三步一起做才够：
+         1) 隐藏第 4 列（位置信息，手机上价值最低，且内容最长）
+         2) 缩小字号和内边距
+         3) 允许任意位置断行（命中内容里可能有很长的密钥串） */
+    .labs-table {
+        font-size: .72rem;
+    }
+
+    .labs-table th,
+    .labs-table td {
+        padding: .3rem .35rem;
+        word-break: break-all;
+    }
+
     .labs-table th:nth-child(4),
     .labs-table td:nth-child(4) {
         display: none;
+    }
+
+    .labs-table code {
+        font-size: .68rem;
+    }
+
+    .labs-row-value {
+        padding: .6rem;
+    }
+
+    .labs-row-label {
+        padding: .4rem .6rem;
     }
 }
