@@ -112,11 +112,8 @@ hasCJKLanguage = true
     name = "战报评测"
     url = "/#report"
     weight = 30
-  [[menu.main]]
-    identifier = "kb"
-    name = "知识库"
-    url = "/#kb"
-    weight = 40
+  # 刻意【不放】「知识库」：它还没成熟，只写在主页"内容模块"里标"规划中"。
+  # 导航纪律：顶栏只放现在已经能打开看的内容，避免重演"有入口没页面"。
   [[menu.main]]
     identifier = "labs"
     name = "靶场"
