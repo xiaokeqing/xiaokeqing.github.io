@@ -7,14 +7,11 @@
 #    3. socialIcons 里的 GitHub 链接
 # ============================================================
 
-# ⚠️ 暂用 github.io：apex 域名 xiaokeqing.cn 目前在 Cloudflare 里【没有任何解析记录】
-# （zone 只有 demo.xiaokeqing.cn → tunnel 一条），公共 DNS 查 A/CNAME 全部 ENODATA。
-# 顺序不能颠倒 —— 一旦 Pages 绑定自定义域，github.io 会被 301 到那个死域名，
-# 连唯一能访问的地址都会挂。所以：
-#   ① 先加 apex + www 的 DNS 记录并验证解析
-#   ② 再部署 static/CNAME（Pages 绑定自定义域）
-#   ③ 同一批把 baseURL 换成 https://xiaokeqing.cn/
-baseURL = "https://xiaokeqing.github.io/"
+# 正式域名。前置条件已全部满足（2026-10-12 核实）：
+#   ① apex 与 www 在 AliDNS / 腾讯 / 8.8.8.8 三家都解析到 Cloudflare
+#   ② CF 已在转发（https://xiaokeqing.cn/ 返回 CF 的 404，说明只是 GitHub 还不认这个域）
+#   ③ 现在部署 static/CNAME，Pages 绑定自定义域；github.io 会 301 到正式域名
+baseURL = "https://xiaokeqing.cn/"
 title = "小刻晴的博客"
 # Hugo 0.158 起 languageCode 已废弃，改用 locale
 locale = "zh-cn"
