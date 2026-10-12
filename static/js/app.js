@@ -366,50 +366,6 @@
   }
 
   /* ==========================================================================
-     6.5 左侧栏左下角统计（站主第四轮 ④）
-     --------------------------------------------------------------------------
-     · 笔记篇数：/index.json 的 count（Hugo 渲染出来的真实索引）
-     · 封禁留痕 / 处置动作：/api/public/audit 的 data.summary.blockTotal / executedActions
-       —— 走和监测中心同一条 readApi（带 ETag/15s 缓存），不额外放大请求频率
-     · 任一来源取不到：那一行写「未接入」，绝不填 0 或假数
-     ========================================================================== */
-  function setSideStat(key, text) {
-    $$('[data-xk-stat="' + key + '"]').forEach(function (n) { n.textContent = text; });
-  }
-
-  function initSideStats() {
-    if (!$('#xk-side-stats')) return;
-
-    // 笔记篇数
-    loadIndex().then(function (idx) {
-      var n = idx && typeof idx.count === 'number' ? idx.count : (idx && idx.notes ? idx.notes.length : null);
-      setSideStat('notes', n === null || n === undefined ? '未接入' : n + ' 篇');
-    }).catch(function () {
-      setSideStat('notes', '未接入');
-    });
-
-    // 处置审计（blockTotal = 封禁留痕条数；executedActions = 已执行处置动作数）
-    readApi('/api/public/audit').then(function (r) {
-      var s = (r && r.data && r.data.data && r.data.data.summary) || null;
-      if (!s) { setSideStat('blocks', '未接入'); setSideStat('actions', '未接入'); return; }
-      setSideStat('blocks', num(s.blockTotal) === '—' ? '未接入' : num(s.blockTotal) + ' 次');
-      setSideStat('actions', num(s.executedActions) === '—' ? '未接入' : num(s.executedActions) + ' 次');
-    }).catch(function (err) {
-      var snap = err && err.snapshot && err.snapshot.data && err.snapshot.data.data;
-      var s = snap && snap.summary;
-      if (s) {
-        // 接口挂了但有本地快照：照实标"上次同步"，不假装是刚拿到的
-        setSideStat('blocks', num(s.blockTotal) + ' 次（上次同步）');
-        setSideStat('actions', num(s.executedActions) + ' 次（上次同步）');
-      } else {
-        setSideStat('blocks', '未接入');
-        setSideStat('actions', '未接入');
-      }
-    });
-  }
-
-  initSideStats();
-  /* ==========================================================================
      7. 主页：实时拦截动态 + 数据来源
      ========================================================================== */
   /* /api/public/latest 规格里就写着"可能不存在"：实测 HTTP 500。

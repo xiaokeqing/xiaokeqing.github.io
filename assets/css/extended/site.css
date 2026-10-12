@@ -50,9 +50,9 @@
   --xk-maxw: 1280px;
   /* 选中态导航文字用的蓝：主蓝 #2F7AEF 放在浅底上只有 ~4.3:1，这里压深到 7:1 以上 */
   --xk-nav-on: #134695;
-  --xk-side-w: 150px;                /* 左侧导引栏宽度（站主第五轮 ④：再收到 150） */
-  --xk-side-left: 16px;
-  --xk-sidew: 186px;                 /* 左栏占位 = 16 + 150 + 20，正文从这条线右边开始排 */
+  --xk-side-w: 136px;                /* 左侧导引栏宽度（站主第八轮 ⑤：150 → 136） */
+  --xk-side-left: 12px;              /* 站主第八轮 ③：整组再往左贴（12px） */
+  --xk-sidew: 168px;                 /* 左栏占位 = 12 + 136 + 20，正文从这条线右边开始排 */
 
   /* 主页欢迎区文字块的水平位置（站主第五轮追加：一行切换）
      靠左 = flex-start（当前）｜居中 = center｜靠右 = flex-end；--xk-hero-shift 可再微调像素 */
@@ -178,20 +178,20 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 }
 .xk-toprow__in { display: flex; align-items: center; gap: 14px; justify-content: flex-end; }
 
-/* 左侧导引栏：个人区 + 竖向导航 + 左下角统计，一栏到底；从 y=0 起（左上角就是它） */
+/* 左侧导引栏：头像 + 名字 + 竖向导航（统计块已删）；从 y=0 起、贴屏幕左上角 */
 .xk-side {
   position: fixed;
-  left: var(--xk-side-left);
-  top: 0;                            /* 站主返工 ②：整列紧贴左上角 */
-  bottom: 22px;                      /* 撑到视口底部，统计块才能"顶到左下角" */
+  left: var(--xk-side-left);         /* 站主第八轮 ③：12px，整组更靠左 */
+  top: 0;
+  bottom: 22px;
   z-index: 4;
-  width: var(--xk-side-w);
-  padding: 6px 0 0;                  /* 站主第五轮 ④：整组上移贴顶，容器从 y=0 开始 */
+  width: var(--xk-side-w);           /* 站主第八轮 ⑤：136px */
+  padding: 5px 0 0;                  /* 内边距同步收紧 */
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   overflow: hidden auto;             /* 视口矮的时候左栏自己滚，不撑破页面 */
-  /* 整块卡片底全部去掉：内容直接叠在背景图上（站主第四轮 ①/③） */
+  /* 整块卡片底全部去掉：内容直接叠在背景图上 */
   background: none;
   border: 0;
   border-radius: 0;
@@ -199,32 +199,30 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
-/* 顶部一组只有：圆形头像 → 名字，竖向紧贴（站主第五轮 ④：整组贴顶、间距再收紧） */
+/* 顶部一组：圆形头像 → 名字，竖向紧贴；站主第八轮 ③ 改成【左对齐】，整组贴左上角 */
 .xk-side__me {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  text-align: center;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
 }
-/* 名字：站主第五轮 ③ —— 去掉底纹（整栏无卡片底）、字号调小、换艺术/手写风格字体。
-   零第三方资源：只用系统里自带的手写体（Segoe Script / Ink Free / 楷体），
-   中文站名不走这个栈；字号按手写体的观感定在 19px（比原来的 23px 明显小）。
-   旧值：--xk-sans-round（Segoe UI Variable Display 打头）/ 23px / 700 / +.3px / 有 rgba(255,255,255,.38) 底纹 */
+/* 名字：手写风格系统字体、无底纹、字号按站主要求再缩一档（19 → 17px）。
+   旧值：--xk-sans-round（Segoe UI Variable Display 打头）/ 23px / 700 / 有底纹 */
 .xk-side__name {
   font-family: var(--xk-sans-hand);
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 400;
   line-height: 1.2;
   letter-spacing: .2px;
   color: var(--xk-title);
-  /* 没有底纹了，用一层贴合文字的白色描边阴影保证在背景图上读得清 */
+  /* 没有底纹，用一层贴合文字的白色描边阴影保证在背景图上读得清 */
   text-shadow: 0 1px 2px rgba(255, 255, 255, .95), 0 0 8px rgba(255, 255, 255, .7);
 }
-/* 圆形头像 44px（站主定的圆形：参考图是圆角方形，不跟） */
+/* 圆形头像 40px（站主第八轮 ③：略缩；仍是站主定的圆形） */
 .xk-side__avatar {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;                /* §1：同一张原图 + CSS 圆形裁切，不产出新图 */
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, .9);
@@ -265,28 +263,8 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   box-shadow: inset 2px 0 0 var(--xk-nav-on);
 }
 
-/* 左下角统计块（站主第四轮 ④）：数字全部来自真实来源，取不到就写「未接入」。
-   排版：两列对齐（左标签 / 右数值），底部一行极小的来源说明。 */
-.xk-side__stats {
-  margin-top: auto;                  /* 顶到左栏最下面 */
-  padding-top: 10px;
-  border-top: 1px solid rgba(15, 42, 80, .10);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.xk-side__stat {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px;
-  font-size: 12px;                   /* 标签与数值统一 12px */
-  line-height: 1.6;
-  color: #4E5F74;
-}
-.xk-side__stat span { text-shadow: 0 1px 1px rgba(255, 255, 255, .85); }
-.xk-side__stat b { font-size: 12px; font-weight: 600; color: var(--xk-title); font-variant-numeric: tabular-nums; }
-.xk-side__src { margin-top: 5px; font-size: 10px; line-height: 1.5; color: #5B6B7F; }
+/* 左下角统计块（笔记 / 封禁留痕 / 处置动作 + 来源小字）已按站主第八轮 ④ 整块删除，
+   这里不再保留任何规则；取数逻辑也一并从 /js/app.js 删掉了。 */
 
 /* 搜索按钮：在内容区第一行的右端，【每个栏目都显示】（站主第五轮 ② 撤销了"只在主页/笔记"的限制）。 */
 .xk-searchbtn {
@@ -404,7 +382,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
      靠右          --xk-hero-align: flex-end
      微调像素      --xk-hero-shift: 0px  → 正数向右（例如 40px）
    --------------------------------------------------------------------------- */
-.xk-hero { padding: 8px 0 12px; }
+.xk-hero { padding: 6px 0 10px; }
 .xk-hero__in {
   display: flex;
   flex-direction: column;
@@ -417,14 +395,6 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   margin-left: var(--xk-hero-shift);
   display: flex;
   flex-direction: column;
-}
-.xk-hero__eyebrow {
-  margin: 0 0 5px;                          /* 小标签 → 主标题：间距小 */
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  color: var(--xk-blue);
-  text-transform: uppercase;
 }
 .xk-hero__title {
   font-size: 42px;
@@ -449,7 +419,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
    限高 = 视口高 −（上面那一行搜索 50 + 正文上边距 6 + 欢迎区 ~137 + 页脚 ~62 + 余量）。
    这里的 258px 是实测出来的"顶部区域 + 页脚"占位，改这几个值时同步调它即可。 */
 .xk-portal--home {
-  grid-template-columns: 320px minmax(0, 1fr) 300px;
+  grid-template-columns: 360px minmax(0, 1fr) 320px;
   padding-bottom: 8px;
   align-items: start;
 }
@@ -677,29 +647,29 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-feed__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--xk-title); }
 .xk-feed__time { color: var(--xk-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 
-/* 功能导览（第五轮 ① / 第七轮 ②）：逐模块一行 —— 名字 + 一两句简单介绍（≤45 字）+ 进入 →。
-   行高与内边距都收紧，5 行在一屏里放得下。 */
-.xk-mod { display: flex; flex-direction: column; }
-.xk-mod > li + li { border-top: 1px solid var(--xk-line); }
-.xk-mod__row {
+/* 功能导览（站主第八轮 ⑥）：竖排长方形容器 + 内部【正方块】分块。
+   每块：模块名 + 一两句简介 + 「进入 →」（只有这个 <a> 可点，整块不加链接/手型）。 */
+.xk-mod2 {
   display: grid;
-  grid-template-columns: 80px minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  padding: 9px 8px;
-  border-radius: 10px;
-  text-decoration: none;
-  color: inherit;
-  transition: background-color .16s ease;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
-.xk-mod__row:hover { text-decoration: none; background: rgba(255, 255, 255, .42); }
-.xk-mod__name { font-size: 14.5px; font-weight: 600; color: var(--xk-title); }
-/* 每条最多两句、≤45 字：一行放得下，行高收紧 */
-.xk-mod__desc { font-size: 12.5px; line-height: 1.5; color: var(--xk-text); }
-.xk-mod__desc b { color: var(--xk-title); font-weight: 600; }
-.xk-mod__go { font-size: 12px; color: var(--xk-link); white-space: nowrap; }
+.xk-mod2__item {
+  aspect-ratio: 1 / 1;               /* 正方块：宽=高 */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 12px 10px;
+  border: 1px solid var(--xk-card-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .26);
+  overflow: hidden;
+}
+.xk-mod2__name { font-size: 14.5px; font-weight: 600; color: var(--xk-title); }
+.xk-mod2__desc { font-size: 12px; line-height: 1.5; color: var(--xk-text); }
+.xk-mod2__go { margin-top: auto; font-size: 12px; color: var(--xk-link); }
+.xk-mod2__go:hover { color: var(--xk-blue); }
 .xk-mod__note { margin-top: 8px; font-size: 11px; line-height: 1.5; }
-
 /* ---------------------------------------------------------------------------
    9. 笔记列表
    --------------------------------------------------------------------------- */

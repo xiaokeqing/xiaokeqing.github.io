@@ -1,17 +1,17 @@
 {{/*
-  ① 门户版式（主页）—— 规格 §4①；站主 2026-10-12 第五轮 ① 调整了版面：
-     · 左：实时拦截动态（窄列 320px，逐条紧凑）—— 原来占中间一大块
-     · 中：功能导览（主视觉，逐个模块写清"是干什么的 / 进去能看到什么"，带「进入 →」）
-     · 右：最新笔记 / 数据来源（保持不动）
+  ① 门户版式（主页）—— 站主 2026-10-12 第八轮（最后一批）调整后的版面：
+     · 欢迎区：只有【主标题 + 一行介绍】，贴内容区左上角（小标签那行已按站主要求删除）
+     · 左列：功能导览 —— 竖排长方形，内部按【正方块】分块；整块不可点，只有「进入 →」是链接
+     · 中列：最新笔记 + 数据来源
+     · 右列：实时拦截动态（窄列、内部滚动、真实数据含 IP 掩码与 audit 来源标注）
   骨架由 Hugo 渲染；实时数字一律由 /js/app.js 从 /api/public/* 填入，模板里不写死任何值。
 */}}
 <template id="tpl-home">
   <section class="xk-hero">
     <div class="xk-wrap xk-hero__in">
-      {{/* 欢迎区文字块：宽度上限 640px、左对齐到内容区左边缘（和下面"实时拦截动态"同一条线）；
-           水平位置由 --xk-hero-align 一行切换（靠左 / 居中 / 靠右），见 site.css 第 7 节 */}}
+      {{/* 欢迎区文字块：宽度上限 640px、贴内容区左上（与下面三栏同一条左边界）；
+           水平位置由 --xk-hero-align 一行切换（靠左 / 居中 / 靠右），见 site.css 第 6 节 */}}
       <div class="xk-hero__text">
-        <p class="xk-hero__eyebrow">个人博客 · 安全运营工作台</p>
         <h1 class="xk-hero__title">{{ site.Params.heroTitle }}</h1>
         <p class="xk-hero__lead">{{ site.Params.heroLead }}</p>
       </div>
@@ -19,76 +19,45 @@
   </section>
 
   <div class="xk-wrap xk-portal xk-portal--home">
-    {{/* ---------- 左：实时拦截动态（窄列，逐条紧凑） ---------- */}}
-    <div class="xk-portal__live">
-      <section class="xk-card xk-card--live xk-card--tight">
-        <header class="xk-card__hd">
-          <h2 class="xk-card__title"><span class="xk-pulse" aria-hidden="true"></span>实时拦截动态</h2>
-          <span class="xk-sync" data-xk-sync="feed">加载中…</span>
-        </header>
-        <ul class="xk-feed" data-xk-feed>
-          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w70"></span><span class="xk-skel xk-skel--w10"></span></li>
-          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w60"></span><span class="xk-skel xk-skel--w10"></span></li>
-          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w80"></span><span class="xk-skel xk-skel--w10"></span></li>
-          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w50"></span><span class="xk-skel xk-skel--w10"></span></li>
-        </ul>
-        <p class="xk-note" data-xk-feed-note></p>
-        <footer class="xk-card__ft">
-          <a class="xk-link" href="/#/monitor/alerts" data-xk-route>完整告警流 →</a>
-          <a class="xk-link" href="/#/monitor/audit" data-xk-route>处置审计 →</a>
-        </footer>
-      </section>
-    </div>
-
-    {{/* ---------- 中：功能导览（主视觉；逐个模块写清楚，不喊口号） ---------- */}}
+    {{/* ---------- 左列：功能导览（竖排长方形，内部正方块；整块不可点） ---------- */}}
     <section class="xk-card xk-portal__guide">
       <header class="xk-card__hd">
         <h2 class="xk-card__title">功能导览</h2>
-        <span class="xk-hint">每个栏目是干什么的 · 点一行就切过去</span>
+        <span class="xk-hint">点「进入」切栏目</span>
       </header>
 
-      <ul class="xk-mod">
-        <li>
-          <a class="xk-mod__row" href="/#/monitor/alerts" data-xk-route>
-            <span class="xk-mod__name">监测中心</span>
-            <span class="xk-mod__desc">主机与网络告警、蜜罐战报、处置审计、系统状态四个子页。</span>
-            <span class="xk-mod__go">进入 →</span>
-          </a>
+      <ul class="xk-mod2">
+        <li class="xk-mod2__item">
+          <span class="xk-mod2__name">监测中心</span>
+          <span class="xk-mod2__desc">主机与网络告警、蜜罐战报、处置审计、系统状态四个子页。</span>
+          <a class="xk-mod2__go" href="/#/monitor/alerts" data-xk-route>进入 →</a>
         </li>
-        <li>
-          <a class="xk-mod__row" href="/#/notes" data-xk-route>
-            <span class="xk-mod__name">笔记</span>
-            <span class="xk-mod__desc">学习与实践记录，带目录的三栏阅读。</span>
-            <span class="xk-mod__go">进入 →</span>
-          </a>
+        <li class="xk-mod2__item">
+          <span class="xk-mod2__name">笔记</span>
+          <span class="xk-mod2__desc">学习与实践记录，带目录的三栏阅读。</span>
+          <a class="xk-mod2__go" href="/#/notes" data-xk-route>进入 →</a>
         </li>
-        <li>
-          <a class="xk-mod__row" href="/#/ai" data-xk-route>
-            <span class="xk-mod__name">AI 安全</span>
-            <span class="xk-mod__desc">公开问答与知识库检索，直连真实后端。</span>
-            <span class="xk-mod__go">进入 →</span>
-          </a>
+        <li class="xk-mod2__item">
+          <span class="xk-mod2__name">AI 安全</span>
+          <span class="xk-mod2__desc">公开问答与知识库检索，直连真实后端。</span>
+          <a class="xk-mod2__go" href="/#/ai" data-xk-route>进入 →</a>
         </li>
-        <li>
-          <a class="xk-mod__row" href="/#/range" data-xk-route>
-            <span class="xk-mod__name">攻防靶场</span>
-            <span class="xk-mod__desc">真调后端检测组件的互动演示。</span>
-            <span class="xk-mod__go">进入 →</span>
-          </a>
+        <li class="xk-mod2__item">
+          <span class="xk-mod2__name">攻防靶场</span>
+          <span class="xk-mod2__desc">真调后端检测组件的互动演示。</span>
+          <a class="xk-mod2__go" href="/#/range" data-xk-route>进入 →</a>
         </li>
-        <li>
-          <a class="xk-mod__row" href="/#/about" data-xk-route>
-            <span class="xk-mod__name">关于</span>
-            <span class="xk-mod__desc">项目说明、架构取舍与个人介绍。</span>
-            <span class="xk-mod__go">进入 →</span>
-          </a>
+        <li class="xk-mod2__item">
+          <span class="xk-mod2__name">关于</span>
+          <span class="xk-mod2__desc">项目说明、架构取舍与个人介绍。</span>
+          <a class="xk-mod2__go" href="/#/about" data-xk-route>进入 →</a>
         </li>
       </ul>
 
-      <p class="xk-note">未上线的能力一律标注「未上线・规划中」，不放死链、不补假数据。</p>
+      <p class="xk-note xk-mod__note">未上线的能力标注「未上线・规划中」，不放死链、不补假数据。</p>
     </section>
 
-    {{/* ---------- 右：最新笔记 / 数据来源（保持不动） ---------- */}}
+    {{/* ---------- 中列：最新笔记 / 数据来源（保持不动） ---------- */}}
     <aside class="xk-portal__side">
       {{- $posts := where site.RegularPages "Section" "posts" }}
       <section class="xk-card">
@@ -119,5 +88,26 @@
         <p class="xk-note">数字全部来自真实接口；取不到就显示「未接入 / 上次同步」，不补假数据。</p>
       </section>
     </aside>
+
+    {{/* ---------- 右列：实时拦截动态（窄列，逐条紧凑） ---------- */}}
+    <div class="xk-portal__live">
+      <section class="xk-card xk-card--live xk-card--tight">
+        <header class="xk-card__hd">
+          <h2 class="xk-card__title"><span class="xk-pulse" aria-hidden="true"></span>实时拦截动态</h2>
+          <span class="xk-sync" data-xk-sync="feed">加载中…</span>
+        </header>
+        <ul class="xk-feed" data-xk-feed>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w70"></span><span class="xk-skel xk-skel--w10"></span></li>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w60"></span><span class="xk-skel xk-skel--w10"></span></li>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w80"></span><span class="xk-skel xk-skel--w10"></span></li>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w50"></span><span class="xk-skel xk-skel--w10"></span></li>
+        </ul>
+        <p class="xk-note" data-xk-feed-note></p>
+        <footer class="xk-card__ft">
+          <a class="xk-link" href="/#/monitor/alerts" data-xk-route>完整告警流 →</a>
+          <a class="xk-link" href="/#/monitor/audit" data-xk-route>处置审计 →</a>
+        </footer>
+      </section>
+    </div>
   </div>
 </template>

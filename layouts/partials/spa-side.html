@@ -1,26 +1,24 @@
 {{/*
-  左侧导引栏（站主 2026-10-12 第四轮方案 B；返工：收窄 + 顶部只留头像与名字）
+  左侧导引栏（站主 2026-10-12 第八轮：最后一批调整）
   ---------------------------------------------------------------------------
-  · 顶部一组只有两样（站主原话"左上角只保留头像和名字，别的不要了"）：
-      圆形头像（46px）→ 名字（19px，圆体字体栈），竖向紧贴
-      —— 原来的「站点名的小小宇宙 ✦」与签名两行已删除
+  · 只保留两样（站主原话"左上角只保留头像和名字" + "左下角那串统计整块删掉"）：
+      圆形头像（40px）→ 名字（17px 手写体），左对齐、贴屏幕左上
   · 下面直接接竖向导航 6 项（主页 / 笔记 / 监测中心 / AI 安全 / 攻防靶场 / 关于），
       中间只有一条极淡分隔线；当前项由 /js/app.js 加 .is-on 高亮
-  · 左下角统计：笔记篇数来自 /index.json 的 count；封禁留痕 / 处置动作来自
-      /api/public/audit 的 summary.blockTotal / summary.executedActions
-      —— 全部真实值，接口取不到就写「未接入」（见 /js/app.js 的 initSideStats）
+  · 左下角统计块（笔记 / 封禁留痕 / 处置动作 + 来源小字）已整块删除 ——
+      HTML、CSS、以及 /js/app.js 里 initSideStats() 那段取数逻辑一并清掉，不留死代码
   这栏挂在 SPA 外壳上：#content 换视图时它不动，所以每个栏目都在；整块没有卡片底。
 */}}
 {{- /*
    头像 object-position 推导：原图 3245x1440（2.254:1），object-fit:cover 放进正方形时
    只能看到原图宽度的 1/2.254 ≈ 44%；脸中心在原图宽度约 65.5% 处
    → object-position: 78%（= (0.655×2.254−0.5)/(2.254−1)）刚好把脸放正中间。
-   圆形裁切只跟宽高比有关、与尺寸无关，所以 46px 用同一个值。
+   圆形裁切只跟宽高比有关、与尺寸无关，所以 40px 用同一个值。
 */ -}}
 {{- $avatarPos := "78% center" -}}
 <aside class="xk-side" id="xk-side" aria-label="站点与作者">
   <div class="xk-side__me">
-    <img class="xk-side__avatar" src="/images/bg.jpg" alt="xiaokeqing 的头像" width="46" height="46"
+    <img class="xk-side__avatar" src="/images/bg.jpg" alt="xiaokeqing 的头像" width="40" height="40"
          decoding="async" style="object-position:{{ $avatarPos }}">
     <p class="xk-side__name">{{ site.Params.siteName | default "xiaokeqing" }}</p>
   </div>
@@ -30,11 +28,4 @@
     <a class="xk-side__link" href="{{ .URL }}" data-xk-route data-xk-nav="{{ .Identifier }}">{{ .Name }}</a>
     {{- end }}
   </nav>
-
-  <div class="xk-side__stats" id="xk-side-stats" aria-label="站点统计">
-    <p class="xk-side__stat"><span>笔记</span><b data-xk-stat="notes">…</b></p>
-    <p class="xk-side__stat"><span>封禁留痕</span><b data-xk-stat="blocks">…</b></p>
-    <p class="xk-side__stat"><span>处置动作</span><b data-xk-stat="actions">…</b></p>
-    <p class="xk-side__src">笔记 /index.json ｜ 处置 /api/public/audit</p>
-  </div>
 </aside>
