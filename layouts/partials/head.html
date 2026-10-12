@@ -45,6 +45,8 @@
     var d = document.documentElement;
     if (/[?&]wb_noblur=1/.test(location.search)) d.setAttribute('data-wb-noblur', '1');
     d.setAttribute('data-theme', 'light');
+    /* 注：面包屑已按站主要求删除、搜索框改成所有栏目都显示，
+       所以这里不再需要预判"当前栏目"（data-xk-page 已一并删除，不留死代码）。 */
     try {
       localStorage.removeItem('pref-theme');
       localStorage.removeItem('pref-theme-default');

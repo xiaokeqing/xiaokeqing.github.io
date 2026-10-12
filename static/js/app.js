@@ -345,9 +345,9 @@
     contentEl.replaceChildren(tpl.content.cloneNode(true));
     window.scrollTo(0, 0);
 
-    // 导航高亮（导航本身不动，只换 class）
+    // 左侧栏导航高亮（导航本身不动，只换 class）
     var active = NAV_OF_ROUTE[route.name];
-    $$('.xk-nav__link').forEach(function (a) {
+    $$('.xk-side__link').forEach(function (a) {
       a.classList.toggle('is-on', a.getAttribute('data-xk-nav') === active);
     });
 
@@ -357,6 +357,7 @@
     else if (route.name === 'note') initNote(route.slug);
     else if (route.name === 'monitor') initMonitor(route.tab);
     else if (route.name === 'range') initRange();
+    else if (route.name === 'ai') initAi();
     else if (route.name === 'about') initAbout();
     else if (route.name === 'notfound') { /* 静态内容 */ }
     if (host) host.focus && host.setAttribute('tabindex', '-1');
@@ -364,6 +365,50 @@
     updateSearchButtonState();
   }
 
+  /* ==========================================================================
+     6.5 左侧栏左下角统计（站主第四轮 ④）
+     --------------------------------------------------------------------------
+     · 笔记篇数：/index.json 的 count（Hugo 渲染出来的真实索引）
+     · 封禁留痕 / 处置动作：/api/public/audit 的 data.summary.blockTotal / executedActions
+       —— 走和监测中心同一条 readApi（带 ETag/15s 缓存），不额外放大请求频率
+     · 任一来源取不到：那一行写「未接入」，绝不填 0 或假数
+     ========================================================================== */
+  function setSideStat(key, text) {
+    $$('[data-xk-stat="' + key + '"]').forEach(function (n) { n.textContent = text; });
+  }
+
+  function initSideStats() {
+    if (!$('#xk-side-stats')) return;
+
+    // 笔记篇数
+    loadIndex().then(function (idx) {
+      var n = idx && typeof idx.count === 'number' ? idx.count : (idx && idx.notes ? idx.notes.length : null);
+      setSideStat('notes', n === null || n === undefined ? '未接入' : n + ' 篇');
+    }).catch(function () {
+      setSideStat('notes', '未接入');
+    });
+
+    // 处置审计（blockTotal = 封禁留痕条数；executedActions = 已执行处置动作数）
+    readApi('/api/public/audit').then(function (r) {
+      var s = (r && r.data && r.data.data && r.data.data.summary) || null;
+      if (!s) { setSideStat('blocks', '未接入'); setSideStat('actions', '未接入'); return; }
+      setSideStat('blocks', num(s.blockTotal) === '—' ? '未接入' : num(s.blockTotal) + ' 次');
+      setSideStat('actions', num(s.executedActions) === '—' ? '未接入' : num(s.executedActions) + ' 次');
+    }).catch(function (err) {
+      var snap = err && err.snapshot && err.snapshot.data && err.snapshot.data.data;
+      var s = snap && snap.summary;
+      if (s) {
+        // 接口挂了但有本地快照：照实标"上次同步"，不假装是刚拿到的
+        setSideStat('blocks', num(s.blockTotal) + ' 次（上次同步）');
+        setSideStat('actions', num(s.executedActions) + ' 次（上次同步）');
+      } else {
+        setSideStat('blocks', '未接入');
+        setSideStat('actions', '未接入');
+      }
+    });
+  }
+
+  initSideStats();
   /* ==========================================================================
      7. 主页：实时拦截动态 + 数据来源
      ========================================================================== */
@@ -1176,6 +1221,314 @@
       var name = r.rule || r.name || r.id;
       return name ? (r.description ? name + '（' + r.description + '）' : name) : JSON.stringify(r);
     }).join(' / ');
+  }
+
+  /* ==========================================================================
+     10.5 AI 安全：POST /api/public/ask + GET /api/public/kb（P4 后端已上线）
+     --------------------------------------------------------------------------
+     纪律：
+       · 只调匿名公开端点，前端不加 Authorization；
+       · answer 是 markdown —— 先整段转义再套极简 markdown（mdLite），不 innerHTML 直插后端原串；
+       · state / stateLabel / failureReason / citations / quota / clientIpMasked 原样展示，
+         generated=false 时明确写出服务端给的原因，不补一段"像答案"的文字；
+       · 429 两种（每分钟 6 次的频率限制 / 同一来源 1 个在飞）按后端 body.message + Retry-After 显示，
+         前端只做倒计时，不自己编话术；
+       · 一次请求最多等 20 秒（服务端预算 20s），超时如实报超时。
+     ========================================================================== */
+  var ASK_TIMEOUT_MS = 20000;
+  var ASK_MAX_CHARS = 600;
+
+  /** 极简 markdown（先 esc 再套标签，因此后端正文里就算带 <script> 也只是文本） */
+  function mdLite(src) {
+    var text = esc(String(src === null || src === undefined ? '' : src));
+    function inline(s) {
+      return s
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+          '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    }
+    var lines = text.split(/\r?\n/);
+    var out = [], para = [], items = [], listType = '', bq = [];
+    function closePara() { if (para.length) { out.push('<p>' + para.join('<br>') + '</p>'); para = []; } }
+    function closeBq() { if (bq.length) { out.push('<blockquote><p>' + bq.join('<br>') + '</p></blockquote>'); bq = []; } }
+    function closeList() {
+      if (items.length) {
+        out.push('<' + listType + '>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</' + listType + '>');
+      }
+      items = []; listType = '';
+    }
+    lines.forEach(function (raw) {
+      var line = raw.replace(/\s+$/, '').trim();
+      if (!line) { closePara(); closeList(); closeBq(); return; }
+      /* 注意：整段已经过 esc()，所以引用块的 ">" 已经变成 "&gt;"，这里必须按转义后的写法匹配 */
+      var q = line.match(/^&gt;\s?(.*)$/);
+      if (q) { closePara(); closeList(); bq.push(inline(q[1])); return; }
+      var h = line.match(/^(#{1,4})\s+(.*)$/);
+      if (h) {
+        closePara(); closeList(); closeBq();
+        var lvl = Math.min(4, h[1].length + 1);   // # → h2，避免正文里再出现 h1
+        out.push('<h' + lvl + '>' + inline(h[2]) + '</h' + lvl + '>');
+        return;
+      }
+      var ul = line.match(/^[-*+]\s+(.*)$/);
+      var ol = line.match(/^\d+[.)]\s+(.*)$/);
+      if (ul || ol) {
+        closePara(); closeBq();
+        var t = ul ? 'ul' : 'ol';
+        if (listType && listType !== t) closeList();
+        listType = t;
+        items.push(inline((ul || ol)[1]));
+        return;
+      }
+      closeList(); closeBq();
+      para.push(inline(line));
+    });
+    closePara(); closeList(); closeBq();
+    return out.join('');
+  }
+
+  /** POST /api/public/ask —— 返回 {status, ok, body, retryAfter, rlRemaining, rlLimit}，超时抛 .timeout */
+  function askApi(question) {
+    var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, ASK_TIMEOUT_MS);
+    return fetch(API + '/api/public/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined,
+      body: JSON.stringify({ question: String(question).slice(0, ASK_MAX_CHARS) })
+    }).then(function (res) {
+      clearTimeout(timer);
+      return res.json().catch(function () { return null; }).then(function (body) {
+        return {
+          status: res.status, ok: res.ok, body: body,
+          retryAfter: res.headers.get('Retry-After'),
+          rlRemaining: res.headers.get('X-RateLimit-Remaining'),
+          rlLimit: res.headers.get('X-RateLimit-Limit')
+        };
+      });
+    }).catch(function (err) {
+      clearTimeout(timer);
+      if (err && err.name === 'AbortError') { var e = new Error('timeout'); e.timeout = true; throw e; }
+      throw err;
+    });
+  }
+
+  function initAi() {
+    var askInput = $('#xk-ask-input', contentEl);
+    var askBtn = $('[data-xk-ask-run]', contentEl);
+    var askResult = $('[data-xk-ask-result]', contentEl);
+    var askState = $('[data-xk-ask-state]', contentEl);
+    var askQuota = $('[data-xk-ask-quota]', contentEl);
+    var kbInput = $('#xk-kb-input', contentEl);
+    var kbResult = $('[data-xk-kb-result]', contentEl);
+    var kbStatus = $('[data-xk-kb-status]', contentEl);
+    var kbNote = $('[data-xk-kb-note]', contentEl);
+    var asking = false;
+
+    if (!askInput || !kbInput) return;
+    /* 顶栏副标题只放一句极简事实（端点与限额的完整清单在下面的卡片里，不再往页头堆字） */
+    setSync('ai', '只读公开端点 · 无 SSE');
+
+    function setAskState(text) { if (askState) askState.textContent = text; }
+
+    /** 429 倒计时：话术用后端给的 message，只把剩余秒数显示出来 */
+    function countdown429(host, msg, seconds) {
+      if (host.__xkCd) clearInterval(host.__xkCd);
+      var left = Math.max(1, Number(seconds) || 0);
+      function paint() {
+        if (!document.body.contains(host)) { clearInterval(host.__xkCd); host.__xkCd = null; return; }
+        if (left <= 0) {
+          host.innerHTML = '<p class="xk-notice xk-notice--warn">' + esc(msg) + '<br>等待结束，可以重新提交了。</p>';
+          clearInterval(host.__xkCd); host.__xkCd = null; return;
+        }
+        host.innerHTML = '<p class="xk-notice xk-notice--warn">' + esc(msg) + '<br>请稍后再试 <b>' + left + '</b> 秒。</p>';
+        left -= 1;
+      }
+      paint();
+      host.__xkCd = setInterval(paint, 1000);
+    }
+
+    function citeItem(c) {
+      var meta = [c.sourceTypeLabel, c.trustLevelLabel,
+        (c.score === undefined || c.score === null || isNaN(Number(c.score)) ? '' : 'score ' + (Math.round(Number(c.score) * 100) / 100))]
+        .filter(Boolean).map(esc).join(' · ');
+      return '<li class="xk-cite">' +
+        '<b class="xk-cite__title">' + esc(c.title || '（无标题）') + '</b>' +
+        (meta ? '<span class="xk-hint">' + meta + '</span>' : '') +
+        (c.snippet ? '<p class="xk-cite__snip">' + esc(c.snippet) + '</p>' : '') +
+        '</li>';
+    }
+
+    function renderAsk(host, r, elapsedMs) {
+      if (r.status === 429) {
+        var wait = parseInt(r.retryAfter || (r.body && r.body.retryAfter) || 0, 10) || 0;
+        countdown429(host, (r.body && r.body.message) || '请求被限流。', wait || 60);
+        setAskState('被限流（HTTP 429）。');
+        return;
+      }
+      var body = r.body;
+      if (!r.ok || !body || body.data === undefined) {
+        host.innerHTML = '<p class="xk-notice xk-notice--bad">接口返回 HTTP ' + esc(r.status) + '，没有可用数据。' +
+          (body && body.message ? '后端说明：' + esc(body.message) : '') + ' 这里不显示任何替代答案。</p>';
+        setAskState('失败（HTTP ' + r.status + '）。');
+        return;
+      }
+      var d = body.data || {};
+      var state = d.state || '';
+      var cls = state === 'model' ? 'xk-tag--on'
+        : (state === 'model-failed' || state === 'retrieval-failed' ? 'xk-tag--bad' : 'xk-tag--warn');
+      var html = '<div class="xk-result__verdict">' +
+        '<span class="xk-tag ' + cls + '">' + esc(d.stateLabel || state || '未识别状态') + '</span>' +
+        /* generated 只有 state=model 时才为 true —— 不把"调用过模型"说成"给出了结论" */
+        '<b>' + (d.generated === true ? '模型已生成结论' : '未生成结论（generated=false）') + '</b>' +
+        '<span class="xk-hint">耗时 ' + esc((Math.round(elapsedMs / 100) / 10)) + 's' +
+          ' · 引用 ' + esc((d.citations || []).length) + ' 条' +
+          (d.quota ? ' · 本分钟剩余 ' + esc(num(d.quota.remaining)) + '/' + esc(num(d.quota.limit)) : '') +
+        '</span></div>';
+      if (d.failureReason) {
+        html += '<p class="xk-notice xk-notice--warn"><b>服务端说明：</b>' + esc(d.failureReason) + '</p>';
+      }
+      if (d.injection && d.injection.blocked) {
+        html += '<p class="xk-notice xk-notice--warn">输入命中提示注入护栏（' + esc(d.injection.hitCount || 0) +
+          ' 条规则），下面是拦截之后的处理结果。</p>';
+      }
+      if (d.answer) {
+        html += '<div class="xk-md xk-answer">' + mdLite(d.answer) + '</div>';
+      } else if (!d.failureReason) {
+        html += '<p class="xk-hint">这次没有返回答案正文（<code>state=' + esc(state || '—') + '</code>）。</p>';
+      }
+      var cites = d.citations || [];
+      html += cites.length
+        ? '<h3 class="xk-sub xk-answer-hd">引用（' + cites.length + ' 条）</h3><ul class="xk-cites">' + cites.map(citeItem).join('') + '</ul>'
+        : '<p class="xk-hint">这次没有引用片段。</p>';
+      if (d.clientIpMasked || (d.quota && d.quota.pool)) {
+        html += '<p class="xk-note">来源 IP（后端已掩码）：<code>' + esc(d.clientIpMasked || '—') + '</code>' +
+          (d.quota && d.quota.pool ? ' · 额度池 <code>' + esc(d.quota.pool) + '</code>' +
+            '（已用 ' + esc(num(d.quota.used)) + '，上限 ' + esc(num(d.quota.limit)) + '）' : '') + '</p>';
+      }
+      host.innerHTML = html;
+      if (askQuota) {
+        askQuota.textContent = d.quota
+          ? '本分钟额度：剩余 ' + num(d.quota.remaining) + '/' + num(d.quota.limit)
+          : '额度：未返回';
+        askQuota.className = 'xk-tag ' + (d.quota && Number(d.quota.remaining) <= 0 ? 'xk-tag--bad' : '');
+      }
+      setAskState('上次提问 ' + clockOf(Date.now()) + ' · HTTP ' + r.status +
+        (r.rlLimit ? ' · 服务端余额 ' + (r.rlRemaining === null ? '—' : r.rlRemaining) + '/' + r.rlLimit : ''));
+    }
+
+    function runAsk() {
+      var q = String(askInput.value || '').trim();
+      if (!q) {
+        askResult.hidden = false;
+        askResult.innerHTML = '<p class="xk-notice xk-notice--warn">先写一个问题再提交。</p>';
+        return;
+      }
+      if (asking) return;                       // 同一来源只允许 1 个在飞：前端也不重复发
+      asking = true;
+      if (askBtn) { askBtn.disabled = true; askBtn.textContent = '等待中…'; }
+      askResult.hidden = false;
+      askResult.innerHTML = '<p class="xk-hint"><span class="xk-pulse" aria-hidden="true"></span>已提交，正在检索并生成…这次最多等 20 秒。</p>';
+      setAskState('等待中（最多 20 秒）…');
+      var t0 = Date.now();
+      askApi(q).then(function (r) {
+        renderAsk(askResult, r, Date.now() - t0);
+      }).catch(function (err) {
+        if (err && err.timeout) {
+          askResult.innerHTML = '<p class="xk-notice xk-notice--warn">等了 20 秒还没返回，这次请求已放弃。' +
+            '后端可能正在排队、或模型这一轮很慢 —— 这里不显示任何推测的答案，过一会儿可以重试。</p>';
+          setAskState('超时：等待 20 秒无响应。');
+        } else {
+          askResult.innerHTML = '<p class="xk-notice xk-notice--bad">提问失败（' +
+            esc(err && err.status ? 'HTTP ' + err.status : '网络不可达或跨域被拒') +
+            '）。没有拿到答案，也没有替代结论。</p>';
+          setAskState('请求失败。');
+        }
+      }).then(function () {
+        asking = false;
+        if (askBtn) { askBtn.disabled = false; askBtn.textContent = '提交提问'; }
+      });
+    }
+
+    function renderKb(host, d, q) {
+      if (d.available === false) {
+        if (kbStatus) { kbStatus.textContent = '检索不可用'; kbStatus.className = 'xk-tag xk-tag--bad'; }
+        if (kbNote) kbNote.textContent = '后端自述检索不可用（available:false）。';
+        host.innerHTML = '<p class="xk-notice xk-notice--warn"><b>检索不可用</b>（<code>available:false</code>）：' +
+          esc(d.note || '后端没有给出更多说明。') + ' 这里不显示任何替代结果。</p>' + rulesHtml(d.rule);
+        return;
+      }
+      var hits = d.results || [];
+      if (kbStatus) {
+        kbStatus.textContent = hits.length ? '命中 ' + hits.length + ' 条' : '无命中';
+        kbStatus.className = 'xk-tag ' + (hits.length ? 'xk-tag--on' : 'xk-tag--off');
+      }
+      if (kbNote) {
+        kbNote.textContent = '关键词「' + q + '」· hitCount=' +
+          (d.hitCount === null || d.hitCount === undefined ? '—' : d.hitCount) + (d.note ? ' · ' + d.note : '');
+      }
+      host.innerHTML = (hits.length
+        ? '<ul class="xk-cites">' + hits.map(citeItem).join('') + '</ul>'
+        : '<p class="xk-hint">没有命中任何文档片段。换个关键词试试 —— 这里不用"相关推荐"凑数。</p>') + rulesHtml(d.rule);
+    }
+
+    /** d.rule{allowedRoots,...}：把后端自述的检索范围也如实列出来 */
+    function rulesHtml(rule) {
+      if (!rule || !rule.allowedRoots || !rule.allowedRoots.length) return '';
+      return '<p class="xk-note">检索范围（后端自述 <code>rule.allowedRoots</code>）：<code>' +
+        esc(rule.allowedRoots.join(' , ')) + '</code></p>';
+    }
+
+    function runKb() {
+      var q = String(kbInput.value || '').trim();
+      if (!q) {
+        kbResult.hidden = false;
+        kbResult.innerHTML = '<p class="xk-notice xk-notice--warn">先写一个关键词再检索。</p>';
+        return;
+      }
+      kbResult.hidden = false;
+      kbResult.innerHTML = '<p class="xk-hint">正在检索 <code>/api/public/kb</code> …</p>';
+      if (kbStatus) { kbStatus.textContent = '检索中…'; kbStatus.className = 'xk-tag'; }
+      fetch(API + '/api/public/kb?q=' + encodeURIComponent(q), {
+        method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store'
+      }).then(function (res) {
+        return res.json().catch(function () { return null; }).then(function (body) {
+          if (res.status === 429) {
+            var wait = parseInt(res.headers.get('Retry-After') || 0, 10) || 0;
+            if (kbStatus) { kbStatus.textContent = '被限流'; kbStatus.className = 'xk-tag xk-tag--warn'; }
+            countdown429(kbResult, (body && body.message) || '检索请求过于频繁。', wait || 60);
+            return;
+          }
+          if (!res.ok || !body || body.data === undefined) {
+            if (kbStatus) { kbStatus.textContent = '检索失败'; kbStatus.className = 'xk-tag xk-tag--bad'; }
+            kbResult.innerHTML = '<p class="xk-notice xk-notice--bad">检索失败（HTTP ' + esc(res.status) + '）' +
+              (body && body.message ? '：' + esc(body.message) : '') + '</p>';
+            return;
+          }
+          renderKb(kbResult, body.data || {}, q);
+        });
+      }).catch(function () {
+        if (kbStatus) { kbStatus.textContent = '网络不可达'; kbStatus.className = 'xk-tag xk-tag--bad'; }
+        kbResult.innerHTML = '<p class="xk-notice xk-notice--bad">检索请求发不出去（网络不可达或跨域被拒）。' +
+          '这里不显示本地缓存里编的结果。</p>';
+      });
+    }
+
+    if (askBtn) askBtn.addEventListener('click', runAsk);
+    askInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); runAsk(); } });
+    $$('[data-xk-ask-preset]', contentEl).forEach(function (b) {
+      b.addEventListener('click', function () {
+        askInput.value = b.getAttribute('data-xk-ask-preset') || '';
+        runAsk();
+      });
+    });
+    var kbBtn = $('[data-xk-kb-run]', contentEl);
+    if (kbBtn) kbBtn.addEventListener('click', runKb);
+    kbInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); runKb(); } });
   }
 
   /* ==========================================================================

@@ -6,9 +6,13 @@
 */}}
 <template id="tpl-about">
   <div class="xk-wrap xk-page">
+    {{/* 追加要求 ②：顶部介绍大卡已删除（返工后连整段说明也去掉）。
+         这里只留【模块名 + 一行极简副标题】+ 本页小节锚点（锚点是真导航，不是介绍）。 */}}
     <header class="xk-page__hd">
-      <h1 class="xk-page__title">关于</h1>
-      <p class="xk-page__lead">个人介绍 · 项目说明（SecAgent）· 架构取舍与踩坑 · 在线 Demo 入口。</p>
+      <div class="xk-page__plate">
+        <h1 class="xk-page__title">关于</h1>
+        <p class="xk-page__lead">个人介绍 · SecAgent · 在线 Demo</p>
+      </div>
       <nav class="xk-anchors" aria-label="本页小节">
         <a class="xk-chip" href="#xk-about-me" data-xk-anchor>我是谁</a>
         <a class="xk-chip" href="#xk-about-project" data-xk-anchor>项目：SecAgent</a>
@@ -35,6 +39,17 @@
       </div>
 
       <aside class="xk-portal__side">
+        {{/* 追加要求 ②：各栏目顶部被删掉的介绍文字，完整说明挪到这一张卡里（不丢信息） */}}
+        <section class="xk-card xk-card--tight" id="xk-about-modules">
+          <header class="xk-card__hd"><h2 class="xk-card__title">各栏目在做什么</h2></header>
+          <ul class="xk-bullets xk-note">
+            <li><b>监测中心</b>：主机层（Wazuh）与网络层（Suricata）告警、蜜罐战报、处置审计与系统指纹 —— 全部来自公开只读端点，源 IP 已掩码，只读不可写。</li>
+            <li><b>笔记</b>：按分类整理的学习与实践记录：渗透文档、课堂笔记、个人总结、CVE 复现、速查表。</li>
+            <li><b>攻防靶场</b>：只剩两种互动，真的把输入送进我方后端检测组件、看它原样返回什么；公网不放真实漏洞应用，模拟器也不假装能防住攻击。</li>
+            <li><b>AI 安全</b>：对着知识库提问、或直接检索文档库；答案、引用与状态标注全部来自后端公开只读端点，模型没生成就如实写原因，不补假结论。</li>
+          </ul>
+          <p class="xk-note">这四段说明原来挂在各模块顶部（占掉半屏），现在集中放在这里。</p>
+        </section>
         <section class="xk-card xk-card--tight">
           <header class="xk-card__hd"><h2 class="xk-card__title">站点事实</h2></header>
           <ul class="xk-meta">

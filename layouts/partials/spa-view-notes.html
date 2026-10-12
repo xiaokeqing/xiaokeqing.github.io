@@ -8,9 +8,13 @@
 {{- $cats := site.Taxonomies.categories -}}
 <template id="tpl-notes">
   <div class="xk-wrap xk-page">
+    {{/* 追加要求 ②：顶部介绍大卡已删除（返工后连整段说明也去掉），
+         只留模块名 + 一行极简副标题，第一屏直接是分类筛选项 + 笔记列表 */}}
     <header class="xk-page__hd">
-      <h1 class="xk-page__title">笔记</h1>
-      <p class="xk-page__lead">按分类整理的学习与实践记录：渗透文档、课堂笔记、个人总结、CVE 复现、速查表。</p>
+      <div class="xk-page__plate">
+        <h1 class="xk-page__title">笔记</h1>
+        <p class="xk-page__lead">渗透文档 · 课堂笔记 · 个人总结 · CVE · 速查</p>
+      </div>
     </header>
 
     <div class="xk-chips" data-xk-cats>

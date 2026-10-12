@@ -1,40 +1,22 @@
 {{/*
-  顶部悬浮毛玻璃胶囊导航（规格 §2）
+  内容区顶部一行（站主 2026-10-12 第五轮）
   ---------------------------------------------------------------------------
-  · 左侧：圆形头像（复用 static/images/bg.jpg，CSS object-fit + object-position 取面部，
-    不产出新图片）+ 站名 xiaokeqing
-  · 中间：六栏目（主页 / 笔记 / 监测中心 / AI 安全 / 攻防靶场 / 关于），顺序与名称来自 hugo.toml 的 menu.main
-  · 右侧：搜索框（只搜笔记，支持 Ctrl+K）
-  导航是 fixed 的兄弟节点，路由只替换 #content —— 点栏目时它不动。
+  · 面包屑（🏠 / 当前栏目）已按站主要求【整块删除】（原话"这个去掉没啥用"）——
+    HTML 与 CSS 一并删掉，不留死代码。
+  · 这一行现在只有搜索框，右对齐（它是 flex 里的 margin-left:auto 单项），不再造新元素。
+  · 没有 fixed 顶栏、没有背景板：这是文档流内的一块，垂直起始位置和以前一样，
+    不会因为删掉面包屑而多出空白占位。
+  · 搜索框在每个栏目都显示（第五轮 ② 撤销了之前"只在主页/笔记"的限制）；Ctrl+K 全站可用。
 */}}
-{{- /*
-   头像的 object-position 不是随手写的：
-   原图 3245x1440（横向 2.254:1），按 object-fit:cover 放进 36px 正方形后，
-   能看到的是原图宽度的 1/2.254 ≈ 44%。人物脸中心在原图宽度约 65.5% 处，
-   要让"脸中心"落在圆形容器正中，需要 object-position: 78%（= (0.655×2.254−0.5)/(2.254−1)）。
-   规格给的是"约 60% 35%，按脸微调"——这里就是按脸微调后的值；y 轴在正方向容器下不参与裁切。
-*/ -}}
-{{- $avatarPos := "78% center" -}}
-<header class="xk-nav" id="xk-nav">
-  <a class="xk-nav__brand" href="/#/home" data-xk-route aria-label="回到主页">
-    {{/* 头像：同一张原图 + CSS 圆形裁切；object-position 取面部（人物在画面中部偏右） */}}
-    <img class="xk-avatar" src="/images/bg.jpg" alt="xiaokeqing 头像" width="36" height="36"
-         decoding="async" style="object-position:{{ $avatarPos }}">
-    <span class="xk-nav__name">{{ site.Params.siteName | default "xiaokeqing" }}</span>
-  </a>
-
-  <nav class="xk-nav__links" aria-label="主导航">
-    {{- range site.Menus.main }}
-    <a class="xk-nav__link" href="{{ .URL }}" data-xk-route data-xk-nav="{{ .Identifier }}">{{ .Name }}</a>
-    {{- end }}
-  </nav>
-
-  <button class="xk-searchbtn" type="button" data-xk-search-open aria-label="搜索笔记（Ctrl+K）">
-    <svg class="xk-ico" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
-      <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
-      <path d="M12.8 12.8 L17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
-    </svg>
-    <span>搜索笔记</span>
-    <kbd>Ctrl</kbd><kbd>K</kbd>
-  </button>
-</header>
+<div class="xk-toprow">
+  <div class="xk-wrap xk-toprow__in">
+    <button class="xk-searchbtn" type="button" data-xk-search-open aria-label="搜索笔记（Ctrl+K）">
+      <svg class="xk-ico" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+        <path d="M12.8 12.8 L17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+      </svg>
+      <span>搜索笔记</span>
+      <kbd>Ctrl</kbd><kbd>K</kbd>
+    </button>
+  </div>
+</div>

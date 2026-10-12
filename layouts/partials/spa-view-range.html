@@ -9,13 +9,13 @@
 */}}
 <template id="tpl-range">
   <div class="xk-wrap xk-page">
+    {{/* 追加要求 ②：顶部介绍大卡已删除（返工后连整段说明也去掉），
+         只留模块名 + 一行极简副标题，第一屏直接是两张互动卡 */}}
     <header class="xk-page__hd">
-      <h1 class="xk-page__title">攻防靶场</h1>
-      <p class="xk-page__lead">
-        这里只剩两种互动：真的把输入送进我方后端的检测组件，看它原样返回什么。
-        公网不放真实漏洞应用，模拟器也不假装能防住攻击。
-      </p>
-      <p class="xk-sync" data-xk-sync="range"></p>
+      <div class="xk-page__plate">
+        <h1 class="xk-page__title">攻防靶场</h1>
+        <p class="xk-page__lead">试着攻击我 · 提示注入演示<span class="xk-sync" data-xk-sync="range"></span></p>
+      </div>
     </header>
 
     <div class="xk-grid2">

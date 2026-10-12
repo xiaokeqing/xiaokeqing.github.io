@@ -29,6 +29,9 @@
 
   {{ partial "spa-nav.html" . }}
 
+  {{/* 常驻左侧个人区（第三轮 ③）：挂在 SPA 外壳上，所有栏目都在；#content 换视图时它不动 */}}
+  {{ partial "spa-side.html" . }}
+
   {{/* 唯一会被路由替换的容器 */}}
   <main class="xk-content" id="content" tabindex="-1"></main>
 

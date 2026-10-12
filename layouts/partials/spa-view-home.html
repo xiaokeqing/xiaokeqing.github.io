@@ -1,26 +1,27 @@
 {{/*
-  ① 门户版式（主页）—— 规格 §4①
-  顺序：欢迎区（叠在背景图上）→ 实时拦截动态卡（live feed）→ 功能导览卡 + 最新笔记。
+  ① 门户版式（主页）—— 规格 §4①；站主 2026-10-12 第五轮 ① 调整了版面：
+     · 左：实时拦截动态（窄列 320px，逐条紧凑）—— 原来占中间一大块
+     · 中：功能导览（主视觉，逐个模块写清"是干什么的 / 进去能看到什么"，带「进入 →」）
+     · 右：最新笔记 / 数据来源（保持不动）
   骨架由 Hugo 渲染；实时数字一律由 /js/app.js 从 /api/public/* 填入，模板里不写死任何值。
 */}}
 <template id="tpl-home">
   <section class="xk-hero">
     <div class="xk-wrap xk-hero__in">
-      <p class="xk-hero__eyebrow">个人博客 · 安全运营工作台</p>
-      <h1 class="xk-hero__title">{{ site.Params.heroTitle }}</h1>
-      <p class="xk-hero__lead">{{ site.Params.heroLead }}</p>
-      <div class="xk-hero__cta">
-        <a class="xk-btn xk-btn--primary" href="/#/monitor/alerts" data-xk-route>进入监测中心</a>
-        <a class="xk-btn" href="/#/notes" data-xk-route>看笔记</a>
+      {{/* 欢迎区文字块：宽度上限 640px、左对齐到内容区左边缘（和下面"实时拦截动态"同一条线）；
+           水平位置由 --xk-hero-align 一行切换（靠左 / 居中 / 靠右），见 site.css 第 7 节 */}}
+      <div class="xk-hero__text">
+        <p class="xk-hero__eyebrow">个人博客 · 安全运营工作台</p>
+        <h1 class="xk-hero__title">{{ site.Params.heroTitle }}</h1>
+        <p class="xk-hero__lead">{{ site.Params.heroLead }}</p>
       </div>
     </div>
   </section>
 
-  <div class="xk-wrap xk-portal">
-    <div class="xk-portal__main">
-
-      {{/* ---------- 实时拦截动态（live feed） ---------- */}}
-      <section class="xk-card xk-card--live">
+  <div class="xk-wrap xk-portal xk-portal--home">
+    {{/* ---------- 左：实时拦截动态（窄列，逐条紧凑） ---------- */}}
+    <div class="xk-portal__live">
+      <section class="xk-card xk-card--live xk-card--tight">
         <header class="xk-card__hd">
           <h2 class="xk-card__title"><span class="xk-pulse" aria-hidden="true"></span>实时拦截动态</h2>
           <span class="xk-sync" data-xk-sync="feed">加载中…</span>
@@ -33,48 +34,71 @@
         </ul>
         <p class="xk-note" data-xk-feed-note></p>
         <footer class="xk-card__ft">
-          <a class="xk-link" href="/#/monitor/alerts" data-xk-route>去看完整告警流 →</a>
+          <a class="xk-link" href="/#/monitor/alerts" data-xk-route>完整告警流 →</a>
           <a class="xk-link" href="/#/monitor/audit" data-xk-route>处置审计 →</a>
         </footer>
       </section>
-
-      {{/* ---------- 功能导览卡 ---------- */}}
-      <section class="xk-card">
-        <header class="xk-card__hd">
-          <h2 class="xk-card__title">功能导览</h2>
-          <span class="xk-hint">未上线的栏目标灰、不可点</span>
-        </header>
-        <div class="xk-guide">
-          <a class="xk-guide__item" href="/#/notes" data-xk-route>
-            <span class="xk-guide__name">笔记</span>
-            <span class="xk-guide__desc">渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查 —— 内容陆续补</span>
-            <span class="xk-tag xk-tag--on">在线</span>
-          </a>
-          <a class="xk-guide__item" href="/#/monitor/alerts" data-xk-route>
-            <span class="xk-guide__name">监测中心</span>
-            <span class="xk-guide__desc">实时告警 / 蜜罐战报 / 处置审计 / 系统状态</span>
-            <span class="xk-tag xk-tag--on">在线</span>
-          </a>
-          <a class="xk-guide__item" href="/#/range" data-xk-route>
-            <span class="xk-guide__name">攻防靶场</span>
-            <span class="xk-guide__desc">只保留真的调用探测组件判定的互动</span>
-            <span class="xk-tag xk-tag--on">在线</span>
-          </a>
-          <a class="xk-guide__item" href="/#/about" data-xk-route>
-            <span class="xk-guide__name">关于</span>
-            <span class="xk-guide__desc">项目说明、SecAgent 的取舍与踩坑、个人介绍</span>
-            <span class="xk-tag xk-tag--on">在线</span>
-          </a>
-          <span class="xk-guide__item is-off" aria-disabled="true">
-            <span class="xk-guide__name">AI 安全</span>
-            <span class="xk-guide__desc">红队评测 / 智能研判演示 / 知识库检索</span>
-            <span class="xk-tag xk-tag--off">未上线・规划中</span>
-          </span>
-        </div>
-      </section>
     </div>
 
-    {{/* ---------- 右栏 ---------- */}}
+    {{/* ---------- 中：功能导览（主视觉；逐个模块写清楚，不喊口号） ---------- */}}
+    <section class="xk-card xk-portal__guide">
+      <header class="xk-card__hd">
+        <h2 class="xk-card__title">功能导览</h2>
+        <span class="xk-hint">每个栏目是干什么的 · 点一行就切过去</span>
+      </header>
+
+      <ul class="xk-mod">
+        <li>
+          <a class="xk-mod__row" href="/#/monitor/alerts" data-xk-route>
+            <span class="xk-mod__name">监测中心</span>
+            <span class="xk-mod__desc">
+              四个子 tab 都在同一页里切，数据来自公开只读端点、源 IP 已掩码：<b>实时告警</b>（窗口内聚合条数 / 高危数 / 去重来源 IP / 去重规则，级别与来源分布、24 小时原始事件趋势、可按级别过滤并点开下钻的告警流）；<b>蜜罐战报</b>（尝试的账号口令 Top、来源 IP、客户端指纹、事件时间线；命令时间线未接入就如实标未接入）；<b>处置审计</b>（封禁留痕含生效/解封与 REAL/MOCK 链路、处置流水含被护栏拦下的动作）；<b>系统状态</b>（镜像 / 源码 / health 三处指纹核对、运行时长与文档向量数；磁盘水位未接入）。
+            </span>
+            <span class="xk-mod__go">进入 →</span>
+          </a>
+        </li>
+        <li>
+          <a class="xk-mod__row" href="/#/notes" data-xk-route>
+            <span class="xk-mod__name">笔记</span>
+            <span class="xk-mod__desc">
+              学习与实践记录，共 {{ len (where site.RegularPages "Section" "posts") }} 篇。按分类筛（渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查；没有内容的分类标「规划中」，不拿示例文章凑数）；点开是左目录（滚动高亮）、中正文（代码块 + 一键复制）、右上下篇与字数/阅读时间的三栏阅读页；正文就是仓库里的 Markdown，公开站只读。
+            </span>
+            <span class="xk-mod__go">进入 →</span>
+          </a>
+        </li>
+        <li>
+          <a class="xk-mod__row" href="/#/ai" data-xk-route>
+            <span class="xk-mod__name">AI 安全</span>
+            <span class="xk-mod__desc">
+              两个真打后端的公开端点：<b>知识库问答</b>（POST /api/public/ask，问题 ≤600 字、最多等 20 秒；返回答案正文、状态措辞、引用片段与可信度、剩余额度，模型没生成就写明原因）与<b>知识库检索</b>（GET /api/public/kb，直接看命中的原文片段与 rule.allowedRoots 检索范围）。只读；限流逐 IP 每分钟 6 次、同一来源并发 1。
+            </span>
+            <span class="xk-mod__go">进入 →</span>
+          </a>
+        </li>
+        <li>
+          <a class="xk-mod__row" href="/#/range" data-xk-route>
+            <span class="xk-mod__name">攻防靶场</span>
+            <span class="xk-mod__desc">
+              只留两个真的把输入送进我方后端检测组件的互动：<b>试着攻击我</b>（提交一段输入，返回提示注入防护 + 敏感信息扫描每项的判定、证据、命中规则与动作）与<b>提示注入演示</b>（点一条常见套路，看 PromptInjectionGuard 的命中情况）。只做检测，不执行、不处置；公网不放真实漏洞应用。
+            </span>
+            <span class="xk-mod__go">进入 →</span>
+          </a>
+        </li>
+        <li>
+          <a class="xk-mod__row" href="/#/about" data-xk-route>
+            <span class="xk-mod__name">关于</span>
+            <span class="xk-mod__desc">
+              个人介绍、SecAgent 这个项目的说明、架构取舍与踩过的坑、在线 Demo 入口；右栏还有「各栏目在做什么」与站点事实（技术栈、依赖、数据来源）。
+            </span>
+            <span class="xk-mod__go">进入 →</span>
+          </a>
+        </li>
+      </ul>
+
+      <p class="xk-note">未上线的能力一律标注「未上线・规划中」，不放死链、不补假数据。</p>
+    </section>
+
+    {{/* ---------- 右：最新笔记 / 数据来源（保持不动） ---------- */}}
     <aside class="xk-portal__side">
       {{- $posts := where site.RegularPages "Section" "posts" }}
       <section class="xk-card">
