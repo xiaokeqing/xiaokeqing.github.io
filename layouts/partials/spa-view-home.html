@@ -1,0 +1,109 @@
+{{/*
+  ① 门户版式（主页）—— 规格 §4①
+  顺序：欢迎区（叠在背景图上）→ 实时拦截动态卡（live feed）→ 功能导览卡 + 最新笔记。
+  骨架由 Hugo 渲染；实时数字一律由 /js/app.js 从 /api/public/* 填入，模板里不写死任何值。
+*/}}
+<template id="tpl-home">
+  <section class="xk-hero">
+    <div class="xk-wrap xk-hero__in">
+      <p class="xk-hero__eyebrow">个人博客 · 安全运营工作台</p>
+      <h1 class="xk-hero__title">{{ site.Params.heroTitle }}</h1>
+      <p class="xk-hero__lead">{{ site.Params.heroLead }}</p>
+      <div class="xk-hero__cta">
+        <a class="xk-btn xk-btn--primary" href="/#/monitor/alerts" data-xk-route>进入监测中心</a>
+        <a class="xk-btn" href="/#/notes" data-xk-route>看笔记</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="xk-wrap xk-portal">
+    <div class="xk-portal__main">
+
+      {{/* ---------- 实时拦截动态（live feed） ---------- */}}
+      <section class="xk-card xk-card--live">
+        <header class="xk-card__hd">
+          <h2 class="xk-card__title"><span class="xk-pulse" aria-hidden="true"></span>实时拦截动态</h2>
+          <span class="xk-sync" data-xk-sync="feed">加载中…</span>
+        </header>
+        <ul class="xk-feed" data-xk-feed>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w70"></span><span class="xk-skel xk-skel--w10"></span></li>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w60"></span><span class="xk-skel xk-skel--w10"></span></li>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w80"></span><span class="xk-skel xk-skel--w10"></span></li>
+          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w50"></span><span class="xk-skel xk-skel--w10"></span></li>
+        </ul>
+        <p class="xk-note" data-xk-feed-note></p>
+        <footer class="xk-card__ft">
+          <a class="xk-link" href="/#/monitor/alerts" data-xk-route>去看完整告警流 →</a>
+          <a class="xk-link" href="/#/monitor/audit" data-xk-route>处置审计 →</a>
+        </footer>
+      </section>
+
+      {{/* ---------- 功能导览卡 ---------- */}}
+      <section class="xk-card">
+        <header class="xk-card__hd">
+          <h2 class="xk-card__title">功能导览</h2>
+          <span class="xk-hint">未上线的栏目标灰、不可点</span>
+        </header>
+        <div class="xk-guide">
+          <a class="xk-guide__item" href="/#/notes" data-xk-route>
+            <span class="xk-guide__name">笔记</span>
+            <span class="xk-guide__desc">渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查 —— 内容陆续补</span>
+            <span class="xk-tag xk-tag--on">在线</span>
+          </a>
+          <a class="xk-guide__item" href="/#/monitor/alerts" data-xk-route>
+            <span class="xk-guide__name">监测中心</span>
+            <span class="xk-guide__desc">实时告警 / 蜜罐战报 / 处置审计 / 系统状态</span>
+            <span class="xk-tag xk-tag--on">在线</span>
+          </a>
+          <a class="xk-guide__item" href="/#/range" data-xk-route>
+            <span class="xk-guide__name">攻防靶场</span>
+            <span class="xk-guide__desc">只保留真的调用探测组件判定的互动</span>
+            <span class="xk-tag xk-tag--on">在线</span>
+          </a>
+          <a class="xk-guide__item" href="/#/about" data-xk-route>
+            <span class="xk-guide__name">关于</span>
+            <span class="xk-guide__desc">项目说明、SecAgent 的取舍与踩坑、个人介绍</span>
+            <span class="xk-tag xk-tag--on">在线</span>
+          </a>
+          <span class="xk-guide__item is-off" aria-disabled="true">
+            <span class="xk-guide__name">AI 安全</span>
+            <span class="xk-guide__desc">红队评测 / 智能研判演示 / 知识库检索</span>
+            <span class="xk-tag xk-tag--off">未上线・规划中</span>
+          </span>
+        </div>
+      </section>
+    </div>
+
+    {{/* ---------- 右栏 ---------- */}}
+    <aside class="xk-portal__side">
+      {{- $posts := where site.RegularPages "Section" "posts" }}
+      <section class="xk-card">
+        <header class="xk-card__hd">
+          <h2 class="xk-card__title">最新笔记</h2>
+          <a class="xk-link xk-hint" href="/#/notes" data-xk-route>全部 {{ len $posts }} 篇</a>
+        </header>
+        <ul class="xk-list">
+          {{- range first 5 $posts }}
+          <li>
+            <a class="xk-link" href="/#/notes/{{ .File.BaseFileName }}" data-xk-note="{{ .File.BaseFileName }}">{{ .Title }}</a>
+            <span class="xk-hint">{{ .Date.Format "2006-01-02" }}</span>
+          </li>
+          {{- else }}
+          <li class="xk-hint">还没有笔记。</li>
+          {{- end }}
+        </ul>
+      </section>
+
+      <section class="xk-card">
+        <header class="xk-card__hd"><h2 class="xk-card__title">数据来源</h2></header>
+        <ul class="xk-meta">
+          <li><span>接口</span><b class="xk-mono" data-xk-api-base>—</b></li>
+          <li><span>口径</span><b>只读公开端点 · IP 掩码</b></li>
+          <li><span>轮询</span><b>10–15s 自适应 · 隐藏即暂停</b></li>
+          <li><span>服务端</span><b>15s 缓存 · 20 次/分钟限流</b></li>
+        </ul>
+        <p class="xk-note">数字全部来自真实接口；取不到就显示「未接入 / 上次同步」，不补假数据。</p>
+      </section>
+    </aside>
+  </div>
+</template>

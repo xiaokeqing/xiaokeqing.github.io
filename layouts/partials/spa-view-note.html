@@ -1,0 +1,51 @@
+{{/*
+  ② 笔记 · 阅读页三栏（规格 §4②：左 220 目录 / 中 720–760 正文 / 右 240 上下篇·字数·阅读时间）
+  正文、目录、上下篇都由 /js/app.js 从 /index.json（Hugo 渲染的笔记索引）注入 ——
+  这样点笔记是换视图而不是跳页，也仍然只有站内数据、零第三方请求。
+*/}}
+<template id="tpl-note">
+  <div class="xk-wrap xk-page">
+    <nav class="xk-crumb" aria-label="面包屑">
+      <a class="xk-link" href="/#/notes" data-xk-route>笔记</a>
+      <span aria-hidden="true">/</span>
+      <span data-xk-note-crumb>…</span>
+    </nav>
+
+    <div class="xk-read">
+      <aside class="xk-read__toc" aria-label="目录">
+        <p class="xk-read__toc-title">目录</p>
+        <ul class="xk-toc" data-xk-toc></ul>
+      </aside>
+
+      <article class="xk-read__main">
+        <header class="xk-read__hd">
+          <h1 class="xk-read__title" data-xk-note-title>加载中…</h1>
+          <p class="xk-read__meta" data-xk-note-meta></p>
+        </header>
+        <div class="xk-md" data-xk-note-body>
+          <p class="xk-hint">正在读取笔记…</p>
+        </div>
+        <footer class="xk-read__nav" data-xk-note-nav></footer>
+      </article>
+
+      <aside class="xk-read__side">
+        <section class="xk-card xk-card--tight">
+          <header class="xk-card__hd"><h2 class="xk-card__title">这篇</h2></header>
+          <ul class="xk-meta" data-xk-note-stats>
+            <li><span>字数</span><b>—</b></li>
+            <li><span>阅读</span><b>—</b></li>
+            <li><span>发布</span><b>—</b></li>
+          </ul>
+        </section>
+        <section class="xk-card xk-card--tight">
+          <header class="xk-card__hd"><h2 class="xk-card__title">分类 / 标签</h2></header>
+          <div class="xk-chips xk-chips--wrap" data-xk-note-tags></div>
+        </section>
+        <section class="xk-card xk-card--tight">
+          <header class="xk-card__hd"><h2 class="xk-card__title">说明</h2></header>
+          <p class="xk-note">公开站只读；字号偏好、划线等个性化本期不做（规格 §4②）。</p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,71 @@
+{{/*
+  ② 笔记 · 列表（规格 §4②）
+  分类口径：规格给的五个方向（渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查）本期"内容后做"——
+  所以它们照实显示为「规划中」，点进去是空列表 + 一句实话，不编内容；
+  同时把仓库里真实存在、真的有文章的 categories 也列出来（数字来自 site.Taxonomies，不写死）。
+*/}}
+{{- $posts := where site.RegularPages "Section" "posts" -}}
+{{- $cats := site.Taxonomies.categories -}}
+<template id="tpl-notes">
+  <div class="xk-wrap xk-page">
+    <header class="xk-page__hd">
+      <h1 class="xk-page__title">笔记</h1>
+      <p class="xk-page__lead">按分类整理的学习与实践记录：渗透文档、课堂笔记、个人总结、CVE 复现、速查表。</p>
+    </header>
+
+    <div class="xk-chips" data-xk-cats>
+      <button class="xk-chip is-on" type="button" data-xk-cat="__all">全部 <b>{{ len $posts }}</b></button>
+      {{- range $name, $items := $cats }}
+      <button class="xk-chip" type="button" data-xk-cat="{{ $name }}">{{ $name }} <b>{{ len $items }}</b></button>
+      {{- end }}
+      {{- range slice "渗透文档" "课堂笔记" "个人总结" "CVE" "速查" }}
+      {{- if not (index $cats .) }}
+      <button class="xk-chip is-planned" type="button" data-xk-cat="{{ . }}">{{ . }} <b>规划中</b></button>
+      {{- end }}
+      {{- end }}
+    </div>
+
+    <div class="xk-portal">
+      <div class="xk-portal__main">
+        <section class="xk-card">
+          <ul class="xk-notes" data-xk-notes>
+            {{- range $posts }}
+            <li class="xk-notes__row"
+                data-note-cat="{{ delimit (.Params.categories | default slice) `|` }}"
+                data-note-slug="{{ .File.BaseFileName }}">
+              <a class="xk-notes__title" href="/#/notes/{{ .File.BaseFileName }}" data-xk-note="{{ .File.BaseFileName }}">{{ .Title }}</a>
+              <p class="xk-notes__sum">{{ with .Params.summary }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 110 }}{{ end }}</p>
+              <div class="xk-notes__meta">
+                {{- with .Params.categories }}<span class="xk-tag">{{ delimit . " / " }}</span>{{ end }}
+                {{- with .Params.tags }}{{ range first 3 . }}<span class="xk-tag xk-tag--ghost">{{ . }}</span>{{ end }}{{ end }}
+                <span class="xk-hint">{{ .Date.Format "2006-01-02" }} · {{ .ReadingTime }} 分钟 · {{ .WordCount }} 字</span>
+              </div>
+            </li>
+            {{- else }}
+            <li class="xk-hint">仓库里还没有笔记。</li>
+            {{- end }}
+          </ul>
+          <p class="xk-note" data-xk-notes-empty hidden>该分类暂时没有内容（规划中）。这里不会用示例文章凑数。</p>
+        </section>
+      </div>
+
+      <aside class="xk-portal__side">
+        <section class="xk-card">
+          <header class="xk-card__hd"><h2 class="xk-card__title">读法</h2></header>
+          <ul class="xk-meta">
+            <li><span>阅读页</span><b>左目录 / 中正文 / 右上下篇</b></li>
+            <li><span>搜索</span><b>Ctrl+K 只搜笔记</b></li>
+            <li><span>公开站</span><b>只读（跳转即换视图，不刷页）</b></li>
+          </ul>
+        </section>
+        <section class="xk-card">
+          <header class="xk-card__hd"><h2 class="xk-card__title">分类计划</h2></header>
+          <p class="xk-note">
+            五个方向的正文还没写：<b>渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查</b>。
+            已经写好的文章按仓库里 front matter 的真实分类归入上面的筛选项，不做二次包装。
+          </p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</template>

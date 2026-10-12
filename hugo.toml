@@ -1,23 +1,24 @@
 # ============================================================
-# 博客站点配置（Hugo + PaperMod）
+# xiaokeqing 博客 · 站点配置（前端改版 · 按《前端改版规格-xiaokeqing.md》实施）
 # ------------------------------------------------------------
-# ⚠️ 部署前必须改的三处（已用 TODO 标出）：
-#    1. baseURL —— 换成你的 GitHub Pages 地址
-#    2. title / 作者 / 简介
-#    3. socialIcons 里的 GitHub 链接
+# 改版要点（与规格一一对应）：
+#   §0  技术栈：Hugo + 原生 HTML/CSS/JS，**不使用任何第三方主题**。
+#        → 本次已把 `theme = "PaperMod"` 摘掉，layouts/ 与 assets/css/ 全部自建；
+#          代码高亮样式由 `hugo gen chromastyles --style=github` 生成为自己的 CSS。
+#   §2  导航就 6 项：主页 / 笔记 / 监测中心 / AI 安全 / 攻防靶场 / 关于
+#        （原「态势感知」→「监测中心」；原「项目」并入「关于」）
+#   §5  公开数据只走 /api/public/*（只读、IP 掩码），前端轮询 10–15s 自适应。
+#   发布改走 GitHub Pages Actions（push 自动构建），不再用本机 deploy 脚本。
 # ============================================================
 
-# 正式域名。前置条件已全部满足（2026-10-12 核实）：
-#   ① apex 与 www 在 AliDNS / 腾讯 / 8.8.8.8 三家都解析到 Cloudflare
-#   ② CF 已在转发（https://xiaokeqing.cn/ 返回 CF 的 404，说明只是 GitHub 还不认这个域）
-#   ③ 现在部署 static/CNAME，Pages 绑定自定义域；github.io 会 301 到正式域名
 baseURL = "https://xiaokeqing.cn/"
-title = "小刻晴的博客"
-# Hugo 0.158 起 languageCode 已废弃，改用 locale
+title = "xiaokeqing"
 locale = "zh-cn"
 defaultContentLanguage = "zh-cn"
-theme = "PaperMod"
-paginate = 10
+
+# 规格 §0：禁止第三方主题。这里刻意不再声明 theme。
+# （themes/PaperMod 目录仍留在工作区里未删除，但已不在构建路径上 —— 详见交付说明。）
+
 enableRobotsTXT = true
 enableEmoji = true
 # 让 Hugo 正确处理中文分词与字数统计
@@ -25,107 +26,57 @@ hasCJKLanguage = true
 
 # ---------- 站点参数 ----------
 [params]
-  env = "production"
-  # TODO 2：简介与关键词
-  description = "小刻晴的博客 —— 网络安全方向的学习与实践记录：应急响应、Linux 加固、AI 安全运营，以及一个真在跑的安全运营工作台"
+  siteName = "xiaokeqing"
+  author = "小刻晴"
+  description = "xiaokeqing 的个人博客 —— 个人网络安全学习实践记录，以及一个正在真实运行的安全运营工作台（告警 / 蜜罐 / 处置审计）。"
   keywords = ["网络安全", "AI 安全", "安全运营", "应急响应", "RAG", "多 Agent", "SOC"]
-  author = "xiaokeqing"
 
-  # 工作台（首页 / /alerts/）取数的【公开只读】接口基址。
-  # 这一层刻意与"写操作"分开：页面里只调用 /api/public/*，
-  # 匿名、只读、IP 掩码、独立限流，因此前端不含任何 Token。
-  # 换机器/换域名时只改这一处。
+  # 工作台（监测中心 / 主页实时动态）取数的【公开只读】接口基址。
+  # 页面里只调用 /api/public/* 与 /api/health：匿名、只读、IP 掩码、服务端 15s 缓存 + 20 次/分钟限流。
+  # 换机器/换域名时只改这一处（模板会把它写进 <meta name="wb-api">）。
   wbApiBase = "https://demo.xiaokeqing.cn"
 
-  DateFormat = "2006-01-02"
-  # 固定浅色，并且【关掉日夜切换】。
-  # 只有一套主题：维护两套意味着每个组件都要在两个底色下各自验证一次对比度，
-  # 而安全站点最不能出的问题就是"某个状态文字在深色下看不见"。
-  # 光设 light 还不够 —— 访客浏览器里可能残留旧的偏好（localStorage），
-  # 所以 workbench.css 里同时把 :root[data-theme="dark"] 也覆盖成浅色值。
-  defaultTheme = "light"
-  disableThemeToggle = true
+  # §1 欢迎区文案（主页门户版式）
+  heroTitle = "欢迎来到 xiaokeqing 的个人博客"
+  heroLead = "个人网络安全的学习与实践记录 —— 同时挂着我在真实运行的安全运营工作台：主机/网络告警、蜜罐战报、带护栏与审计的处置链路。"
 
-  # ---------- 文章页显示项 ----------
-  ShowReadingTime = true
-  ShowWordCount = true
-  ShowCodeCopyButtons = true
-  ShowPostNavLinks = true
-  ShowBreadCrumbs = true
-  ShowToc = true
-  TocOpen = false
-  UseHugoToc = true
-  # 关闭第三方分享按钮：不引入外部脚本，保持零第三方依赖
-  ShowShareButtons = false
-  # 评论后续用 Giscus 接入（基于 GitHub Discussions，无自建后端）
-  comments = false
+# ---------- 导航菜单（§2：就这 6 项、按此顺序与名称） ----------
+# url 用 /#/<route> 形式：点击只替换 #content，背景层与胶囊导航不动（不整页跳转）。
+# 名称与顺序是硬约束，模板按 weight 顺序渲染。
+[[menu.main]]
+  identifier = "home"
+  name = "主页"
+  url = "/#/home"
+  weight = 10
+[[menu.main]]
+  identifier = "notes"
+  name = "笔记"
+  url = "/#/notes"
+  weight = 20
+[[menu.main]]
+  identifier = "monitor"
+  name = "监测中心"
+  url = "/#/monitor/alerts"
+  weight = 30
+[[menu.main]]
+  identifier = "ai"
+  name = "AI 安全"
+  url = "/#/ai"
+  weight = 40
+[[menu.main]]
+  identifier = "range"
+  name = "攻防靶场"
+  url = "/#/range"
+  weight = 50
+[[menu.main]]
+  identifier = "about"
+  name = "关于"
+  url = "/#/about"
+  weight = 60
 
-  # 首页简介
-  [params.homeInfoParams]
-    Title = "知微安全实验室"
-    Content = """
-**知微** —— 取「见微知著」：从细微的异常里，看出真正的攻击。
-
-这里记录我在网络安全方向的实践：把 RAG 与多 Agent 落到安全运营场景、在公网环境里做加固与响应、以及一路踩过的坑。
-
-<div class="hero-cta">
-<a class="hero-btn is-primary" href="/demo/">在线 Demo</a>
-<a class="hero-btn" href="/labs/">试试靶场</a>
-<a class="hero-btn" href="/projects/">看项目</a>
-</div>
-"""
-
-  # 社交图标。注意：这里只能用 [[params.socialIcons]] 数组写法，
-  # 不能再写一行 [params.socialIcons]，否则 TOML 会报"表与数组表冲突"。
-  [[params.socialIcons]]
-    name = "github"
-    url = "https://github.com/xiaokeqing"
-  [[params.socialIcons]]
-    name = "rss"
-    url = "index.xml"
-
-# ---------- 导航菜单 ----------
-[menu]
-  # 顶栏 = 栏目切换器：logo 与头像在两端，导航项居中（不放右边）。
-  # 功能项用 /#xxx 锚点：点它【不跳页】，只在中栏换成对应栏目。
-  #
-  # 【六栏目口径 · 已定改版】主页 / 笔记 / 态势感知 / AI 安全 / 攻防靶场 / 关于
-  #   · 态势感知 ← 原「实时告警看板」，并新并入「处置审计」块（真实封禁留痕）
-  #   · AI 安全   ← 新增，放 AI 研判 5 态（含 rule-based 共 6 个取值）的口径映射
-  #   · 攻防靶场 ← 原「靶场」+ 原「战报评测」的蜜罐战报（靶场=公开模拟环境的战报）
-  # 纪律不变：顶栏只放现在已经能打开看的内容。
-  # 「项目」（/projects/）与「公开模拟靶场」（/labs/）不在顶栏里，改由
-  # 主页"内容模块"与「攻防靶场」栏目内链进入 —— 页面本身都保留、没有删。
-  [[menu.main]]
-    identifier = "home"
-    name = "主页"
-    url = "/#home"
-    weight = 5
-  [[menu.main]]
-    identifier = "notes"
-    name = "笔记"
-    url = "/#notes"
-    weight = 10
-  [[menu.main]]
-    identifier = "situ"
-    name = "态势感知"
-    url = "/#situ"
-    weight = 20
-  [[menu.main]]
-    identifier = "ai"
-    name = "AI 安全"
-    url = "/#ai"
-    weight = 30
-  [[menu.main]]
-    identifier = "range"
-    name = "攻防靶场"
-    url = "/#range"
-    weight = 40
-  [[menu.main]]
-    identifier = "about"
-    name = "关于"
-    url = "/about/"
-    weight = 70
+# ---------- 分页 ----------
+[pagination]
+  pagerSize = 10
 
 # ---------- Markdown 与代码高亮 ----------
 [markup]
@@ -136,14 +87,14 @@ hasCJKLanguage = true
     lineNos = false
     lineNumbersInTable = true
   [markup.goldmark.renderer]
-    # 允许文章内嵌原始 HTML。
-    # 做「交互式安全演示」时需要在 Markdown 里写 iframe / form 等标签。
-    # 本站内容全部由仓库自行维护、无用户投稿，因此风险可控。
+    # 允许文章内嵌原始 HTML（站内文章全部由仓库自行维护、无用户投稿，风险可控）。
     unsafe = true
 
 # ---------- 输出格式 ----------
+# home 额外输出 JSON：SPA 的笔记阅读/搜索索引（/index.json），
+# 由 layouts/index.json 生成，内容全部来自仓库里的 Markdown，不含第三方服务。
 [outputs]
-  home = ["HTML", "RSS"]
+  home = ["HTML", "RSS", "JSON"]
   section = ["HTML", "RSS"]
 
 [sitemap]

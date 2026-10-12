@@ -1,0 +1,72 @@
+{{/*
+  ④ AI 安全 —— 规格 §4④：红队评测 / AI 研判演示 / 知识库检索本期均未上线。
+  三张卡一律「规划中」且不可点击（不是死链，是刻意不可点）；不放任何示例结果、不放假分数。
+  另附一条命名纪律（来自规格原文）：质量评测达标才叫「智能研判」，否则命名为「日志富化助手」。
+*/}}
+<template id="tpl-ai">
+  <div class="xk-wrap xk-page">
+    <header class="xk-page__hd">
+      <h1 class="xk-page__title">AI 安全</h1>
+      <p class="xk-page__lead">AI 在安全运营里的三种用法：评测它、用它研判、拿它检索知识。本期都还没上线。</p>
+    </header>
+
+    <div class="xk-grid3">
+      <section class="xk-card xk-card--planned" aria-disabled="true">
+        <header class="xk-card__hd">
+          <h2 class="xk-card__title">红队评测</h2>
+          <span class="xk-tag xk-tag--off">未上线・规划中</span>
+        </header>
+        <p class="xk-card__lead">用成规模的攻击样本打 AI 研判链路，量出绕过率、误伤率与拒答率。</p>
+        <ul class="xk-meta">
+          <li><span>状态</span><b>基线待重跑</b></li>
+          <li><span>发布条件</span><b>镜像指纹 / 源码指纹 / health 三方对齐</b></li>
+        </ul>
+        <p class="xk-note">历史分数已作废（那批跑的是旧代码）。在能标注"结果产自哪个 commit"之前，这里不放任何数字。</p>
+      </section>
+
+      <section class="xk-card xk-card--planned" aria-disabled="true">
+        <header class="xk-card__hd">
+          <h2 class="xk-card__title">智能研判演示</h2>
+          <span class="xk-tag xk-tag--off">未上线・规划中</span>
+        </header>
+        <p class="xk-card__lead">公开一段真实告警，现场看 AI 给出研判结论与依据（含"不给结论"的降级态）。</p>
+        <ul class="xk-meta">
+          <li><span>公开端点</span><b>未开放</b></li>
+          <li><span>命名</span><b>评测达标前不叫「智能研判」</b></li>
+        </ul>
+        <p class="xk-note">"模型不可用"和"研判为安全"是两件事，演示页会把这个区别摆在最显眼的位置。</p>
+      </section>
+
+      <section class="xk-card xk-card--planned" aria-disabled="true">
+        <header class="xk-card__hd">
+          <h2 class="xk-card__title">知识库检索</h2>
+          <span class="xk-tag xk-tag--off">未上线・规划中</span>
+        </header>
+        <p class="xk-card__lead">对着文档向量做语义检索，把散落的处置经验串成可复用的依据。</p>
+        <ul class="xk-meta">
+          <li><span>向量库</span><b>运行中（仅内网）</b></li>
+          <li><span>公开检索</span><b>未开放</b></li>
+        </ul>
+        <p class="xk-note">文档向量数在「监测中心 · 系统状态」里如实显示。</p>
+      </section>
+    </div>
+
+    <section class="xk-card">
+      <header class="xk-card__hd"><h2 class="xk-card__title">研判状态口径（不是数据，是措辞纪律）</h2></header>
+      <table class="xk-table">
+        <thead>
+          <tr><th>state 取值</th><th>页面措辞</th><th>含义</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>model</code></td><td><span class="xk-state is-model">模型研判</span></td><td>模型给出了结论与依据</td></tr>
+          <tr><td><code>rule-based</code></td><td><span class="xk-state is-rule">规则解析</span></td><td>结论来自规则，模型不参与处置拍板</td></tr>
+          <tr><td><code>input-insufficient</code></td><td><span class="xk-state is-warn">依据不足，不做定性</span></td><td>信息量不够，明确不给结论</td></tr>
+          <tr><td><code>no-retrieval</code></td><td><span class="xk-state is-warn">未检索到依据，不给结论</span></td><td>检索为空，不用模型自由发挥</td></tr>
+          <tr><td><code>retrieval-failed</code></td><td><span class="xk-state is-bad">检索不可用，未生成</span></td><td>链路故障，不伪装成"安全"</td></tr>
+          <tr><td><code>model-failed</code></td><td><span class="xk-state is-bad">模型不可用，未生成</span></td><td>模型不可用，明确"未生成"</td></tr>
+        </tbody>
+      </table>
+      <p class="xk-note">表外的取值一律显示原始 <code>state</code> 字符串 + "未识别状态"，不猜它的含义。</p>
+    </section>
+  </div>
+</template>

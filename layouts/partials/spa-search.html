@@ -1,0 +1,26 @@
+{{/*
+  搜索浮层（Ctrl+K）
+  ---------------------------------------------------------------------------
+  规格 §2 要求导航右侧是「搜索框（Pagefind，只搜笔记，支持 Ctrl+K）」。
+  现状：本仓库没有 Pagefind（它是 Node 侧构建依赖，需 pnpm add pagefind + 构建后索引步骤），
+  而规格 §0 又硬性要求"零新增依赖"。两者冲突，处理方式：
+    · 这里实现同等的交互（Ctrl+K 唤起、只搜笔记、键盘上下 + 回车打开），
+      索引来自本仓库自己的 /index.json（Hugo 渲染，零依赖、零第三方请求）；
+    · 是否改用 Pagefind 由站主决策，交付说明里已列为待决策项。
+  索引只在第一次打开搜索时拉取（懒加载），不在首屏制造请求。
+*/}}
+<div class="xk-modal" id="xk-search" hidden>
+  <div class="xk-modal__mask" data-xk-search-close></div>
+  <div class="xk-modal__panel" role="dialog" aria-modal="true" aria-label="搜索笔记">
+    <div class="xk-modal__hd">
+      <svg class="xk-ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+        <path d="M12.8 12.8 L17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+      </svg>
+      <input id="xk-search-input" type="search" placeholder="搜索笔记标题 / 分类 / 正文关键词…" autocomplete="off" spellcheck="false">
+      <kbd>Esc</kbd>
+    </div>
+    <ul class="xk-modal__list" id="xk-search-list"></ul>
+    <p class="xk-modal__ft">只搜本仓库的笔记（Hugo 生成的 /index.json 本地索引，零第三方请求）</p>
+  </div>
+</div>

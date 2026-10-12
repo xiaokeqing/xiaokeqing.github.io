@@ -1,0 +1,25 @@
+{{/*
+  笔记索引（/index.json）—— SPA 的笔记阅读与 Ctrl+K 搜索都用它
+  ---------------------------------------------------------------------------
+  为什么不在浏览器里 fetch 每篇文章的 HTML：
+    · 点笔记要"换视图不跳页"，fetch HTML 会带来一次额外往返与解析；
+    · 索引里已经带了 Hugo 渲染好的正文与纯文本，第一次打开阅读页只发一个请求。
+  内容全部来自本仓库的 Markdown，不引入任何第三方搜索服务。
+*/}}
+{{- $notes := slice -}}
+{{- range $p := where site.RegularPages "Section" "posts" -}}
+  {{- $notes = $notes | append (dict
+      "slug" $p.File.BaseFileName
+      "title" $p.Title
+      "url" $p.RelPermalink
+      "date" ($p.Date.Format "2006-01-02")
+      "categories" ($p.Params.categories | default slice)
+      "tags" ($p.Params.tags | default slice)
+      "summary" ($p.Params.summary | default ($p.Summary | plainify))
+      "wordCount" $p.WordCount
+      "readingTime" $p.ReadingTime
+      "content" $p.Content
+      "text" ($p.Plain | truncate 4000)
+  ) -}}
+{{- end -}}
+{{- dict "generatedAt" (now.Format "2006-01-02 15:04:05") "count" (len $notes) "notes" $notes | jsonify -}}

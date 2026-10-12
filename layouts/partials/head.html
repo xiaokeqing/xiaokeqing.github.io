@@ -1,0 +1,57 @@
+{{/*
+  <head> 内容（站点自建，不依赖任何第三方主题/脚本/CDN）
+  ---------------------------------------------------------------------------
+  · 全站零第三方请求：字体只用系统字体栈，样式/脚本全部本地 resources 管道产出。
+  · ?wb_noblur=1 会在样式表生效前就打到 <html> 上：
+    软件渲染（虚拟机/无 GPU）下 backdrop-filter 会让页面卡死，
+    截图验证时带上这个参数即可关掉毛玻璃（见 assets/css/extended/site.css）。
+  · 同时清掉 PaperMod 时代残留的 localStorage 主题偏好 —— 本站固定浅色，
+    不允许访客浏览器里的旧偏好把页面翻成深色（规格 §0）。
+*/}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }} · xiaokeqing{{ end }}</title>
+<meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta name="keywords" content="{{ delimit site.Params.keywords `,` }}">
+<meta name="author" content="{{ site.Params.author }}">
+<meta name="color-scheme" content="light">
+{{ hugo.Generator }}
+
+{{/* 公开只读接口基址：页面里只调 /api/public/* 与 /api/health，不含任何 Token */}}
+<meta name="wb-api" content="{{ site.Params.wbApiBase | default "https://demo.xiaokeqing.cn" }}">
+
+{{/* §1 唯一允许的派生文件：favicon（从 static/images/bg.jpg 面部裁的 128 / 256 png） */}}
+<link rel="icon" type="image/png" sizes="128x128" href="/favicon-128.png">
+<link rel="apple-touch-icon" sizes="256x256" href="/favicon-256.png">
+
+{{/* 接口同域预连接：省一次 DNS/TLS 往返，不引入任何第三方资源 */}}
+<link rel="preconnect" href="{{ site.Params.wbApiBase | default "https://demo.xiaokeqing.cn" }}" crossorigin>
+
+{{ with .OutputFormats.Get "RSS" }}
+<link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }}">
+{{ end }}
+<link rel="canonical" href="{{ .Permalink }}">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }}{{ end }}">
+<meta property="og:description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta name="twitter:card" content="summary">
+
+<script>
+  /* 截图/软件渲染开关 + 固定浅色守卫。必须内联且早于样式表，避免闪一下深色。 */
+  (function () {
+    var d = document.documentElement;
+    if (/[?&]wb_noblur=1/.test(location.search)) d.setAttribute('data-wb-noblur', '1');
+    d.setAttribute('data-theme', 'light');
+    try {
+      localStorage.removeItem('pref-theme');
+      localStorage.removeItem('pref-theme-default');
+    } catch (e) { /* 隐私模式下 localStorage 可能抛错，忽略 */ }
+  })();
+</script>
+
+{{/* 样式：assets/css/extended/*.css 按文件名顺序拼接（chroma.css → site.css），压缩 + 指纹 */}}
+{{- $css := resources.Match "css/extended/*.css" | resources.Concat "css/site.css" | resources.Minify | resources.Fingerprint -}}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
