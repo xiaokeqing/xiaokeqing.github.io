@@ -1,0 +1,339 @@
+/* ============================================================================
+   知微安全实验室 · P2 可视化组件样式（浅色）
+   ----------------------------------------------------------------------------
+   与既有两份样式的分工不变：
+     workbench.css      —— 设计令牌 + 通用组件（卡片/徽标/按钮/hero/右栏统计行）
+     workbench-app.css  —— P1 工作台版式：KPI、分布条、趋势图、告警流、下钻
+     workbench-p2.css   —— 【本文件】P2 新增组件的版式：
+                           处置审计记录行、蜜罐事件时间线、AI 研判 state 标记、
+                           靶场三层列表、全局系统状态条，另补齐两处历史遗漏。
+
+   颜色语义与既有约定一致：绿只在表示"在线/正常"时出现；降级态用琥珀/红，
+   蓝灰用于中性信息 —— 避免"绿 = 好"与"绿 = 低危"打架。
+
+   【另补齐两处历史遗漏】（P1 代码里引用了、但从未定义过的变量/类）：
+     · --wb-maxw / --wb-shadow：workbench-app.css 用了，但 :root 里没有 → 补上，
+       这样 /alerts/ 与首页一样收在 1380 宽。
+     · .wb-board__bar / .wb-eyebrow：两个 partial 里的类名之前没有任何样式。
+   ========================================================================== */
+
+:root,
+:root[data-theme="dark"] {
+  --wb-maxw: 1380px;
+  --wb-shadow: 0 8px 24px rgba(30, 60, 110, .08);
+}
+
+/* ============================================================================
+   补齐：面板顶栏（徽标 + 同步时间 + 刷新按钮）
+   ========================================================================== */
+.wb-board__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-s3);
+  flex-wrap: wrap;
+  margin-bottom: var(--wb-s4);
+}
+
+.wb-board__bar .wb-sync { margin-left: auto; }
+
+.wb-eyebrow {
+  margin: 0 0 var(--wb-s2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--wb-accent);
+}
+
+/* ============================================================================
+   KPI：4 列变体（处置审计）与"不可用"小字
+   ========================================================================== */
+.wb-kpis--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.wb-col--main .wb-kpis--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ============================================================================
+   分布条：标签变长变体（账号/口令、来源 IP、客户端指纹）
+   既有 .wb-dist__row 的标签列只有 62px，装不下 "root / pineapple1"
+   ========================================================================== */
+.wb-dist--wide .wb-dist__row { grid-template-columns: minmax(96px, 150px) 1fr 40px; }
+.wb-dist--wide .wb-dist__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--wb-mono);
+  font-size: 11px;
+}
+
+/* ============================================================================
+   记录行（处置审计：封禁记录 / 审计流水）
+   桌面：一行一条记录，列宽固定；窄屏：每格自带标签（data-label）竖排。
+   ========================================================================== */
+.wb-rec { display: flex; flex-direction: column; }
+
+.wb-rec__row {
+  display: grid;
+  gap: var(--wb-s3);
+  align-items: center;
+  padding: 9px 0;
+  border-top: 1px solid var(--wb-line-soft);
+  font-size: 12px;
+  color: var(--wb-fg-2);
+  min-width: 0;
+}
+
+.wb-rec__row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.wb-rec--blocks .wb-rec__row { grid-template-columns: 74px 126px 62px 52px 100px 76px minmax(90px, 1fr); }
+.wb-rec--actions .wb-rec__row { grid-template-columns: 74px 100px 82px 116px 62px 62px minmax(0, 1fr); }
+
+.wb-rec__row--head {
+  border-top: 0;
+  padding-bottom: 6px;
+  font-size: 11px;
+  color: var(--wb-fg-3);
+  font-weight: 600;
+}
+
+.wb-rec__row--head > span { overflow: visible; }
+
+/* 出现最多的掩码来源：压一条极淡的蓝底，说明"这条记录是真实存在且可核对的" */
+.wb-rec--blocks .wb-rec__row.is-hot { background: #F5F9FF; }
+
+.wb-rec__ip {
+  font-family: var(--wb-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-fg);
+}
+
+.wb-rec__id { font-family: var(--wb-mono); }
+
+.wb-rec__act { color: var(--wb-fg); }
+
+.wb-rec__reason { color: var(--wb-fg-3); }
+
+/* ============================================================================
+   蜜罐事件时间线
+   ========================================================================== */
+.wb-tl { display: flex; flex-direction: column; }
+
+.wb-tl__row {
+  display: grid;
+  grid-template-columns: 74px 88px minmax(0, 1fr) 116px;
+  gap: var(--wb-s3);
+  align-items: center;
+  padding: 7px 0;
+  border-top: 1px solid var(--wb-line-soft);
+  font-size: 12px;
+}
+
+.wb-tl__row:first-child { border-top: 0; }
+
+.wb-tl__detail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--wb-fg);
+}
+
+.wb-tl__ip {
+  font-family: var(--wb-mono);
+  font-size: 11px;
+  color: var(--wb-fg-2);
+  text-align: right;
+}
+
+/* ============================================================================
+   "未接入"：如实说明某块数据不存在（命令时间线、磁盘水位）
+   ========================================================================== */
+.wb-na-block {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wb-s3);
+  padding: var(--wb-s4);
+  border: 1px dashed #CBDCEE;
+  border-radius: var(--wb-r-card);
+  background: #FAFCFF;
+}
+
+.wb-na-block__text { font-size: 13px; line-height: 1.8; color: var(--wb-fg-2); }
+
+.wb-na { color: var(--wb-fg-3) !important; font-weight: 500 !important; }
+
+/* ============================================================================
+   AI 研判 state 标记（措辞见 static/js/workbench.js 的 WB_STATE）
+   model        → 蓝（模型真的给出了研判）
+   rule-based   → 蓝灰（规则解析，模型不参与处置拍板）
+   依据/检索类降级 → 琥珀（没结论，但不是故障）
+   故障类降级     → 红（未生成）
+   unknown      → 虚线灰（不在口径表内，原样显示，不猜含义）
+   ========================================================================== */
+.wb-state {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--wb-line);
+  border-radius: var(--wb-r-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.wb-state--model   { color: var(--wb-accent); background: var(--wb-accent-bg); border-color: #D3E0FB; }
+.wb-state--rule-based { color: #3E6C93; background: #EFF5FA; border-color: #D2E2EF; }
+
+.wb-state--input-insufficient,
+.wb-state--no-retrieval { color: #B54708; background: #FFFAEB; border-color: #FEDF89; }
+
+.wb-state--retrieval-failed,
+.wb-state--model-failed { color: #B42318; background: #FEF3F2; border-color: #FECDCA; }
+
+.wb-state--unknown { color: var(--wb-fg-2); background: #F7FAFE; border-color: #CBDCEE; border-style: dashed; }
+
+/* ============================================================================
+   口径映射表（AI 安全栏目）
+   PaperMod 的 reset 把 table 变成 display:block + 横向滚动，这里收回表格布局
+   ========================================================================== */
+.wb-table {
+  display: table;
+  width: 100%;
+  margin: var(--wb-s3) 0 0;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 13px;
+}
+
+.wb-table thead th {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--wb-line);
+  color: var(--wb-fg-3);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.wb-table tbody td {
+  padding: 10px;
+  border-bottom: 1px solid var(--wb-line-soft);
+  vertical-align: middle;
+  color: var(--wb-fg);
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.wb-table tbody tr:last-child td { border-bottom: 0; }
+
+.wb-table code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--wb-line-soft);
+  color: var(--wb-fg);
+  font-family: var(--wb-mono);
+  font-size: 12px;
+}
+
+.wb-table__note { color: var(--wb-fg-2); font-size: 12px; }
+
+/* ============================================================================
+   靶场三层列表：标题列宽一点，第三列放徽标
+   ========================================================================== */
+.wb-layers > li > b { min-width: 118px; }
+.wb-layers > li { align-items: flex-start; }
+
+/* ============================================================================
+   全局系统状态条（非首页页面 · 由 baseof.html 注入）
+   与右栏卡片共用 data-wb-sys 契约与同一个渲染函数，杜绝两处数字不一致
+   ========================================================================== */
+.wb-sys-global { margin: var(--wb-s3) 0 var(--wb-s4); }
+
+.wb-sys-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--wb-s2) var(--wb-s5);
+  padding: 10px var(--wb-s4);
+  border: 1px solid var(--wb-line);
+  border-radius: var(--wb-r-card);
+  background: var(--wb-card);
+  box-shadow: var(--wb-shadow);
+  font-size: 12px;
+  color: var(--wb-fg-2);
+}
+
+.wb-sys-strip__label {
+  font-weight: 700;
+  color: var(--wb-fg);
+  padding-right: var(--wb-s3);
+  border-right: 1px solid var(--wb-line);
+}
+
+.wb-sys-strip__item { display: inline-flex; align-items: center; gap: 6px; }
+
+.wb-sys-strip__item b {
+  color: var(--wb-fg);
+  font-family: var(--wb-mono);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.wb-sys-strip__na b { color: var(--wb-fg-3); font-weight: 500; }
+
+/* ============================================================================
+   响应式
+   ========================================================================== */
+@media (max-width: 1180px) {
+  .wb-kpis--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  /* 审计记录：表头隐藏，每格自带标签竖排（窄屏不横向滚动） */
+  .wb-rec__row--head { display: none; }
+
+  /* 【移动端修正】workbench-app.css 里 `.wb-col--main .wb-panels{repeat(2)}`
+     的选择器权重比它在 @media 里的单列覆盖更高，导致窄屏下中栏仍是两列、
+     并撑出横向滚动条（实测 430px 视口右侧被切掉）。
+     中栏在窄屏已经占满整宽，这里按同权重覆盖回单列。 */
+  .wb-col--main .wb-panels { grid-template-columns: minmax(0, 1fr); }
+  .wb-col--main .wb-panel--wide { grid-column: span 1; }
+  .wb-col--main .wb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wb-col--main .wb-kpis--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wb-col--main .wb-row > summary { min-width: 0; }
+  .wb-col--main .wb-row__title { white-space: normal; }
+
+  .wb-rec--blocks .wb-rec__row,
+  .wb-rec--actions .wb-rec__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: var(--wb-s3) 0;
+  }
+
+  .wb-rec__row > span {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: var(--wb-s2);
+    white-space: normal;
+  }
+
+  .wb-rec__row > span::before {
+    content: attr(data-label);
+    color: var(--wb-fg-3);
+    font-size: 11px;
+  }
+
+  .wb-tl__row { grid-template-columns: 74px minmax(0, 1fr); }
+  .wb-tl__detail { white-space: normal; }
+  .wb-tl__ip { grid-column: 2; text-align: left; }
+
+  .wb-dist--wide .wb-dist__row { grid-template-columns: minmax(84px, 120px) 1fr 34px; }
+
+  .wb-table thead th, .wb-table tbody td { padding: 8px 6px; font-size: 12px; }
+}
+
+@media (max-width: 560px) {
+  .wb-sys-strip { gap: 6px var(--wb-s3); }
+  .wb-sys-strip__label { flex: 1 1 100%; border-right: 0; padding-right: 0; }
+}

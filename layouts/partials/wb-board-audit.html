@@ -1,0 +1,59 @@
+{{/*
+  处置审计 · 封禁留痕（可复用面板）
+  ----------------------------------------------------------------------------
+  数据源：GET {wbApiBase}/api/public/audit（公开只读、匿名、IP 已掩码）
+
+  真实字段（2026-10-12 curl 实测，逐字）：
+    data.generatedAt / data.cacheSeconds / data.readOnly=true
+    data.summary   : blockTotal, blockActive, blockedByGuard, executedActions, note
+    data.blocks[]  : id, ip, durationMinutes, source, actor, auditId,
+                     createdAt, expiresAt, unblocked, unblockedAt, unblockMode
+    data.actions[] : id, time, actor, action, target, reason, riskLevel, mode, success
+
+  模板里不写死任何数字（骨架屏除外），全部由 static/js/workbench.js 填充。
+  首页「态势感知」栏目与 /alerts/ 独立页共用这一份标记 —— 同一份数据在两处
+  显示不同数字是最容易失去信任的一类 bug，所以不重复实现。
+*/}}
+
+<div class="wb-board" id="wb-board-audit">
+
+  <div class="wb-board__bar">
+    <span class="wb-badge wb-badge--muted" id="wb-audit-badge">连接中</span>
+    <span class="wb-sync">同步于 <b id="wb-audit-synced">—</b></span>
+  </div>
+
+  <div class="wb-notice" id="wb-audit-notice" hidden></div>
+
+  <section class="wb-panel">
+    <h3 class="wb-panel__title">处置摘要 · 来自处置审计留痕文件</h3>
+    <div class="wb-kpis wb-kpis--4" id="wb-audit-kpis" aria-busy="true">
+      <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+      <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+      <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+      <div class="wb-kpi"><span class="wb-skeleton wb-skeleton--sm"></span><span class="wb-skeleton wb-skeleton--lg"></span></div>
+    </div>
+    <p class="wb-hint" id="wb-audit-note"></p>
+  </section>
+
+  <section class="wb-panel">
+    <h3 class="wb-panel__title">封禁记录 <span class="wb-hint" id="wb-audit-blocks-note"></span></h3>
+    <div class="wb-rec wb-rec--blocks" id="wb-audit-blocks">
+      <span class="wb-skeleton wb-skeleton--bar"></span>
+      <span class="wb-skeleton wb-skeleton--bar"></span>
+    </div>
+  </section>
+
+  <section class="wb-panel">
+    <h3 class="wb-panel__title">审计流水 <span class="wb-hint" id="wb-audit-actions-note"></span></h3>
+    <div class="wb-rec wb-rec--actions" id="wb-audit-actions">
+      <span class="wb-skeleton wb-skeleton--bar"></span>
+      <span class="wb-skeleton wb-skeleton--bar"></span>
+    </div>
+  </section>
+
+  <p class="wb-hint">
+    本接口只读（readOnly），且不含原始 detail、内网地址与完整 IP；IP 已掩码到网段，
+    页面上显示的就是后端返回的脱敏值，前端不做任何还原尝试。
+  </p>
+
+</div>

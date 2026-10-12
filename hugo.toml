@@ -88,7 +88,14 @@ hasCJKLanguage = true
 [menu]
   # 顶栏 = 栏目切换器：logo 与头像在两端，导航项居中（不放右边）。
   # 功能项用 /#xxx 锚点：点它【不跳页】，只在中栏换成对应栏目。
-  # 「战报评测」= 蜜罐战报 + 红队评测 合并（都是效果数据，体量都不大）。
+  #
+  # 【六栏目口径 · 已定改版】主页 / 笔记 / 态势感知 / AI 安全 / 攻防靶场 / 关于
+  #   · 态势感知 ← 原「实时告警看板」，并新并入「处置审计」块（真实封禁留痕）
+  #   · AI 安全   ← 新增，放 AI 研判 5 态（含 rule-based 共 6 个取值）的口径映射
+  #   · 攻防靶场 ← 原「靶场」+ 原「战报评测」的蜜罐战报（靶场=公开模拟环境的战报）
+  # 纪律不变：顶栏只放现在已经能打开看的内容。
+  # 「项目」（/projects/）与「公开模拟靶场」（/labs/）不在顶栏里，改由
+  # 主页"内容模块"与「攻防靶场」栏目内链进入 —— 页面本身都保留、没有删。
   [[menu.main]]
     identifier = "home"
     name = "主页"
@@ -100,27 +107,20 @@ hasCJKLanguage = true
     url = "/#notes"
     weight = 10
   [[menu.main]]
-    identifier = "alerts"
-    name = "实时告警"
-    url = "/#alerts"
+    identifier = "situ"
+    name = "态势感知"
+    url = "/#situ"
     weight = 20
   [[menu.main]]
-    identifier = "report"
-    name = "战报评测"
-    url = "/#report"
+    identifier = "ai"
+    name = "AI 安全"
+    url = "/#ai"
     weight = 30
-  # 刻意【不放】「知识库」：它还没成熟，只写在主页"内容模块"里标"规划中"。
-  # 导航纪律：顶栏只放现在已经能打开看的内容，避免重演"有入口没页面"。
   [[menu.main]]
-    identifier = "labs"
-    name = "靶场"
-    url = "/labs/"
-    weight = 50
-  [[menu.main]]
-    identifier = "projects"
-    name = "项目"
-    url = "/projects/"
-    weight = 60
+    identifier = "range"
+    name = "攻防靶场"
+    url = "/#range"
+    weight = 40
   [[menu.main]]
     identifier = "about"
     name = "关于"

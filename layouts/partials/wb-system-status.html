@@ -1,0 +1,63 @@
+{{/*
+  系统状态（可复用 · 两个变体）
+  ----------------------------------------------------------------------------
+  数据源：GET {wbApiBase}/api/health（注意：它【不在】/api/public/* 前缀下，
+  而且返回体是**扁平对象**，没有 {code,message,data} 信封 —— 所以 workbench.js
+  里对它单独用 apiRaw()，不能套用 api()）。
+
+  真实字段（2026-10-12 curl 实测，逐字）：
+      application      "SecAgent"
+      buildTime        "unknown"
+      sourceSha        "61dfa9d"       → 源码指纹
+      documentVectors  318             → 文档向量数
+      buildSha         "6203642"       → 产物（声称）版本指纹
+      artifactMd5      "0d635ec8..."   → 镜像内 jar MD5（最硬）
+      fingerprint      "buildSha=…｜sourceSha=…｜artifactMd5=…"（字段说明文案）
+      vectorStore      "memory"
+      uptimeMs         387406
+      status           "ok"
+      logsMockEnabled / alertsMockEnabled  true/false
+
+  【没接入的字段就直说】
+  接口【没有】服务器 2 磁盘水位（disk/watermark）字段 —— 页面上写死"未接入"，
+  不给假数字，也不用别处的数字凑一个看起来完整的表。
+
+  两个变体：
+      card  —— 首页右栏的卡片（默认）
+      strip —— 其余页面的全局细条（由 baseof.html 注入）
+  两者共用 data-wb-sys="…" 契约，渲染函数只有一个，杜绝两处数字不一致。
+*/}}
+
+{{- $variant := "card" -}}
+{{- if reflect.IsMap . -}}{{ $variant = .variant | default "card" }}{{- end -}}
+
+{{- if eq $variant "strip" -}}
+<div class="wb-sys-strip" id="wb-sys-strip" hidden>
+  <span class="wb-sys-strip__label">系统状态</span>
+  <span class="wb-sys-strip__item">产物指纹 <b data-wb-sys="build">—</b></span>
+  <span class="wb-sys-strip__item">源码指纹 <b data-wb-sys="source">—</b></span>
+  <span class="wb-sys-strip__item">镜像 MD5 <b data-wb-sys="md5">—</b></span>
+  <span class="wb-sys-strip__item">文档向量 <b data-wb-sys="vectors">—</b></span>
+  <span class="wb-sys-strip__item">服务 <span class="wb-badge wb-badge--muted" data-wb-sys="status">—</span></span>
+  <span class="wb-sys-strip__item wb-sys-strip__na">磁盘水位 <b data-wb-sys="disk">未接入</b></span>
+</div>
+{{- else -}}
+<section class="wb-card" id="wb-sys-card">
+  <h3 class="wb-card__title wb-card__title--bar">系统状态</h3>
+  <ul class="wb-stats" style="margin-top:8px">
+    <li><span>产物指纹 buildSha</span><b data-wb-sys="build">—</b></li>
+    <li><span>源码指纹 sourceSha</span><b data-wb-sys="source">—</b></li>
+    <li><span>镜像 MD5 artifactMd5</span><b data-wb-sys="md5" title="镜像内 jar 的 MD5，三个指纹里最硬的一个">—</b></li>
+    <li><span>文档向量</span><b data-wb-sys="vectors">—</b></li>
+    <li><span>向量库</span><b data-wb-sys="store">—</b></li>
+    <li><span>服务状态</span><span class="wb-badge wb-badge--muted" data-wb-sys="status">—</span></li>
+    <li><span>运行时长</span><b data-wb-sys="uptime">—</b></li>
+    <li><span>告警窗口</span><b id="wb-window">—</b></li>
+    <li title="接口没有返回这个字段"><span>磁盘水位</span><b class="wb-na" data-wb-sys="disk">未接入</b></li>
+  </ul>
+  <p class="wb-hint" style="margin:8px 0 0">
+    指纹口径：buildSha=声称版本（环境变量）｜sourceSha=服务器源码｜artifactMd5=镜像内 jar MD5（最硬）。
+    磁盘水位接口未提供，如实标"未接入"。
+  </p>
+</section>
+{{- end -}}

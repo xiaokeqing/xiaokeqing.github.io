@@ -62,6 +62,25 @@
     <main class="main">
         {{- block "main" . }}{{ end }}
     </main>
+
+    {{/*
+      全局"系统状态"条（P2）。
+      ----------------------------------------------------------------------------
+      右栏的「系统状态」卡只在三栏工作台（首页）里出现；其余页面（/alerts/、
+      /about/、/labs/、/projects/、文章页）目前仍是单栏阅读版式（三栏化属后置项），
+      所以这里给它们补一条同样内容的**全局**细条 —— 保证"三个指纹 + 文档向量数"
+      在所有页面上都能看到，且与右栏卡片共用同一份 DOM 契约（data-wb-sys 属性）
+      和同一个渲染函数，不会出现两处数字不一致。
+
+      首页不重复渲染（它走右栏卡片）：data-wb-sys 的宿主由 JS 统一填充。
+      接口未提供的字段（如服务器磁盘水位）一律显示"未接入"，不编造。
+    */}}
+    {{ if ne .Kind "home" }}
+    <div class="wb-sys-global">
+        {{ partial "wb-system-status.html" (dict "variant" "strip") }}
+    </div>
+    {{ end }}
+
     {{ partialCached "footer.html" . .Layout .Kind (.Param "hideFooter") (.Param "ShowCodeCopyButtons") -}}
 
     {{/*
