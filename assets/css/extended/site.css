@@ -18,8 +18,10 @@
      这一条是站主对规格 §3 的显式覆盖，其余令牌仍与规格一致。 */
   --xk-page: #F8FBFF;
 
-  /* 追加要求 ④：卡片「薄、透、干净」——白度从 .72 降到 .66，配合更薄的遮罩。 */
-  --xk-card: rgba(255, 255, 255, .66);
+  /* 站主第七轮 ④：卡片再透一点（.66 → .48），让背景透出来但不糊；
+     描边换成 1px 白色高光，标题加极淡白阴影兜住可读性（正文对比度实测见交付报告） */
+  --xk-card: rgba(255, 255, 255, .48);
+  --xk-card-line: rgba(255, 255, 255, .62);
   --xk-line: rgba(15, 42, 80, .06);
   --xk-line-2: rgba(15, 42, 80, .12);
   /* 阴影减重：原来 0 8px 30px/.08 偏"厚重灰白"，压到 0 6px 22px/.06。 */
@@ -27,12 +29,15 @@
 
   --xk-blue: #2F7AEF;
   --xk-blue-soft: rgba(47, 122, 239, .10);
+  /* 站主第七轮 ④：卡片白度降到 .48 之后，蓝色【文字链接】用主蓝实测只有 2.79:1，
+     所以文字链接单独用深一档的蓝；主蓝继续用于按钮/胶囊这类"色块"（白字压在上面对比度另算）。 */
+  --xk-link: #1550A8;
   --xk-title: #122236;
   --xk-text: #46586C;
   /* 追加要求 ④「文字对比度仍达标」：规格给的次要色 #8A99AB 在白底上只有 2.8:1，
      遮罩调薄后更糟（实测 2.84:1）。这里压深到 #5B6B7F —— 白底 5.4:1、卡片上实测 4.6~5.3:1，
      色相不变（仍是同一支蓝灰），只是把亮度降下来。这是对规格 §3 的第二处显式偏离。 */
-  --xk-muted: #5B6B7F;
+  --xk-muted: #4F5F73;
 
   --xk-green: #16A34A;
   --xk-red: #EF4444;
@@ -106,7 +111,7 @@ h1, h2, h3, h4, h5 { margin: 0; color: var(--xk-title); font-weight: 600; line-h
 p { margin: 0; }
 ul, ol { margin: 0; padding: 0; list-style: none; }
 img { max-width: 100%; height: auto; display: block; }
-a { color: var(--xk-blue); text-decoration: none; }
+a { color: var(--xk-link); text-decoration: none; }
 a:hover { text-decoration: underline; }
 table { border-collapse: collapse; width: 100%; }
 button, input, textarea { font: inherit; color: inherit; }
@@ -382,34 +387,29 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 }
 .xk-footer__in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .xk-footer__in a { color: var(--xk-muted); }
-.xk-footer__in a:hover { color: var(--xk-blue); }
+.xk-footer__in a:hover { color: var(--xk-link); }
 .xk-footer__sep { color: rgba(138, 153, 171, .6); }
 
 /* ---------------------------------------------------------------------------
    6. 门户版式（主页）：欢迎区 + 三栏
    ---------------------------------------------------------------------------
-   站主第五轮追加：欢迎区"调整位置"——
-     · 不贴屏幕左上角：跟正文一样走 .xk-wrap（左边缘与下面"实时拦截动态"对齐），顶部留 28px
-     · 文字块限宽 640px（站主要求 560–680），不让长句横穿人物脸部
-     · 三行间距：小标签→主标题 6px（小）、主标题→介绍 16px（略大）
-     · 整块垂直居中偏上（justify-content:center + 底部 28px 让位）
-     · 两个按钮已删（站主要求"也去掉"），.xk-hero__cta 那条 CSS 一并删掉
+   站主第七轮 ①：欢迎区压扁，别把三栏挤下去 ——
+     · 顶部呼吸 14px、底部 12px（与三栏的间距就是这 12px）
+     · 小标签 + 主标题 + 一句话介绍（white-space:nowrap 强制一行），整块高度 ~137px（≤140）
+     · 去掉 min-height / 垂直居中：高度完全跟着内容走，不留空白占位
+   站主第五轮保留项：文字块限宽 640px、左边缘与下面"实时拦截动态"对齐；
    【一行切换水平位置】改下面这两个令牌即可，不用动结构：
      靠左（当前）  --xk-hero-align: flex-start
      居中          --xk-hero-align: center
      靠右          --xk-hero-align: flex-end
      微调像素      --xk-hero-shift: 0px  → 正数向右（例如 40px）
    --------------------------------------------------------------------------- */
-.xk-hero { padding: 18px 0 26px; }
+.xk-hero { padding: 8px 0 12px; }
 .xk-hero__in {
-  min-height: 176px;
   display: flex;
   flex-direction: column;
-  justify-content: center;                  /* 三行整块：垂直居中 */
+  justify-content: flex-start;
   align-items: var(--xk-hero-align);        /* 水平位置：一行令牌切换 */
-  /* 上下留白不对称（上 18 / 下 26）：整块在欢迎区里"居中偏上"，
-     同时小标签离上面那行搜索框只有 ~26px，不会留出空白占位 */
-  padding-bottom: 26px;
 }
 .xk-hero__text {
   width: 100%;
@@ -419,7 +419,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   flex-direction: column;
 }
 .xk-hero__eyebrow {
-  margin: 0 0 6px;                          /* 小标签 → 主标题：间距小 */
+  margin: 0 0 5px;                          /* 小标签 → 主标题：间距小 */
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .14em;
@@ -433,15 +433,41 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   text-shadow: 0 1px 2px rgba(255, 255, 255, .92), 0 0 22px rgba(255, 255, 255, .72);
 }
 .xk-hero__lead {
-  margin: 16px 0 0;                         /* 主标题 → 介绍文字：间距略大 */
+  margin: 12px 0 0;                         /* 主标题 → 介绍文字：间距略大 */
   font-size: 15.5px;
   color: #2B3E55;
   text-shadow: 0 1px 2px rgba(255, 255, 255, .9), 0 0 16px rgba(255, 255, 255, .6);
+  /* 一句话介绍：强制一行；真放不下就省略号，不换行、不把欢迎区抬高 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .xk-portal { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; padding-bottom: 44px; }
-/* 主页三栏（站主第五轮 ①）：左=实时拦截动态窄列 320px ｜ 中=功能导览（主视觉）｜ 右=最新笔记/数据来源 300px */
-.xk-portal--home { grid-template-columns: 320px minmax(0, 1fr) 300px; }
+/* 主页三栏（站主第五轮 ① / 第七轮 ①③）：左=实时拦截动态窄列 320px ｜ 中=功能导览 ｜ 右=最新笔记/数据来源 300px。
+   第七轮 ③：主页一屏固定 —— 三栏各自限高 + 内部滚动，页面本身不出现纵向滚动条。
+   限高 = 视口高 −（上面那一行搜索 50 + 正文上边距 6 + 欢迎区 ~137 + 页脚 ~62 + 余量）。
+   这里的 258px 是实测出来的"顶部区域 + 页脚"占位，改这几个值时同步调它即可。 */
+.xk-portal--home {
+  grid-template-columns: 320px minmax(0, 1fr) 300px;
+  padding-bottom: 8px;
+  align-items: start;
+}
+.xk-portal--home > * {
+  max-height: calc(100vh - 258px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 细滚动条（Firefox / Chromium 两套写法） */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 42, 80, .22) transparent;
+}
+.xk-portal--home > *::-webkit-scrollbar { width: 6px; height: 6px; }
+.xk-portal--home > *::-webkit-scrollbar-track { background: transparent; }
+.xk-portal--home > *::-webkit-scrollbar-thumb { background: rgba(15, 42, 80, .20); border-radius: 3px; }
+.xk-portal--home > *::-webkit-scrollbar-thumb:hover { background: rgba(15, 42, 80, .32); }
+/* 第七轮 ①：三栏卡片内边距收紧（上下 10–12px） */
+.xk-portal--home .xk-card { padding: 11px 16px 12px; }
+.xk-portal--home .xk-card__hd { margin-bottom: 8px; }
 .xk-portal__main, .xk-work__main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .xk-portal__side, .xk-work__side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .xk-portal__live { min-width: 0; }
@@ -455,7 +481,8 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
    --------------------------------------------------------------------------- */
 .xk-card {
   padding: 18px 20px;
-  border: 1px solid var(--xk-line);
+  /* 第七轮 ④：描边改成 1px 白色高光（比原来的浅蓝灰线更"玻璃"），底更透（--xk-card .48） */
+  border: 1px solid var(--xk-card-line);
   border-radius: var(--r-card);
   background: var(--xk-card);
   backdrop-filter: var(--xk-blur);
@@ -464,11 +491,18 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 }
 .xk-card + .xk-card { margin-top: 0; }
 .xk-card--tight { padding: 14px 16px; }
-.xk-card--off { border-style: dashed; background: rgba(255, 255, 255, .58); }
+.xk-card--off { border-style: dashed; background: rgba(255, 255, 255, .44); }
 .xk-card--planned { opacity: .68; }
 .xk-card__hd { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .xk-card__hd .xk-sync, .xk-card__hd .xk-hint { margin-left: auto; }
-.xk-card__title { font-size: 15px; display: flex; align-items: center; gap: 8px; }
+/* 卡片标题：极淡白阴影 —— 卡片变透之后靠它兜住标题可读性（不改变字色层次） */
+.xk-card__title {
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, .6);
+}
 .xk-card__lead { margin: 0 0 12px; font-size: 13.5px; color: var(--xk-text); }
 .xk-card__ft { display: flex; gap: 16px; margin-top: 12px; }
 .xk-sub { font-size: 13px; margin-bottom: 8px; color: var(--xk-title); }
@@ -480,7 +514,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-mono { font-family: var(--xk-mono); }
 .xk-sub--tight { margin-bottom: 6px; }
 
-.xk-link { color: var(--xk-blue); }
+.xk-link { color: var(--xk-link); }
 .xk-link--plain { color: inherit; }
 
 .xk-btn {
@@ -643,26 +677,28 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-feed__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--xk-title); }
 .xk-feed__time { color: var(--xk-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 
-/* 功能导览（第五轮 ①）：从"两列小卡"改成"逐模块一行"——名字 + 具体说明 + 进入 →。
-   一行比一张卡能放的字多，主视觉留给说明文字。 */
+/* 功能导览（第五轮 ① / 第七轮 ②）：逐模块一行 —— 名字 + 一两句简单介绍（≤45 字）+ 进入 →。
+   行高与内边距都收紧，5 行在一屏里放得下。 */
 .xk-mod { display: flex; flex-direction: column; }
 .xk-mod > li + li { border-top: 1px solid var(--xk-line); }
 .xk-mod__row {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: baseline;
-  padding: 12px 10px;
-  border-radius: 12px;
+  grid-template-columns: 80px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 8px;
+  border-radius: 10px;
   text-decoration: none;
   color: inherit;
   transition: background-color .16s ease;
 }
 .xk-mod__row:hover { text-decoration: none; background: rgba(255, 255, 255, .42); }
 .xk-mod__name { font-size: 14.5px; font-weight: 600; color: var(--xk-title); }
-.xk-mod__desc { font-size: 12.5px; line-height: 1.7; color: var(--xk-text); }
+/* 每条最多两句、≤45 字：一行放得下，行高收紧 */
+.xk-mod__desc { font-size: 12.5px; line-height: 1.5; color: var(--xk-text); }
 .xk-mod__desc b { color: var(--xk-title); font-weight: 600; }
-.xk-mod__go { font-size: 12px; color: var(--xk-blue); white-space: nowrap; }
+.xk-mod__go { font-size: 12px; color: var(--xk-link); white-space: nowrap; }
+.xk-mod__note { margin-top: 8px; font-size: 11px; line-height: 1.5; }
 
 /* ---------------------------------------------------------------------------
    9. 笔记列表
@@ -704,8 +740,8 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   text-decoration: none;
   line-height: 1.5;
 }
-.xk-toc a:hover { color: var(--xk-blue); text-decoration: none; }
-.xk-toc a.is-on { color: var(--xk-blue); border-left-color: var(--xk-blue); font-weight: 600; }
+.xk-toc a:hover { color: var(--xk-link); text-decoration: none; }
+.xk-toc a.is-on { color: var(--xk-link); border-left-color: var(--xk-blue); font-weight: 600; }
 .xk-toc a.is-l3 { padding-left: 26px; font-size: 12px; color: var(--xk-muted); }
 
 .xk-read__main {
@@ -750,7 +786,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   transition: opacity .16s ease;
 }
 .xk-tab:hover { color: var(--xk-title); }
-.xk-tab.is-on { background: #fff; color: var(--xk-blue); font-weight: 600; box-shadow: 0 2px 8px rgba(31, 78, 140, .10); }
+.xk-tab.is-on { background: #fff; color: var(--xk-link); font-weight: 600; box-shadow: 0 2px 8px rgba(31, 78, 140, .10); }
 .xk-pane { display: none; }
 .xk-pane.is-on { display: block; }
 
@@ -1047,7 +1083,6 @@ html[data-wb-noblur="1"] .xk-modal__mask { backdrop-filter: none; -webkit-backdr
 /* 追加要求 ④ 之后，这里只做【很小的】白度补偿：
    老版本直接把卡片刷成 rgba(255,255,255,.93)，而验收截图必须带 ?wb_noblur=1，
    那样截出来就完全看不到"薄、透"了 —— 所以补偿压到刚够读字的程度。 */
-html[data-wb-noblur="1"] .xk-card { background: rgba(255, 255, 255, .74); }
 html[data-wb-noblur="1"] .xk-read__main { background: rgba(255, 255, 255, .84); }
 html[data-wb-noblur="1"] .xk-tabs { background: rgba(255, 255, 255, .60); }
 html[data-wb-noblur="1"] .xk-searchbtn { background: rgba(255, 255, 255, .68); }

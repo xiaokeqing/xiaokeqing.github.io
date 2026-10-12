@@ -51,45 +51,35 @@
         <li>
           <a class="xk-mod__row" href="/#/monitor/alerts" data-xk-route>
             <span class="xk-mod__name">监测中心</span>
-            <span class="xk-mod__desc">
-              四个子 tab 都在同一页里切，数据来自公开只读端点、源 IP 已掩码：<b>实时告警</b>（窗口内聚合条数 / 高危数 / 去重来源 IP / 去重规则，级别与来源分布、24 小时原始事件趋势、可按级别过滤并点开下钻的告警流）；<b>蜜罐战报</b>（尝试的账号口令 Top、来源 IP、客户端指纹、事件时间线；命令时间线未接入就如实标未接入）；<b>处置审计</b>（封禁留痕含生效/解封与 REAL/MOCK 链路、处置流水含被护栏拦下的动作）；<b>系统状态</b>（镜像 / 源码 / health 三处指纹核对、运行时长与文档向量数；磁盘水位未接入）。
-            </span>
+            <span class="xk-mod__desc">主机与网络告警、蜜罐战报、处置审计、系统状态四个子页。</span>
             <span class="xk-mod__go">进入 →</span>
           </a>
         </li>
         <li>
           <a class="xk-mod__row" href="/#/notes" data-xk-route>
             <span class="xk-mod__name">笔记</span>
-            <span class="xk-mod__desc">
-              学习与实践记录，共 {{ len (where site.RegularPages "Section" "posts") }} 篇。按分类筛（渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查；没有内容的分类标「规划中」，不拿示例文章凑数）；点开是左目录（滚动高亮）、中正文（代码块 + 一键复制）、右上下篇与字数/阅读时间的三栏阅读页；正文就是仓库里的 Markdown，公开站只读。
-            </span>
+            <span class="xk-mod__desc">学习与实践记录，带目录的三栏阅读。</span>
             <span class="xk-mod__go">进入 →</span>
           </a>
         </li>
         <li>
           <a class="xk-mod__row" href="/#/ai" data-xk-route>
             <span class="xk-mod__name">AI 安全</span>
-            <span class="xk-mod__desc">
-              两个真打后端的公开端点：<b>知识库问答</b>（POST /api/public/ask，问题 ≤600 字、最多等 20 秒；返回答案正文、状态措辞、引用片段与可信度、剩余额度，模型没生成就写明原因）与<b>知识库检索</b>（GET /api/public/kb，直接看命中的原文片段与 rule.allowedRoots 检索范围）。只读；限流逐 IP 每分钟 6 次、同一来源并发 1。
-            </span>
+            <span class="xk-mod__desc">公开问答与知识库检索，直连真实后端。</span>
             <span class="xk-mod__go">进入 →</span>
           </a>
         </li>
         <li>
           <a class="xk-mod__row" href="/#/range" data-xk-route>
             <span class="xk-mod__name">攻防靶场</span>
-            <span class="xk-mod__desc">
-              只留两个真的把输入送进我方后端检测组件的互动：<b>试着攻击我</b>（提交一段输入，返回提示注入防护 + 敏感信息扫描每项的判定、证据、命中规则与动作）与<b>提示注入演示</b>（点一条常见套路，看 PromptInjectionGuard 的命中情况）。只做检测，不执行、不处置；公网不放真实漏洞应用。
-            </span>
+            <span class="xk-mod__desc">真调后端检测组件的互动演示。</span>
             <span class="xk-mod__go">进入 →</span>
           </a>
         </li>
         <li>
           <a class="xk-mod__row" href="/#/about" data-xk-route>
             <span class="xk-mod__name">关于</span>
-            <span class="xk-mod__desc">
-              个人介绍、SecAgent 这个项目的说明、架构取舍与踩过的坑、在线 Demo 入口；右栏还有「各栏目在做什么」与站点事实（技术栈、依赖、数据来源）。
-            </span>
+            <span class="xk-mod__desc">项目说明、架构取舍与个人介绍。</span>
             <span class="xk-mod__go">进入 →</span>
           </a>
         </li>
