@@ -18,13 +18,17 @@
      这一条是站主对规格 §3 的显式覆盖，其余令牌仍与规格一致。 */
   --xk-page: #F8FBFF;
 
-  /* 站主第九轮 ②「玻璃质感配方」（原文照做，覆盖第七轮的 .48 弱化值）：
-       大卡片 background: rgba(255,255,255,.58) + backdrop-filter: blur(20px) saturate(1.15)
-       + 边框 1px rgba(255,255,255,.7) + 圆角 18px + 柔和大阴影 */
-  --xk-card: rgba(255, 255, 255, .58);
+  /* 站主第十轮（2026-10-13）①「背景要透出来」——玻璃配方改成【更透 + 更强模糊】：
+       · 大卡片白度 .58 → .52（落在站主给的 .48–.54 区间；取靠近上沿的值，
+         是为了在 veil 大幅减薄之后仍把卡内文字的对比度稳住，实测见 _dev/r10/REPORT.md）
+       · backdrop-filter blur(20px)/saturate(1.15) → blur(24px) saturate(1.25)（落在 22–26px / 1.2–1.3）
+         —— 模糊越强，背景越柔和、卡片上的字越清楚，"通透"与"可读"可以同时要
+       · 边框仍是 1px rgba(255,255,255,.7) + 圆角 18px + 柔和大阴影（未改）
+       第九轮原值：rgba(255,255,255,.58) + blur(20px) saturate(1.15) */
+  --xk-card: rgba(255, 255, 255, .54);
   --xk-card-line: rgba(255, 255, 255, .7);
-  /* 卡内小方块（功能导览那 5 个）：.34 + 细白边 → 「玻璃里的玻璃」层次 */
-  --xk-card-in: rgba(255, 255, 255, .34);
+  /* 卡内小方块（功能导览那 5 个）：.34 → .30（落在站主给的 .26–.32 区间）+ 细白边 */
+  --xk-card-in: rgba(255, 255, 255, .30);
   --xk-card-in-line: rgba(255, 255, 255, .55);
   --xk-line: rgba(15, 42, 80, .06);
   --xk-line-2: rgba(15, 42, 80, .12);
@@ -34,14 +38,18 @@
   --xk-blue: #2F7AEF;
   --xk-blue-soft: rgba(47, 122, 239, .10);
   /* 站主第七轮 ④：卡片白度降到 .48 之后，蓝色【文字链接】用主蓝实测只有 2.79:1，
-     所以文字链接单独用深一档的蓝；主蓝继续用于按钮/胶囊这类"色块"（白字压在上面对比度另算）。 */
-  --xk-link: #1550A8;
-  --xk-title: #122236;
-  --xk-text: #46586C;
+     所以文字链接单独用深一档的蓝；主蓝继续用于按钮/胶囊这类"色块"（白字压在上面对比度另算）。
+     第十轮 ①：卡片再变透（.54）之后，照片的暗部会从卡片里透出来，链接蓝再压深一档
+     （#1550A8 → #103F86，实测见 _dev/r10/REPORT.md）。 */
+  --xk-link: #103F86;
+  --xk-title: #081727;
+  --xk-text: #24344A;
   /* 追加要求 ④「文字对比度仍达标」：规格给的次要色 #8A99AB 在白底上只有 2.8:1，
      遮罩调薄后更糟（实测 2.84:1）。这里压深到 #5B6B7F —— 白底 5.4:1、卡片上实测 4.6~5.3:1，
-     色相不变（仍是同一支蓝灰），只是把亮度降下来。这是对规格 §3 的第二处显式偏离。 */
-  --xk-muted: #4F5F73;
+     色相不变（仍是同一支蓝灰），只是把亮度降下来。这是对规格 §3 的第二处显式偏离。
+     第十轮 ①：遮罩大幅减薄（.75 → .30）之后，卡内底噪变成"照片 + 白纱"的复合色，
+     最暗处比纯白底低一大截，因此再压一档：#4F5F73 → #3D4D61（白底 7.0:1，卡片最暗处 >4.5:1）。 */
+  --xk-muted: #3A4A5E;
 
   --xk-green: #16A34A;
   --xk-red: #EF4444;
@@ -59,7 +67,7 @@
   --xk-guide-gap: 14px;
   --xk-maxw: 1320px;
   /* 选中态导航文字用的蓝：主蓝 #2F7AEF 放在浅底上只有 ~4.3:1，这里压深到 7:1 以上 */
-  --xk-nav-on: #134695;
+  --xk-nav-on: #10407F;
   --xk-side-w: 136px;                /* 左侧导引栏宽度（站主第九轮：136px 保留） */
   /* 第九轮①（修 bug）：整组离屏幕左边缘的安全间距。
      原来 12px 太贴边 —— 头像的柔光 + 手写体的左侧墨迹几乎顶到屏幕边，
@@ -72,8 +80,9 @@
   --xk-hero-align: flex-start;
   --xk-hero-shift: 0px;
   /* 追加要求 ④：模糊与饱和明显调小（原来 blur(18px) saturate(140%)）。
-     第九轮 ②：按站主给的玻璃配方回到 blur(20px) saturate(1.15)。 */
-  --xk-blur: blur(20px) saturate(1.15);
+     第九轮 ②：按站主给的玻璃配方回到 blur(20px) saturate(1.15)（第十轮改为 blur(24px) saturate(1.25)：卡片白度降到 .52 之后，
+      用更强的模糊换通透感，背景更柔和、卡上的字反而更清楚）。 */
+  --xk-blur: blur(24px) saturate(1.25);
   /* 第三轮站主指定：顶栏背景板用 blur(8px) saturate(115%) */
   --xk-blur-soft: blur(8px) saturate(115%);
 
@@ -129,7 +138,13 @@ a:hover { text-decoration: underline; }
 table { border-collapse: collapse; width: 100%; }
 button, input, textarea { font: inherit; color: inherit; }
 code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
-:focus-visible { outline: 2px solid var(--xk-blue); outline-offset: 2px; border-radius: 6px; }
+/* 键盘焦点（站主第十轮 ④）：双色环 —— 深蓝实线负责浅底，外面 4px 白环负责深色照片底，
+   两种底色下都有 ≥3:1 的可见性；去掉原来那个 border-radius:6px（它会把胶囊按钮的圆角压成 6px）。 */
+:focus-visible { outline: 2px solid #0B4FB0; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(255, 255, 255, .92); }
+/* 输入框自己那圈 focus 阴影要保持（见 .xk-input:focus），这里只补一条可见轮廓 */
+.xk-input:focus-visible, .xk-modal__hd input:focus-visible { outline: 2px solid #0B4FB0; outline-offset: 1px; }
+/* 侧栏导航压在照片上，用白底环更醒目 */
+.xk-side__link:focus-visible { box-shadow: 0 0 0 3px rgba(255, 255, 255, .95); }
 
 /* ---------------------------------------------------------------------------
    3. 背景层 + 白纱遮罩（§1：原图不改，浅色只靠透明度）
@@ -154,7 +169,17 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
    站主第九轮 ②：再叠一层【极淡冷白纱】（顶部 → 中部渐变，偏冷白 #F2F7FF）。
    作用有两个：① 文字压在人物亮区（银发/高光）时底色更均匀；② 把最薄的那段顶部
    整体抬亮一点，让 Hero 的大字号标题在背景图上也有 ≥7:1 的余量。
-   仍然是"网页层加一层纱"，bg.jpg 一个字节都没动（SHA256 见交付报告）。 */
+   仍然是"网页层加一层纱"，bg.jpg 一个字节都没动（SHA256 见交付报告）。
+
+   ★ 站主第十轮（2026-10-13）①：要求反过来 —— **背景要透出来**。
+     → 第二层纯白纱：100% 处 .75 → .30，中段同步减薄（.10/.16/.22/.26/.30/.30）；
+     → 第一层冷白纱：#F2F7FF 由 .34 起 → .12 起（.12/.08/.04/0）。
+   减薄之后仍然满足「正文/辅助 ≥4.5:1、标题 ≥7:1」：卡内文字靠 .52 的卡片底 + 24px 模糊托住，
+   直接压在照片上的那几条（Hero / 左栏导航 / 页脚）靠各自的局部底纹或文字描边，
+   逐条像素采样实测见 _dev/r10/REPORT.md（桌面 1280 与移动 390 各一份）。
+   ★ 注意：截图验收【不能】再带 ?wb_noblur=1（那个参数会把 blur 关掉，看不出真实观感，
+     上一轮"背景被挡死"就是因为验收图全带了这个参数才没被发现）；
+     只有对比度像素采样那一步才用 noblur 图（去掉模糊后背景更"扎"，取值更保守）。 */
 .xk-veil {
   position: absolute;
   inset: 0;
@@ -166,18 +191,18 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   background-image:
     linear-gradient(
       180deg,
-      rgba(242, 247, 255, .34) 0px,
-      rgba(242, 247, 255, .22) 300px,
-      rgba(244, 249, 255, .08) 620px,
+      rgba(242, 247, 255, .12) 0px,
+      rgba(242, 247, 255, .08) 300px,
+      rgba(242, 247, 255, .04) 620px,
       rgba(248, 251, 255, 0) 900px),
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, .32) 0px,
-      rgba(255, 255, 255, .44) 220px,
-      rgba(255, 255, 255, .56) 340px,
-      rgba(255, 255, 255, .70) 480px,
-      rgba(255, 255, 255, .75) 560px,
-      rgba(255, 255, 255, .75) 100%);
+      rgba(255, 255, 255, .10) 0px,
+      rgba(255, 255, 255, .16) 220px,
+      rgba(255, 255, 255, .22) 340px,
+      rgba(255, 255, 255, .26) 480px,
+      rgba(255, 255, 255, .30) 560px,
+      rgba(255, 255, 255, .30) 100%);
 }
 
 /* ---------------------------------------------------------------------------
@@ -378,7 +403,9 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   padding: 5px 60px 8px 16px;
   margin-left: -16px;              /* 文字视觉上仍与容器左边缘对齐 */
   border-radius: 14px;
-  background: rgba(255, 255, 255, .58);
+  /* 第十轮 ①：veil 减薄后这张"文字底纹"下面是照片（各栏目页的标题区可能是暗部），
+     .58 不够 → 提到 .70；右侧依然淡出，观感仍是"底纹"而不是一张白卡。 */
+  background: rgba(255, 255, 255, .70);
   backdrop-filter: var(--xk-blur-soft);
   -webkit-backdrop-filter: var(--xk-blur-soft);
   box-shadow: 0 2px 10px rgba(31, 78, 140, .06);
@@ -412,11 +439,19 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   padding-left: var(--xk-sidew);
   font-size: 12.5px;
   /* 页脚是唯一【直接压在背景图】上的小字（没有卡片托着），所以用比 --xk-muted 更深一档的灰蓝：
-     实测这里底噪最亮处约 L=.64，--xk-muted(#4F5F73) 只有 3.79–4.21:1，不达标；压到 #3E4E62 后 >5:1。 */
-  color: #3E4E62;
+     实测这里底噪最亮处约 L=.64，--xk-muted(#4F5F73) 只有 3.79–4.21:1，不达标；压到 #3E4E62 后 >5:1。
+     ★ 第十轮 ①：veil 减薄后，照片【底部正好是暗部】（实测局部亮度低到 L≈0.09），
+     深字压深底在 4.5:1 上【数学上不可能达到】—— 所以这里给小字加一条【局部底纹】：
+     只在页脚这条横带铺白纱（顶部淡出、底部最浓），横带以上一个像素都没被盖白。
+     这是本轮为"背景可见"付出的两处局部代价之一（另一处是 Hero 横带）。 */
+  background-image: linear-gradient(180deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, .58) 22%,
+    rgba(255, 255, 255, .86) 100%);
+  color: #33445A;
 }
 .xk-footer__in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.xk-footer__in a { color: #3E4E62; }
+.xk-footer__in a { color: #33445A; }
 .xk-footer__in a:hover { color: var(--xk-link); }
 .xk-footer__sep { color: rgba(138, 153, 171, .6); }
 
@@ -430,7 +465,22 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
      ③ 栏间距与卡片间距统一 20px；卡片内边距 22–24px。
    保留第七轮 ③ 的"一屏固定"：三栏各自限高 + 内部滚动，页面本身不出现纵向滚动条。
    --------------------------------------------------------------------------- */
-.xk-hero { padding: 6px 0 10px; }
+/* ★ 站主第十轮 ①：veil 减薄之后，Hero 这条横带是【唯一一大片直接压在照片上的文字】。
+   站主给的处置办法是"只给 Hero 那条横带加一层局部渐变（别把整页又盖白）"——
+   于是这里给 .xk-hero 自己的【背景】铺一层径向渐变：左上浓（文字与四个数字都在这一带）、
+   右下自然衰减到 0，所以横带以外一个像素都没被盖白，整页仍然通透。
+   这一层是 .xk-hero 的块背景（在 .xk-content 的层叠上下文里），永远在文字【下面】，
+   不需要任何 z-index 技巧，也不会挡住卡片。 */
+.xk-hero {
+  padding: 6px 0 10px;
+  background-image:
+    radial-gradient(150% 128% at 30% 46%,
+      rgba(255, 255, 255, .88) 0px,
+      rgba(255, 255, 255, .70) 42%,
+      rgba(255, 255, 255, .30) 70%,
+      rgba(255, 255, 255, 0) 94%);
+  background-repeat: no-repeat;
+}
 .xk-hero__in {
   display: flex;
   flex-direction: column;
@@ -489,7 +539,9 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-hstat__caliber {
   font-size: 11.5px;
   line-height: 1.45;
-  color: #46586C;
+  /* 第十轮 ①：这一行直接压在照片上（Hero 横带），用比 --xk-muted 更深一档的 #2B3E55
+     才在减薄后的照片上仍然 ≥4.5:1（实测见 _dev/r10/REPORT.md）。 */
+  color: #2B3E55;
   text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
 }
 
@@ -525,11 +577,14 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-work { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--xk-gap); align-items: start; }
 .xk-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--xk-gap); }
 .xk-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--xk-gap); }
-/* 主页只留的一行数据说明（完整口径/免责搬到「关于」页） */
+/* 主页只留的一行数据说明（完整口径/免责搬到「关于」页）
+   第十轮 ①：这一行没卡片托着、直接压在照片上（照片在那里是暗部），
+   --xk-muted 只有 2.72:1，压到 #1A2C42 后 ≥4.5:1（实测见 _dev/r10/REPORT.md）。 */
 .xk-home__src {
   font-size: 12.5px;
-  color: var(--xk-muted);
+  color: #0B1B2D;
   padding: 0 2px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, .9), 0 0 12px rgba(255, 255, 255, .7);
 }
 
 /* ---------------------------------------------------------------------------
@@ -878,10 +933,23 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 
 /* 中栏最新笔记：最新一篇加大置顶，其余走紧凑列表 */
 .xk-note-hero {
+  /* 站主第十轮 ①：卡片变透之后，这块「最新一篇」正好压在照片最暗的一小块上。
+     只给这一块加一层 .22 的极淡内衬（不是整页盖白），21px 标题在暗部也稳过 7:1。 */
+  position: relative;
   padding-bottom: 14px;
   margin-bottom: 12px;
   border-bottom: 1px solid var(--xk-line);
 }
+.xk-note-hero::before {
+  content: '';
+  position: absolute;
+  inset: -8px -12px -4px -12px;
+  z-index: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .30);
+  pointer-events: none;
+}
+.xk-note-hero > * { position: relative; z-index: 1; }
 .xk-note-hero__title {
   display: block;
   font-size: 21px;
@@ -1147,6 +1215,80 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-check__body code { background: rgba(15, 42, 80, .05); border-radius: 4px; padding: 1px 4px; }
 .xk-check.is-na { opacity: .62; }
 
+/* --- 第十轮 ⑤：靶场结果的三组件总览（一眼看出每个组件各自的结论） ---
+   背景：后端保证"只检测、不执行"，也不回传正则原文；但上一版把三个组件的
+   判定、动作、局限全铺成一大段，读者看不出"哪个组件给了什么结论"。
+   现在结构是：总览条（组件名 + 适用/不适用 + 命中/未命中 + severity 色点）
+   → 「未命中 ≠ 无害」醒目说明 → 每个组件一张小卡（detail 默认可见，
+   action / limit 收进 <details>「动作与局限」）。 */
+.xk-verdicts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+.xk-verd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--xk-line-2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .5);
+  font-size: 12.5px;
+}
+.xk-verd.is-hit { border-color: rgba(239, 68, 68, .45); background: rgba(239, 68, 68, .07); }
+.xk-verd.is-na { border-style: dashed; background: rgba(255, 255, 255, .34); color: var(--xk-muted); }
+.xk-verd__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--xk-title); font-weight: 600; }
+.xk-verd__st { margin-left: auto; flex: none; }
+/* 状态药丸不许被挤成两行（"未命中" 被折成 "未命/中" 的观感很差） */
+.xk-verd .xk-sev, .xk-check__hd .xk-sev { flex: none; white-space: nowrap; }
+.xk-verd__dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: #C3CCD8; }
+.xk-verd__dot.is-crit { background: var(--xk-red); box-shadow: 0 0 0 3px rgba(239, 68, 68, .16); }
+.xk-verd__dot.is-high { background: var(--xk-red); }
+.xk-verd__dot.is-med { background: var(--xk-orange); }
+.xk-verd__dot.is-low { background: #9AA7B6; }
+.xk-verd__dot.is-miss { background: var(--xk-green); }
+.xk-verd__dot.is-na { background: transparent; border: 1.5px dashed #9AA7B6; }
+
+/* 「未命中 ≠ 无害」：命中为 0 时必须原样展示后端给的覆盖度警告 */
+.xk-noharm {
+  display: flex;
+  gap: 9px;
+  margin: 0 0 12px;
+  padding: 11px 13px;
+  border: 1px solid rgba(245, 158, 11, .34);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, .09);
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: #4A3A16;
+}
+.xk-noharm b { color: #7A4E06; }
+.xk-noharm__ico { flex: none; color: #B45309; }
+
+/* 每个组件的小卡：结论区（默认可见） + 「动作与局限」折叠 */
+.xk-check__more { margin-top: 7px; }
+.xk-check__more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--xk-link);
+  font-size: 12px;
+  list-style: none;
+}
+.xk-check__more > summary::-webkit-details-marker { display: none; }
+.xk-check__more > summary::before { content: "▸ "; }
+.xk-check__more[open] > summary::before { content: "▾ "; }
+.xk-check__more > summary:hover { text-decoration: underline; }
+.xk-check__more .xk-note { margin-top: 5px; }
+.xk-check__kv { margin-top: 6px; }
+.xk-check__kv > li { gap: 8px; }
+.xk-check__kv > li > b { text-align: left; margin-left: 0; font-weight: 500; max-width: 100%; }
+
 /* ---------------------------------------------------------------------------
    13. 404
    --------------------------------------------------------------------------- */
@@ -1292,8 +1434,163 @@ html[data-wb-noblur="1"] .xk-searchbtn { background: rgba(255, 255, 255, .68); }
 /* 注意：这里【不给顶栏补白底】，顶栏自己那层 rgba(255,255,255,.42) 就够了；
    左栏也没有卡片底，文字靠各自的极轻底纹。 */
 
+/* ===========================================================================
+   17. 响应式（站主第十轮 ③：「桌面端现有版式不能回归」+「移动端不出现横向滚动」）
+   ---------------------------------------------------------------------------
+   断点与分工（下面所有媒体查询都不作用于 ≥1200px，所以桌面三栏一个像素不变）：
+     ≥1200px  三栏 300 / minmax(0,1fr) / 320、间距 20、内容区封顶 1320、一屏固定
+     980–1199 三栏压缩：家页变「功能导览 + 笔记」两栏、右栏（拦截动态）整行下沉；
+              工作台 1fr+280、阅读 180/1fr/200；KPI 由 4 列改 2 列；
+              **取消一屏固定**（回到正常文档流滚动）
+     ≤980     单列堆叠；左侧导览栏变成【顶部横向条】（站主给的两种做法之一）；
+              Hero 数字 2×2；触控目标 ≥44px；宽度表收进卡片内横向滚动容器
+     ≤620     功能导览方块（以及其余两列小网格）改单列
+   移动端细节：viewport meta 在 head.html 里（width=device-width, initial-scale=1，无 maximum-scale，
+   不禁止缩放）；这里放开 body 的 min-width，让文档宽度跟随视口，从而不产生横向滚动。
+   =========================================================================== */
+
+/* ---------- 980–1199px：三栏压缩 + 右栏下沉，并取消"一屏固定" ---------- */
+@media (max-width: 1199px) {
+  body { min-width: 0; }                    /* 第九轮的 min-width:1200px 会造成横向滚动，这里放开 */
+  .xk-portal--home { grid-template-columns: 264px minmax(0, 1fr); }
+  /* 取消一屏固定：移动/平板回到正常文档流滚动（站主第十轮 ③ 明确要求） */
+  .xk-portal--home > * { max-height: none; overflow-y: visible; }
+  .xk-portal--home > .xk-portal__live { grid-column: 1 / -1; }
+  .xk-work { grid-template-columns: minmax(0, 1fr) 280px; }
+  .xk-read { grid-template-columns: 180px minmax(0, 1fr) 200px; }
+  .xk-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .xk-hero__brand { font-size: 40px; }
+}
+
+/* ---------- ≤980px：单列堆叠 + 顶部横向条 + 触控目标 ≥44px ---------- */
+@media (max-width: 980px) {
+  /* 左栏不再是 fixed 侧栏 → 这几个容器不再为它让位（同一份令牌，改一处即可） */
+  :root { --xk-sidew: 0px; --xk-side-left: 0px; }
+  .xk-body { display: flex; flex-direction: column; }   /* 只为让 order:-1 把导览条排到最上面 */
+  .xk-toprow { padding-left: 0; padding-top: 6px; }
+  .xk-content { padding-left: 0; padding-top: 2px; }
+  .xk-footer { padding-left: 0; }
+
+  /* 左侧导览栏 → 顶部横向条：头像 + 站名一行，下面 6 个导航项换行排。
+     注意 position 必须是 relative + 正 z-index：背景层 .xk-bg(z-index:0) 与白纱 .xk-veil(z-index:1)
+     都是定位元素，文档流里的普通块会被它们盖住（第一版就踩了这个坑，截图里整条导航看不见）。 */
+  .xk-side {
+    position: relative; left: auto; top: auto; bottom: auto;
+    order: -1;
+    width: min(var(--xk-maxw), calc(100% - 40px));
+    margin: 0 auto;
+    padding: 10px 0 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    z-index: 4;
+  }
+  .xk-side__me { flex-direction: row; align-items: center; gap: 8px; padding: 0; text-align: left; }
+  .xk-side__avatar { width: 34px; height: 34px; }
+  .xk-side__name { font-size: 16px; }
+  .xk-side__nav {
+    flex: 0 0 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 8px;
+    overflow: visible;
+  }
+  /* 顶部横向条上的每个导航项自带一层白色药丸底：移动端导航正好压在照片的暗部（人物头发）上，
+     药丸底只覆盖 6 个链接本身，链接之间与整条横带的背景照片照旧透出来。 */
+  .xk-side__link { display: inline-flex; align-items: center; padding: 10px 14px; background: rgba(255, 255, 255, .62); }
+  .xk-side__link:hover { background: rgba(255, 255, 255, .78); }
+  .xk-side__link.is-on { background: rgba(255, 255, 255, .84); box-shadow: inset 0 0 0 2px var(--xk-nav-on); }
+
+  /* 所有多列版式 → 单列 */
+  .xk-portal, .xk-portal--home, .xk-work, .xk-read,
+  .xk-grid2, .xk-grid3, .xk-cols2 { grid-template-columns: minmax(0, 1fr); }
+  .xk-portal--home > .xk-portal__live { grid-column: auto; }
+  .xk-read__toc, .xk-read__side { position: static; max-height: none; overflow: visible; }
+  .xk-hero__brand { font-size: 34px; }
+  .xk-hero__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .xk-hstat__num { font-size: 26px; }
+  .xk-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .xk-page__plate { max-width: 100%; padding-right: 34px; }
+
+  /* 宽表 / 宽行：收进卡片内部的横向滚动容器（页面级不会因此出现横向滚动） */
+  .xk-rec { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .xk-rec--blocks .xk-rec__row { min-width: 620px; }
+  .xk-rec--actions .xk-rec__row { min-width: 560px; }
+  .xk-table { display: block; overflow-x: auto; }
+  .xk-md table { display: block; overflow-x: auto; }
+  .xk-fp__row { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+
+  /* 告警流：级别/标题一行，元信息换到第二行并允许换行 */
+  .xk-stream__hd { grid-template-columns: 56px minmax(0, 1fr); row-gap: 4px; }
+  .xk-stream__meta { grid-column: 2; flex-wrap: wrap; }
+  .xk-stream__title { white-space: normal; overflow: visible; text-overflow: clip; }
+  .xk-stream__detail { padding-left: 8px; }
+  .xk-tl__row { grid-template-columns: 92px 62px minmax(0, 1fr); gap: 8px; }
+  .xk-feed__row { grid-template-columns: 10px minmax(0, 1fr); row-gap: 2px; }
+  .xk-feed__time { grid-column: 2; }
+  .xk-dist--wide .xk-dist__row { grid-template-columns: minmax(72px, 110px) minmax(0, 1fr) 44px; }
+
+  .xk-modal { padding-top: 5vh; }
+  .xk-modal__panel { width: calc(100% - 24px); max-height: 82vh; }
+  /* 胶囊/标签行一律允许换行：笔记页的分类筛选那一行原来不换行（.xk-chips 没有 --wrap），
+     窄屏上会顶出页面级横向滚动（实测 390px 下 document.scrollWidth=507） */
+  .xk-chips { flex-wrap: wrap; }
+  .xk-card__hd { flex-wrap: wrap; }
+
+  /* ---- 触控目标 ≥44px（站主第十轮 ③）----
+     只作用于真正要手指点的控件：导航、按钮、胶囊、输入框、折叠标题、列表条目、复制按钮。
+     正文里的行内链接（文字排印）不强行撑高，否则会把段落撑散。 */
+  .xk-side__link, .xk-btn, .xk-chip, .xk-tab, .xk-input,
+  .xk-caliber > summary, .xk-searchbtn, .xk-copy,
+  .xk-list--notes > li > a, .xk-notes__title, .xk-mod2__go,
+  .xk-modal__item, .xk-feed__row, .xk-stream__hd, .xk-toc a, .xk-anchors a {
+    min-height: 44px;
+  }
+  .xk-btn, .xk-chip, .xk-tab, .xk-input, .xk-searchbtn, .xk-copy,
+  .xk-caliber > summary, .xk-modal__item, .xk-list--notes > li > a,
+  .xk-notes__title, .xk-mod2__go, .xk-toc a, .xk-anchors a {
+    display: inline-flex; align-items: center;
+  }
+  .xk-list > li { align-items: flex-start; }
+  .xk-list--notes > li { flex-wrap: wrap; }
+  /* 「进入 →」这类文字链接高度够了但只有 38px 宽，给一个 ≥44px 的最小点击宽度 */
+  .xk-mod2__go { min-width: 44px; }
+  .xk-toc a { padding-top: 8px; padding-bottom: 8px; }
+  .xk-chip { padding: 9px 14px; }
+  .xk-input { padding: 11px 12px; }
+  .xk-caliber > summary { padding: 10px 0; }
+}
+
+/* ---------- ≤620px：两列小网格（功能导览方块 / 分布 / KPI）改单列 ---------- */
+@media (max-width: 620px) {
+  .xk-mod2 { grid-template-columns: minmax(0, 1fr); }
+  .xk-mod2__item { min-height: 0; }
+  .xk-hero__stats { gap: 10px; }
+  .xk-kpis { gap: 14px; }
+  .xk-feed__row { padding: 12px 4px; }
+}
+
+/* ---------- 跳转链接（键盘用户第一个 Tab 就能跳过顶部导航直达正文） ---------- */
+.xk-skip {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--xk-nav-on);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(18, 34, 54, .18);
+  transition: top .15s ease;
+}
+.xk-skip:focus { top: 12px; text-decoration: none; }
+
 /* ---------------------------------------------------------------------------
-   17. 动效纪律（§3：只用 transform/opacity，且尊重 prefers-reduced-motion）
+   18. 动效纪律（§3：只用 transform/opacity，且尊重 prefers-reduced-motion）
    --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1303,4 +1600,9 @@ html[data-wb-noblur="1"] .xk-searchbtn { background: rgba(255, 255, 255, .68); }
     scroll-behavior: auto !important;
   }
   .xk-skel { animation: none; background: rgba(15, 42, 80, .08); }
+  /* 站主第十轮 ④：不只是"把时长压到 0"，而是真的【关掉 hover 上浮与动画】——
+     过渡时长归零仍然会瞬间位移，对前庭敏感的用户一样是"动了"。
+     这里把三处会位移/缩放的 hover 效果直接取消（保持其余颜色反馈）。 */
+  .xk-btn:hover, .xk-mod2__item:hover, .xk-searchbtn:hover, .xk-skip { transform: none !important; }
+  .xk-pulse::after { animation: none !important; opacity: 0 !important; }
 }

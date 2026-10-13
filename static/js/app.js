@@ -268,31 +268,45 @@
       return Math.max(lo, Math.min(hi, Math.round(LAST_RTT * 6)));
     }
 
+    function clear() { if (timer) { clearTimeout(timer); timer = null; } }
+    function schedule(ms) { clear(); if (!stopped) timer = setTimeout(tick, ms); }
+
     function tick() {
       if (stopped) return;
-      if (document.hidden) { timer = setTimeout(tick, POLL_MIN); return; }
+      timer = null;
+      /* 站主第十轮 ④：页面不可见时【彻底停表】—— 不是"每 10s 醒来发现隐藏再睡回去"，
+         而是根本不排下一个定时器；恢复可见时由 visibilitychange → resume() 立刻补一次。
+         这样在后台标签页里一个请求都不会发（限流预算全部留给前台）。 */
+      if (document.hidden) return;
       loadFn().then(function () {
         fails = 0;
       }).catch(function () {
         fails += 1;   // 失败次数由各视图自己写进同步文案
       }).then(function () {
-        if (stopped) return;
+        if (stopped || document.hidden) return;
+        /* 失败退避：连续失败按 2^n 拉长间隔，封顶 BACKOFF_MAX(2 分钟)，只放慢不加快 */
         var delay = fails ? Math.min(interval() * Math.pow(2, fails), BACKOFF_MAX) : interval();
-        timer = setTimeout(tick, delay);
+        schedule(delay);
       });
     }
 
     activePoller = {
-      stop: function () { stopped = true; if (timer) clearTimeout(timer); },
-      kick: function () { if (timer) clearTimeout(timer); fails = 0; tick(); }
+      stop: function () { stopped = true; clear(); },
+      /* 暂停：只停表，不改变 stopped（resume 后还能接着轮询） */
+      pause: function () { clear(); },
+      /* 恢复：清空失败计数并【立刻补一次】，不等下一个间隔 */
+      resume: function () { if (stopped) return; fails = 0; clear(); tick(); },
+      kick: function () { if (stopped) return; fails = 0; clear(); tick(); }
     };
-    tick();
+    if (document.hidden) { /* 开局就不可见：不排任何定时器，等 visibilitychange */ }
+    else { tick(); }
   }
 
-  // 切到后台/标签隐藏即暂停；回到前台立刻补一次（规格 §5）
+  // 切到后台/标签隐藏即【暂停轮询】；回到前台立刻补一次（规格 §5 / 站主第十轮 ④）
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) return;
-    if (activePoller) activePoller.kick();
+    if (!activePoller) return;
+    if (document.hidden) activePoller.pause();
+    else activePoller.resume();
   });
 
   /* ==========================================================================
@@ -353,17 +367,51 @@
   var contentEl = document.getElementById('content');
   var INDEX = null;          // 笔记索引（/index.json）
 
+  /* 折叠件语义（站主第十轮 ④）：
+     <details>/<summary> 本身就有原生展开语义，但很多辅助技术与自动化检查要求把状态写成
+     aria-expanded + aria-controls。这里两者都给：
+       · aria-controls 指向被折叠的那一块（没有 id 就自动补一个，保证指得着）；
+       · aria-expanded 跟随 <details> 的 open 状态实时同步（toggle 事件）。
+     所有折叠件（首页「数据口径」、靶场结果里的「动作与局限」）都走这一条通路。 */
+  var XK_UID = 0;
+  function syncDisclosures(root) {
+    $$('details', root || document).forEach(function (d) {
+      var s = d.querySelector('summary');
+      if (!s) return;
+      var body = d.querySelector('.xk-meta, .xk-check__kv, .xk-caliber__body, [data-xk-disclosure]') ||
+                 d.lastElementChild;
+      if (!body) return;
+      if (body === s) body = null;
+      if (body && !body.id) body.id = 'xk-disc-' + (++XK_UID);
+      if (body && body.id) s.setAttribute('aria-controls', body.id);
+      s.setAttribute('aria-expanded', d.open ? 'true' : 'false');
+      if (!d.__xkAria) {
+        d.__xkAria = true;
+        d.addEventListener('toggle', function () {
+          s.setAttribute('aria-expanded', d.open ? 'true' : 'false');
+        });
+      }
+    });
+  }
+
   function render(route) {
     stopPolling();
     var tpl = document.getElementById(VIEW_TPL[route.name] || 'tpl-notfound');
     contentEl.replaceChildren(tpl.content.cloneNode(true));
     window.scrollTo(0, 0);
 
-    // 左侧栏导航高亮（导航本身不动，只换 class）
+    // 左侧栏导航高亮（导航本身不动，只换 class）+ aria-current（站主第十轮 ④）
     var active = NAV_OF_ROUTE[route.name];
     $$('.xk-side__link').forEach(function (a) {
-      a.classList.toggle('is-on', a.getAttribute('data-xk-nav') === active);
+      var on = a.getAttribute('data-xk-nav') === active;
+      a.classList.toggle('is-on', on);
+      if (on) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
     });
+
+    // 折叠件（「数据口径」/「动作与局限」）把展开状态用 aria-expanded 显式暴露出来，
+    // 并用 aria-controls 指向被展开的那块内容（站主第十轮 ④）
+    syncDisclosures(contentEl);
 
     var host = contentEl.firstElementChild;
     if (route.name === 'home') initHome();
@@ -917,6 +965,8 @@
         var on = t.getAttribute('data-xk-tab') === name;
         t.classList.toggle('is-on', on);
         t.setAttribute('aria-selected', on ? 'true' : 'false');
+        /* roving tabindex：Tab 键只落在当前选中的那个 tab 上，←/→ 在组内移动（WAI-ARIA tabs 惯例） */
+        t.setAttribute('tabindex', on ? '0' : '-1');
       });
       panes.forEach(function (p) {
         var on = p.getAttribute('data-xk-pane') === name;
@@ -941,6 +991,17 @@
 
     tabs.forEach(function (t) {
       t.addEventListener('click', function () { activate(t.getAttribute('data-xk-tab')); });
+      /* 站主第十轮 ④：role=tab 的键盘惯例 —— ←/→ 在同一个 tablist 内换页并同步焦点 */
+      t.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
+        e.preventDefault();
+        var i = tabs.indexOf(t), n = tabs.length, next;
+        if (e.key === 'Home') next = tabs[0];
+        else if (e.key === 'End') next = tabs[n - 1];
+        else next = tabs[(i + (e.key === 'ArrowRight' ? 1 : n - 1)) % n];
+        next.focus();
+        activate(next.getAttribute('data-xk-tab'));
+      });
     });
     activate(tab || 'alerts', true);
   }
@@ -1401,6 +1462,39 @@
     availabilityProbe();
   }
 
+  /* 站主第十轮 ⑤：结果展示重排（后端已保证只检测、不执行，也不再回传正则原文）
+     ---------------------------------------------------------------------------
+     读者要三眼看清三件事：① 有哪些组件、各自"适用 / 不适用"；② 命中还是未命中、severity 是几；
+     ③ 未命中时为什么仍然不能说"安全"。
+     所以结果区结构固定为：
+       [总览条]  每个组件一格：severity 色点 + 组件名 + 适用/不适用 + 命中/未命中
+       [未命中 ≠ 无害] 后端 coverageWarning / uncovered 原样展示（不缩写、不折叠）
+       [逐组件卡] 结论（detail / 证据 / 命中规则）默认可见；action + limit 收进「动作与局限」折叠
+     severity 色点：严重/高危=红、中危=橙、低危=灰蓝、未命中=绿、不适用=虚线空心。 */
+  function sevDotClass(c) {
+    if (c.applicable === false) return 'is-na';
+    if (!c.hit) return 'is-miss';
+    var s = c.severity;
+    if (s === 'CRITICAL') return 'is-crit';
+    if (s === 'HIGH') return 'is-high';
+    if (s === 'MEDIUM') return 'is-med';
+    return 'is-low';
+  }
+  function sevTagText(c) {
+    if (c.applicable === false) return '不适用';
+    if (!c.hit) return '未命中';
+    return '命中 ' + (c.severity === 'NONE' ? '' : (c.severity || '')) ;
+  }
+  function sevTagClass(c) {
+    if (c.applicable === false) return 'xk-sev is-info';
+    if (!c.hit) return 'xk-sev is-low';
+    return 'xk-sev ' + (c.severity === 'CRITICAL' || c.severity === 'HIGH' ? 'is-high' : 'is-medium');
+  }
+  function shortComp(name) {
+    var s = String(name || '').replace(/Guard$|Scanner$|Util$/, '');
+    return s || name;
+  }
+
   function renderCheckResult(host, body, onlyPI) {
     var d = (body && body.data) || {};
     var checks = (d.checks || []).filter(function (c) { return !onlyPI || c.id === 'prompt-injection'; });
@@ -1412,36 +1506,54 @@
       '<span class="xk-hint">' + esc(d.summary || '') + ' · ' + esc(d.elapsedMs != null ? d.elapsedMs + ' ms' : '') +
       ' · ' + esc(d.treatedAsLabel || ('按「' + (d.treatedAs || '—') + '」检测')) + '</span></div>';
 
+    /* ---- 总览条：三组件各自结论一眼可见 ---- */
+    html += '<ul class="xk-verdicts" data-xk-pg-summary>' + checks.map(function (c) {
+      var hit = c.applicable !== false && c.hit;
+      return '<li class="xk-verd' + (hit ? ' is-hit' : (c.applicable === false ? ' is-na' : '')) + '">' +
+        '<span class="xk-verd__dot ' + sevDotClass(c) + '" aria-hidden="true"></span>' +
+        '<span class="xk-verd__name" title="' + esc(c.name + ' · ' + (c.component || '')) + '">' + esc(shortComp(c.name)) + '</span>' +
+        '<span class="xk-verd__st"><span class="' + sevTagClass(c) + '">' + esc(sevTagText(c)) + '</span></span>' +
+        '</li>';
+    }).join('') + '</ul>';
+
+    /* ---- 「未命中 ≠ 无害」：后端原文照登，永远是可见段落（不折叠、不缩成小字） ---- */
+    if (d.coverageWarning || d.uncovered) {
+      html += '<div class="xk-noharm" data-xk-pg-noharm><span class="xk-noharm__ico" aria-hidden="true">!</span><div>' +
+        '<b>未命中 ≠ 无害。</b> ' + (d.coverageWarning ? esc(d.coverageWarning) : '') +
+        (d.uncovered ? '<p style="margin-top:6px"><b>' + esc(d.uncoveredTitle || '关于「未命中」的说明') + '</b>：' + esc(d.uncovered) + '</p>' : '') +
+        '</div></div>';
+    }
+
+    /* ---- 逐组件：结论可见，动作与局限折叠 ---- */
     html += checks.map(function (c) {
-      var sevCls = c.hit ? (c.severity === 'HIGH' || c.severity === 'CRITICAL' ? 'is-high' : 'is-medium') : 'is-low';
-      var stateTag = c.applicable === false
-        ? '<span class="xk-sev is-info">不适用</span>'
-        : (c.hit ? '<span class="xk-sev ' + sevCls + '">命中 ' + esc(c.severity || '') + '</span>' : '<span class="xk-sev is-low">未命中</span>');
+      var mid = 'xk-more-' + String(c.id || c.component || 'c').replace(/[^\w-]/g, '');
       return '<div class="xk-check' + (c.applicable === false ? ' is-na' : '') + '">' +
-        '<div class="xk-check__hd">' + stateTag +
+        '<div class="xk-check__hd">' +
+          '<span class="xk-verd__dot ' + sevDotClass(c) + '" aria-hidden="true"></span>' +
+          '<span class="' + sevTagClass(c) + '">' + esc(sevTagText(c)) + '</span>' +
           '<span class="xk-check__name">' + esc(c.name) + '</span>' +
           '<span class="xk-check__where">' + esc(c.where || '') + ' · <code>' + esc(c.component || '') + '</code></span>' +
         '</div>' +
         '<div class="xk-check__body">' +
           '<p>' + esc(c.detail || '') + '</p>' +
-          (c.evidence && c.evidence.length ? '<p>证据：<code>' + esc(c.evidence.join(' / ')) + '</code></p>' : '') +
-          (c.rules && c.rules.length ? '<p>命中规则：<code>' + esc(rulesText(c.rules)) + '</code></p>' : '') +
-          '<p>动作：' + esc(c.action || '—') + '</p>' +
-          '<p class="xk-note">边界：' + esc(c.limit || '—') + '</p>' +
+          (c.evidence && c.evidence.length ? '<p class="xk-hint">证据：<code>' + esc(c.evidence.join(' / ')) + '</code></p>' : '') +
+          (c.rules && c.rules.length ? '<p class="xk-hint">命中规则：<code>' + esc(rulesText(c.rules)) + '</code></p>' : '') +
+          '<details class="xk-check__more" id="' + mid + '">' +
+            '<summary>动作与局限</summary>' +
+            '<ul class="xk-meta xk-check__kv">' +
+              '<li><span>动作</span><b>' + esc(c.action || '—') + '</b></li>' +
+              '<li><span>局限</span><b>' + esc(c.limit || '—') + '</b></li>' +
+            '</ul>' +
+          '</details>' +
         '</div></div>';
     }).join('');
 
-    if (d.coverageWarning) {
-      html += '<p class="xk-notice xk-notice--warn" style="margin-top:12px">' + esc(d.coverageWarning) + '</p>';
-    }
-    if (d.uncovered) {
-      html += '<div class="xk-check"><div class="xk-check__hd"><span class="xk-check__name">' + esc(d.uncoveredTitle || '关于「未命中」的说明') + '</span></div>' +
-        '<div class="xk-check__body"><p>' + esc(d.uncovered) + '</p></div></div>';
-    }
     if (d.note) {
       html += '<p class="xk-note">' + esc(d.note) + '</p>';
     }
     host.innerHTML = html;
+    /* 新插入的折叠件也要有 aria-expanded / aria-controls */
+    syncDisclosures(host);
   }
 
   function rulesText(rules) {
@@ -1982,11 +2094,22 @@
   });
 
   // 13.2 键盘：Ctrl/Cmd+K 搜索、上下键选择、Esc 关闭
+  //      站主第十轮 ④：把「看起来能点」的东西真正做成键盘可达 ——
+  //      拦截动态条目（[data-xk-goto]，role=link）、告警流下钻行（.xk-stream__hd，role=button）
+  //      都能用 Enter / 空格触发，和鼠标点击走同一条通路（直接派发 click，不复制一份逻辑）。
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       searchState.open ? closeSearch() : openSearch();
       return;
+    }
+    if (!searchState.open && (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar')) {
+      var el = e.target;
+      if (el && el.getAttribute) {
+        var act = el.hasAttribute && el.hasAttribute('data-xk-goto') ? el
+                : (el.classList && el.classList.contains('xk-stream__hd') ? el : null);
+        if (act) { e.preventDefault(); act.click(); return; }
+      }
     }
     if (!searchState.open) return;
     if (e.key === 'Escape') { closeSearch(); }

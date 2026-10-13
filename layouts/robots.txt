@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# robots.txt（站主第十轮 ⑤）：静态站，没有后台、没有登录、没有用户投稿，整站都可抓。
+# 这里没有引任何第三方 robots/SEO 服务，也没有 Disallow 掉真实内容。
+# /index.json 是 SPA 搜索用的机器可读索引，不是隐私内容，所以只标注、不 Disallow。
+# 全站页面（首页 / 笔记 / 分类 / 标签 / 关于）都在下面的 sitemap 里。
+Sitemap: {{ "sitemap.xml" | absURL }}

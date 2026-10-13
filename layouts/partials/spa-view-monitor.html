@@ -22,14 +22,14 @@
     </header>
 
     <div class="xk-tabs" role="tablist" aria-label="监测中心子栏目">
-      <button class="xk-tab is-on" type="button" role="tab" data-xk-tab="alerts" aria-selected="true">实时告警</button>
-      <button class="xk-tab" type="button" role="tab" data-xk-tab="honeypot" aria-selected="false">蜜罐战报</button>
-      <button class="xk-tab" type="button" role="tab" data-xk-tab="audit" aria-selected="false">处置审计</button>
-      <button class="xk-tab" type="button" role="tab" data-xk-tab="system" aria-selected="false">系统状态</button>
+      <button class="xk-tab is-on" type="button" role="tab" id="xk-tab-alerts" data-xk-tab="alerts" aria-selected="true" aria-controls="xk-pane-alerts" tabindex="0">实时告警</button>
+      <button class="xk-tab" type="button" role="tab" id="xk-tab-honeypot" data-xk-tab="honeypot" aria-selected="false" aria-controls="xk-pane-honeypot" tabindex="-1">蜜罐战报</button>
+      <button class="xk-tab" type="button" role="tab" id="xk-tab-audit" data-xk-tab="audit" aria-selected="false" aria-controls="xk-pane-audit" tabindex="-1">处置审计</button>
+      <button class="xk-tab" type="button" role="tab" id="xk-tab-system" data-xk-tab="system" aria-selected="false" aria-controls="xk-pane-system" tabindex="-1">系统状态</button>
     </div>
 
     {{/* ---------------- 实时告警 ---------------- */}}
-    <section class="xk-pane is-on" data-xk-pane="alerts">
+    <section class="xk-pane is-on" id="xk-pane-alerts" data-xk-pane="alerts" role="tabpanel" aria-labelledby="xk-tab-alerts" tabindex="0">
       <div class="xk-work">
         <div class="xk-work__main">
           <section class="xk-card">
@@ -105,7 +105,7 @@
     </section>
 
     {{/* ---------------- 蜜罐战报 ---------------- */}}
-    <section class="xk-pane" data-xk-pane="honeypot" hidden>
+    <section class="xk-pane" id="xk-pane-honeypot" data-xk-pane="honeypot" role="tabpanel" aria-labelledby="xk-tab-honeypot" tabindex="0" hidden>
       <div class="xk-work">
         <div class="xk-work__main">
           <section class="xk-card">
@@ -164,7 +164,7 @@
     </section>
 
     {{/* ---------------- 处置审计 ---------------- */}}
-    <section class="xk-pane" data-xk-pane="audit" hidden>
+    <section class="xk-pane" id="xk-pane-audit" data-xk-pane="audit" role="tabpanel" aria-labelledby="xk-tab-audit" tabindex="0" hidden>
       <div class="xk-work">
         <div class="xk-work__main">
           <section class="xk-card">
@@ -205,7 +205,7 @@
     </section>
 
     {{/* ---------------- 系统状态 ---------------- */}}
-    <section class="xk-pane" data-xk-pane="system" hidden>
+    <section class="xk-pane" id="xk-pane-system" data-xk-pane="system" role="tabpanel" aria-labelledby="xk-tab-system" tabindex="0" hidden>
       <div class="xk-work">
         <div class="xk-work__main">
           <section class="xk-card">

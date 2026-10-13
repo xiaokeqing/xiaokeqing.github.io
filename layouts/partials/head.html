@@ -9,9 +9,20 @@
     不允许访客浏览器里的旧偏好把页面翻成深色（规格 §0）。
 */}}
 <meta charset="utf-8">
+{{/* 站主第十轮 ③：移动端 viewport 正确（device-width + 允许缩放，不写 maximum-scale/user-scalable=no） */}}
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{- /* 站主第十轮 ⑤（SEO / 分享）：OG / Twitter / canonical / JSON-LD 全部用【站内已有素材】——
+      分享图就是仓库里那张 static/images/bg.jpg（同头像同一张原图，不新增任何外链图片），
+       每页若在 front matter 里写了 images，则优先用页面自己的图。
+     所有字段只取真实内容（标题 / 描述 / 日期 / 分类 / 标签），没有的字段直接不输出，不编造。 */ -}}
+{{- $desc := .Description | default site.Params.description -}}
+{{- $ogTitle := cond .IsHome "xiaokeqing · 个人博客与安全运营工作台" .Title -}}
+{{- $ogImgPath := "/images/bg.jpg" -}}
+{{- with .Params.images }}{{ $ogImgPath = index . 0 }}{{ end -}}
+{{- $ogImg := $ogImgPath | absURL -}}
+{{- $isPost := and .IsPage (eq .Section "posts") -}}
 <title>{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }} · xiaokeqing{{ end }}</title>
-<meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta name="description" content="{{ $desc }}">
 <meta name="keywords" content="{{ delimit site.Params.keywords `,` }}">
 <meta name="author" content="{{ site.Params.author }}">
 <meta name="color-scheme" content="light">
@@ -32,12 +43,51 @@
 {{ end }}
 <link rel="canonical" href="{{ .Permalink }}">
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }}{{ end }}">
-<meta property="og:description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+<meta property="og:type" content="{{ if $isPost }}article{{ else }}website{{ end }}">
+<meta property="og:title" content="{{ $ogTitle }}">
+<meta property="og:description" content="{{ $desc }}">
 <meta property="og:url" content="{{ .Permalink }}">
 <meta property="og:site_name" content="{{ site.Title }}">
-<meta name="twitter:card" content="summary">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="{{ $ogImg }}">
+<meta property="og:image:width" content="3245">
+<meta property="og:image:height" content="1440">
+<meta property="og:image:alt" content="xiaokeqing 博客的背景插画（站内 static/images/bg.jpg）">
+{{- if $isPost }}
+<meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05-07:00" }}">
+<meta property="article:modified_time" content="{{ .Lastmod.Format "2006-01-02T15:04:05-07:00" }}">
+<meta property="article:author" content="{{ site.Params.author }}">
+{{- with .Params.categories }}<meta property="article:section" content="{{ index . 0 }}">{{ end }}
+{{- range .Params.tags }}<meta property="article:tag" content="{{ . }}">
+{{- end }}
+{{- end }}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $ogTitle }}">
+<meta name="twitter:description" content="{{ $desc }}">
+<meta name="twitter:image" content="{{ $ogImg }}">
+<meta name="twitter:image:alt" content="xiaokeqing 博客的背景插画（站内 static/images/bg.jpg）">
+
+{{/* 结构化数据（JSON-LD）：首页 WebSite、文章页 BlogPosting —— 只用页面上的真值 */}}
+{{- if .IsHome }}
+{{- $ld := dict "@context" "https://schema.org" "@type" "WebSite"
+      "name" site.Title "alternateName" (site.Params.siteName | default site.Title)
+      "url" site.BaseURL "description" site.Params.description "inLanguage" "zh-CN"
+      "image" $ogImg "publisher" (dict "@type" "Person" "name" site.Params.author) }}
+<script type="application/ld+json">{{ $ld | jsonify | safeJS }}</script>
+{{- else if $isPost }}
+{{- $ld := dict "@context" "https://schema.org" "@type" "BlogPosting"
+      "headline" .Title
+      "description" ((.Description | default .Params.summary | default (.Summary | plainify)) | plainify | truncate 160)
+      "datePublished" (.Date.Format "2006-01-02T15:04:05-07:00")
+      "dateModified" (.Lastmod.Format "2006-01-02T15:04:05-07:00")
+      "inLanguage" "zh-CN" "url" .Permalink
+      "author" (dict "@type" "Person" "name" site.Params.author)
+      "publisher" (dict "@type" "Person" "name" site.Params.author "url" site.BaseURL)
+      "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink) }}
+{{- with .Params.categories }}{{ $ld = merge $ld (dict "articleSection" (index . 0)) }}{{ end }}
+{{- with .Params.tags }}{{ $ld = merge $ld (dict "keywords" (delimit . "、")) }}{{ end }}
+<script type="application/ld+json">{{ $ld | jsonify | safeJS }}</script>
+{{- end }}
 
 <script>
   /* 截图/软件渲染开关 + 固定浅色守卫。必须内联且早于样式表，避免闪一下深色。 */

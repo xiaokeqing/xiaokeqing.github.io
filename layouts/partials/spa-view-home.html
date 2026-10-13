@@ -202,8 +202,8 @@
 
         {{/* 原来贴在卡片正文里的免责说明，按站主要求缩成底部一个折叠 */}}
         <details class="xk-caliber">
-          <summary>数据口径</summary>
-          <ul class="xk-meta">
+          <summary aria-controls="xk-caliber-list">数据口径</summary>
+          <ul class="xk-meta" id="xk-caliber-list">
             <li><span>条目</span><b>同类别 + 同来源 IP 聚合，只列最近 3–5 条</b></li>
             <li><span>今日拦截</span><b>audit.blocks 中创建于今日的封禁留痕</b></li>
             <li><span>生效中</span><b>audit.summary.blockActive</b></li>
