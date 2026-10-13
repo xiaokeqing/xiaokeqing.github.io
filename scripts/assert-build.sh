@@ -129,6 +129,64 @@ else
   echo "          若已下线：删掉引用（否则每次加载都会打一个 404）。"
 fi
 
+# ---------- ⑦ 零第三方资源引用（只查"资源"，不查正文里的文字链接）----------
+head1 "⑦ 产物里不得有第三方资源引用（src / link href / CSS url()）"
+EXT=$(grep -rlE 'src="https?://|src='"'"'https?://|<link[^>]+href="https?://|url\(https?://' "$PUB" 2>/dev/null | grep -vE 'xiaokeqing' | head -5)
+if [ -z "$EXT" ]; then ok "无第三方资源引用（正文里的文字链接不算）"; else
+  no "发现第三方资源引用（违反零第三方红线）："; printf '%s\n' "$EXT" | sed 's/^/        /'
+  printf '%s\n' "$EXT" | head -2 | while IFS= read -r f; do grep -oE '(src|href)="https?://[^"]+' "$f" | head -2 | sed "s|^|        $(printf '%s' "$f") :|"; done
+fi
+
+# ---------- ⑧ bg.jpg 一个字节都不许动 ----------
+head1 "⑧ static/images/bg.jpg SHA256 未变"
+BG_WANT="4b1e13ee54ef5df240543eef85de864f69823ccad25e023533a5e3f1e9a55660"
+if [ -f "static/images/bg.jpg" ]; then
+  BG_GOT=$(sha256sum static/images/bg.jpg | cut -d' ' -f1)
+  [ "$BG_GOT" = "$BG_WANT" ] && ok "bg.jpg SHA256 与基线一致" || no "bg.jpg 被改动（红线②）：want=$BG_WANT got=$BG_GOT"
+else no "找不到 static/images/bg.jpg"; fi
+
+# ---------- ⑨ 角色资产完整性：不得有 0 字节 / 总体积封顶 ----------
+head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 12MB"
+if [ -d static/kurisu ]; then
+  EMPTY=$(find static/kurisu static/images/crt -type f -size 0 2>/dev/null | head -5)
+  TOT=$(du -sk static/kurisu static/images/crt 2>/dev/null | awk '{s+=$1} END {print s+0}')
+  [ -z "$EMPTY" ] && ok "无 0 字节资产" || { no "存在 0 字节资产（会解码失败）："; printf '%s\n' "$EMPTY" | sed 's/^/        /'; }
+  if [ "$TOT" -le 12288 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 12MB"; else no "资产过大：$((TOT/1024))MB > 12MB"; fi
+else no "找不到 static/kurisu（角色资产缺失）"; fi
+
+# ---------- ⑩ 首屏档体积 ≤1.5MB（读 manifest 自报预算）----------
+head1 "⑩ 首屏角色资源 ≤ 1.5MB（manifest.budgets.firstScreenBytes）"
+if [ -f static/kurisu/manifest.json ]; then
+  # 【稳健写法】优先读 manifest 自报；字段名变了/没有就按"首屏档文件"名规则实算（boot/poster/static + 头像 idle）
+  FS=$(python -c "
+import json, os
+p='static/kurisu/manifest.json'
+try:
+    d=json.load(open(p, encoding='utf-8'))
+    b=d.get('budgets') or d.get('budget') or {}
+    v=b.get('firstScreenBytes') or b.get('first_screen_bytes')
+    if not v:
+        files=(b.get('firstScreenFiles') or {}).keys()
+        v=sum(os.path.getsize(os.path.join('static/kurisu', f)) for f in files if os.path.exists(os.path.join('static/kurisu', f)))
+    print(int(v))
+except Exception:
+    print(-1)
+" 2>/dev/null || echo -1)
+  if [ "$FS" = "-1" ] || [ -z "$FS" ]; then
+    # 兜底实算：首屏档 = *.boot.webp + *.poster.webp + avatar/*.static.webp + avatar/normal.idle.webp
+    FS=$( { find static/kurisu -type f \( -name '*.boot.webp' -o -name '*.poster.webp' -o -name 'normal.static.webp' -o -name 'normal.idle.webp' \) -printf '%s\n' 2>/dev/null | awk '{s+=$1} END {print s+0}'; } )
+    ok "manifest 未自报，按文件规则实算首屏 $((FS/1024))KB（预算 1536KB）"
+  fi
+  if [ "${FS:-0}" -le 1572864 ]; then ok "首屏 $((FS/1024))KB ≤ 1536KB"; else no "首屏 $((FS/1024))KB 超预算 1536KB"; fi
+else no "找不到 static/kurisu/manifest.json"; fi
+
+# ---------- ⑪ 播放器必须保留降级与暂停逻辑（防以后被简化掉）----------
+head1 "⑪ kurisu-player.js 保留 reduced-motion / visibility / 图集三类逻辑"
+if [ -f static/js/kurisu-player.js ]; then
+  for pat in 'prefers-reduced-motion' 'visibilitychange' 'drawImage'; do
+    if grep -q "$pat" static/js/kurisu-player.js; then ok "播放器含 $pat"; else no "播放器缺少 $pat（降级/暂停/图集逻辑被删了？）"; fi
+  done
+else no "找不到 static/js/kurisu-player.js"; fi
 # ---------- 汇总 ----------
 head1 "汇总"
 echo "  通过 $PASS 项，失败 $FAIL 项"
