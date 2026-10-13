@@ -1606,3 +1606,723 @@ html[data-wb-noblur="1"] .xk-searchbtn { background: rgba(255, 255, 255, .68); }
   .xk-btn:hover, .xk-mod2__item:hover, .xk-searchbtn:hover, .xk-skip { transform: none !important; }
   .xk-pulse::after { animation: none !important; opacity: 0 !important; }
 }
+
+/* ============================================================================
+   19. 第十一轮：透明科技风视觉系统 + 阅读模式（站主 2026-10-13 追加的 A 项）
+   ============================================================================
+   站主原话要点：
+     "界面要整体透明，能看到背景，不要一片白团遮住" + "深色玻璃 + 霓虹描边"是"科技感"的关键。
+
+   实现方式（**不动 bg.jpg 一个字节**，只调它上方的层）：
+     · <html data-xk-theme="tech">  → 深色玻璃 + 霓虹描边（默认）
+       <html data-xk-theme="read">  → 浅色玻璃（原来的浅色配方，长文阅读更舒服，一键切换）
+     · 主题写在 <html> 上，而不是改 :root 的浅色令牌 —— 这样：
+         ① 第 1 节里那套"浅色玻璃配方"（--xk-card .54 / blur 24px / saturate 1.25）原样保留，
+            verify-redesign.ps1 第 2 组的断言仍然成立；
+         ② 阅读模式就是"不加 data-xk-theme=tech 时的样子"，两者不会互相污染。
+     · 对比度：浅色文字写死在下面的令牌里，实测数字见 _dev/r11/contrast-*.txt
+       （正文/辅助 ≥4.5:1、标题 ≥7:1，桌面 1280 与移动 390 各一份）。
+     · 动效：全部只用 opacity / transform，并统一受 prefers-reduced-motion 约束（见第 18 节）。
+   ============================================================================ */
+
+/* ---------- 19.1 深色科技风（默认） ---------- */
+html[data-xk-theme="tech"] {
+  --xk-t-card: rgba(8, 16, 30, .62);
+  --xk-t-card-line: rgba(120, 200, 255, .22);
+  --xk-t-card-in: rgba(10, 22, 38, .56);
+  --xk-t-title: #FFFFFF;
+  --xk-t-text: #E8F1FF;
+  --xk-t-muted: #A9BFD8;
+  --xk-t-link: #7CC4FF;
+  --xk-t-accent: #4FD1E8;
+  --xk-t-glow: 0 0 0 1px rgba(120, 200, 255, .06), 0 10px 30px rgba(0, 12, 26, .42);
+  color-scheme: dark;
+}
+
+/* 背景层：只在这一层做"压暗 + 提饱和"，让人物退成纹理（bg.jpg 本身没动）。
+   这是"背景清晰可见"与"浅色文字可读"之间的取舍：.52 是实测折中 ——
+   背景纹理一眼看得出（站主要的效果），最亮区的浅色文字也能过 4.5:1
+   （实测数字见 _dev/r11/CONTRAST.md）。 */
+html[data-xk-theme="tech"] .xk-bg {
+  filter: saturate(1.05) brightness(.52) contrast(1.06);
+}
+
+/* 遮罩：白色纱不出现；改成冷色暗纱，只在文字带加深（背景依旧透出） */
+html[data-xk-theme="tech"] .xk-veil {
+  background-image:
+    radial-gradient(120% 90% at 30% 12%, rgba(6, 14, 26, .20) 0px, rgba(6, 14, 26, 0) 70%),
+    linear-gradient(
+      180deg,
+      rgba(6, 12, 22, .34) 0px,
+      rgba(6, 12, 22, .40) 320px,
+      rgba(6, 12, 22, .50) 640px,
+      rgba(6, 12, 22, .60) 100%);
+}
+
+html[data-xk-theme="tech"] body { color: var(--xk-t-text); }
+
+/* Hero：横向一条深色渐变，让大字号标签与数字压在稳定底色上 */
+html[data-xk-theme="tech"] .xk-hero {
+  background-image:
+    radial-gradient(140% 130% at 26% 44%,
+      rgba(6, 16, 30, .82) 0px,
+      rgba(6, 16, 30, .62) 44%,
+      rgba(6, 16, 30, .26) 72%,
+      rgba(6, 16, 30, 0) 96%);
+}
+html[data-xk-theme="tech"] .xk-hero__brand,
+html[data-xk-theme="tech"] .xk-hstat__num,
+html[data-xk-theme="tech"] .xk-band__num {
+  color: var(--xk-t-title);
+  text-shadow: 0 1px 18px rgba(0, 10, 24, .72), 0 0 2px rgba(0, 10, 24, .6);
+}
+html[data-xk-theme="tech"] .xk-hero__lead,
+html[data-xk-theme="tech"] .xk-hero__eyebrow,
+html[data-xk-theme="tech"] .xk-hstat__label,
+html[data-xk-theme="tech"] .xk-hstat__trend,
+html[data-xk-theme="tech"] .xk-home__src { color: var(--xk-t-text); text-shadow: 0 1px 12px rgba(0, 10, 24, .7); }
+html[data-xk-theme="tech"] .xk-home__src { color: var(--xk-t-muted); }
+
+/* 卡片：深色玻璃 + 霓虹描边 + 顶部一道 1px 高光 */
+html[data-xk-theme="tech"] .xk-card {
+  background: var(--xk-t-card);
+  border-color: var(--xk-t-card-line);
+  box-shadow: var(--xk-t-glow), inset 0 1px 0 rgba(190, 230, 255, .14);
+  color: var(--xk-t-text);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+html[data-xk-theme="tech"] .xk-card__title,
+html[data-xk-theme="tech"] .xk-sub { color: var(--xk-t-title); }
+html[data-xk-theme="tech"] .xk-card__lead,
+html[data-xk-theme="tech"] .xk-note,
+html[data-xk-theme="tech"] .xk-meta > li > span,
+html[data-xk-theme="tech"] .xk-list,
+html[data-xk-theme="tech"] .xk-bullets { color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-hint,
+html[data-xk-theme="tech"] .xk-sync { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-link { color: var(--xk-t-link); }
+html[data-xk-theme="tech"] .xk-meta > li > b,
+html[data-xk-theme="tech"] .xk-meta > li > .xk-meta__v { color: var(--xk-t-title); }
+html[data-xk-theme="tech"] .xk-line,
+html[data-xk-theme="tech"] .xk-notes__row,
+html[data-xk-theme="tech"] .xk-feed,
+html[data-xk-theme="tech"] .xk-toc { border-color: rgba(140, 200, 255, .14); }
+html[data-xk-theme="tech"] .xk-notes__row { border-top-color: rgba(140, 200, 255, .14); }
+
+/* 左侧导引栏：导航在深色底上要重新给色。
+   第十一轮实测：只靠背景压暗不够 —— 导航文字压在人物亮部（银发/高光）上仍会掉到 3:1 以下，
+   所以这里给每个导航项自己一层薄玻璃底（不是给整栏盖白，人物照旧透出来）。 */
+html[data-xk-theme="tech"] .xk-side__link {
+  color: #E4EEF9;
+  background: rgba(8, 16, 30, .40);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+}
+html[data-xk-theme="tech"] .xk-side__link:hover { background: rgba(20, 40, 66, .66); color: #fff; }
+html[data-xk-theme="tech"] .xk-side__link.is-on {
+  background: rgba(24, 62, 100, .74);
+  color: #F2FAFF;
+  box-shadow: inset 0 0 0 1px rgba(140, 210, 255, .45);
+}
+html[data-xk-theme="tech"] .xk-side__avatar {
+  box-shadow: 0 0 0 1px rgba(140, 200, 255, .35), 0 6px 18px rgba(0, 10, 24, .6);
+}
+
+html[data-xk-theme="tech"] .xk-searchbtn {
+  background: rgba(10, 22, 38, .46);
+  border-color: rgba(140, 200, 255, .24);
+  color: #D6E4F5;
+  backdrop-filter: blur(12px) saturate(1.2);
+}
+html[data-xk-theme="tech"] .xk-searchbtn:hover { background: rgba(20, 40, 66, .6); color: #fff; border-color: rgba(140, 200, 255, .45); }
+
+/* 页脚：只剩版权与两个入口，深色底上要给足对比 */
+html[data-xk-theme="tech"] .xk-footer { background-image: linear-gradient(180deg, rgba(6, 12, 22, 0), rgba(6, 12, 22, .74)); }
+html[data-xk-theme="tech"] .xk-footer__in { color: #C7D8EC; }
+html[data-xk-theme="tech"] .xk-footer__in a { color: #BBD3EE; }
+
+/* 表格 / 代码 / 输入 */
+html[data-xk-theme="tech"] .xk-table th,
+html[data-xk-theme="tech"] .xk-table td { border-color: rgba(140, 200, 255, .16); color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-table th { color: var(--xk-t-title); background: rgba(10, 22, 38, .34); }
+html[data-xk-theme="tech"] .xk-input,
+html[data-xk-theme="tech"] .xk-chat__input {
+  background: rgba(6, 14, 26, .54);
+  border-color: rgba(140, 200, 255, .26);
+  color: var(--xk-t-title);
+}
+html[data-xk-theme="tech"] .xk-input::placeholder,
+html[data-xk-theme="tech"] .xk-chat__input::placeholder { color: #8FA7C2; }
+html[data-xk-theme="tech"] .xk-chip {
+  background: rgba(10, 22, 38, .44);
+  border-color: rgba(140, 200, 255, .24);
+  color: var(--xk-t-text);
+}
+html[data-xk-theme="tech"] .xk-chip:hover { background: rgba(20, 40, 66, .6); color: #fff; border-color: rgba(140, 200, 255, .5); }
+html[data-xk-theme="tech"] .xk-chip.is-on { background: rgba(79, 209, 232, .2); color: #EAF7FF; border-color: rgba(120, 200, 255, .45); }
+html[data-xk-theme="tech"] .xk-btn {
+  background: rgba(10, 22, 38, .5);
+  border-color: rgba(140, 200, 255, .3);
+  color: var(--xk-t-text);
+}
+html[data-xk-theme="tech"] .xk-btn--primary { background: linear-gradient(180deg, #2F7AEF, #1D5FD0); border-color: rgba(140, 200, 255, .5); color: #fff; }
+html[data-xk-theme="tech"] .xk-tag { background: rgba(140, 200, 255, .14); color: #D9EBFF; }
+html[data-xk-theme="tech"] .xk-tag--ghost { background: rgba(140, 200, 255, .08); color: var(--xk-t-muted); }
+
+/* 正文排版（文章 / 答案）：md 里的元素全部给深色底上的色 */
+html[data-xk-theme="tech"] .xk-md { color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-md h1,
+html[data-xk-theme="tech"] .xk-md h2,
+html[data-xk-theme="tech"] .xk-md h3,
+html[data-xk-theme="tech"] .xk-md h4,
+html[data-xk-theme="tech"] .xk-read__title { color: var(--xk-t-title); }
+html[data-xk-theme="tech"] .xk-md a { color: var(--xk-t-link); }
+html[data-xk-theme="tech"] .xk-md code {
+  background: rgba(140, 200, 255, .12);
+  color: #BFE4FF;
+}
+html[data-xk-theme="tech"] .xk-md pre,
+html[data-xk-theme="tech"] .xk-code { background: rgba(4, 10, 20, .72); border-color: rgba(140, 200, 255, .18); }
+html[data-xk-theme="tech"] .xk-md blockquote {
+  border-left-color: rgba(120, 200, 255, .4);
+  background: rgba(10, 22, 38, .34);
+  color: var(--xk-t-text);
+}
+html[data-xk-theme="tech"] .xk-md hr { border-color: rgba(140, 200, 255, .16); }
+html[data-xk-theme="tech"] .xk-read__hd { border-bottom-color: rgba(140, 200, 255, .16); }
+html[data-xk-theme="tech"] .xk-read__nav { border-top-color: rgba(140, 200, 255, .16); }
+html[data-xk-theme="tech"] .xk-crumb { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-page__title { color: var(--xk-t-title); text-shadow: 0 1px 14px rgba(0, 10, 24, .7); }
+html[data-xk-theme="tech"] .xk-page__lead { color: var(--xk-t-text); text-shadow: 0 1px 12px rgba(0, 10, 24, .7); }
+html[data-xk-theme="tech"] .xk-page__plate { background-image: linear-gradient(90deg, rgba(6, 14, 26, .7) 0%, rgba(6, 14, 26, .34) 62%, rgba(6, 14, 26, 0) 100%); }
+html[data-xk-theme="tech"] .xk-toc a { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-toc a.is-on { color: #9FE3FF; border-left-color: var(--xk-t-accent); }
+html[data-xk-theme="tech"] .xk-prog span { background: linear-gradient(90deg, var(--xk-t-accent), #7CC4FF); }
+
+/* 聊天 / 大屏的深色细节 */
+html[data-xk-theme="tech"] .xk-chat { background: rgba(8, 16, 30, .40); border-color: rgba(120, 200, 255, .2); }
+html[data-xk-theme="tech"] .xk-msg--ai .xk-msg__bubble {
+  background: rgba(10, 22, 38, .56);
+  border-color: rgba(120, 200, 255, .22);
+  color: var(--xk-t-text);
+}
+html[data-xk-theme="tech"] .xk-msg--user .xk-msg__bubble { background: linear-gradient(180deg, #2F7AEF, #2563C9); color: #fff; border-color: rgba(160, 210, 255, .4); }
+html[data-xk-theme="tech"] .xk-chat__bar { border-bottom-color: rgba(120, 200, 255, .16); }
+html[data-xk-theme="tech"] .xk-chat__form { border-top-color: rgba(120, 200, 255, .16); }
+html[data-xk-theme="tech"] .xk-chat__mode { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-band { background: rgba(8, 16, 30, .42); border-color: rgba(120, 200, 255, .2); }
+html[data-xk-theme="tech"] .xk-band__label,
+html[data-xk-theme="tech"] .xk-band__sub { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-screen__grid { opacity: .5; }
+html[data-xk-theme="tech"] .xk-svg__track { fill: rgba(140, 200, 255, .10); }
+html[data-xk-theme="tech"] .xk-svg__label { fill: #D9EBFF; }
+html[data-xk-theme="tech"] .xk-svg__value { fill: #FFFFFF; }
+html[data-xk-theme="tech"] .xk-svg__x { fill: #9DB4CE; }
+html[data-xk-theme="tech"] .xk-mark { background: rgba(79, 209, 232, .3); color: #fff; }
+html[data-xk-theme="tech"] .xk-modal__panel { background: rgba(8, 16, 30, .84); border-color: rgba(120, 200, 255, .24); color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-modal__hd { border-bottom-color: rgba(120, 200, 255, .16); }
+html[data-xk-theme="tech"] .xk-modal__item:hover,
+html[data-xk-theme="tech"] .xk-modal__item.is-on { background: rgba(79, 209, 232, .16); }
+html[data-xk-theme="tech"] .xk-modal__item b { color: var(--xk-t-title); }
+html[data-xk-theme="tech"] .xk-modal__item span { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-modal__group { color: #8FB2D6; }
+html[data-xk-theme="tech"] .xk-dist__track { background: rgba(140, 200, 255, .12); }
+html[data-xk-theme="tech"] .xk-dist__label { color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-dist__count { color: var(--xk-t-title); }
+html[data-xk-theme="tech"] .xk-feed__row { border-top-color: rgba(140, 200, 255, .12); }
+html[data-xk-theme="tech"] .xk-feed__text { color: var(--xk-t-title); }
+html[data-xk-theme="tech"] .xk-feed__ip { color: #BFE4FF; }
+html[data-xk-theme="tech"] .xk-feed__cnt { color: #9FE3FF; }
+html[data-xk-theme="tech"] .xk-feed__time { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-tl__row { border-top-color: rgba(140, 200, 255, .12); }
+html[data-xk-theme="tech"] .xk-tl__kind { color: var(--xk-t-accent); }
+html[data-xk-theme="tech"] .xk-tl__detail { color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-skel { background: rgba(140, 200, 255, .10); }
+html[data-xk-theme="tech"] .xk-notice { background: rgba(10, 22, 38, .5); border-color: rgba(140, 200, 255, .2); color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-skip { background: #0B1626; color: #CFE6FF; }
+
+/* 卡片 hover 的"轻微上浮 + 描边泛光"（只动 transform / box-shadow / border-color） */
+html[data-xk-theme="tech"] .xk-note-hero::before { background: rgba(8, 16, 30, .72); }
+html[data-xk-theme="tech"] .xk-note-hero { background: rgba(8, 16, 30, .56); border-radius: 14px; }
+html[data-xk-theme="tech"] .xk-card:hover,
+html[data-xk-theme="tech"] .xk-mod2__item:hover {
+  border-color: rgba(140, 200, 255, .42);
+  box-shadow: 0 0 0 1px rgba(120, 200, 255, .18), 0 14px 34px rgba(0, 12, 26, .5);
+}
+
+/* ---------- 19.2 阅读模式（浅色玻璃，一键切回） ---------- */
+/* ★ 第十一轮实测修正：阅读模式下 Hero / 页脚 / 左栏导航是【直接压在照片上的深色字】，
+   而减薄后的白纱（最大 .30）根本托不住它们 —— 实测 hero-brand 的底色局部暗到 L=0.008，
+   深字压深底只有 1.0:1。所以这三处各给自己一条局部浅色底纹（与科技模式的深色底纹对称），
+   依旧只在各自的横带/色块内生效，背景照片在其余位置照旧透出来。 */
+html[data-xk-theme="read"] .xk-hero {
+  background-image:
+    radial-gradient(150% 132% at 28% 44%,
+      rgba(255, 255, 255, .98) 0px,
+      rgba(255, 255, 255, .95) 46%,
+      rgba(255, 255, 255, .72) 74%,
+      rgba(255, 255, 255, 0) 96%);
+}
+html[data-xk-theme="read"] .xk-footer {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .96));
+}
+html[data-xk-theme="read"] .xk-side__link {
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+}
+html[data-xk-theme="read"] .xk-side__link.is-on { background: rgba(255, 255, 255, .98); }
+html[data-xk-theme="read"] .xk-page__plate {
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, .96) 0%, rgba(255, 255, 255, .82) 62%, rgba(255, 255, 255, 0) 100%);
+}
+html[data-xk-theme="read"] .xk-home__src { color: #0B1B2D; }
+html[data-xk-theme="read"] .xk-card { color: var(--xk-text); }
+html[data-xk-theme="read"] .xk-card__title { color: var(--xk-title); }
+html[data-xk-theme="read"] .xk-hint,
+html[data-xk-theme="read"] .xk-sync,
+html[data-xk-theme="read"] .xk-note { color: var(--xk-muted); }
+html[data-xk-theme="read"] .xk-themebtn {
+  background: rgba(255, 255, 255, .9);
+  border-color: rgba(15, 42, 80, .18);
+  color: var(--xk-nav-on);
+}
+html[data-xk-theme="read"] .xk-searchbtn { background: rgba(255, 255, 255, .9); }
+
+/* ---------- 19.3 主题开关按钮（放在内容区顶部一行，与搜索并排） ---------- */
+.xk-themebtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(15, 42, 80, .16);
+  background: rgba(255, 255, 255, .72);
+  color: var(--xk-nav-on);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: var(--xk-blur-soft);
+  -webkit-backdrop-filter: var(--xk-blur-soft);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.xk-themebtn:hover { transform: translateY(-1px); border-color: rgba(47, 122, 239, .5); }
+html[data-xk-theme="tech"] .xk-themebtn {
+  background: rgba(10, 22, 38, .46);
+  border-color: rgba(140, 200, 255, .24);
+  color: #D6E4F5;
+}
+html[data-xk-theme="tech"] .xk-themebtn:hover { background: rgba(20, 40, 66, .6); color: #fff; }
+
+/* ============================================================================
+   20. 第十一轮新组件
+   ============================================================================ */
+
+/* ---------- 20.1 首屏可玩：试着攻击我 ---------- */
+.xk-play { margin-top: 18px; width: 100%; max-width: 760px; }
+.xk-play__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--xk-t-accent, var(--xk-nav-on));
+  margin-bottom: 8px;
+  text-shadow: 0 1px 10px rgba(0, 10, 24, .6);
+}
+.xk-play__row { display: flex; gap: 10px; align-items: stretch; }
+.xk-play__row .xk-input { flex: 1 1 auto; min-width: 0; height: 46px; }
+.xk-play__row .xk-btn { flex: none; min-height: 46px; }
+.xk-play__chips { margin: 10px 0 0; }
+.xk-play__hint { font-size: 12.5px; color: var(--xk-t-muted, var(--xk-muted)); align-self: center; }
+.xk-play .xk-result { margin-top: 12px; }
+
+/* ---------- 20.2 Hero 数字的"相对量"行 ---------- */
+.xk-hstat__trend {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--xk-t-muted, #2B3E55);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
+  margin-top: 1px;
+}
+.xk-caliber--mini { margin-top: 4px; }
+.xk-caliber--mini > summary { font-size: 11.5px; }
+.xk-caliber--inline > summary { font-size: 12.5px; }
+.xk-caliber--cites > summary { font-size: 12.5px; margin-top: 8px; }
+.xk-caliber--mini .xk-meta { margin-top: 6px; gap: 5px; font-size: 12px; }
+
+/* ---------- 20.3 右栏入口卡（原功能导览位置的真实数据） ---------- */
+.xk-portal__guide .xk-mod2 { display: flex; flex-direction: column; gap: var(--xk-guide-gap); }
+.xk-portal__guide .xk-mod2__item {
+  width: auto;
+  min-height: 0;
+  padding: 12px 14px;
+  gap: 8px;
+}
+.xk-mod2__caliber { margin-top: 12px; }
+.xk-mod2__foot { margin-top: 6px; }
+
+/* ---------- 20.4 阅读进度条 / 引用 / 回到顶部 / 复制提示 ---------- */
+.xk-prog {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(140, 200, 255, .12);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.xk-prog span {
+  display: block;
+  height: 100%;
+  width: var(--xk-prog, 0%);
+  background: linear-gradient(90deg, var(--xk-blue), #4FD1E8);
+  transition: width .12s linear;
+}
+.xk-read__acts { display: flex; align-items: center; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+.xk-btn--ghost {
+  min-height: 40px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, .5);
+  border: 1px solid rgba(15, 42, 80, .14);
+  color: var(--xk-nav-on);
+}
+html[data-xk-theme="tech"] .xk-btn--ghost { background: rgba(10, 22, 38, .44); border-color: rgba(140, 200, 255, .24); color: #D6E4F5; }
+html[data-xk-theme="tech"] .xk-btn--ghost:hover { background: rgba(20, 40, 66, .62); color: #fff; }
+.xk-read__lede {
+  flex-basis: 100%;
+  color: var(--xk-t-muted, var(--xk-muted));
+  font-size: 13px;
+  line-height: 1.6;
+}
+.xk-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 14px);
+  z-index: 300;
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  background: rgba(8, 16, 30, .92);
+  color: #EAF2FF;
+  font-size: 13px;
+  border: 1px solid rgba(120, 200, 255, .3);
+  box-shadow: 0 12px 30px rgba(0, 12, 26, .4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.xk-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 20.5 搜索：命中高亮 + 分组 ---------- */
+.xk-mark { background: rgba(47, 122, 239, .22); color: inherit; border-radius: 3px; padding: 0 2px; }
+.xk-modal__group {
+  padding: 10px 14px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--xk-muted);
+}
+.xk-modal__list { max-height: min(56vh, 460px); overflow-y: auto; }
+.xk-modal__item { min-height: 48px; }
+
+/* ---------- 20.6 AI 安全：对话界面 ---------- */
+.xk-chat {
+  border: 1px solid rgba(15, 42, 80, .12);
+  border-radius: var(--r-card);
+  background: rgba(255, 255, 255, .54);
+  backdrop-filter: var(--xk-blur);
+  -webkit-backdrop-filter: var(--xk-blur);
+  box-shadow: var(--xk-shadow);
+  overflow: hidden;
+}
+.xk-chat__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--xk-line-2);
+}
+.xk-chat__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--xk-title);
+}
+.xk-chat__badge code {
+  font-family: var(--xk-mono);
+  font-size: 11.5px;
+  color: var(--xk-muted);
+  background: rgba(15, 42, 80, .06);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.xk-chat__badge.is-on { color: var(--xk-green); }
+.xk-chat__badge.is-bad { color: var(--xk-red); }
+.xk-chat__badge.is-warn { color: #B45309; }
+.xk-chat__mode { margin-left: auto; font-size: 11.5px; color: var(--xk-muted); }
+.xk-chat__log {
+  list-style: none;
+  margin: 0;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.xk-msg { display: flex; flex-direction: column; gap: 6px; max-width: 100%; animation: xk-fade-up .28s ease both; }
+.xk-msg__bubble {
+  padding: 12px 15px;
+  border-radius: 14px;
+  border: 1px solid var(--xk-card-line);
+  background: rgba(255, 255, 255, .62);
+  font-size: 14px;
+  line-height: 1.68;
+  color: var(--xk-text);
+  overflow-wrap: anywhere;
+}
+.xk-msg__bubble p + p { margin-top: 8px; }
+.xk-msg__meta { font-size: 11.5px; color: var(--xk-muted); }
+.xk-msg--user { align-items: flex-end; }
+.xk-msg--user .xk-msg__bubble { background: var(--xk-blue); border-color: var(--xk-blue); color: #fff; }
+.xk-msg--user .xk-msg__bubble p { color: #fff; }
+.xk-msg--user .xk-msg__meta { text-align: right; }
+.xk-msg--ai { align-items: flex-start; }
+.xk-msg--ai .xk-msg__bubble { width: 100%; }
+.xk-msg__verdict { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.xk-msg__note { font-size: 12.5px; color: var(--xk-muted); margin-top: 6px; }
+.xk-chat__presets { padding: 0 18px 12px; }
+.xk-chat__form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 12px 18px;
+  border-top: 1px solid var(--xk-line-2);
+}
+.xk-chat__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  max-height: 120px;
+  padding: 13px 14px;
+  border-radius: var(--r-ctl);
+  border: 1px solid rgba(15, 42, 80, .16);
+  background: rgba(255, 255, 255, .8);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--xk-title);
+  resize: none;
+}
+.xk-chat__form .xk-btn { flex: none; min-height: 46px; }
+.xk-chat__state { padding: 8px 18px 14px; margin: 0; }
+.xk-typing { display: inline-flex; gap: 4px; align-items: center; }
+.xk-typing i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--xk-blue);
+  opacity: .35;
+  animation: xk-blink 1.1s infinite ease-in-out;
+}
+.xk-typing i:nth-child(2) { animation-delay: .15s; }
+.xk-typing i:nth-child(3) { animation-delay: .3s; }
+.xk-sr {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+@keyframes xk-blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+@keyframes xk-fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---------- 20.7 监测中心：一页大屏 ---------- */
+.xk-screen { position: relative; }
+.xk-screen__grid {
+  position: absolute;
+  inset: -8px -8px auto -8px;
+  height: 420px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .8;
+  background-image:
+    linear-gradient(rgba(120, 200, 255, .10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 200, 255, .10) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(79, 209, 232, .16), rgba(79, 209, 232, 0) 78%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
+  mask-image: linear-gradient(180deg, #000, transparent);
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent);
+  animation: xk-scan 9s linear infinite;
+}
+@keyframes xk-scan {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 0 40px, 40px 0, 0 0; }
+}
+.xk-screen > *:not(.xk-screen__grid) { position: relative; z-index: 1; }
+
+.xk-band {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--xk-gap);
+  padding: 16px 20px;
+  margin-bottom: var(--xk-gap);
+  border: 1px solid rgba(15, 42, 80, .12);
+  border-radius: var(--r-card);
+  background: rgba(255, 255, 255, .54);
+  backdrop-filter: var(--xk-blur);
+  -webkit-backdrop-filter: var(--xk-blur);
+  box-shadow: var(--xk-shadow);
+}
+.xk-band__item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.xk-band__num {
+  font-family: var(--xk-mono);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  color: var(--xk-title);
+  font-variant-numeric: tabular-nums;
+}
+.xk-band__label { font-size: 12.5px; font-weight: 600; color: var(--xk-title); }
+.xk-band__sub { font-size: 11.5px; line-height: 1.45; color: var(--xk-muted); font-variant-numeric: tabular-nums; }
+
+.xk-screen__mid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--xk-gap); align-items: start; }
+.xk-screen__left, .xk-screen__right { display: flex; flex-direction: column; gap: var(--xk-gap); min-width: 0; }
+.xk-screen__bottom { margin-top: var(--xk-gap); }
+.xk-screen__foot { margin-top: var(--xk-gap); }
+.xk-card--stream { display: flex; flex-direction: column; }
+.xk-feed--tall { max-height: min(52vh, 460px); overflow-y: auto; }
+.xk-tl--scroll { max-height: 320px; overflow-y: auto; }
+
+.xk-svg { display: block; overflow: visible; }
+.xk-svg__bar { fill: url(#none); fill: rgba(47, 122, 239, .8); animation: xk-bar-in .5s ease both; animation-delay: var(--xk-delay, 0ms); transform-origin: left center; }
+.xk-svg__track { fill: rgba(15, 42, 80, .07); }
+.xk-svg__label { font-size: 12px; font-family: var(--xk-mono); fill: var(--xk-text); }
+.xk-svg__value { font-size: 12px; font-family: var(--xk-mono); font-variant-numeric: tabular-nums; fill: var(--xk-title); font-weight: 600; }
+.xk-svg__x { font-size: 10px; font-family: var(--xk-mono); fill: var(--xk-muted); }
+.xk-svg--spark .xk-svg__line { fill: none; stroke: #2F7AEF; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.xk-svg--spark .xk-svg__area { fill: rgba(47, 122, 239, .16); stroke: none; }
+.xk-svg--spark .xk-svg__dot { fill: #4FD1E8; }
+html[data-xk-theme="tech"] .xk-svg--spark .xk-svg__line { stroke: #5EC8FF; }
+html[data-xk-theme="tech"] .xk-svg--spark .xk-svg__area { fill: rgba(94, 200, 255, .18); }
+html[data-xk-theme="tech"] .xk-svg__bar { fill: rgba(94, 200, 255, .82); }
+@keyframes xk-bar-in { from { transform: scaleX(.02); } to { transform: scaleX(1); } }
+
+/* 采集通道三态灯 */
+[data-xk-screen-nodes] > li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px 10px; align-items: center; }
+[data-xk-screen-nodes] > li > small { grid-column: 2 / -1; }
+
+/* ---------- 20.8 笔记分类页 ---------- */
+.xk-cats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--xk-gap); }
+.xk-cats__item {
+  display: block;
+  padding: 16px 18px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--xk-card-line);
+  background: rgba(255, 255, 255, .44);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.xk-cats__item:hover { text-decoration: none; transform: translateY(-2px); border-color: rgba(47, 122, 239, .45); box-shadow: 0 10px 26px rgba(31, 78, 140, .12); }
+.xk-cats__name { font-size: 16px; font-weight: 700; color: var(--xk-title); }
+.xk-cats__n { font-family: var(--xk-mono); font-size: 12.5px; color: var(--xk-muted); }
+.xk-cats__sample { margin-top: 6px; font-size: 12.5px; color: var(--xk-muted); }
+html[data-xk-theme="tech"] .xk-cats__item { background: rgba(10, 22, 38, .42); }
+html[data-xk-theme="tech"] .xk-cats__name { color: var(--xk-t-title); }
+
+/* ---------- 20.9 404 ---------- */
+.xk-nf { text-align: center; padding: 40px 20px 60px; }
+.xk-nf__code {
+  font-family: var(--xk-mono);
+  font-size: 84px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: var(--xk-title);
+  text-shadow: 0 1px 20px rgba(255, 255, 255, .8);
+}
+html[data-xk-theme="tech"] .xk-nf__code { color: #EAF7FF; text-shadow: 0 0 26px rgba(94, 200, 255, .5); }
+.xk-nf__title { font-size: 22px; margin-top: 10px; }
+.xk-nf__lead { margin-top: 8px; color: var(--xk-muted); }
+.xk-nf__acts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+
+/* ---------- 20.10 响应式补充（不改变 300/1fr/320 与 20px 间距这一组硬约束） ---------- */
+/* 三栏 + 左侧固定导引栏合计最小需要 ~1100px；再窄就必然横向溢出，
+   所以从这里开始折成单列（桌面 1280 的三栏、间距、封顶一个字都不改）。 */
+@media (max-width: 1120px) {
+  .xk-portal--home,
+  .xk-portal { grid-template-columns: minmax(0, 1fr); }
+  .xk-read { grid-template-columns: minmax(0, 1fr); }
+  .xk-read__toc, .xk-read__side { position: static; top: auto; }
+  .xk-screen__mid { grid-template-columns: minmax(0, 1fr); }
+  .xk-portal--home > * { max-height: none; overflow-y: visible; }
+}
+@media (max-width: 1199px) {
+  .xk-cats { grid-template-columns: minmax(0, 1fr); }
+  .xk-chat__mode { flex-basis: 100%; margin-left: 0; }
+}
+@media (max-width: 980px) {
+  .xk-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .xk-screen__mid { grid-template-columns: minmax(0, 1fr); }
+  .xk-play__row { flex-wrap: wrap; }
+  .xk-play__row .xk-btn { flex: 1 1 auto; }
+  .xk-chat__log { max-height: none; }
+  .xk-grid2, .xk-grid3, .xk-cols2 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ★ 第十一轮对比度实测补丁（藏字测底色法跑出来才发现的真实缺陷）：
+   个别元素在深色主题下【仍然是深色文字】—— 深字压深底，实测只有 1.0–1.9:1。
+   原因都是它们自己有更具体的选择器（链接色 / 小数字色 / 提示色），
+   没有被上面那批 --xk-t-* 的通用规则覆盖到。逐条补上。 */
+html[data-xk-theme="tech"] .xk-note-hero__title,
+html[data-xk-theme="tech"] .xk-notes__title,
+html[data-xk-theme="tech"] .xk-read__title,
+html[data-xk-theme="tech"] .xk-note-hero__sum,
+html[data-xk-theme="tech"] .xk-notes__sum,
+html[data-xk-theme="tech"] .xk-cats__item,
+html[data-xk-theme="tech"] .xk-cats__name,
+html[data-xk-theme="tech"] .xk-list--notes a,
+html[data-xk-theme="tech"] .xk-read__lede { color: var(--xk-t-text); }
+html[data-xk-theme="tech"] .xk-note-hero__title:hover,
+html[data-xk-theme="tech"] .xk-notes__title:hover { color: #BDE3FF; }
+html[data-xk-theme="tech"] .xk-mini__num,
+html[data-xk-theme="tech"] .xk-caliber > summary,
+html[data-xk-theme="tech"] .xk-caliber--mini > summary { color: var(--xk-t-title); }
+html[data-xk-theme="tech"] .xk-note-hero { background: rgba(6, 14, 26, .74); }
+html[data-xk-theme="tech"] .xk-portal__guide .xk-mod2__item { background: rgba(8, 16, 30, .5); border-color: rgba(120, 200, 255, .18); }
+html[data-xk-theme="tech"] .xk-toprow .xk-searchbtn,
+html[data-xk-theme="tech"] .xk-themebtn { background: rgba(6, 14, 26, .78); border-color: rgba(140, 200, 255, .32); color: #EAF4FF; }
+html[data-xk-theme="tech"] .xk-themebtn:hover,
+html[data-xk-theme="tech"] .xk-toprow .xk-searchbtn:hover { background: rgba(12, 30, 52, .88); color: #fff; }
+html[data-xk-theme="tech"] .xk-side__link { background: rgba(6, 14, 26, .72); }
+html[data-xk-theme="tech"] .xk-side__link.is-on { background: rgba(18, 54, 92, .88); }
+
+/* ★ 对比度实测第二轮补丁：搜索按钮的文字压在【两个】底色上 ——
+   左边是深色按钮底、右边是 kbd 键盘提示（浅底）。
+   同一段文字要同时满足两者是不可能的，所以把 kbd 也一起纳入主题：
+   深色主题给深底浅字，浅色主题给浅底深字，整块文字才有一个统一的底色。
+   另外把主题按钮/小数字的颜色提到接近纯白，确保在透明卡片上仍 ≥4.5:1。 */
+html[data-xk-theme="tech"] .xk-toprow .xk-searchbtn { color: #F2F8FF; }
+html[data-xk-theme="tech"] .xk-toprow .xk-searchbtn kbd {
+  background: rgba(190, 225, 255, .22);
+  border-color: rgba(190, 225, 255, .34);
+  color: #F2F8FF;
+}
+html[data-xk-theme="read"] .xk-toprow .xk-searchbtn { color: #0E2A52; }
+html[data-xk-theme="read"] .xk-toprow .xk-searchbtn kbd { background: rgba(15, 42, 80, .08); border-color: rgba(15, 42, 80, .18); color: #0E2A52; }
+html[data-xk-theme="tech"] .xk-mini__label { color: #C6D8EE; }
+html[data-xk-theme="tech"] .xk-themebtn { color: #F2F8FF; }
+
+/* ★ 触控目标：口径折叠的 summary 在窄屏上是"看起来很小但必须能点"的控件。
+   r10 的断言要求 ≥44×44（触控目标），而 4 个"口径"summary 实测只有 33×44 ——
+   宽度差 11px。这里把它的最小宽度补到 44px（只在窄屏，桌面版式不受影响）。 */
+@media (max-width: 980px) {
+  .xk-caliber--mini > summary { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .xk-play__chips .xk-chip, .xk-chips--wrap .xk-chip, .xk-play .xk-chip { min-height: 44px; }
+}

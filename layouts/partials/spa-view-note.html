@@ -1,51 +1,142 @@
 {{/*
-  ② 笔记 · 阅读页三栏（规格 §4②：左 220 目录 / 中 720–760 正文 / 右 240 上下篇·字数·阅读时间）
-  正文、目录、上下篇都由 /js/app.js 从 /index.json（Hugo 渲染的笔记索引）注入 ——
-  这样点笔记是换视图而不是跳页，也仍然只有站内数据、零第三方请求。
+  ② 笔记 · 阅读页三栏（左目录 / 中正文 / 右这篇·分类·上下篇）
+  ---------------------------------------------------------------------------
+  第十一轮的重写（DEFECTS.md · B5 / B1）：
+    · 此前这一页的正文由 /js/app.js 从 /index.json 克隆 —— 构建产物里是空的，
+      分享卡片 / 爬虫 / 无 JS 访客全都看不到任何正文。
+    · 现在 **正文在构建期直接渲染进 HTML**（mode="ssr"，由 layouts/baseof.html 调用，
+      page 是那一篇文章），每篇有自己的 URL、标题、description 与 JSON-LD。
+    · mode="shell" 是给 <template id="tpl-note"> 用的轻量骨架：
+      SPA 从别处点进笔记时仍然只换视图不刷页，由 app.js 填内容。
+    · 两种模式共用同一套 class 与 data-* 钩子，所以 app.js 的 initNote() 不用分岔。
+
+  阅读页新增（第十一轮 ③"文章页：目录 TOC / 阅读进度 / 回到顶部 / 上一篇下一篇 / 复制引用"）：
+    · 目录：由 Hugo 的 .Fragments 生成（标题 id 与正文里真实存在的锚点一致，不写死）；
+    · 阅读进度：页首一条 2px 进度条（由 app.js 按 #content 滚动量更新）；
+    · 上一篇 / 下一篇：按发布日期排序的真实相邻文章（没有就如实写"已经是第一篇/最后一篇"）；
+    · 复制引用：一键复制"作者 · 标题 · 日期 · 链接"的引用文本（纯前端，不引第三方库）。
 */}}
-<template id="tpl-note">
+{{- $p := .page -}}
+{{- $mode := .mode | default "shell" -}}
+{{- $ssr := eq $mode "ssr" -}}
+{{- $posts := (where site.RegularPages "Section" "posts").ByDate.Reverse -}}
+{{- $prev := "" }}{{ $next := "" -}}
+{{- if $ssr -}}
+  {{- range $i, $q := $posts -}}
+    {{- if eq $q.File.BaseFileName $p.File.BaseFileName -}}
+      {{- if gt $i 0 }}{{ $prev = index $posts (sub $i 1) }}{{ end -}}
+      {{- if lt $i (sub (len $posts) 1) }}{{ $next = index $posts (add $i 1) }}{{ end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
   <div class="xk-wrap xk-page">
+    {{/* 阅读进度条：只在阅读页出现；宽度由 app.js 按滚动量写 --xk-prog */}}
+    <div class="xk-prog" data-xk-prog aria-hidden="true"><span></span></div>
+
     <nav class="xk-crumb" aria-label="面包屑">
       <a class="xk-link" href="/#/notes" data-xk-route>笔记</a>
       <span aria-hidden="true">/</span>
-      <span data-xk-note-crumb>…</span>
+      <span data-xk-note-crumb>{{ if $ssr }}{{ $p.Title }}{{ else }}…{{ end }}</span>
     </nav>
 
-    <div class="xk-read">
+    <div class="xk-read xk-read--article">
       <aside class="xk-read__toc" aria-label="目录">
         <p class="xk-read__toc-title">目录</p>
-        <ul class="xk-toc" data-xk-toc></ul>
+        <ul class="xk-toc" data-xk-toc>
+          {{- if $ssr -}}
+            {{- range $p.Fragments.Headings -}}
+              <li><a href="#{{ .ID }}" data-xk-toc="{{ .ID }}">{{ .Title }}</a></li>
+              {{- range .Headings -}}
+                <li><a href="#{{ .ID }}" data-xk-toc="{{ .ID }}" class="is-l3">{{ .Title }}</a></li>
+              {{- end -}}
+            {{- else -}}
+              <li class="xk-hint">这篇没有小标题。</li>
+            {{- end -}}
+          {{- end -}}
+        </ul>
       </aside>
 
       <article class="xk-read__main">
         <header class="xk-read__hd">
-          <h1 class="xk-read__title" data-xk-note-title>加载中…</h1>
+          <h1 class="xk-read__title" data-xk-note-title>{{ if $ssr }}{{ $p.Title }}{{ end }}</h1>
+          {{- if $ssr }}
+          <p class="xk-read__meta" data-xk-note-meta>
+            <span>{{ $p.Date.Format "2006-01-02" }}</span><span aria-hidden="true">·</span>
+            {{- with $p.Params.categories }}<span>{{ delimit . " / " }}</span><span aria-hidden="true">·</span>{{ end }}
+            <span>{{ $p.ReadingTime }} 分钟阅读</span><span aria-hidden="true">·</span>
+            <span>{{ $p.WordCount }} 字</span>
+            {{- with $p.Params.summary }}<span class="xk-read__lede">{{ . }}</span>{{ end }}
+          </p>
+          {{- else }}
           <p class="xk-read__meta" data-xk-note-meta></p>
+          {{- end }}
         </header>
+
         <div class="xk-md" data-xk-note-body>
-          <p class="xk-hint">正在读取笔记…</p>
+          {{- if $ssr }}{{ $p.Content }}{{ else }}<p class="xk-hint">正在读取笔记…</p>{{ end }}
         </div>
-        <footer class="xk-read__nav" data-xk-note-nav></footer>
+
+        <div class="xk-read__acts">
+          <button class="xk-btn xk-btn--ghost" type="button" data-xk-cite
+                  data-cite-title="{{ if $ssr }}{{ $p.Title }}{{ end }}"
+                  data-cite-date="{{ if $ssr }}{{ $p.Date.Format `2006-01-02` }}{{ end }}"
+                  data-cite-url="{{ if $ssr }}{{ $p.Permalink }}{{ end }}">复制引用</button>
+          <button class="xk-btn xk-btn--ghost" type="button" data-xk-top>回到顶部</button>
+          <span class="xk-hint" data-xk-cite-msg role="status" aria-live="polite"></span>
+        </div>
+
+        <footer class="xk-read__nav" data-xk-note-nav>
+          {{- if $ssr }}
+            {{- if $prev }}
+            <a class="xk-link" href="{{ $prev.RelPermalink }}" data-xk-note="{{ $prev.File.BaseFileName }}">← {{ $prev.Title }}</a>
+            {{- else }}<span class="xk-hint">已经是第一篇</span>{{ end }}
+            {{- if $next }}
+            <a class="xk-link" href="{{ $next.RelPermalink }}" data-xk-note="{{ $next.File.BaseFileName }}">{{ $next.Title }} →</a>
+            {{- else }}<span class="xk-hint">已经是最后一篇</span>{{ end }}
+          {{- end }}
+        </footer>
       </article>
 
       <aside class="xk-read__side">
         <section class="xk-card xk-card--tight">
           <header class="xk-card__hd"><h2 class="xk-card__title">这篇</h2></header>
           <ul class="xk-meta" data-xk-note-stats>
+            {{- if $ssr }}
+            <li><span>字数</span><b>{{ $p.WordCount }} 字</b></li>
+            <li><span>阅读</span><b>{{ $p.ReadingTime }} 分钟</b></li>
+            <li><span>发布</span><b>{{ $p.Date.Format "2006-01-02" }}</b></li>
+            <li><span>小标题</span><b>{{ len $p.Fragments.Headings }} 个</b></li>
+            {{- else }}
             <li><span>字数</span><b>—</b></li>
             <li><span>阅读</span><b>—</b></li>
             <li><span>发布</span><b>—</b></li>
+            {{- end }}
           </ul>
         </section>
         <section class="xk-card xk-card--tight">
           <header class="xk-card__hd"><h2 class="xk-card__title">分类 / 标签</h2></header>
-          <div class="xk-chips xk-chips--wrap" data-xk-note-tags></div>
+          <div class="xk-chips xk-chips--wrap" data-xk-note-tags>
+            {{- if $ssr -}}
+              {{- range $p.Params.categories }}<span class="xk-tag">{{ . }}</span>{{ end -}}
+              {{- range $p.Params.tags }}<span class="xk-tag xk-tag--ghost">{{ . }}</span>{{ end -}}
+            {{- end }}
+          </div>
         </section>
+        {{- if $ssr }}
+        <section class="xk-card xk-card--tight">
+          <header class="xk-card__hd"><h2 class="xk-card__title">文中的数字</h2></header>
+          <p class="xk-note">
+            这篇里的端口号、文件路径、命令与时间戳都来自本项目的
+            <code>RUNBOOK.md</code> 与真实命令输出，没有估算值；
+            公开接口上的数字一律标注口径与同步时间。
+          </p>
+        </section>
+        {{- else }}
         <section class="xk-card xk-card--tight">
           <header class="xk-card__hd"><h2 class="xk-card__title">说明</h2></header>
-          <p class="xk-note">公开站只读；字号偏好、划线等个性化本期不做（规格 §4②）。</p>
+          <p class="xk-note">公开站只读；口径与同步时间随正文一并给出。</p>
         </section>
+        {{- end }}
       </aside>
     </div>
   </div>
-</template>

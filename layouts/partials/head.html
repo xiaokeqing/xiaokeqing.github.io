@@ -90,13 +90,21 @@
 {{- end }}
 
 <script>
-  /* 截图/软件渲染开关 + 固定浅色守卫。必须内联且早于样式表，避免闪一下深色。 */
+  /* 主题（第十一轮 A 项）+ 截图/软件渲染开关 + 固定浅色 data-theme 守卫。
+     必须在样式表之前同步执行，否则会闪一下默认主题。
+     注意：data-theme="light" 一直是浅色（站主 §0 硬约束：不允许深色模式偷偷生效）；
+     这里新增的 data-xk-theme 是【两套玻璃配方】的开关：
+       tech = 深色玻璃 + 霓虹描边（默认，站主第十一轮要求"界面要整体透明、有科技感"）
+       read = 浅色玻璃（长文阅读更舒服，可由页面上的开关一键切回，并被记忆） */
   (function () {
     var d = document.documentElement;
     if (/[?&]wb_noblur=1/.test(location.search)) d.setAttribute('data-wb-noblur', '1');
     d.setAttribute('data-theme', 'light');
-    /* 注：面包屑已按站主要求删除、搜索框改成所有栏目都显示，
-       所以这里不再需要预判"当前栏目"（data-xk-page 已一并删除，不留死代码）。 */
+    var t = 'tech';
+    try { var saved = localStorage.getItem('xk-theme'); if (saved === 'read' || saved === 'tech') t = saved; } catch (e) { /* 隐私模式忽略 */ }
+    if (/[?&]theme=read/.test(location.search)) t = 'read';
+    if (/[?&]theme=tech/.test(location.search)) t = 'tech';
+    d.setAttribute('data-xk-theme', t);
     try {
       localStorage.removeItem('pref-theme');
       localStorage.removeItem('pref-theme-default');

@@ -1,244 +1,126 @@
 {{/*
-  ③ 监测中心（工作台两栏：中 1fr + 右 300，gap 18）—— 规格 §4③
-  四个子 tab 都在这一栏内切换（不另开页）：实时告警 / 蜜罐战报 / 处置审计 / 系统状态。
-  数字全部由 /js/app.js 从真实接口填入：
-    /api/public/overview + /api/public/alerts   （实时告警）
-    /api/public/honeypot                        （蜜罐战报，命令时间线未接入）
-    /api/public/audit                           （处置审计，IP 掩码）
-    /api/health                                 （系统状态，扁平对象无信封）
-  口径纪律：KPI 一律用【去重/聚合口径】（窗口内聚合条数、去重来源 IP、去重规则），
-  原始事件计数单独标注"未去重"，避免单条高频规则刷出几万条"高危"。
+  ③ 监测中心 —— 一页大屏（第十一轮重做）
+  ============================================================================
+  站主原话："系统监控要做成很高级很科技感又很有用的大屏，有动态效果，而不是拆成一个个小模块"。
+  所以这一栏从"4 个子 tab 拆成小模块"改成一页大屏（不再有 tab 切换）：
+    · 顶部【指标带】：4 个数字，每个都配【本来就有的】相对量（给不出就如实写"窗口内"，不编）；
+    · 中部左：攻击态势 —— 来源网段 Top（自绘 SVG 条）+ 近 24h 攻击节奏（自绘 SVG）
+      + 攻击事件时间轴（可滚动）；
+    · 中部右：自动滚动的拦截动态（新条目淡入 + 级别色点）；
+    · 底部：规则命中 Top / 严重度分布 / 采集通道状态（三态灯）。
+  零第三方图表库：全部自绘 SVG + CSS。
+  数据全部来自公开端点：/api/public/overview · alerts · honeypot · audit · /api/health。
+  查不到就显示"未接入" —— 不留白、不造数；动画只用真数据（不做假动画冒充"在跑"）。
 */}}
-<template id="tpl-monitor">
-  <div class="xk-wrap xk-page">
-    {{/* 追加要求 ②：原来这里是一整块玻璃介绍卡，已删除（返工后连整段说明也去掉）。
-         现在只有【模块名 + 一行极简副标题】+ 同步状态，底纹只贴在文字这一条上；
-         完整口径挪到「关于」页的说明卡。 */}}
+  <div class="xk-wrap xk-page xk-screen" data-xk-screen>
+    <div class="xk-screen__grid" aria-hidden="true"></div>
+
     <header class="xk-page__hd">
       <div class="xk-page__plate">
         <h1 class="xk-page__title">监测中心</h1>
-        <p class="xk-page__lead">实时告警 · 蜜罐战报 · 处置审计 · 系统状态<span class="xk-sync" data-xk-sync="monitor">加载中…</span></p>
+        <p class="xk-page__lead">
+          一页大屏 · 真实公开端点<span class="xk-sync" data-xk-sync="monitor">加载中…</span>
+        </p>
       </div>
     </header>
 
-    <div class="xk-tabs" role="tablist" aria-label="监测中心子栏目">
-      <button class="xk-tab is-on" type="button" role="tab" id="xk-tab-alerts" data-xk-tab="alerts" aria-selected="true" aria-controls="xk-pane-alerts" tabindex="0">实时告警</button>
-      <button class="xk-tab" type="button" role="tab" id="xk-tab-honeypot" data-xk-tab="honeypot" aria-selected="false" aria-controls="xk-pane-honeypot" tabindex="-1">蜜罐战报</button>
-      <button class="xk-tab" type="button" role="tab" id="xk-tab-audit" data-xk-tab="audit" aria-selected="false" aria-controls="xk-pane-audit" tabindex="-1">处置审计</button>
-      <button class="xk-tab" type="button" role="tab" id="xk-tab-system" data-xk-tab="system" aria-selected="false" aria-controls="xk-pane-system" tabindex="-1">系统状态</button>
+    <section class="xk-band" aria-label="核心指标">
+      <div class="xk-band__item">
+        <b class="xk-band__num" data-xk-stat="alerts24h">—</b>
+        <span class="xk-band__label">24h 告警</span>
+        <span class="xk-band__sub" data-xk-trend="alerts24h">—</span>
+      </div>
+      <div class="xk-band__item">
+        <b class="xk-band__num" data-xk-stat="honeypot">—</b>
+        <span class="xk-band__label">蜜罐事件</span>
+        <span class="xk-band__sub" data-xk-trend="honeypot">—</span>
+      </div>
+      <div class="xk-band__item">
+        <b class="xk-band__num" data-xk-stat="guard">—</b>
+        <span class="xk-band__label">护栏拦截</span>
+        <span class="xk-band__sub" data-xk-trend="guard">—</span>
+      </div>
+      <div class="xk-band__item">
+        <b class="xk-band__num" data-xk-screen="active">—</b>
+        <span class="xk-band__label">封禁生效中</span>
+        <span class="xk-band__sub" data-xk-screen="activeSub">—</span>
+      </div>
+    </section>
+
+    <div class="xk-screen__mid">
+      <div class="xk-screen__left">
+        <section class="xk-card">
+          <header class="xk-card__hd">
+            <h2 class="xk-card__title">攻击来源网段 Top</h2>
+            <span class="xk-hint">IP 已由后端掩码到网段</span>
+          </header>
+          <div class="xk-bars" data-xk-screen-sources><p class="xk-hint">正在读取…</p></div>
+          <p class="xk-hint" data-xk-screen-sources-note>来源累计被判定的连接 / 登录尝试次数。</p>
+        </section>
+
+        <section class="xk-card">
+          <header class="xk-card__hd">
+            <h2 class="xk-card__title">近 24 小时攻击节奏</h2>
+            <span class="xk-hint" data-xk-screen-trend-note>逐小时桶（同一 24h 窗口）</span>
+          </header>
+          <div class="xk-spark" data-xk-screen-hourly><p class="xk-hint">正在读取…</p></div>
+        </section>
+
+        <section class="xk-card">
+          <header class="xk-card__hd"><h2 class="xk-card__title">攻击事件时间轴</h2><span class="xk-hint">最近 20 条</span></header>
+          <ul class="xk-tl xk-tl--scroll" data-xk-screen-timeline><li class="xk-hint">正在读取…</li></ul>
+        </section>
+      </div>
+
+      <div class="xk-screen__right">
+        <section class="xk-card xk-card--live xk-card--stream">
+          <header class="xk-card__hd">
+            <h2 class="xk-card__title" data-xk-live-title>拦截动态 · 最近同步</h2>
+            <span class="xk-sync" data-xk-sync="feed">加载中…</span>
+          </header>
+          <ul class="xk-feed xk-feed--tall" data-xk-feed>
+            <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w70"></span></li>
+            <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w60"></span></li>
+            <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w80"></span></li>
+          </ul>
+          <details class="xk-caliber">
+            <summary>数据口径</summary>
+            <ul class="xk-meta">
+              <li><span>条目</span><b>同类别 + 同来源 IP 聚合；只显示最近若干条（不是全量）</b></li>
+              <li><span>同步</span><b>同步行的时间是浏览器这次成功取数的时刻，不是事件发生时刻</b></li>
+              <li><span>来源</span><b class="xk-mono">/api/public/audit · /api/public/alerts · /api/public/honeypot</b></li>
+              <li><span>免责</span><b>只读展示 · IP 已掩码 · 无处置入口</b></li>
+            </ul>
+          </details>
+        </section>
+      </div>
     </div>
 
-    {{/* ---------------- 实时告警 ---------------- */}}
-    <section class="xk-pane is-on" id="xk-pane-alerts" data-xk-pane="alerts" role="tabpanel" aria-labelledby="xk-tab-alerts" tabindex="0">
-      <div class="xk-work">
-        <div class="xk-work__main">
-          <section class="xk-card">
-            <div class="xk-kpis" data-xk-alert-kpis>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-            </div>
-            <p class="xk-note" data-xk-alert-caliber></p>
-          </section>
+    <div class="xk-grid3 xk-screen__bottom">
+      <section class="xk-card">
+        <header class="xk-card__hd"><h2 class="xk-card__title">规则命中 Top</h2><span class="xk-hint">聚合窗口内</span></header>
+        <div class="xk-dist" data-xk-screen-rules><p class="xk-hint">正在读取…</p></div>
+      </section>
 
-          <div class="xk-grid2">
-            <section class="xk-card">
-              <header class="xk-card__hd"><h2 class="xk-card__title">级别分布</h2><span class="xk-hint" data-xk-sev-caliber>去重口径</span></header>
-              <div class="xk-dist" data-xk-alert-sev></div>
-            </section>
-            <section class="xk-card">
-              <header class="xk-card__hd"><h2 class="xk-card__title">来源分布</h2><span class="xk-hint">去重口径</span></header>
-              <div class="xk-dist" data-xk-alert-src></div>
-            </section>
-          </div>
+      <section class="xk-card">
+        <header class="xk-card__hd"><h2 class="xk-card__title">严重度分布</h2><span class="xk-hint">24h 桶</span></header>
+        <div class="xk-dist" data-xk-screen-sev><p class="xk-hint">正在读取…</p></div>
+      </section>
 
-          <section class="xk-card">
-            <header class="xk-card__hd">
-              <h2 class="xk-card__title">24 小时趋势</h2>
-              <span class="xk-hint">原始事件计数（未去重，含重复上报）</span>
-            </header>
-            {{/* 注意：这里的宿主不加 .xk-chart —— JS 会自己输出 .xk-chart 行，
-                否则会变成 .xk-chart 套 .xk-chart，内层作为 flex 子项被压成 0 宽 */}}
-            <div data-xk-alert-trend></div>
-            <p class="xk-note" data-xk-trend-note></p>
-          </section>
+      <section class="xk-card">
+        <header class="xk-card__hd"><h2 class="xk-card__title">采集通道</h2><span class="xk-hint">三态灯</span></header>
+        <ul class="xk-meta" data-xk-screen-nodes><li class="xk-hint">正在读取…</li></ul>
+        <p class="xk-note" data-xk-screen-source-note></p>
+      </section>
+    </div>
 
-          <section class="xk-card">
-            <header class="xk-card__hd">
-              <h2 class="xk-card__title">告警流</h2>
-              <div class="xk-filters" data-xk-alert-filters>
-                <button class="xk-chip is-on" type="button" data-xk-sev-filter="__all">全部</button>
-                <button class="xk-chip" type="button" data-xk-sev-filter="CRITICAL">严重</button>
-                <button class="xk-chip" type="button" data-xk-sev-filter="HIGH">高危</button>
-                <button class="xk-chip" type="button" data-xk-sev-filter="MEDIUM">中危</button>
-                <button class="xk-chip" type="button" data-xk-sev-filter="LOW">低危</button>
-              </div>
-            </header>
-            <ul class="xk-stream" data-xk-alert-stream>
-              <li class="xk-stream__row is-skeleton"><span class="xk-skel xk-skel--w80"></span></li>
-              <li class="xk-stream__row is-skeleton"><span class="xk-skel xk-skel--w70"></span></li>
-              <li class="xk-stream__row is-skeleton"><span class="xk-skel xk-skel--w75"></span></li>
-            </ul>
-            <p class="xk-note" data-xk-stream-note></p>
-          </section>
-        </div>
-
-        <aside class="xk-work__side">
-          <section class="xk-card xk-card--tight">
-            <header class="xk-card__hd"><h2 class="xk-card__title">节点</h2></header>
-            <ul class="xk-meta" data-xk-nodes></ul>
-          </section>
-          <section class="xk-card xk-card--tight">
-            <header class="xk-card__hd"><h2 class="xk-card__title">数据源</h2></header>
-            <ul class="xk-meta" data-xk-source></ul>
-            <p class="xk-note" data-xk-source-note></p>
-          </section>
-          <section class="xk-card xk-card--tight">
-            <header class="xk-card__hd"><h2 class="xk-card__title">关于下钻</h2></header>
-            <p class="xk-note" data-xk-drill-note>
-              点告警行可展开该条聚合记录自带的全部字段（无需额外请求）。
-            </p>
-          </section>
-        </aside>
-      </div>
-    </section>
-
-    {{/* ---------------- 蜜罐战报 ---------------- */}}
-    <section class="xk-pane" id="xk-pane-honeypot" data-xk-pane="honeypot" role="tabpanel" aria-labelledby="xk-tab-honeypot" tabindex="0" hidden>
-      <div class="xk-work">
-        <div class="xk-work__main">
-          <section class="xk-card">
-            <div class="xk-kpis xk-kpis--hp" data-xk-hp-kpis>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-            </div>
-            <p class="xk-note" data-xk-hp-note></p>
-          </section>
-
-          <div class="xk-grid3">
-            <section class="xk-card">
-              <header class="xk-card__hd"><h2 class="xk-card__title">尝试账号 / 口令</h2></header>
-              <div class="xk-dist xk-dist--wide" data-xk-hp-creds></div>
-            </section>
-            <section class="xk-card">
-              <header class="xk-card__hd"><h2 class="xk-card__title">来源 IP</h2></header>
-              <div class="xk-dist xk-dist--wide" data-xk-hp-sources></div>
-            </section>
-            <section class="xk-card">
-              <header class="xk-card__hd"><h2 class="xk-card__title">客户端指纹</h2></header>
-              <div class="xk-dist xk-dist--wide" data-xk-hp-clients></div>
-            </section>
-          </div>
-
-          <section class="xk-card">
-            <header class="xk-card__hd"><h2 class="xk-card__title">事件时间线</h2><span class="xk-hint">真实采集事件</span></header>
-            <ul class="xk-tl" data-xk-hp-timeline></ul>
-          </section>
-
-          <section class="xk-card xk-card--off">
-            <header class="xk-card__hd">
-              <h2 class="xk-card__title">命令时间线</h2>
-              <span class="xk-tag xk-tag--off">数据源未接入</span>
-            </header>
-            <p class="xk-note" data-xk-hp-cmd-note>
-              接口返回 <code>commandsAvailable=false</code>：Wazuh 侧没有命令执行规则，蜜罐里敲过的命令拿不到。
-              这里不编造命令内容，等数据源接入后再填。
-            </p>
-          </section>
-        </div>
-        <aside class="xk-work__side">
-          <section class="xk-card xk-card--tight">
-            <header class="xk-card__hd"><h2 class="xk-card__title">口径</h2></header>
-            <ul class="xk-meta">
-              <li><span>IP</span><b>掩码到网段</b></li>
-              <li><span>样本</span><b data-xk-hp-sampled>—</b></li>
-              <li><span>总数</span><b data-xk-hp-total>—</b></li>
-            </ul>
-            <p class="xk-note">Top 榜单来自采样窗口，按出现次数排序；未采样部分不计入。</p>
-          </section>
-        </aside>
-      </div>
-    </section>
-
-    {{/* ---------------- 处置审计 ---------------- */}}
-    <section class="xk-pane" id="xk-pane-audit" data-xk-pane="audit" role="tabpanel" aria-labelledby="xk-tab-audit" tabindex="0" hidden>
-      <div class="xk-work">
-        <div class="xk-work__main">
-          <section class="xk-card">
-            <div class="xk-kpis xk-kpis--4" data-xk-audit-kpis>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-              <div class="xk-kpi is-skeleton"><span class="xk-skel xk-skel--w40"></span><span class="xk-skel xk-skel--w70"></span></div>
-            </div>
-            <p class="xk-note" data-xk-audit-note></p>
-          </section>
-
-          <section class="xk-card">
-            <header class="xk-card__hd"><h2 class="xk-card__title">封禁留痕</h2><span class="xk-hint">IP 已掩码</span></header>
-            <div class="xk-rec xk-rec--blocks" data-xk-audit-blocks></div>
-          </section>
-
-          <section class="xk-card">
-            <header class="xk-card__hd"><h2 class="xk-card__title">审计流水</h2><span class="xk-hint">处置动作与护栏拦截</span></header>
-            <div class="xk-rec xk-rec--actions" data-xk-audit-actions></div>
-          </section>
-        </div>
-        <aside class="xk-work__side">
-          <section class="xk-card xk-card--tight">
-            <header class="xk-card__hd"><h2 class="xk-card__title">怎么读</h2></header>
-            <ul class="xk-meta">
-              <li><span>来源</span><b>处置审计留痕</b></li>
-              <li><span>可写</span><b>否（只读）</b></li>
-              <li><span>detail</span><b>不下发</b></li>
-            </ul>
-            <p class="xk-note">
-              <code>mode=BLOCKED</code> 表示动作被护栏拦下（<b>没执行</b>）；<code>REAL</code> / <code>MOCK</code>
-              标明解封动作走的是真实链路还是演练链路 —— 两者不会混着报。
-            </p>
-          </section>
-        </aside>
-      </div>
-    </section>
-
-    {{/* ---------------- 系统状态 ---------------- */}}
-    <section class="xk-pane" id="xk-pane-system" data-xk-pane="system" role="tabpanel" aria-labelledby="xk-tab-system" tabindex="0" hidden>
-      <div class="xk-work">
-        <div class="xk-work__main">
-          <section class="xk-card">
-            <header class="xk-card__hd"><h2 class="xk-card__title">指纹核对</h2><span class="xk-hint" data-xk-sys-sync></span></header>
-            <ul class="xk-fp" data-xk-sys-fp>
-              <li class="is-skeleton"><span class="xk-skel xk-skel--w60"></span></li>
-              <li class="is-skeleton"><span class="xk-skel xk-skel--w60"></span></li>
-              <li class="is-skeleton"><span class="xk-skel xk-skel--w60"></span></li>
-            </ul>
-          </section>
-          <section class="xk-card">
-            <header class="xk-card__hd"><h2 class="xk-card__title">运行信息</h2></header>
-            <ul class="xk-meta xk-meta--kv" data-xk-sys-info></ul>
-          </section>
-          <section class="xk-card xk-card--off">
-            <header class="xk-card__hd"><h2 class="xk-card__title">数据机磁盘水位</h2><span class="xk-tag xk-tag--off">未接入</span></header>
-            <p class="xk-note">
-              <code>/api/health</code> 的公开字段里没有磁盘水位（已逐字段核对返回体）。这一格保持"未接入"，
-              不用估算值或图片占位。
-            </p>
-          </section>
-        </div>
-        <aside class="xk-work__side">
-          <section class="xk-card xk-card--tight">
-            <header class="xk-card__hd"><h2 class="xk-card__title">公开字段说明</h2></header>
-            <p class="xk-note">
-              <code>/api/health</code> 返回的是<b>扁平对象</b>（没有 <code>{code,message,data}</code> 信封），
-              本页只展示可公开字段：三处指纹、状态、文档向量数、运行时长。
-              <code>buildSha</code> 是环境变量自述（非证据），单独标出，不与指纹混排。
-            </p>
-          </section>
-        </aside>
-      </div>
+    <section class="xk-card xk-screen__foot">
+      <header class="xk-card__hd"><h2 class="xk-card__title">这份大屏读不到的（如实列出，不放占位图）</h2></header>
+      <ul class="xk-bullets">
+        <li><b>HTTP 状态码分布</b>：公开端点里没有 statusCode / httpStatus 字段（已逐字段核对响应体），所以这里不画这张图。</li>
+        <li><b>7 天 × 24 小时热力格</b>：需要历史日桶，公开端点只给"最近 24h 的逐小时桶"。等后端提供日粒度聚合后再补，不拿 24h 数据伪装成 7 天。</li>
+        <li><b>蜜罐命令时间线</b>：Wazuh 侧没有命令执行规则（<code>commandsAvailable=false</code>），不作图、不编造内容。</li>
+        <li><b>磁盘水位 / 队列深度</b>：<code>/api/health</code> 的公开字段里没有，保持缺省而不是估算。</li>
+      </ul>
     </section>
   </div>
-</template>

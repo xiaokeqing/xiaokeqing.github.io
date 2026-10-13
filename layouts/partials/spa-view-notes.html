@@ -1,19 +1,28 @@
 {{/*
-  ② 笔记 · 列表（规格 §4②）
-  分类口径：规格给的五个方向（渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查）本期"内容后做"——
-  所以它们照实显示为「规划中」，点进去是空列表 + 一句实话，不编内容；
-  同时把仓库里真实存在、真的有文章的 categories 也列出来（数字来自 site.Taxonomies，不写死）。
+  ② 笔记 · 列表 + 分类页（第十一轮 ③ / 站主 E 项）
+  ---------------------------------------------------------------------------
+  两件事合成一页，但用真实的分类与标签聚合（不是二次包装）：
+    · 顶部：分类 chips（来自 site.Taxonomies 的真值，数量是真实篇数）；
+    · 中栏：按时间倒序的全部文章，每条带日期 / 阅读时长 / 字数 / 摘要；
+    · 右栏：分类卡 + 标签入口 —— 点进去是可分享的真实 URL
+      （/categories/<name>/ 与 /tags/<name>/，Hugo 生成的独立页面，各带自己的列表）。
+  为什么要有独立的分类页 URL：分享给面试官时，发过去的是一条能直接打开的列表，
+  而不是"你到我的站上点笔记再点分类" —— **可分享**本身就是可信度的一部分。
 */}}
-{{- $posts := where site.RegularPages "Section" "posts" -}}
+{{- $T := .term -}}
+{{- $isTerm := ne $T "" -}}
+{{- $all := (where site.RegularPages "Section" "posts").ByDate.Reverse -}}
+{{- $posts := cond $isTerm .pages $all -}}
 {{- $cats := site.Taxonomies.categories -}}
-<template id="tpl-notes">
+{{- $tags := site.Taxonomies.tags -}}
   <div class="xk-wrap xk-page">
-    {{/* 追加要求 ②：顶部介绍大卡已删除（返工后连整段说明也去掉），
-         只留模块名 + 一行极简副标题，第一屏直接是分类筛选项 + 笔记列表 */}}
     <header class="xk-page__hd">
       <div class="xk-page__plate">
-        <h1 class="xk-page__title">笔记</h1>
-        <p class="xk-page__lead">渗透文档 · 课堂笔记 · 个人总结 · CVE · 速查</p>
+        <h1 class="xk-page__title">{{ if $isTerm }}{{ .kindLabel }}：{{ $T }}{{ else }}笔记{{ end }}</h1>
+        <p class="xk-page__lead">
+          {{ if $isTerm }}{{ len $posts }} 篇 · <a class="xk-link" href="/posts/">全部笔记</a>
+          {{ else }}{{ len $posts }} 篇 · 真实复盘（部署链 / 事故 / AI 防护 / 蜜罐 / 规则裁剪）{{ end }}
+        </p>
       </div>
     </header>
 
@@ -21,11 +30,6 @@
       <button class="xk-chip is-on" type="button" data-xk-cat="__all">全部 <b>{{ len $posts }}</b></button>
       {{- range $name, $items := $cats }}
       <button class="xk-chip" type="button" data-xk-cat="{{ $name }}">{{ $name }} <b>{{ len $items }}</b></button>
-      {{- end }}
-      {{- range slice "渗透文档" "课堂笔记" "个人总结" "CVE" "速查" }}
-      {{- if not (index $cats .) }}
-      <button class="xk-chip is-planned" type="button" data-xk-cat="{{ . }}">{{ . }} <b>规划中</b></button>
-      {{- end }}
       {{- end }}
     </div>
 
@@ -37,8 +41,8 @@
             <li class="xk-notes__row"
                 data-note-cat="{{ delimit (.Params.categories | default slice) `|` }}"
                 data-note-slug="{{ .File.BaseFileName }}">
-              <a class="xk-notes__title" href="/#/notes/{{ .File.BaseFileName }}" data-xk-note="{{ .File.BaseFileName }}">{{ .Title }}</a>
-              <p class="xk-notes__sum">{{ with .Params.summary }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 110 }}{{ end }}</p>
+              <a class="xk-notes__title" href="{{ .RelPermalink }}" data-xk-note="{{ .File.BaseFileName }}">{{ .Title }}</a>
+              <p class="xk-notes__sum">{{ with .Params.summary }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 130 }}{{ end }}</p>
               <div class="xk-notes__meta">
                 {{- with .Params.categories }}<span class="xk-tag">{{ delimit . " / " }}</span>{{ end }}
                 {{- with .Params.tags }}{{ range first 3 . }}<span class="xk-tag xk-tag--ghost">{{ . }}</span>{{ end }}{{ end }}
@@ -49,27 +53,45 @@
             <li class="xk-hint">仓库里还没有笔记。</li>
             {{- end }}
           </ul>
-          <p class="xk-note" data-xk-notes-empty hidden>该分类暂时没有内容（规划中）。这里不会用示例文章凑数。</p>
+          <p class="xk-note" data-xk-notes-empty hidden>该分类暂时没有内容。这里不会用示例文章凑数。</p>
         </section>
       </div>
 
       <aside class="xk-portal__side">
         <section class="xk-card">
+          <header class="xk-card__hd"><h2 class="xk-card__title">分类</h2><span class="xk-hint">可分享 URL</span></header>
+          <div class="xk-cats">
+            {{- range $name, $items := $cats }}
+            {{- with site.GetPage (printf "/categories/%s" $name) }}
+            <a class="xk-cats__item" href="{{ .RelPermalink }}">
+              <span class="xk-cats__name">{{ $name }}</span>
+              <span class="xk-cats__n">{{ len $items }} 篇</span>
+              <span class="xk-cats__sample">{{ range first 2 $items }}{{ .Page.Title }}・{{ end }}</span>
+            </a>
+            {{- end }}
+            {{- end }}
+          </div>
+        </section>
+
+        <section class="xk-card">
+          <header class="xk-card__hd"><h2 class="xk-card__title">标签</h2></header>
+          <div class="xk-chips xk-chips--wrap">
+            {{- range $name, $items := $tags }}
+            {{- with site.GetPage (printf "/tags/%s" $name) }}
+            <a class="xk-chip" href="{{ .RelPermalink }}">{{ $name }} <b>{{ len $items }}</b></a>
+            {{- end }}
+            {{- end }}
+          </div>
+        </section>
+
+        <section class="xk-card">
           <header class="xk-card__hd"><h2 class="xk-card__title">读法</h2></header>
           <ul class="xk-meta">
             <li><span>阅读页</span><b>左目录 / 中正文 / 右上下篇</b></li>
-            <li><span>搜索</span><b>Ctrl+K 只搜笔记</b></li>
-            <li><span>公开站</span><b>只读（跳转即换视图，不刷页）</b></li>
+            <li><span>搜索</span><b>Ctrl+K 或 “/”</b></li>
+            <li><span>主题</span><b>科技模式 / 阅读模式可切</b></li>
           </ul>
-        </section>
-        <section class="xk-card">
-          <header class="xk-card__hd"><h2 class="xk-card__title">分类计划</h2></header>
-          <p class="xk-note">
-            五个方向的正文还没写：<b>渗透文档 / 课堂笔记 / 个人总结 / CVE / 速查</b>。
-            已经写好的文章按仓库里 front matter 的真实分类归入上面的筛选项，不做二次包装。
-          </p>
         </section>
       </aside>
     </div>
   </div>
-</template>

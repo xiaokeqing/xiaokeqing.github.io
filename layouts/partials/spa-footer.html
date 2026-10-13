@@ -1,11 +1,17 @@
-{{/* 页脚：只放不误导的静态信息（无第三方统计脚本） */}}
+{{/*
+  页脚（第十一轮 A6 重做）
+  ---------------------------------------------------------------------------
+  DEFECTS.md · A6：原来这里挤着三句"自证"（静态托管 / 零第三方脚本 / 只读接口 / IP 掩码），
+  整行看起来就是一张免责声明墙 —— 声明写得越多，读者对内容本身的信任反而越低。
+  现在页脚只留两样：版权 + 两个真入口（RSS / GitHub）。
+  "这个站怎么保护你"这类自证搬到「关于」页，那是访客主动去核对的地方。
+*/}}
 <footer class="xk-footer">
   <div class="xk-wrap xk-footer__in">
-    <span>© {{ now.Year }} {{ site.Params.siteName | default "xiaokeqing" }} · 个人博客与安全运营工作台</span>
-    <span class="xk-footer__sep" aria-hidden="true">·</span>
-    <span>静态托管 / 零第三方脚本 · 公开数据来自只读接口，IP 已掩码</span>
+    <span>© {{ now.Year }} 小刻晴 · xiaokeqing</span>
     <span class="xk-footer__sep" aria-hidden="true">·</span>
     <a href="{{ `index.xml` | relURL }}">RSS</a>
+    <span class="xk-footer__sep" aria-hidden="true">·</span>
     <a href="https://github.com/xiaokeqing" rel="noopener noreferrer" target="_blank">GitHub</a>
   </div>
 </footer>

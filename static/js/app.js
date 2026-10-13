@@ -31,10 +31,8 @@
   var SEV_ORDER = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 };
   var SEV_CLASS = { CRITICAL: 'critical', HIGH: 'high', MEDIUM: 'medium', LOW: 'low', INFO: 'info' };
 
-  /* 长列表纪律（规格 §3：长列表分页或虚拟滚动）：
-     告警流 / 蜜罐事件时间线先只渲染前 N 条，点"显示全部"再展开 —— 一次塞几百行
-     既拖慢首屏，也让页面难以阅读。 */
-  var STREAM_LIMIT = 30, HP_TL_LIMIT = 40;
+  /* 备注：第十一轮把监测中心改成"一页大屏"后，原来的长列表分页常量（STREAM_LIMIT /
+     HP_TL_LIMIT）连同用它们的加载器一起删掉了 —— 不留死代码。 */
 
   /* ==========================================================================
      1. 小工具
@@ -338,6 +336,10 @@
     if (/^\/posts\/?$/.test(p) || /^\/categories/.test(p) || /^\/tags/.test(p)) return { name: 'notes' };
     if (/^\/alerts/.test(p)) return { name: 'monitor', tab: 'alerts' };
     if (/^\/labs/.test(p)) return { name: 'range' };
+    /* ★ 第十一轮修的一个真 bug：以前这里没有 /ai/ 分支 —— 所以直接打开 /ai/（服务端渲染正确）
+       之后，app.js 会把路由判成 notfound 并把整页替换成 404。实测就是"无 JS 正常、有 JS 变 404"。
+       现在补上，并把这个坑写进断言（见 _dev/verify-redesign.ps1 第 12 组）。 */
+    if (/^\/ai\/?$/.test(p)) return { name: 'ai' };
     if (/^\/(about|projects|demo)/.test(p)) return { name: 'about' };
     if (/^\/(404\.html)?$/.test(p)) return { name: 'notfound' };
     return { name: 'notfound' };
@@ -361,11 +363,90 @@
     render(parseHash(hash) || { name: 'notfound' });
   }
 
+  /* 站点级小工具（第十一轮）：主题、阅读进度、引用、回到顶部、轻提示 */
+  /* ========================================================================== */
+  var THEME_KEY = 'xk-theme';
+  var THEMES = ['tech', 'read'];
+  function currentTheme() {
+    var t = document.documentElement.getAttribute('data-xk-theme');
+    return THEMES.indexOf(t) >= 0 ? t : 'tech';
+  }
+  function applyTheme(t, persist) {
+    if (THEMES.indexOf(t) < 0) t = 'tech';
+    document.documentElement.setAttribute('data-xk-theme', t);
+    var btn = document.querySelector('[data-xk-theme-toggle]');
+    if (btn) {
+      var isRead = t === 'read';
+      btn.setAttribute('aria-pressed', isRead ? 'true' : 'false');
+      var lbl = btn.querySelector('[data-xk-theme-label]');
+      if (lbl) lbl.textContent = isRead ? '阅读模式' : '科技模式';
+    }
+    if (persist) { try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* 隐私模式忽略 */ } }
+  }
+  function toggleTheme() {
+    applyTheme(currentTheme() === 'read' ? 'tech' : 'read', true);
+  }
+
+  /* 阅读进度：把 #content 的滚动量写成一个 CSS 变量，由 .xk-prog span 的宽度呈现 */
+  function updateProgress() {
+    var bar = $('[data-xk-prog]');
+    if (!bar) return;
+    var sc = contentEl.scrollHeight - contentEl.clientHeight;
+    var p = sc > 8 ? (contentEl.scrollTop / sc) : 0;
+    bar.style.setProperty('--xk-prog', (p * 100).toFixed(2) + '%');
+    bar.classList.toggle('is-on', p > 0.004);
+  }
+
+  function toast(msg) {
+    var host = $('#xk-toast');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'xk-toast';
+      host.className = 'xk-toast';
+      host.setAttribute('role', 'status');
+      host.setAttribute('aria-live', 'polite');
+      document.body.appendChild(host);
+    }
+    host.textContent = msg;
+    host.classList.add('is-on');
+    clearTimeout(host.__t);
+    host.__t = setTimeout(function () { host.classList.remove('is-on'); }, 2400);
+  }
+
+  /** 引用文本：作者 · 标题 · 日期 · 链接（用于"复制引用"，不改动页面内容） */
+  function citationText(title, date, url) {
+    return (boot.siteName || 'xiaokeqing') + '｜' + (title || '') +
+      (date ? '｜' + date : '') + (url ? '｜' + url : '');
+  }
+
   /* ==========================================================================
      6. 视图渲染
      ========================================================================== */
   var contentEl = document.getElementById('content');
+
+  /* ★ 第十一轮：把 <main> 里服务端渲染好的内容收进一个 .xk-ssr 容器。
+     服务端在 main 上写了 data-xk-ssr="<路由>"（纯标记，不参与样式），
+     这里据此判断"当前这一份就是这条路由的最终内容"，包一层容器后交给 render() 复用。
+     不走这一步，render() 会把 main 当成空容器，点导航前就把服务端渲染的正文丢掉。 */
+  var SSR_HOST = null;
+  (function () {
+    var name = contentEl.getAttribute('data-xk-ssr');
+    if (!name || !contentEl.children.length) return;
+    var host = document.createElement('div');
+    host.className = 'xk-ssr';
+    host.setAttribute('data-xk-ssr', name);
+    while (contentEl.firstChild) host.appendChild(contentEl.firstChild);
+    contentEl.appendChild(host);
+    SSR_HOST = name;
+  })();
   var INDEX = null;          // 笔记索引（/index.json）
+
+  /** #content 里由构建期渲染好的那一份视图（data-xk-ssr 与路由同名时直接复用） */
+  function ssrHostFor(route) {
+    var first = contentEl.firstElementChild;
+    if (!first || !first.classList.contains('xk-ssr')) return null;
+    return first.getAttribute('data-xk-ssr') === route ? first : null;
+  }
 
   /* 折叠件语义（站主第十轮 ④）：
      <details>/<summary> 本身就有原生展开语义，但很多辅助技术与自动化检查要求把状态写成
@@ -396,9 +477,45 @@
 
   function render(route) {
     stopPolling();
-    var tpl = document.getElementById(VIEW_TPL[route.name] || 'tpl-notfound');
-    contentEl.replaceChildren(tpl.content.cloneNode(true));
+    /* 第十一轮 SSR（DEFECTS.md · B5）：本页在构建期已经把【当前这条路由】渲染进 <main> 了。
+       开局时直接复用它，不再 cloneNode 覆盖 —— 否则首屏会出现一次内容替换（闪烁），
+       而且会把服务端渲染好的正文白白丢掉。从别的路由切回来时，首屏那一份已经被换掉，
+       这时才走正常的模板 clone 通路。 */
+    /* 诊断面包屑（无副作用，属性 + 不参与任何逻辑）：路由名、首个子元素、模板是否存在。
+       这条在排查"服务端渲染正确但页面显示 404"时是决定性的 —— 保留它没有成本。 */
+    try {
+      document.documentElement.setAttribute('data-xk-render', route.name);
+      var __f = contentEl.firstElementChild;
+      document.documentElement.setAttribute('data-xk-first', __f ? (String(__f.className) + '|' + (__f.getAttribute('data-xk-ssr') || '')) : 'none');
+      document.documentElement.setAttribute('data-xk-tpl', String(!!document.getElementById(VIEW_TPL[route.name] || 'tpl-notfound')));
+      var __kids = contentEl.children, __pairs = [];
+      for (var __i = 0; __i < Math.min(__kids.length, 12); __i++) {
+        __pairs.push(__kids[__i].tagName + '#' + (__kids[__i].id || '-') + '.' + String(__kids[__i].className || '-'));
+      }
+      document.documentElement.setAttribute('data-xk-kids', String(__kids.length) + ' :: ' + __pairs.join(' ~ '));
+      document.documentElement.setAttribute('data-xk-contentid', String(contentEl && contentEl.id) + '/' + String(contentEl && contentEl.tagName));
+      window.__xkDiag = { first: __f ? (String(__f.className) + '|' + (__f.getAttribute('data-xk-ssr') || '')) : 'none', n: contentEl.children.length };
+    } catch (e) { }
+    var ssr = ssrHostFor(route.name) || (route.name === 'note' ? ssrHostFor('note') : null);
+    var ssrSlug = ssr ? ssr.getAttribute('data-xk-ssr-slug') : null;
+    var canReuse = !!ssr && (!route.slug || !ssrSlug || ssrSlug === route.slug);
+    if (canReuse) {
+      var others = $$('.xk-ssr', contentEl).filter(function (n) { return n !== ssr; });
+      others.forEach(function (n) { n.remove(); });
+    } else {
+      var tpl = document.getElementById(VIEW_TPL[route.name] || 'tpl-notfound');
+      if (!tpl) tpl = document.getElementById('tpl-notfound');
+      if (!tpl) {
+        /* 理论上不会发生（每条路由都有模板）；但绝不让"模板缺失"把整页炸成空白 */
+        contentEl.innerHTML = '<div class="xk-wrap xk-page"><p class="xk-notice xk-notice--bad">' +
+          '这个视图的模板没有随页面下发（' + esc(String(route.name)) + '）。请刷新页面重试。</p></div>';
+        return;
+      }
+      contentEl.replaceChildren(tpl.content.cloneNode(true));
+    }
     window.scrollTo(0, 0);
+    contentEl.scrollTop = 0;
+    updateProgress();
 
     // 左侧栏导航高亮（导航本身不动，只换 class）+ aria-current（站主第十轮 ④）
     var active = NAV_OF_ROUTE[route.name];
@@ -413,16 +530,16 @@
     // 并用 aria-controls 指向被展开的那块内容（站主第十轮 ④）
     syncDisclosures(contentEl);
 
-    var host = contentEl.firstElementChild;
-    if (route.name === 'home') initHome();
+    var head = contentEl.firstElementChild;
+    if (route.name === 'home') { initHome(); initHeroPlay(); }
     else if (route.name === 'notes') initNotes();
-    else if (route.name === 'note') initNote(route.slug);
+    else if (route.name === 'note') { initNote(route.slug); initNoteExtras(); }
     else if (route.name === 'monitor') initMonitor(route.tab);
     else if (route.name === 'range') initRange();
     else if (route.name === 'ai') initAi();
     else if (route.name === 'about') initAbout();
     else if (route.name === 'notfound') { /* 静态内容 */ }
-    if (host) host.focus && host.setAttribute('tabindex', '-1');
+    if (head) head.focus && head.setAttribute('tabindex', '-1');
 
     updateSearchButtonState();
   }
@@ -510,10 +627,11 @@
     var al = partData(parts, 'alerts');
 
     renderHeroStats(ov, au, hp, al);
-    renderGuideBadge('monitor', guideMonitorBadge(ov, al));
     renderFeed(au, al, hp, parts);
     renderMinis(au);
+    renderHoneypotMini(hp);
     setSync('feed', syncTextOf(parts));
+    setSync('hp', syncTextOf(parts));
   }
 
   /** 压缩成中文数量口诀（只用于角标这种"小数据"，不改动真值本身） */
@@ -533,54 +651,75 @@
   }
 
   function renderHeroStats(ov, au, hp, al) {
-    /* ① 24h 告警 */
+    /* ① 24h 告警（口径收进 <details>，标题只写"真值 + 本来就有的相对量"） */
     var s24 = al && al.stats24h;
     var v24 = (s24 && s24.available !== false && s24.total !== null && s24.total !== undefined) ? s24.total : null;
     if (v24 !== null) {
-      setStat('alerts24h', num(v24),
-        '口径 /api/public/alerts · stats24h.total（' + (s24.windowHours || 24) + ' 小时未去重上报量）');
+      setStat('alerts24h', num(v24), null);
+      setTrend('alerts24h', trendLineOf(s24));
     } else if (ov && ov.alerts && ov.alerts.windowCount !== null && ov.alerts.windowCount !== undefined) {
-      setStat('alerts24h', num(ov.alerts.windowCount),
-        '口径降级 /api/public/overview · alerts.windowCount（最近 ' + num(ov.alerts.windowSize) + ' 条窗口，不是 24h 总量）');
+      setStat('alerts24h', num(ov.alerts.windowCount), null);
+      setTrend('alerts24h', '窗口口径（' + num(ov.alerts.windowSize) + ' 条，不是 24h 总量）');
     } else {
-      setStat('alerts24h', null, '口径 /api/public/alerts · stats24h.total（本次取不到 → 未接入，不补数）');
+      setStat('alerts24h', null, null);
+      setTrend('alerts24h', '本次取不到 → 未接入，不补数');
     }
 
-    /* ② 蜜罐事件 */
+    /* ② 蜜罐事件：相对量只用同一响应里本来就有的字段（连接 / 登录 / 登录失败） */
     var hpTotal = hp && hp.total !== undefined ? hp.total : null;
-    setStat('honeypot', hpTotal === null ? null : num(hpTotal),
-      hpTotal === null
-        ? '口径 /api/public/honeypot · total（本次取不到 → 未接入，不补数）'
-        : '口径 /api/public/honeypot · total（服务端字段原样展示' + (hp.available === false ? ' · available=false' : '') + '）');
+    setStat('honeypot', hpTotal === null ? null : num(hpTotal), null);
+    if (hpTotal === null) {
+      setTrend('honeypot', '本次取不到 → 未接入，不补数');
+    } else {
+      var parts = [];
+      if (hp.connections !== undefined) parts.push('连接 ' + num(hp.connections));
+      if (hp.logins !== undefined) parts.push('登录 ' + num(hp.logins));
+      if (hp.loginFails !== undefined) parts.push('登录失败 ' + num(hp.loginFails));
+      setTrend('honeypot', parts.length ? (parts.join(' · ') + '（同一响应内的字段）') : '服务端字段原样展示');
+    }
 
-    /* ③ 护栏拦截 */
+    /* ③ 护栏拦截 + 封禁留痕（相对量 = 同一次 audit 响应里的其他计数） */
     var guard = au && au.summary && au.summary.blockedByGuard !== undefined ? au.summary.blockedByGuard : null;
-    setStat('guard', guard === null ? null : num(guard),
-      guard === null
-        ? '口径 /api/public/audit · summary.blockedByGuard（本次取不到 → 未接入，不补数）'
-        : '口径 /api/public/audit · summary.blockedByGuard（被护栏拦下的动作条数）');
+    setStat('guard', guard === null ? null : num(guard), null);
+    if (guard === null) {
+      setTrend('guard', '本次取不到 → 未接入，不补数');
+    } else {
+      var sm = (au && au.summary) || {};
+      var gp = [];
+      if (sm.blockTotal !== undefined) gp.push('封禁留痕共 ' + num(sm.blockTotal) + ' 条');
+      if (sm.blockActive !== undefined) gp.push('当前生效 ' + num(sm.blockActive));
+      if (sm.executedActions !== undefined) gp.push('已执行动作 ' + num(sm.executedActions));
+      setTrend('guard', gp.length ? gp.join(' · ') : '被护栏拦下的动作数');
+    }
 
-    /* ④ 单元测试：数值与口径都在模板里（构建期常量，hugo.toml params.tests*），这里不需要接口 */
+    /* ④ 单元测试：数值与口径都在模板里（构建期常量），这里不需要接口 */
   }
 
-  /** 监测中心角标：优先 24h 未去重上报量，取不到降级到 overview 窗口数，都没有就写「未接入」 */
-  function guideMonitorBadge(ov, al) {
-    var s24 = al && al.stats24h;
-    if (s24 && s24.available !== false && s24.total !== undefined && s24.total !== null) {
-      return { text: '24h ' + compactNum(s24.total) + ' 条', title: '口径：/api/public/alerts · stats24h.total（24 小时未去重上报量）' };
+  /**
+   * 24h 趋势（"本来就有的口径"，不编对比基准）：
+   * stats24h.trend 是服务端给的 25 个小时桶，全部落在同一个 24h 窗口内 ——
+   * 所以这里只做"窗口内最近 1 小时 vs 前 3 小时均值"的比较，并把两个原始数字都写出来，
+   * 读的人可以自己核。取不到桶就如实写"未接入"。
+   */
+  function trendLineOf(s24) {
+    if (!s24 || s24.available === false) return '本次取不到 24h 聚合 → 未接入';
+    var t = s24.trend;
+    if (!Array.isArray(t) || t.length < 5) return '服务端未返回逐小时桶 → 本次不给趋势';
+    var arr = t.map(function (p) { return Number(p.count) || 0; });
+    var cur = arr[arr.length - 1];
+    var base = (arr[arr.length - 4] + arr[arr.length - 3] + arr[arr.length - 2]) / 3;
+    var txt = '最近 1 小时 ' + num(cur) + ' · 前 3 小时均值 ' + num(Math.round(base));
+    if (base > 0) {
+      var d = Math.round((cur - base) / base * 100);
+      var sign = d > 0 ? '+' : '';
+      txt = (d > 0 ? '↑ ' : (d < 0 ? '↓ ' : '→ ')) + sign + d + '%　' + txt;
     }
-    if (ov && ov.alerts && ov.alerts.windowCount !== undefined && ov.alerts.windowCount !== null) {
-      return { text: '窗口 ' + num(ov.alerts.windowCount) + ' 条', title: '口径降级：/api/public/overview · alerts.windowCount（最近 200 条窗口，不是 24h 总量）' };
-    }
-    return { text: '未接入', title: '两个告警端点本次都取不到数据 → 标「未接入」，不用窗口数冒充 24h 总量', muted: true };
+    return txt + '（同一 24h 窗口内，现算）';
   }
 
-  function renderGuideBadge(key, info) {
-    var n = document.querySelector('[data-xk-badge="' + key + '"]');
-    if (!n || !info) return;
-    n.textContent = info.text;
-    if (info.title) n.title = info.title;
-    n.className = 'xk-mod2__badge' + (info.muted ? ' is-muted' : '');
+  function setTrend(key, text) {
+    var n = document.querySelector('[data-xk-trend="' + key + '"]');
+    if (n) n.textContent = text || '—';
   }
 
   /* ---------- 右栏：三个小数字（今日拦截 / 生效中 / 护栏拦截） ---------- */
@@ -596,18 +735,131 @@
     n.className = 'xk-mini__num' + (warn ? ' is-warn' : '');
   }
 
+  function setMiniCtx(key, text) {
+    var n = document.querySelector('[data-xk-mini-ctx="' + key + '"]');
+    if (n) n.textContent = text || '—';
+  }
+
+  /**
+   * 三个小数字 + 【每个 0 的上下文】（DEFECTS.md · A5）。
+   * 站主要求不造假：0 就是 0，但必须让读的人知道这个 0 是什么意思 ——
+   * 所以每个数字都补一行"最近一次是什么时候 / 当前是不是真的没有"。
+   * 这一行全部由真实字段算出（blocks[].createdAt / unblockedAt / summary），没有估计值。
+   */
   function renderMinis(au) {
     var s = (au && au.summary) || {};
-    /* 今日拦截：audit.blocks 里 createdAt 落在【今天】的条数（前端按真实 createdAt 归日，不拿总数冒充今日） */
-    if (au && Array.isArray(au.blocks)) {
+    var blocks = (au && Array.isArray(au.blocks)) ? au.blocks : null;
+
+    /* 今日拦截 */
+    if (blocks) {
       var key = todayKey(new Date());
-      var n = au.blocks.filter(function (b) { return String(b.createdAt || '').slice(0, 10) === key; }).length;
-      setMini('today', num(n), false);
+      var today = blocks.filter(function (b) { return String(b.createdAt || '').slice(0, 10) === key; });
+      setMini('today', num(today.length), today.length > 0);
+      if (today.length > 0) {
+        setMiniCtx('today', '最近一次 ' + String(today[0].createdAt || '').slice(5, 16) + ' · ' + (today[0].ip || '—'));
+      } else if (blocks.length) {
+        setMiniCtx('today', '最近一次 ' + String(blocks[0].createdAt || '').slice(5, 16) + ' · ' + (blocks[0].ip || '—'));
+      } else {
+        setMiniCtx('today', '审计留痕里还没有封禁记录');
+      }
     } else {
       setMini('today', null, false);
+      setMiniCtx('today', '本次取不到处置审计 → 未接入');
     }
-    setMini('active', s.blockActive === undefined ? null : num(s.blockActive), s.blockActive > 0);
-    setMini('guard', s.blockedByGuard === undefined ? null : num(s.blockedByGuard), s.blockedByGuard > 0);
+
+    /* 生效中 */
+    var active = s.blockActive === undefined ? null : Number(s.blockActive);
+    setMini('active', active === null ? null : num(active), active > 0);
+    if (active === null) {
+      setMiniCtx('active', '本次取不到 → 未接入');
+    } else if (active > 0) {
+      setMiniCtx('active', '仍在封禁期内的条数');
+    } else if (blocks && blocks.length) {
+      var un = blocks.filter(function (b) { return b.unblocked; })[0] || blocks[0];
+      setMiniCtx('active', '最后一条已于 ' + String(un.unblockedAt || '').slice(5, 16) + ' 解除');
+    } else {
+      setMiniCtx('active', '没有仍在生效的封禁');
+    }
+
+    /* 护栏拦截 */
+    var g = s.blockedByGuard === undefined ? null : Number(s.blockedByGuard);
+    setMini('guard', g === null ? null : num(g), g > 0);
+    setMiniCtx('guard', g === null ? '本次取不到 → 未接入'
+      : (s.blockTotal !== undefined ? '封禁留痕共 ' + num(s.blockTotal) + ' 条' : '被护栏拦下的动作数'));
+
+    renderHoneypotMini(CACHE['/api/public/honeypot'] ? envelope(CACHE['/api/public/honeypot'].data) : null);
+  }
+
+  /* ---------- 右栏入口卡：真实聚合（原「功能导览」的位置，DEFECTS.md · A3） ----------
+     三块内容全部来自 /api/public/honeypot 的同一份响应：
+       · 被攻击最多的来源（topSources，后端已把 IP 掩码到网段）
+       · 尝试口令的结构（从 topCredentials 现场归纳：长度 / 是否与用户名相同 / 字符构成）
+       · 攻击者用的客户端（topClients，客户端指纹）
+     纪律：**完整口令不下发** —— 这里只输出结构分布与"掩码示例"（保留首末字符，中间打星）。 */
+  function maskSecret(s) {
+    var t = String(s || '');
+    if (t.length <= 2) return '**';
+    return t.charAt(0) + new Array(Math.max(1, t.length - 2) + 1).join('*') + t.charAt(t.length - 1);
+  }
+
+  function credStructure(creds) {
+    var buckets = { '长度 ≤ 6': 0, '长度 7–9': 0, '长度 ≥ 10': 0 };
+    var same = 0, total = 0, digits = 0, mixed = 0, samples = [];
+    (creds || []).forEach(function (c) {
+      var key = String(c.key || '');
+      var i = key.indexOf(' / ');
+      if (i < 0) return;
+      var u = key.slice(0, i), p = key.slice(i + 3);
+      if (!p) return;
+      total++;
+      if (p.length <= 6) buckets['长度 ≤ 6']++;
+      else if (p.length <= 9) buckets['长度 7–9']++;
+      else buckets['长度 ≥ 10']++;
+      if (u && u === p) same++;
+      if (/^\d+$/.test(p)) digits++;
+      if (/[A-Za-z]/.test(p) && /\d/.test(p)) mixed++;
+      if (samples.length < 3 && p.length >= 4) samples.push(u + ' / ' + maskSecret(p));
+    });
+    return { buckets: buckets, same: same, total: total, digits: digits, mixed: mixed, samples: samples };
+  }
+
+  function renderHoneypotMini(hp) {
+    var hostS = document.querySelector('[data-xk-hp-sources-mini]');
+    var hostC = document.querySelector('[data-xk-hp-creds-mini]');
+    var hostK = document.querySelector('[data-xk-hp-clients-mini]');
+    var noteC = document.querySelector('[data-xk-hp-creds-note]');
+    if (!hostS && !hostC && !hostK) return;
+
+    if (!hp) {
+      [hostS, hostC, hostK].forEach(function (h) {
+        if (h) h.innerHTML = '<p class="xk-hint">蜜罐接口本次取不到 → 未接入，不补数。</p>';
+      });
+      if (noteC) noteC.textContent = '';
+      return;
+    }
+
+    if (hostS) hostS.innerHTML = distList((hp.topSources || []).slice(0, 3), true) || '<p class="xk-hint">没有来源数据。</p>';
+    if (hostK) hostK.innerHTML = distList((hp.topClients || []).slice(0, 3), true) || '<p class="xk-hint">没有客户端指纹。</p>';
+
+    if (hostC) {
+      var st = credStructure(hp.topCredentials);
+      if (!st.total) {
+        hostC.innerHTML = '<p class="xk-hint">本次没有可归纳的尝试口令。</p>';
+      } else {
+        var rows = Object.keys(st.buckets).map(function (k) {
+          return { label: k, count: st.buckets[k] };
+        });
+        rows.push({ label: '与用户名相同', count: st.same });
+        rows.push({ label: '纯数字', count: st.digits });
+        rows.push({ label: '字母 + 数字', count: st.mixed });
+        hostC.innerHTML = distList(rows, false);
+      }
+      if (noteC) {
+        noteC.textContent = st.total
+          ? '按采样榜单（' + num(st.total) + ' 条）归纳；完整口令不下发，示例为掩码：' + (st.samples.join('、') || '—')
+          : '';
+      }
+    }
   }
 
   /* ---------- 右栏：3–5 条中文可读的聚合条目 ----------
@@ -796,7 +1048,6 @@
             '<b class="xk-feed__ok">' + esc(r.label) + '</b>' +
             (r.ip ? '・<b class="xk-feed__ip">' + esc(r.ip) + '</b>' : '') +
             (r.count > 1 ? '・<span class="xk-feed__cnt">聚合 ' + esc(num(r.count)) + ' 次</span>' : '') +
-            '<span class="xk-feed__src">' + esc(r.source) + '</span>' +
           '</span>' +
           '<span class="xk-feed__time">' + (r.ms ? esc(relTime(new Date(r.ms))) : '—') + '</span></li>';
       }).join('');
@@ -810,8 +1061,8 @@
     var titleHost = $('[data-xk-live-title]');
     if (titleHost) {
       titleHost.innerHTML = live
-        ? '<span class="xk-pulse" aria-hidden="true"></span>实时拦截动态'
-        : '最近同步 · 拦截动态';
+        ? '<span class="xk-pulse" aria-hidden="true"></span>拦截动态 · 实时'
+        : '拦截动态 · 最近同步';
     }
   }
 
@@ -951,456 +1202,237 @@
   }
 
   /* ==========================================================================
-     9. 监测中心：四个子 tab
+     9. 监测中心 —— 一页大屏（第十一轮重做）
+     --------------------------------------------------------------------------
+     站主原话："系统监控要做成很高级很科技感又很有用的大屏，有动态效果，而不是拆成一个个小模块"。
+     数据来源（全部公开只读端点，5 个）：
+       overview  节点在线 / 告警分布（窗口口径）
+       alerts    聚合后的告警流 + stats24h（24h 总量 / 逐小时桶 / 严重度）
+       honeypot  蜜罐：来源 Top / 尝试口令 / 客户端指纹 / 事件时间线
+       audit     处置审计：封禁留痕、summary
+       health    指纹与运行信息（扁平对象，无信封）
+     图表全部自绘（SVG + CSS），零第三方图表库。
+     纪律：拿不到就写「未接入」；**动画只用真数据**（新条目淡入是真的换了条目，
+     绝不用假脉冲冒充"在跑"）。
      ========================================================================== */
-  function initMonitor(tab) {
-    var tabs = $$('[data-xk-tab]', contentEl);
-    var panes = $$('[data-xk-pane]', contentEl);
-    var current = null;
+  var SCREEN_JOBS = [
+    { name: 'overview', path: '/api/public/overview' },
+    { name: 'alerts', path: '/api/public/alerts' },
+    { name: 'honeypot', path: '/api/public/honeypot' },
+    { name: 'audit', path: '/api/public/audit' },
+    { name: 'health', path: '/api/health' }
+  ];
 
-    function activate(name, silent) {
-      if (['alerts', 'honeypot', 'audit', 'system'].indexOf(name) < 0) name = 'alerts';
-      current = name;
-      tabs.forEach(function (t) {
-        var on = t.getAttribute('data-xk-tab') === name;
-        t.classList.toggle('is-on', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-        /* roving tabindex：Tab 键只落在当前选中的那个 tab 上，←/→ 在组内移动（WAI-ARIA tabs 惯例） */
-        t.setAttribute('tabindex', on ? '0' : '-1');
+  function initMonitor() {
+    var load = function () {
+      return Promise.all(SCREEN_JOBS.map(function (j) {
+        return readApi(j.path).then(function (res) { return { name: j.name, path: j.path, res: res, err: null }; })
+          .catch(function (err) {
+            return {
+              name: j.name, path: j.path, err: err,
+              res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null
+            };
+          });
+      })).then(function (parts) {
+        renderScreen(parts);
+        setSync('monitor', syncTextOf(parts));
+        setSync('feed', syncTextOf(parts));
       });
-      panes.forEach(function (p) {
-        var on = p.getAttribute('data-xk-pane') === name;
-        p.classList.toggle('is-on', on);
-        p.hidden = !on;
-      });
-      if (!silent) {
-        // tab 也做成可深链的：#/monitor/honeypot
-        history.replaceState({ xk: 1 }, '', '/#/monitor/' + name);
-      }
-      startPolling(loaders[name], weights[name]);
-    }
-
-    var loaders = {
-      alerts: loadAlerts,
-      honeypot: loadHoneypot,
-      audit: loadAudit,
-      system: loadSystem
     };
-    // 每个子 tab 一轮要读几个端点（用于按限流预算抬高轮询下限，见 intervalFloor）
-    var weights = { alerts: 2, honeypot: 1, audit: 1, system: 1 };
-
-    tabs.forEach(function (t) {
-      t.addEventListener('click', function () { activate(t.getAttribute('data-xk-tab')); });
-      /* 站主第十轮 ④：role=tab 的键盘惯例 —— ←/→ 在同一个 tablist 内换页并同步焦点 */
-      t.addEventListener('keydown', function (e) {
-        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
-        e.preventDefault();
-        var i = tabs.indexOf(t), n = tabs.length, next;
-        if (e.key === 'Home') next = tabs[0];
-        else if (e.key === 'End') next = tabs[n - 1];
-        else next = tabs[(i + (e.key === 'ArrowRight' ? 1 : n - 1)) % n];
-        next.focus();
-        activate(next.getAttribute('data-xk-tab'));
-      });
-    });
-    activate(tab || 'alerts', true);
+    startPolling(load, SCREEN_JOBS.length);
   }
 
-  /* ---------- 9.1 实时告警 ---------- */
-  function loadAlerts() {
-    var jobs = [
-      { name: 'overview', path: '/api/public/overview' },
-      { name: 'alerts', path: '/api/public/alerts' }
-    ];
-    return Promise.all(jobs.map(function (j) {
-      return readApi(j.path).then(function (res) { return { name: j.name, res: res, err: null }; })
-        .catch(function (err) {
-          return { name: j.name, err: err, res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null };
-        });
-    })).then(function (parts) {
-      var ov = (parts.filter(function (p) { return p.name === 'overview' && p.res; })[0] || {}).res;
-      var al = (parts.filter(function (p) { return p.name === 'alerts' && p.res; })[0] || {}).res;
-      renderAlerts(ov && ov.data && ov.data.data, al && al.data && al.data.data, parts);
-    });
-  }
+  function renderScreen(parts) {
+    var ov = partData(parts, 'overview');
+    var al = partData(parts, 'alerts');
+    var hp = partData(parts, 'honeypot');
+    var au = partData(parts, 'audit');
+    var hh = partData(parts, 'health');
 
-  function renderAlerts(ov, al, parts) {
-    function host(name) { return $('[data-xk-' + name + ']', contentEl); }
+    /* ---- ① 指标带：与主页共用同一套"数字 + 本来就有的相对量"逻辑 ---- */
+    renderHeroStats(ov, au, hp, al);
+    var sm = (au && au.summary) || {};
+    var activeN = sm.blockActive === undefined ? null : Number(sm.blockActive);
+    screenSet('active', activeN === null ? '未接入' : num(activeN));
+    screenSet('activeSub', activeN === null ? '本次取不到处置审计'
+      : (activeN > 0 ? '仍在封禁期内' : (sm.blockTotal !== undefined ? '封禁留痕共 ' + num(sm.blockTotal) + ' 条，均已解除' : '当前没有生效中的封禁')));
 
-    /* --- KPI：一律用去重/聚合口径（规格 §4③ 明确要求，避免几万条"高危"） --- */
-    var list = (al && al.list) || [];
-    var bySev = {}, bySrc = {}, ips = {}, rules = {};
-    list.forEach(function (a) {
-      bySev[a.severity] = (bySev[a.severity] || 0) + 1;
-      var src = a.sourceLabel || a.source || '未知';
-      bySrc[src] = (bySrc[src] || 0) + 1;
-      if (a.srcIp) ips[a.srcIp] = 1;
-      if (a.ruleName) rules[a.ruleName] = 1;
-    });
-    var highDedup = (bySev.HIGH || 0) + (bySev.CRITICAL || 0);
-    var aggTotal = al ? al.total : null;
-    var kpiHtml = [
-      kpi(num(aggTotal), '窗口内聚合告警（去重后条数）', ''),
-      kpi(num(highDedup), '其中高危及以上（去重）', highDedup > 0 ? 'is-red' : ''),
-      kpi(String(Object.keys(ips).length), '去重来源 IP', ''),
-      kpi(String(Object.keys(rules).length), '去重规则', '')
-    ].join('');
-    host('alert-kpis').innerHTML = kpiHtml;
-
-    var caliber = host('alert-caliber');
-    if (caliber) {
-      caliber.innerHTML = al
-        ? '口径：观察窗口 <b>' + esc(al.windowMinutes != null ? al.windowMinutes + ' 分钟' : '未给') + '</b>、原始事件 <b>' + esc(num(al.rawTotal)) +
-          '</b> 条，按规则/IP 去重聚合为 <b>' + esc(num(al.total)) + '</b> 条告警（<code>aggregated=' + esc(al.aggregated) + '</code>）。' +
-          '响应体自述：窗口上限 ' + esc(num(al.windowSize)) + ' 条。'
-        : '告警接口没有返回数据。';
-    }
-
-    var sevHost = host('alert-sev');
-    var sevMax = Math.max(1, Math.max.apply(null, Object.keys(bySev).map(function (k) { return bySev[k]; }).concat([1])));
-    var sevKeys = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'];
-    sevHost.innerHTML = sevKeys.map(function (k) {
-      var c = bySev[k] || 0;
-      return distRow(sevLabel(k), c, sevMax, k);
-    }).join('');
-
-    var srcHost = host('alert-src');
-    var srcMax = Math.max(1, Math.max.apply(null, Object.keys(bySrc).map(function (k) { return bySrc[k]; }).concat([1])));
-    srcHost.innerHTML = Object.keys(bySrc).length
-      ? Object.keys(bySrc).sort(function (a, b) { return bySrc[b] - bySrc[a]; }).map(function (k) { return distRow(k, bySrc[k], srcMax, ''); }).join('')
-      : '<p class="xk-hint">无来源数据。</p>';
-
-    /* --- 24h 趋势：原始计数（未去重）单独标注，并在下面写清为什么不用它做 KPI --- */
-    var trend = (al && al.stats24h && al.stats24h.trend) || (al && al.stats && al.stats.trend) || [];
-    var trendHost = host('alert-trend');
-    if (trend.length) {
-      var max = Math.max.apply(null, trend.map(function (t) { return t.count; }).concat([1]));
-      trendHost.innerHTML =
-        '<div class="xk-chart">' + trend.map(function (t) {
-          var h = Math.max(2, Math.round(t.count / max * 118));
-          return '<div class="xk-chart__col" title="' + esc(t.time + ' · ' + num(t.count) + ' 条原始事件') + '">' +
-                 '<div class="xk-chart__bar' + (t.count ? '' : ' is-zero') + '" style="height:' + h + 'px"></div></div>';
-        }).join('') + '</div>' +
-        '<div class="xk-chart__x">' + trend.map(function (t, i) {
-          return '<span class="xk-chart__xl">' + esc(i % 3 === 0 ? t.time : '') + '</span>';
-        }).join('') + '</div>';
-    } else {
-      trendHost.innerHTML = '<p class="xk-hint">接口没有返回趋势数据。</p>';
-    }
-    var tnote = host('trend-note');
-    if (tnote) {
-      if (al && al.stats24h && al.stats24h.available) {
-        tnote.innerHTML = '24 小时原始事件合计 <b>' + esc(num(al.stats24h.total)) + '</b> 条（<code>windowHours=' +
-          esc(al.stats24h.windowHours) + '</code>）。这是<b>未去重</b>的上报量：单条高频规则一小时就能刷上万次，' +
-          '直接当成"高危事件数"会严重误导，所以上方 KPI 用的是去重聚合口径，这张图只用来观察上报量的形状。';
+    /* ---- ② 攻击来源网段 Top（自绘 SVG 条） ---- */
+    var srcHost = $('[data-xk-screen-sources]', contentEl);
+    if (srcHost) {
+      var srcs = (hp && Array.isArray(hp.topSources)) ? hp.topSources.slice(0, 8) : null;
+      if (!srcs) {
+        srcHost.innerHTML = '<p class="xk-hint">蜜罐接口本次取不到 → 未接入，不补数。</p>';
+      } else if (!srcs.length) {
+        srcHost.innerHTML = '<p class="xk-hint">窗口内没有来源数据。</p>';
       } else {
-        tnote.textContent = '接口未提供 24 小时趋势（available=false）。';
+        srcHost.innerHTML = svgBars(srcs.map(function (s) { return { label: String(s.key || '—'), value: Number(s.count) || 0 }; }));
+      }
+      var sn = $('[data-xk-screen-sources-note]', contentEl);
+      if (sn) {
+        sn.textContent = (hp && hp.total !== undefined)
+          ? '蜜罐累计事件 ' + num(hp.total) + ' 条 · 采样 ' + num(hp.sampled) + ' 条；来源计数是采样窗口内的真实计数。'
+          : '来源计数来自采样窗口。';
       }
     }
 
-    /* --- 告警流：高危置顶 + 级别过滤 + 点开下钻 --- */
-    renderStream(al);
-
-    /* --- 右栏：节点 / 数据源 --- */
-    var nodesHost = host('nodes');
-    var nodes = (ov && ov.nodes) || [];
-    nodesHost.innerHTML = nodes.length ? nodes.map(function (n) {
-      return '<li><span>' + esc(n.label || n.id) + '</span><b>' +
-        '<span class="xk-dot ' + (n.online ? 'xk-dot--ok' : 'xk-dot--off') + '" style="display:inline-block;margin-right:6px"></span>' +
-        esc(n.online ? '在线' : '离线') + '</b></li>' +
-        '<li><span></span><b class="xk-meta__v" style="font-weight:400;color:var(--xk-muted);font-size:11.5px">' + esc(n.probe || '') + '</b></li>';
-    }).join('') : '<li class="xk-hint">节点数据未返回。</li>';
-
-    var srcPanel = host('source');
-    var ds = ov && ov.dataSource;
-    srcPanel.innerHTML = ds
-      ? '<li><span>Wazuh</span><b>' + esc(ds.wazuhMode || '—') + '</b></li>' +
-        '<li><span>降级</span><b>' + esc(ds.degraded ? '是' : '否') + '</b></li>'
-      : '<li class="xk-hint">数据源信息未返回。</li>';
-    var srcNote = host('source-note');
-    if (srcNote && ds && ds.note) srcNote.textContent = ds.note;
-
-    var drill = host('drill-note');
-    if (drill) {
-      drill.innerHTML = '展开用的是聚合记录自带的字段（无需额外请求）。' +
-        '注意：明细下钻端点 <code>/api/public/alerts/{aggId}</code> 当前<b>尚未上线</b>（实测 HTTP 404），' +
-        '所以这里不提供"原始事件列表"，也不会用别的接口拼一份出来。';
+    /* ---- ③ 近 24 小时攻击节奏（自绘 SVG 折线 + 面积） ---- */
+    var hHost = $('[data-xk-screen-hourly]', contentEl);
+    var hNote = $('[data-xk-screen-trend-note]', contentEl);
+    if (hHost) {
+      var s24 = al && al.stats24h;
+      if (!s24 || s24.available === false) {
+        hHost.innerHTML = '<p class="xk-hint">24h 聚合本次取不到（stats24h.available=false）→ 未接入。</p>';
+        if (hNote) hNote.textContent = '未接入';
+      } else if (!Array.isArray(s24.trend) || !s24.trend.length) {
+        hHost.innerHTML = '<p class="xk-hint">服务端没有返回逐小时桶 → 本次不画图。</p>';
+        if (hNote) hNote.textContent = '无逐小时桶';
+      } else {
+        hHost.innerHTML = svgSpark(s24.trend.map(function (p) { return { label: p.time, value: Number(p.count) || 0 }; }));
+        var arr = s24.trend.map(function (p) { return Number(p.count) || 0; });
+        var peak = Math.max.apply(null, arr);
+        var peakAt = s24.trend[arr.indexOf(peak)];
+        if (hNote) hNote.textContent = '峰值 ' + num(peak) + ' 条 @ ' + (peakAt ? peakAt.time : '—') + ' · 共 ' + arr.length + ' 个桶';
+      }
     }
 
-    setSync('monitor', syncTextOf(parts));
+    /* ---- ④ 攻击事件时间轴 ---- */
+    var tl = $('[data-xk-screen-timeline]', contentEl);
+    if (tl) {
+      var evs = (hp && Array.isArray(hp.timeline)) ? hp.timeline.slice(0, 20) : null;
+      if (!evs) {
+        tl.innerHTML = '<li class="xk-hint">蜜罐接口本次取不到 → 未接入，不补数。</li>';
+      } else if (!evs.length) {
+        tl.innerHTML = '<li class="xk-hint">窗口内没有蜜罐事件。</li>';
+      } else {
+        tl.innerHTML = evs.map(function (e) {
+          return '<li class="xk-tl__row">' +
+            '<span class="xk-tl__time">' + esc(String(e.time || '').slice(5, 16)) + '</span>' +
+            '<span class="xk-tl__kind">' + esc(e.kind || '事件') + '</span>' +
+            '<span class="xk-tl__detail" title="' + esc(e.detail || '') + '">' + esc(e.srcIp || '—') + '</span></li>';
+        }).join('');
+      }
+    }
+
+    /* ---- ⑤ 规则命中 Top（alerts.list 的 ruleName 聚合是服务端给的，直接按条数排序展示） ---- */
+    var rHost = $('[data-xk-screen-rules]', contentEl);
+    if (rHost) {
+      var list = (al && Array.isArray(al.list)) ? al.list : null;
+      if (!list) {
+        rHost.innerHTML = '<p class="xk-hint">告警接口本次取不到 → 未接入。</p>';
+      } else {
+        var byRule = {};
+        list.forEach(function (a) {
+          var k = shortRule(a.ruleName || a.title || '（无规则名）', 46);
+          byRule[k] = (byRule[k] || 0) + (Number(a.count) || 1);
+        });
+        var rows = Object.keys(byRule).map(function (k) { return { label: k, count: byRule[k] }; })
+          .sort(function (x, y) { return y.count - x.count; }).slice(0, 8);
+        rHost.innerHTML = distList(rows, true);
+      }
+    }
+
+    /* ---- ⑥ 严重度分布（24h 桶，服务端已给） ---- */
+    var sevHost = $('[data-xk-screen-sev]', contentEl);
+    if (sevHost) {
+      var s24b = al && al.stats24h;
+      var bucket = (s24b && s24b.available !== false && s24b.bySeverity) ? s24b.bySeverity
+        : ((ov && ov.alerts && ov.alerts.bySeverity) ? ov.alerts.bySeverity.reduce(function (acc, x) { acc[x.key] = x.count; return acc; }, {}) : null);
+      if (!bucket) {
+        sevHost.innerHTML = '<p class="xk-hint">严重度分布本次取不到 → 未接入。</p>';
+      } else {
+        var order = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'];
+        var names = { CRITICAL: '严重', HIGH: '高危', MEDIUM: '中危', LOW: '低危', INFO: '提示' };
+        var srows = order.map(function (k) { return { label: names[k], count: Number(bucket[k]) || 0, sev: k }; });
+        sevHost.innerHTML = srows.map(function (r) {
+          var max = Math.max.apply(null, srows.map(function (x) { return x.count; })) || 1;
+          return '<div class="xk-dist__row">' +
+            '<span class="xk-dist__label"><span class="xk-dot xk-dot--' + SEV_CLASS[r.sev] + '" aria-hidden="true"></span> ' + esc(r.label) + '</span>' +
+            '<span class="xk-dist__track"><span class="xk-dist__fill" style="width:' + Math.round(r.count / max * 100) + '%"></span></span>' +
+            '<span class="xk-dist__count">' + esc(num(r.count)) + '</span></div>';
+        }).join('');
+      }
+    }
+
+    /* ---- ⑦ 采集通道：三态灯（在线 / 降级 / 离线） ---- */
+    var nodeHost = $('[data-xk-screen-nodes]', contentEl);
+    if (nodeHost) {
+      var nodes = (ov && Array.isArray(ov.nodes)) ? ov.nodes : null;
+      if (!nodes) {
+        nodeHost.innerHTML = '<li class="xk-hint">总览接口本次取不到 → 未接入。</li>';
+      } else {
+        nodeHost.innerHTML = nodes.map(function (n) {
+          var on = n.online === true;
+          return '<li><span class="xk-dot xk-dot--' + (on ? 'ok' : 'off') + '" aria-hidden="true"></span>' +
+            '<span>' + esc(n.label || n.id || '节点') + '</span>' +
+            '<b>' + (on ? '在线' : '离线 / 降级') + '</b>' +
+            '<small class="xk-hint">' + esc(n.probe || '') + '</small></li>';
+        }).join('');
+      }
+      var srcNote = $('[data-xk-screen-source-note]', contentEl);
+      if (srcNote) {
+        var ds = ov && ov.dataSource;
+        srcNote.textContent = ds
+          ? ('数据源：' + (ds.wazuhMode || '—') + ' · 降级=' + (ds.degraded === true ? '是' : '否') + (ds.note ? ' · ' + ds.note : ''))
+          : '数据源状态本次取不到。';
+        if (hh && hh.status) srcNote.textContent += ' · 服务状态=' + hh.status;
+      }
+    }
+
+    /* ---- ⑧ 拦截动态：与主页复用同一套聚合 ---- */
+    renderFeed(au, al, hp, parts);
   }
 
-  function kpi(value, label, cls, sub) {
-    return '<div class="xk-kpi"><span class="xk-kpi__num ' + (cls || '') + '">' + value + '</span>' +
-      '<span class="xk-kpi__label">' + esc(label) + '</span>' +
-      (sub ? '<span class="xk-kpi__sub">' + esc(sub) + '</span>' : '') + '</div>';
+  function screenSet(key, text) {
+    var n = document.querySelector('[data-xk-screen="' + key + '"]');
+    if (n) n.textContent = text;
   }
 
-  function distRow(label, count, max, sevKey) {
-    // 计数为 0 就不画条：留 2% 的"零宽余量"会让 0 看起来像"有一点点"，那是误导
-    var w = (max > 0 && count > 0) ? Math.max(3, Math.round(count / max * 100)) : 0;
-    return '<div class="xk-dist__row"><span class="xk-dist__label" title="' + esc(label) + '">' + esc(label) + '</span>' +
-      '<span class="xk-dist__track"><span class="xk-dist__fill' + (sevKey ? ' is-' + SEV_CLASS[sevKey] : '') + '" style="width:' + w + '%"></span></span>' +
-      '<span class="xk-dist__count">' + esc(num(count)) + '</span></div>';
-  }
-
-  function renderStream(al) {
-    var streamHost = $('[data-xk-alert-stream]', contentEl);
-    var noteHost = $('[data-xk-stream-note]', contentEl);
-    if (!streamHost) return;
-
-    var list = ((al && al.list) || []).slice();
-    var filter = streamHost.getAttribute('data-filter') || '__all';
-
-    // 高危置顶：先按级别，再按时间倒序（规格 §4③）
-    list.sort(function (a, b) {
-      var sa = SEV_ORDER[a.severity] == null ? 9 : SEV_ORDER[a.severity];
-      var sb = SEV_ORDER[b.severity] == null ? 9 : SEV_ORDER[b.severity];
-      if (sa !== sb) return sa - sb;
-      return String(b.occurredAt || '').localeCompare(String(a.occurredAt || ''));
+  /** 自绘横向条形图（SVG）：来源网段 Top —— 不用任何图表库 */
+  function svgBars(rows) {
+    var max = Math.max.apply(null, rows.map(function (r) { return r.value; })) || 1;
+    var W = 560, rowH = 26, gap = 6, padL = 6, padR = 78;
+    var H = rows.length * (rowH + gap);
+    var barMax = W - padL - padR;
+    var svg = ['<svg class="xk-svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" role="img" aria-label="攻击来源网段 Top ' + rows.length + ' 条">'];
+    rows.forEach(function (r, i) {
+      var y = i * (rowH + gap);
+      var w = Math.max(2, Math.round(r.value / max * barMax));
+      svg.push('<rect x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" rx="6" class="xk-svg__track"></rect>');
+      svg.push('<rect x="' + padL + '" y="' + y + '" width="' + w + '" height="' + rowH + '" rx="6" class="xk-svg__bar" style="--xk-delay:' + (i * 70) + 'ms"></rect>');
+      svg.push('<text x="' + (padL + 10) + '" y="' + (y + 17) + '" class="xk-svg__label">' + esc(r.label) + '</text>');
+      svg.push('<text x="' + (W - 6) + '" y="' + (y + 17) + '" text-anchor="end" class="xk-svg__value">' + esc(num(r.value)) + '</text>');
     });
-    if (filter !== '__all') list = list.filter(function (a) { return a.severity === filter; });
-
-    if (!list.length) {
-      streamHost.innerHTML = '<li class="xk-hint" style="padding:10px 0">该过滤条件下没有告警。</li>';
-    } else {
-      var shown = list.slice(0, STREAM_LIMIT);
-      streamHost.innerHTML = shown.map(function (a) {
-        var sev = SEV_CLASS[a.severity] || 'info';
-        var t = parseTs(a.occurredAt);
-        return '<li class="xk-stream__row" data-xk-agg="' + esc(a.aggId) + '">' +
-          '<div class="xk-stream__hd" role="button" tabindex="0">' +
-            '<span class="xk-sev is-' + sev + '">' + esc(a.severityLabel || sevLabel(a.severity)) + '</span>' +
-            '<span class="xk-stream__title" title="' + esc(a.title) + '">' + esc(a.title) + '</span>' +
-            '<span class="xk-stream__meta"><span>' + esc(a.srcIp || '—') + '</span>' +
-            '<span>' + esc(a.sourceLabel || a.source || '—') + '</span>' +
-            '<span>聚合 ' + esc(num(a.count)) + ' 次</span>' +
-            '<span>' + esc(t ? relTime(t) : '—') + '</span></span>' +
-          '</div>' +
-          '<div class="xk-stream__detail" hidden>' + detailTable(a) + '</div>' +
-        '</li>';
-      }).join('') + (list.length > shown.length
-        ? '<li class="xk-hint" style="padding:10px 0">只渲染了前 ' + shown.length + ' 条（共 ' + list.length +
-          ' 条）<button class="xk-chip" type="button" data-xk-more="stream" style="margin-left:8px">显示全部</button></li>'
-        : '');
-    }
-
-    if (noteHost) {
-      noteHost.innerHTML = al
-        ? '数据源口径：窗口 ' + esc(num(al.windowSize)) + ' 条原始事件 / ' + esc(num(al.rawTotal)) +
-          ' 条已读取；接口返回 <code>aggregated=' + esc(al.aggregated) + '</code>，因此每一行是"同一规则 + 同一来源 IP"聚合后的一条记录，行内数字是它的出现次数。'
-        : '';
-    }
+    svg.push('</svg>');
+    return svg.join('');
   }
 
-  /** 下钻：展开聚合记录自带的全部字段（明文列出字段名，方便对照接口） */
-  function detailTable(a) {
-    var rows = [
-      ['aggId', a.aggId], ['severity', a.severity + '（' + (a.severityLabel || '') + '）'],
-      ['source', a.source + '（' + (a.sourceLabel || '') + '）'],
-      ['type', a.type + '（' + (a.typeLabel || '') + '）'],
-      ['srcIp（已掩码）', a.srcIp], ['count', a.count], ['status', a.status],
-      ['occurredAt', a.occurredAt], ['startTime', a.startTime], ['endTime', a.endTime],
-      ['ruleName', a.ruleName], ['srcGeo', a.srcGeo == null ? 'null（接口未提供）' : JSON.stringify(a.srcGeo)]
-    ];
-    return '<ul class="xk-meta xk-meta--kv">' + rows.map(function (r) {
-      return '<li><span>' + esc(r[0]) + '</span><b>' + esc(r[1] === undefined ? '—' : r[1]) + '</b></li>';
-    }).join('') + '</ul>';
-  }
-
-  /* ---------- 9.2 蜜罐战报 ---------- */
-  function loadHoneypot() {
-    return Promise.all([readApi('/api/public/honeypot').then(function (res) { return { res: res, err: null }; })
-      .catch(function (err) { return { err: err, res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null }; })])
-      .then(function (parts) {
-        renderHoneypot(parts[0].res && parts[0].res.data && parts[0].res.data.data, parts);
-      });
-  }
-
-  function renderHoneypot(d, parts) {
-    function host(n) { return $('[data-xk-' + n + ']', contentEl); }
-    if (!d) {
-      host('hp-kpis').innerHTML = '<p class="xk-hint">蜜罐接口没有返回数据。</p>';
-      setSync('monitor', syncTextOf(parts));
-      return;
-    }
-    host('hp-kpis').innerHTML = [
-      kpi(num(d.total), '事件总量（服务端字段 total）', ''),
-      kpi(num(d.connections), 'SSH 连接数', ''),
-      kpi(num(d.logins), '登录成功次数（攻击者拿到了"成功"）', d.logins > 0 ? 'is-orange' : ''),
-      kpi(num(d.loginFails), '登录失败次数', '')
-    ].join('');
-
-    host('hp-note').innerHTML = (d.note ? esc(d.note) + ' ' : '') +
-      '接口自述：<code>available=' + esc(d.available) + '</code>、<code>commandsAvailable=' + esc(d.commandsAvailable) + '</code>、' +
-      '<code>total=' + esc(num(d.total)) + '</code>、<code>sampled=' + esc(num(d.sampled)) + '</code>。' +
-      'total 与 sampled 的口径由服务端定义，这里按原字段展示，不做换算。';
-
-    host('hp-creds').innerHTML = distList(d.topCredentials, true);
-    host('hp-sources').innerHTML = distList(d.topSources, true);
-    host('hp-clients').innerHTML = distList(d.topClients, true);
-
-    var tl = host('hp-timeline');
-    var rows = d.timeline || [];
-    var tlShown = rows.slice(0, HP_TL_LIMIT);
-    tl.innerHTML = rows.length ? tlShown.map(function (e) {
-      return '<li class="xk-tl__row"><span class="xk-tl__time">' + esc(e.time) + '</span>' +
-        '<span class="xk-tl__kind">' + esc(e.kind) + '</span>' +
-        '<span class="xk-tl__detail" title="' + esc(e.detail) + '">' + esc(e.detail) + '</span></li>';
-    }).join('') + (rows.length > tlShown.length
-      ? '<li class="xk-hint" style="padding:10px 0">只渲染了最近 ' + tlShown.length + ' 条（接口共返回 ' + rows.length +
-        ' 条）<button class="xk-chip" type="button" data-xk-more="hp" style="margin-left:8px">显示全部</button></li>'
-      : '') : '<li class="xk-hint">接口没有返回事件时间线。</li>';
-
-    var cmdNote = host('hp-cmd-note');
-    if (cmdNote) {
-      cmdNote.innerHTML = d.commandsAvailable === false
-        ? '接口返回 <code>commandsAvailable=false</code>：蜜罐里敲过的命令暂时拿不到（Wazuh 侧没有命令执行规则）。' +
-          '这一格保持「数据源未接入」，不编造命令内容。' + (d.note ? ' 接口原话：' + esc(d.note) : '')
-        : '接口声称命令数据可用（<code>commandsAvailable=' + esc(d.commandsAvailable) + '</code>），但本次响应里没有 commands 字段，因此仍无可展示内容。';
-    }
-    host('hp-sampled').textContent = num(d.sampled);
-    host('hp-total').textContent = num(d.total);
-    setSync('monitor', syncTextOf(parts));
+  /** 自绘折线 + 面积（SVG）：近 24h 攻击节奏 */
+  function svgSpark(points) {
+    var W = 560, H = 132, padB = 18, padT = 10;
+    var vals = points.map(function (p) { return p.value; });
+    var max = Math.max.apply(null, vals) || 1;
+    var step = W / Math.max(1, points.length - 1);
+    var yOf = function (v) { return padT + (H - padB - padT) * (1 - v / max); };
+    var line = points.map(function (p, i) { return (i ? 'L' : 'M') + (i * step).toFixed(1) + ' ' + yOf(p.value).toFixed(1); }).join(' ');
+    var area = line + ' L' + ((points.length - 1) * step).toFixed(1) + ' ' + (H - padB) + ' L0 ' + (H - padB) + ' Z';
+    var svg = ['<svg class="xk-svg xk-svg--spark" viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" role="img" aria-label="近 24 小时逐小时攻击计数折线">'];
+    svg.push('<path d="' + area + '" class="xk-svg__area"></path>');
+    svg.push('<path d="' + line + '" class="xk-svg__line"></path>');
+    points.forEach(function (p, i) {
+      if (i % 3 === 0) {
+        svg.push('<text x="' + (i * step).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" class="xk-svg__x">' + esc(String(p.label || '').slice(0, 5)) + '</text>');
+      }
+      svg.push('<circle cx="' + (i * step).toFixed(1) + '" cy="' + yOf(p.value).toFixed(1) + '" r="2.5" class="xk-svg__dot"><title>' + esc((p.label || '') + '：' + num(p.value)) + '</title></circle>');
+    });
+    svg.push('</svg>');
+    return svg.join('');
   }
 
   function distList(arr, wide) {
     if (!arr || !arr.length) return '<p class="xk-hint">无数据。</p>';
     var max = Math.max.apply(null, arr.map(function (x) { return x.count; }).concat([1]));
     return arr.slice(0, 10).map(function (x) { return distRow(x.key, x.count, max, ''); }).join('');
-  }
-
-  /* ---------- 9.3 处置审计 ---------- */
-  function loadAudit() {
-    return readApi('/api/public/audit').then(function (res) { return { res: res, err: null }; })
-      .catch(function (err) { return { err: err, res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null }; })
-      .then(function (part) { renderAudit(part.res && part.res.data && part.res.data.data, [part]); });
-  }
-
-  function renderAudit(d, parts) {
-    function host(n) { return $('[data-xk-' + n + ']', contentEl); }
-    if (!d) {
-      host('audit-kpis').innerHTML = '<p class="xk-hint">审计接口没有返回数据。</p>';
-      setSync('monitor', syncTextOf(parts));
-      return;
-    }
-    var s = d.summary || {};
-    host('audit-kpis').innerHTML = [
-      kpi(num(s.blockTotal), '封禁留痕条数'),
-      kpi(num(s.blockActive), '当前生效中的封禁', s.blockActive > 0 ? 'is-orange' : ''),
-      kpi(num(s.blockedByGuard), '被护栏拦下的动作', s.blockedByGuard > 0 ? 'is-orange' : ''),
-      kpi(num(s.executedActions), '已执行动作')
-    ].join('');
-    host('audit-note').innerHTML = (s.note ? esc(s.note) + ' ' : '') +
-      '接口自述 <code>readOnly=' + esc(d.readOnly) + '</code>：这一栏没有任何写操作入口。';
-
-    var blocks = d.blocks || [];
-    host('audit-blocks').innerHTML =
-      '<div class="xk-rec__row xk-rec__row--head"><span>审计号</span><span>IP（掩码）</span><span>时长</span><span>来源</span><span>创建 / 过期</span><span>解封</span><span>执行者与模式</span></div>' +
-      (blocks.length ? blocks.map(function (b) {
-        return '<div class="xk-rec__row">' +
-          '<span class="xk-rec__id">' + esc(b.id) + '</span>' +
-          '<span class="xk-rec__ip">' + esc(b.ip) + '</span>' +
-          '<span>' + esc(b.durationMinutes != null ? b.durationMinutes + ' 分' : '—') + '</span>' +
-          '<span>' + esc(b.source || '—') + '</span>' +
-          '<span class="xk-hint">' + esc(b.createdAt) + '<br>' + esc(b.expiresAt) + '</span>' +
-          '<span>' + (b.unblocked
-            ? '<span class="xk-tag ' + (b.unblockMode === 'MOCK' ? 'xk-tag--warn' : 'xk-tag--on') + '">已解封 ' + esc(b.unblockMode || '') + '</span>'
-            : '<span class="xk-tag xk-tag--bad">生效中</span>') + '</span>' +
-          '<span>' + esc(b.actor || '—') + ' · <code>' + esc(b.auditId || '') + '</code></span>' +
-        '</div>';
-      }).join('') : '<p class="xk-hint">没有封禁留痕。</p>');
-
-    var actions = d.actions || [];
-    host('audit-actions').innerHTML =
-      '<div class="xk-rec__row xk-rec__row--head"><span>审计号</span><span>时间</span><span>执行者</span><span>动作 → 目标</span><span>风险</span><span>模式</span><span>原因 / 结果</span></div>' +
-      (actions.length ? actions.map(function (a) {
-        var modeTag = a.mode === 'BLOCKED' ? 'xk-tag--bad' : (a.mode === 'MOCK' ? 'xk-tag--warn' : 'xk-tag--on');
-        return '<div class="xk-rec__row">' +
-          '<span class="xk-rec__id">' + esc(a.id) + '</span>' +
-          '<span class="xk-hint">' + esc(a.time) + '</span>' +
-          '<span>' + esc(a.actor) + '</span>' +
-          '<span>' + esc(a.action) + ' → ' + esc(a.target) + '</span>' +
-          '<span>' + esc(a.riskLevel) + '</span>' +
-          '<span><span class="xk-tag ' + modeTag + '">' + esc(a.mode) + '</span></span>' +
-          '<span class="xk-rec__reason">' + esc(a.reason || '') + (a.success ? '' : ' · <b>未执行</b>') + '</span>' +
-        '</div>';
-      }).join('') : '<p class="xk-hint">没有审计流水。</p>');
-
-    setSync('monitor', syncTextOf(parts));
-  }
-
-  /* ---------- 9.4 系统状态 ---------- */
-  function loadSystem() {
-    // /api/health 是扁平对象，没有 {code,message,data} 信封
-    return readApi('/api/health').then(function (res) { return { res: res, err: null }; })
-      .catch(function (err) { return { err: err, res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null }; })
-      .then(function (part) { renderSystem(part.res && part.res.data, [part]); });
-  }
-
-  function renderSystem(h, parts) {
-    function host(n) { return $('[data-xk-' + n + ']', contentEl); }
-    if (!h) {
-      host('sys-fp').innerHTML = '<li class="xk-hint">/api/health 没有返回数据。</li>';
-      host('sys-info').innerHTML = '<li class="xk-hint">—</li>';
-      setSync('monitor', syncTextOf(parts));
-      return;
-    }
-
-    var fp = [
-      ['镜像指纹 artifactMd5', h.artifactMd5, '镜像内 jar 的 MD5（硬证据）'],
-      ['源码指纹 embeddedGitCommit', h.embeddedGitCommit, (h.embeddedGitBranch || '—') + ' @ ' + (h.embeddedGitCommitTime || '—') + ' · ' + (h.embeddedGitCommitMessage || '')],
-      ['服务器源码树 sourceSha', h.sourceSha, '服务器上的源码树 SHA'],
-      ['环境变量自述 buildSha', h.buildSha, 'BUILD_SHA 自述，仅对照用，非证据'],
-      ['期望发布 expectedReleaseCommit', h.expectedReleaseCommit, '发布流水线期望的 commit']
-    ];
-    host('sys-fp').innerHTML = fp.map(function (r) {
-      var v = r[1] === undefined || r[1] === null || r[1] === '' ? '未接入' : r[1];
-      return '<li class="xk-fp__row"><span class="xk-fp__k">' + esc(r[0]) + '</span>' +
-        '<span class="xk-fp__v">' + esc(v) + (r[2] ? '<small>' + esc(r[2]) + '</small>' : '') + '</span></li>';
-    }).join('');
-
-    var statusTag = h.status === 'ok'
-      ? '<span class="xk-tag xk-tag--on">ok</span>'
-      : '<span class="xk-tag xk-tag--bad">' + esc(h.status || '未知') + '</span>';
-
-    var kv = [
-      ['应用 application', h.application],
-      ['状态 status', null, statusTag],
-      ['镜像包含 Git 属性 embeddedGitPropertiesPresent', h.embeddedGitPropertiesPresent === undefined ? '未接入' : String(h.embeddedGitPropertiesPresent)],
-      ['工作区干净 embeddedGitDirty', h.embeddedGitDirty === undefined ? '未接入' : String(h.embeddedGitDirty)],
-      ['指纹不一致 fingerprintMismatch', h.fingerprintMismatch === undefined ? '未接入' : String(h.fingerprintMismatch)],
-      ['指纹问题 fingerprintIssues', Array.isArray(h.fingerprintIssues) && h.fingerprintIssues.length ? h.fingerprintIssues.join(' / ') : '无'],
-      ['文档向量数 documentVectors', h.documentVectors],
-      ['向量库 vectorStore', h.vectorStore],
-      ['运行时长 uptimeMs', h.uptimeMs === undefined ? '未接入' : h.uptimeMs + ' ms（' + durationText(h.uptimeMs) + '）'],
-      ['构建时间 buildTime', h.buildTime],
-      ['jar 构建时间 embeddedGitBuildTime', h.embeddedGitBuildTime],
-      ['构建说明 buildShaNote', h.buildShaNote]
-    ];
-
-    var html = kv.map(function (r) {
-      var val = r[2] !== undefined && r[2] !== null ? r[2] : esc(r[1] === undefined || r[1] === null || r[1] === '' ? '未接入' : r[1]);
-      return '<li><span>' + esc(r[0]) + '</span><b>' + val + '</b></li>';
-    }).join('');
-
-    // 样本开关：接口自己声明还开着 mock 数据源 —— 必须显示，不能藏起来
-    var mocks = [];
-    if (h.alertsMockEnabled) mocks.push('告警样本 alertsMockEnabled=true');
-    if (h.logsMockEnabled) mocks.push('日志样本 logsMockEnabled=true');
-    if (mocks.length) {
-      html += '<li><span>样本开关</span><b><span class="xk-tag xk-tag--warn">' + esc(mocks.join(' / ')) + '</span></b></li>';
-    } else {
-      html += '<li><span>样本开关</span><b><span class="xk-tag xk-tag--on">均为 false</span></b></li>';
-    }
-
-    host('sys-info').innerHTML = html;
-
-    var detail = kv.filter(function (r) { return r[1] !== undefined; });
-    setSync('monitor', syncTextOf(parts));
-    var sysSync = host('sys-sync');
-    if (sysSync) sysSync.textContent = '字段名逐条对过 /api/health 的返回体';
-    void detail;
   }
 
   /* ==========================================================================
@@ -1421,20 +1453,20 @@
         setStatus('检测链路可用（真实后端）', 'xk-tag--on');
       }).catch(function (err) {
         available = false;
-        setStatus('未上线・规划中', 'xk-tag--off');
+        setStatus('链路不可达', 'xk-tag--off');
         var msg = '<p class="xk-notice xk-notice--bad">检测端点 <code>POST /api/playground/check</code> 当前不可用（' +
           esc(err.status ? 'HTTP ' + err.status : '网络不可达') + '）。按纪律这里不放任何模拟结论 —— 按钮已停用。</p>';
-        $$('[data-xk-pg-result], [data-xk-pi-result]', contentEl).forEach(function (r) { r.hidden = false; r.innerHTML = msg; });
-        $$('[data-xk-pg-run], [data-xk-pg-preset], [data-xk-pi-preset]', contentEl).forEach(function (b) { b.disabled = true; });
+        $$('[data-xk-pg-result]', contentEl).forEach(function (r) { r.hidden = false; r.innerHTML = msg; });
+        $$('[data-xk-pg-run], [data-xk-pg-preset]', contentEl).forEach(function (b) { b.disabled = true; });
       });
     }
 
-    function run(input, resultEl, onlyPI) {
+    function run(text, resultEl) {
       if (available === false) return;
       resultEl.hidden = false;
-      resultEl.innerHTML = '<p class="xk-hint">正在请求后端检测链路…</p>';
-      postPlayground(input).then(function (body) {
-        renderCheckResult(resultEl, body, onlyPI);
+      resultEl.innerHTML = '<p class="xk-hint"><span class="xk-pulse" aria-hidden="true"></span>正在请求后端检测链路…</p>';
+      postPlayground(text).then(function (body) {
+        renderCheckResult(resultEl, body, false);
       }).catch(function (err) {
         resultEl.innerHTML = '<p class="xk-notice xk-notice--bad">检测失败（' +
           esc(err.status ? 'HTTP ' + err.status : '网络不可达') + '）。这不代表输入安全，只代表这次没测成。</p>';
@@ -1443,20 +1475,19 @@
 
     var input = $('#xk-pg-input', contentEl);
     var pgResult = $('[data-xk-pg-result]', contentEl);
-    var piResult = $('[data-xk-pi-result]', contentEl);
+    if (!input || !pgResult) return;
 
     $$('[data-xk-pg-run]', contentEl).forEach(function (b) {
-      b.addEventListener('click', function () { run(input.value, pgResult, false); });
+      b.addEventListener('click', function () { run(input.value, pgResult); });
     });
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(input.value, pgResult, false); });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(input.value, pgResult); });
+    /* 一键样本（第十一轮 E 项）：点一下就把样本填进输入框并立刻真跑一次，
+       不需要访客自己打字 —— 面试官"拿起来就能试"是这一栏唯一的目标。 */
     $$('[data-xk-pg-preset]', contentEl).forEach(function (b) {
       b.addEventListener('click', function () {
         input.value = b.getAttribute('data-xk-pg-preset');
-        run(input.value, pgResult, false);
+        run(input.value, pgResult);
       });
-    });
-    $$('[data-xk-pi-preset]', contentEl).forEach(function (b) {
-      b.addEventListener('click', function () { run(b.getAttribute('data-xk-pi-preset'), piResult, true); });
     });
 
     availabilityProbe();
@@ -1659,219 +1690,271 @@
     });
   }
 
+  /* ==========================================================================
+     10b. AI 安全 —— 真·对话界面（第十一轮重写）
+     --------------------------------------------------------------------------
+     站主原话："AI 问答应该像豆包/对话界面"。所以这里不是"表单 + 结果块"，而是一条对话：
+       · 用户气泡在右、AI 卡片在左；输入区在底部，Enter 发送 / Shift+Enter 换行；
+       · AI 消息里渲染结论正文 + 引用卡片（<details> 展开看标题/片段/可信度/来源性质/相关度）；
+       · 顶部状态徽标把 state 直接可视化（model / model-failed / input-insufficient / rule-based …）；
+       · 预设问题 chips 一键发送（含一条演示"公开面为什么不取证"）。
+     红线（站主 + 规格）：
+       · **不许 SSE / WebSocket** —— 公开面只有一次性 POST /api/public/ask；
+         正文用前端渐进揭示（打字机）呈现，并在界面上【如实标注"回答非流式传输"】，不假装真流式；
+       · 模型没生成就写原因，不补"听起来像答案"的话；
+       · 引用里出现的 web-01 / auth.log 是知识库文档里的教学示例，不当内部真实数据宣传。
+     ========================================================================== */
+  var CHAT_STATE_LABEL = {
+    'model': ['模型研判', 'is-model', 'on'],
+    'rule-based': ['规则解析', 'is-rule', 'warn'],
+    'input-insufficient': ['依据不足，不做定性', 'is-warn', 'warn'],
+    'no-retrieval': ['未检索到依据，不给结论', 'is-warn', 'warn'],
+    'retrieval-failed': ['检索不可用，未生成', 'is-bad', 'bad'],
+    'model-failed': ['模型不可用，未生成', 'is-bad', 'bad'],
+    'injection-blocked': ['命中提示注入护栏', 'is-warn', 'warn']
+  };
+
+  var CHAT = { bound: false, asking: false, typeTimer: null };
+
+  function chatLog() { return $('[data-xk-chat-log]', contentEl); }
+
+  function chatScroll() {
+    var log = chatLog();
+    if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  function chatPush(kind, html, metaOverride) {
+    var log = chatLog();
+    if (!log) return null;
+    var li = document.createElement('li');
+    li.className = 'xk-msg xk-msg--' + kind;
+    li.innerHTML = '<div class="xk-msg__bubble">' + html + '</div>' +
+      '<div class="xk-msg__meta"><span class="xk-msg__who">' +
+      esc(metaOverride || (kind === 'user' ? '你' : 'AI 安全')) + '</span></div>';
+    log.appendChild(li);
+    chatScroll();
+    return li;
+  }
+
+  function chatTypingPush() {
+    return chatPush('ai', '<span class="xk-typing" aria-label="正在生成"><i></i><i></i><i></i></span>', 'AI 安全 · 生成中');
+  }
+
+  /** 状态徽标：把"到底是谁给的结论"直接摆在聊天窗口上方（项目最值钱的那部分） */
+  function chatBadge(state, label) {
+    var host = $('[data-xk-chat-badge]', contentEl);
+    if (!host) return;
+    var conf = CHAT_STATE_LABEL[state];
+    var text = label || (conf ? conf[0] : (state ? state + '（未识别状态）' : '等待提问'));
+    var dot = state === 'model' ? 'ok' : (conf && conf[2] === 'bad' ? 'off' : (conf ? 'medium' : 'off'));
+    host.className = 'xk-chat__badge is-' + (conf ? conf[2] : 'off');
+    host.innerHTML = '<span class="xk-dot xk-dot--' + dot + '" aria-hidden="true"></span>' + esc(text) +
+      (state ? '<code>' + esc(state) + '</code>' : '');
+  }
+
+  /** 引用卡片：标题 + 来源性质 + 可信度 + 相关度，片段可展开（默认收起，避免淹没正文） */
+  function chatCite(c, i) {
+    var bits = [];
+    if (c.sourceTypeLabel) bits.push(c.sourceTypeLabel);
+    if (c.trustLevelLabel) bits.push(c.trustLevelLabel);
+    if (c.score !== undefined && c.score !== null && !isNaN(Number(c.score))) {
+      bits.push('相关度 ' + (Math.round(Number(c.score) * 100) / 100));
+    }
+    return '<li class="xk-cite">' +
+      '<b class="xk-cite__title">[' + (i + 1) + '] ' + esc(c.title || '（无标题）') + '</b>' +
+      (bits.length ? '<span class="xk-hint">' + esc(bits.join(' · ')) + '</span>' : '') +
+      (c.snippet ? '<details class="xk-caliber xk-caliber--inline"><summary>看片段</summary>' +
+        '<p class="xk-cite__snip">' + esc(c.snippet) + '</p></details>' : '') +
+      '</li>';
+  }
+
+  /**
+   * 渐进揭示：把【已经拿到的完整正文】逐字显示出来。
+   * 诚实说明：这不是流式传输 —— 公开面只有一次性 POST（规格明确不许 SSE/WebSocket），
+   * 页面上也如实标注了这一点。这里只是让"已经到手的完整答案"读起来不像一次硬刷新。
+   * 做法：先按 mdLite 渲染成 HTML，再按"标签不可分割"的粒度渐进写入 ——
+   * 展示的始终是真内容的子集（不是假动画），也不会因为截断标签而破坏 DOM。
+   */
+  function chatReveal(host, text) {
+    var target = host.querySelector('[data-xk-reveal]');
+    if (!target) return;
+    var html = mdLite(text);
+    var tokens = html.match(/<[^>]+>|[^<]/g) || [];
+    var i = 0;
+    target.innerHTML = '';
+    if (prefersReducedMotion()) { target.innerHTML = html; chatScroll(); return; }
+    var step = Math.max(1, Math.round(tokens.length / 120));
+    clearInterval(CHAT.typeTimer);
+    CHAT.typeTimer = setInterval(function () {
+      if (!document.body.contains(target)) { clearInterval(CHAT.typeTimer); return; }
+      var buf = '', n = 0;
+      while (i < tokens.length && n < step) {
+        buf += tokens[i];
+        if (tokens[i].charAt(0) !== '<') n++;
+        i++;
+      }
+      target.innerHTML += buf;
+      chatScroll();
+      if (i >= tokens.length) { clearInterval(CHAT.typeTimer); target.innerHTML = html; chatScroll(); }
+    }, 16);
+  }
+
+  function chatRenderAnswer(li, d, elapsedMs) {
+    var state = d.state || '';
+    var conf = CHAT_STATE_LABEL[state];
+    var head = '<div class="xk-msg__verdict">' +
+      '<span class="xk-state ' + (conf ? conf[1] : 'is-warn') + '">' + esc(d.stateLabel || (conf ? conf[0] : (state || '未识别状态'))) + '</span>' +
+      '<b>' + (d.generated === true ? '模型已生成结论' : '未生成结论（generated=false）') + '</b>' +
+      '<span class="xk-hint">' + esc((Math.round(elapsedMs / 100) / 10)) + 's · 引用 ' +
+      esc((d.citations || []).length) + ' 条</span></div>';
+
+    var body = '';
+    if (d.injection && d.injection.blocked) {
+      body += '<p class="xk-notice xk-notice--warn">输入命中<b>提示注入护栏</b>（' +
+        esc(d.injection.hitCount || 0) + ' 条规则）。下面是被当作"不可信数据"处理之后的结果。</p>';
+    }
+    if (d.failureReason) {
+      body += '<p class="xk-notice xk-notice--warn"><b>服务端说明：</b>' + esc(d.failureReason) + '</p>';
+    }
+    if (d.answer) {
+      body += '<div class="xk-md xk-answer"><span data-xk-reveal></span></div>';
+    } else if (!d.failureReason) {
+      body += '<p class="xk-hint">这次没有返回答案正文（<code>state=' + esc(state || '—') + '</code>）。</p>';
+    }
+
+    var cites = d.citations || [];
+    body += cites.length
+      ? '<details class="xk-caliber xk-caliber--cites"><summary>引用 ' + cites.length + ' 条（点开看片段）</summary>' +
+        '<ul class="xk-cites">' + cites.map(chatCite).join('') + '</ul></details>'
+      : '<p class="xk-hint">这次没有引用片段 —— 没有依据就直接说没有，不用"相关推荐"凑数。</p>';
+
+    if (d.clientIpMasked || (d.quota && d.quota.pool)) {
+      body += '<p class="xk-note">来源 IP（后端已掩码）：<code>' + esc(d.clientIpMasked || '—') + '</code>' +
+        (d.quota && d.quota.pool ? ' · 额度池 <code>' + esc(d.quota.pool) + '</code>（已用 ' +
+          esc(num(d.quota.used)) + '，上限 ' + esc(num(d.quota.limit)) + '）' : '') + '</p>';
+    }
+
+    li.querySelector('.xk-msg__bubble').innerHTML = head + body;
+    if (d.answer) chatReveal(li, d.answer);
+    chatScroll();
+  }
+
   function initAi() {
+    var log = chatLog();
     var askInput = $('#xk-ask-input', contentEl);
     var askBtn = $('[data-xk-ask-run]', contentEl);
-    var askResult = $('[data-xk-ask-result]', contentEl);
-    var askState = $('[data-xk-ask-state]', contentEl);
-    var askQuota = $('[data-xk-ask-quota]', contentEl);
-    var kbInput = $('#xk-kb-input', contentEl);
-    var kbResult = $('[data-xk-kb-result]', contentEl);
-    var kbStatus = $('[data-xk-kb-status]', contentEl);
-    var kbNote = $('[data-xk-kb-note]', contentEl);
-    var asking = false;
+    if (!log || !askInput) return;
 
-    if (!askInput || !kbInput) return;
-    /* 顶栏副标题只放一句极简事实（端点与限额的完整清单在下面的卡片里，不再往页头堆字） */
     setSync('ai', '只读公开端点 · 无 SSE');
 
-    function setAskState(text) { if (askState) askState.textContent = text; }
+    /* 输入框自适应高度（最多 5 行），Enter 发送 / Shift+Enter 换行 */
+    function autoGrow() {
+      askInput.style.height = 'auto';
+      askInput.style.height = Math.min(120, askInput.scrollHeight) + 'px';
+    }
+    askInput.addEventListener('input', autoGrow);
+    askInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        runAsk();
+      }
+    });
+    if (askBtn) askBtn.addEventListener('click', runAsk);
+    $$('[data-xk-ask-preset]', contentEl).forEach(function (b) {
+      b.addEventListener('click', function () {
+        askInput.value = b.getAttribute('data-xk-ask-preset') || '';
+        autoGrow();
+        runAsk();
+      });
+    });
 
-    /** 429 倒计时：话术用后端给的 message，只把剩余秒数显示出来 */
-    function countdown429(host, msg, seconds) {
-      if (host.__xkCd) clearInterval(host.__xkCd);
+    function setAskState(text) {
+      var n = $('[data-xk-ask-state]', contentEl);
+      if (n) n.textContent = text;
+    }
+
+    function countdown429(li, msg, seconds) {
       var left = Math.max(1, Number(seconds) || 0);
+      clearInterval(li.__cd);
       function paint() {
-        if (!document.body.contains(host)) { clearInterval(host.__xkCd); host.__xkCd = null; return; }
+        if (!document.body.contains(li)) { clearInterval(li.__cd); return; }
+        var b = li.querySelector('.xk-msg__bubble');
         if (left <= 0) {
-          host.innerHTML = '<p class="xk-notice xk-notice--warn">' + esc(msg) + '<br>等待结束，可以重新提交了。</p>';
-          clearInterval(host.__xkCd); host.__xkCd = null; return;
+          if (b) b.innerHTML = '<p class="xk-notice xk-notice--warn">' + esc(msg) + '<br>等待结束，可以重新提问了。</p>';
+          clearInterval(li.__cd); return;
         }
-        host.innerHTML = '<p class="xk-notice xk-notice--warn">' + esc(msg) + '<br>请稍后再试 <b>' + left + '</b> 秒。</p>';
+        if (b) b.innerHTML = '<p class="xk-notice xk-notice--warn">' + esc(msg) + '<br>请稍后再试 <b>' + left + '</b> 秒。</p>';
         left -= 1;
       }
       paint();
-      host.__xkCd = setInterval(paint, 1000);
+      li.__cd = setInterval(paint, 1000);
     }
 
-    function citeItem(c) {
-      var meta = [c.sourceTypeLabel, c.trustLevelLabel,
-        (c.score === undefined || c.score === null || isNaN(Number(c.score)) ? '' : 'score ' + (Math.round(Number(c.score) * 100) / 100))]
-        .filter(Boolean).map(esc).join(' · ');
-      return '<li class="xk-cite">' +
-        '<b class="xk-cite__title">' + esc(c.title || '（无标题）') + '</b>' +
-        (meta ? '<span class="xk-hint">' + meta + '</span>' : '') +
-        (c.snippet ? '<p class="xk-cite__snip">' + esc(c.snippet) + '</p>' : '') +
-        '</li>';
-    }
-
-    function renderAsk(host, r, elapsedMs) {
-      if (r.status === 429) {
-        var wait = parseInt(r.retryAfter || (r.body && r.body.retryAfter) || 0, 10) || 0;
-        countdown429(host, (r.body && r.body.message) || '请求被限流。', wait || 60);
-        setAskState('被限流（HTTP 429）。');
-        return;
-      }
-      var body = r.body;
-      if (!r.ok || !body || body.data === undefined) {
-        host.innerHTML = '<p class="xk-notice xk-notice--bad">接口返回 HTTP ' + esc(r.status) + '，没有可用数据。' +
-          (body && body.message ? '后端说明：' + esc(body.message) : '') + ' 这里不显示任何替代答案。</p>';
-        setAskState('失败（HTTP ' + r.status + '）。');
-        return;
-      }
-      var d = body.data || {};
-      var state = d.state || '';
-      var cls = state === 'model' ? 'xk-tag--on'
-        : (state === 'model-failed' || state === 'retrieval-failed' ? 'xk-tag--bad' : 'xk-tag--warn');
-      var html = '<div class="xk-result__verdict">' +
-        '<span class="xk-tag ' + cls + '">' + esc(d.stateLabel || state || '未识别状态') + '</span>' +
-        /* generated 只有 state=model 时才为 true —— 不把"调用过模型"说成"给出了结论" */
-        '<b>' + (d.generated === true ? '模型已生成结论' : '未生成结论（generated=false）') + '</b>' +
-        '<span class="xk-hint">耗时 ' + esc((Math.round(elapsedMs / 100) / 10)) + 's' +
-          ' · 引用 ' + esc((d.citations || []).length) + ' 条' +
-          (d.quota ? ' · 本分钟剩余 ' + esc(num(d.quota.remaining)) + '/' + esc(num(d.quota.limit)) : '') +
-        '</span></div>';
-      if (d.failureReason) {
-        html += '<p class="xk-notice xk-notice--warn"><b>服务端说明：</b>' + esc(d.failureReason) + '</p>';
-      }
-      if (d.injection && d.injection.blocked) {
-        html += '<p class="xk-notice xk-notice--warn">输入命中提示注入护栏（' + esc(d.injection.hitCount || 0) +
-          ' 条规则），下面是拦截之后的处理结果。</p>';
-      }
-      if (d.answer) {
-        html += '<div class="xk-md xk-answer">' + mdLite(d.answer) + '</div>';
-      } else if (!d.failureReason) {
-        html += '<p class="xk-hint">这次没有返回答案正文（<code>state=' + esc(state || '—') + '</code>）。</p>';
-      }
-      var cites = d.citations || [];
-      html += cites.length
-        ? '<h3 class="xk-sub xk-answer-hd">引用（' + cites.length + ' 条）</h3><ul class="xk-cites">' + cites.map(citeItem).join('') + '</ul>'
-        : '<p class="xk-hint">这次没有引用片段。</p>';
-      if (d.clientIpMasked || (d.quota && d.quota.pool)) {
-        html += '<p class="xk-note">来源 IP（后端已掩码）：<code>' + esc(d.clientIpMasked || '—') + '</code>' +
-          (d.quota && d.quota.pool ? ' · 额度池 <code>' + esc(d.quota.pool) + '</code>' +
-            '（已用 ' + esc(num(d.quota.used)) + '，上限 ' + esc(num(d.quota.limit)) + '）' : '') + '</p>';
-      }
-      host.innerHTML = html;
-      if (askQuota) {
-        askQuota.textContent = d.quota
-          ? '本分钟额度：剩余 ' + num(d.quota.remaining) + '/' + num(d.quota.limit)
-          : '额度：未返回';
-        askQuota.className = 'xk-tag ' + (d.quota && Number(d.quota.remaining) <= 0 ? 'xk-tag--bad' : '');
-      }
-      setAskState('上次提问 ' + clockOf(Date.now()) + ' · HTTP ' + r.status +
-        (r.rlLimit ? ' · 服务端余额 ' + (r.rlRemaining === null ? '—' : r.rlRemaining) + '/' + r.rlLimit : ''));
+    function setQuota(d) {
+      var q = $('[data-xk-ask-quota]', contentEl);
+      if (!q) return;
+      q.textContent = (d && d.quota) ? '本分钟额度：剩余 ' + num(d.quota.remaining) + '/' + num(d.quota.limit) : '额度：未返回';
+      q.className = 'xk-tag ' + (d && d.quota && Number(d.quota.remaining) <= 0 ? 'xk-tag--bad' : '');
     }
 
     function runAsk() {
       var q = String(askInput.value || '').trim();
-      if (!q) {
-        askResult.hidden = false;
-        askResult.innerHTML = '<p class="xk-notice xk-notice--warn">先写一个问题再提交。</p>';
-        return;
-      }
-      if (asking) return;                       // 同一来源只允许 1 个在飞：前端也不重复发
-      asking = true;
-      if (askBtn) { askBtn.disabled = true; askBtn.textContent = '等待中…'; }
-      askResult.hidden = false;
-      askResult.innerHTML = '<p class="xk-hint"><span class="xk-pulse" aria-hidden="true"></span>已提交，正在检索并生成…这次最多等 20 秒。</p>';
+      if (!q) { toast('先写一个问题'); askInput.focus(); return; }
+      if (CHAT.asking) return;              // 同一来源只允许 1 个在飞：前端也不重复发
+      CHAT.asking = true;
+      if (askBtn) askBtn.disabled = true;
+      chatPush('user', '<p>' + esc(q) + '</p>', '你');
+      askInput.value = '';
+      autoGrow();
+      var pending = chatTypingPush();
       setAskState('等待中（最多 20 秒）…');
+      chatBadge('', '生成中…');
       var t0 = Date.now();
       askApi(q).then(function (r) {
-        renderAsk(askResult, r, Date.now() - t0);
+        var body = r.body;
+        if (r.status === 429) {
+          var wait = parseInt(r.retryAfter || (body && body.retryAfter) || 0, 10) || 0;
+          countdown429(pending, (body && body.message) || '请求被限流。', wait || 60);
+          setAskState('被限流（HTTP 429）。');
+          chatBadge('', '被限流');
+          return;
+        }
+        if (!r.ok || !body || body.data === undefined) {
+          pending.querySelector('.xk-msg__bubble').innerHTML =
+            '<p class="xk-notice xk-notice--bad">接口返回 HTTP ' + esc(r.status) + '，没有可用数据。' +
+            (body && body.message ? '后端说明：' + esc(body.message) : '') + ' 这里不显示任何替代答案。</p>';
+          setAskState('失败（HTTP ' + r.status + '）。');
+          chatBadge('', '请求失败');
+          return;
+        }
+        var d = body.data || {};
+        chatRenderAnswer(pending, d, Date.now() - t0);
+        chatBadge(d.state || '', null);
+        setQuota(d);
+        setAskState('上次提问 ' + clockOf(Date.now()) + ' · HTTP ' + r.status +
+          (r.rlLimit ? ' · 服务端余额 ' + (r.rlRemaining === null ? '—' : r.rlRemaining) + '/' + r.rlLimit : ''));
       }).catch(function (err) {
         if (err && err.timeout) {
-          askResult.innerHTML = '<p class="xk-notice xk-notice--warn">等了 20 秒还没返回，这次请求已放弃。' +
-            '后端可能正在排队、或模型这一轮很慢 —— 这里不显示任何推测的答案，过一会儿可以重试。</p>';
+          pending.querySelector('.xk-msg__bubble').innerHTML =
+            '<p class="xk-notice xk-notice--warn">等了 20 秒还没返回，这次请求已放弃。后端可能正在排队、或模型这一轮很慢 ——' +
+            ' 这里不显示任何推测的答案，过一会儿可以重试。</p>';
           setAskState('超时：等待 20 秒无响应。');
+          chatBadge('', '超时');
         } else {
-          askResult.innerHTML = '<p class="xk-notice xk-notice--bad">提问失败（' +
-            esc(err && err.status ? 'HTTP ' + err.status : '网络不可达或跨域被拒') +
+          pending.querySelector('.xk-msg__bubble').innerHTML =
+            '<p class="xk-notice xk-notice--bad">提问失败（' + esc(err && err.status ? 'HTTP ' + err.status : '网络不可达或跨域被拒') +
             '）。没有拿到答案，也没有替代结论。</p>';
           setAskState('请求失败。');
+          chatBadge('', '请求失败');
         }
       }).then(function () {
-        asking = false;
-        if (askBtn) { askBtn.disabled = false; askBtn.textContent = '提交提问'; }
+        CHAT.asking = false;
+        if (askBtn) askBtn.disabled = false;
       });
     }
-
-    function renderKb(host, d, q) {
-      if (d.available === false) {
-        if (kbStatus) { kbStatus.textContent = '检索不可用'; kbStatus.className = 'xk-tag xk-tag--bad'; }
-        if (kbNote) kbNote.textContent = '后端自述检索不可用（available:false）。';
-        host.innerHTML = '<p class="xk-notice xk-notice--warn"><b>检索不可用</b>（<code>available:false</code>）：' +
-          esc(d.note || '后端没有给出更多说明。') + ' 这里不显示任何替代结果。</p>' + rulesHtml(d.rule);
-        return;
-      }
-      var hits = d.results || [];
-      if (kbStatus) {
-        kbStatus.textContent = hits.length ? '命中 ' + hits.length + ' 条' : '无命中';
-        kbStatus.className = 'xk-tag ' + (hits.length ? 'xk-tag--on' : 'xk-tag--off');
-      }
-      if (kbNote) {
-        kbNote.textContent = '关键词「' + q + '」· hitCount=' +
-          (d.hitCount === null || d.hitCount === undefined ? '—' : d.hitCount) + (d.note ? ' · ' + d.note : '');
-      }
-      host.innerHTML = (hits.length
-        ? '<ul class="xk-cites">' + hits.map(citeItem).join('') + '</ul>'
-        : '<p class="xk-hint">没有命中任何文档片段。换个关键词试试 —— 这里不用"相关推荐"凑数。</p>') + rulesHtml(d.rule);
-    }
-
-    /** d.rule{allowedRoots,...}：把后端自述的检索范围也如实列出来 */
-    function rulesHtml(rule) {
-      if (!rule || !rule.allowedRoots || !rule.allowedRoots.length) return '';
-      return '<p class="xk-note">检索范围（后端自述 <code>rule.allowedRoots</code>）：<code>' +
-        esc(rule.allowedRoots.join(' , ')) + '</code></p>';
-    }
-
-    function runKb() {
-      var q = String(kbInput.value || '').trim();
-      if (!q) {
-        kbResult.hidden = false;
-        kbResult.innerHTML = '<p class="xk-notice xk-notice--warn">先写一个关键词再检索。</p>';
-        return;
-      }
-      kbResult.hidden = false;
-      kbResult.innerHTML = '<p class="xk-hint">正在检索 <code>/api/public/kb</code> …</p>';
-      if (kbStatus) { kbStatus.textContent = '检索中…'; kbStatus.className = 'xk-tag'; }
-      fetch(API + '/api/public/kb?q=' + encodeURIComponent(q), {
-        method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store'
-      }).then(function (res) {
-        return res.json().catch(function () { return null; }).then(function (body) {
-          if (res.status === 429) {
-            var wait = parseInt(res.headers.get('Retry-After') || 0, 10) || 0;
-            if (kbStatus) { kbStatus.textContent = '被限流'; kbStatus.className = 'xk-tag xk-tag--warn'; }
-            countdown429(kbResult, (body && body.message) || '检索请求过于频繁。', wait || 60);
-            return;
-          }
-          if (!res.ok || !body || body.data === undefined) {
-            if (kbStatus) { kbStatus.textContent = '检索失败'; kbStatus.className = 'xk-tag xk-tag--bad'; }
-            kbResult.innerHTML = '<p class="xk-notice xk-notice--bad">检索失败（HTTP ' + esc(res.status) + '）' +
-              (body && body.message ? '：' + esc(body.message) : '') + '</p>';
-            return;
-          }
-          renderKb(kbResult, body.data || {}, q);
-        });
-      }).catch(function () {
-        if (kbStatus) { kbStatus.textContent = '网络不可达'; kbStatus.className = 'xk-tag xk-tag--bad'; }
-        kbResult.innerHTML = '<p class="xk-notice xk-notice--bad">检索请求发不出去（网络不可达或跨域被拒）。' +
-          '这里不显示本地缓存里编的结果。</p>';
-      });
-    }
-
-    if (askBtn) askBtn.addEventListener('click', runAsk);
-    askInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); runAsk(); } });
-    $$('[data-xk-ask-preset]', contentEl).forEach(function (b) {
-      b.addEventListener('click', function () {
-        askInput.value = b.getAttribute('data-xk-ask-preset') || '';
-        runAsk();
-      });
-    });
-    var kbBtn = $('[data-xk-kb-run]', contentEl);
-    if (kbBtn) kbBtn.addEventListener('click', runKb);
-    kbInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); runKb(); } });
   }
+
+
 
   /* ==========================================================================
      11. 关于（正文由 Hugo 渲染）+ 站主第九轮 ⑤：
@@ -1883,6 +1966,8 @@
     ['/api/public/alerts', '实时告警（按规则 + IP 聚合）'],
     ['/api/public/honeypot', '蜜罐战报'],
     ['/api/public/audit', '处置审计'],
+    ['/api/public/latest', '最新聚合（窗口口径，2026-10-13 上线）'],
+    ['/api/public/kb', '公开知识库检索（白名单目录）'],
     ['/api/health', '系统指纹（扁平对象，无信封）']
   ];
 
@@ -1936,6 +2021,8 @@
      12. 搜索（Ctrl+K，只搜笔记）
      ========================================================================== */
   var searchState = { open: false, items: [], cursor: 0 };
+  /* 首屏可玩（英雄区「试着攻击我」）的运行态：用 document 级委托，视图换来换去也只绑一次 */
+  var heroPlay = { running: false, bound: false };
 
   function updateSearchButtonState() { /* 预留：导航上的搜索按钮始终可用 */ }
 
@@ -1961,26 +2048,63 @@
     searchState.open = false;
   }
 
+  /**
+   * 搜索结果渲染（第十一轮 ③）：命中高亮 + 分组 + 键盘上下选择。
+   * 高亮做法：把 query 转成安全的正则（转义元字符），只对【已经 esc() 过的文本】做包裹，
+   * 所以不存在把用户输入当 HTML 注入的路径（esc 在前，包 <mark> 在后）。
+   */
+  function hi(text, q) {
+    var s = esc(text == null ? '' : String(text));
+    if (!q) return s;
+    var safe = String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try { return s.replace(new RegExp('(' + safe + ')', 'gi'), '<mark class="xk-mark">$1</mark>'); }
+    catch (e) { return s; }
+  }
+
+  function searchBucket(n, q) {
+    var qq = q.toLowerCase();
+    if (String(n.title || '').toLowerCase().indexOf(qq) >= 0) return '标题命中';
+    if (((n.categories || []).join(' ') + ' ' + (n.tags || []).join(' ')).toLowerCase().indexOf(qq) >= 0) return '分类 / 标签命中';
+    return '正文命中';
+  }
+
   function renderSearch(q) {
     var list = $('#xk-search-list');
-    var query = String(q || '').trim().toLowerCase();
+    var query = String(q || '').trim();
+    var lc = query.toLowerCase();
     var items = searchState.items;
     if (query) {
       items = items.filter(function (n) {
         var hay = [n.title, (n.categories || []).join(' '), (n.tags || []).join(' '), n.summary, n.text].join(' ').toLowerCase();
-        return hay.indexOf(query) >= 0;
+        return hay.indexOf(lc) >= 0;
       });
     }
     if (!items.length) {
       list.innerHTML = '<li class="xk-modal__empty">没有匹配的笔记。</li>';
+      searchState.filtered = [];
       return;
     }
     searchState.filtered = items;
     searchState.cursor = 0;
-    list.innerHTML = items.slice(0, 20).map(function (n, i) {
-      return '<li class="xk-modal__item' + (i === 0 ? ' is-on' : '') + '" data-xk-idx="' + i + '" data-xk-slug="' + esc(n.slug) + '">' +
-        '<b>' + esc(n.title) + '</b><span>' + esc(n.date + ' · ' + (n.categories || []).join(' / ') + ' · ' + n.summary) + '</span></li>';
-    }).join('');
+
+    /* 分组：标题命中 → 分类/标签命中 → 正文命中（组内保持仓库里的时间倒序） */
+    var groups = ['标题命中', '分类 / 标签命中', '正文命中'];
+    var html = '', flat = 0;
+    var shown = items.slice(0, 20);
+    groups.forEach(function (g) {
+      var inGroup = shown.filter(function (n) { return searchBucket(n, query || '') === g; });
+      if (!inGroup.length) return;
+      html += '<li class="xk-modal__group" aria-hidden="true">' + esc(g) + '</li>';
+      inGroup.forEach(function (n) {
+        var idx = flat++;
+        html += '<li class="xk-modal__item' + (idx === 0 ? ' is-on' : '') + '" data-xk-idx="' + idx + '" data-xk-slug="' + esc(n.slug) + '" role="option">' +
+          '<b>' + hi(n.title, query) + '</b>' +
+          '<span>' + esc(n.date + ' · ' + (n.categories || []).join(' / ')) + ' · ' + hi(n.summary, query) + '</span></li>';
+      });
+    });
+    list.innerHTML = html;
+    // 分组后 Flat 顺序与 items 顺序一致，键盘移动仍然按 DOM 顺序走
+    searchState.filtered = shown;
   }
 
   function moveSearch(delta) {
@@ -2026,42 +2150,6 @@
     var noteLink = e.target.closest ? e.target.closest('a[data-xk-note]') : null;
     if (noteLink) { e.preventDefault(); navigate('#/notes/' + noteLink.getAttribute('data-xk-note')); return; }
 
-    var row = e.target.closest ? e.target.closest('.xk-stream__hd') : null;
-    if (row) {                                  // 告警下钻：展开聚合记录自带字段
-      var item = row.parentElement;
-      var detail = $('.xk-stream__detail', item);
-      var open = !detail.hidden;
-      detail.hidden = open;
-      item.classList.toggle('is-open', !open);
-      return;
-    }
-
-    var catChip = e.target.closest ? e.target.closest('[data-xk-sev-filter]') : null;
-    if (catChip) {                              // 告警级别过滤
-      var stream = $('[data-xk-alert-stream]', contentEl);
-      $$('[data-xk-sev-filter]', contentEl).forEach(function (c) { c.classList.toggle('is-on', c === catChip); });
-      stream.setAttribute('data-filter', catChip.getAttribute('data-xk-sev-filter'));
-      var cached = CACHE['/api/public/alerts'];
-      if (cached && cached.ok) {
-        renderStream(Object.assign({}, cached.data && cached.data.data, { list: (cached.data && cached.data.data && cached.data.data.list) || [] }));
-      }
-      return;
-    }
-
-    var more = e.target.closest ? e.target.closest('[data-xk-more]') : null;
-    if (more) {                                 // 长列表：按需展开剩余部分（数据已在内存里）
-      if (more.getAttribute('data-xk-more') === 'stream') {
-        STREAM_LIMIT = 100000;
-        var ca = CACHE['/api/public/alerts'];
-        if (ca && ca.ok) renderStream(ca.data && ca.data.data);
-      } else {
-        HP_TL_LIMIT = 100000;
-        var ch = CACHE['/api/public/honeypot'];
-        if (ch && ch.ok) renderHoneypot(ch.data && ch.data.data, [{ name: 'honeypot', res: { data: ch.data, syncedAt: ch.syncedAt }, err: null }]);
-      }
-      return;
-    }
-
     var item2 = e.target.closest ? e.target.closest('#xk-search-list .xk-modal__item') : null;
     if (item2) {
       var slug = item2.getAttribute('data-xk-slug');
@@ -2102,6 +2190,13 @@
       searchState.open ? closeSearch() : openSearch();
       return;
     }
+    /* 第十一轮 ③："/" 也能聚焦搜索（很多技术读者习惯 vim/文档站的这个键位）。
+       只在没有输入焦点、也没有打开浮层时接管，避免把正文里的斜杠吃掉。 */
+    if (!searchState.open && e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      var ae = document.activeElement;
+      var typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+      if (!typing) { e.preventDefault(); openSearch(); return; }
+    }
     if (!searchState.open && (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar')) {
       var el = e.target;
       if (el && el.getAttribute) {
@@ -2136,7 +2231,119 @@
   else setTimeout(prefetchIndex, 2500);
 
   /* ==========================================================================
+     14. 首屏可玩：Hero 里的「试着攻击我」（第十一轮 ③）
+     --------------------------------------------------------------------------
+     站主原话："不是功能没做，是做得不够好不够出色"——最值钱的能力（真会被拦下来的检测链路）
+     原来埋在"攻防靶场"二级页，首屏只给了一堆不能点的数字。现在 Hero 直接可玩：
+     同一路径 POST /api/playground/check，结果用与靶场一致的 renderCheckResult 渲染
+     （三组件判定 + severity 色点 + "未命中 ≠ 无害"常显）。
+     红线：只做检测、不执行；前端不回显任何内部标记名或正则原文（后端已收口，这里也不自己拼）。
+     ========================================================================== */
+  function heroPlayRun(text) {
+    var form = $('[data-xk-play="hero"]', contentEl);
+    if (!form) return;
+    var input = $('[data-xk-play-input]', form);
+    var result = $('[data-xk-play-result]', form);
+    if (!input || !result) return;
+    var v = String(text == null ? input.value : text);
+    if (!v.trim()) { toast('先输入一段内容再检测'); input.focus(); return; }
+    if (heroPlay.running) return;
+    heroPlay.running = true;
+    result.hidden = false;
+    result.innerHTML = '<p class="xk-hint"><span class="xk-pulse" aria-hidden="true"></span>正在请求后端检测链路…</p>';
+    postPlayground(v).then(function (body) {
+      renderCheckResult(result, body, false);
+    }).catch(function (err) {
+      result.innerHTML = '<p class="xk-notice xk-notice--bad">检测链路不可达（' +
+        esc(err.status ? 'HTTP ' + err.status : '网络不可达') +
+        '）。这不代表输入安全，只代表这次没测成 —— 完整能力见「攻防靶场」。</p>';
+    }).then(function () { heroPlay.running = false; });
+  }
+
+  /**
+   * 首屏可玩的绑定：用 document 级委托（submit + click），只绑一次。
+   * 为什么不用元素级监听：视图会被 SPA 反复替换，元素级监听要么漏绑、要么重复绑；
+   * 委托天然幂等，也不需要为"换回来"单独写一套恢复逻辑。
+   */
+  function initHeroPlay() {
+    if (heroPlay.bound) return;
+    heroPlay.bound = true;
+    document.addEventListener('submit', function (e) {
+      var form = e.target.closest ? e.target.closest('[data-xk-play="hero"]') : null;
+      if (!form) return;
+      e.preventDefault();
+      heroPlayRun();
+    });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest) return;
+      var chip = e.target.closest('[data-xk-play-preset]');
+      if (chip) {
+        var form = chip.closest('[data-xk-play="hero"]');
+        if (!form) return;
+        var input = $('[data-xk-play-input]', form);
+        if (input) input.value = chip.getAttribute('data-xk-play-preset');
+        heroPlayRun(input ? input.value : '');
+      }
+    });
+  }
+
+  /* ==========================================================================
+     15. 阅读页增强（第十一轮 ③）：进度、复制引用、回到顶部
+     同样用 document 级委托，理由与上面一致。
+     ========================================================================== */
+  function copyText(txt, onOk, onFail) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(onOk, onFail);
+      return;
+    }
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); onOk(); } catch (e) { onFail(); }
+    document.body.removeChild(ta);
+  }
+
+  function initNoteExtras() {
+    if (initNoteExtras.bound) return;
+    initNoteExtras.bound = true;
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest) return;
+      var cite = e.target.closest('[data-xk-cite]');
+      if (cite) {
+        var txt = citationText(cite.getAttribute('data-cite-title'),
+          cite.getAttribute('data-cite-date'), cite.getAttribute('data-cite-url'));
+        var msg = $('[data-xk-cite-msg]', contentEl);
+        copyText(txt,
+          function () { if (msg) msg.textContent = '引用已复制'; toast('引用已复制'); },
+          function () { if (msg) msg.textContent = '复制失败，请手动选择标题'; });
+        return;
+      }
+      if (e.target.closest('[data-xk-top]')) {
+        var reduce = prefersReducedMotion();
+        contentEl.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      }
+    });
+  }
+
+  // 内容区滚动 → 更新阅读进度条（#content 在桌面是内部滚动容器，窄屏是文档流）
+  contentEl.addEventListener('scroll', updateProgress, { passive: true });
+  window.addEventListener('scroll', updateProgress, { passive: true });
+
+  /* ==========================================================================
+     16. 主题开关 + 全局委托（主题 / 引用的键盘可达）
+     ========================================================================== */
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('[data-xk-theme-toggle]') : null;
+    if (t) { toggleTheme(); return; }
+  });
+
+  /* ==========================================================================
      14. 启动
      ========================================================================== */
+  applyTheme(currentTheme(), false);   // 读 <html data-xk-theme>（head 里的内联脚本已按存储值写好）
+  initHeroPlay();
+  initNoteExtras();
   render(currentRoute());
 })();

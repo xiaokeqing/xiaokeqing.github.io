@@ -1,19 +1,28 @@
-{{/* 404：仍然用同一个外壳（背景 + 导航不变），只是 #content 换成"找不到"视图 */}}
-<template id="tpl-notfound">
+{{/*
+  404 视图（第十一轮 ③：自定义 404，带回监测中心入口）
+  ---------------------------------------------------------------------------
+  此前 404 只是一个"页面不存在"+ 5 个栏目药丸。现在多两样东西，
+  让这个页面本身也成为一次"证明系统在跑"的机会：
+    · 一句诚实的解释（链接可能改过名字 / 站内入口都是通的）；
+    · 直达监测中心的入口 —— 访客在迷路的时候看到的不是一堵墙，而是一个真在跑的系统。
+*/}}
   <div class="xk-wrap xk-page">
-    <section class="xk-card xk-nf">
+    <div class="xk-nf">
       <p class="xk-nf__code">404</p>
-      <h1 class="xk-nf__title">这个页面不存在</h1>
-      <p class="xk-page__lead">
-        链接可能被打错了，或者文章改过名字。站内这几个入口都是通的：
+      <h1 class="xk-nf__title">这个地址没有内容</h1>
+      <p class="xk-nf__lead">
+        链接可能打错了，或者文章改过名字。站内这几个入口都是通的 ——
+        想看点真在跑的东西，直接去监测中心或靶场。
       </p>
-      <div class="xk-chips">
+      <div class="xk-nf__acts">
+        <a class="xk-btn xk-btn--primary" href="/#/monitor/alerts" data-xk-route>去看监测中心大屏 →</a>
+        <a class="xk-btn xk-btn--ghost" href="/#/range" data-xk-route>试着攻击我</a>
+      </div>
+      <div class="xk-chips" style="justify-content:center; margin-top:18px; flex-wrap:wrap">
         <a class="xk-chip" href="/#/home" data-xk-route>主页</a>
         <a class="xk-chip" href="/#/notes" data-xk-route>笔记</a>
-        <a class="xk-chip" href="/#/monitor/alerts" data-xk-route>监测中心</a>
-        <a class="xk-chip" href="/#/range" data-xk-route>攻防靶场</a>
+        <a class="xk-chip" href="/#/ai" data-xk-route>AI 安全</a>
         <a class="xk-chip" href="/#/about" data-xk-route>关于</a>
       </div>
-    </section>
+    </div>
   </div>
-</template>

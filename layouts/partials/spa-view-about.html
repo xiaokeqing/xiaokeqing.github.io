@@ -4,7 +4,6 @@
   不做二次改写：文字是站主自己写的，前端只负责版面。
   三块合并成一栏，所以 /about/、/projects/、/demo/ 三个老地址都落到这里，不会出现 404。
 */}}
-<template id="tpl-about">
   <div class="xk-wrap xk-page">
     {{/* 追加要求 ②：顶部介绍大卡已删除（返工后连整段说明也去掉）。
          这里只留【模块名 + 一行极简副标题】+ 本页小节锚点（锚点是真导航，不是介绍）。 */}}
@@ -56,7 +55,7 @@
           <ul class="xk-meta">
             <li><span>接口基址</span><b class="xk-mono" data-xk-api-base>—</b></li>
             <li><span>口径</span><b>只读公开端点 · IP 已由后端掩码</b></li>
-            <li><span>轮询</span><b>10–15s 自适应（主页 4 个端点时放宽到 ≥20s，给限流留余量）· 标签隐藏即暂停</b></li>
+            <li><span>轮询</span><b>10–15s 自适应（监测中心 5 个端点时放宽到 ≥20s，给限流留余量）· 标签隐藏即暂停</b></li>
             <li><span>服务端</span><b>15s 缓存 · 20 次/分钟限流</b></li>
             <li><span>前端</span><b>不再加工或还原 IP，只原样展示服务端掩码后的字段</b></li>
           </ul>
@@ -67,13 +66,18 @@
           </ul>
 
           <p class="xk-note">
-            <b>免责与取舍：</b>
+            <b>免责与取舍（逐条都是当前事实，2026-10-13 复核）：</b>
             ① 所有数字都来自上面的公开只读端点，取不到就写「未接入 / 上次同步」，<b>不补假数据、不用样本冒充真实</b>；
-            <code>/api/public/audit</code> 的真实封禁与处置留痕，并在卡片里写明来源，而不是编一条 live 数据；
-            ③ 明细下钻端点 <code>/api/public/alerts/{aggId}</code> 同样未上线，所以监测中心只展示聚合记录自带的字段，
+            ② <code>/api/public/audit</code> 展示的是真实封禁与处置留痕，并在卡片里写明来源，而不是编一条 live 数据；
+            ③ <code>/api/public/latest</code> <b>已上线</b>：返回窗口聚合（<code>windowSize=200 / windowAlertCount /
+            severityCounts / sourceCounts / latestEvent / latestBlock</code>），字段全部来自公开白名单
+            （来源 IP 已掩码到网段，不含标题、内网目的地址、聚合 id）。此前文档里写的"404 未上线"是旧结论，已更正；
+            ④ 明细下钻端点 <code>/api/public/alerts/{aggId}</code> 仍未上线，所以监测中心只展示聚合记录自带的字段，
             不额外拼一份「原始事件列表」；
-            ④ 蜜罐命令时间线（<code>commandsAvailable=false</code>）保持「数据源未接入」，不编造命令内容；
-            ⑤ 前端不做匿名常驻 SSE / WebSocket，秒级实时只给登录后的私有后台。
+            ⑤ 蜜罐命令时间线（<code>commandsAvailable=false</code>）保持「数据源未接入」，不编造命令内容；
+            ⑥ <b>HTTP 状态码分布与 7 天 × 24 小时热力格没有画</b>：公开端点里没有 statusCode / httpStatus 字段，
+            也没有历史日桶 —— 监测中心底部把这两项如实列成"读不到"，而不是拿 24h 数据伪装成 7 天；
+            ⑦ 前端不做匿名常驻 SSE / WebSocket，秒级实时只给登录后的私有后台。
           </p>
         </section>
       </div>
@@ -111,4 +115,3 @@
       </aside>
     </div>
   </div>
-</template>

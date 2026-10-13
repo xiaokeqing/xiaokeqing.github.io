@@ -1,16 +1,23 @@
 {{/*
-  内容区顶部一行（站主 2026-10-12 第五轮）
+  内容区顶部一行（站主 2026-10-12 第五轮；第十一轮加了主题开关）
   ---------------------------------------------------------------------------
-  · 面包屑（🏠 / 当前栏目）已按站主要求【整块删除】（原话"这个去掉没啥用"）——
-    HTML 与 CSS 一并删掉，不留死代码。
-  · 这一行现在只有搜索框，右对齐（它是 flex 里的 margin-left:auto 单项），不再造新元素。
-  · 没有 fixed 顶栏、没有背景板：这是文档流内的一块，垂直起始位置和以前一样，
-    不会因为删掉面包屑而多出空白占位。
-  · 搜索框在每个栏目都显示（第五轮 ② 撤销了之前"只在主页/笔记"的限制）；Ctrl+K 全站可用。
+  · 面包屑（🏠 / 当前栏目）已按站主要求【整块删除】，不留死代码。
+  · 这一行现在只有两样：主题开关 + 搜索框，右对齐；没有 fixed、没有背景板。
+  · 主题开关：tech（深色玻璃 + 霓虹描边，默认）/ read（浅色玻璃，长文阅读更舒服）。
+    状态写在 <html data-xk-theme> 上，由 head 里的内联脚本在首帧前定好，并被记忆。
+  · 搜索框在每个栏目都显示；Ctrl+K 与 "/" 都能唤起。
 */}}
 <div class="xk-toprow">
   <div class="xk-wrap xk-toprow__in">
-    <button class="xk-searchbtn" type="button" data-xk-search-open aria-label="搜索笔记（Ctrl+K）">
+    <button class="xk-themebtn" type="button" data-xk-theme-toggle aria-pressed="false">
+      <svg class="xk-ico" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+        <circle cx="10" cy="10" r="4" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+        <path d="M10 2v2.2M10 15.8V18M2 10h2.2M15.8 10H18M4.4 4.4l1.6 1.6M14 14l1.6 1.6M15.6 4.4L14 6M6 14l-1.6 1.6"
+              fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+      <span data-xk-theme-label>科技模式</span>
+    </button>
+    <button class="xk-searchbtn" type="button" data-xk-search-open aria-label="搜索笔记（Ctrl+K 或 /）">
       <svg class="xk-ico" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
         <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
         <path d="M12.8 12.8 L17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
