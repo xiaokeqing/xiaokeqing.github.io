@@ -17,6 +17,12 @@
 */}}
 {{- $posts := (where site.RegularPages "Section" "posts").ByDate.Reverse -}}
 {{- $lead := index $posts 0 -}}
+  {{- /* 第十二轮：窄屏（≤980px）的她 —— 132px 头像图集形态（04 方案 §2.3：人物区嵌在内容区顶部）。
+         为什么放在 Hero 之前：手机端 Hero（标题+导语+可玩入口+四个数字）本身就很长，
+         放在 Hero 之后她会掉到屏幕外好几屏。桌面端这块卡片是 display:none
+         （桌面用 CRT 场景里的全身动画，避免同一个人出现两次）。 */}}
+  {{ partial "xk-kurisu-mobile.html" . }}
+
   <section class="xk-hero{{ if site.Params.kurisuEnabled }} xk-hero--crt{{ end }}" aria-labelledby="xk-hero-name">
     <div class="xk-wrap xk-hero__in">
       <div class="xk-hero__text">
@@ -105,10 +111,6 @@
     </div>
   </section>
 
-  {{- /* 第十二轮：窄屏（≤980px）的她 —— 132px 头像图集形态，放在内容区顶部（04 方案 §2.3）。
-         桌面端这块卡片是 display:none（桌面用 CRT 场景里的全身动画，避免同一个人出现两次）。 */}}
-  {{ partial "xk-kurisu-mobile.html" . }}
-
   <div class="xk-wrap xk-portal xk-portal--home">
     {{/* ---------- 左栏（300px 不动）：真实文章，不再是导航的第二遍 ---------- */}}
     <section class="xk-card xk-portal__notes" aria-labelledby="xk-home-notes">
@@ -146,7 +148,7 @@
       </footer>
     </section>
 
-    {{/* ---------- 中栏（1fr）：证明"真在跑"的那一栏 ---------- */}}}
+    {{/* ---------- 中栏（1fr）：证明"真在跑"的那一栏 ---------- */}}
     <div class="xk-portal__main">
       <section class="xk-card xk-card--live" aria-labelledby="xk-home-live">
         <header class="xk-card__hd">

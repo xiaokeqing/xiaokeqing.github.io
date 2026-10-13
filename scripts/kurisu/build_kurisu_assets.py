@@ -745,8 +745,9 @@ def main():
             scene["deskMobile"] = {
                 "url": "images/crt/desk-mobile.webp", "w": sizes["desk-mobile"][0],
                 "bytes": sizes["desk-mobile"][1]}
+            # 只留指纹、不留 URL：manifest 是**运行时**文件（播放器要 fetch 它），
+            # 站点运行时零外链 —— 来源 URL 属于文档（scripts/kurisu/README.md 与 docs/）。
             scene["wallpaperSha256"] = h
-            scene["wallpaperSource"] = WALLPAPER_URL
 
         lab = build_lab(src.zip("visual"), args.crt_out)
         if lab:

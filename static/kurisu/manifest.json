@@ -2,7 +2,7 @@
  "format": "xiaokeqing.kurisu.v2",
  "generator": {
   "script": "scripts/kurisu/build_kurisu_assets.py",
-  "builtAt": "2026-10-14T00:41:23",
+  "builtAt": "2026-10-14T01:08:12",
   "ktx": "ktx.exe",
   "sourceManifestSha256": "259DFC10E3FF1453848295F87340948F99F1F2E4254C30201334757EBE210EBB",
   "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514"
@@ -64,7 +64,6 @@
     "bytes": 32048
    },
    "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514",
-   "wallpaperSource": "https://raw.githubusercontent.com/Code-Amadeus/Amadeus/main/assets/images/amadeus_desktop_wallpaper.png",
    "lab": {
     "url": "images/crt/lab.webp",
     "w": 912,

@@ -158,7 +158,7 @@ else no "找不到 static/kurisu（角色资产缺失）"; fi
 head1 "⑩ 首屏角色资源 ≤ 1.5MB（manifest.budgets.firstScreenBytes）"
 if [ -f static/kurisu/manifest.json ]; then
   # 【稳健写法】优先读 manifest 自报；字段名变了/没有就按"首屏档文件"名规则实算（boot/poster/static + 头像 idle）
-  FS=$(python -c "
+  PYBIN=$(command -v python3 || command -v python || echo python); FS=$($PYBIN -c "
 import json, os
 p='static/kurisu/manifest.json'
 try:
@@ -174,7 +174,7 @@ except Exception:
 " 2>/dev/null || echo -1)
   if [ "$FS" = "-1" ] || [ -z "$FS" ]; then
     # 兜底实算：首屏档 = *.boot.webp + *.poster.webp + avatar/*.static.webp + avatar/normal.idle.webp
-    FS=$( { find static/kurisu -type f \( -name '*.boot.webp' -o -name '*.poster.webp' -o -name 'normal.static.webp' -o -name 'normal.idle.webp' \) -printf '%s\n' 2>/dev/null | awk '{s+=$1} END {print s+0}'; } )
+    FS=$( { find static/kurisu -type f \( -name 'idle.boot.webp' -o -name 'idle.intro.webp' -o -name 'idle.poster.webp' -o -name 'normal.static.webp' -o -name 'normal.idle.webp' \) -printf '%s\n' 2>/dev/null | awk '{s+=$1} END {print s+0}'; } )
     ok "manifest 未自报，按文件规则实算首屏 $((FS/1024))KB（预算 1536KB）"
   fi
   if [ "${FS:-0}" -le 1572864 ]; then ok "首屏 $((FS/1024))KB ≤ 1536KB"; else no "首屏 $((FS/1024))KB 超预算 1536KB"; fi
