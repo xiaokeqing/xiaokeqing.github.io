@@ -27,7 +27,6 @@
   var BACKOFF_MAX = 120000;                 // 连续失败最长退避 2 分钟
   var DEFAULT_CACHE_SECONDS = 15;           // 服务端 Cache-Control: max-age=15
   var SNAP_KEY = 'xk-snap-v1';
-  var FEED_MAX = 8;                         // §4①：最近 5–8 条真实事件
 
   var SEV_ORDER = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 };
   var SEV_CLASS = { CRITICAL: 'critical', HIGH: 'high', MEDIUM: 'medium', LOW: 'low', INFO: 'info' };
@@ -244,14 +243,29 @@
     if (activePoller) { activePoller.stop(); activePoller = null; }
   }
 
-  function startPolling(loadFn) {
+  /* 端点预算（站主第九轮 ⑤「公开端点有 20 次/分钟限流，别把轮询调快」）：
+     一个视图一次轮询读几个端点由调用方用 weight 告知，这里据此抬高轮询下限，
+     让「端点个数 × 每分钟轮询次数」不超过 12 —— 只在需要时【放慢】，从不加快。
+       1–2 个端点 → 仍是 10–15s（规格 §5 原值）
+       4 个端点（主页）→ 下限 20s ≈ 12 次/分钟，给手动刷新和切栏目留 40% 余量 */
+  var RPM_BUDGET = 12;
+  function intervalFloor(weight) {
+    var w = Math.max(1, Number(weight) || 1);
+    return Math.max(POLL_MIN, Math.ceil(w * 60000 / RPM_BUDGET));
+  }
+
+  function startPolling(loadFn, weight) {
     stopPolling();
     var stopped = false, fails = 0, timer = null;
+    var floor = intervalFloor(weight);
 
     function interval() {
-      // 自适应：请求越慢，间隔越靠近上限；快请求落到下限 10s。
-      // 上限 15s 是规格硬约束 —— 服务端限流 20 次/分钟不放宽。
-      return Math.min(POLL_MAX, Math.max(POLL_MIN, Math.round(LAST_RTT * 6)));
+      // 自适应：请求越慢，间隔越靠近上限；快请求落到下限。
+      // 上限 15s 是规格硬约束 —— 服务端限流 20 次/分钟不放宽；
+      // 端点多的视图下限由 intervalFloor 抬高（见上）。
+      var lo = floor;
+      var hi = Math.max(floor, POLL_MAX);
+      return Math.max(lo, Math.min(hi, Math.round(LAST_RTT * 6)));
     }
 
     function tick() {
@@ -366,126 +380,376 @@
   }
 
   /* ==========================================================================
-     7. 主页：实时拦截动态 + 数据来源
+     7. 主页（站主 2026-10-13 第九轮）：Hero 四数字 + 功能导览角标 + 右栏拦截动态
+     --------------------------------------------------------------------------
+     · Hero 四个核心数字：全部来自真实接口，页面上印着口径；取不到就写「未接入」。
+        ① 24h 告警  ← /api/public/alerts · stats24h.total（24 小时【未去重】上报量）
+                      注：/api/public/overview 只有「最近 200 条窗口」口径、没有 24h 总量字段，
+                      所以这里用 alerts 的真字段；overview 只在 alerts 取不到时降级顶上，
+                      且口径文案会改成「窗口数，不是 24h 总量」——不拿窗口数冒充满。
+        ② 蜜罐事件  ← /api/public/honeypot · total
+        ③ 护栏拦截  ← /api/public/audit · summary.blockedByGuard
+        ④ 单元测试  ← 构建期常量（hugo.toml params.tests*，真值来自 SecAgent surefire 汇总）
+     · 功能导览角标：监测中心 ← alerts.stats24h.total 压缩成「24h 21.3万条」；
+       其余三个角标是构建期就能核对的真实事实（笔记篇数 / 靶场检测样例数 / 零第三方依赖）。
+     · 右栏拦截动态：同类别 + 同来源 IP 聚合成 3–5 条中文可读条目；
+       顶部三个小数字（今日拦截 / 生效中 / 护栏拦截）来自 audit summary + blocks；
+       拿不到新鲜数据时标题写「最近同步 · 拦截动态」，不写「实时」。
+     端点预算：主页一次轮询读 4 个公开端点 → startPolling 把下限抬到 20s（≈12 次/分钟）。
      ========================================================================== */
-  /* /api/public/latest 规格里就写着"可能不存在"：实测 HTTP 500。
-     它属于可选端点，失败后 10 分钟内不再重试 —— 不能因为一个不存在的端点
-     把每个轮询周期都变成一次失败请求（那是在白白消耗 20 次/分钟的限流）。 */
-  var OPTIONAL_RETRY_MS = 600000;
-  var optionalDeadUntil = {};
+  var HOME_JOBS = [
+    { name: 'overview', path: '/api/public/overview' },
+    { name: 'audit', path: '/api/public/audit' },
+    { name: 'honeypot', path: '/api/public/honeypot' },
+    { name: 'alerts', path: '/api/public/alerts' }
+  ];
+  var FEED_ROWS_MAX = 5;      // 站主：右栏只留 3–5 条
+  var LIVE_FRESH_MS = 90000;  // 90s 内有成功同步才算"实时"，否则标题写「最近同步」
+
+  /** {code,message,data} 信封 → data；已经是裸对象就原样返回 */
+  function envelope(res) {
+    var b = res && res.data;
+    return b && b.data ? b.data : b;
+  }
+
+  function partData(parts, name) {
+    var p = parts.filter(function (x) { return x.name === name; })[0];
+    return p && p.res ? envelope(p.res) : null;
+  }
 
   function initHome() {
     $$('[data-xk-api-base]').forEach(function (n) { n.textContent = API.replace(/^https?:\/\//, ''); });
 
     var load = function () {
-      // 只读两个端点：audit（真实封禁/处置留痕）与 latest（规格说"可能不存在"）
-      var jobs = [{ name: 'audit', path: '/api/public/audit', optional: false }];
-      if (Date.now() > (optionalDeadUntil['/api/public/latest'] || 0)) {
-        jobs.push({ name: 'latest', path: '/api/public/latest', optional: true });
-      } else {
-        jobs.push({ name: 'latest', path: '/api/public/latest', optional: true, dead: true });
-      }
-
-      return Promise.all(jobs.map(function (j) {
-        if (j.dead) {
-          return Promise.resolve({
-            name: j.name, res: null, optional: true,
-            err: { status: 500, cached: true }
-          });
-        }
+      return Promise.all(HOME_JOBS.map(function (j) {
         return readApi(j.path).then(function (res) {
-          return { name: j.name, res: res, err: null, optional: !!j.optional };
+          return { name: j.name, path: j.path, res: res, err: null };
         }).catch(function (err) {
-          if (j.optional) optionalDeadUntil[j.path] = Date.now() + OPTIONAL_RETRY_MS;
+          // 失败时退回 localStorage 里的快照：数字照显，但同步文案会如实写「上次同步于 X 分钟前」
           return {
-            name: j.name, optional: !!j.optional, err: err,
+            name: j.name, path: j.path, err: err,
             res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null
           };
         });
-      })).then(function (parts) {
-        var audit = (parts.filter(function (p) { return p.name === 'audit' && p.res; })[0] || {}).res;
-        var latest = (parts.filter(function (p) { return p.name === 'latest' && p.res; })[0] || {}).res;
-        renderFeed(audit, latest, parts);
-      });
+      })).then(function (parts) { renderHome(parts); });
     };
 
-    startPolling(load);
+    startPolling(load, HOME_JOBS.length);
   }
 
-  /** 实时动态：优先 /api/public/latest（未就绪就退回 audit，并如实写明） */
-  function renderFeed(audit, latest, parts) {
-    var rows = [], sourceNote = '';
-    var latestPart = parts.filter(function (p) { return p.name === 'latest'; })[0];
+  function renderHome(parts) {
+    var ov = partData(parts, 'overview');
+    var au = partData(parts, 'audit');
+    var hp = partData(parts, 'honeypot');
+    var al = partData(parts, 'alerts');
 
-    var latestItems = latest && latest.data ? pickArray(latest.data.data || latest.data) : null;
-    if (latestItems && latestItems.length) {
-      latestItems.slice(0, FEED_MAX).forEach(function (it) {
-        rows.push({
-          level: it.severity || it.level || 'INFO',
-          text: it.title || it.message || it.ruleName || JSON.stringify(it).slice(0, 120),
-          time: parseTs(it.occurredAt || it.time || it.createdAt),
+    renderHeroStats(ov, au, hp, al);
+    renderGuideBadge('monitor', guideMonitorBadge(ov, al));
+    renderFeed(au, al, hp, parts);
+    renderMinis(au);
+    setSync('feed', syncTextOf(parts));
+  }
+
+  /** 压缩成中文数量口诀（只用于角标这种"小数据"，不改动真值本身） */
+  function compactNum(n) {
+    if (n === null || n === undefined || n === '' || isNaN(Number(n))) return null;
+    var v = Number(n);
+    if (v >= 100000000) return (v / 100000000).toFixed(1).replace(/\.0$/, '') + '亿';
+    if (v >= 10000) return (v / 10000).toFixed(1).replace(/\.0$/, '') + '万';
+    return String(v);
+  }
+
+  function setStat(key, value, caliber) {
+    var n = document.querySelector('[data-xk-stat="' + key + '"]');
+    if (n) n.textContent = (value === null || value === undefined || value === '') ? '未接入' : value;
+    var c = document.querySelector('[data-xk-caliber="' + key + '"]');
+    if (c && caliber) c.textContent = caliber;
+  }
+
+  function renderHeroStats(ov, au, hp, al) {
+    /* ① 24h 告警 */
+    var s24 = al && al.stats24h;
+    var v24 = (s24 && s24.available !== false && s24.total !== null && s24.total !== undefined) ? s24.total : null;
+    if (v24 !== null) {
+      setStat('alerts24h', num(v24),
+        '口径 /api/public/alerts · stats24h.total（' + (s24.windowHours || 24) + ' 小时未去重上报量）');
+    } else if (ov && ov.alerts && ov.alerts.windowCount !== null && ov.alerts.windowCount !== undefined) {
+      setStat('alerts24h', num(ov.alerts.windowCount),
+        '口径降级 /api/public/overview · alerts.windowCount（最近 ' + num(ov.alerts.windowSize) + ' 条窗口，不是 24h 总量）');
+    } else {
+      setStat('alerts24h', null, '口径 /api/public/alerts · stats24h.total（本次取不到 → 未接入，不补数）');
+    }
+
+    /* ② 蜜罐事件 */
+    var hpTotal = hp && hp.total !== undefined ? hp.total : null;
+    setStat('honeypot', hpTotal === null ? null : num(hpTotal),
+      hpTotal === null
+        ? '口径 /api/public/honeypot · total（本次取不到 → 未接入，不补数）'
+        : '口径 /api/public/honeypot · total（服务端字段原样展示' + (hp.available === false ? ' · available=false' : '') + '）');
+
+    /* ③ 护栏拦截 */
+    var guard = au && au.summary && au.summary.blockedByGuard !== undefined ? au.summary.blockedByGuard : null;
+    setStat('guard', guard === null ? null : num(guard),
+      guard === null
+        ? '口径 /api/public/audit · summary.blockedByGuard（本次取不到 → 未接入，不补数）'
+        : '口径 /api/public/audit · summary.blockedByGuard（被护栏拦下的动作条数）');
+
+    /* ④ 单元测试：数值与口径都在模板里（构建期常量，hugo.toml params.tests*），这里不需要接口 */
+  }
+
+  /** 监测中心角标：优先 24h 未去重上报量，取不到降级到 overview 窗口数，都没有就写「未接入」 */
+  function guideMonitorBadge(ov, al) {
+    var s24 = al && al.stats24h;
+    if (s24 && s24.available !== false && s24.total !== undefined && s24.total !== null) {
+      return { text: '24h ' + compactNum(s24.total) + ' 条', title: '口径：/api/public/alerts · stats24h.total（24 小时未去重上报量）' };
+    }
+    if (ov && ov.alerts && ov.alerts.windowCount !== undefined && ov.alerts.windowCount !== null) {
+      return { text: '窗口 ' + num(ov.alerts.windowCount) + ' 条', title: '口径降级：/api/public/overview · alerts.windowCount（最近 200 条窗口，不是 24h 总量）' };
+    }
+    return { text: '未接入', title: '两个告警端点本次都取不到数据 → 标「未接入」，不用窗口数冒充 24h 总量', muted: true };
+  }
+
+  function renderGuideBadge(key, info) {
+    var n = document.querySelector('[data-xk-badge="' + key + '"]');
+    if (!n || !info) return;
+    n.textContent = info.text;
+    if (info.title) n.title = info.title;
+    n.className = 'xk-mod2__badge' + (info.muted ? ' is-muted' : '');
+  }
+
+  /* ---------- 右栏：三个小数字（今日拦截 / 生效中 / 护栏拦截） ---------- */
+  function todayKey(d) {
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  function setMini(key, value, warn) {
+    var n = document.querySelector('[data-xk-mini="' + key + '"]');
+    if (!n) return;
+    n.textContent = (value === null || value === undefined || value === '') ? '未接入' : value;
+    n.className = 'xk-mini__num' + (warn ? ' is-warn' : '');
+  }
+
+  function renderMinis(au) {
+    var s = (au && au.summary) || {};
+    /* 今日拦截：audit.blocks 里 createdAt 落在【今天】的条数（前端按真实 createdAt 归日，不拿总数冒充今日） */
+    if (au && Array.isArray(au.blocks)) {
+      var key = todayKey(new Date());
+      var n = au.blocks.filter(function (b) { return String(b.createdAt || '').slice(0, 10) === key; }).length;
+      setMini('today', num(n), false);
+    } else {
+      setMini('today', null, false);
+    }
+    setMini('active', s.blockActive === undefined ? null : num(s.blockActive), s.blockActive > 0);
+    setMini('guard', s.blockedByGuard === undefined ? null : num(s.blockedByGuard), s.blockedByGuard > 0);
+  }
+
+  /* ---------- 右栏：3–5 条中文可读的聚合条目 ----------
+     为什么这样聚合：原来直接把 audit.actions 一条条摊开，结果是 8 条几乎一样的
+     「block-ip → ***・18 小时前」（护栏连续拦下同一个动作），看着像假数据。
+     现在按【类别 + 来源 IP / 动作】合并计数，并且同一类别最多占 2 行，
+     保证 3–5 行里既有蜜罐、也有护栏与封禁留痕 —— 既真实也不单调。 */
+  function feedGroups(au, al, hp) {
+    var groups = {};   // key → { kind, level, label, ip, count, ms, source, goto }
+    var reasons = {};  // key → { 原因: 次数 }（护栏拦下的原因，取最多的那个写进标签）
+
+    var SEV_RANK = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 };
+
+    function put(key, g) {
+      var cur = groups[key];
+      if (!cur) { groups[key] = g; return; }
+      cur.count += g.count;
+      if (g.ms && (!cur.ms || g.ms > cur.ms)) cur.ms = g.ms;
+      if (SEV_RANK[g.level] < SEV_RANK[cur.level]) cur.level = g.level;   // 取最严重的那条
+    }
+
+    /* (a) 蜜罐：topSources 是服务端给的"每个来源 IP 真实计数"，直接原样展示。
+           只取最上面 1 条 —— 否则同一类条目会把 3–5 条的位置全占满，右栏又变单调。 */
+    if (hp && Array.isArray(hp.topSources)) {
+      var hpMs = parseTs(hp.generatedAt);
+      hp.topSources.slice(0, 1).forEach(function (s) {
+        put('hp|' + s.key, {
+          kind: 'hp', level: 'HIGH', label: '蜜罐捕获 SSH 攻击来源', ip: s.key,
+          count: Number(s.count) || 0, ms: hpMs, source: '/api/public/honeypot · topSources',
+          goto: '#/monitor/honeypot'
+        });
+      });
+    }
+
+    /* (a2) 蜜罐时间线：接口返回窗口内的真实事件（新连接 / 登录尝试 / 客户端指纹），
+           按"事件类型 + 来源 IP"计数。次数口径是"接口这次返回的窗口内条数"，标签里会写明来源。 */
+    if (hp && Array.isArray(hp.timeline)) {
+      hp.timeline.forEach(function (e) {
+        var kind = String(e.kind || '');
+        var label = /登录/.test(kind) ? '蜜罐捕获 SSH 登录尝试'
+                  : /连接/.test(kind) ? '蜜罐新增 SSH 连接'
+                  : /指纹/.test(kind) ? '蜜罐 SSH 客户端指纹'
+                  : '蜜罐事件 · ' + kind;
+        var ip = e.srcIp && e.srcIp !== '***' ? e.srcIp : '';
+        put('hptl|' + label + '|' + ip, {
+          kind: 'hptl', level: /登录/.test(kind) ? 'HIGH' : 'MEDIUM', label: label, ip: ip,
+          count: 1, ms: parseTs(e.time),
+          source: '/api/public/honeypot · timeline（接口返回窗口内）',
+          goto: '#/monitor/honeypot'
+        });
+      });
+    }
+
+    /* (b) 高危 / 蜜罐相关的告警（alerts.list 已经是"同规则 + 同来源 IP"聚合，count 是出现次数） */
+    if (al && Array.isArray(al.list)) {
+      al.list.forEach(function (a) {
+        var sev = a.severity || 'INFO';
+        if (sev !== 'CRITICAL' && sev !== 'HIGH' && !/蜜罐|爆破|扫描|注入|injection|brute/i.test(String(a.title || ''))) return;
+        var kind = alertKind(a.title, a.source);
+        put('al|' + kind.label + '|' + (a.srcIp || '—'), {
+          kind: 'al', level: sev === 'INFO' ? kind.level : sev,
+          label: kind.label, ip: a.srcIp || '—',
+          count: Number(a.count) || 1, ms: parseTs(a.occurredAt || a.endTime || a.startTime),
+          source: '/api/public/alerts · ' + (a.sourceLabel || a.source || '告警'),
           goto: '#/monitor/alerts'
         });
       });
-      sourceNote = '数据来自 /api/public/latest（真实接口）。';
-    } else if (audit && audit.data) {
-      var d = (audit.data && audit.data.data) || {};   // {code,message,data} 信封
-      (d.blocks || []).forEach(function (b) {
-        rows.push({
-          level: b.unblocked ? 'LOW' : 'HIGH',
-          text: '封禁 ' + (b.ip || '—') + ' · ' + (b.durationMinutes != null ? b.durationMinutes + ' 分钟' : '时长未给') +
-                '（来源：' + (b.source || '未标注') + '）' + (b.unblocked ? ' · 已解封' : ' · 生效中'),
-          time: parseTs(b.createdAt),
-          goto: '#/monitor/audit'
-        });
-      });
-      (d.actions || []).forEach(function (a) {
-        rows.push({
-          level: a.success ? (a.riskLevel || 'LOW') : 'MEDIUM',
-          text: '处置动作 ' + (a.action || '—') + ' → ' + (a.target || '—') +
-                '（' + (a.mode || '—') + '）' + (a.reason ? ' · ' + a.reason : '') + (a.success ? '' : ' · 未执行'),
-          time: parseTs(a.time),
-          goto: '#/monitor/audit'
-        });
-      });
-      sourceNote = '数据来自 /api/public/audit（真实封禁与处置留痕）。';
-      if (latestPart && latestPart.err) {
-        sourceNote += ' /api/public/latest 尚未就绪（' +
-          (latestPart.err.status ? 'HTTP ' + latestPart.err.status : '不可达') + '），因此本卡用 audit 替代 —— 不编造 live 数据。';
-      }
     }
 
-    rows = rows.filter(function (r) { return r.time; })
-               .sort(function (a, b) { return b.time - a.time; })
-               .slice(0, FEED_MAX);
+    /* (c) 处置审计：封禁留痕按 IP 聚合（同一 IP 反复封禁只显示一条 + 次数） */
+    if (au && Array.isArray(au.blocks)) {
+      au.blocks.forEach(function (b) {
+        var ip = b.ip || '—';
+        put('blk|' + ip, {
+          kind: 'blk', level: b.unblocked ? 'LOW' : 'HIGH',
+          label: '封禁 IP' + (b.durationMinutes != null ? '（' + b.durationMinutes + ' 分钟）' : '') +
+                 (b.unblocked ? '・已解封' : '・生效中'),
+          ip: ip, count: 1, ms: parseTs(b.createdAt),
+          source: '/api/public/audit · blocks', goto: '#/monitor/audit'
+        });
+      });
+    }
 
+    /* (d) 处置动作：护栏拦下的【按动作合并】（原因只取出现最多的那个），真的执行了的按 动作→目标 合并 */
+    if (au && Array.isArray(au.actions)) {
+      au.actions.forEach(function (a) {
+        var blocked = a.mode === 'BLOCKED' || a.success === false;
+        var action = a.action || '动作';
+        var reason = String(a.reason || '').replace(/^封禁目标\s*/, '');
+        var key, g;
+        if (blocked) {
+          key = 'gd|' + action;
+          g = {
+            kind: 'gd', level: 'MEDIUM', label: '护栏拦下 ' + action, ip: '', count: 1,
+            ms: parseTs(a.time), source: '/api/public/audit · actions（mode=' + (a.mode || 'BLOCKED') + '）',
+            goto: '#/monitor/audit'
+          };
+          if (reason) {
+            reasons[key] = reasons[key] || {};
+            reasons[key][reason] = (reasons[key][reason] || 0) + 1;
+          }
+        } else {
+          var label = '处置 ' + action + ' → ' + (a.target || '—');
+          key = 'act|' + label;
+          g = {
+            kind: 'act', level: a.riskLevel || 'LOW', label: label, ip: '', count: 1,
+            ms: parseTs(a.time), source: '/api/public/audit · actions',
+            goto: '#/monitor/audit'
+          };
+        }
+        put(key, g);
+      });
+    }
+
+    /* 护栏条目：把出现最多的原因补进标签，给人一个"为什么被拦"的落点 */
+    Object.keys(reasons).forEach(function (k) {
+      var tally = reasons[k], top = '', n = 0;
+      Object.keys(tally).forEach(function (r) { if (tally[r] > n) { n = tally[r]; top = r; } });
+      if (top && groups[k]) groups[k].label += '（' + top + '）';
+    });
+
+    /* 排序：先看"多新"（这是动态流），同一时间点再按严重程度 —— 不把一天前的高危顶在今天的事件前面 */
+    var sorted = Object.keys(groups).map(function (k) { return groups[k]; })
+      .sort(function (a, b) {
+        var ta = a.ms || 0, tb = b.ms || 0;
+        if (ta !== tb) return tb - ta;
+        var sa = SEV_RANK[a.level] == null ? 9 : SEV_RANK[a.level];
+        var sb = SEV_RANK[b.level] == null ? 9 : SEV_RANK[b.level];
+        return sa - sb;
+      });
+
+    /* 同类最多 2 行：避免"护栏拦下 ×4"这种虽然聚合了、但看起来还是重复的版面 */
+    var perKind = {}, out = [];
+    sorted.forEach(function (g) {
+      if (out.length >= FEED_ROWS_MAX) return;
+      perKind[g.kind] = perKind[g.kind] || 0;
+      if (perKind[g.kind] >= 2) return;
+      perKind[g.kind] += 1;
+      out.push(g);
+    });
+    return out;
+  }
+
+  /** 长规则名截断：优先在词边界断开（结果里不出现 "promisc" 这种断词） */
+  function shortRule(t, max) {
+    var s = String(t || '').trim();
+    if (s.length <= max) return s;
+    var cut = s.slice(0, max);
+    var sp = cut.lastIndexOf(' ');
+    if (sp > max * 0.6) cut = cut.slice(0, sp);
+    return cut + '…';
+  }
+
+  /** 告警原始规则串 → 中文可读类别。口令 / 用户名这类细节一律不展示（前端也不还原任何被掩码字段）。 */
+  function alertKind(title, source) {
+    var t = String(title || '');
+    if (/蜜罐/i.test(t)) return { label: /登录|login|SSH/i.test(t) ? '蜜罐拦截 SSH 登录尝试' : '蜜罐事件', level: 'HIGH' };
+    if (/爆破|暴力|brute/i.test(t)) return { label: '暴力破解尝试', level: 'HIGH' };
+    if (/SQL|XSS|注入|injection/i.test(t)) return { label: '注入类攻击尝试', level: 'HIGH' };
+    if (/扫描|scan/i.test(t)) return { label: '端口 / 服务扫描', level: 'MEDIUM' };
+    if (String(source) === 'SURICATA' || /Suricata/i.test(t)) return { label: '网络层可疑流量', level: 'LOW' };
+    /* 认不出来的规则：不硬编一个中文解释，直接把规则名（截断）摆出来，口径在来源行里写明 */
+    return { label: '主机告警 · ' + shortRule(t.replace(/^[\w\s.:\-]*?:\s*/, ''), 36), level: 'LOW' };
+  }
+
+  function renderFeed(au, al, hp, parts) {
     var host = $('[data-xk-feed]');
     if (!host) return;
 
+    var rows = feedGroups(au, al, hp);
+
     if (!rows.length) {
-      var reason = parts.filter(function (p) { return p.err && !p.optional; })[0];
+      var reason = parts.filter(function (p) { return p.err; })[0];
       host.innerHTML = '<li class="xk-feed__row"><span class="xk-dot xk-dot--off"></span>' +
         '<span class="xk-feed__text">' + (reason
-          ? '取不到数据（' + esc(reason.err.status ? 'HTTP ' + reason.err.status : '网络不可达') + '）——不显示占位假事件。'
-          : '接口没有返回可展示的事件。') +
+          ? '取不到数据（' + esc(reason.err.status ? 'HTTP ' + reason.err.status : '网络不可达') +
+            '）——这里不显示占位事件，也不编造拦截记录。'
+          : '接口没有返回可展示的拦截 / 处置记录。') +
         '</span><span class="xk-feed__time">—</span></li>';
     } else {
       host.innerHTML = rows.map(function (r) {
+        var sevCls = SEV_CLASS[r.level];
         return '<li class="xk-feed__row" data-xk-goto="' + esc(r.goto) + '" role="link" tabindex="0">' +
-          '<span class="xk-dot ' + (SEV_CLASS[r.level] ? 'xk-dot--' + SEV_CLASS[r.level] : '') + '"></span>' +
-          '<span class="xk-feed__text" title="' + esc(r.text) + '">' + esc(r.text) + '</span>' +
-          '<span class="xk-feed__time">' + esc(relTime(r.time)) + '</span></li>';
+          '<span class="xk-dot' + (sevCls ? ' xk-dot--' + sevCls : '') + '" title="级别：' + esc(sevLabel(r.level)) + '"></span>' +
+          '<span class="xk-feed__text">' +
+            '<b class="xk-feed__ok">' + esc(r.label) + '</b>' +
+            (r.ip ? '・<b class="xk-feed__ip">' + esc(r.ip) + '</b>' : '') +
+            (r.count > 1 ? '・<span class="xk-feed__cnt">聚合 ' + esc(num(r.count)) + ' 次</span>' : '') +
+            '<span class="xk-feed__src">' + esc(r.source) + '</span>' +
+          '</span>' +
+          '<span class="xk-feed__time">' + (r.ms ? esc(relTime(new Date(r.ms))) : '—') + '</span></li>';
       }).join('');
     }
 
-    var note = $('[data-xk-feed-note]');
-    if (note) {
-      note.textContent = sourceNote + ' IP 已由服务端掩码；这里是只读展示，不含任何处置入口。';
+    /* 标题诚实：只有【真的有新鲜同步】并且【没有端点失败】时才写「实时」 */
+    var failed = parts.filter(function (p) { return p.err; }).length;
+    var newest = 0;
+    parts.forEach(function (p) { if (p.res && p.res.syncedAt > newest) newest = p.res.syncedAt; });
+    var live = !failed && newest > 0 && (Date.now() - newest) < LIVE_FRESH_MS;
+    var titleHost = $('[data-xk-live-title]');
+    if (titleHost) {
+      titleHost.innerHTML = live
+        ? '<span class="xk-pulse" aria-hidden="true"></span>实时拦截动态'
+        : '最近同步 · 拦截动态';
     }
-    setSync('feed', syncTextOf(parts.filter(function (p) { return !p.optional || p.res; })));
   }
 
-  /** 结果可能是数组，也可能包在 data/list/items 里 —— 不猜字段名，只在常见的三种里找 */
+  /* 结果可能是数组，也可能包在 data/list/items 里 —— 不猜字段名，只在常见的三种里找 */
   function pickArray(body) {
     if (Array.isArray(body)) return body;
     if (!body) return null;
@@ -655,7 +919,7 @@
         // tab 也做成可深链的：#/monitor/honeypot
         history.replaceState({ xk: 1 }, '', '/#/monitor/' + name);
       }
-      startPolling(loaders[name]);
+      startPolling(loaders[name], weights[name]);
     }
 
     var loaders = {
@@ -664,6 +928,8 @@
       audit: loadAudit,
       system: loadSystem
     };
+    // 每个子 tab 一轮要读几个端点（用于按限流预算抬高轮询下限，见 intervalFloor）
+    var weights = { alerts: 2, honeypot: 1, audit: 1, system: 1 };
 
     tabs.forEach(function (t) {
       t.addEventListener('click', function () { activate(t.getAttribute('data-xk-tab')); });
@@ -1488,9 +1754,53 @@
   }
 
   /* ==========================================================================
-     11. 关于（内容由 Hugo 直接渲染，这里只处理小节锚点）
+     11. 关于（正文由 Hugo 渲染）+ 站主第九轮 ⑤：
+         主页不再出现技术免责 → 「数据来源 / 口径 / 免责」整块搬到这里，
+         并把公开端点做一次【一次性探测】（不轮询、不缓存），如实标出可用/未上线。
      ========================================================================== */
-  function initAbout() { /* 无数据请求：正文是构建期渲染的 */ }
+  var ABOUT_ENDPOINTS = [
+    ['/api/public/overview', '总览（节点 / 告警分布）'],
+    ['/api/public/alerts', '实时告警（按规则 + IP 聚合）'],
+    ['/api/public/honeypot', '蜜罐战报'],
+    ['/api/public/audit', '处置审计'],
+    ['/api/public/latest', '可选端点：最近事件（未上线时主页改用 audit）'],
+    ['/api/health', '系统指纹（扁平对象，无信封）']
+  ];
+
+  function initAbout() {
+    $$('[data-xk-api-base]').forEach(function (n) { n.textContent = API.replace(/^https?:\/\//, ''); });
+
+    var host = $('[data-xk-endpoints]', contentEl);
+    if (!host) return;
+
+    host.innerHTML = ABOUT_ENDPOINTS.map(function (e) {
+      return '<li data-xk-ep="' + esc(e[0]) + '"><span class="xk-mono">' + esc(e[0]) + '</span>' +
+        '<b class="xk-ep__v"><span class="xk-ep__st">探测中…</span><small>' + esc(e[1]) + '</small></b></li>';
+    }).join('');
+
+    var done = 0, okCount = 0, bad = [];
+    function settle(path, text, cls) {
+      var li = $('[data-xk-ep="' + path + '"]', host);
+      if (li) {
+        var v = $('.xk-ep__st', li);
+        if (v) { v.textContent = text; v.className = 'xk-ep__st ' + (cls || ''); }
+      }
+      done += 1;
+      if (cls === 'is-ok') okCount += 1; else bad.push(path.replace('/api/public/', '').replace('/api/', ''));
+      if (done === ABOUT_ENDPOINTS.length) {
+        setSync('about', okCount + '/' + ABOUT_ENDPOINTS.length + ' 个端点可用' +
+          (bad.length ? ' · 未上线 / 不可达：' + bad.join('、') : '') +
+          ' · 探测于 ' + clockOf(Date.now()));
+      }
+    }
+
+    /* 一次性探测：故意不带 If-None-Match、不写进 localStorage 快照 —— 这一页要的是"现在的状态" */
+    ABOUT_ENDPOINTS.forEach(function (e) {
+      fetch(API + e[0], { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' })
+        .then(function (r) { settle(e[0], 'HTTP ' + r.status + (r.ok ? ' · 可用' : ' · 未上线'), r.ok ? 'is-ok' : 'is-bad'); })
+        .catch(function () { settle(e[0], '不可达 / 未接入', 'is-bad'); });
+    });
+  }
 
   /* ==========================================================================
      12. 搜索（Ctrl+K，只搜笔记）

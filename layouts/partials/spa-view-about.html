@@ -17,6 +17,8 @@
         <a class="xk-chip" href="#xk-about-me" data-xk-anchor>我是谁</a>
         <a class="xk-chip" href="#xk-about-project" data-xk-anchor>项目：SecAgent</a>
         <a class="xk-chip" href="#xk-about-demo" data-xk-anchor>在线 Demo</a>
+        {{/* 站主第九轮 ⑤：主页不再出现技术免责 → 「数据来源 / 口径 / 免责」整块落在这一节 */}}
+        <a class="xk-chip" href="#xk-about-data" data-xk-anchor>数据来源 · 口径 · 免责</a>
       </nav>
     </header>
 
@@ -35,6 +37,45 @@
         <section class="xk-card" id="xk-about-demo">
           <header class="xk-card__hd"><h2 class="xk-card__title">在线 Demo</h2></header>
           <div class="xk-md">{{ with site.GetPage "/demo" }}{{ .Content }}{{ end }}</div>
+        </section>
+
+        {{/* ============================================================
+            站主 2026-10-13 第九轮 ⑤：把「数据来源 / 口径 / 免责」整块从主页搬到这一节。
+            两块内容：
+              ① 数据来源与口径（接口基址 / 口径 / 轮询 / 缓存与限流）
+              ② 公开端点实时探测（一次性，不轮询）—— 可选端点到底上没上线，这里如实写
+            主页只留一行「数据来自真实接口 · 只读 · IP 掩码」。
+            数值/状态一律由 /js/app.js 探测后填入，模板里不预设任何「正常/可用」的字样。
+            ============================================================ */}}
+        <section class="xk-card" id="xk-about-data">
+          <header class="xk-card__hd">
+            <h2 class="xk-card__title">数据来源 · 口径 · 免责</h2>
+            <span class="xk-sync" data-xk-sync="about"></span>
+          </header>
+
+          <ul class="xk-meta">
+            <li><span>接口基址</span><b class="xk-mono" data-xk-api-base>—</b></li>
+            <li><span>口径</span><b>只读公开端点 · IP 已由后端掩码</b></li>
+            <li><span>轮询</span><b>10–15s 自适应（主页 4 个端点时放宽到 ≥20s，给限流留余量）· 标签隐藏即暂停</b></li>
+            <li><span>服务端</span><b>15s 缓存 · 20 次/分钟限流</b></li>
+            <li><span>前端</span><b>不再加工或还原 IP，只原样展示服务端掩码后的字段</b></li>
+          </ul>
+
+          <h3 class="xk-sub xk-sub--tight" style="margin-top:16px">公开端点实时探测（一次性，只读）</h3>
+          <ul class="xk-meta xk-meta--kv" data-xk-endpoints>
+            <li class="xk-hint">探测中…</li>
+          </ul>
+
+          <p class="xk-note">
+            <b>免责与取舍：</b>
+            ① 所有数字都来自上面的公开只读端点，取不到就写「未接入 / 上次同步」，<b>不补假数据、不用样本冒充真实</b>；
+            ② 可选端点 <code>/api/public/latest</code> 若未上线（探测结果见上表），主页的拦截动态就改用
+            <code>/api/public/audit</code> 的真实封禁与处置留痕，并在卡片里写明来源，而不是编一条 live 数据；
+            ③ 明细下钻端点 <code>/api/public/alerts/{aggId}</code> 同样未上线，所以监测中心只展示聚合记录自带的字段，
+            不额外拼一份「原始事件列表」；
+            ④ 蜜罐命令时间线（<code>commandsAvailable=false</code>）保持「数据源未接入」，不编造命令内容；
+            ⑤ 前端不做匿名常驻 SSE / WebSocket，秒级实时只给登录后的私有后台。
+          </p>
         </section>
       </div>
 

@@ -1,25 +1,54 @@
 {{/*
-  ① 门户版式（主页）—— 站主 2026-10-12 第八轮（最后一批）调整后的版面：
-     · 欢迎区：只有【主标题 + 一行介绍】，贴内容区左上角（小标签那行已按站主要求删除）
-     · 左列：功能导览 —— 竖排长方形，内部按【正方块】分块；整块不可点，只有「进入 →」是链接
-     · 中列：最新笔记 + 数据来源
-     · 右列：实时拦截动态（窄列、内部滚动、真实数据含 IP 掩码与 audit 来源标注）
-  骨架由 Hugo 渲染；实时数字一律由 /js/app.js 从 /api/public/* 填入，模板里不写死任何值。
+  ① 门户版式（主页）—— 站主 2026-10-13 第九轮改版后的版面：
+    · Hero：品牌名 xiaokeqing 放大做视觉主体（40–46px / 800），下面一行介绍，
+      底部一排【4 个核心数字】，每个数字都在页面上标着口径（取不到就由 JS 写「未接入」）。
+    · 左列：功能导览 —— 玻璃小卡（图标 + 名字 + 一句话 + 「进入」+ 一个真实小数据角标），
+      定位是「能力卡片」，不再复述右侧导航。
+    · 中列（弹性最宽）：只放笔记列表，最新一篇加大置顶；「数据来源」整块已按站主要求移走
+      （搬去「关于」页的「数据来源 · 口径 · 免责」卡）。
+    · 右列：拦截动态 —— 3–5 条中文可读的聚合条目 + 顶部三个小数字 + 底部「数据口径」折叠。
+  骨架由 Hugo 渲染；实时数字一律由 /js/app.js 从 /api/public/* 填入，模板里不写死任何接口值
+  （唯一写死的是构建期常量：笔记篇数、单元测试数 —— 都来自本仓库/后端仓库的真实产物）。
 */}}
+{{- $posts := where site.RegularPages "Section" "posts" -}}
 <template id="tpl-home">
   <section class="xk-hero">
     <div class="xk-wrap xk-hero__in">
-      {{/* 欢迎区文字块：宽度上限 640px、贴内容区左上（与下面三栏同一条左边界）；
-           水平位置由 --xk-hero-align 一行切换（靠左 / 居中 / 靠右），见 site.css 第 6 节 */}}
+      {{/* 欢迎区文字块：品牌名是视觉主体；水平位置由 --xk-hero-align 一行切换，见 site.css 第 6 节 */}}
       <div class="xk-hero__text">
-        <h1 class="xk-hero__title">{{ site.Params.heroTitle }}</h1>
-        <p class="xk-hero__lead">{{ site.Params.heroLead }}</p>
+        <h1 class="xk-hero__brand">{{ site.Params.heroBrand | default site.Params.siteName }}</h1>
+        <p class="xk-hero__lead">{{ site.Params.heroTitle }} · {{ site.Params.heroLead }}</p>
       </div>
+
+      {{/* Hero 四个核心数字：骨架里只印「标签 + 口径」，数值由 JS 从真实接口填入；
+           第 4 个（单元测试）是构建期常量，直接渲染真值，口径里写明是 Tests run 口径与截至日期。 */}}
+      <ul class="xk-hero__stats">
+        <li class="xk-hstat">
+          <b class="xk-hstat__num" data-xk-stat="alerts24h">—</b>
+          <span class="xk-hstat__label">24h 告警</span>
+          <span class="xk-hstat__caliber" data-xk-caliber="alerts24h">口径 /api/public/alerts · stats24h.total（24 小时未去重上报量）</span>
+        </li>
+        <li class="xk-hstat">
+          <b class="xk-hstat__num" data-xk-stat="honeypot">—</b>
+          <span class="xk-hstat__label">蜜罐事件</span>
+          <span class="xk-hstat__caliber" data-xk-caliber="honeypot">口径 /api/public/honeypot · total（服务端字段原样展示）</span>
+        </li>
+        <li class="xk-hstat">
+          <b class="xk-hstat__num" data-xk-stat="guard">—</b>
+          <span class="xk-hstat__label">护栏拦截</span>
+          <span class="xk-hstat__caliber" data-xk-caliber="guard">口径 /api/public/audit · summary.blockedByGuard（由护栏拦下的动作数）</span>
+        </li>
+        <li class="xk-hstat">
+          <b class="xk-hstat__num">{{ site.Params.testsRun }}</b>
+          <span class="xk-hstat__label">单元测试</span>
+          <span class="xk-hstat__caliber">口径 {{ site.Params.testsSource }}：Tests run {{ site.Params.testsRun }} · Failures {{ site.Params.testsFailed }} · Skipped {{ site.Params.testsSkipped }} · 截至 {{ site.Params.testsAsOf }}</span>
+        </li>
+      </ul>
     </div>
   </section>
 
   <div class="xk-wrap xk-portal xk-portal--home">
-    {{/* ---------- 左列：功能导览（竖排长方形，内部正方块；整块不可点） ---------- */}}
+    {{/* ---------- 左列：功能导览（能力卡片：图标 + 名字 + 一句话 + 进入 + 真实角标） ---------- */}}
     <section class="xk-card xk-portal__guide">
       <header class="xk-card__hd">
         <h2 class="xk-card__title">功能导览</h2>
@@ -28,81 +57,161 @@
 
       <ul class="xk-mod2">
         <li class="xk-mod2__item">
-          <span class="xk-mod2__name">监测中心</span>
-          <span class="xk-mod2__desc">主机与网络告警、蜜罐战报、处置审计、系统状态四个子页。</span>
-          <a class="xk-mod2__go" href="/#/monitor/alerts" data-xk-route>进入 →</a>
+          <span class="xk-mod2__hd">
+            <svg class="xk-mod2__icon" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <path d="M2 11.5h3.2l1.8-6 3 12 2.6-9 1.6 3H18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="xk-mod2__name">监测中心</span>
+          </span>
+          <span class="xk-mod2__desc">主机 / 网络告警与处置审计</span>
+          <span class="xk-mod2__ft">
+            <a class="xk-mod2__go" href="/#/monitor/alerts" data-xk-route>进入 →</a>
+            <span class="xk-mod2__badge" data-xk-badge="monitor" title="口径：/api/public/alerts · stats24h.total">—</span>
+          </span>
         </li>
         <li class="xk-mod2__item">
-          <span class="xk-mod2__name">笔记</span>
-          <span class="xk-mod2__desc">学习与实践记录，带目录的三栏阅读。</span>
-          <a class="xk-mod2__go" href="/#/notes" data-xk-route>进入 →</a>
+          <span class="xk-mod2__hd">
+            <svg class="xk-mod2__icon" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <path d="M5 2.5h6.5L15.5 6v11.5h-10z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path>
+              <path d="M7.5 9h5M7.5 12h5M7.5 15h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+            </svg>
+            <span class="xk-mod2__name">笔记</span>
+          </span>
+          <span class="xk-mod2__desc">带目录的三栏阅读笔记</span>
+          <span class="xk-mod2__ft">
+            <a class="xk-mod2__go" href="/#/notes" data-xk-route>进入 →</a>
+            <span class="xk-mod2__badge" title="口径：本仓库 content/posts 的真实篇数（构建期统计）">{{ len $posts }} 篇</span>
+          </span>
         </li>
         <li class="xk-mod2__item">
-          <span class="xk-mod2__name">AI 安全</span>
-          <span class="xk-mod2__desc">公开问答与知识库检索，直连真实后端。</span>
-          <a class="xk-mod2__go" href="/#/ai" data-xk-route>进入 →</a>
+          <span class="xk-mod2__hd">
+            <svg class="xk-mod2__icon" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <path d="M10 2.5 3.5 5v5c0 4 3 6.5 6.5 7.5 3.5-1 6.5-3.5 6.5-7.5V5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path>
+              <path d="M10 7.6v4.2M10 6.6v.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+            </svg>
+            <span class="xk-mod2__name">AI 安全</span>
+          </span>
+          <span class="xk-mod2__desc">知识库问答与文档检索</span>
+          <span class="xk-mod2__ft">
+            <a class="xk-mod2__go" href="/#/ai" data-xk-route>进入 →</a>
+            <span class="xk-mod2__badge" title="本栏提供的能力：POST /api/public/ask 与 GET /api/public/kb（均为真实端点，不编造数字）">问答 + 知识库</span>
+          </span>
         </li>
         <li class="xk-mod2__item">
-          <span class="xk-mod2__name">攻防靶场</span>
-          <span class="xk-mod2__desc">真调后端检测组件的互动演示。</span>
-          <a class="xk-mod2__go" href="/#/range" data-xk-route>进入 →</a>
+          <span class="xk-mod2__hd">
+            <svg class="xk-mod2__icon" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+              <circle cx="10" cy="10" r="3.4" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+              <circle cx="10" cy="10" r="1" fill="currentColor"></circle>
+            </svg>
+            <span class="xk-mod2__name">攻防靶场</span>
+          </span>
+          <span class="xk-mod2__desc">真调后端检测的互动演示</span>
+          <span class="xk-mod2__ft">
+            <a class="xk-mod2__go" href="/#/range" data-xk-route>进入 →</a>
+            <span class="xk-mod2__badge" title="口径：layouts/partials/spa-view-range.html 里真实存在的检测预设（2 张卡 × 5 条）">5 个检测样例</span>
+          </span>
         </li>
         <li class="xk-mod2__item">
-          <span class="xk-mod2__name">关于</span>
-          <span class="xk-mod2__desc">项目说明、架构取舍与个人介绍。</span>
-          <a class="xk-mod2__go" href="/#/about" data-xk-route>进入 →</a>
+          <span class="xk-mod2__hd">
+            <svg class="xk-mod2__icon" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <circle cx="10" cy="10" r="7.6" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+              <path d="M10 9v4.4M10 6.4v.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+            </svg>
+            <span class="xk-mod2__name">关于</span>
+          </span>
+          <span class="xk-mod2__desc">项目说明 · 数据来源与免责</span>
+          <span class="xk-mod2__ft">
+            <a class="xk-mod2__go" href="/#/about" data-xk-route>进入 →</a>
+            <span class="xk-mod2__badge" title="口径：全站零前端框架、零第三方脚本/字体/图标库（可在 layouts 与 assets 里逐条核对）">零第三方依赖</span>
+          </span>
         </li>
       </ul>
-
-      <p class="xk-note xk-mod__note">未上线的能力标注「未上线・规划中」，不放死链、不补假数据。</p>
     </section>
 
-    {{/* ---------- 中列：最新笔记 / 数据来源（保持不动） ---------- */}}
-    <aside class="xk-portal__side">
-      {{- $posts := where site.RegularPages "Section" "posts" }}
+    {{/* ---------- 中列：最新笔记（只放笔记列表；最新一篇加大置顶） ---------- */}}
+    <div class="xk-portal__main">
       <section class="xk-card">
         <header class="xk-card__hd">
           <h2 class="xk-card__title">最新笔记</h2>
           <a class="xk-link xk-hint" href="/#/notes" data-xk-route>全部 {{ len $posts }} 篇</a>
         </header>
-        <ul class="xk-list">
-          {{- range first 5 $posts }}
+
+        {{- if $posts }}
+        {{- with index $posts 0 }}
+        <article class="xk-note-hero">
+          <a class="xk-note-hero__title" href="/#/notes/{{ .File.BaseFileName }}" data-xk-note="{{ .File.BaseFileName }}">{{ .Title }}</a>
+          <p class="xk-note-hero__sum">{{ .Summary | plainify | truncate 150 }}</p>
+          <div class="xk-note-hero__meta">
+            <span class="xk-hint">{{ .Date.Format "2006-01-02" }}</span>
+            {{- with .Params.categories }}<span class="xk-tag">{{ index . 0 }}</span>{{ end }}
+            <span class="xk-hint">{{ .ReadingTime }} 分钟阅读</span>
+          </div>
+        </article>
+        {{- end }}
+
+        <ul class="xk-list xk-list--notes">
+          {{- range after 1 (first 5 $posts) }}
           <li>
             <a class="xk-link" href="/#/notes/{{ .File.BaseFileName }}" data-xk-note="{{ .File.BaseFileName }}">{{ .Title }}</a>
             <span class="xk-hint">{{ .Date.Format "2006-01-02" }}</span>
           </li>
           {{- else }}
-          <li class="xk-hint">还没有笔记。</li>
+          <li class="xk-hint">暂时只有这一篇。</li>
           {{- end }}
         </ul>
+        {{- else }}
+        <p class="xk-hint">还没有笔记。</p>
+        {{- end }}
       </section>
 
-      <section class="xk-card">
-        <header class="xk-card__hd"><h2 class="xk-card__title">数据来源</h2></header>
-        <ul class="xk-meta">
-          <li><span>接口</span><b class="xk-mono" data-xk-api-base>—</b></li>
-          <li><span>口径</span><b>只读公开端点 · IP 掩码</b></li>
-          <li><span>轮询</span><b>10–15s 自适应 · 隐藏即暂停</b></li>
-          <li><span>服务端</span><b>15s 缓存 · 20 次/分钟限流</b></li>
-        </ul>
-        <p class="xk-note">数字全部来自真实接口；取不到就显示「未接入 / 上次同步」，不补假数据。</p>
-      </section>
-    </aside>
+      {{/* 主页只留这一行数据说明；完整的「数据来源 / 口径 / 免责」已移到「关于」页（站主第九轮 ⑤） */}}
+      <p class="xk-home__src">数据来自真实接口 · 只读 · IP 掩码</p>
+    </div>
 
-    {{/* ---------- 右列：实时拦截动态（窄列，逐条紧凑） ---------- */}}
+    {{/* ---------- 右列：拦截动态（3–5 条中文可读聚合 + 三个小数字 + 口径折叠） ---------- */}}
     <div class="xk-portal__live">
-      <section class="xk-card xk-card--live xk-card--tight">
+      <section class="xk-card xk-card--live">
         <header class="xk-card__hd">
-          <h2 class="xk-card__title"><span class="xk-pulse" aria-hidden="true"></span>实时拦截动态</h2>
+          {{/* 默认先写「最近同步」：只有真的拿到新鲜数据，JS 才会把它换成「实时拦截动态」 */}}
+          <h2 class="xk-card__title" data-xk-live-title>最近同步 · 拦截动态</h2>
           <span class="xk-sync" data-xk-sync="feed">加载中…</span>
         </header>
+
+        <ul class="xk-minis">
+          <li class="xk-mini">
+            <b class="xk-mini__num" data-xk-mini="today" title="口径：/api/public/audit blocks 中创建于今日的封禁留痕条数">—</b>
+            <span class="xk-mini__label">今日拦截</span>
+          </li>
+          <li class="xk-mini">
+            <b class="xk-mini__num" data-xk-mini="active" title="口径：/api/public/audit summary.blockActive">—</b>
+            <span class="xk-mini__label">生效中</span>
+          </li>
+          <li class="xk-mini">
+            <b class="xk-mini__num" data-xk-mini="guard" title="口径：/api/public/audit summary.blockedByGuard">—</b>
+            <span class="xk-mini__label">护栏拦截</span>
+          </li>
+        </ul>
+
         <ul class="xk-feed" data-xk-feed>
           <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w70"></span><span class="xk-skel xk-skel--w10"></span></li>
           <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w60"></span><span class="xk-skel xk-skel--w10"></span></li>
           <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w80"></span><span class="xk-skel xk-skel--w10"></span></li>
-          <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w50"></span><span class="xk-skel xk-skel--w10"></span></li>
         </ul>
-        <p class="xk-note" data-xk-feed-note></p>
+
+        {{/* 原来贴在卡片正文里的免责说明，按站主要求缩成底部一个折叠 */}}
+        <details class="xk-caliber">
+          <summary>数据口径</summary>
+          <ul class="xk-meta">
+            <li><span>条目</span><b>同类别 + 同来源 IP 聚合，只列最近 3–5 条</b></li>
+            <li><span>今日拦截</span><b>audit.blocks 中创建于今日的封禁留痕</b></li>
+            <li><span>生效中</span><b>audit.summary.blockActive</b></li>
+            <li><span>护栏拦截</span><b>audit.summary.blockedByGuard</b></li>
+            <li><span>来源</span><b class="xk-mono">/api/public/audit · /api/public/alerts</b></li>
+            <li><span>免责</span><b>只读展示 · IP 已由后端掩码 · 无处置入口</b></li>
+          </ul>
+        </details>
+
         <footer class="xk-card__ft">
           <a class="xk-link" href="/#/monitor/alerts" data-xk-route>完整告警流 →</a>
           <a class="xk-link" href="/#/monitor/audit" data-xk-route>处置审计 →</a>

@@ -39,8 +39,22 @@ hasCJKLanguage = true
   # §1 欢迎区文案（主页门户版式）
   # 站主 2026-10-12 第七轮 ①："一句话介绍（压成一行）" → 文案压成一行能放下的长度
   # （旧值：个人网络安全的学习与实践记录 —— 同时挂着我在真实运行的安全运营工作台：主机/网络告警、蜜罐战报、带护栏与审计的处置链路。）
-  heroTitle = "欢迎来到 xiaokeqing 的个人博客"
+  # 站主 2026-10-13 第九轮：品牌名单独放大做视觉主体 → 主标题只留欢迎语，站名交给 heroBrand。
+  heroBrand = "xiaokeqing"
+  heroTitle = "欢迎来到我的个人博客"
   heroLead = "个人网络安全的学习与实践记录，外加一个真实在跑的安全运营工作台。"
+
+  # ---------- Hero 第四个数字：单元测试数 ----------
+  # 为什么是常量而不是现场取：博客是静态站，构建期不会去跑后端测试；
+  # 真值来自 SecAgent 仓库自己的 surefire 汇总（不是估算、不是示例值）：
+  #   F:\7AAA\AI\SecAgent\sec-agent\target\surefire-reports\TEST-*.xml 逐类求和
+  #   → Tests run 238 · Failures 0 · Errors 0 · Skipped 3
+  # 口径写在页面上（主页 Hero 与「关于」页都标），改数只改这一处。
+  testsRun = 238
+  testsSkipped = 3
+  testsFailed = 0
+  testsAsOf = "2026-10-13"
+  testsSource = "SecAgent · sec-agent/target/surefire-reports 汇总（Tests run / Failures / Skipped）"
 
 # ---------- 导航菜单（§2：就这 6 项、按此顺序与名称） ----------
 # url 用 /#/<route> 形式：点击只替换 #content，背景层与胶囊导航不动（不整页跳转）。
