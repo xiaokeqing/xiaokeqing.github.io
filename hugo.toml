@@ -48,9 +48,9 @@ hasCJKLanguage = true
   # 为什么是常量而不是现场取：博客是静态站，构建期不会去跑后端测试；
   # 真值来自 SecAgent 仓库自己的 surefire 汇总（不是估算、不是示例值）：
   #   F:\7AAA\AI\SecAgent\sec-agent\target\surefire-reports\TEST-*.xml 逐类求和
-  #   → Tests run 238 · Failures 0 · Errors 0 · Skipped 3
+  #   → Tests run 239 · Failures 0 · Errors 0 · Skipped 3
   # 口径写在页面上（主页 Hero 与「关于」页都标），改数只改这一处。
-  testsRun = 238
+  testsRun = 239
   testsSkipped = 3
   testsFailed = 0
   testsAsOf = "2026-10-13"
