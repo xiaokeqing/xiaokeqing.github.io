@@ -1,0 +1,57 @@
+{{/*
+  右栏角色面板（栏目页的 320px 右栏）
+  ============================================================================
+  站主评审【补 3】的硬要求：右栏**不能只剩"她"** ——
+  原「口径 / 辅助信息」块必须留在下面（闸门里有断言依赖它的 id）。
+  所以这个 partial 是**插在右栏最前面**的一块，调用方不要替换右栏的原内容。
+
+  · 桌面端：人物区约 268px 高，画的是**全身** idle/speaking/thinking（图集 432 高，够清晰）
+  · 窄屏（≤980px）：同一块面板变成整宽，角色走 132px 头像图集静帧（站主要求②）
+  · 与 AI 问答联动：data-xk-kurisu-hook="ask" 让播放器包装 fetch 识别
+    POST /api/public/ask 的状态（思考 → 说话 → 回 idle）。app.js 一行都不用改。
+  · 字幕 / 状态行 / 语音说明都是**真文本**；画布与情绪缩略图是装饰（aria-hidden）。
+  · 语音：本轮空实现。🔊 按钮必须在、可聚焦、有焦点态、aria-pressed，且**绝不自动播放**。
+*/}}
+{{- if site.Params.kurisuEnabled }}
+{{- /* 调用方传 dict：avatar=true 表示"这块面板用 132px 头像图集"（非 AI 页的右栏更省字节） */}}
+{{- $avatar := false -}}{{ with . }}{{ $avatar = .avatar | default false }}{{ end -}}
+{{- $emo := slice
+      (dict "key" "normal"           "label" "普通")
+      (dict "key" "happy"            "label" "开心")
+      (dict "key" "sad"              "label" "难过")
+      (dict "key" "angry"            "label" "生气")
+      (dict "key" "blush"            "label" "害羞")
+      (dict "key" "disappointed"     "label" "失落")
+      (dict "key" "sided_thinking"   "label" "思考")
+      (dict "key" "sided_surprised"  "label" "惊讶") -}}
+<div class="xk-kurisu xk-kurisu--rail" data-xk-kurisu="rail" data-xk-kurisu-hook="ask"
+     data-xk-kurisu-clip="idle"{{ if $avatar }} data-xk-kurisu-avatar="1"{{ end }}>
+  <p class="xk-kurisu__who"><b>桐莉栖</b><span>● 在线 · 文本版（语音未启用）</span></p>
+
+  <div class="xk-kurisu__stage">
+    <canvas class="xk-kurisu__canvas" data-xk-kurisu-canvas aria-hidden="true"></canvas>
+  </div>
+
+  <p class="xk-kurisu__status" data-xk-kurisu-status>正在读取…</p>
+  <p class="xk-kurisu__say" data-xk-kurisu-say
+     data-xk-default-say="有什么安全相关的问题直接问我。我会走真实的检索链路，答不了就说答不了。">有什么安全相关的问题直接问我。我会走真实的检索链路，答不了就说答不了。</p>
+
+  <p class="xk-kurisu__emo-hd">情绪（8 种，随对话切换，也可以点）</p>
+  <ul class="xk-kurisu__emo" data-xk-kurisu-emo>
+    {{- range $emo }}
+    <li>
+      <button type="button" data-xk-emo="{{ .key }}" aria-pressed="false">
+        <img src="/kurisu/avatar/{{ .key }}.static.webp" alt="" aria-hidden="true"
+             width="24" height="24" loading="lazy" decoding="async">
+        <span>{{ .label }}</span>
+      </button>
+    </li>
+    {{- end }}
+  </ul>
+
+  <button class="xk-kurisu__voice" type="button" data-xk-kurisu-voice aria-pressed="false"
+          title="语音未启用（本轮只上文本版）"><span aria-hidden="true">🔊</span> 语音（未启用）</button>
+  <p class="xk-kurisu__note" data-xk-kurisu-voice-note aria-live="polite"></p>
+  <p class="xk-kurisu__note">她的解说只用本页的真实数据与真实回答；取不到就说读不到，不编数字。</p>
+</div>
+{{- end }}

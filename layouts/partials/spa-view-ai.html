@@ -21,6 +21,12 @@
       </div>
     </header>
 
+    {{/* 第十二轮：右栏 320px = 她（站主 04 方案 §2.2 / 评审【补 3】）。
+         注意：右栏是**新增**的一列，原来那两块口径卡（状态口径 / 公开端点与限额）
+         一块都没删，它们留在中栏对话下方 —— 右栏不允许"只剩角色"。 */}}
+    <div class="xk-portal xk-portal--ai">
+      <div class="xk-portal__main">
+
     <div class="xk-chat">
       <div class="xk-chat__bar">
         <span class="xk-chat__badge" data-xk-chat-badge><span class="xk-dot xk-dot--off" aria-hidden="true"></span>等待提问</span>
@@ -58,7 +64,7 @@
       <p class="xk-hint xk-chat__state" data-xk-ask-state>未提问。</p>
     </div>
 
-    <div class="xk-grid2" style="margin-top:20px">
+    <div class="xk-grid2">
       <section class="xk-card">
         <header class="xk-card__hd"><h2 class="xk-card__title">状态口径（措辞纪律）</h2></header>
         <table class="xk-table">
@@ -92,5 +98,11 @@
           这类示例资产名，那是知识库文档里的<b>教学示例</b>，不是本站的内部真实数据。
         </p>
       </section>
-    </div>
-  </div>
+      </div>{{/* /xk-grid2：两块口径卡并排在中栏 */}}
+      </div>{{/* /xk-portal__main：对话 + 两块口径卡，一个都没为角色让位而删除 */}}
+
+      <div class="xk-portal__live">
+        {{ partial "xk-kurisu-rail.html" (dict) }}
+      </div>
+    </div>{{/* /xk-portal--ai：1fr 对话 + 320px 的她 */}}
+  </div>{{/* /xk-wrap xk-page */}}

@@ -1,0 +1,26 @@
+{{/*
+  移动端（≤980px）的她：132px 头像图集形态
+  ============================================================================
+  站主要求②：移动端**不要**用 764×1028 全身，直接用素材自带的 132px 头像图集。
+  所以窄屏下：CRT 场景整层不渲染（.xk-crt 在 ≤980px 是 display:none），
+  改由这块卡片承担"她"的存在 —— 位置在内容区顶部（04 方案 §2.3）。
+  桌面端这块卡片是 display:none（桌面用 CRT 场景，避免同一个人出现两次）。
+  · 与右栏面板同一套 data 协议（data-xk-kurisu="rail"）→ 播放器代码只用一套逻辑。
+  · 画布 aria-hidden；字幕是真文本。
+*/}}
+{{- if site.Params.kurisuEnabled }}
+<section class="xk-card xk-kurisu-card" aria-labelledby="xk-kurisu-m-h">
+  <header class="xk-card__hd">
+    <h2 class="xk-card__title" id="xk-kurisu-m-h">桐莉栖</h2>
+    <span class="xk-hint">移动端用 132px 头像图集（不用全身素材）</span>
+  </header>
+  <div class="xk-kurisu xk-kurisu--rail xk-kurisu--mobile" data-xk-kurisu="rail"
+       data-xk-kurisu-clip="idle">
+    <div class="xk-kurisu__stage">
+      <canvas class="xk-kurisu__canvas" data-xk-kurisu-canvas aria-hidden="true"></canvas>
+    </div>
+    <p class="xk-kurisu__say" data-xk-kurisu-say
+       data-xk-default-say="欢迎回来。这里的数字都来自真实接口，取不到我就直说读不到。">欢迎回来。这里的数字都来自真实接口，取不到我就直说读不到。</p>
+  </div>
+</section>
+{{- end }}

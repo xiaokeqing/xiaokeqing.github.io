@@ -1,0 +1,34 @@
+{{/*
+  CRT 场景 + 桐莉栖（主页整屏背景的那一层）
+  ============================================================================
+  分工：
+    · 这一层只负责"画场景"：实拍书桌底图（CSS 背景）+ CRT 屏幕里的实验室背景
+      + 角色画布 + 屏内字幕条 / 状态行。
+    · 位置几何全部是**底图上的百分比**（crtRectNorm），所以底图怎么缩放，
+      角色与字幕条都严丝合缝地待在 CRT 屏幕里。
+    · 开关有两层：
+        ① 构建期 site.Params.kurisuEnabled（false = 整块不渲染，全站回到纯文本版）
+        ② 运行期 <html data-xk-crt-on>（由 kurisu-player.js 按当前路由设置 ——
+           SPA 只换 <main>，这一层在 <main> 外面，所以必须靠属性开关）
+    · 可访问性：底图 / 画布 / 特写静帧全部 aria-hidden="true"（装饰）；
+      字幕条与状态行是**真文本节点** —— 读屏与爬虫读得到她说了什么。
+    · 这里刻意**不写 id**：同一份标记既渲染进主页正文，也放进文末的 <template>
+      （SPA 从别的路由点回主页时用它现挂），写 id 就会在文档里重复。
+*/}}
+{{- if site.Params.kurisuEnabled }}
+<div class="xk-crt" data-xk-crt>
+  <div class="xk-crt__stage">
+    <div class="xk-crt__screen xk-kurisu xk-kurisu--stage" data-xk-kurisu="stage"
+         data-xk-kurisu-clip="idle">
+      {{/* "大头出场"的特写静帧：用 data-src 而不是 src —— 站主要求角色资源在首屏渲染完成
+           之后（200ms）才开始加载，写 src 的话解析到就会立刻下载。 */}}
+      <img class="xk-kurisu__intro" data-xk-kurisu-intro alt="" aria-hidden="true"
+           decoding="async" data-src="/kurisu/full/idle.intro.webp">
+      <canvas class="xk-kurisu__canvas" data-xk-kurisu-canvas aria-hidden="true"></canvas>
+      <p class="xk-kurisu__status" data-xk-kurisu-status>正在读取…</p>
+      <p class="xk-kurisu__say" data-xk-kurisu-say
+         data-xk-default-say="欢迎回来。这里的数据都来自真实只读接口 —— 取不到我就直说读不到。">欢迎回来。这里的数据都来自真实只读接口 —— 取不到我就直说读不到。</p>
+    </div>
+  </div>
+</div>
+{{- end }}

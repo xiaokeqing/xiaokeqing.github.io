@@ -1,0 +1,483 @@
+{
+ "format": "xiaokeqing.kurisu.v2",
+ "generator": {
+  "script": "scripts/kurisu/build_kurisu_assets.py",
+  "builtAt": "2026-10-14T00:41:23",
+  "ktx": "ktx.exe",
+  "sourceManifestSha256": "259DFC10E3FF1453848295F87340948F99F1F2E4254C30201334757EBE210EBB",
+  "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514"
+ },
+ "budgets": {
+  "firstScreenBudgetBytes": 1500000,
+  "firstScreenBytes": 699050,
+  "firstScreenFiles": {
+   "full/idle.intro.webp": 53152,
+   "full/idle.boot.webp": 531854,
+   "full/idle.poster.webp": 23114,
+   "avatar/normal.idle.webp": 86696,
+   "avatar/normal.static.webp": 4234
+  },
+  "note": "首屏只载 idle.boot + 静态头像；hi 图集在首屏渲染完成后 200ms 后台补",
+  "warnings": [
+   "speaking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）",
+   "thinking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）"
+  ]
+ },
+ "scene": {
+  "source": {
+   "w": 1672,
+   "h": 941
+  },
+  "crtRect": {
+   "x": 566,
+   "y": 168,
+   "w": 608,
+   "h": 500
+  },
+  "crtRectNorm": {
+   "x": 0.338517,
+   "y": 0.178533,
+   "w": 0.363636,
+   "h": 0.53135
+  },
+  "compose": {
+   "charHRatio": 0.68,
+   "footYRatio": 1.0,
+   "bgZoom": 1.45,
+   "bgBright": 1.3,
+   "bgSaturate": 1.1
+  },
+  "images": {
+   "desk": {
+    "url": "images/crt/desk.webp",
+    "w": 1672,
+    "bytes": 77608
+   },
+   "desk1024": {
+    "url": "images/crt/desk-1024.webp",
+    "w": 1024,
+    "bytes": 38542
+   },
+   "deskMobile": {
+    "url": "images/crt/desk-mobile.webp",
+    "w": 435,
+    "bytes": 32048
+   },
+   "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514",
+   "wallpaperSource": "https://raw.githubusercontent.com/Code-Amadeus/Amadeus/main/assets/images/amadeus_desktop_wallpaper.png",
+   "lab": {
+    "url": "images/crt/lab.webp",
+    "w": 912,
+    "h": 750,
+    "bytes": 59950
+   }
+  }
+ },
+ "clips": {
+  "idle": {
+   "frames": 60,
+   "frameIntervalMs": 42,
+   "loopMode": "loop",
+   "frameWidth": 321,
+   "frameHeight": 432,
+   "columns": 8,
+   "rows": 8,
+   "source": {
+    "clip": "idle",
+    "frames": 120,
+    "frameIntervalMs": 21,
+    "stride": 2
+   },
+   "atlas": {
+    "hi": {
+     "url": "kurisu/full/idle.hi.webp",
+     "w": 2568,
+     "h": 3456,
+     "bytes": 1316104,
+     "decodedBytes": 35500032
+    },
+    "boot": {
+     "url": "kurisu/full/idle.boot.webp",
+     "frames": 24,
+     "w": 2568,
+     "h": 1296,
+     "bytes": 531854,
+     "decodedBytes": 13312512
+    }
+   },
+   "poster": {
+    "url": "kurisu/full/idle.poster.webp",
+    "w": 321,
+    "h": 432,
+    "bytes": 23114
+   },
+   "intro": {
+    "url": "kurisu/full/idle.intro.webp",
+    "w": 764,
+    "h": 1028,
+    "bytes": 53152,
+    "note": "素材无独立特写帧：用 idle 首帧原生分辨率当特写，运行时 transform scale 缩回全身"
+   }
+  },
+  "speaking": {
+   "frames": 90,
+   "frameIntervalMs": 34,
+   "loopMode": "loop",
+   "frameWidth": 321,
+   "frameHeight": 432,
+   "columns": 8,
+   "rows": 12,
+   "source": {
+    "clip": "speaking_loop1",
+    "frames": 180,
+    "frameIntervalMs": 17,
+    "stride": 2
+   },
+   "atlas": {
+    "hi": {
+     "url": "kurisu/full/speaking.hi.webp",
+     "w": 2568,
+     "h": 5184,
+     "bytes": 1592000,
+     "decodedBytes": 53250048
+    },
+    "boot": {
+     "url": "kurisu/full/speaking.boot.webp",
+     "frames": 24,
+     "w": 2568,
+     "h": 1296,
+     "bytes": 444430,
+     "decodedBytes": 13312512
+    }
+   },
+   "poster": {
+    "url": "kurisu/full/speaking.poster.webp",
+    "w": 321,
+    "h": 432,
+    "bytes": 22106
+   },
+   "intro": null
+  },
+  "thinking": {
+   "frames": 90,
+   "frameIntervalMs": 34,
+   "loopMode": "loop",
+   "frameWidth": 321,
+   "frameHeight": 432,
+   "columns": 8,
+   "rows": 12,
+   "source": {
+    "clip": "thinking_speaking1",
+    "frames": 180,
+    "frameIntervalMs": 17,
+    "stride": 2
+   },
+   "atlas": {
+    "hi": {
+     "url": "kurisu/full/thinking.hi.webp",
+     "w": 2568,
+     "h": 5184,
+     "bytes": 1703650,
+     "decodedBytes": 53250048
+    },
+    "boot": {
+     "url": "kurisu/full/thinking.boot.webp",
+     "frames": 24,
+     "w": 2568,
+     "h": 1296,
+     "bytes": 475680,
+     "decodedBytes": 13312512
+    }
+   },
+   "poster": {
+    "url": "kurisu/full/thinking.poster.webp",
+    "w": 321,
+    "h": 432,
+    "bytes": 23552
+   },
+   "intro": null
+  }
+ },
+ "emotions": {
+  "normal": {
+   "idle": {
+    "url": "kurisu/avatar/normal.idle.webp",
+    "frames": 21,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 396,
+    "frameIntervalMs": 120,
+    "durationMs": 2520,
+    "sourceFrames": 21,
+    "stride": 1,
+    "bytes": 86696,
+    "decodedBytes": 1672704
+   },
+   "speaking": {
+    "url": "kurisu/avatar/normal.speaking.webp",
+    "frames": 49,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 924,
+    "frameIntervalMs": 42,
+    "durationMs": 2058,
+    "sourceFrames": 49,
+    "stride": 1,
+    "bytes": 189358,
+    "decodedBytes": 3902976
+   },
+   "static": {
+    "url": "kurisu/avatar/normal.static.webp",
+    "frameSize": 132,
+    "bytes": 4234
+   }
+  },
+  "sided_thinking": {
+   "idle": {
+    "url": "kurisu/avatar/sided_thinking.idle.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 11016,
+    "decodedBytes": 557568
+   },
+   "speaking": {
+    "url": "kurisu/avatar/sided_thinking.speaking.webp",
+    "frames": 62,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 1056,
+    "frameIntervalMs": 41,
+    "durationMs": 2542,
+    "sourceFrames": 123,
+    "stride": 2,
+    "bytes": 299302,
+    "decodedBytes": 4460544
+   },
+   "static": {
+    "url": "kurisu/avatar/sided_thinking.static.webp",
+    "frameSize": 132,
+    "bytes": 4068
+   }
+  },
+  "sided_surprised": {
+   "idle": {
+    "url": "kurisu/avatar/sided_surprised.idle.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 12480,
+    "decodedBytes": 557568
+   },
+   "speaking": {
+    "url": "kurisu/avatar/sided_surprised.speaking.webp",
+    "frames": 37,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 660,
+    "frameIntervalMs": 41,
+    "durationMs": 1517,
+    "sourceFrames": 74,
+    "stride": 2,
+    "bytes": 148130,
+    "decodedBytes": 2787840
+   },
+   "static": {
+    "url": "kurisu/avatar/sided_surprised.static.webp",
+    "frameSize": 132,
+    "bytes": 4240
+   }
+  },
+  "happy": {
+   "idle": {
+    "url": "kurisu/avatar/happy.idle.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 11358,
+    "decodedBytes": 557568
+   },
+   "speaking": {
+    "url": "kurisu/avatar/happy.speaking.webp",
+    "frames": 37,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 660,
+    "frameIntervalMs": 41,
+    "durationMs": 1517,
+    "sourceFrames": 74,
+    "stride": 2,
+    "bytes": 149744,
+    "decodedBytes": 2787840
+   },
+   "static": {
+    "url": "kurisu/avatar/happy.static.webp",
+    "frameSize": 132,
+    "bytes": 4226
+   }
+  },
+  "blush": {
+   "idle": {
+    "url": "kurisu/avatar/blush.idle.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 12322,
+    "decodedBytes": 557568
+   },
+   "speaking": {
+    "url": "kurisu/avatar/blush.speaking.webp",
+    "frames": 62,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 1056,
+    "frameIntervalMs": 41,
+    "durationMs": 2542,
+    "sourceFrames": 123,
+    "stride": 2,
+    "bytes": 258912,
+    "decodedBytes": 4460544
+   },
+   "static": {
+    "url": "kurisu/avatar/blush.static.webp",
+    "frameSize": 132,
+    "bytes": 4194
+   }
+  },
+  "angry": {
+   "idle": {
+    "url": "kurisu/avatar/angry.idle.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 12280,
+    "decodedBytes": 557568
+   },
+   "speaking": {
+    "url": "kurisu/avatar/angry.speaking.webp",
+    "frames": 37,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 660,
+    "frameIntervalMs": 41,
+    "durationMs": 1517,
+    "sourceFrames": 74,
+    "stride": 2,
+    "bytes": 150980,
+    "decodedBytes": 2787840
+   },
+   "static": {
+    "url": "kurisu/avatar/angry.static.webp",
+    "frameSize": 132,
+    "bytes": 4224
+   }
+  },
+  "sad": {
+   "idle": {
+    "url": "kurisu/avatar/sad.idle.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 11466,
+    "decodedBytes": 557568
+   },
+   "speaking": {
+    "url": "kurisu/avatar/sad.speaking.webp",
+    "frames": 49,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 924,
+    "frameIntervalMs": 42,
+    "durationMs": 2058,
+    "sourceFrames": 49,
+    "stride": 1,
+    "bytes": 203032,
+    "decodedBytes": 3902976
+   },
+   "static": {
+    "url": "kurisu/avatar/sad.static.webp",
+    "frameSize": 132,
+    "bytes": 4244
+   }
+  },
+  "disappointed": {
+   "idle": {
+    "url": "kurisu/avatar/disappointed.idle.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 10850,
+    "decodedBytes": 557568
+   },
+   "speaking": {
+    "url": "kurisu/avatar/disappointed.speaking.webp",
+    "frames": 3,
+    "columns": 8,
+    "frameSize": 132,
+    "atlasW": 1056,
+    "atlasH": 132,
+    "frameIntervalMs": 170,
+    "durationMs": 510,
+    "sourceFrames": 3,
+    "stride": 1,
+    "bytes": 10864,
+    "decodedBytes": 557568
+   },
+   "static": {
+    "url": "kurisu/avatar/disappointed.static.webp",
+    "frameSize": 132,
+    "bytes": 3926
+   }
+  }
+ }
+}

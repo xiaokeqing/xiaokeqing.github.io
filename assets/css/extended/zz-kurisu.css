@@ -1,0 +1,429 @@
+/* ============================================================================
+   桐莉栖 / CRT 场景（kurisu）—— 站点自建，零第三方、零外链
+   ----------------------------------------------------------------------------
+   为什么文件名是 `zz-kurisu.css`：
+     head.html 用 `resources.Match "css/extended/*.css" | resources.Concat`
+     按**文件名字母序**拼接（chroma.css → site.css）。本站既有样式在 site.css 里，
+     新文件要能覆盖它，就必须排在它后面 —— 所以用 `zz-` 前缀，而不是去改 head.html。
+
+   内容分区：
+     1. 场景层（主页整屏背景 = 实拍书桌 + CRT）
+     2. CRT 屏幕内的角色 / 字幕条 / 状态行
+     3. "大头出场"特写静帧
+     4. 右栏角色面板（栏目页 320px 右栏）
+     5. 角落点缀（其它视图）
+     6. 页面底部输入条
+     7. 降级（reduced-motion / saveData / 窄屏）、主题（tech/read）、伪影（扫描线）
+
+   三条硬约束写在这里，改这个文件时别破坏：
+     · 动效只用 transform / opacity，且统一受 prefers-reduced-motion 约束；
+     · 装饰性动画容器一律 aria-hidden（在模板里写死，见 xk-kurisu-*.html）；
+     · 字幕与状态行是**真文本节点**（读屏/爬虫可读），绝不把文字画进 canvas。
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   1. 场景层：主页整屏背景（实拍书桌 + CRT）
+   ---------------------------------------------------------------------------
+   · 开关是 <html data-xk-crt-on="1">，由 kurisu-player.js 按**当前路由**设置
+     （SPA 只换 <main>，所以这一层必须在 <main> 外面，靠这个属性开关）。
+   · 只在 tech 主题下铺：read = 浅色阅读模式，它的对比度契约是"浅色玻璃 + 深色正文"，
+     深色照片底会把正文压到 4.5:1 以下 —— 这条是刻意取舍，理由写在交付报告里。
+   · ≤980px（窄屏）不铺：移动端用 132px 头像图集（站主要求②），
+     也就顺带**不下载** desk.webp（媒体查询里才写 background-image，窄屏根本没这条规则）。
+   · bg.jpg 一个字节都不动：这里只是把 .xk-bg 在"场景生效"时隐藏掉（不删元素、不改文件）。 */
+.xk-crt {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: none;
+  overflow: hidden;
+  pointer-events: none;   /* 只是背景，不拦任何点击 */
+  background: #05080d center / cover no-repeat;
+}
+html[data-xk-crt-on="1"] .xk-crt { display: block; }
+/* read 主题不铺场景（浅色阅读模式的对比度契约优先）；写在后面前面都无所谓，靠层叠顺序赢 */
+html[data-xk-theme="read"] .xk-crt { display: none; }
+/* 场景生效时把 bg.jpg 那一层藏起来 —— 文件一个字节没动，只是不再显示（站主评审【补 5】允许） */
+html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
+
+/* 场景层的舞台：一个"等比铺满视口"的盒子（1672×941 = 底图原始比例），再整体放大 1.35 倍、
+   横向平移一点。为什么放大+平移：底图里 CRT 在正中间，而主页左侧是标题/数字文字块 ——
+   放大之后就有余量把 CRT（连同她）平移到右侧空白区，既不和文字打架，也仍然铺满整屏。
+   平移量用自身宽度的百分比（translate 的百分比以自身尺寸为准），换视口尺寸时按比例跟随。 */
+.xk-crt__stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  --xk-crt-zoom: 1.1;
+  --xk-crt-pan: 12.3%;
+  width: max(110vw, 195.45vh);
+  height: max(110vh, 61.91vw);
+  transform: translate(calc(-50% + var(--xk-crt-pan)), -50%);
+}
+
+/* 场景生效时把暗纱调薄：底图本身已经是暗调影棚照，再叠 tech 主题那套 .34→.60 的暗纱
+   就黑成一片了。这里保留"上薄下浓"的形状（文字带加深），但整体减半 ——
+   对比度不是靠这层保证的：主页文字压在 .xk-hero 自己的深色径向渐变上（见 site.css §19.1）。 */
+html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
+  background-image:
+    radial-gradient(120% 90% at 30% 12%, rgba(6, 14, 26, .12) 0px, rgba(6, 14, 26, 0) 70%),
+    linear-gradient(
+      180deg,
+      rgba(6, 12, 22, .18) 0px,
+      rgba(6, 12, 22, .22) 320px,
+      rgba(6, 12, 22, .28) 640px,
+      rgba(6, 12, 22, .36) 100%);
+}
+/* 底图只在桌面端（>980px）才会被请求；这也是"移动端不下载场景图"的实现方式 */
+@media (min-width: 981px) {
+  .xk-crt__stage {
+    background-image: url("/images/crt/desk.webp");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+}
+
+/* CRT 屏幕矩形：数值 = manifest.scene.crtRectNorm（源底图 1672×941 上 x566 y168 w608 h500）。
+   两者必须一致；改一处就要改另一处（构建脚本里会打印这几个数）。 */
+.xk-crt__screen {
+  position: absolute;
+  left: 33.8517%;
+  top: 17.8534%;
+  width: 36.3636%;
+  height: 53.1350%;
+  overflow: hidden;                 /* ★ 角色一律裁剪在屏幕内（源合成脚本就是这么做的） */
+  background: var(--xk-kurisu-lab, none) center / 100% 100% no-repeat;
+  --xk-kurisu-char-h: 66%;          /* = manifest.scene.compose.charHRatio（角色高 / 屏高） */
+  --xk-kurisu-char-foot: 96%;       /* = manifest.scene.compose.footYRatio（脚位置 / 屏高） */
+}
+
+/* 极轻的 CRT 质感：一层很淡的扫描线 + 四角暗角。刻意做得很轻（站主："别夸张"）。
+   只用 repeating-linear-gradient 与 radial-gradient，零图片、零动画。 */
+.xk-crt__screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(120% 110% at 50% 50%, rgba(0, 0, 0, 0) 58%, rgba(0, 0, 0, .38) 100%),
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, .10) 0px, rgba(0, 0, 0, .10) 1px,
+      rgba(0, 0, 0, 0) 1px, rgba(0, 0, 0, 0) 3px);
+}
+
+/* ---------------------------------------------------------------------------
+   2. CRT 屏幕内：角色画布 / 字幕条 / 状态行
+   ---------------------------------------------------------------------------
+   ⚠️ 字幕条与状态行是**真文本**；画布是装饰（aria-hidden 在模板里写死）。 */
+.xk-kurisu__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 屏内底部字幕条：位置与源视频标定一致（起于屏高 84.5%、高 11.5%） */
+.xk-kurisu__say {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 84.5%;
+  height: 11.5%;
+  margin: 0;
+  padding: 0 .7em;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: rgba(10, 12, 16, .86);
+  border-radius: 4px;
+  color: #EEF0F6;                                /* 实测对比度见交付报告 */
+  font-size: clamp(10px, 0.92vw, 17px);
+  line-height: 1.25;
+  letter-spacing: .01em;
+}
+
+/* 屏内右上状态行：真实数据或"读不到"。带一层深色胶囊底，保证压在任何屏幕内容上都 ≥4.5:1 */
+.xk-kurisu__status {
+  position: absolute;
+  right: 5%;
+  top: 3.4%;
+  margin: 0;
+  max-width: 68%;
+  padding: .12em .6em;
+  border-radius: 999px;
+  background: rgba(8, 12, 18, .72);
+  color: #D6EFDC;
+  font-size: clamp(8px, 0.72vw, 13px);
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 状态行前面那颗绿点（纯装饰，用 ::before，不占文本节点） */
+.xk-kurisu__status::before {
+  content: "";
+  display: inline-block;
+  width: .5em;
+  height: .5em;
+  margin-right: .45em;
+  border-radius: 50%;
+  background: #6BD98A;
+  box-shadow: 0 0 6px rgba(107, 217, 138, .75);
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------------------
+   3. "大头出场"：特写静帧（idle 首帧的**原生分辨率**）+ CSS transform 缩放
+   ---------------------------------------------------------------------------
+   素材里没有独立的贴脸镜头（交接方确认），所以：
+     静帧按角色同一套几何摆好（高度 = 屏高 × charHRatio、脚踩 footYRatio），
+     再用 transform: scale() 从 2.6 倍缩到 1 倍，原点放在头部附近
+     —— 视觉上就是"贴脸特写 → 拉远到全身"，然后淡出把画面交给动画。
+   用 transform 而不是逐帧缩放：走合成器、不占主线程；reduced-motion 下整段跳过（JS 里判断）。 */
+.xk-kurisu__intro {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - var(--xk-kurisu-char-foot));
+  height: var(--xk-kurisu-char-h);
+  width: auto;
+  transform: translateX(-50%) scale(1);
+  transform-origin: 50% 8%;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------------------
+   4. 右栏角色面板（栏目页 320px 右栏 = 人物在上、原口径内容保留在下方）
+   ---------------------------------------------------------------------------
+   站主评审【补 3】：右栏不能只剩"她"，原口径块必须留着（闸门里有断言依赖它的 id）。
+   所以本面板是**插在右栏最前面**的一块，不是替换右栏。 */
+.xk-kurisu--rail {
+  position: relative;
+  padding: 10px 12px 12px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--xk-card-line);
+  background: var(--xk-card);
+  box-shadow: var(--xk-shadow);
+  backdrop-filter: var(--xk-blur);
+  -webkit-backdrop-filter: var(--xk-blur);
+}
+.xk-kurisu--rail .xk-kurisu__stage {
+  position: relative;
+  width: 100%;
+  height: 268px;                  /* 04 方案：右栏人物区约 300px 高 */
+  overflow: hidden;
+  border-radius: calc(var(--r-card) - 6px);
+  background: linear-gradient(180deg, rgba(8, 14, 24, .35), rgba(8, 14, 24, .62));
+}
+.xk-kurisu--rail .xk-kurisu__say {
+  position: static;
+  margin: 10px 0 0;
+  height: auto;
+  min-height: 44px;
+  font-size: 13px;
+  line-height: 1.6;
+  background: rgba(9, 11, 16, .9);
+}
+.xk-kurisu--rail .xk-kurisu__status {
+  position: static;
+  display: inline-block;
+  margin: 8px 0 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.xk-kurisu__who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.xk-kurisu__who b { color: var(--xk-link); font-weight: 700; }
+.xk-kurisu__who span { color: var(--xk-muted); font-size: 11.5px; }
+
+/* 8 情绪：可点（键盘可达、≥44px 触控目标），并显示当前项 */
+.xk-kurisu__emo {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.xk-kurisu__emo button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--xk-line-2);
+  border-radius: 10px;
+  background: var(--xk-card-in);
+  color: var(--xk-muted);
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 1.1;
+  cursor: pointer;
+}
+.xk-kurisu__emo button img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin: 3px auto 1px;
+  image-rendering: auto;
+}
+.xk-kurisu__emo button.is-on {
+  border-color: var(--xk-blue);
+  box-shadow: 0 0 0 1px var(--xk-blue) inset;
+  color: var(--xk-title);
+}
+.xk-kurisu__emo-hd { margin: 12px 0 0; font-size: 11.5px; color: var(--xk-muted); }
+
+/* 🔊 语音入口：本轮是空实现（语音线另派）。按钮必须在、可聚焦、有焦点态、aria-pressed。 */
+.xk-kurisu__voice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--xk-card-line);
+  border-radius: var(--r-pill);
+  background: var(--xk-card-in);
+  color: var(--xk-text);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.xk-kurisu__voice[aria-pressed="true"] { border-color: var(--xk-blue); color: var(--xk-link); }
+.xk-kurisu__note { margin: 6px 0 0; font-size: 11px; color: var(--xk-muted); min-height: 1.2em; }
+
+/* ---------------------------------------------------------------------------
+   5. 角落点缀（非主页/非 AI 页）：一个小头像，纯装饰
+   ---------------------------------------------------------------------------
+   规格："其余视图：角落克制点缀"。它是 aria-hidden 的装饰，不承载任何信息
+   （信息仍在正文里可读），所以不给它文字。窄屏隐藏（移动端走底部输入条 + 内容区头像）。 */
+.xk-kurisu--corner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 3;
+  width: 96px;
+  height: 96px;
+  pointer-events: none;
+  opacity: .92;
+}
+.xk-kurisu--corner .xk-kurisu__stage { position: relative; width: 100%; height: 100%; }
+.xk-kurisu--corner .xk-kurisu__say,
+.xk-kurisu--corner .xk-kurisu__status { display: none; }
+
+/* ---------------------------------------------------------------------------
+   5b. 主页首屏版式（只在 CRT 场景生效的桌面端）：左侧信息列收窄，右侧留给她
+   ---------------------------------------------------------------------------
+   底图里的 CRT 在正中间，而主页左侧原本是"标题 + 导语 + 可玩入口 + 四个数字"（宽 1020px）。
+   两者叠在一起会互相压住，所以：
+     · 左列收窄到 560px（四个数字排成 2×2），右侧就是她在 CRT 里的位置；
+     · Hero 给一个最小高度，让 CRT 屏幕（连同屏内字幕条）留在**首屏之内**、
+       不被下面的三栏卡片盖住 —— 字幕条在屏幕高 84.5% 处，必须看得见。
+   这是"首屏要一眼看到它在跑"（第十一轮 ③）与"她要看得见"（第十二轮）的折中。 */
+@media (min-width: 981px) {
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__in { min-height: min(78vh, 700px); }
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__text,
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-play,
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__stats { max-width: 560px; }
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14px;
+  }
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__brand { font-size: 42px; }
+}
+/* 981–1199px：可用宽度更小，左列再收一档，保证她和文字块之间仍有间隔 */
+@media (min-width: 981px) and (max-width: 1199px) {
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__text,
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-play,
+  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__stats { max-width: 440px; }
+}
+
+/* ---------------------------------------------------------------------------
+   6. 页面底部输入条（站主视频 ⑤：CRT 外面、页面最底部一条输入条）
+   ---------------------------------------------------------------------------
+   · 桌面：只出现在主页（那里它就是"她的嘴"；AI 页有自己的对话输入区，不重复）；
+   · 窄屏：其它栏目页也显示（站主："移动端输入条固定在底部"）。
+   · 提交后走的是**既有**的问答链路：切到 AI 页 → 写进真实输入框 → 触发同一个发送按钮。
+     不新增任何后端端点（红线）。
+   · 🔊 按钮 = 将来语音的入口，本轮空实现，绝不自动播放。 */
+.xk-kbar {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  z-index: 6;
+  transform: translateX(-50%);
+  width: min(720px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 1px solid var(--xk-card-line);
+  border-radius: var(--r-card);
+  background: var(--xk-card);
+  box-shadow: var(--xk-shadow);
+  backdrop-filter: var(--xk-blur);
+  -webkit-backdrop-filter: var(--xk-blur);
+  display: none;
+}
+html[data-xk-kbar-on="1"] .xk-kbar { display: block; }
+.xk-kbar__in { display: flex; align-items: center; gap: 8px; }
+.xk-kbar__voice {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--xk-card-line);
+  border-radius: var(--r-pill);
+  background: var(--xk-card-in);
+  color: var(--xk-text);
+  font-size: 16px;
+  cursor: pointer;
+}
+.xk-kbar__voice[aria-pressed="true"] { border-color: var(--xk-blue); }
+.xk-kbar__input { flex: 1 1 auto; min-width: 0; }
+.xk-kbar__note { margin: 6px 2px 0; font-size: 11px; color: var(--xk-muted); min-height: 1.1em; }
+/* 固定条不能被内容盖住：给它让出底部空间（只在显示时生效，避免无谓留白） */
+html[data-xk-kbar-on="1"] body { padding-bottom: 92px; }
+
+/* ---------------------------------------------------------------------------
+   7. 主题（tech / read）下的文字色
+   --------------------------------------------------------------------------- */
+html[data-xk-theme="tech"] .xk-kurisu__who b { color: var(--xk-t-link); }
+html[data-xk-theme="tech"] .xk-kurisu__who span,
+html[data-xk-theme="tech"] .xk-kurisu__emo-hd,
+html[data-xk-theme="tech"] .xk-kurisu__note { color: var(--xk-t-muted); }
+html[data-xk-theme="tech"] .xk-kurisu__emo button { color: var(--xk-t-muted); border-color: rgba(140, 200, 255, .18); }
+html[data-xk-theme="tech"] .xk-kurisu__emo button.is-on { color: var(--xk-t-title); border-color: var(--xk-t-link); box-shadow: 0 0 0 1px var(--xk-t-link) inset; }
+html[data-xk-theme="tech"] .xk-kurisu__voice,
+html[data-xk-theme="tech"] .xk-kbar__voice { color: var(--xk-t-text); background: rgba(10, 22, 38, .56); border-color: rgba(120, 200, 255, .22); }
+html[data-xk-theme="tech"] .xk-kurisu--rail { background: var(--xk-t-card); border-color: var(--xk-t-card-line); }
+html[data-xk-theme="tech"] .xk-kbar { background: var(--xk-t-card); border-color: var(--xk-t-card-line); }
+
+/* ---------------------------------------------------------------------------
+   8. 降级：reduced-motion（真的不动）、窄屏（移动端形态）
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  /* 站规约：reduced-motion 下不出现任何位移/缩放/过渡 */
+  .xk-kurisu__intro { transition: none !important; transform: translateX(-50%) scale(1) !important; opacity: 0 !important; }
+  .xk-crt__screen::after { background-image: none; }
+  .xk-kurisu__canvas { transition: none !important; }
+}
+
+@media (max-width: 980px) {
+  /* 窄屏：不铺 CRT 场景（省字节 + 132px 素材放进 CRT 会小到看不清） */
+  .xk-crt { display: none !important; }
+  .xk-kurisu--corner { display: none; }
+  /* 内容区顶部的"她"（头像图集形态）：右栏面板在单栏布局里就是正常文档流 */
+  .xk-kurisu--rail .xk-kurisu__stage { height: 200px; }
+  .xk-kbar { width: calc(100vw - 20px); bottom: 10px; }
+  html[data-xk-kbar-on="1"] body { padding-bottom: 86px; }
+}
+
+/* 移动端"她"的卡片：只在主页用（桌面端主页用的是 CRT 场景），窄屏才显示 */
+.xk-kurisu-card { display: none; }
+@media (max-width: 980px) {
+  .xk-kurisu-card { display: block; }
+}

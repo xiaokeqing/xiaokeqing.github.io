@@ -58,6 +58,9 @@
       </div>
 
       <aside class="xk-portal__side">
+        {{/* 第十二轮：她在右栏**最上面**；原来的「分类」等辅助信息一块都没删，全在下面
+             （站主评审【补 3】：右栏不允许只剩角色）。非 AI 页用 132px 头像图集，省字节。 */}}
+        {{ partial "xk-kurisu-rail.html" (dict "avatar" true) }}
         <section class="xk-card">
           <header class="xk-card__hd"><h2 class="xk-card__title">分类</h2><span class="xk-hint">可分享 URL</span></header>
           <div class="xk-cats">

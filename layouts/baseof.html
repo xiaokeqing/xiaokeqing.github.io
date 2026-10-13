@@ -12,6 +12,12 @@
   <div class="xk-bg" aria-hidden="true"></div>
   <div class="xk-veil" aria-hidden="true"></div>
 
+  {{- /* CRT 场景层（主页整屏背景 + CRT 里的她）。
+         为什么在 <main> 外面：SPA 只替换 <main>，这一层要跨路由常驻，
+         由 kurisu-player.js 按当前路由写 <html data-xk-crt-on> 来决定显不显示。
+         只在主页的构建产物里内联渲染（其它路由靠文末的 #tpl-kurisu-stage 现挂）。 */}}
+  {{- if and site.Params.kurisuEnabled .IsHome }}{{ partial "xk-kurisu-stage.html" . }}{{ end }}
+
   {{ partial "spa-nav.html" . }}
   {{ partial "spa-side.html" . }}
 
@@ -55,6 +61,10 @@
 
   {{ partial "spa-footer.html" . }}
   {{ partial "spa-search.html" . }}
+  {{- if site.Params.kurisuEnabled }}
+  {{/* 页面底部输入条：桌面只在主页显示、窄屏在所有栏目页显示（kurisu-player.js 写开关） */}}
+  {{ partial "xk-kurisu-bar.html" . }}
+  {{- end }}
 
   {{/* 路由启动参数（接口基址只在这里出现一次，JS 不写死域名） */}}
   <script type="application/json" id="xk-boot">{{ dict
@@ -66,6 +76,11 @@
     | jsonify | safeJS }}</script>
 
   <script src="/js/app.js" defer></script>
+  {{- if site.Params.kurisuEnabled }}
+  {{/* 角色播放器：独立模块，app.js 完全不知道它存在（路由靠 hashchange +
+       对 #content 的 MutationObserver 自己感知，见文件头注释）。 */}}
+  <script src="/js/kurisu-player.js" defer></script>
+  {{- end }}
 
   {{- /* 视图模板表：每条路由一份 <template>，与 <main> 平级（不在它里面）。
          app.js 点导航时从这里 cloneNode 换视图；当前路由的那一份同时也渲染进了 main，
@@ -79,6 +94,13 @@
     <template id="tpl-range">{{ partial "spa-view-range.html" . }}</template>
     <template id="tpl-about">{{ partial "spa-view-about.html" . }}</template>
     <template id="tpl-notfound">{{ partial "spa-view-notfound.html" . }}</template>
+    {{- if site.Params.kurisuEnabled }}
+    {{/* CRT 场景层的"可现挂"副本：从非主页路由点回主页时，app.js 只换 <main>，
+         这一层在 <main> 外面、构建期不会为它单独出一份 HTML ——
+         所以留一份 <template>，kurisu-player.js 发现没有 .xk-crt 时 clone 到 body 末尾。
+         <template> 里的内容是惰性的：不渲染、不参与布局、不会被 querySelectorAll 命中。 */}}
+    <template id="tpl-kurisu-stage">{{ partial "xk-kurisu-stage.html" . }}</template>
+    {{- end }}
   </div>
 </body>
 </html>

@@ -17,7 +17,7 @@
 */}}
 {{- $posts := (where site.RegularPages "Section" "posts").ByDate.Reverse -}}
 {{- $lead := index $posts 0 -}}
-  <section class="xk-hero" aria-labelledby="xk-hero-name">
+  <section class="xk-hero{{ if site.Params.kurisuEnabled }} xk-hero--crt{{ end }}" aria-labelledby="xk-hero-name">
     <div class="xk-wrap xk-hero__in">
       <div class="xk-hero__text">
         <p class="xk-hero__eyebrow">xiaokeqing · 知微安全实验室</p>
@@ -104,6 +104,10 @@
       </ul>
     </div>
   </section>
+
+  {{- /* 第十二轮：窄屏（≤980px）的她 —— 132px 头像图集形态，放在内容区顶部（04 方案 §2.3）。
+         桌面端这块卡片是 display:none（桌面用 CRT 场景里的全身动画，避免同一个人出现两次）。 */}}
+  {{ partial "xk-kurisu-mobile.html" . }}
 
   <div class="xk-wrap xk-portal xk-portal--home">
     {{/* ---------- 左栏（300px 不动）：真实文章，不再是导航的第二遍 ---------- */}}

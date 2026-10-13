@@ -1,0 +1,28 @@
+{{/*
+  页面底部输入条（站主视频 ⑤：CRT 外面、页面最底部一条输入条）
+  ============================================================================
+  · 桌面：只在主页显示（那里它就是"她的嘴"；AI 页有自己的对话输入区，不重复）；
+    窄屏（≤980px）：其它栏目页也显示（站主："移动端输入条固定在底部"）。
+    显示与否由 kurisu-player.js 写 <html data-xk-kbar-on> 控制，CSS 才知道该不该占位。
+  · 提交后走的是**既有**的问答链路：切到 AI 问答页 → 写进那个真实的输入框 →
+    触发同一个发送按钮。**不新增任何后端端点**（红线；也是"不侵入 app.js"的做法）。
+  · 🔊 按钮 = 将来语音的入口，本轮空实现，绝不自动播放任何音频。
+  · 它在 <main> 外面、每页都渲染一次 —— 所以它是 UI 骨架，不是内容；
+    输入框有 <label>（视觉隐藏）+ 真 placeholder，键盘可 Tab 到，Enter 即发送。
+*/}}
+{{- if site.Params.kurisuEnabled }}
+<form class="xk-kbar" data-xk-kurisu-bar>
+  <label class="xk-sr" for="xk-kbar-input">向她提问（会送到真实的公开问答链路）</label>
+  <div class="xk-kbar__in">
+    <button class="xk-kbar__voice" type="button" data-xk-kurisu-voice aria-pressed="false"
+            title="语音未启用（本轮只上文本版）">
+      <span aria-hidden="true">🔊</span><span class="xk-sr">语音（未启用）</span>
+    </button>
+    <input class="xk-input xk-kbar__input" id="xk-kbar-input" type="text" autocomplete="off"
+           spellcheck="false"
+           placeholder="问她一个安全相关的问题…（Enter 发送；会切到 AI 问答页，走真实链路）">
+    <button class="xk-btn xk-btn--primary" type="submit" data-xk-kbar-send>发送</button>
+  </div>
+  <p class="xk-kbar__note" data-xk-kurisu-voice-note aria-live="polite"></p>
+</form>
+{{- end }}

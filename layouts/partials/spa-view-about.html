@@ -83,6 +83,9 @@
       </div>
 
       <aside class="xk-portal__side">
+        {{/* 第十二轮：她在右栏**最上面**；原「各栏目在做什么 / 可核验口径」等卡全部留在下面
+             （站主评审【补 3】）。非 AI 页用 132px 头像图集，省字节。 */}}
+        {{ partial "xk-kurisu-rail.html" (dict "avatar" true) }}
         {{/* 追加要求 ②：各栏目顶部被删掉的介绍文字，完整说明挪到这一张卡里（不丢信息） */}}
         <section class="xk-card xk-card--tight" id="xk-about-modules">
           <header class="xk-card__hd"><h2 class="xk-card__title">各栏目在做什么</h2></header>

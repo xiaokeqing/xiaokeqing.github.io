@@ -112,7 +112,7 @@ fi
 # 这种会过期的前提，而应断言"所有出现的端点都必须在白名单里"。
 head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 # 白名单 = 线上实测能返回 200 的公开端点。**新增端点必须先在线上实测，再手动加进来。**
-ALLOWED="ask kb overview alerts latest honeypot audit geo"
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
