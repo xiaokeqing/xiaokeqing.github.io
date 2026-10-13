@@ -50,10 +50,10 @@ hasCJKLanguage = true
   #   F:\7AAA\AI\SecAgent\sec-agent\target\surefire-reports\TEST-*.xml 逐类求和
   #   → Tests run 239 · Failures 0 · Errors 0 · Skipped 3
   # 口径写在页面上（主页 Hero 与「关于」页都标），改数只改这一处。
-  testsRun = 239
+  testsRun = 471
   testsSkipped = 3
   testsFailed = 0
-  testsAsOf = "2026-10-13"
+  testsAsOf = "2026-10-14"
   testsSource = "SecAgent · sec-agent/target/surefire-reports 汇总（Tests run / Failures / Skipped）"
 
 # ---------- 导航菜单（§2：就这 6 项、按此顺序与名称） ----------
