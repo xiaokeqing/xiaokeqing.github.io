@@ -1,0 +1,106 @@
+# ============================================================
+# 博客自动构建 + 断言 + 发布（push main → gh-pages）
+# ------------------------------------------------------------
+# 为什么现在才补这个文件：
+#   hugo.toml 和 .gitignore 里都写着「push 自动构建」，但仓库里
+#   一直没有 .github/workflows —— 于是每轮改版的产物只能靠本机
+#   deploy.ps1 手工推，"第十轮改完没上线"就是这么来的。
+#   「写了但没生效」的自动化比没有自动化更糟：它让人以为已经上线了。
+#
+# 为什么发布用 peaceiris/actions-gh-pages（而不是官方 deploy-pages）：
+#   本站是【分支部署】：源码在 main、产物在 gh-pages —— 这是
+#   deploy.ps1 一直在做的事，也是 GitHub Pages 当前的设置。
+#   官方 actions/deploy-pages 走的是 "GitHub Actions" 发布源，
+#   用它必须先去 Settings → Pages 改 Source，那是一次手工改设置，
+#   改错了站点直接 404。选 peaceiris 与现有设置**零差异**：
+#   推的还是 gh-pages，站主不用动任何设置，CI 只是把手工作业变成自动。
+#   代价：多一个第三方 Action（钉 v4 主版本，未钉 commit SHA）。
+#
+# 失败即不发布（这是本文件的核心性质）：
+#   断言脚本在发布步骤【之前】执行，任一断言失败 → 该步退出码非 0 →
+#   后面的发布步骤根本不跑 → gh-pages 保持上次的产物。
+#   宁可站点停在旧版本，也不发布一个坏的版本。
+#
+# ⚠️ 接入时的已知状态（2026-10-13 本机实测，必须知道）：
+#   断言 ⑥ 目前会【红】：站点的「关于」页把已经下线的 /api/public/latest
+#   当作"未上线端点"在探测（static/js/app.js 的 ABOUT_ENDPOINTS 里有它，
+#   layouts/partials/spa-view-about.html 里也写了它），而这个片段被
+#   包含进【每一个】页面。也就是说在它被删掉之前，这个 workflow 会
+#   正确地拦住发布 —— 这是断言在起作用，不是 CI 坏了。
+#   恢复发布只需删掉两处引用：
+#     · static/js/app.js:        ['/api/public/latest', '…'],  这一行
+#     · layouts/partials/spa-view-about.html:  ② 可选端点 <code>/api/public/latest</code> …
+#   （删掉后本机实测 7/7 全过，见交付说明。）
+# ============================================================
+name: Deploy Blog
+
+"on":
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write      # peaceiris 需要往 gh-pages 分支推送
+
+concurrency:
+  group: deploy-blog-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # 版本写死：Hugo 小版本之间渲染/校验行为会变，跟着 "latest" 走
+  # 等于把发布结果交给运气。
+  HUGO_VERSION: 0.167.0
+  # 本机下载 hugo_extended_0.167.0_linux-amd64.tar.gz 后算出的 sha256
+  HUGO_SHA256: 0163f5c3deddac1f494a1629ddc40c65d18de9d5794facd98f7f96ac2c7d8957
+
+jobs:
+  build-assert-deploy:
+    name: 构建 + 断言 + 发布 gh-pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@v4
+        with:
+          # 本机手工发布用的是完整克隆。Hugo 的 .Lastmod / .GitInfo 依赖
+          # 完整历史，保持与手工流程一致，免得哪天打开 enableGitInfo 后
+          # 线上日期集体变成"今天"。
+          fetch-depth: 0
+
+      - name: 安装 Hugo ${{ env.HUGO_VERSION }} extended（校验 sha256）
+        run: |
+          set -euo pipefail
+          curl -sSfL -o /tmp/hugo.tar.gz \
+            "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          echo "${HUGO_SHA256}  /tmp/hugo.tar.gz" | sha256sum -c -
+          mkdir -p /tmp/hugobin
+          tar -xzf /tmp/hugo.tar.gz -C /tmp/hugobin hugo
+          sudo install -m 0755 /tmp/hugobin/hugo /usr/local/bin/hugo
+          hugo version
+
+      - name: 构建（参数与本机 deploy.ps1 一致）
+        run: |
+          set -euo pipefail
+          hugo --gc --minify --cleanDestinationDir
+          echo "产物文件数：$(find public -type f | wc -l | tr -d ' ')"
+          # .nojekyll：阻止 GitHub Pages 用 Jekyll 处理产物
+          # （下划线开头的文件/目录会被 Jekyll 直接丢掉）。
+          # peaceiris 默认也会建一个；这里显式建，是为了让"产物本身"
+          # 就是完整可发布的，不依赖发布动作的副作用。
+          touch public/.nojekyll
+
+      # 这一步失败 = 后面不发布。清单与理由见 scripts/assert-build.sh
+      - name: 断言产物（失败即不发布）
+        run: bash scripts/assert-build.sh public
+
+      - name: 发布到 gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          # 与本机 deploy.ps1 的 `git push -f` 行为对齐：gh-pages 保持
+          # 单提交，别让构建产物把分支历史撑成几百个提交
+          force_orphan: true
+          user_name: xiaokeqing
+          user_email: 3053970237@qq.com
+          commit_message: "deploy: ${{ github.sha }}"

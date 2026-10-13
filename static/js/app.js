@@ -1883,7 +1883,6 @@
     ['/api/public/alerts', '实时告警（按规则 + IP 聚合）'],
     ['/api/public/honeypot', '蜜罐战报'],
     ['/api/public/audit', '处置审计'],
-    ['/api/public/latest', '可选端点：最近事件（未上线时主页改用 audit）'],
     ['/api/health', '系统指纹（扁平对象，无信封）']
   ];
 
