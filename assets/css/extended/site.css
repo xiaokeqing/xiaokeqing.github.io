@@ -411,10 +411,12 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   /* 与正文同一份额外左内边距，页脚才会和正文左右对齐 */
   padding-left: var(--xk-sidew);
   font-size: 12.5px;
-  color: var(--xk-muted);
+  /* 页脚是唯一【直接压在背景图】上的小字（没有卡片托着），所以用比 --xk-muted 更深一档的灰蓝：
+     实测这里底噪最亮处约 L=.64，--xk-muted(#4F5F73) 只有 3.79–4.21:1，不达标；压到 #3E4E62 后 >5:1。 */
+  color: #3E4E62;
 }
 .xk-footer__in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.xk-footer__in a { color: var(--xk-muted); }
+.xk-footer__in a { color: #3E4E62; }
 .xk-footer__in a:hover { color: var(--xk-link); }
 .xk-footer__sep { color: rgba(138, 153, 171, .6); }
 
@@ -873,7 +875,6 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   max-width: 100%;
 }
 .xk-mod2__badge.is-muted { background: rgba(15, 42, 80, .06); color: var(--xk-muted); }
-.xk-mod__note { margin-top: 10px; font-size: 11.5px; line-height: 1.55; }
 
 /* 中栏最新笔记：最新一篇加大置顶，其余走紧凑列表 */
 .xk-note-hero {
@@ -1099,9 +1100,9 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-fp__v small { display: block; margin-top: 3px; font-family: var(--xk-sans); font-size: 11.5px; color: var(--xk-muted); }
 
 /* 「关于」页的公开端点一次性探测结果（站主第九轮 ⑤）：可用/未上线都用能过 4.5:1 的深色 */
-.xk-ep__v { display: block; }
-.xk-ep__v small { display: block; margin-top: 2px; font-family: var(--xk-sans); font-size: 11.5px; font-weight: 400; color: var(--xk-muted); }
-.xk-ep__st { color: var(--xk-muted); }
+.xk-ep__k { display: flex; flex-direction: column; min-width: 0; }
+.xk-ep__k small { margin-top: 2px; font-size: 11.5px; color: var(--xk-muted); }
+.xk-ep__st { color: var(--xk-muted); font-family: var(--xk-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .xk-ep__st.is-ok { color: #15803D; }
 .xk-ep__st.is-bad { color: #B91C1C; }
 

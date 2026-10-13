@@ -420,18 +420,36 @@
   function initHome() {
     $$('[data-xk-api-base]').forEach(function (n) { n.textContent = API.replace(/^https?:\/\//, ''); });
 
+    function readHomePart(j) {
+      return readApi(j.path).then(function (res) {
+        return { name: j.name, path: j.path, res: res, err: null };
+      }).catch(function (err) {
+        // 失败时退回 localStorage 里的快照：数字照显，但同步文案会如实写「上次同步于 X 分钟前」
+        return {
+          name: j.name, path: j.path, err: err,
+          res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null
+        };
+      });
+    }
+
     var load = function () {
-      return Promise.all(HOME_JOBS.map(function (j) {
-        return readApi(j.path).then(function (res) {
-          return { name: j.name, path: j.path, res: res, err: null };
-        }).catch(function (err) {
-          // 失败时退回 localStorage 里的快照：数字照显，但同步文案会如实写「上次同步于 X 分钟前」
-          return {
-            name: j.name, path: j.path, err: err,
-            res: err.snapshot ? { data: err.snapshot.data, syncedAt: err.snapshot.syncedAt } : null
-          };
-        });
-      })).then(function (parts) { renderHome(parts); });
+      return Promise.all(HOME_JOBS.map(readHomePart)).then(function (parts) {
+        /* 服务端的 24h 统计会抖：冷缓存下 /api/public/alerts 常返回 stats24h.available=false，
+           同一个 URL 过 15s（服务端缓存热了）再取就是真值 —— 实测记录见交付报告。
+           所以这里【只在确实 available=false 时】补一次请求（多这一次，且不进快照）；
+           补到真值就用，补不到就按降级口径显示（绝不拿窗口数冒充满 24h 总量）。 */
+        var al = parts.filter(function (p) { return p.name === 'alerts'; })[0];
+        var d = al && al.res ? envelope(al.res) : null;
+        if (!d || !d.stats24h || d.stats24h.available !== false) return parts;
+        return new Promise(function (r) { setTimeout(r, 1200); })
+          .then(function () { return readApi('/api/public/alerts', { force: true }); })
+          .then(function (res) {
+            var d2 = envelope(res);
+            if (d2 && d2.stats24h && d2.stats24h.available !== false) { al.res = res; al.err = null; al.retried = true; }
+            return parts;
+          })
+          .catch(function () { return parts; });
+      }).then(renderHome);
     };
 
     startPolling(load, HOME_JOBS.length);
@@ -747,16 +765,6 @@
         ? '<span class="xk-pulse" aria-hidden="true"></span>实时拦截动态'
         : '最近同步 · 拦截动态';
     }
-  }
-
-  /* 结果可能是数组，也可能包在 data/list/items 里 —— 不猜字段名，只在常见的三种里找 */
-  function pickArray(body) {
-    if (Array.isArray(body)) return body;
-    if (!body) return null;
-    ['data', 'list', 'items', 'events'].forEach(function (k) {
-      if (Array.isArray(body[k])) body = body[k];
-    });
-    return Array.isArray(body) ? body : null;
   }
 
   /* ==========================================================================
@@ -1774,8 +1782,9 @@
     if (!host) return;
 
     host.innerHTML = ABOUT_ENDPOINTS.map(function (e) {
-      return '<li data-xk-ep="' + esc(e[0]) + '"><span class="xk-mono">' + esc(e[0]) + '</span>' +
-        '<b class="xk-ep__v"><span class="xk-ep__st">探测中…</span><small>' + esc(e[1]) + '</small></b></li>';
+      return '<li data-xk-ep="' + esc(e[0]) + '">' +
+        '<span class="xk-ep__k"><span class="xk-mono">' + esc(e[0]) + '</span><small>' + esc(e[1]) + '</small></span>' +
+        '<b class="xk-ep__st">探测中…</b></li>';
     }).join('');
 
     var done = 0, okCount = 0, bad = [];
@@ -1794,12 +1803,22 @@
       }
     }
 
-    /* 一次性探测：故意不带 If-None-Match、不写进 localStorage 快照 —— 这一页要的是"现在的状态" */
-    ABOUT_ENDPOINTS.forEach(function (e) {
-      fetch(API + e[0], { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' })
-        .then(function (r) { settle(e[0], 'HTTP ' + r.status + (r.ok ? ' · 可用' : ' · 未上线'), r.ok ? 'is-ok' : 'is-bad'); })
-        .catch(function () { settle(e[0], '不可达 / 未接入', 'is-bad'); });
-    });
+    /* 一次性探测：故意不带 If-None-Match、不写进 localStorage 快照 —— 这一页要的是"现在的状态"。
+       并发度限死 2：服务端有公网并发闸（X-Public-Concurrency），6 个并发探测会被排队，
+       界面上就会出现一直"探测中…"的假等待；小池子慢一点，但每一项都会落到真实结果。 */
+    var queue = ABOUT_ENDPOINTS.slice(), running = 0, MAXC = 2;
+    function pump() {
+      while (running < MAXC && queue.length) {
+        (function (e) {
+          running += 1;
+          fetch(API + e[0], { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' })
+            .then(function (r) { settle(e[0], 'HTTP ' + r.status + (r.ok ? ' · 可用' : ' · 未上线'), r.ok ? 'is-ok' : 'is-bad'); })
+            .catch(function () { settle(e[0], '不可达 / 未接入', 'is-bad'); })
+            .then(function () { running -= 1; setTimeout(pump, 150); });
+        })(queue.shift());
+      }
+    }
+    pump();
   }
 
   /* ==========================================================================
