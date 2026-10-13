@@ -104,19 +104,29 @@ else
   done
 fi
 
-# ---------- ⑥ 不得出现死端点 /api/public/latest ----------
-head1 "⑥ 全站不得出现死端点 /api/public/latest"
-HITS=$(scan '/api/public/latest' | head -20)
-if [ -z "$HITS" ]; then
-  ok "没有任何文件引用 /api/public/latest"
+# ---------- ⑥ 产物里出现的 /api/public/* 必须都在"已上线白名单"里 ----------
+# 【2026-10-14 改】原来这条写死"不得出现 /api/public/latest"，前提是它当时已下线。
+# 但该端点后来上线了（线上实测 200 + available=true），而「关于」页写的是**正确的文档**
+# ——"③ /api/public/latest 已上线：返回窗口聚合"——于是断言把正确文档当成死端点拦下，
+# 导致第十一轮整轮发布被拒（gh-pages 未更新）。教训：断言不要绑定"某个端点当前是死是活"
+# 这种会过期的前提，而应断言"所有出现的端点都必须在白名单里"。
+head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
+# 白名单 = 线上实测能返回 200 的公开端点。**新增端点必须先在线上实测，再手动加进来。**
+ALLOWED="ask kb overview alerts latest honeypot audit geo"
+FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
+BAD=""
+for e in $FOUND; do
+  case " $ALLOWED " in *" $e "*) ;; *) BAD="$BAD $e" ;; esac
+done
+if [ -z "$BAD" ]; then
+  ok "产物里出现的端点全部在白名单内（$(echo $FOUND | wc -w) 个：$(echo $FOUND | sed 's/ $//')）"
 else
-  no "有文件引用已下线的 /api/public/latest："
-  printf '%s\n' "$HITS" | sed 's/^/        /'
-  printf '%s\n' "$HITS" | head -3 | while IFS= read -r f; do
-    grep -n -m2 -e '/api/public/latest' "$f" | sed "s|^|        $(printf '%s' "$f") :|"
+  no "产物里出现白名单外的 /api/public/* 端点（可能是死端点或拼写错误）：$BAD"
+  for e in $BAD; do
+    grep -rl -- "/api/public/$e" "$PUB" 2>/dev/null | head -3 | sed 's/^/        /'
   done
-  echo "        → 处理方式二选一：① 从引用处删掉（推荐：它每次加载都会打一个 404）；"
-  echo "                          ② 若确实要保留'未上线端点探测'的说明，就不要把它写进产物。"
+  echo "        → 该端点若确实已上线：线上实测 200 后，把它加进本脚本的 ALLOWED；"
+  echo "          若已下线：删掉引用（否则每次加载都会打一个 404）。"
 fi
 
 # ---------- 汇总 ----------
