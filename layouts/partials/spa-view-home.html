@@ -39,7 +39,8 @@
           <span class="xk-hstat__caliber" data-xk-caliber="guard">口径 /api/public/audit · summary.blockedByGuard（由护栏拦下的动作数）</span>
         </li>
         <li class="xk-hstat">
-          <b class="xk-hstat__num">{{ site.Params.testsRun }}</b>
+          {{/* 构建期常量（hugo.toml params.tests*），不依赖任何接口；参数缺失时不显示空数字，写「未接入」 */}}
+          <b class="xk-hstat__num">{{ with site.Params.testsRun }}{{ . }}{{ else }}未接入{{ end }}</b>
           <span class="xk-hstat__label">单元测试</span>
           <span class="xk-hstat__caliber">口径 {{ site.Params.testsSource }}：Tests run {{ site.Params.testsRun }} · Failures {{ site.Params.testsFailed }} · Skipped {{ site.Params.testsSkipped }} · 截至 {{ site.Params.testsAsOf }}</span>
         </li>
