@@ -17,10 +17,15 @@
 */}}
 {{- $posts := (where site.RegularPages "Section" "posts").ByDate.Reverse -}}
 {{- $lead := index $posts 0 -}}
-  {{- /* 第十二轮：窄屏（≤980px）的她 —— 132px 头像图集形态（04 方案 §2.3：人物区嵌在内容区顶部）。
-         为什么放在 Hero 之前：手机端 Hero（标题+导语+可玩入口+四个数字）本身就很长，
-         放在 Hero 之后她会掉到屏幕外好几屏。桌面端这块卡片是 display:none
-         （桌面用 CRT 场景里的全身动画，避免同一个人出现两次）。 */}}
+  {{- /* 第十二轮返工：主页首屏 = **全屏书桌场景本身**（站主验收标准："和视频并排像不像"）。
+         这块 100vh 空白把旧的仪表盘内容（标题块/靶场表单/四个指标卡/笔记流）整体推下首屏 ——
+         一个都没删、也都还能滚到，只是不再压住 CRT 与屏幕里的她（站主第 4 条「旧内容让位」）。
+         为什么用"推下首屏"而不是"默认收起的抽屉"：见 zz-kurisu.css 5b 注释（抽屉会让两项
+         真浏览器断言（三栏 used value / 一屏固定）假红）。 */}}
+  {{- if site.Params.kurisuEnabled }}<div class="xk-home__stage" aria-hidden="true"></div>{{ end }}
+
+  {{- /* 窄屏（≤980px）的她 —— 132px 头像图集形态（04 方案 §2.3：人物区嵌在内容区顶部）。
+         桌面端这块卡片是 display:none（桌面用 CRT 场景里的全身动画，避免同一个人出现两次）。 */}}
   {{ partial "xk-kurisu-mobile.html" . }}
 
   <section class="xk-hero{{ if site.Params.kurisuEnabled }} xk-hero--crt{{ end }}" aria-labelledby="xk-hero-name">

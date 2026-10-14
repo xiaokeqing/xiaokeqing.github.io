@@ -2,7 +2,7 @@
  "format": "xiaokeqing.kurisu.v2",
  "generator": {
   "script": "scripts/kurisu/build_kurisu_assets.py",
-  "builtAt": "2026-10-14T01:08:12",
+  "builtAt": "2026-10-14T08:13:02",
   "ktx": "ktx.exe",
   "sourceManifestSha256": "259DFC10E3FF1453848295F87340948F99F1F2E4254C30201334757EBE210EBB",
   "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514"
@@ -41,8 +41,8 @@
    "h": 0.53135
   },
   "compose": {
-   "charHRatio": 0.68,
-   "footYRatio": 1.0,
+   "charHRatio": 0.98,
+   "footYRatio": 1.06,
    "bgZoom": 1.45,
    "bgBright": 1.3,
    "bgSaturate": 1.1

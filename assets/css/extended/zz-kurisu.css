@@ -46,19 +46,16 @@ html[data-xk-theme="read"] .xk-crt { display: none; }
 /* 场景生效时把 bg.jpg 那一层藏起来 —— 文件一个字节没动，只是不再显示（站主评审【补 5】允许） */
 html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
 
-/* 场景层的舞台：一个"等比铺满视口"的盒子（1672×941 = 底图原始比例），再整体放大 1.35 倍、
-   横向平移一点。为什么放大+平移：底图里 CRT 在正中间，而主页左侧是标题/数字文字块 ——
-   放大之后就有余量把 CRT（连同她）平移到右侧空白区，既不和文字打架，也仍然铺满整屏。
-   平移量用自身宽度的百分比（translate 的百分比以自身尺寸为准），换视口尺寸时按比例跟随。 */
+/* 场景层就是"那张书桌照片本身"：等比铺满、居中，**不裁剪、不模糊、不变形、不加 filter**。
+   站主要求："不模糊、不压成背景板" → 压暗只交给上面那层很淡的暗纱（见下）。
+   底图与盒子比例一致（1672×941），所以底图里 CRT 的百分比坐标可以直接拿来定位她。 */
 .xk-crt__stage {
   position: absolute;
   left: 50%;
   top: 50%;
-  --xk-crt-zoom: 1.1;
-  --xk-crt-pan: 12.3%;
-  width: max(110vw, 195.45vh);
-  height: max(110vh, 61.91vw);
-  transform: translate(calc(-50% + var(--xk-crt-pan)), -50%);
+  width: max(100vw, 177.68vh);
+  height: max(100vh, 56.28vw);
+  transform: translate(-50%, -50%);
 }
 
 /* 场景生效时把暗纱调薄：底图本身已经是暗调影棚照，再叠 tech 主题那套 .34→.60 的暗纱
@@ -66,13 +63,12 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
    对比度不是靠这层保证的：主页文字压在 .xk-hero 自己的深色径向渐变上（见 site.css §19.1）。 */
 html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
   background-image:
-    radial-gradient(120% 90% at 30% 12%, rgba(6, 14, 26, .12) 0px, rgba(6, 14, 26, 0) 70%),
     linear-gradient(
       180deg,
-      rgba(6, 12, 22, .18) 0px,
-      rgba(6, 12, 22, .22) 320px,
-      rgba(6, 12, 22, .28) 640px,
-      rgba(6, 12, 22, .36) 100%);
+      rgba(6, 12, 22, .10) 0px,
+      rgba(6, 12, 22, .14) 320px,
+      rgba(6, 12, 22, .20) 640px,
+      rgba(6, 12, 22, .28) 100%);
 }
 /* 底图只在桌面端（>980px）才会被请求；这也是"移动端不下载场景图"的实现方式 */
 @media (min-width: 981px) {
@@ -94,8 +90,8 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
   height: 53.1350%;
   overflow: hidden;                 /* ★ 角色一律裁剪在屏幕内（源合成脚本就是这么做的） */
   background: var(--xk-kurisu-lab, none) center / 100% 100% no-repeat;
-  --xk-kurisu-char-h: 66%;          /* = manifest.scene.compose.charHRatio（角色高 / 屏高） */
-  --xk-kurisu-char-foot: 96%;       /* = manifest.scene.compose.footYRatio（脚位置 / 屏高） */
+  --xk-kurisu-char-h: 98%;          /* = manifest.scene.compose.charHRatio（角色高 / 屏高） */
+  --xk-kurisu-char-foot: 106%;      /* = manifest.scene.compose.footYRatio（脚位置 / 屏高） */
 }
 
 /* 极轻的 CRT 质感：一层很淡的扫描线 + 四角暗角。刻意做得很轻（站主："别夸张"）。
@@ -138,7 +134,7 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
   background: rgba(10, 12, 16, .86);
   border-radius: 4px;
   color: #EEF0F6;                                /* 实测对比度见交付报告 */
-  font-size: clamp(10px, 0.92vw, 17px);
+  font-size: clamp(12px, 1.25vw, 22px);          /* 站主："字号要能读"（1280 下 = 16px） */
   line-height: 1.25;
   letter-spacing: .01em;
 }
@@ -319,30 +315,25 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
 .xk-kurisu--corner .xk-kurisu__status { display: none; }
 
 /* ---------------------------------------------------------------------------
-   5b. 主页首屏版式（只在 CRT 场景生效的桌面端）：左侧信息列收窄，右侧留给她
+   5b. 主页 = 全屏场景本身（站主 2026-10-14 返工要求，验收标准是"和视频并排像不像"）
    ---------------------------------------------------------------------------
-   底图里的 CRT 在正中间，而主页左侧原本是"标题 + 导语 + 可玩入口 + 四个数字"（宽 1020px）。
-   两者叠在一起会互相压住，所以：
-     · 左列收窄到 560px（四个数字排成 2×2），右侧就是她在 CRT 里的位置；
-     · Hero 给一个最小高度，让 CRT 屏幕（连同屏内字幕条）留在**首屏之内**、
-       不被下面的三栏卡片盖住 —— 字幕条在屏幕高 84.5% 处，必须看得见。
-   这是"首屏要一眼看到它在跑"（第十一轮 ③）与"她要看得见"（第十二轮）的折中。 */
+   视频里的主页：整屏就是那张书桌照，正中间一台 CRT，她在屏幕里，
+   屏内只有"右上状态行 + 底部字幕条"，页面最底部一条输入条 —— **再没有别的 UI**。
+   所以这里：
+     · .xk-home__stage 是一块 100vh 的空白（桌面端、仅场景生效时）—— 它不是视觉元素，
+       作用是**把旧的仪表盘内容整体推到首屏之下**：首屏 = 场景 + 左侧细导航 + 底部输入条，
+       标题块/靶场表单/四个指标卡/笔记流都还在（一个都没删、也能滚到），只是不再压在她身上。
+     · 为什么不做成"默认收起的抽屉"：收起的 <details> / display:none 会让
+       .xk-portal--home 的 grid-template-columns 拿不到 used value，既有的
+       "三栏 300/1fr/320 不许回归"与"一屏固定"两项真浏览器断言会因此假红。
+       推下首屏既满足"不遮挡"，又不改变任何既有布局契约 —— 这是当前最稳的做法。
+   左栏导航（x≈20–156）在 981px 以上的任何视口都不会与 CRT 屏幕（底图 33.85%–70.2%）重叠，
+   顶部只有一颗主题胶囊 + 搜索框，也落在 CRT 之外。 */
 @media (min-width: 981px) {
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__in { min-height: min(78vh, 700px); }
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__text,
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-play,
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__stats { max-width: 560px; }
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 14px;
-  }
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__brand { font-size: 42px; }
+  html[data-xk-crt-on="1"] .xk-home__stage { min-height: 100vh; }
 }
-/* 981–1199px：可用宽度更小，左列再收一档，保证她和文字块之间仍有间隔 */
-@media (min-width: 981px) and (max-width: 1199px) {
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__text,
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-play,
-  html[data-xk-crt-on="1"] .xk-hero--crt .xk-hero__stats { max-width: 440px; }
+@media (max-width: 980px) {
+  .xk-home__stage { display: none; }   /* 窄屏不铺场景，也就不需要这块占位 */
 }
 
 /* ---------------------------------------------------------------------------
