@@ -10,7 +10,9 @@
      ⑤ **六页初始屏断言（2026-10-14 第四批新口径）**：每页初始 `.on` 必须落在它自己那一屏
         （alerts→v-monitor、posts→v-notes、labs→v-range、about→v-about、ai→v-ai），
         `main[data-xk-ssr]` 的取值要等于该页路由名，`#xk-views` 要在；
-        主页（不是 .view 结构）改为断言 `.navpill` 当前项 + `#charCanvas` 真的画出东西。
+        主页（不是 .view 结构）改为断言 `.dock` 当前项 + `#charCanvas` 真的画出东西。
+        ★ 主页导航本批已与内容页统一为左侧竖排 `.dock`（原顶部胶囊 `.navpill` 已删除），
+          所以这里的取当前项选择器同步改成 `.dock a.on`（`#dock a.on` 同源）。
    ★ 旧口径的"hash 路由逐条切页（核对 app.js 的 data-xk-render）"那一段**已删除**：
      站主 2026-10-14 第四批口径明确"六个生产页 = demo 文件整份，不再套站点 SPA 外层、不挂 kurisu-player"，
      那段测的是已经不存在的机制。路由契约由 _dev/check-ssr-contract.py 继续负责。
@@ -245,7 +247,7 @@ async function main() {
       rec.playerInstances = await evalJs('(window.KurisuPlayer&&KurisuPlayer.instances)?KurisuPlayer.instances().length:-1');
       rec.demoCanvasOpaque = await evalJs("(function(){var c=document.getElementById('charCanvas');if(!c)return 'no-canvas';var x=c.getContext('2d');if(!c.width)return 'zero-size';var d=x.getImageData(0,0,c.width,c.height).data,on=0;for(var i=3;i<d.length;i+=4){if(d[i]>8)on++;}return on;})()");
       rec.demoClip = await evalJs("(typeof cur!=='undefined'?cur:null)");
-      rec.navpillOn = await evalJs("(function(){var a=document.querySelector('.navpill a.on');return a?a.textContent.trim():null;})()");
+      rec.dockOn = await evalJs("(function(){var a=document.querySelector('.dock a.on');return a?a.textContent.trim():null;})()");
     }
     report.pages.push(rec);
     console.log('        nonOk=' + nonOk.length + ' console=' + consoleMsgs.length +
@@ -277,9 +279,9 @@ async function main() {
       }
     } else {
       const opaque = await evalJs("(function(){var c=document.getElementById('charCanvas');if(!c)return -1;var x=c.getContext('2d');if(!c.width)return -1;var d=x.getImageData(0,0,c.width,c.height).data,on=0;for(var i=3;i<d.length;i+=4){if(d[i]>8)on++;}return on;})()");
-      const nav = await evalJs("(function(){var a=document.querySelector('.navpill a.on');return a?a.textContent.trim():null;})()");
+      const nav = await evalJs("(function(){var a=document.querySelector('.dock a.on');return a?a.textContent.trim():null;})()");
       ok = ssr === p.expect && views && opaque > 10000 && nav === '主页';
-      extra = '画布不透明像素=' + opaque + ' · navpill=' + nav;
+      extra = '画布不透明像素=' + opaque + ' · dock=' + nav;
     }
     if (!ok) routeBad++;
     await shot(`${PREFIX}-view-${p.name}`);

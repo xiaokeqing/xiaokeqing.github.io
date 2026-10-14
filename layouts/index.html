@@ -3,9 +3,14 @@
    ----------------------------------------------------------------------------
    搬过来的：它自己的 <style>（逐字）、<body> 全部标记（逐字）、那一段内联 <script>
    （4 剪辑逐帧 canvas / 开场播完硬切 idle / showHud 打字 / 原版落位公式，逐字）。
-   只改两处：
+   只改三处：
      ① 素材 src → 我们 static/ 下的真文件（映射表见 _dev/gen-demo-pages.py）
-     ② .navpill 的 href="#" → 站点真路由（/ · /alerts/ · /posts/ · /labs/ · /ai/ · /about/）
+     ② demo 的顶部胶囊 `.navpill` → 内容页外壳那一份**左侧竖排 dock**：标记逐字照
+        `layouts/partials/xk-demo/shell-chrome.html` 的 <nav class="dock">，样式值逐字照
+        `layouts/partials/xk-demo/shell-style.html` 的 `.dock` / `.dock .brand` / `.dock a`（+ 980px 那条）。
+        项目顺序 XK-LAB ｜ 主页 · 监测中心 · AI 问答 · 笔记 · 靶场 · 关于；主页高亮"主页"。
+     ③ 链接是站点真路由（/ · /alerts/ · /posts/ · /labs/ · /ai/ · /about/）
+        （不是 demo 的 `<button data-v>`，也不走 `/#/…` hash：这一页不挂站点 SPA 的 app.js）
    不搬的：站点 SPA 外层（app.js / 侧栏 / 顶行 / 输入条 / 页脚 / 搜索层）、kurisu-player.js、
    状态机/语音/口型 —— 站主明确要求这些**不要**进这一页。
    保留的不可见契约：Hugo <head>（标题/描述/canonical/OG/favicon）+ <main id="content"
@@ -20,6 +25,12 @@
   :root{
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    /* —— 左侧 dock 用到的变量：值逐字取自 xk-demo/shell-style.html 的 :root（warm 口径） —— */
+    --line:rgba(255,246,235,.15);
+    --line2:rgba(255,246,235,.28);
+    --txt:#FAF7F0; --mut:#D2CBBD;
+    --acc:#7FD4D8;
+    --solid:rgba(48,45,41,.82);
     /* —— 来自 static/kurisu/manifest.json scene.*（底图 1672×941） —— */
     --crt-x:32.8947%; --crt-y:20.7226%; --crt-w:35.0478%; --crt-h:47.0776%;
   }
@@ -64,12 +75,23 @@
     vertical-align:-2px;animation:blink 1s steps(1) infinite}
   @keyframes blink{50%{opacity:0}}
 
-  /* 屏外：导航浮条 */
-  .navpill{position:fixed;top:16px;left:16px;z-index:60;display:flex;gap:2px;
-    background:rgba(11,17,24,.82);border:1px solid rgba(120,200,220,.35);border-radius:99px;
-    padding:4px;backdrop-filter:blur(8px)}
-  .navpill a{font:12.5px var(--sans);color:#8CA3B8;text-decoration:none;padding:5px 12px;border-radius:99px}
-  .navpill a.on{color:#39D0D8;background:rgba(57,208,216,.1)}
+  /* 屏外：左侧竖排导航 dock（值逐字照 xk-demo/shell-style.html 的 .dock / .dock .brand / .dock a） */
+  .dock{position:fixed;left:0;top:14px;z-index:60;
+    display:flex;flex-direction:column;gap:2px;
+    background:var(--solid);border:1px solid var(--line2);border-left:none;border-radius:0 14px 14px 0;
+    padding:6px 4px 6px 2px;backdrop-filter:blur(4px);box-shadow:0 10px 34px rgba(0,0,0,.45)}
+  .dock .brand{font:600 11px var(--mono);color:var(--acc);letter-spacing:.08em;text-align:center;
+    padding:3px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .dock a{display:flex;align-items:center;background:none;border:1px solid transparent;
+    color:var(--mut);font:13px var(--sans);padding:7px 10px 7px 8px;border-radius:0 9px 9px 0;cursor:pointer;
+    text-align:left;white-space:nowrap;text-decoration:none}
+  .dock a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}
+  .dock a:hover{color:var(--txt)}
+
+  @media (max-width:980px){
+    .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}
+    .dock .brand{display:none}
+  }
 
   /* 开场遮罩（避免底图未载时露白） */
   .bootveil{position:fixed;inset:0;background:#0B1118;z-index:80;transition:opacity .4s}
@@ -108,9 +130,14 @@
   </div>
 </div>
 
-<nav class="navpill" aria-label="站点导航（演示）">
-  <a class="on" href="/">主页</a><a href="/alerts/">监测中心</a><a href="/posts/">笔记</a>
-  <a href="/labs/">靶场</a><a href="/ai/">AI 问答</a><a href="/about/">关于</a>
+<nav class="dock" id="dock" aria-label="站点导航（演示）">
+  <div class="brand">XK-LAB</div>
+  <a href="/" class="on">主页</a>
+  <a href="/alerts/">监测中心</a>
+  <a href="/ai/">AI 问答</a>
+  <a href="/posts/">笔记</a>
+  <a href="/labs/">靶场</a>
+  <a href="/about/">关于</a>
 </nav>
 
 <div class="bootveil" id="bootveil"></div>

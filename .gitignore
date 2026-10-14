@@ -63,3 +63,5 @@ _dev/*
 !_dev/build_statemachine_manifest.py
 !_dev/build_voice_bank.py
 !_dev/build_mouth_data.py
+
+!_dev/gen-demo-pages.py
