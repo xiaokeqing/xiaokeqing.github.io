@@ -9,15 +9,15 @@
  },
  "budgets": {
   "firstScreenBudgetBytes": 1500000,
-  "firstScreenBytes": 699050,
+  "firstScreenBytes": 971422,
   "firstScreenFiles": {
-   "full/idle.intro.webp": 53152,
+   "full/lookcrt.boot.webp": 325524,
    "full/idle.boot.webp": 531854,
    "full/idle.poster.webp": 23114,
    "avatar/normal.idle.webp": 86696,
    "avatar/normal.static.webp": 4234
   },
-  "note": "首屏只载 idle.boot + 静态头像；hi 图集在首屏渲染完成后 200ms 后台补",
+  "note": "首屏 = 开场图集(lookcrt.boot) + idle boot 图集 + 静帧 + 头像静帧；hi 图集在首屏渲染完成后后台补",
   "warnings": [
    "speaking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）",
    "thinking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）"
@@ -109,13 +109,6 @@
     "w": 321,
     "h": 432,
     "bytes": 23114
-   },
-   "intro": {
-    "url": "kurisu/full/idle.intro.webp",
-    "w": 764,
-    "h": 1028,
-    "bytes": 53152,
-    "note": "素材无独立特写帧：用 idle 首帧原生分辨率当特写，运行时 transform scale 缩回全身"
    }
   },
   "speaking": {
@@ -195,6 +188,40 @@
     "bytes": 23552
    },
    "intro": null
+  },
+  "lookcrt": {
+   "frames": 30,
+   "frameIntervalMs": 100,
+   "loopMode": "once_then_hold",
+   "fit": "screen",
+   "role": "intro",
+   "next": "idle",
+   "columns": 8,
+   "frameWidth": 392,
+   "frameHeight": 315,
+   "source": {
+    "bundle": "amadeus-visual-runtime-2026-09-26.zip",
+    "clip": "look_at_CRT_loop",
+    "frames": 180,
+    "frameIntervalMs": 33,
+    "stride": 3,
+    "note": "原包 assets/scenarios/runtime/look_at_CRT/look_at_CRT_loop/loop/ 的现成 PNG 序列：整段就是「贴脸靠近镜头」的成片，含房间与 CRT 边框，所以按整屏绘制（fit=screen）。原包没有「镜头拉远」的序列，开场结束后由播放器做一次淡入淡出切到 idle。"
+   },
+   "atlas": {
+    "boot": {
+     "url": "kurisu/full/lookcrt.boot.webp",
+     "frames": 30,
+     "w": 3136,
+     "h": 1260,
+     "bytes": 325524
+    }
+   },
+   "poster": {
+    "url": "kurisu/full/lookcrt.poster.webp",
+    "w": 392,
+    "h": 315,
+    "bytes": 13906
+   }
   }
  },
  "emotions": {

@@ -41,10 +41,13 @@
   background: #05080d center / cover no-repeat;
 }
 html[data-xk-crt-on="1"] .xk-crt { display: block; }
-/* read 主题不铺场景（浅色阅读模式的对比度契约优先）；写在后面前面都无所谓，靠层叠顺序赢 */
-html[data-xk-theme="read"] .xk-crt { display: none; }
+/* ★ 2026-10-14 返工：read 主题**也**铺场景。原因：主页正文已经按站主要求删空了 ——
+   再不铺场景，阅读主题下的主页就是一整页空白（只剩导航与输入条）。
+   场景层是固定定位 + pointer-events:none，主页也没有浅色玻璃正文要保对比度；
+   read 主题下"深字压深照片"的那几处（导航、搜索胶囊、主题胶囊）由本文件末尾
+   一组 [data-xk-crt-on="1"] 覆盖规则单独解决，别的页面完全不受影响。 */
 /* 场景生效时把 bg.jpg 那一层藏起来 —— 文件一个字节没动，只是不再显示（站主评审【补 5】允许） */
-html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
+html[data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
 
 /* 场景层就是"那张书桌照片本身"：等比铺满、居中，**不裁剪、不模糊、不变形、不加 filter**。
    站主要求："不模糊、不压成背景板" → 压暗只交给上面那层很淡的暗纱（见下）。
@@ -60,8 +63,9 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
 
 /* 场景生效时把暗纱调薄：底图本身已经是暗调影棚照，再叠 tech 主题那套 .34→.60 的暗纱
    就黑成一片了。这里保留"上薄下浓"的形状（文字带加深），但整体减半 ——
-   对比度不是靠这层保证的：主页文字压在 .xk-hero 自己的深色径向渐变上（见 site.css §19.1）。 */
-html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
+   主页的文字（字幕条 / 状态行 / 输入条）都自带深色胶囊底，对比度不靠这层保证。
+   ★ 2026-10-14：不再限定 tech 主题（read 主题下主页也铺场景，见上）。 */
+html[data-xk-crt-on="1"] .xk-veil {
   background-image:
     linear-gradient(
       180deg,
@@ -70,14 +74,29 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
       rgba(6, 12, 22, .20) 640px,
       rgba(6, 12, 22, .28) 100%);
 }
-/* 底图只在桌面端（>980px）才会被请求；这也是"移动端不下载场景图"的实现方式 */
-@media (min-width: 981px) {
+/* 底图在桌面端与窄屏都会被请求（窄屏也要这个"大屏"效果） */
+.xk-crt__stage {
+  background-image: url("/images/crt/desk.webp");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+/* ★ 窄屏（≤980px）：CRT 屏幕铺满视口宽度。
+   275vw = 100vw ÷ 36.3636%（屏幕宽度占底图的比例）；高度按底图比例 1.7768 算。
+   这样手机上她与字幕条都完整落在屏幕里，多出来的上下部分交给 #05080d 的场景底色。
+   （旧版窄屏整层 display:none、退回 132px 头像卡片 —— 站主要"一进来就是大屏"，已废弃。） */
+@media (max-width: 980px) {
   .xk-crt__stage {
-    background-image: url("/images/crt/desk.webp");
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
+    width: 275vw;
+    height: 154.77vw;
+    /* 底图里 CRT 屏幕的中心在 52.03%（= 0.3385 + 0.3636/2），不是 50% —— 桌面端那点
+       偏移正好和视频一致，但窄屏上屏幕已经铺满视口宽度，再偏 2% 就会把右边 22px 切掉。
+       所以窄屏上按"屏幕中心"对齐视口中心：52.03% − 50% = 左移 2.03% 舞台宽。 */
+    transform: translate(-52.03%, -50%);
   }
+  /* 窄屏字幕条：屏幕只有 ~320px 高，11.5% 的高度里要放下两行 —— 12px 太小，
+     抬到 13px 起（实测两行 32px，落在 37px 的条里不会截断）。 */
+  .xk-kurisu__say { font-size: clamp(13px, 3.33vw, 22px); }
 }
 
 /* CRT 屏幕矩形：数值 = manifest.scene.crtRectNorm（源底图 1672×941 上 x566 y168 w608 h500）。
@@ -110,7 +129,7 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
 /* ---------------------------------------------------------------------------
    2. CRT 屏幕内：角色画布 / 字幕条 / 状态行
    ---------------------------------------------------------------------------
-   ⚠️ 字幕条与状态行是**真文本**；画布是装饰（aria-hidden 在模板里写死）。 */
+   ⚠️ 字幕条与状态行是**真文本**；两张画布是装饰（aria-hidden 在模板里写死）。 */
 .xk-kurisu__canvas {
   position: absolute;
   inset: 0;
@@ -118,6 +137,21 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
   height: 100%;
   display: block;
 }
+/* 两层画布：
+   · --main  她本人（idle / speaking / thinking 图集，按 charRect 站在屏幕里）
+   · --intro 开场"贴脸靠近镜头"的**原包成片帧序列**（整屏铺满）
+   开场层平时透明；只有 [data-xk-crt-intro="1"] 期间不透明，同时主层收起来
+   （避免"先闪一下空房间/全身再贴脸"）。摘掉属性后两层各走 420ms 的 opacity 过渡
+   —— 这就是"贴脸 → 全身站定"的切换方式：**淡切**，不是 zoom（原包没有拉远序列）。 */
+.xk-kurisu__canvas { transition: opacity 420ms ease; }
+.xk-kurisu__canvas--intro { opacity: 0; pointer-events: none; }
+[data-xk-crt-intro="1"] .xk-kurisu__canvas--intro { opacity: 1; }
+[data-xk-crt-intro="1"] .xk-kurisu__canvas--main { opacity: 0; }
+[data-xk-crt-intro="1"].xk-crt__screen { background-image: none; }
+/* 开场（贴脸）时字幕条先不出现 —— 视频里前两秒屏内没有字幕，第一句话是站定之后才说的。
+   只做 opacity，不改布局（字幕条的位置始终固定，不会因为出现/消失而抖动）。 */
+[data-xk-crt-intro="1"] .xk-kurisu__say { opacity: 0; }
+.xk-kurisu--stage .xk-kurisu__say { transition: opacity 240ms ease; }
 
 /* 屏内底部字幕条：位置与源视频标定一致（起于屏高 84.5%、高 11.5%） */
 .xk-kurisu__say {
@@ -170,25 +204,17 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
 }
 
 /* ---------------------------------------------------------------------------
-   3. "大头出场"：特写静帧（idle 首帧的**原生分辨率**）+ CSS transform 缩放
+   3. 开场（"贴脸大头 → 拉远到全身站定"）—— 这里**不再有** transform: scale() 的假动画
    ---------------------------------------------------------------------------
-   素材里没有独立的贴脸镜头（交接方确认），所以：
-     静帧按角色同一套几何摆好（高度 = 屏高 × charHRatio、脚踩 footYRatio），
-     再用 transform: scale() 从 2.6 倍缩到 1 倍，原点放在头部附近
-     —— 视觉上就是"贴脸特写 → 拉远到全身"，然后淡出把画面交给动画。
-   用 transform 而不是逐帧缩放：走合成器、不占主线程；reduced-motion 下整段跳过（JS 里判断）。 */
-.xk-kurisu__intro {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% - var(--xk-kurisu-char-foot));
-  height: var(--xk-kurisu-char-h);
-  width: auto;
-  transform: translateX(-50%) scale(1);
-  transform-origin: 50% 8%;
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
+   历史：上一版素材里没有独立特写，于是用 idle 首帧 + CSS transform: scale(2.6→1) 假装
+   "拉远"，被站主否掉（"这个也不用你自己做，人家动画啥的都是做好的，你解包完直接用"）。
+   现在开场是**原包现成的帧序列**：04 场景包
+   `assets/scenarios/runtime/look_at_CRT/look_at_CRT_loop/loop/` 的 180 张 PNG
+   （整段就是"贴脸靠近镜头"的成片，房间 + 她 + CRT 边框都在帧里），
+   经 scripts/kurisu/build_intro_clip.py 打成 static/kurisu/full/lookcrt.boot.webp，
+   由 kurisu-player.js 画在 .xk-kurisu__canvas--intro 上（真 rAF 逐帧推进）。
+   所以本节只剩下面这条：开场期间把屏内实验室背景收起来（见 §2）。
+   ⚠️ 原包没有"镜头拉远"序列 → 开场结束是 420ms 淡切（§2 的 opacity 过渡），不是 zoom。 */
 
 /* ---------------------------------------------------------------------------
    4. 右栏角色面板（栏目页 320px 右栏 = 人物在上、原口径内容保留在下方）
@@ -315,26 +341,15 @@ html[data-xk-theme="tech"][data-xk-crt-on="1"] .xk-veil {
 .xk-kurisu--corner .xk-kurisu__status { display: none; }
 
 /* ---------------------------------------------------------------------------
-   5b. 主页 = 全屏场景本身（站主 2026-10-14 返工要求，验收标准是"和视频并排像不像"）
+   5b. 主页 = 全屏场景本身（站主 2026-10-14 第二次返工："主页除了导航栏全删掉"）
    ---------------------------------------------------------------------------
    视频里的主页：整屏就是那张书桌照，正中间一台 CRT，她在屏幕里，
    屏内只有"右上状态行 + 底部字幕条"，页面最底部一条输入条 —— **再没有别的 UI**。
-   所以这里：
-     · .xk-home__stage 是一块 100vh 的空白（桌面端、仅场景生效时）—— 它不是视觉元素，
-       作用是**把旧的仪表盘内容整体推到首屏之下**：首屏 = 场景 + 左侧细导航 + 底部输入条，
-       标题块/靶场表单/四个指标卡/笔记流都还在（一个都没删、也能滚到），只是不再压在她身上。
-     · 为什么不做成"默认收起的抽屉"：收起的 <details> / display:none 会让
-       .xk-portal--home 的 grid-template-columns 拿不到 used value，既有的
-       "三栏 300/1fr/320 不许回归"与"一屏固定"两项真浏览器断言会因此假红。
-       推下首屏既满足"不遮挡"，又不改变任何既有布局契约 —— 这是当前最稳的做法。
-   左栏导航（x≈20–156）在 981px 以上的任何视口都不会与 CRT 屏幕（底图 33.85%–70.2%）重叠，
-   顶部只有一颗主题胶囊 + 搜索框，也落在 CRT 之外。 */
-@media (min-width: 981px) {
-  html[data-xk-crt-on="1"] .xk-home__stage { min-height: 100vh; }
-}
-@media (max-width: 980px) {
-  .xk-home__stage { display: none; }   /* 窄屏不铺场景，也就不需要这块占位 */
-}
+   所以这里不再需要上一版那块 100vh 的 .xk-home__stage 占位块（它只是把旧仪表盘
+   推到首屏下面），旧内容已经**真删**（见 partials/spa-view-home.html）。
+   导航（左栏 20–156px / 顶部一行）在 981px 以上的任何视口都不会与 CRT 屏幕
+   （底图 33.85%–70.2%）重叠；窄屏导航变成顶部横条，落在场景上方的暗部。 */
+html[data-xk-crt-on="1"] .xk-footer { display: none; }   /* 主页不显示页脚（视频里没有） */
 
 /* ---------------------------------------------------------------------------
    6. 页面底部输入条（站主视频 ⑤：CRT 外面、页面最底部一条输入条）
@@ -398,14 +413,14 @@ html[data-xk-theme="tech"] .xk-kbar { background: var(--xk-t-card); border-color
    --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   /* 站规约：reduced-motion 下不出现任何位移/缩放/过渡 */
-  .xk-kurisu__intro { transition: none !important; transform: translateX(-50%) scale(1) !important; opacity: 0 !important; }
   .xk-crt__screen::after { background-image: none; }
   .xk-kurisu__canvas { transition: none !important; }
+  /* 开场帧序列在 reduced-motion 下整段不播（JS 判定 staticOnly）→ 开场层永远透明 */
+  .xk-kurisu__canvas--intro { opacity: 0 !important; }
 }
 
 @media (max-width: 980px) {
-  /* 窄屏：不铺 CRT 场景（省字节 + 132px 素材放进 CRT 会小到看不清） */
-  .xk-crt { display: none !important; }
+  /* 窄屏也铺场景（"一进来就是大屏"）；.xk-crt 在 §1 已按 275vw 定位 */
   .xk-kurisu--corner { display: none; }
   /* 内容区顶部的"她"（头像图集形态）：右栏面板在单栏布局里就是正常文档流 */
   .xk-kurisu--rail .xk-kurisu__stage { height: 200px; }
@@ -413,8 +428,46 @@ html[data-xk-theme="tech"] .xk-kbar { background: var(--xk-t-card); border-color
   html[data-xk-kbar-on="1"] body { padding-bottom: 86px; }
 }
 
+/* 移动端"她"的卡片：partials/xk-kurisu-mobile.html 的样式。
+   ★ 2026-10-14 起主页不再引用那块 partial（窄屏也走全屏 CRT 场景），
+   这两条规则留给"将来别的窄屏页面想嵌一块头像卡片"时用；主页上它不出现。 */
+
 /* 移动端"她"的卡片：只在主页用（桌面端主页用的是 CRT 场景），窄屏才显示 */
 .xk-kurisu-card { display: none; }
 @media (max-width: 980px) {
   .xk-kurisu-card { display: block; }
+}
+
+/* ---------------------------------------------------------------------------
+   9. 阅读主题（read）+ 场景生效时：导航的文字/胶囊改成深色玻璃配方
+   ---------------------------------------------------------------------------
+   为什么需要：主页现在两种主题下都铺深色书桌照片（见 §1）。read 主题的导航是
+   "浅底深字"配方（深蓝字 + 白色 text-shadow），压在深色照片上实测只有 1.x:1。
+   所以场景生效的那一页（只有主页会把 data-xk-crt-on 打开）把这几处换成 tech 的配方，
+   其它页面/其它路由一点不受影响（选择器都带 [data-xk-crt-on="1"]）。 */
+html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-side__link {
+  color: #EAF4FF;
+  background: rgba(6, 14, 26, .72);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
+}
+html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-side__link.is-on {
+  background: rgba(18, 54, 92, .88);
+  color: #FFFFFF;
+}
+html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-side__nav { border-top-color: rgba(190, 225, 255, .22); }
+html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-toprow .xk-searchbtn,
+html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-themebtn {
+  background: rgba(6, 14, 26, .78);
+  border-color: rgba(140, 200, 255, .32);
+  color: #F2F8FF;
+}
+html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-toprow .xk-searchbtn kbd {
+  background: rgba(190, 225, 255, .22);
+  border-color: rgba(190, 225, 255, .34);
+  color: #F2F8FF;
+}
+/* 顶部横条形态（≤980px）：导航项的白色药丸底压在深色照片上要换成深色玻璃 */
+@media (max-width: 980px) {
+  html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-side__link { background: rgba(6, 14, 26, .74); }
+  html[data-xk-theme="read"][data-xk-crt-on="1"] .xk-side__link.is-on { background: rgba(18, 54, 92, .9); }
 }
