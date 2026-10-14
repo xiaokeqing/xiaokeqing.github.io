@@ -1,0 +1,22 @@
+{{/*
+  左侧竖排导航（"那个 AI 的版式"）
+  ============================================================================
+  逐字对照 `docs/demo-内容页外壳.html:406-414`：
+      <nav class="dock" id="dock"><div class="brand">XK-LAB</div>
+        <button data-v="home" class="on">主页</button> … <button data-v="about">关于</button></nav>
+  唯一的结构性差异（按站主口径④"路由仍是站点 app.js 唯一一套"）：
+      demo 用 `<button data-v="home">` 靠它自己的 JS 切 `.view`；
+      这里换成 `<a href="/#/home" data-xk-route data-xk-nav="home">` ——
+      点击由 app.js 处理（与站点既有 `spa-side.html` 完全同一套约定），**没有任何第二个 hashchange 监听**。
+      外观靠 `assets/css/xk-app.css` 里 `.dock button` 的同一组值（补了一条 `.dock a` 规则，值一样），
+      当前项高亮用站点既有的 `[data-xk-nav]` 机制，故同时保留 demo 的 `.on` 类名。
+*/}}
+<nav class="dock" id="dock" aria-label="站点导航">
+  <div class="brand">XK-LAB</div>
+  <a href="/#/home" data-xk-route data-xk-nav="home" class="{{ if eq . "home" }}on{{ end }}">主页</a>
+  <a href="/#/monitor/alerts" data-xk-route data-xk-nav="monitor" class="{{ if eq . "monitor" }}on{{ end }}">监测中心</a>
+  <a href="/#/ai" data-xk-route data-xk-nav="ai" class="{{ if eq . "ai" }}on{{ end }}">AI 问答</a>
+  <a href="/#/notes" data-xk-route data-xk-nav="notes" class="{{ if eq . "notes" }}on{{ end }}">笔记</a>
+  <a href="/#/labs" data-xk-route data-xk-nav="range" class="{{ if eq . "labs" }}on{{ end }}">靶场</a>
+  <a href="/#/about" data-xk-route data-xk-nav="about" class="{{ if eq . "about" }}on{{ end }}">关于</a>
+</nav>

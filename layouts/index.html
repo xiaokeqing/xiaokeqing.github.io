@@ -26,8 +26,6 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden;background:#0B1118}
   body{font:14px/1.6 var(--sans)}
-  .demo-flag{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:100;
-    background:#F5A623;color:#201500;font:12px var(--mono);padding:2px 12px;border-radius:0 0 6px 6px;white-space:nowrap}
 
   /* stage：按底图比例 cover（manifest scene.cover.css 口径） */
   .stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
@@ -43,8 +41,12 @@
   .crt-clip>*{position:absolute;inset:0;width:100%;height:100%}
   .backplate{object-fit:cover}
   .charcanvas{display:block}
+  /* ★ 第十二批修正（站主：CRT 内景顶部有一块发暗的矩形）：demo 的 .plate 末尾写着
+     `inset:auto`，它把同一条规则前面的 left/bottom 全部抵消 → 垫板被当成"四边 auto"的
+     绝对定位元素，落在 CRT 左上角（就是那块暗色矩形）。删掉 inset:auto 即回到作者意图：
+     垫板贴在屏幕底部、宽 72%（字幕条就压在它上面）。 */
   .plate{position:absolute;left:14%;right:14%;top:auto;bottom:2.5%;width:72%;height:auto;
-    aspect-ratio:2564/430;object-fit:fill;inset:auto}
+    aspect-ratio:2564/430;object-fit:fill}
   .scan{background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);pointer-events:none}
   .vig{background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.42) 100%);pointer-events:none}
   .glow{mix-blend-mode:screen;opacity:.5;pointer-events:none;animation:breathe 7s ease-in-out infinite}
@@ -83,7 +85,7 @@
 <body>
 {{- /* ↓↓↓ 以下到 </main> 为止 = docs/demo-主页.html 的 body 逐字（仅素材路径与导航 href 如上） */}}
 <main id="content" data-xk-ssr="home">
-<div class="demo-flag">主页 DEMO · 真实帧素材与真实几何 · 监测数字为演示数据</div>
+
 
 <div class="stage" id="stage">
   <img class="desk" src="/images/crt/desk.webp" alt="" aria-hidden="true">
@@ -236,5 +238,6 @@ const desk = document.querySelector('.desk');
 });
 
 </script>
+{{ partial "xk-demo/api-bind.html" . }}
 </body>
 </html>

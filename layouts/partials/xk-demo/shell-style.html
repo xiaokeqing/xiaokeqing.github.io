@@ -40,8 +40,6 @@
   .bg{position:fixed;inset:0;z-index:-2;background:#0A0D11 center/cover no-repeat;transform:scale(1.1)}
   .bgshade{position:fixed;inset:0;z-index:-1;
     background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}
-  .demo-flag{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:100;
-    background:#F5A623;color:#201500;font:12px var(--mono);padding:2px 12px;border-radius:0 0 6px 6px;white-space:nowrap}
 
   /* 左侧竖排导航 dock */
   .dock{position:fixed;left:0;top:14px;z-index:60;
@@ -195,7 +193,7 @@
   @keyframes blink{50%{opacity:.12}}
   .ops-rail{display:flex;flex-direction:column;gap:14px}
   .threat{display:flex;align-items:baseline;gap:12px}
-  .threat .lv{font:700 22px var(--mono);color:var(--warn)}
+  .threat .lv{font:700 22px var(--mono);color:var(--warn);white-space:nowrap}   /* ★第十二批：等级字不许被旁边的口径挤成两行 */
   .threat .trend{font:11px var(--mono);color:var(--bad)}
   .spark24{width:100%;height:56px;display:block}
   .graphwrap{position:relative}
@@ -218,7 +216,7 @@
   @keyframes barGrow{from{height:0}}
   .proto{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
   .donut{width:118px;height:118px;border-radius:50%;flex:none;position:relative;
-    background:conic-gradient(var(--acc) 0 46%,var(--warn) 46% 72%,var(--acc2) 72% 88%,var(--ok) 88% 100%)}
+    background:rgba(140,160,180,.18)}   /* ★第十二批：真值由 api-bind 从 /api/public/overview 写 inline conic-gradient */
   .donut::after{content:"";position:absolute;inset:24px;border-radius:50%;background:#12100D}
   .donut-c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;font:12px var(--mono);color:var(--mut)}
   .proto-lg{list-style:none;font:12.5px var(--sans);color:var(--mut)}
@@ -352,8 +350,12 @@
   .crt-clip>*{position:absolute;inset:0;width:100%;height:100%}
   .backplate{object-fit:cover}
   .charcanvas{display:block}
+  /* ★ 第十二批修正（站主：CRT 内景顶部有一块发暗的矩形）：demo 的 .plate 末尾写着
+     `inset:auto`，它把同一条规则前面的 left/bottom 全部抵消 → 垫板被当成"四边 auto"的
+     绝对定位元素，落在 CRT 左上角（就是那块暗色矩形）。删掉 inset:auto 即回到作者意图：
+     垫板贴在屏幕底部、宽 72%（字幕条就压在它上面）。 */
   .plate{position:absolute;left:14%;right:14%;top:auto;bottom:2.5%;width:72%;height:auto;
-    aspect-ratio:2564/430;object-fit:fill;inset:auto}
+    aspect-ratio:2564/430;object-fit:fill}
   .scan{background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);pointer-events:none}
   .vig{background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.42) 100%);pointer-events:none}
   .glow{mix-blend-mode:screen;opacity:.5;pointer-events:none;animation:breathe 7s ease-in-out infinite}

@@ -384,3 +384,31 @@
   body.xk-app-ai #xk-app .holo, body.xk-app-ai #xk-app .holo-bubble{display:none}
 
 
+
+/* ===========================================================================
+   ★ 主页舞台：开场层与 idle 层的互淡（demo 只有一张画布、由它自己的脚本换 CLIPS；
+     我们的播放器用"开场层叠加 + 420ms 线性 alpha 互淡"，所以补这一组规则）。
+     作用域全部带 #xk-app 前缀；不碰 html/body，不影响别的页面。
+   =========================================================================== */
+#xk-app .stageview{display:none}
+html[data-xk-crt-on="1"] #xk-app .stageview{display:block}
+#xk-app .charcanvas--intro{opacity:0;transition:opacity .42s linear}
+#xk-app .crt-status, #xk-app .crt-sub{transition:opacity .42s linear}
+#xk-app .crt[data-xk-crt-intro="1"] .charcanvas--intro{opacity:1}
+#xk-app .crt[data-xk-crt-intro="1"] .charcanvas--main{opacity:0}
+#xk-app .crt[data-xk-crt-intro="1"] .backplate{opacity:0}
+#xk-app .crt[data-xk-crt-intro="1"] .plate{opacity:0}
+#xk-app .crt[data-xk-crt-intro="1"] .crt-status{opacity:0}
+#xk-app .crt[data-xk-crt-intro="1"] .crt-sub{opacity:0}
+
+/* ===========================================================================
+   ★ 左侧竖排导航：demo 里是 <button data-v=…>，生产页按"app.js 是唯一路由"改成 <a href="/#/…">
+     （结构差异只有标签名，见 layouts/partials/xk-dock.html 的说明）。
+     这里把 demo 对 `.dock button` 的那组值原样套到 `.dock a`，保证外观一致。
+   =========================================================================== */
+#xk-app .dock a{display:flex;align-items:center;background:none;border:1px solid transparent;
+  color:var(--mut);font:12.5px var(--sans);padding:6px 9px;border-radius:9px;cursor:pointer;
+  text-decoration:none;white-space:nowrap}
+#xk-app .dock a.on,#xk-app .dock a.is-on{color:var(--acc);border-color:var(--line2);
+  background:rgba(127,212,216,.10)}
+#xk-app .dock a:hover{color:var(--txt)}

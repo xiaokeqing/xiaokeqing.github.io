@@ -1,0 +1,408 @@
+{{- /* ============================================================================
+   真实数据绑定层（第十二批 · 站主红线：数字只来自真实接口，取不到就写「读不到」）
+   ----------------------------------------------------------------------------
+   做法：只往 demo **原有元素** 里写值 —— 不新增元素、不改结构、不动版式。
+   数据源：<meta name="wb-api"> + 站点既有公开只读端点：
+     /api/public/alerts · overview · honeypot · audit · geo · webstats · stories
+   取数范围按页面裁剪（端点有 20 次/分钟限流）：
+     主页（data-xk-ssr=home）→ alerts + audit + honeypot（CRT 状态行三个数字）
+     /alerts/（data-xk-ssr=monitor）→ 上面 7 个端点（作战室整屏）
+     其余四页 → 0 个请求（它们的 v-monitor 是隐藏的）
+   纪律（照 static/js/app.js 的既有做法）：
+     · 页面不可见时不发请求；回到前台补一次；刷新间隔 40s（7 端点 ≈ 10 次/分钟，给限流留余量）
+     · 任一端点失败 → 对应字段写「读不到」，**不留假数字、不补样例**；文案里保留失败原因
+     · 字符串一律转义后再进 innerHTML（接口字段是外部数据）
+   ============================================================================ */ -}}
+<script>
+(function () {
+  'use strict';
+  var NA = '读不到';
+  var meta = document.querySelector('meta[name="wb-api"]');
+  var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+  var mainEl = document.querySelector('main[data-xk-ssr]');
+  var SSR = mainEl ? mainEl.getAttribute('data-xk-ssr') : '';
+  var TIMEOUT = 12000;   /* 单请求上限（站点既有实现是裸 fetch；这里加一道保险，别让挂在界面上的数字无限等） */
+  var REFRESH = 40000;
+  var lastSync = 0;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  function fmt(v) {
+    return (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v).toLocaleString('en-US');
+  }
+  function txt(el, s) { if (el) el.textContent = s; }
+  function textNodes(el) {
+    var out = [], n = el.childNodes;
+    for (var i = 0; i < n.length; i++) { if (n[i].nodeType === 3) out.push(n[i]); }
+    return out;
+  }
+  function clockOf(ms) {
+    var d = new Date(ms);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') +
+      ':' + String(d.getSeconds()).padStart(2, '0');
+  }
+  function syncAgeText() {
+    if (!lastSync) return NA;
+    var s = Math.max(0, Math.round((Date.now() - lastSync) / 1000));
+    return s < 60 ? s + 's' : Math.round(s / 60) + 'min';
+  }
+
+  function get(path) {
+    return new Promise(function (resolve, reject) {
+      var opt = { cache: 'no-store', credentials: 'omit' };
+      var ctl = null, timer = null;
+      if (typeof AbortController !== 'undefined') { ctl = new AbortController(); opt.signal = ctl.signal; timer = setTimeout(function () { ctl.abort(); }, TIMEOUT); }
+      fetch(API + path, opt).then(function (r) {
+        if (!r.ok) { var e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+        return r.json();
+      }).then(function (b) {
+        if (timer) clearTimeout(timer);
+        resolve(b && b.data ? b.data : b);
+      }).catch(function (e) { if (timer) clearTimeout(timer); reject(e); });
+    });
+  }
+  function settle(path) {
+    return get(path).then(function (d) { return { path: path, ok: true, d: d, err: null }; },
+      function (e) { return { path: path, ok: false, d: null, err: e }; });
+  }
+  function pick(parts, name) {
+    var p = parts.filter(function (x) { return x.path.indexOf('/' + name) >= 0; })[0];
+    return p && p.ok ? p.d : null;
+  }
+  function errText(parts) {
+    var bad = parts.filter(function (p) { return !p.ok; });
+    if (!bad.length) return '';
+    return bad.map(function (p) { return p.path.replace('/api/public/', '') + ' ' + (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达'); }).join('、');
+  }
+
+  function errShort(parts) {
+    var bad = parts.filter(function (p) { return !p.ok; });
+    if (!bad.length) return '';
+    var f = bad[0];
+    return bad.length + ' 个公开端点本次不可达 · 如 ' + f.path.replace('/api/public/', '') +
+      (f.err && f.err.status ? ' HTTP ' + f.err.status : ' 不可达');
+  }
+
+  /* ---------------------------------------------------------------- 主页 CRT 状态行 */
+  function bindCrt(parts) {
+    var el = document.getElementById('crtStatus');
+    if (!el) return;
+    var al = pick(parts, 'alerts'), au = pick(parts, 'audit'), hp = pick(parts, 'honeypot');
+    var s24 = al && al.stats24h;
+    var v24 = (s24 && s24.available !== false) ? fmt(s24.total) : null;
+    var guard = (au && au.summary) ? fmt(au.summary.blockedByGuard) : null;
+    var hpN = hp ? fmt(hp.total) : null;
+    var anyOk = parts.some(function (p) { return p.ok; });
+    var okEl = el.querySelector('.ok');
+    if (okEl) okEl.textContent = anyOk ? '● LIVE' : '● ' + NA;
+    var tn = textNodes(el);
+    if (tn.length >= 3) {
+      tn[1].nodeValue = '24h 告警 ' + (v24 || NA) + ' · 拦截 ' + (guard || NA);
+      tn[2].nodeValue = '蜜罐交互 ' + (hpN || NA) + ' · sync ' + syncAgeText();
+    }
+  }
+
+  /* ---------------------------------------------------------------- 作战室各格 */
+  function bindSync(parts) {
+    var el = document.querySelector('.screen-hd .sync');
+    if (!el) return;
+    if (lastSync) {
+      el.textContent = '● 刚刚同步 ' + clockOf(lastSync) + ' · 全部来自 /api/public/* 只读端点';
+    } else if (parts.length) {
+      el.textContent = '● ' + NA + '（' + errShort(parts) + '）· 不补数、不编造';
+    }
+  }
+
+  function rowsOf(mod) { return mod ? mod.querySelectorAll('.row') : []; }
+  function fillRows(rows, pairs) {
+    for (var i = 0; i < rows.length; i++) {
+      var k = rows[i].querySelector('.k'), c = rows[i].querySelector('.chip');
+      var p = pairs[i];
+      if (p) { txt(k, p[0]); txt(c, p[1]); if (c) c.style.display = ''; }
+      else { txt(k, ''); txt(c, ''); if (c) c.style.display = 'none'; }   /* 没数据的那几行不留空药丸 */
+    }
+  }
+  function mods() { return document.querySelectorAll('.ops-rail .mod'); }
+
+  function bindRail(parts) {
+    var ms = mods();
+    var al = pick(parts, 'alerts'), geo = pick(parts, 'geo'), hp = pick(parts, 'honeypot');
+
+    /* ① 威胁等级：等级由 24h 真实严重度分布推出（口径写在旁边），没有该字段就写读不到 */
+    var sev = al && al.stats24h && al.stats24h.available !== false ? al.stats24h.bySeverity : null;
+    var lv = null, basis = NA;
+    if (sev) {
+      var n = function (k) { return Number(sev[k]) || 0; };
+      lv = n('CRITICAL') > 0 ? '严重' : n('HIGH') > 0 ? '高' : n('MEDIUM') > 0 ? '较高' : '低';
+      /* 口径写在旁边（一行放得下的前两个非零档），等级怎么来的可以自己核 */
+      var keys = [['CRITICAL', '严重'], ['HIGH', '高危'], ['MEDIUM', '中危'], ['LOW', '低危']];
+      var nz = keys.filter(function (k) { return n(k[0]) > 0; });
+      basis = '24h ' + (nz.length ? nz : keys).slice(0, 2).map(function (k) { return k[1] + ' ' + fmt(n(k[0])); }).join(' · ');
+    }
+    if (ms[0]) { txt(ms[0].querySelector('.lv'), lv || NA); txt(ms[0].querySelector('.trend'), basis); }
+
+    /* ② TOP 攻击来源 ← /api/public/geo byCountry（后端不给 IP，只给国家/地区 + 计数） */
+    var top = (geo && Array.isArray(geo.byCountry) && geo.byCountry.length) ? geo.byCountry.slice(0, 4) : null;
+    fillRows(rowsOf(ms[1]), top ? top.map(function (c) {
+      return [(c.country || '—') + ' · ' + (c.countryName || '—'), fmt(c.count) + ' 次' + (c.sharePercent !== undefined ? ' · ' + c.sharePercent + '%' : '')];
+    }) : [[NA, '/geo']]);
+
+    /* ③ 蜜罐捕获凭据 ← /api/public/honeypot topCredentials（只给结构：用户名 + 长度 + 是否弱口令） */
+    var creds = (hp && Array.isArray(hp.topCredentials) && hp.topCredentials.length) ? hp.topCredentials.slice(0, 4) : null;
+    fillRows(rowsOf(ms[2]), creds ? creds.map(function (c) {
+      return [(c.username || '—') + ' / ' + (c.passwordLength !== undefined ? c.passwordLength + ' 位' : '—'),
+        '×' + (Number(c.count) || 0) + ' · ' + (c.weakPassword ? '弱口令' : (c.passwordCharClasses || '—'))];
+    }) : [[NA, '/honeypot']]);
+
+    /* ④ HOLO 面板那句话：数字换成真值（三个文本节点 + 两个 .qk 原件，不新增元素） */
+    var say = document.getElementById('holoSay');
+    if (say) {
+      var qk = say.querySelectorAll('.qk');
+      var guard = (pick(parts, 'audit') || {}).summary;
+      var guardN = guard ? fmt(guard.blockedByGuard) : null;
+      var hpN = hp ? fmt(hp.total) : null;
+      var tn = textNodes(say);
+      if (qk.length === 2 && tn.length >= 3) {
+        if (guardN || hpN) {
+          tn[0].nodeValue = '公开只读端点汇总：护栏拦下 ';
+          qk[0].textContent = guardN ? guardN + ' 个动作' : NA;
+          tn[1].nodeValue = '，蜜罐累计事件 ';
+          qk[1].textContent = hpN ? hpN + ' 条' : NA;
+          tn[2].nodeValue = '。明细都在「监测中心」的大屏里。';
+        } else {
+          tn[0].nodeValue = '公开只读端点 ';
+          qk[0].textContent = NA;
+          tn[1].nodeValue = ' ';
+          qk[1].textContent = '';
+          tn[2].nodeValue = '· 不补数、不编造（' + (parts.length ? errShort(parts) : '端点未取到') + '）';
+        }
+      }
+    }
+  }
+
+  function bindTypes(parts) {
+    var al = pick(parts, 'alerts');
+    var rows = al && al.stats && al.stats.byType ? al.stats.byType.slice() : null;
+    if (rows) rows.sort(function (a, b) { return (Number(b.count) || 0) - (Number(a.count) || 0); });
+    window.XK_TYPES = rows;
+    if (window.__xkRenderTypes) window.__xkRenderTypes();
+  }
+
+  function bindSpark(parts) {
+    var al = pick(parts, 'alerts');
+    var s24 = al && al.stats24h;
+    window.XK24H = (s24 && s24.available !== false && Array.isArray(s24.trend)) ? s24.trend : null;
+    if (window.__xkSpark) window.__xkSpark();
+  }
+
+  function bindCounters(parts) {
+    var al = pick(parts, 'alerts'), au = pick(parts, 'audit'), hp = pick(parts, 'honeypot'), geo = pick(parts, 'geo');
+    var s24 = al && al.stats24h;
+    /* 服务端在"冷缓存/降级"时会返回 available=false 并给零值 —— 零值不是真值，写成读不到 */
+    var vals = [
+      (s24 && s24.available !== false) ? fmt(s24.total) : null,
+      (au && au.summary) ? fmt(au.summary.blockedByGuard) : null,
+      (hp && hp.available !== false) ? fmt(hp.total) : null,
+      (geo && geo.available !== false && geo.coverage) ? fmt(geo.coverage.sourceBuckets) : null
+    ];
+    var els = document.querySelectorAll('.stats [data-count]');
+    for (var i = 0; i < els.length; i++) {
+      var v = vals[i];
+      if (v === null) { els[i].setAttribute('data-count', ''); txt(els[i], NA); }
+      else { els[i].setAttribute('data-count', String(vals[i]).replace(/,/g, '')); txt(els[i], v); }
+    }
+  }
+
+  function bindGraphData(parts) {
+    var al = pick(parts, 'alerts'), hp = pick(parts, 'honeypot');
+    var ips = [];
+    if (al && Array.isArray(al.list)) {
+      al.list.forEach(function (a) { var ip = String(a.srcIp || ''); if (ip && ip.indexOf('内网') < 0 && ips.indexOf(ip) < 0 && ips.length < 5) ips.push(ip); });
+    }
+    var clients = (hp && Array.isArray(hp.topClients)) ? hp.topClients.filter(function (c) { return String(c.key || '').indexOf('\\x') !== 0; }).slice(0, 6).map(function (c) { return [String(c.key || '—'), fmt(c.count) + ' 次']; }) : [];
+    window.XK_ATTACKERS = ips;
+    window.XK_SENSORS = clients;
+    window.XK_GRAPH_NOTE = (!ips.length || !clients.length)
+      ? ('读不到：来源 IP ' + (ips.length ? '有' : '无') + '（/alerts）· 客户端指纹 ' + (clients.length ? '有' : '无') + '（/honeypot）—— 不画假的攻击路径')
+      : '';
+  }
+
+  function bindStats(parts) {
+    /* 7×24 访问统计 ← webstats.heatmap（整点桶）按"钟点"聚合：24 根柱子是真值，其余置 0 */
+    var ws = pick(parts, 'webstats');
+    var bars = document.querySelectorAll('.ops-tab[data-pane="stats"] .bars i');
+    var sums = null;
+    if (ws && Array.isArray(ws.heatmap) && ws.heatmap.length) {
+      sums = new Array(24).fill(0);
+      ws.heatmap.forEach(function (c) { var h = Number(c.hour); if (h >= 0 && h < 24) sums[h] += Number(c.count) || 0; });
+    }
+    var barMod = document.querySelector('.ops-tab[data-pane="stats"] .mod');
+    var barTag = barMod ? barMod.querySelector('.mod-hd .tag') : null;
+    if (!sums && barTag) barTag.textContent = '读不到（/webstats）';
+    for (var i = 0; i < bars.length; i++) {
+      if (!sums) { bars[i].style.display = ''; bars[i].style.height = '0'; continue; }
+      if (i >= 24) { bars[i].style.display = 'none'; continue; }   /* 按钟点聚合只有 24 格，多余的柱子不显示 */
+      bars[i].style.display = '';
+      var max = Math.max.apply(null, sums) || 1;
+      bars[i].style.height = Math.max(2, Math.round(sums[i] / max * 100)) + '%';
+    }
+
+    /* 来源 TOP5 ← /api/public/geo byCountry */
+    var geo = pick(parts, 'geo');
+    var lis = document.querySelectorAll('.ops-tab[data-pane="stats"] .geo li');
+    var top = geo && geo.byCountry ? geo.byCountry.slice(0, lis.length) : null;
+    var maxShare = top && top.length ? Math.max.apply(null, top.map(function (c) { return Number(c.sharePercent) || 0; })) : 1;
+    for (var j = 0; j < lis.length; j++) {
+      var cc = lis[j].querySelector('.cc'), bar = lis[j].querySelector('.bar i'), pct = lis[j].querySelector('span:last-child');
+      var c = top ? top[j] : null;
+      if (!c) { txt(cc, '—'); if (bar) bar.style.width = '0'; txt(pct, NA); continue; }
+      txt(cc, c.country || '—');
+      if (bar) bar.style.width = Math.max(2, Math.round((Number(c.sharePercent) || 0) / maxShare * 100)) + '%';
+      txt(pct, (c.sharePercent !== undefined ? c.sharePercent : '—') + '%');
+    }
+
+    /* 故事线 ← /api/public/stories：拿阶段最全的那一条来源，逐阶段写真实计数与"确实没有数据" */
+    var st = pick(parts, 'stories');
+    var rows = document.querySelectorAll('.ops-tab[data-pane="stats"] .grid32 .mod:nth-child(2) .row');
+    var s0 = st && Array.isArray(st.sources) && st.sources.length ? st.sources[0] : null;
+    var labels = (st && st.stageLabels) ? st.stageLabels : null;
+    if (rows.length) {
+      if (s0 && labels) {
+        var stageKeys = Object.keys(labels);
+        var tagEl = document.querySelector('.ops-tab[data-pane="stats"] .grid32 .mod:nth-child(2) .mod-hd .tag');
+        if (tagEl) tagEl.textContent = '/stories · ' + s0.srcIp;
+        for (var r = 0; r < rows.length; r++) {
+          var key = stageKeys[r], kEl = rows[r].querySelector('.k'), mid = rows[r].querySelector('span:not(.k):not(.chip)'), chip = rows[r].querySelector('.chip');
+          if (!key) { txt(kEl, ''); txt(mid, ''); txt(chip, ''); continue; }
+          var cnt = Number((s0.stages || {})[key]) || 0;
+          txt(kEl, labels[key] || key);
+          txt(mid, cnt > 0 ? ('该来源真实命中 ' + fmt(cnt) + ' 条') : '这个来源该阶段确实没有数据（不是"未接入"）');
+          txt(chip, cnt > 0 ? fmt(cnt) : '0');
+        }
+      } else {
+        for (var q = 0; q < rows.length; q++) {
+          txt(rows[q].querySelector('.k'), ''); txt(rows[q].querySelector('span:not(.k):not(.chip)'), ''); txt(rows[q].querySelector('.chip'), '');
+        }
+        var tg = document.querySelector('.ops-tab[data-pane="stats"] .grid32 .mod:nth-child(2) .mod-hd .tag');
+        if (tg) tg.textContent = '/stories · ' + NA;
+        txt(rows[0].querySelector('span:not(.k):not(.chip)'), NA);
+      }
+    }
+
+    /* 告警来源分布（原"协议分布"）← /api/public/overview alerts.bySource：甜甜圈与图例都是真值 */
+    var ov = pick(parts, 'overview');
+    var bs = (ov && ov.alerts && Array.isArray(ov.alerts.bySource)) ? ov.alerts.bySource : null;
+    var donut = document.querySelector('.donut');
+    var items = document.querySelectorAll('.proto-lg li');
+    var center = document.querySelector('.donut-c');
+    if (bs) {
+      var total = bs.reduce(function (s, x) { return s + (Number(x.count) || 0); }, 0) || 1;
+      var colors = ['var(--acc)', 'var(--warn)', 'var(--acc2)', 'var(--ok)'];
+      var stops = [], acc = 0;
+      bs.forEach(function (x, i) {
+        var from = acc / total * 100; acc += Number(x.count) || 0;
+        stops.push(colors[i % colors.length] + ' ' + from.toFixed(2) + '% ' + (acc / total * 100).toFixed(2) + '%');
+      });
+      if (donut) donut.style.background = stops.length ? 'conic-gradient(' + stops.join(',') + ')' : '';
+      if (center) center.textContent = '窗口';
+      for (var k = 0; k < items.length; k++) {
+        var it = items[k], x2 = bs[k];
+        if (!x2) { items[k].innerHTML = '<i class="lg ok"></i>—<b>—</b>'; items[k].style.display = 'none'; continue; }
+        items[k].style.display = '';
+        items[k].innerHTML = '<i class="lg ' + ['teal', 'warn', 'purp', 'ok'][k % 4] + '"></i>' + esc(x2.label || x2.key) +
+          '<b>' + (Number(x2.count) || 0 ? Math.round((Number(x2.count) || 0) / total * 100) + '%' : '0%') + '</b>';
+      }
+    } else {
+      if (donut) donut.style.background = '';
+      if (center) center.textContent = NA;
+      for (var m = 0; m < items.length; m++) { items[m].style.display = ''; items[m].innerHTML = '<i class="lg ok"></i>—<b>—</b>'; }
+    }
+  }
+
+  function bindFeed(parts) {
+    var al = pick(parts, 'alerts');
+    if (!al || !Array.isArray(al.list)) { window.XK_FEED = null; }
+    else {
+      var CLS = { SQL_INJECTION: 'web', BRUTE_FORCE: 'ssh', SSH: 'ssh', PORT_SCAN: 'scan', SCAN: 'scan', WEB_ATTACK: 'web', XSS: 'web', MALWARE: 'iot', IOT: 'iot', SMB: 'smb' };
+      window.XK_FEED = al.list.slice().reverse().map(function (a) {
+        var t = String(a.occurredAt || '').slice(11, 19) || '--:--:--';
+        var cls = CLS[String(a.type || '').toUpperCase()] || 'dns';
+        var tag = '[' + String(a.typeLabel || a.sourceLabel || '告警').replace(/\s*告警$/, '') + ']';
+        var text = String(a.title || a.ruleName || '（无规则名）').replace(/\s+/g, ' ').slice(0, 90) +
+          ' → ×' + (Number(a.count) || 1) + ' · ' + String(a.srcIp || '—');
+        return { key: String(a.aggId || t + a.title), ts: t, cls: cls, tag: tag, text: text };
+      });
+    }
+    if (window.__xkRenderFeed) window.__xkRenderFeed();
+  }
+
+  function bindOps(parts) {
+    bindSync(parts);
+    bindRail(parts);
+    bindSpark(parts);
+    bindTypes(parts);
+    bindCounters(parts);
+    bindGraphData(parts);
+    bindStats(parts);
+    bindFeed(parts);
+  }
+
+  /* ---------------------------------------------------------------- 取数调度 */
+  var JOBS = SSR === 'home' ? ['alerts', 'audit', 'honeypot']
+    : SSR === 'monitor' ? ['alerts', 'overview', 'honeypot', 'audit', 'geo', 'webstats', 'stories']
+      : [];
+  var lastParts = null;
+  function render(parts) {
+    if (parts.some(function (p) { return p.ok; })) lastSync = Date.now();
+    lastParts = parts;
+    if (SSR === 'home') bindCrt(parts);
+    if (SSR === 'monitor') bindOps(parts);
+  }
+  /* 服务端"冷缓存"时会返回一版"这次没数据"的降级响应（app.js 里记录的同一个现象：
+     /api/public/alerts 冷缓存下 stats24h.available=false，同一 URL 过一会儿再取就是真值）。
+     这里按端点各自的字段判断，**只在确实降级时**补一次请求，补到真值就用。 */
+  function degraded(p) {
+    var d = p.ok ? p.d : null;
+    if (!d) return false;
+    if (d.available === false) return true;
+    var q = p.path;
+    if (q.indexOf('/alerts') >= 0) return !d.stats24h || d.stats24h.available === false;
+    if (q.indexOf('/honeypot') >= 0) return !d.topCredentials || !d.topCredentials.length;
+    if (q.indexOf('/geo') >= 0) return !d.byCountry || !d.byCountry.length;
+    if (q.indexOf('/webstats') >= 0) return !d.heatmap || !d.heatmap.length;
+    if (q.indexOf('/stories') >= 0) return !d.sources || !d.sources.length;
+    if (q.indexOf('/overview') >= 0) return !d.alerts;
+    if (q.indexOf('/audit') >= 0) return !d.summary;
+    return false;
+  }
+
+  function load() {
+    if (!JOBS.length || document.hidden) return Promise.resolve();
+    return Promise.all(JOBS.map(function (n) { return settle('/api/public/' + n); })).then(function (parts) {
+      var retry = parts.filter(degraded);
+      if (!retry.length) { render(parts); return parts; }
+      return new Promise(function (r) { setTimeout(r, 1500); })
+        .then(function () { return Promise.all(retry.map(function (p) { return settle(p.path); })); })
+        .then(function (again) {
+          again.forEach(function (p2) {
+            if (p2.ok && p2.d && !degraded(p2)) {
+              var t = parts.filter(function (x) { return x.path === p2.path; })[0];
+              if (t) { t.ok = true; t.d = p2.d; t.err = null; t.retried = true; }
+            }
+          });
+          render(parts); return parts;
+        }).catch(function () { render(parts); return parts; });
+    });
+  }
+  /* CRT 那一行里的 "sync Ns" 要自己往上走（不额外发请求，只用上次成功同步的时间） */
+  if (SSR === 'home') setInterval(function () { if (lastParts) bindCrt(lastParts); }, 5000);
+  if (JOBS.length) {
+    load();
+    setInterval(load, REFRESH);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  }
+})();
+</script>

@@ -7,8 +7,8 @@
   "note": "每个节点补上 medium 档图集分页几何 + 真实字节数；帧播放契约与 manifest.json 的 clips.* 一致 （columns/rows/tile 尺寸来自图集本身，frameIntervalMs/loopMode/frames 来自原状态机）"
  },
  "root": "idle",
- "node_count": 37,
- "edge_count": 87,
+ "node_count": 38,
+ "edge_count": 88,
  "host_triggered_entries": [
   "angry_trans",
   "closed_eye_trans",
@@ -25,7 +25,7 @@
  ],
  "loop_mode_counts": {
   "loop": 27,
-  "once_then_hold": 12
+  "once_then_hold": 13
  },
  "medium_total_bytes": 50492702,
  "hi_total_bytes": 20568710,
@@ -2416,6 +2416,63 @@
     "overlay_entry": null,
     "closed_frame_idx": null
    }
+  },
+  {
+   "id": "_key_point_to_thinking",
+   "clip": "key_point_to_thinking",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied(thinking_to_key_point)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/thinking_to_key_point.atlas.webp",
+      "file": "thinking_to_key_point.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 910014
+     }
+    ],
+    "bytes": 910014
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "thinking_to_key_point.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   },
+   "atlas_clip": "thinking_to_key_point",
+   "reverse": true
   }
  ],
  "edges": [
@@ -2820,9 +2877,9 @@
   },
   {
    "from": "key_point_speaking",
-   "to": "thinking_speaking1",
+   "to": "key_point_to_thinking",
    "from_id": "_8zysg7u",
-   "to_id": "_20x9amw",
+   "to_id": "_key_point_to_thinking",
    "prob": 0.5
   },
   {
@@ -3026,6 +3083,13 @@
    "to": "idle",
    "from_id": "_bcg75h5",
    "to_id": "_8ms718k",
+   "prob": 1
+  },
+  {
+   "from": "key_point_to_thinking",
+   "to": "thinking_speaking1",
+   "from_id": "_key_point_to_thinking",
+   "to_id": "_20x9amw",
    "prob": 1
   }
  ]

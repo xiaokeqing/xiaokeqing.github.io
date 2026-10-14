@@ -22,11 +22,11 @@
    "surprise_speaking"
   ],
   "hiTotalBytes": 20568710,
-  "nodeCount": 37,
-  "edgeCount": 87,
+  "nodeCount": 38,
+  "edgeCount": 88,
   "auto": true,
   "maxWalkBytes": 6291456,
-  "note": "★ 运行时取状态机只读这一个文件（docs/ 下的原始副本不进产物）。37 个节点全部带 medium 档图集分页几何与真实字节数；medium 档合计 48.15MB（见 _dev/medium-volume-table.md）。clips.* 仍是 4 段主推剪辑的既有契约（hi/boot 两档），状态机里另外 33 段只发 medium 一档。",
+  "note": "★ 运行时取状态机只读这一个文件（docs/ 下的原始副本不进产物）。38 个节点全部带 medium 档图集分页几何与真实字节数；medium 档合计 48.15MB（见 _dev/medium-volume-table.md）。clips.* 仍是 4 段主推剪辑的既有契约（hi/boot 两档），状态机里另外 34 段只发 medium 一档。",
   "hostTriggeredEntries": [
    "angry_trans",
    "closed_eye_trans",
@@ -806,8 +806,8 @@
   }
  },
  "clipsMedium": {
-  "note": "37 个\"图内剪辑\"的 medium 档（其中 6 段另有 hi 档）。由 _dev/build_statemachine_manifest.py 从 docs/amadeus-research/data/statemachine.json 一次生成，与 static/kurisu/statemachine.json 同源，不会漂移。clips.* 那 4 段（idle/speaking/thinking/opening）仍是既有 hi+boot 契约，未改动；本段是新增的第二档。",
-  "count": 37,
+  "note": "38 个\"图内剪辑\"的 medium 档（其中 6 段另有 hi 档）。由 _dev/build_statemachine_manifest.py 从 docs/amadeus-research/data/statemachine.json 一次生成，与 static/kurisu/statemachine.json 同源，不会漂移。clips.* 那 4 段（idle/speaking/thinking/opening）仍是既有 hi+boot 契约，未改动；本段是新增的第二档。其中 key_point_to_thinking 是 0.17.0α 的返回过渡：atlas_clip + reverse 表示它复用 thinking_to_key_point 的同一张图集、播放时倒放，没有新增任何素材字节。",
+  "count": 38,
   "mediumTotalBytes": 50492702,
   "hiTotalBytes": 20568710,
   "clips": {
@@ -2714,6 +2714,50 @@
      "overlay_entry": null,
      "closed_frame_idx": null
     }
+   },
+   "key_point_to_thinking": {
+    "frames": 120,
+    "frameIntervalMs": 8,
+    "loopMode": "once_then_hold",
+    "frameWidth": 134,
+    "frameHeight": 180,
+    "columns": 8,
+    "tier": "medium",
+    "atlas": {
+     "medium": {
+      "pages": [
+       {
+        "url": "kurisu/medium/thinking_to_key_point.atlas.webp",
+        "file": "thinking_to_key_point.atlas.webp",
+        "tile_w": 134,
+        "tile_h": 180,
+        "cols": 8,
+        "rows": 15,
+        "frames": 120,
+        "first_frame": 1,
+        "last_frame": 120,
+        "pixels": [
+         1072,
+         2700
+        ],
+        "bytes": 910014
+       }
+      ],
+      "bytes": 910014
+     }
+    },
+    "source": "statemachine.json / copied(thinking_to_key_point)",
+    "mouthPatch": {
+     "file": "thinking_to_key_point.patch.png",
+     "size": [
+      34,
+      18
+     ],
+     "overlay_entry": null,
+     "closed_frame_idx": null
+    },
+    "atlas_clip": "thinking_to_key_point",
+    "reverse": true
    }
   }
  },

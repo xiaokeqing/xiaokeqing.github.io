@@ -45,6 +45,13 @@ hasCJKLanguage = true
   # 素材来源与用途声明见 docs/kurisu-素材来源与用途声明.md。
   kurisuEnabled = true
 
+  # ---------- 新外壳（"那个 AI 的版式"）按页生效 ----------
+  # assets/css/xk-app.css = docs/demo-内容页外壳.html 的样式全量 #xk-app 前缀化版本。
+  # 站主要求整站按那份 demo 改 → 主页先接。打开外壳的页面必须真的加载它，
+  # 由 layouts/partials/head.html 那条按页 <link> 负责（条件：.Params.xkAppShell 或本参数 + .IsHome）。
+  # 一致性门禁：产物里 #xk-app 规则数 ⇔ 页面上 #xk-app 根元素（_dev/gate-firstscreen.mjs）。
+  xkAppShell = true
+
   # §1 欢迎区文案（主页门户版式）
   # 站主 2026-10-12 第七轮 ①："一句话介绍（压成一行）" → 文案压成一行能放下的长度
   # （旧值：个人网络安全的学习与实践记录 —— 同时挂着我在真实运行的安全运营工作台：主机/网络告警、蜜罐战报、带护栏与审计的处置链路。）

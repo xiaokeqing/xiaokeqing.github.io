@@ -9,6 +9,9 @@
 <head>
   {{ partial "head.html" . }}
 </head>
+{{- /* 注：#xk-app 的根**不改挂到 <body>** —— 试过：`#xk-app{min-height:100vh}` 挂在 body 上会让
+       CRT 盒的定位/尺寸基准变化，角色与画布错位（实测 CRT 内部像素差从 11% 恶化到 81%），
+       已回滚。主页的外壳根仍是 layouts/partials/xk-kurisu-stage.html 里的那层 <div id="xk-app">。 */ -}}
 <body class="xk-body">
 
   {{/* 站主第十轮 ④：键盘用户的第一个 Tab 就能跳过顶部/侧边导航直达正文 */}}
@@ -16,7 +19,11 @@
 
   {{/* 背景层：原图，一个像素都不改 */}}
   <div class="xk-bg" aria-hidden="true"></div>
+  {{- /* 白纱/色调层：demo 主页里没有这一层（它是站点自己给正文加对比度用的）；
+         主页按 demo 来 → 不输出。其它页面照旧。 */}}
+  {{- if not (and site.Params.kurisuEnabled .IsHome) }}
   <div class="xk-veil" aria-hidden="true"></div>
+  {{- end }}
 
   {{- /* CRT 场景层（主页整屏背景 + CRT 里的她）。
          为什么在 <main> 外面：SPA 只替换 <main>，这一层要跨路由常驻，
@@ -24,8 +31,15 @@
          只在主页的构建产物里内联渲染（其它路由靠文末的 #tpl-kurisu-stage 现挂）。 */}}
   {{- if and site.Params.kurisuEnabled .IsHome }}{{ partial "xk-kurisu-stage.html" . }}{{ end }}
 
+  {{- /* ★ 2026-10-14：按站主要求"生产页 = demo 对应 view，一字不增不减" ——
+         主页（= demo 主页）里**没有**站点自带的左侧栏、顶行（主题/搜索）、底部输入条、搜索弹层，
+         所以这一页**根本不输出**它们（不是 CSS 隐藏 → 像素差里也就不会有这块）。
+         导航改由 demo 的 `.dock` 承担（layouts/partials/xk-dock.html，挂在 #xk-app 里），
+         它用 `data-xk-route` + `/#/…`，点击仍由 app.js 那唯一一套路由处理。 */}}
+  {{- if not (and site.Params.kurisuEnabled .IsHome) }}
   {{ partial "spa-nav.html" . }}
   {{ partial "spa-side.html" . }}
+  {{- end }}
 
   {{- /* 当前 URL 对应哪条路由（服务端渲染与 JS 启动共用这一个判定） */ -}}
   {{- $cur := "notfound" -}}
@@ -65,10 +79,13 @@
     {{- end -}}
   </main>
 
+  {{- /* 同上：主页按 demo 主页来，页脚 / 搜索弹层 / 底部输入条都不在 demo 里 → 不输出 */}}
+  {{- if not (and site.Params.kurisuEnabled .IsHome) }}
   {{ partial "spa-footer.html" . }}
   {{ partial "spa-search.html" . }}
-  {{- if site.Params.kurisuEnabled }}
-  {{/* 页面底部输入条：桌面只在主页显示、窄屏在所有栏目页显示（kurisu-player.js 写开关） */}}
+  {{- end }}
+  {{- if and site.Params.kurisuEnabled (not .IsHome) }}
+  {{/* 页面底部输入条：窄屏栏目页显示（kurisu-player.js 写开关）；主页不渲染（demo 里没有） */}}
   {{ partial "xk-kurisu-bar.html" . }}
   {{- end }}
 

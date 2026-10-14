@@ -4,9 +4,14 @@ static/kurisu/statemachine.json —— 逐节点补上 medium 档图集的分页
 并逐文件核对 static/kurisu/medium/ 里的文件确实存在、大小与元数据一致。
 
 口径：
-  · 37 个节点 = 37 个"图内剪辑"（statemachine.json 的 node_count 就是 37）
+  · 38 个节点 = 38 个"图内剪辑"（statemachine.json 的 node_count 就是 38）
   · 49 个图集文件（9 个剪辑是 0.5× 新生成的，会分 2~4 页）
   · 元数据来源：web/meta/<clip>.json 的 medium_pages；9 个新生成的取 _dev/medium-manifest.json
+  · 资产别名：节点带 `atlas_clip` 时，几何/图集全部沿用源剪辑的 meta（0.17.0α 的"返回过渡"
+    key_point_to_thinking 就是 thinking_to_key_point 的逐帧倒序 → 复用同一张图集，新增字节 = 0），
+    节点带 `reverse: True` 时播放器反向取帧；两者都只在需要时写进产物。
+  · 同时把 manifest.json 的 clipsMedium 段与 stateMachine 段里可推导的字段（nodeCount/edgeCount/
+    hiClips/hiTotalBytes/hostTriggeredEntries）一起刷新，两处不会再与 statemachine.json 漂移。
 用法：python _dev/build_statemachine_manifest.py [--dry]
 """
 import json
@@ -29,19 +34,22 @@ gen = json.load(open(GEN_META, encoding='utf-8'))['clips']
 problems = []
 tot_referenced = 0
 files_seen = set()
+medium_file_bytes = {}   # file → 真实字节；同一份图集被多个节点引用时只算一次
 files_seen_hi = set()
 rows = []
 nodes_out = []
 
 for n in sm['nodes']:
     clip = n['clip']
-    meta = json.load(open(os.path.join(SRC_META, clip + '.json'), encoding='utf-8'))
+    # 资产别名（见文件头）：几何与图集沿用源剪辑的 meta
+    meta_clip = n.get('atlas_clip') or clip
+    meta = json.load(open(os.path.join(SRC_META, meta_clip + '.json'), encoding='utf-8'))
     raw_pages = meta.get('medium_pages')
-    origin = 'copied'
+    origin = 'copied' if meta_clip == clip else 'copied(%s)' % meta_clip
     if not raw_pages:
-        g = gen.get(clip)
+        g = gen.get(meta_clip)
         if not g:
-            problems.append('%s: 既无 source medium_pages，也不在 _dev/medium-manifest.json' % clip)
+            problems.append('%s: 既无 source medium_pages，也不在 _dev/medium-manifest.json' % meta_clip)
             continue
         raw_pages = g['medium_pages']
         origin = 'generated(0.5x q=%s)' % g.get('quality')
@@ -57,7 +65,9 @@ for n in sm['nodes']:
         if decl and decl != real:
             problems.append('%s: %s 字节不一致 元数据=%s 实际=%s' % (clip, f, decl, real))
         files_seen.add(f)
-        tot_referenced += real
+        # 字节按文件去重：同一张图集被别名节点引用时不能算两次，否则 medium_total_bytes
+        # 会虚高，与 static/kurisu/medium/ 的真实占用对不上（这正是"新增字节 = 0"的核对口径）
+        medium_file_bytes[f] = real
         pages.append({
             'url': 'kurisu/medium/' + f,
             'file': f,
@@ -114,9 +124,14 @@ for n in sm['nodes']:
             'closed_frame_idx': mouth.get('closed_frame_idx'),
         },
     })
+    if n.get('atlas_clip'):
+        nodes_out[-1]['atlas_clip'] = n['atlas_clip']
+    if n.get('reverse'):
+        nodes_out[-1]['reverse'] = True
     rows.append((clip, n['frames'], n['frameIntervalMs'], n['loopMode'], origin,
                  len(pages), sum(p['bytes'] for p in pages)))
 
+tot_referenced = sum(medium_file_bytes.values())   # 按文件去重后的真实占用
 extra = sorted(set(os.listdir(MEDIA)) - files_seen)
 if extra:
     problems.append('static/kurisu/medium/ 里有 %d 个没被任何节点引用的文件：%s' % (len(extra), extra))
@@ -205,15 +220,31 @@ if not DRY:
             cm[n['clip']]['atlas']['hi'] = {'pages': n['hi']['pages'], 'bytes': n['hi']['bytes']}
         if n.get('mouthPatch') and n['mouthPatch'].get('file'):
             cm[n['clip']]['mouthPatch'] = n['mouthPatch']
+        # 倒放复用：manifest 里也要看得见（只读 manifest 的工具/AI 才知道这段不是新素材）
+        if n.get('atlas_clip'):
+            cm[n['clip']]['atlas_clip'] = n['atlas_clip']
+        if n.get('reverse'):
+            cm[n['clip']]['reverse'] = True
     mf['clipsMedium'] = {
-        'note': '37 个"图内剪辑"的 medium 档（其中 6 段另有 hi 档）。由 _dev/build_statemachine_manifest.py '
+        'note': '%d 个"图内剪辑"的 medium 档（其中 6 段另有 hi 档）。由 _dev/build_statemachine_manifest.py '
                 '从 docs/amadeus-research/data/statemachine.json 一次生成，与 static/kurisu/statemachine.json 同源，不会漂移。'
-                'clips.* 那 4 段（idle/speaking/thinking/opening）仍是既有 hi+boot 契约，未改动；本段是新增的第二档。',
+                'clips.* 那 4 段（idle/speaking/thinking/opening）仍是既有 hi+boot 契约，未改动；本段是新增的第二档。'
+                '其中 key_point_to_thinking 是 0.17.0α 的返回过渡：atlas_clip + reverse 表示它复用 '
+                'thinking_to_key_point 的同一张图集、播放时倒放，没有新增任何素材字节。' % len(cm),
         'count': len(cm),
         'mediumTotalBytes': tot_referenced,
         'hiTotalBytes': tot_hi,
         'clips': cm,
     }
+    # stateMachine 段里凡是**能从同一事实来源推导**的字段，也由本脚本写，
+    # 免得它手改后与 statemachine.json 漂移（nodeCount/edgeCount 曾长期停在 37/87）。
+    st = mf.get('stateMachine')
+    if isinstance(st, dict):
+        st['nodeCount'] = len(nodes_out)
+        st['edgeCount'] = len(sm['edges'])
+        st['hiClips'] = [n['clip'] for n in nodes_out if n.get('hi')]
+        st['hiTotalBytes'] = tot_hi
+        st['hostTriggeredEntries'] = sm.get('host_triggered_entries')
     json.dump(mf, open(MANIFEST, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('clipsMedium 段（%d 段）→ %s' % (len(cm), MANIFEST))
 print('OK：%d 节点 / %d 边 / medium %d 文件 %.2f MB / hi %d 文件 %.2f MB → %s' %

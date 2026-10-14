@@ -438,6 +438,17 @@
     }
     if (this.voiceBtn) { this.wireVoice(); }
     if (this.emoEl) { this.wireEmotions(); }
+    /* ★ 首屏预算与"垫板用原图"的冲突，用这一招两全：垫板 382,384 B 的原图在 markup 里只写
+       data-src，首帧画出来之后（HI_DELAY_MS 同一节奏）再挂上真 src —— 首屏 1.5s 窗口里没有它，
+       资产仍是作者原图、一字节没降质。 */
+    var plate = q('[data-xk-plate]', this.mount);
+    if (plate && plate.getAttribute('data-src')) {
+      setTimeout(function () {
+        if (self.destroyed || !plate.getAttribute('data-src')) { return; }
+        plate.src = plate.getAttribute('data-src');
+        plate.removeAttribute('data-src');
+      }, HI_DELAY_MS);
+    }
     this.handleResize();
   };
 
@@ -544,6 +555,20 @@
    *   头像（corner / 窄屏 / 右栏头像模式）：正方形居中。 */
   Player.prototype.charRect = function (bw, bh, aspect) {
     var comp = ((this.manifest || {}).scene || {}).compose || {};
+    if (this.mode === 'stage' && this.mount.getAttribute('data-xk-kurisu-fit') === 'source') {
+      /* ★ 2026-10-14：按站主要求改用**原版源码落位公式**（docs/demo-主页.html 用的就是这一套，
+         manifest.scene.character 也逐字记了它）：
+           scale = min(w*0.64/764, h*0.90/1028)；x = 0.52w（再左移半个身位）；脚 = bottom − max(3, h*0.012)
+         与下面 compose.charHRatio(0.66)/footYRatio(0.96) 的差别是**她在屏里更大更靠下**（0.90h vs 0.66h）
+         —— 那正是 demo 的观感，所以主页舞台走这一支；其它挂载点完全不受影响。 */
+      var ch = ((this.manifest || {}).scene || {}).character || {};
+      var cv = ch.canvasSize || { w: 764, h: 1028 };
+      var s = Math.min(bw * (ch.maxWidthRatio || 0.64) / cv.w,
+                       bh * (ch.maxHeightRatio || 0.90) / cv.h);
+      var dh = cv.h * s, dw = dh * aspect;
+      var foot = Math.max(3, bh * (typeof ch.footRatio === 'number' ? ch.footRatio : 0.012));
+      return { x: bw * (ch.xRatio || 0.52) - dw / 2, y: bh - foot - dh, w: dw, h: dh };
+    }
     if (this.mode === 'stage') {
       var hr = comp.charHRatio || 0.66;
       var fy = (typeof comp.footYRatio === 'number') ? comp.footYRatio : 0.96;
@@ -582,6 +607,10 @@
     else if (cur.once) { idx = Math.min(total - 1, Math.floor(this.elapsed / cur.interval)); }
     else { idx = Math.floor(this.elapsed / cur.interval) % total; }
     if (idx < 0) { idx = 0; }
+    /* 倒放复用：只有 current.reverse 的节点（0.17.0α 的返回过渡）反向取帧。
+       放在分页解析之前，多页图集也整体反序。fixedFrame 是取证/口型用的**绝对帧号**
+       （smCoverage / mouthRender 直接指定），不参与反转，保持既有语义。 */
+    if (cur.reverse && cur.fixedFrame == null) { idx = total - 1 - idx; }
     var img = null, cols = cur.columns, fw = cur.fw, fh = cur.fh, local = idx;
     if (atlas.pages && atlas.pages.length) {
       /* 状态机剪辑：medium 档是**多分页**图集（9 个新生成的剪辑 2~4 页）。
@@ -969,6 +998,12 @@
     if (this.introCtx && this.introCanvas) {
       this.introCtx.clearRect(0, 0, this.introCanvas.width, this.introCanvas.height);
     }
+    /* ★ demo 的 showHud()：屏内状态行与字幕条在 demo 里初始是 hidden，开场播完才出现。
+       我们照这个行为（节点的初始 hidden 也照 demo 写在 partial 里）——
+       状态行的**数字仍由 composeStatus() 从真实节点/白名单接口取**，取不到写"读不到"。 */
+    if (this.statusEl) { this.statusEl.hidden = false; }
+    var sayBox = this.sayEl && (this.sayEl.closest ? this.sayEl.closest('.crt-sub') : null);
+    if (sayBox) { sayBox.hidden = false; }
     this.setState('intro:done');
   };
 
@@ -1501,10 +1536,12 @@
     return w >= 480;
   };
 
-  /** 载入一个状态机节点的图集（medium 或 hi，可能 2~4 页）。只保留当前这一个剪辑。 */
+  /** 载入一个状态机节点的图集（medium 或 hi，可能 2~4 页）。只保留当前这一个剪辑。
+   *  别名节点（node.atlas_clip）与源剪辑共用同一个缓存键：同一张图只下载一次、只解码一次
+   *  ——0.17.0α 的返回过渡 key_point_to_thinking 就是 thinking_to_key_point 的倒放，走这条路。 */
   Player.prototype.ensureMediumClip = function (node) {
     var self = this;
-    var key = 'sm:' + node.clip;
+    var key = 'sm:' + (node.atlas_clip || node.clip);
     var have = this.atlases[key];
     if (have && have.pages) { return Promise.resolve(have); }
     var useHi = this.smUseHi(node);
@@ -1554,7 +1591,7 @@
   Player.prototype.smSetCurrent = function (node, atlas) {
     var p0 = atlas.pages[0];
     this.current = {
-      clip: 'sm:' + node.clip,
+      clip: 'sm:' + (node.atlas_clip || node.clip),
       clipName: node.clip,
       frames: node.frames,
       columns: p0.cols,
@@ -1564,6 +1601,10 @@
       tier: 'medium',
       fit: 'char',
       once: node.loopMode === 'once_then_hold',
+      /* 倒放复用（0.17.0α 新增的返回过渡 key_point_to_thinking）：
+         图集是正向那张（atlas_clip），播放时把帧序反过来取 —— 不新增任何素材字节。
+         其余节点没有这个字段，行为完全不变。 */
+      reverse: !!node.reverse,
       fixedFrame: null,
       page: null,
       smNode: node
@@ -2153,9 +2194,15 @@
   }
 
   /** 从非主页路由点回主页时，<main> 外面那一层 CRT 场景并没有随 SSR 渲染出来，
-   *  这里把 <template id="tpl-kurisu-stage"> 的惰性内容挂到 body 末尾（挂一次就够）。 */
+   *  这里把 <template id="tpl-kurisu-stage"> 的惰性内容挂到 body 末尾（挂一次就够）。
+   *  ★ 2026-10-14 修（真回归）：守卫原来查的是 `q('.xk-crt')`，而主页 stage 换成 demo 版式后
+   *  根元素变成 `#xk-app .crt` —— `.xk-crt` 永远查不到，于是**每次 scan() 都往 body 再挂一份 stage**。
+   *  后果：同一个页面出现 2 份 `[data-xk-kurisu="stage"]`，`scan()` 给两份都建了播放器，
+   *  后挂的那份画布盖在上面；而 `KurisuPlayer.stage()` 返回的是**第一份**（它可能早已被
+   *  destroyAll() 销毁 → `play()` 提前返回 → `current` 永远为空）。实测表现就是
+   *  "角色画布空白、CRT 内部像素差从 11% 恶化到 81%"。守卫改成查**新的挂载点标记**。 */
   function ensureStage() {
-    if (q('.xk-crt')) { return; }
+    if (q('[data-xk-kurisu="stage"]') || q('.xk-crt')) { return; }
     var tpl = q('#tpl-kurisu-stage');
     if (tpl && tpl.content) { document.body.appendChild(tpl.content.cloneNode(true)); }
   }

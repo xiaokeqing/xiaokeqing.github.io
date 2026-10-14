@@ -1,42 +1,68 @@
 {{/*
-  CRT 场景 + 小刻晴（主页整屏背景的那一层）
+  CRT 场景 + 小刻晴（主页整屏背景那一层）
   ============================================================================
-  分工：
-    · 这一层只负责"画场景"：实拍书桌底图（CSS 背景）+ CRT 屏幕里的实验室背景
-      + 角色画布 + 屏内字幕条 / 状态行。
-    · 位置几何全部是**底图上的百分比**（crtRectNorm），所以底图怎么缩放，
-      角色与字幕条都严丝合缝地待在 CRT 屏幕里。
-    · 开关有两层：
-        ① 构建期 site.Params.kurisuEnabled（false = 整块不渲染，全站回到纯文本版）
-        ② 运行期 <html data-xk-crt-on>（由 kurisu-player.js 按当前路由设置 ——
-           SPA 只换 <main>，这一层在 <main> 外面，所以必须靠属性开关）
-    · 两层画布（都是装饰，aria-hidden）：
-        .xk-kurisu__canvas--intro  开场"贴脸靠近镜头"的**原包成片帧序列**（整屏铺满）
-        .xk-kurisu__canvas         她本人（全身 idle / speaking / thinking 图集）
-      开场层在 [data-xk-crt-intro="1"] 时不透明，播完摘掉属性 → 420ms 互淡（见 zz-kurisu.css）。
-    · 可访问性：底图 / 两张画布全部 aria-hidden="true"（装饰）；
-      字幕条与状态行是**真文本节点** —— 读屏与爬虫读得到她说了什么。
-    · 这里刻意**不写 id**：同一份标记既渲染进主页外层的场景，也放进文末的 <template>
-      （SPA 从别的路由点回主页时用它现挂），写 id 就会在文档里重复。
+  ★ 2026-10-14：按站主要求改成"那个 AI 的版式"（原话"让你全按这个改"）。
+     基准文件：`docs/demo-主页.html` 的 markup（+ `docs/demo-内容页外壳.html` 的 v-home）。
+     结构 / 类名 / 层序 / 几何变量（`--crt-x/y/w/h`、14 点多边形 clip-path）**保持 demo 原样**；
+     样式由 `assets/css/xk-app.css`（全量 `#xk-app` 前缀化）提供，只在主页加载。
+
+  与 demo 的**全部**差异（逐条都要有理由，绝不悄悄改版式）：
+    ① demo 里那 214 行 `<script>` 是**第二套帧播放器**（CLIPS + drawFrame + loop）——
+       按硬要求③换成既有 `static/js/kurisu-player.js`：这里只加 `data-xk-kurisu-*` 挂钩，
+       帧推进 / 状态机 / 口型 / L1 语音全部走那一个模块。**没有第二套播放器、没有第二套路由。**
+    ② demo 只有一张 `#charCanvas`；我们的播放器把开场 84 帧画在**独立一层画布**上、与 idle 层互淡
+       （`data-xk-kurisu-canvas-intro`），所以多一张同尺寸画布 —— 这是播放器契约要求，不是改版式。
+       （`.charcanvas` 的尺寸/位置规则仍是 demo 的 `.crt-clip>*{inset:0;width:100%;height:100%}`。）
+    ③ demo 的 `.crt-status` / `.crt-sub` 初始 `hidden`，由它自己的脚本在开场后显示；
+       我们的播放器自己管这两个节点（开局就写"正在读取…"），所以不加 hidden
+       （否则状态行与字幕永远不出现）。**文案与数字全部来自真实接口/真实节点，取不到写"读不到"。**
+    ④ demo 的 `.bootveil` / `.fallback` 由它自己的脚本摘除与切换；我们的播放器有自己的降级路径
+       （reduced-motion / 省流量 / 挂载点不可见）。本批**没搬**这两个 —— 如实记在交接文档"未做"里。
+    ⑤ demo 的 `.navpill` 是"主页演示"自己的浮条；站点已有左侧导航 + 顶行（app.js 的唯一路由入口），
+       导航搬运牵动路由，按站主要求"一页一页交"，本批先交主页舞台。
+
+  可访问性：底图/两张画布全部 `aria-hidden="true"`（装饰）；字幕条与状态行是**真文本节点**。
+  开关：构建期 site.Params.kurisuEnabled（false = 整块不渲染）；运行期 <html data-xk-crt-on>。
 */}}
 {{- if site.Params.kurisuEnabled }}
-<div class="xk-crt" data-xk-crt>
-  <div class="xk-crt__stage">
-    {{- /* ★ 状态机开关（37 节点 / 87 边自动游走）：**默认关**。
-           打开 = 在这里加 data-xk-kurisu-sm="on"（或在 manifest.stateMachine.auto 上做总闸）。
-           为什么默认关：37 段 medium 全量 48MB，按每节点 ~2.6s 的节奏，一次 60 秒的访问
-           会多拉 ~28MB（已加 6MB 带宽闸，但仍取决于访问量）。站主裁定：等 srv2 直连 +
-           Cloudflare 边缘缓存生效之后再打开。现在的动画仍是"逐帧真动画 + 开场真序列"。 */ -}}
-    <div class="xk-crt__screen xk-kurisu xk-kurisu--stage" data-xk-kurisu="stage"
-         data-xk-kurisu-clip="idle">
-      <canvas class="xk-kurisu__canvas xk-kurisu__canvas--main" data-xk-kurisu-canvas
-              aria-hidden="true"></canvas>
-      <canvas class="xk-kurisu__canvas xk-kurisu__canvas--intro" data-xk-kurisu-canvas-intro
-              aria-hidden="true"></canvas>
-      <p class="xk-kurisu__status" data-xk-kurisu-status>正在读取…</p>
-      <p class="xk-kurisu__say" data-xk-kurisu-say
-         data-xk-default-say="欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。">欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。</p>
+<div id="xk-app">
+  {{- /* demo 主页顶部那条橙色标识条（`docs/demo-主页.html:71`；位置/尺寸/圆角/配色/字号 1:1 照搬）。
+         唯一改动是**文案**：demo 原文写"监测数字为演示数据"，与"数字只来自真实只读端点"的纪律冲突，
+         换成等长的真实表述（与原文长度相当 → 像素差最小）。 */}}
+  <div class="demo-flag">XK-LAB · 真实帧素材与真实几何 · 数据来自真实只读端点</div>
+  <section class="view on stageview" id="v-home">
+    <div class="stage" id="stage">
+      <img class="desk" src="/images/crt/desk.webp" alt="" aria-hidden="true" decoding="async"
+           fetchpriority="high">
+      <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true"
+           decoding="async" loading="lazy">
+
+      {{- /* .crt = 播放器挂载点：既是"CRT 屏矩形"（character 落位公式的 bounds），也是 status/sub 的父节点。
+             data-xk-kurisu-fit="source" = 用原版源码落位公式（scale=min(w*.64/764,h*.90/1028)…）。 */}}
+      <div class="crt" id="crt" data-xk-kurisu="stage" data-xk-kurisu-clip="idle"
+           data-xk-kurisu-fit="source">
+        <div class="crt-clip" id="crtClip">
+          <img class="backplate" src="/images/crt/lab.webp" alt="" aria-hidden="true" decoding="async">
+          <canvas class="charcanvas charcanvas--main" data-xk-kurisu-canvas aria-hidden="true"></canvas>
+          <canvas class="charcanvas charcanvas--intro" data-xk-kurisu-canvas-intro aria-hidden="true"></canvas>
+          {{- /* 字幕垫板：**原图**（382,384 B，站主要求不许降质）。它正好在首屏里，
+                 直接写 src 会把主页首屏顶到 1688KB > 1536KB 预算；
+                 所以用 data-src + 播放器在"首帧画完之后"补上（与 hi 档同一招），
+                 资产是原图、首屏不超预算。见 kurisu-player.js 的 build()。 */}}
+          <img class="plate" data-xk-plate data-src="/kurisu/scene/subtitle_frame_big.webp"
+               alt="" aria-hidden="true" decoding="async">
+          <div class="scan" aria-hidden="true"></div>
+          <div class="vig" aria-hidden="true"></div>
+        </div>
+        <p class="crt-status" data-xk-kurisu-status hidden>正在读取…</p>
+        <p class="crt-sub" aria-live="polite" hidden><span data-xk-kurisu-say
+           data-xk-default-say="欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。">欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。</span><span class="cursor" aria-hidden="true"></span></p>
+      </div>
     </div>
-  </div>
+  </section>
+  {{- /* 主页导航 = demo 主页的浮条（`docs/demo-主页.html:94-97`）。
+         注意：内容页用的是外壳那份 `.dock`（layouts/partials/xk-dock.html），两者不是同一个东西，
+         各自的基准文件不同：主页看 demo-主页.html，内容页看 demo-内容页外壳.html。 */}}
+  {{ partial "xk-navpill.html" "home" }}
 </div>
 {{- end }}

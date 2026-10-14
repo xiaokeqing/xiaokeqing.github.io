@@ -81,92 +81,132 @@ opsTabs.forEach(b=>b.onclick = ()=>{
   opsTab = b.dataset.tab;
   opsTabs.forEach(x=>x.classList.toggle('on', x===b));
   opsPanes.forEach(p=>p.classList.toggle('on', p.dataset.pane===opsTab));
-  if(opsTab==='graph') startGraph();
-  if(opsTab==='stats') runCounters();
+  if(opsTab==='graph'){ startGraph(); runCounters(); }   /* ★第十二批：这四个数字渲染在 graph 这一屏，
+      原来只在点 stats 时滚动 → 它们永远停在 0（demo 的错位）。 */
+  if(opsTab==='stats') drawSpark();
   if(opsTab==='live') drawSpark();
 });
 
-/* 实时攻击流 */
-const FEED = [
-  ['ssh','[SSH]','密码猜测失败 root @ 45.155.x.x → 命中 cowrie-01'],
-  ['ssh','[SSH]','暴力破解 12/12 组已尝试 → cowrie-01 全程记录'],
-  ['ssh','[SSH]','会话建立：执行 uname -a、cat /etc/passwd → 已存回放'],
-  ['scan','[扫描]','6379/tcp Redis 探测 → 引导至 sentinel 诱饵'],
-  ['scan','[扫描]','masscan 特征：单 IP 扫 200+ 端口 → 已限速留证'],
-  ['web','[WEB]','POST /wp-login.php 撞库 → dionaea-03 记录载荷'],
-  ['web','[WEB]','GET /.env 探测 → tanner 返回伪造配置'],
-  ['iot','[IoT]','Telnet 僵尸网络握手 → conpot 工控蜜罐'],
-  ['iot','[IoT]','Mirai 特征载荷 → 已进入样本库'],
-  ['smb','[SMB]','EternalBlue 探测 → honeytrap 已拦截'],
-  ['dns','[DNS]','可疑 TXT 查询 → passiveDNS 已留证'],
-];
+/* 实时攻击流 —— ★第十二批重写（站主：①不许假数字 ②修"行叠行"）
+   数据：/api/public/alerts 的真实聚合告警，由 api-bind 写进 window.XK_FEED 后调 __xkRenderFeed。
+   行数：按容器高度实算（原来是"最多 12 行 + 光标一行"= 13 个行盒塞进 12.89 行的容器，
+        最后一行被 overflow 切掉 2.4px —— 实测 scrollHeight 316 > clientHeight 314）。
+        现在行数 = floor((容器高 - 上下 padding) / 行高) - 1（减 1 给光标），行与行永不重叠、末行不被切。 */
 const termFeed = document.getElementById('termFeed');
-const pad2 = n=>String(n).padStart(2,'0');
-function feedLine(){
-  const d = new Date(), t = pad2(d.getHours())+':'+pad2(d.getMinutes())+':'+pad2(d.getSeconds());
-  const f = FEED[Math.floor(Math.random()*FEED.length)];
-  const el = document.createElement('div');
-  el.className = 'tl';
-  el.innerHTML = `<span class="ts">${t}</span> <span class="tg ${f[0]}">${f[1]}</span> ${f[2]}`;
-  termFeed.appendChild(el);
-  while(termFeed.querySelectorAll('.tl').length > 12) termFeed.removeChild(termFeed.querySelector('.tl'));
-}
-for(let i=0;i<10;i++) feedLine();
+const xkEsc = s=>String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const tcursor = document.createElement('div');
 tcursor.innerHTML = '<span class="tcursor"></span>';
-termFeed.appendChild(tcursor);
-if(!RM) setInterval(()=>{
-  const mon = document.getElementById('v-monitor').classList.contains('on');
-  if(mon && opsTab==='live'){ feedLine(); termFeed.appendChild(tcursor); }
-}, 1500);
+let feedSeen = {};
+function feedCap(){
+  const lh = parseFloat(getComputedStyle(termFeed).lineHeight) || 22.8;
+  return Math.max(2, Math.floor((termFeed.clientHeight - 20) / lh) - 1);
+}
+function feedRow(it){
+  const el = document.createElement('div');
+  el.className = 'tl';
+  el.innerHTML = `<span class="ts">${xkEsc(it.ts)}</span> <span class="tg ${it.cls}">${xkEsc(it.tag)}</span> ${xkEsc(it.text)}`;
+  termFeed.appendChild(el);
+}
+function feedTrim(){
+  const cap = feedCap();
+  while(termFeed.querySelectorAll('.tl').length > cap) termFeed.removeChild(termFeed.querySelector('.tl'));
+  termFeed.appendChild(tcursor);
+}
+function renderFeed(){
+  const items = window.XK_FEED;
+  if(!items){
+    termFeed.innerHTML = '';
+    feedRow({ts:'--:--:--', cls:'dns', tag:'[读不到]', text:'/api/public/alerts 本次取不到（不可达或被拦）—— 不补样例值'});
+    feedTrim();
+    return;
+  }
+  if(!items.length){
+    termFeed.innerHTML = '';
+    feedRow({ts:'--:--:--', cls:'dns', tag:'[空]', text:'/api/public/alerts 返回的聚合窗口里没有告警（不是取不到，是真的没有）'});
+    feedTrim();
+    return;
+  }
+  items.filter(it=>!feedSeen[it.key]).forEach(it=>{ feedSeen[it.key] = 1; feedRow(it); });
+  feedTrim();
+}
+window.__xkRenderFeed = renderFeed;
+addEventListener('resize', feedTrim);
 
-/* 24h 时序 sparkline：线条从左到右画出 */
+
+/* 24 小时攻击时序 —— ★第十二批重写：数据改成 /api/public/alerts 的 stats24h.trend
+   （25 个小时桶真实计数，由 api-bind 写进 window.XK24H）；取不到就清空画布 + 表头写"读不到"，
+   不再用 Math.sin + 取模画一条看着像波形的假曲线（原实现就是这么画的）。 */
 let sparkDone = false;
 function drawSpark(){
   const c = document.getElementById('spark24'); if(!c) return;
-  const dpr = Math.min(devicePixelRatio||1, 2), w = c.clientWidth, h = 56;
+  const h = 56, dpr = Math.min(devicePixelRatio||1, 2), w = c.clientWidth;
   if(!w) return;
   c.width = w*dpr; c.height = h*dpr;
-  const x = c.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
-  const pts = [];
-  for(let i=0;i<=48;i++) pts.push(h-8-Math.abs(Math.sin(i*.62))*26-((i*7919)%13));
+  const x = c.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,w,h);
+  const bins = window.XK24H || null;
+  const mod = c.closest('.mod');
+  const tag = mod ? mod.querySelector('.mod-hd .tag') : null;
+  if(!bins || bins.length < 2){
+    if(tag) tag.textContent = '读不到（/alerts · stats24h）';
+    return;
+  }
+  if(tag) tag.textContent = '/alerts · stats24h（' + bins.length + ' 个小时桶）';
+  const vals = bins.map(b=>Number(b.count)||0);
+  const max = Math.max.apply(null, vals) || 1;
+  const yOf = v => (h-8) - (h-16) * (v/max);
+  const area = ()=>{
+    x.beginPath(); x.moveTo(0,h);
+    vals.forEach((v,i)=>x.lineTo(i/(vals.length-1)*w, yOf(v)));
+    x.lineTo(w,h); x.closePath();
+    x.fillStyle = 'rgba(127,212,216,.10)'; x.fill();
+  };
   const line = upto=>{
     x.beginPath();
-    const n = Math.max(2, Math.ceil(pts.length*upto));
-    for(let i=0;i<n;i++){ const px = i/(pts.length-1)*w; i===0 ? x.moveTo(px,pts[i]) : x.lineTo(px,pts[i]); }
+    const n = Math.max(2, Math.ceil(vals.length*upto));
+    for(let i=0;i<n;i++){ const px = i/(vals.length-1)*w; i===0 ? x.moveTo(px,yOf(vals[i])) : x.lineTo(px,yOf(vals[i])); }
     x.strokeStyle = '#7FD4D8'; x.lineWidth = 1.6; x.stroke();
   };
-  x.beginPath(); x.moveTo(0,h); pts.forEach((y,i)=>x.lineTo(i/(pts.length-1)*w,y)); x.lineTo(w,h); x.closePath();
-  x.fillStyle = 'rgba(127,212,216,.10)'; x.fill();
+  area();
   if(RM || sparkDone){ line(1); return; }
   sparkDone = true;
   const t0 = performance.now(), dur = 1100;
   (function step(t){
     const k = Math.min(1,(t-t0)/dur);
-    x.clearRect(0,0,w,h);
-    x.beginPath(); x.moveTo(0,h); pts.forEach((y,i)=>x.lineTo(i/(pts.length-1)*w,y)); x.lineTo(w,h); x.closePath();
-    x.fillStyle = 'rgba(127,212,216,.10)'; x.fill();
-    line(k);
+    x.clearRect(0,0,w,h); area(); line(k);
     if(k<1) requestAnimationFrame(step);
   })(t0);
 }
+window.__xkSpark = drawSpark;
 drawSpark();
 
+
 /* 攻击图谱：攻击者 → 传感器，数据包流动动画 */
-const SENSORS = [['cowrie-01','SSH 蜜罐'],['dionaea-03','恶意软件捕获'],['conpot','工控蜜罐'],['tanner','Web 蜜罐'],['honeytrap','低交互蜜罐'],['sentinel','Redis 诱饵']];
-const ATTACKERS = ['45.155.x.x','185.220.x.x','91.240.x.x','103.99.x.x','198.51.x.x'];
+/* ★第十二批：攻击者与传感器不再是写死的样例 ——
+   由 api-bind 从 /api/public/alerts（真实来源 IP）与 /api/public/honeypot（真实 SSH 客户端指纹）
+   写进 window.XK_ATTACKERS / window.XK_SENSORS；取不到就只画一行「读不到」，不画假的攻击路径。 */
+const SENSORS = [];
+const ATTACKERS = [];
 let graphStarted = false;
 function startGraph(){
   const c = document.getElementById('atkGraph'); if(!c || graphStarted) return;
   graphStarted = true;
   const dpr = Math.min(devicePixelRatio||1, 2);
   const x = c.getContext('2d');
-  const hits = SENSORS.map(()=>0);
+  let hits = null;
   let W = 0, H = 340;
   const resize = ()=>{ W = c.clientWidth; c.width = W*dpr; c.height = H*dpr; x.setTransform(dpr,0,0,dpr,0,0); };
   resize(); addEventListener('resize', resize);
-  const A = ATTACKERS.map((n,i)=>({n, fx:.09, fy:(i+1)/(ATTACKERS.length+1)}));
-  const S = SENSORS.map((s,i)=>({n:s[0], d:s[1], fx:.82, fy:(i+1)/(SENSORS.length+1)}));
+  const A_NAMES = window.XK_ATTACKERS || [], S_NAMES = window.XK_SENSORS || [];
+  if(!A_NAMES.length || !S_NAMES.length){   /* 读不到：把原因画在同一块画布上，不画假的路径 */
+    graphStarted = false;   /* 不锁死：数据到了以后再点这一栏还能画 */
+    const note = ()=>{ const w2 = c.clientWidth; if(!w2) return; x.clearRect(0,0,w2,H);
+      x.fillStyle = 'rgba(210,203,189,.75)'; x.font = '12px ui-monospace,Consolas,monospace'; x.textAlign = 'center';
+      x.fillText(window.XK_GRAPH_NOTE || '读不到：攻击路径的数据源没取到 —— 不画假的路径', w2/2, H/2); };
+    note(); addEventListener('resize', note); return;
+  }
+  hits = S_NAMES.map(()=>0);
+  const A = A_NAMES.map((n,i)=>({n, fx:.09, fy:(i+1)/(A_NAMES.length+1)}));
+  const S = S_NAMES.map((s,i)=>({n:s[0], d:s[1], fx:.82, fy:(i+1)/(S_NAMES.length+1)}));
   let pk = [], last = 0;
   function frame(t){
     requestAnimationFrame(frame);
@@ -211,34 +251,44 @@ function startGraph(){
   requestAnimationFrame(frame);
 }
 
-/* ATT&CK 矩阵（中文版） */
-const TACTICS = [
-  ['TA0043','侦察'],['TA0042','资源开发'],['TA0001','初始访问'],['TA0002','执行'],
-  ['TA0003','持久化'],['TA0004','权限提升'],['TA0005','防御规避'],['TA0006','凭据访问'],
-  ['TA0007','发现'],['TA0008','横向移动'],['TA0009','收集'],['TA0011','指挥控制'],
-  ['TA0010','渗出'],['TA0040','影响'],
-];
-const TACTIC_HITS = {3:9, 8:4, 11:6, 9:2, 1:12, 13:1};
+/* 告警类型矩阵 —— ★第十二批重写（原来是写死的 TACTIC_HITS 样例值）。
+   服务端没有 ATT&CK 战术字段，所以这里一格 = 服务端真实给的一个类型标签 + /alerts 的
+   stats.byType 真实计数；映射关系由服务端给，前端不编。取不到就写"读不到"。 */
 const attkGrid = document.getElementById('attkGrid');
-TACTICS.forEach((t,i)=>{
-  const hit = TACTIC_HITS[i] || 0;
-  const cell = document.createElement('div');
-  cell.className = 'cell' + (hit>=6 ? ' fire' : hit>0 ? ' hot' : '');
-  cell.innerHTML = `<b>${t[1]}</b><span class="taid">${t[0]}</span><div class="num">${hit}</div>`;
-  attkGrid.appendChild(cell);
-});
+function renderTypes(){
+  if(!attkGrid) return;
+  const rows = window.XK_TYPES;
+  attkGrid.innerHTML = '';
+  if(!rows || !rows.length){
+    attkGrid.innerHTML = '<div class="cell"><b>读不到</b><span class="taid">/api/public/alerts</span><div class="num">—</div></div>';
+    return;
+  }
+  const max = Math.max.apply(null, rows.map(r=>Number(r.count)||0)) || 1;
+  rows.forEach((r,i)=>{
+    const hit = Number(r.count) || 0;
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (hit/max >= .6 ? ' fire' : hit>0 ? ' hot' : '');
+    cell.innerHTML = `<b>${xkEsc(r.label || r.key || '—')}</b><span class="taid">${xkEsc(r.key || '')}</span>` +
+      `<div class="num">${hit.toLocaleString('en-US')}</div>`;
+    attkGrid.appendChild(cell);
+  });
+}
+window.__xkRenderTypes = renderTypes;
 
 /* 数据统计：数字滚动 */
 let counted = false;
 function runCounters(){
-  if(counted) return; counted = true;
+  counted = true;
+  /* ★第十二批：data-count 为空 = 该数字这次没取到 → 写"读不到"，**不写 0 冒充**；
+     真值由 api-bind 从真实端点写进 data-count 与文本。 */
   document.querySelectorAll('[data-count]').forEach(el=>{
-    const T = +el.dataset.count;
-    if(RM){ el.textContent = T.toLocaleString(); return; }
+    const raw = el.dataset.count, T = Number(raw);
+    if(raw === '' || raw === undefined || !isFinite(T)){ el.textContent = '读不到'; return; }
+    if(RM){ el.textContent = T.toLocaleString('en-US'); return; }
     const t0 = performance.now(), dur = 900;
     (function step(t){
       const k = Math.min(1,(t-t0)/dur);
-      el.textContent = Math.round(T*(1-Math.pow(1-k,3))).toLocaleString();
+      el.textContent = Math.round(T*(1-Math.pow(1-k,3))).toLocaleString('en-US');
       if(k<1) requestAnimationFrame(step);
     })(t0);
   });
@@ -363,7 +413,7 @@ document.querySelectorAll('#emos b').forEach(b=>b.onclick = ()=>{
 const views = {home:'v-home', monitor:'v-monitor', ai:'v-ai', notes:'v-notes', range:'v-range', about:'v-about'};
 const SAYS = {
   home:'',
-  monitor:'过去 24 小时拦截了 <span class="qk">96 次</span> 暴力破解，蜜罐记录了 <span class="qk">37 条</span> 交互。都在「监测中心」的大屏里。',
+  monitor:'公开只读端点的实时汇总都在这一屏；取不到就写读不到，不补数。',
   ai:'有什么安全问题直接问我。答不了就说答不了。',
   notes:'这几篇都是真实实验记录，「Cowrie 观察」那篇最热闹。',
   range:'想试试攻击输入？点上面的一键样本，判定全部来自后端检测组件。',
