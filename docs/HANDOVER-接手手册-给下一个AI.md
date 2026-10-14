@@ -56,7 +56,8 @@ Amadeus 源码 clone：E:\DeepSeek1\work\_amadeus-src（素材包安装到这里
 | `E:\DeepSeek1\work\断点状态-20261014-*.md` 与 `E:\DeepSeek1\work\push-gate.ps1` | 我的断点笔记 + **上线闸门脚本**（9 组检查） |
 | `docs/demo-主页.html`（222 行，自包含） | **主页的设计基准**：自带 style/标记/内联脚本（4 剪辑逐帧 / 开场硬切 idle / HUD 打字 / 原版落位公式） |
 | `docs/demo-内容页外壳.html`（8 个 view） | **五页的设计基准**：作战室 OPS-ROOM 等；注意它自带三处缺陷（见 `docs/交接-六页整份搬demo-20261014.md`） |
-| `docs/HANDOVER-接手手册-给下一个AI.md` | **就是本文**（唯一入口，0~11 节） |
+| `docs/HANDOVER-接手手册-给下一个AI.md` | **就是本文**（唯一入口，0~12 节） |
+| `docs/接线方案-动画与语音接入六页.md` | ★ **施工规格**：怎么把 状态机(38/88) + 视频(9.54MB) + 语音 + 口型 接进六页（三步、验收、feature flag 回退、10 条坑） |
 
 ---
 
