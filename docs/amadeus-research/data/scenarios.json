@@ -1,0 +1,271 @@
+{
+  "format": "amadeus.kurisu.scenarios.v1",
+  "source": "04-visual-runtime/assets/scenarios/runtime/scenario_graph.json",
+  "node_count": 6,
+  "edge_count": 19,
+  "nodes": [
+    {
+      "id": "node_mpbd0kg1_8hbek",
+      "label": "computer use",
+      "sceneId": "computer_use",
+      "resource": "computer_use/computer_uses_mastered.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/computer_use/computer_uses_mastered.webp",
+      "src_mode": "RGB",
+      "self_loop_prob": 0.8
+    },
+    {
+      "id": "node_mpbd0mm0_31rh3",
+      "label": "sleep_desk",
+      "sceneId": "computer_use",
+      "resource": "computer_use/sleep_at_work_desk.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/computer_use/sleep_at_work_desk.webp",
+      "src_mode": "RGB",
+      "self_loop_prob": 0.8
+    },
+    {
+      "id": "node_mpbd1abc_ollp9",
+      "label": "drink_coffee",
+      "sceneId": "read_books",
+      "resource": "read_books/drinking_coffee.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/read_books/drinking_coffee.webp",
+      "src_mode": "RGB",
+      "self_loop_prob": 0.8
+    },
+    {
+      "id": "node_mpbd2278_w4q82",
+      "label": "stand thinking",
+      "sceneId": "stand_thinking",
+      "resource": "stand_thinking/stand_thinking.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/stand_thinking/stand_thinking.webp",
+      "src_mode": "RGB",
+      "self_loop_prob": null
+    },
+    {
+      "id": "node_mpbd27lu_gjiit",
+      "label": "whiteboard use",
+      "sceneId": "whiteboard_use",
+      "resource": "whiteboard_use/white_board_use.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/whiteboard_use/white_board_use.webp",
+      "src_mode": "RGB",
+      "self_loop_prob": 0.8
+    },
+    {
+      "id": "node_mpbd2d4m_holi4",
+      "label": "look at CRT",
+      "sceneId": "look_at_CRT",
+      "resource": "look_at_CRT/look_at_CRT.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/look_at_CRT/look_at_CRT.webp",
+      "src_mode": "RGBA",
+      "self_loop_prob": 0.4
+    }
+  ],
+  "edges": [
+    {
+      "from": "stand thinking",
+      "to": "look at CRT",
+      "prob": 0.3,
+      "from_id": "node_mpbd2278_w4q82",
+      "to_id": "node_mpbd2d4m_holi4"
+    },
+    {
+      "from": "stand thinking",
+      "to": "computer use",
+      "prob": 0.3,
+      "from_id": "node_mpbd2278_w4q82",
+      "to_id": "node_mpbd0kg1_8hbek"
+    },
+    {
+      "from": "stand thinking",
+      "to": "drink_coffee",
+      "prob": 0.1,
+      "from_id": "node_mpbd2278_w4q82",
+      "to_id": "node_mpbd1abc_ollp9"
+    },
+    {
+      "from": "stand thinking",
+      "to": "whiteboard use",
+      "prob": 0.2,
+      "from_id": "node_mpbd2278_w4q82",
+      "to_id": "node_mpbd27lu_gjiit"
+    },
+    {
+      "from": "stand thinking",
+      "to": "sleep_desk",
+      "prob": 0.1,
+      "from_id": "node_mpbd2278_w4q82",
+      "to_id": "node_mpbd0mm0_31rh3"
+    },
+    {
+      "from": "drink_coffee",
+      "to": "drink_coffee",
+      "prob": 0.8,
+      "from_id": "node_mpbd1abc_ollp9",
+      "to_id": "node_mpbd1abc_ollp9"
+    },
+    {
+      "from": "computer use",
+      "to": "computer use",
+      "prob": 0.8,
+      "from_id": "node_mpbd0kg1_8hbek",
+      "to_id": "node_mpbd0kg1_8hbek"
+    },
+    {
+      "from": "sleep_desk",
+      "to": "sleep_desk",
+      "prob": 0.8,
+      "from_id": "node_mpbd0mm0_31rh3",
+      "to_id": "node_mpbd0mm0_31rh3"
+    },
+    {
+      "from": "sleep_desk",
+      "to": "computer use",
+      "prob": 0.2,
+      "from_id": "node_mpbd0mm0_31rh3",
+      "to_id": "node_mpbd0kg1_8hbek"
+    },
+    {
+      "from": "computer use",
+      "to": "sleep_desk",
+      "prob": 0.1,
+      "from_id": "node_mpbd0kg1_8hbek",
+      "to_id": "node_mpbd0mm0_31rh3"
+    },
+    {
+      "from": "computer use",
+      "to": "stand thinking",
+      "prob": 0.1,
+      "from_id": "node_mpbd0kg1_8hbek",
+      "to_id": "node_mpbd2278_w4q82"
+    },
+    {
+      "from": "whiteboard use",
+      "to": "whiteboard use",
+      "prob": 0.8,
+      "from_id": "node_mpbd27lu_gjiit",
+      "to_id": "node_mpbd27lu_gjiit"
+    },
+    {
+      "from": "whiteboard use",
+      "to": "stand thinking",
+      "prob": 0.2,
+      "from_id": "node_mpbd27lu_gjiit",
+      "to_id": "node_mpbd2278_w4q82"
+    },
+    {
+      "from": "look at CRT",
+      "to": "look at CRT",
+      "prob": 0.4,
+      "from_id": "node_mpbd2d4m_holi4",
+      "to_id": "node_mpbd2d4m_holi4"
+    },
+    {
+      "from": "look at CRT",
+      "to": "drink_coffee",
+      "prob": 0.2,
+      "from_id": "node_mpbd2d4m_holi4",
+      "to_id": "node_mpbd1abc_ollp9"
+    },
+    {
+      "from": "look at CRT",
+      "to": "stand thinking",
+      "prob": 0.2,
+      "from_id": "node_mpbd2d4m_holi4",
+      "to_id": "node_mpbd2278_w4q82"
+    },
+    {
+      "from": "look at CRT",
+      "to": "computer use",
+      "prob": 0.2,
+      "from_id": "node_mpbd2d4m_holi4",
+      "to_id": "node_mpbd0kg1_8hbek"
+    },
+    {
+      "from": "drink_coffee",
+      "to": "stand thinking",
+      "prob": 0.1,
+      "from_id": "node_mpbd1abc_ollp9",
+      "to_id": "node_mpbd2278_w4q82"
+    },
+    {
+      "from": "drink_coffee",
+      "to": "computer use",
+      "prob": 0.1,
+      "from_id": "node_mpbd1abc_ollp9",
+      "to_id": "node_mpbd0kg1_8hbek"
+    }
+  ],
+  "extra_assets": [
+    {
+      "resource": "BG_empty.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/BG_empty.webp",
+      "note": "empty room backplate - NOT referenced by scenario_graph.json",
+      "referenced_by_graph": false
+    },
+    {
+      "resource": "scenario_backplate.png",
+      "png_size": [
+        1398,
+        1125
+      ],
+      "webp": "scenes/BG_empty.webp",
+      "note": "与 BG_empty.png **逐字节相同**（sha256 2732c57a…）→ 只产出一份，本条目不再单独产出文件，webp 指回 BG_empty。",
+      "referenced_by_graph": false,
+      "originalWebp": "scenes/scenario_backplate.webp",
+      "deduplicated": true,
+      "emitted": false
+    }
+  ],
+  "crt_loop": {
+    "resource": "look_at_CRT/look_at_CRT_loop/loop/frame_0000..0179.png",
+    "frames": 180,
+    "size": [
+      1070,
+      860
+    ],
+    "fps": 30,
+    "duration_s": 6.0
+  },
+  "start": "stand thinking",
+  "startSceneId": "stand_thinking",
+  "startNote": "空闲（inactivitySeconds 到点）后进入场景态时的**起始节点**。源码结论：是 stand_thinking，不是 look at CRT（HOW-IT-WORKS §⑦；[源码] wallpaper/scene_assets.py 空闲进入分支）。",
+  "empty_room": {
+    "webp": "scenes/BG_empty.webp",
+    "role": "backplate",
+    "note": "**她不在时就显示这张空房间**。它是 backplate 层（不是 scenario_graph 的节点）：常态下 = BG_empty + 角色精灵；场景态下角色层隐藏，只留这张底图 / 换成场景整图。"
+  },
+  "dwell": {
+    "inactivitySeconds": 60,
+    "staticHoldSeconds": 45,
+    "staticHoldMaxSeconds": 60,
+    "note": "最后一次语音播完后 **60s** 才进入空闲场景；每个 pose 停 **45~60s**（随机）；动画按作者帧率播完当前循环再换 pose。",
+    "source": "HOW-IT-WORKS §⑦（wallpaper/scene_assets.py inactivitySeconds/staticHold*）"
+  }
+}

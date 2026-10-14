@@ -1,0 +1,1729 @@
+{
+ "format": "amadeus.kurisu.statemachine.v1",
+ "source": "03-character-kurisu/assets/spriteforge/runtime/kurisu/graph_config.json",
+ "root": "idle",
+ "node_count": 37,
+ "edge_count": 87,
+ "host_triggered_entries": [
+  "angry_trans",
+  "closed_eye_trans",
+  "sad_trans",
+  "shy_trans",
+  "speaking_short",
+  "speaking_trans",
+  "surprise_trans",
+  "trans_smile"
+ ],
+ "clips_not_in_graph": [
+  "sad",
+  "smile"
+ ],
+ "loop_mode_counts": {
+  "loop": 27,
+  "once_then_hold": 12
+ },
+ "frame_interval_counts": {
+  "21": 6,
+  "5": 1,
+  "8": 10,
+  "17": 22
+ },
+ "nodes": [
+  {
+   "id": "_8ms718k",
+   "clip": "idle",
+   "is_root": true,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 6,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle.atlas.webp"
+   ],
+   "atlas_bytes": 2312750,
+   "boot": "idle.boot.webp",
+   "poster": "idle.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_6fknbp9",
+   "clip": "idle2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 290,
+   "frame_size": [
+    764,
+    1026
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1026
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle2.atlas.webp",
+    "idle2.atlas.p01.webp"
+   ],
+   "atlas_bytes": 5626674,
+   "boot": "idle2.boot.webp",
+   "poster": "idle2.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_sugrzf5",
+   "clip": "idle_mic_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 194,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle_mic_wind.atlas.webp"
+   ],
+   "atlas_bytes": 3793752,
+   "boot": "idle_mic_wind.boot.webp",
+   "poster": "idle_mic_wind.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_478pebn",
+   "clip": "idle_str_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 194,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle_str_wind.atlas.webp"
+   ],
+   "atlas_bytes": 4103140,
+   "boot": "idle_str_wind.boot.webp",
+   "poster": "idle_str_wind.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_5qqy7vp",
+   "clip": "idle1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle1.atlas.webp"
+   ],
+   "atlas_bytes": 2311002,
+   "boot": "idle1.boot.webp",
+   "poster": "idle1.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_h60jwtz",
+   "clip": "trans_standby",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 196,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "trans_standby.atlas.webp"
+   ],
+   "atlas_bytes": 3556940,
+   "boot": "trans_standby.boot.webp",
+   "poster": "trans_standby.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_tj6uxlr",
+   "clip": "trans_smile",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 5,
+   "fps": 200.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1027
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1027
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "trans_smile.atlas.webp"
+   ],
+   "atlas_bytes": 2440080,
+   "boot": "trans_smile.boot.webp",
+   "poster": "trans_smile.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_tcjdzf0",
+   "clip": "speaking_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "in",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    18,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "speaking_trans.atlas.webp"
+   ],
+   "atlas_bytes": 2446698,
+   "boot": "speaking_trans.boot.webp",
+   "poster": "speaking_trans.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_iomne8b",
+   "clip": "speaking_loop1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    156,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas": [
+    "speaking_loop1.atlas.webp"
+   ],
+   "atlas_bytes": 3196630,
+   "boot": "speaking_loop1.boot.webp",
+   "poster": "speaking_loop1.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_afk0000",
+   "clip": "speaking_loop2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 240,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    0,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas": [
+    "speaking_loop2.atlas.webp",
+    "speaking_loop2.atlas.p01.webp"
+   ],
+   "atlas_bytes": 4431470,
+   "boot": "speaking_loop2.boot.webp",
+   "poster": "speaking_loop2.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_cpu0zpb",
+   "clip": "idle_side_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    175,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle_side_wind.atlas.webp"
+   ],
+   "atlas_bytes": 3265042,
+   "boot": "idle_side_wind.boot.webp",
+   "poster": "idle_side_wind.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_vo874gi",
+   "clip": "idle_side_soft_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    175,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle_side_soft_wind.atlas.webp"
+   ],
+   "atlas_bytes": 3264962,
+   "boot": "idle_side_soft_wind.boot.webp",
+   "poster": "idle_side_soft_wind.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_k5b3qvq",
+   "clip": "speaking_short",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas": [
+    "speaking_short.atlas.webp"
+   ],
+   "atlas_bytes": 2091890,
+   "boot": "speaking_short.boot.webp",
+   "poster": "speaking_short.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_kg5obtl",
+   "clip": "speaking_med",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 240,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas": [
+    "speaking_med.atlas.webp",
+    "speaking_med.atlas.p01.webp"
+   ],
+   "atlas_bytes": 4667624,
+   "boot": "speaking_med.boot.webp",
+   "poster": "speaking_med.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_9ejqr4v",
+   "clip": "speaking_long",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 360,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas": [
+    "speaking_long.atlas.webp",
+    "speaking_long.atlas.p01.webp"
+   ],
+   "atlas_bytes": 6417966,
+   "boot": "speaking_long.boot.webp",
+   "poster": "speaking_long.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_m1sdkop",
+   "clip": "smile_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    17,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas": [
+    "smile_speaking.atlas.webp"
+   ],
+   "atlas_bytes": 3498358,
+   "boot": "smile_speaking.boot.webp",
+   "poster": "smile_speaking.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_5t4fqvt",
+   "clip": "sad_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "sad_trans.atlas.webp"
+   ],
+   "atlas_bytes": 1194030,
+   "boot": "sad_trans.boot.webp",
+   "poster": "sad_trans.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_a998p67",
+   "clip": "sad_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    15,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas": [
+    "sad_speaking.atlas.webp"
+   ],
+   "atlas_bytes": 2175610,
+   "boot": "sad_speaking.boot.webp",
+   "poster": "sad_speaking.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_cckcbim",
+   "clip": "thinking_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    18,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "thinking_trans.atlas.webp"
+   ],
+   "atlas_bytes": 2442306,
+   "boot": "thinking_trans.boot.webp",
+   "poster": "thinking_trans.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_20x9amw",
+   "clip": "thinking_speaking1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 5,
+   "has_mouth_profile": true,
+   "atlas": [
+    "thinking_speaking1.atlas.webp"
+   ],
+   "atlas_bytes": 3415466,
+   "boot": "thinking_speaking1.boot.webp",
+   "poster": "thinking_speaking1.poster.webp",
+   "tier": "featured"
+  },
+  {
+   "id": "_lmwgyyi",
+   "clip": "thinking_speaking2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 300,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas": [
+    "thinking_speaking2.atlas.webp",
+    "thinking_speaking2.atlas.p01.webp"
+   ],
+   "atlas_bytes": 5778906,
+   "boot": "thinking_speaking2.boot.webp",
+   "poster": "thinking_speaking2.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_wov3kn0",
+   "clip": "thinking_to_serious",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "thinking_to_serious.atlas.webp"
+   ],
+   "atlas_bytes": 2421794,
+   "boot": "thinking_to_serious.boot.webp",
+   "poster": "thinking_to_serious.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_nnu2yb5",
+   "clip": "thinking_to_key_point",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "thinking_to_key_point.atlas.webp"
+   ],
+   "atlas_bytes": 2497304,
+   "boot": "thinking_to_key_point.boot.webp",
+   "poster": "thinking_to_key_point.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_8zysg7u",
+   "clip": "key_point_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    148,
+    24,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas": [
+    "key_point_speaking.atlas.webp"
+   ],
+   "atlas_bytes": 3503970,
+   "boot": "key_point_speaking.boot.webp",
+   "poster": "key_point_speaking.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_wvjuqyw",
+   "clip": "serious_to_thinking",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    156,
+    20,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas": [
+    "serious_to_thinking.atlas.webp"
+   ],
+   "atlas_bytes": 2314238,
+   "boot": "serious_to_thinking.boot.webp",
+   "poster": "serious_to_thinking.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_la21lrm",
+   "clip": "shy_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "shy_trans.atlas.webp"
+   ],
+   "atlas_bytes": 1148162,
+   "boot": "shy_trans.boot.webp",
+   "poster": "shy_trans.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_ezyyvyu",
+   "clip": "shy_speaking1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas": [
+    "shy_speaking1.atlas.webp"
+   ],
+   "atlas_bytes": 3401142,
+   "boot": "shy_speaking1.boot.webp",
+   "poster": "shy_speaking1.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_ivj6gek",
+   "clip": "shy_speaking2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 300,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas": [
+    "shy_speaking2.atlas.webp",
+    "shy_speaking2.atlas.p01.webp"
+   ],
+   "atlas_bytes": 5907212,
+   "boot": "shy_speaking2.boot.webp",
+   "poster": "shy_speaking2.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_wpmgajp",
+   "clip": "surprise_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "surprise_trans.atlas.webp"
+   ],
+   "atlas_bytes": 1116484,
+   "boot": "surprise_trans.boot.webp",
+   "poster": "surprise_trans.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_bqm6hqs",
+   "clip": "surprise_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas": [
+    "surprise_speaking.atlas.webp"
+   ],
+   "atlas_bytes": 3406538,
+   "boot": "surprise_speaking.boot.webp",
+   "poster": "surprise_speaking.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_24e7jnz",
+   "clip": "angry_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "angry_trans.atlas.webp"
+   ],
+   "atlas_bytes": 1105124,
+   "boot": "angry_trans.boot.webp",
+   "poster": "angry_trans.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_ijtkrmm",
+   "clip": "angry_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    112,
+    16,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas": [
+    "angry_speaking.atlas.webp"
+   ],
+   "atlas_bytes": 3505244,
+   "boot": "angry_speaking.boot.webp",
+   "poster": "angry_speaking.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_t0sryza",
+   "clip": "idle_side_butterfly",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 600,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    175,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle_side_butterfly.atlas.webp",
+    "idle_side_butterfly.atlas.p01.webp",
+    "idle_side_butterfly.atlas.p02.webp"
+   ],
+   "atlas_bytes": 12099844,
+   "boot": "idle_side_butterfly.boot.webp",
+   "poster": "idle_side_butterfly.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_khp4i06",
+   "clip": "closed_eye_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "in",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    18,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "closed_eye_trans.atlas.webp"
+   ],
+   "atlas_bytes": 2513370,
+   "boot": "closed_eye_trans.boot.webp",
+   "poster": "closed_eye_trans.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_7jh10a4",
+   "clip": "speaking_closed_eye_1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    136,
+    20,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas": [
+    "speaking_closed_eye_1.atlas.webp"
+   ],
+   "atlas_bytes": 3172928,
+   "boot": "speaking_closed_eye_1.boot.webp",
+   "poster": "speaking_closed_eye_1.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_vudn3h4",
+   "clip": "speaking_closed_eye_2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 300,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    136,
+    20,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas": [
+    "speaking_closed_eye_2.atlas.webp",
+    "speaking_closed_eye_2.atlas.p01.webp"
+   ],
+   "atlas_bytes": 5380952,
+   "boot": "speaking_closed_eye_2.boot.webp",
+   "poster": "speaking_closed_eye_2.poster.webp",
+   "tier": "general"
+  },
+  {
+   "id": "_bcg75h5",
+   "clip": "idle_closed_eye",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 738,
+   "frame_size": [
+    960,
+    1028
+   ],
+   "opaque_bbox": [
+    98,
+    0,
+    764,
+    1028
+   ],
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas": [
+    "idle_closed_eye.atlas.webp",
+    "idle_closed_eye.atlas.p01.webp",
+    "idle_closed_eye.atlas.p02.webp",
+    "idle_closed_eye.atlas.p03.webp"
+   ],
+   "atlas_bytes": 14708824,
+   "boot": "idle_closed_eye.boot.webp",
+   "poster": "idle_closed_eye.poster.webp",
+   "tier": "featured"
+  }
+ ],
+ "edges": [
+  {
+   "from": "idle",
+   "to": "idle",
+   "from_id": "_8ms718k",
+   "to_id": "_8ms718k",
+   "prob": 0.7
+  },
+  {
+   "from": "idle",
+   "to": "idle2",
+   "from_id": "_8ms718k",
+   "to_id": "_6fknbp9",
+   "prob": 0.05
+  },
+  {
+   "from": "idle",
+   "to": "idle_mic_wind",
+   "from_id": "_8ms718k",
+   "to_id": "_sugrzf5",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_mic_wind",
+   "to": "idle_mic_wind",
+   "from_id": "_sugrzf5",
+   "to_id": "_sugrzf5",
+   "prob": 0.6
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "idle_str_wind",
+   "from_id": "_478pebn",
+   "to_id": "_478pebn",
+   "prob": 0.3
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "idle_mic_wind",
+   "from_id": "_478pebn",
+   "to_id": "_sugrzf5",
+   "prob": 0.5
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "idle",
+   "from_id": "_478pebn",
+   "to_id": "_8ms718k",
+   "prob": 0.2
+  },
+  {
+   "from": "idle_mic_wind",
+   "to": "idle_str_wind",
+   "from_id": "_sugrzf5",
+   "to_id": "_478pebn",
+   "prob": 0.2
+  },
+  {
+   "from": "idle_mic_wind",
+   "to": "idle",
+   "from_id": "_sugrzf5",
+   "to_id": "_8ms718k",
+   "prob": 0.2
+  },
+  {
+   "from": "idle",
+   "to": "idle1",
+   "from_id": "_8ms718k",
+   "to_id": "_5qqy7vp",
+   "prob": 0.05
+  },
+  {
+   "from": "idle1",
+   "to": "idle1",
+   "from_id": "_5qqy7vp",
+   "to_id": "_5qqy7vp",
+   "prob": 0.15
+  },
+  {
+   "from": "idle1",
+   "to": "idle",
+   "from_id": "_5qqy7vp",
+   "to_id": "_8ms718k",
+   "prob": 0.85
+  },
+  {
+   "from": "idle2",
+   "to": "idle2",
+   "from_id": "_6fknbp9",
+   "to_id": "_6fknbp9",
+   "prob": 0.7
+  },
+  {
+   "from": "idle2",
+   "to": "idle",
+   "from_id": "_6fknbp9",
+   "to_id": "_8ms718k",
+   "prob": 0.3
+  },
+  {
+   "from": "idle",
+   "to": "trans_standby",
+   "from_id": "_8ms718k",
+   "to_id": "_h60jwtz",
+   "prob": 0.05
+  },
+  {
+   "from": "idle",
+   "to": "trans_smile",
+   "from_id": "_8ms718k",
+   "to_id": "_tj6uxlr",
+   "prob": 0
+  },
+  {
+   "from": "idle",
+   "to": "speaking_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_tcjdzf0",
+   "prob": 0
+  },
+  {
+   "from": "speaking_loop1",
+   "to": "speaking_loop1",
+   "from_id": "_iomne8b",
+   "to_id": "_iomne8b",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_loop2",
+   "to": "speaking_loop2",
+   "from_id": "_afk0000",
+   "to_id": "_afk0000",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_loop2",
+   "to": "speaking_loop1",
+   "from_id": "_afk0000",
+   "to_id": "_iomne8b",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_loop1",
+   "to": "speaking_loop2",
+   "from_id": "_iomne8b",
+   "to_id": "_afk0000",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_trans",
+   "to": "speaking_loop2",
+   "from_id": "_tcjdzf0",
+   "to_id": "_afk0000",
+   "prob": 0.6
+  },
+  {
+   "from": "speaking_trans",
+   "to": "speaking_loop1",
+   "from_id": "_tcjdzf0",
+   "to_id": "_iomne8b",
+   "prob": 0.4
+  },
+  {
+   "from": "idle_side_wind",
+   "to": "idle_side_wind",
+   "from_id": "_cpu0zpb",
+   "to_id": "_cpu0zpb",
+   "prob": 0.3
+  },
+  {
+   "from": "trans_standby",
+   "to": "idle_side_soft_wind",
+   "from_id": "_h60jwtz",
+   "to_id": "_vo874gi",
+   "prob": 0.3
+  },
+  {
+   "from": "trans_standby",
+   "to": "idle_side_wind",
+   "from_id": "_h60jwtz",
+   "to_id": "_cpu0zpb",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_side_soft_wind",
+   "to": "idle_side_soft_wind",
+   "from_id": "_vo874gi",
+   "to_id": "_vo874gi",
+   "prob": 0.6
+  },
+  {
+   "from": "idle_side_soft_wind",
+   "to": "idle_side_wind",
+   "from_id": "_vo874gi",
+   "to_id": "_cpu0zpb",
+   "prob": 0.3
+  },
+  {
+   "from": "idle_side_wind",
+   "to": "idle_side_soft_wind",
+   "from_id": "_cpu0zpb",
+   "to_id": "_vo874gi",
+   "prob": 0.6
+  },
+  {
+   "from": "speaking_short",
+   "to": "speaking_short",
+   "from_id": "_k5b3qvq",
+   "to_id": "_k5b3qvq",
+   "prob": 0.2
+  },
+  {
+   "from": "idle",
+   "to": "speaking_short",
+   "from_id": "_8ms718k",
+   "to_id": "_k5b3qvq",
+   "prob": 0
+  },
+  {
+   "from": "speaking_short",
+   "to": "speaking_med",
+   "from_id": "_k5b3qvq",
+   "to_id": "_kg5obtl",
+   "prob": 0.3
+  },
+  {
+   "from": "speaking_short",
+   "to": "speaking_long",
+   "from_id": "_k5b3qvq",
+   "to_id": "_9ejqr4v",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_long",
+   "to": "speaking_long",
+   "from_id": "_9ejqr4v",
+   "to_id": "_9ejqr4v",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_long",
+   "to": "speaking_med",
+   "from_id": "_9ejqr4v",
+   "to_id": "_kg5obtl",
+   "prob": 0.3
+  },
+  {
+   "from": "speaking_long",
+   "to": "speaking_short",
+   "from_id": "_9ejqr4v",
+   "to_id": "_k5b3qvq",
+   "prob": 0.2
+  },
+  {
+   "from": "speaking_med",
+   "to": "speaking_med",
+   "from_id": "_kg5obtl",
+   "to_id": "_kg5obtl",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_med",
+   "to": "speaking_long",
+   "from_id": "_kg5obtl",
+   "to_id": "_9ejqr4v",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_med",
+   "to": "speaking_short",
+   "from_id": "_kg5obtl",
+   "to_id": "_k5b3qvq",
+   "prob": 0.4
+  },
+  {
+   "from": "trans_smile",
+   "to": "smile_speaking",
+   "from_id": "_tj6uxlr",
+   "to_id": "_m1sdkop",
+   "prob": 1
+  },
+  {
+   "from": "smile_speaking",
+   "to": "smile_speaking",
+   "from_id": "_m1sdkop",
+   "to_id": "_m1sdkop",
+   "prob": 1
+  },
+  {
+   "from": "idle",
+   "to": "sad_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_5t4fqvt",
+   "prob": 0
+  },
+  {
+   "from": "sad_trans",
+   "to": "sad_speaking",
+   "from_id": "_5t4fqvt",
+   "to_id": "_a998p67",
+   "prob": 1
+  },
+  {
+   "from": "sad_speaking",
+   "to": "sad_speaking",
+   "from_id": "_a998p67",
+   "to_id": "_a998p67",
+   "prob": 1
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "thinking_trans",
+   "from_id": "_478pebn",
+   "to_id": "_cckcbim",
+   "prob": 0
+  },
+  {
+   "from": "thinking_trans",
+   "to": "thinking_speaking2",
+   "from_id": "_cckcbim",
+   "to_id": "_lmwgyyi",
+   "prob": 0.65
+  },
+  {
+   "from": "thinking_trans",
+   "to": "thinking_speaking1",
+   "from_id": "_cckcbim",
+   "to_id": "_20x9amw",
+   "prob": 0.35
+  },
+  {
+   "from": "thinking_speaking1",
+   "to": "thinking_speaking1",
+   "from_id": "_20x9amw",
+   "to_id": "_20x9amw",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_speaking1",
+   "to": "thinking_speaking2",
+   "from_id": "_20x9amw",
+   "to_id": "_lmwgyyi",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_speaking1",
+   "from_id": "_lmwgyyi",
+   "to_id": "_20x9amw",
+   "prob": 0.4
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_speaking2",
+   "from_id": "_lmwgyyi",
+   "to_id": "_lmwgyyi",
+   "prob": 0.3
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_to_serious",
+   "from_id": "_lmwgyyi",
+   "to_id": "_wov3kn0",
+   "prob": 0.15
+  },
+  {
+   "from": "thinking_to_serious",
+   "to": "speaking_loop2",
+   "from_id": "_wov3kn0",
+   "to_id": "_afk0000",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_to_serious",
+   "to": "speaking_loop1",
+   "from_id": "_wov3kn0",
+   "to_id": "_iomne8b",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_to_key_point",
+   "from_id": "_lmwgyyi",
+   "to_id": "_nnu2yb5",
+   "prob": 0.15
+  },
+  {
+   "from": "thinking_to_key_point",
+   "to": "key_point_speaking",
+   "from_id": "_nnu2yb5",
+   "to_id": "_8zysg7u",
+   "prob": 1
+  },
+  {
+   "from": "key_point_speaking",
+   "to": "key_point_speaking",
+   "from_id": "_8zysg7u",
+   "to_id": "_8zysg7u",
+   "prob": 0.5
+  },
+  {
+   "from": "key_point_speaking",
+   "to": "thinking_speaking1",
+   "from_id": "_8zysg7u",
+   "to_id": "_20x9amw",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_loop2",
+   "to": "serious_to_thinking",
+   "from_id": "_afk0000",
+   "to_id": "_wvjuqyw",
+   "prob": 0.1
+  },
+  {
+   "from": "speaking_loop1",
+   "to": "serious_to_thinking",
+   "from_id": "_iomne8b",
+   "to_id": "_wvjuqyw",
+   "prob": 0.1
+  },
+  {
+   "from": "serious_to_thinking",
+   "to": "thinking_speaking1",
+   "from_id": "_wvjuqyw",
+   "to_id": "_20x9amw",
+   "prob": 0.4
+  },
+  {
+   "from": "serious_to_thinking",
+   "to": "thinking_speaking2",
+   "from_id": "_wvjuqyw",
+   "to_id": "_lmwgyyi",
+   "prob": 0.6
+  },
+  {
+   "from": "idle",
+   "to": "shy_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_la21lrm",
+   "prob": 0
+  },
+  {
+   "from": "shy_trans",
+   "to": "shy_speaking1",
+   "from_id": "_la21lrm",
+   "to_id": "_ezyyvyu",
+   "prob": 0.4
+  },
+  {
+   "from": "shy_trans",
+   "to": "shy_speaking2",
+   "from_id": "_la21lrm",
+   "to_id": "_ivj6gek",
+   "prob": 0.6
+  },
+  {
+   "from": "shy_speaking1",
+   "to": "shy_speaking1",
+   "from_id": "_ezyyvyu",
+   "to_id": "_ezyyvyu",
+   "prob": 0.5
+  },
+  {
+   "from": "shy_speaking2",
+   "to": "shy_speaking2",
+   "from_id": "_ivj6gek",
+   "to_id": "_ivj6gek",
+   "prob": 0.6
+  },
+  {
+   "from": "shy_speaking2",
+   "to": "shy_speaking1",
+   "from_id": "_ivj6gek",
+   "to_id": "_ezyyvyu",
+   "prob": 0.4
+  },
+  {
+   "from": "shy_speaking1",
+   "to": "shy_speaking2",
+   "from_id": "_ezyyvyu",
+   "to_id": "_ivj6gek",
+   "prob": 0.5
+  },
+  {
+   "from": "idle",
+   "to": "surprise_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_wpmgajp",
+   "prob": 0
+  },
+  {
+   "from": "surprise_trans",
+   "to": "surprise_speaking",
+   "from_id": "_wpmgajp",
+   "to_id": "_bqm6hqs",
+   "prob": 1
+  },
+  {
+   "from": "surprise_speaking",
+   "to": "surprise_speaking",
+   "from_id": "_bqm6hqs",
+   "to_id": "_bqm6hqs",
+   "prob": 1
+  },
+  {
+   "from": "idle",
+   "to": "angry_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_24e7jnz",
+   "prob": 0
+  },
+  {
+   "from": "angry_trans",
+   "to": "angry_speaking",
+   "from_id": "_24e7jnz",
+   "to_id": "_ijtkrmm",
+   "prob": 1
+  },
+  {
+   "from": "angry_speaking",
+   "to": "angry_speaking",
+   "from_id": "_ijtkrmm",
+   "to_id": "_ijtkrmm",
+   "prob": 1
+  },
+  {
+   "from": "idle_side_wind",
+   "to": "idle_side_butterfly",
+   "from_id": "_cpu0zpb",
+   "to_id": "_t0sryza",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_side_soft_wind",
+   "to": "idle_side_butterfly",
+   "from_id": "_vo874gi",
+   "to_id": "_t0sryza",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_side_butterfly",
+   "to": "idle_side_wind",
+   "from_id": "_t0sryza",
+   "to_id": "_cpu0zpb",
+   "prob": 1
+  },
+  {
+   "from": "idle",
+   "to": "closed_eye_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_khp4i06",
+   "prob": 0
+  },
+  {
+   "from": "closed_eye_trans",
+   "to": "speaking_closed_eye_1",
+   "from_id": "_khp4i06",
+   "to_id": "_7jh10a4",
+   "prob": 0.5
+  },
+  {
+   "from": "closed_eye_trans",
+   "to": "speaking_closed_eye_2",
+   "from_id": "_khp4i06",
+   "to_id": "_vudn3h4",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_closed_eye_2",
+   "to": "speaking_closed_eye_1",
+   "from_id": "_vudn3h4",
+   "to_id": "_7jh10a4",
+   "prob": 0.6
+  },
+  {
+   "from": "speaking_closed_eye_1",
+   "to": "speaking_closed_eye_2",
+   "from_id": "_7jh10a4",
+   "to_id": "_vudn3h4",
+   "prob": 0.35
+  },
+  {
+   "from": "speaking_closed_eye_1",
+   "to": "speaking_closed_eye_1",
+   "from_id": "_7jh10a4",
+   "to_id": "_7jh10a4",
+   "prob": 0.65
+  },
+  {
+   "from": "speaking_closed_eye_2",
+   "to": "speaking_closed_eye_2",
+   "from_id": "_vudn3h4",
+   "to_id": "_vudn3h4",
+   "prob": 0.4
+  },
+  {
+   "from": "idle",
+   "to": "idle_closed_eye",
+   "from_id": "_8ms718k",
+   "to_id": "_bcg75h5",
+   "prob": 0.05
+  },
+  {
+   "from": "idle_closed_eye",
+   "to": "idle",
+   "from_id": "_bcg75h5",
+   "to_id": "_8ms718k",
+   "prob": 1
+  }
+ ]
+}
