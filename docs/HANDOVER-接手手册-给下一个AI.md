@@ -216,3 +216,31 @@ HEAD              = 2e37354（六页整份搬 demo 已提交，并已发布到 s
 若交接前有人把任何密钥贴进过聊天（CF token / Fish Key / SSH 私钥），请到对应平台 **Revoke 重建** ✓
 仓库里**没有**任何密钥；密钥只在上面那张表的 `.cf-token` / `.fish-key` 与 `~\.ssh\` 里 ✓
 ```
+
+---
+
+## 11. 工具与 SSH 速查（照着填/照着跑）
+
+```
+hugo     = C:\Users\T\AppData\Local\Microsoft\WinGet\Packages\Hugo.Hugo.Extended_Microsoft.Winget.Source_8wekyb3d8bbwe\hugo.exe
+node     = F:\node.js\node.exe        # _dev/gate-firstscreen.mjs 需要
+git      = C:\Program Files\Git\cmd\git.exe
+bash     = C:\Program Files\Git\bin\bash.exe   # 跑 scripts/assert-build.sh
+python   = C:\Users\T\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe
+ffmpeg   = E:\DeepSeek1\work\_kurisu-017\video-pipeline\tools\ffmpeg-master-latest-win64-gpl\bin\ffmpeg.exe
+ssh 别名 = secagent-srv1（阿里云）｜ secagent-srv2（腾讯云）；配置在 %USERPROFILE%\.ssh\config
+ssh 私钥 = %USERPROFILE%\.ssh\secagent_ed25519
+
+# 推送前必须设（否则 GitHub 报 publickey 拒绝 ✗）：
+$env:GIT_SSH_COMMAND = 'ssh -i "$env:USERPROFILE\.ssh\secagent_ed25519" -o IdentitiesOnly=yes'
+
+# 完整一条龙（构建 → 门禁 → 提交 → 推送 → 发布到 srv2）：
+& hugo --gc --minify --cleanDestinationDir
+& bash scripts/assert-build.sh ./public
+& node _dev/gate-firstscreen.mjs
+& python _dev/check-ssr-contract.py public
+git add <你自己的文件> ; git commit ; git push
+powershell -ExecutionPolicy Bypass -File scripts\publish-site-to-srv2.ps1   # ← 这一步才上线 ✗
+```
+
+> 提醒：**两个 AI 不要同时改同一个仓库** ✗ —— 交接时先让上一个停手（`list_agents` 看有没有在跑的活）。
