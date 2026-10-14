@@ -1,6 +1,240 @@
-{{/*
-  首页 layout：外壳与全部视图都在 layouts/baseof.html 里提供，
-  所以这里只需要一个空的 main 块（Hugo 要求页面 layout 存在）。
-  真正的门户内容见 layouts/partials/spa-view-home.html。
-*/}}
-{{ define "main" }}{{ end }}
+{{- /* ============================================================================
+   生产主页 = `docs/demo-主页.html` **整份**（站主 2026-10-14 第四批口径）。
+   ----------------------------------------------------------------------------
+   搬过来的：它自己的 <style>（逐字）、<body> 全部标记（逐字）、那一段内联 <script>
+   （4 剪辑逐帧 canvas / 开场播完硬切 idle / showHud 打字 / 原版落位公式，逐字）。
+   只改两处：
+     ① 素材 src → 我们 static/ 下的真文件（映射表见 _dev/gen-demo-pages.py）
+     ② .navpill 的 href="#" → 站点真路由（/ · /alerts/ · /posts/ · /labs/ · /ai/ · /about/）
+   不搬的：站点 SPA 外层（app.js / 侧栏 / 顶行 / 输入条 / 页脚 / 搜索层）、kurisu-player.js、
+   状态机/语音/口型 —— 站主明确要求这些**不要**进这一页。
+   保留的不可见契约：Hugo <head>（标题/描述/canonical/OG/favicon）+ <main id="content"
+   data-xk-ssr="home">（SPA 契约断言读它）+ #xk-views 占位。
+   重现方式：python _dev/gen-demo-pages.py
+   ============================================================================ */ -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+<style>
+  :root{
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    /* —— 来自 static/kurisu/manifest.json scene.*（底图 1672×941） —— */
+    --crt-x:32.8947%; --crt-y:20.7226%; --crt-w:35.0478%; --crt-h:47.0776%;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#0B1118}
+  body{font:14px/1.6 var(--sans)}
+  .demo-flag{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:100;
+    background:#F5A623;color:#201500;font:12px var(--mono);padding:2px 12px;border-radius:0 0 6px 6px;white-space:nowrap}
+
+  /* stage：按底图比例 cover（manifest scene.cover.css 口径） */
+  .stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:max(100vw,177.68vh);height:max(56.28vw,100vh)}
+  .desk{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  /* CRT 容器（bounds 百分比写死，与视口无关） */
+  .crt{position:absolute;left:var(--crt-x);top:var(--crt-y);width:var(--crt-w);height:var(--crt-h)}
+  .crt-clip{position:absolute;inset:0;
+    clip-path:polygon(1.7065% 2.2573%,21.5017% 0.4515%,50.1706% 0%,79.1809% 0.6772%,98.4642% 3.1603%,
+      99.6587% 33.4086%,100% 67.9458%,98.9761% 97.7427%,78.8396% 99.5485%,50.5119% 100%,
+      21.5017% 99.0971%,1.0239% 97.2912%,0% 67.4944%,0.3413% 33.1828%)}
+  .crt-clip>*{position:absolute;inset:0;width:100%;height:100%}
+  .backplate{object-fit:cover}
+  .charcanvas{display:block}
+  .plate{position:absolute;left:14%;right:14%;top:auto;bottom:2.5%;width:72%;height:auto;
+    aspect-ratio:2564/430;object-fit:fill;inset:auto}
+  .scan{background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);pointer-events:none}
+  .vig{background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.42) 100%);pointer-events:none}
+  .glow{mix-blend-mode:screen;opacity:.5;pointer-events:none;animation:breathe 7s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.42}50%{opacity:.58}}
+
+  /* 屏内 DOM：状态行 / 字幕条（垫板 + 浅字，对比度实测口径 ≥4.5:1） */
+  .crt-status{position:absolute;top:4.5%;right:5%;z-index:5;text-align:right;
+    font:11px/1.7 var(--mono);color:#DFF3FF;background:rgba(8,14,20,.55);
+    padding:4px 9px;border-radius:6px;letter-spacing:.04em;white-space:nowrap}
+  .crt-status .ok{color:#3ECF8E}
+  .crt-sub{position:absolute;left:16%;right:16%;bottom:5.2%;z-index:5;text-align:center;
+    font:13.5px/1.5 var(--sans);color:#E8F4FF;text-shadow:0 1px 2px rgba(0,0,0,.8);
+    min-height:2.6em;display:flex;align-items:center;justify-content:center}
+  .crt-sub .cursor{display:inline-block;width:.5em;height:1em;background:#39D0D8;margin-left:2px;
+    vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* 屏外：导航浮条 */
+  .navpill{position:fixed;top:16px;left:16px;z-index:60;display:flex;gap:2px;
+    background:rgba(11,17,24,.82);border:1px solid rgba(120,200,220,.35);border-radius:99px;
+    padding:4px;backdrop-filter:blur(8px)}
+  .navpill a{font:12.5px var(--sans);color:#8CA3B8;text-decoration:none;padding:5px 12px;border-radius:99px}
+  .navpill a.on{color:#39D0D8;background:rgba(57,208,216,.1)}
+
+  /* 开场遮罩（避免底图未载时露白） */
+  .bootveil{position:fixed;inset:0;background:#0B1118;z-index:80;transition:opacity .4s}
+  .fallback{display:none;position:fixed;inset:0;z-index:70;background:#0B1118;color:#8CA3B8;
+    font:13px var(--mono);place-items:center;text-align:center;padding:20px}
+
+  @media (prefers-reduced-motion:reduce){
+    .glow,.crt-sub .cursor{animation:none}
+  }
+
+</style>
+</head>
+<body>
+{{- /* ↓↓↓ 以下到 </main> 为止 = docs/demo-主页.html 的 body 逐字（仅素材路径与导航 href 如上） */}}
+<main id="content" data-xk-ssr="home">
+<div class="demo-flag">主页 DEMO · 真实帧素材与真实几何 · 监测数字为演示数据</div>
+
+<div class="stage" id="stage">
+  <img class="desk" src="/images/crt/desk.webp" alt="" aria-hidden="true">
+  <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true">
+
+  <div class="crt" id="crt">
+    <div class="crt-clip" id="crtClip">
+      <img class="backplate" src="/images/crt/lab.webp" alt="" aria-hidden="true">
+      <canvas class="charcanvas" id="charCanvas" aria-hidden="true"></canvas>
+      <img class="plate" src="/kurisu/scene/subtitle_frame_big.webp" alt="" aria-hidden="true">
+      <div class="scan"></div>
+      <div class="vig"></div>
+    </div>
+    <div class="crt-status" id="crtStatus" hidden>
+      SEC-LAB · <span class="ok">● LIVE</span><br>
+      24h 告警 1,284 · 拦截 96<br>
+      蜜罐交互 37 · sync 12s
+    </div>
+    <div class="crt-sub" id="crtSub" hidden><span id="subText"></span><span class="cursor"></span></div>
+  </div>
+</div>
+
+<nav class="navpill" aria-label="站点导航（演示）">
+  <a class="on" href="/">主页</a><a href="/alerts/">监测中心</a><a href="/posts/">笔记</a>
+  <a href="/labs/">靶场</a><a href="/ai/">AI 问答</a><a href="/about/">关于</a>
+</nav>
+
+<div class="bootveil" id="bootveil"></div>
+<div class="fallback" id="fallback">CRT 高度不足 260px，该视口下降级为移动端 CHIP 模式<br>（见 demo-内容页外壳.html）</div>
+
+<h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">小刻晴 · 一个人的安全实验室</h1>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+<script>
+
+/* ================= 数据：全部来自 static/kurisu/manifest.json ================= */
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const CLIPS = {
+  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle'},
+  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor'},
+  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'},
+  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'}
+};
+/* 角色落位（scene.character 源码公式）：scale=min(w*0.64/764,h*0.90/1028), x=0.52w, y=bottom-h*0.012, anchor=(0.5,1) */
+const CHAR_BOX = {w:764, h:1028, maxW:0.64, maxH:0.90, xRatio:0.52, footRatio:0.012};
+
+const stage = document.getElementById('stage');
+const crt = document.getElementById('crt');
+const canvas = document.getElementById('charCanvas');
+const ctx = canvas.getContext('2d');
+const cache = {};
+function img(src){ if(!cache[src]){ const im=new Image(); im.src=src; cache[src]=im; } return cache[src]; }
+
+let cur = null, acc = 0, fi = 0, lastT = 0, started = false;
+let bounds = {w:0, h:0};
+
+function resize(){
+  const r = crt.getBoundingClientRect();
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  bounds = {w:r.width, h:r.height};
+  canvas.width  = Math.round(r.width  * dpr);
+  canvas.height = Math.round(r.height * dpr);
+  /* 桌面实拍照常驻、CRT 完整可见的硬不变量：CRT 高度 <260px 触发降级 */
+  document.getElementById('fallback').style.display = r.height < 260 ? 'grid' : 'none';
+}
+
+function drawFrame(){
+  if(!cur) return;
+  const c = CLIPS[cur];
+  const im = img(c.src);
+  if(!im.complete || !im.naturalWidth) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const sx = (fi % c.cols) * c.cw, sy = Math.floor(fi / c.cols) * c.ch;
+  if(c.fit === 'screen'){
+    /* fit=crt_screen：整帧铺满屏幕（开场特写） */
+    ctx.drawImage(im, sx, sy, c.cw, c.ch, 0, 0, canvas.width, canvas.height);
+  }else{
+    /* anchor：源码落位公式 */
+    const w = bounds.w * (canvas.width / bounds.w), h = bounds.h * (canvas.height / bounds.h);
+    const s = Math.min(w * CHAR_BOX.maxW / CHAR_BOX.w, h * CHAR_BOX.maxH / CHAR_BOX.h);
+    const dw = CHAR_BOX.w * s, dh = CHAR_BOX.h * s;
+    const x = w * CHAR_BOX.xRatio, y = h - Math.max(3, h * CHAR_BOX.footRatio);
+    ctx.drawImage(im, sx, sy, c.cw, c.ch, x - dw/2, y - dh, dw, dh);
+  }
+}
+
+function play(name){
+  const c = CLIPS[name];
+  cur = name; fi = 0; acc = 0;
+  img(c.src); drawFrame();
+}
+
+function loop(t){
+  if(!started) return;
+  if(cur){
+    const c = CLIPS[cur];
+    const im = img(c.src);
+    if((im.complete && im.naturalWidth) && !RM){
+      acc += t - lastT;
+      if(acc >= c.interval){
+        acc = 0; fi++;
+        if(fi >= c.frames){
+          if(cur === 'opening'){ play('idle'); showHud(); }   /* 硬切（原版机制） */
+          else fi = fi % c.frames;
+        }
+        drawFrame();
+      }
+    }
+  }
+  lastT = t;
+  requestAnimationFrame(loop);
+}
+
+/* 屏内 HUD：开场结束后出现 */
+let hudShown = false;
+function showHud(){
+  if(hudShown) return; hudShown = true;
+  document.getElementById('crtStatus').hidden = false;
+  typeSub('你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。');
+}
+let typeTimer = null;
+function typeSub(text){
+  const el = document.getElementById('subText'), sub = document.getElementById('crtSub');
+  sub.hidden = false; el.textContent = '';
+  clearInterval(typeTimer);
+  let i = 0;
+  typeTimer = setInterval(()=>{
+    el.textContent = text.slice(0, ++i);
+    if(i >= text.length) clearInterval(typeTimer);
+  }, 45);
+}
+
+/* 启动：reduced-motion 直接静帧 */
+resize(); addEventListener('resize', ()=>{ resize(); drawFrame(); });
+if(RM){
+  cur = 'idle'; fi = 0;
+  const im = img(CLIPS.idle.src);
+  (im.complete ? Promise.resolve() : new Promise(r=>im.onload=r)).then(()=>{ drawFrame(); showHud(); });
+  document.getElementById('bootveil').style.opacity = 0;
+  setTimeout(()=>document.getElementById('bootveil').remove(), 450);
+}else{
+  play('opening');
+}
+started = true; lastT = performance.now();
+requestAnimationFrame(loop);
+const veil = document.getElementById('bootveil');
+const desk = document.querySelector('.desk');
+(desk.complete ? Promise.resolve() : new Promise(r=>desk.onload=r)).then(()=>{
+  veil.style.opacity = 0; setTimeout(()=>veil.remove(), 450);
+});
+
+</script>
+</body>
+</html>

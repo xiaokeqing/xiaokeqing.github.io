@@ -1,0 +1,72 @@
+{{- /* 外壳常驻件（逐字）：底图两层 / demo 标识条 / 左侧 .dock / HOLO 面板 / 背景选择器。
+      唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。 */ -}}
+{{- $v := .v -}}
+<div class="bg" id="bgEl" aria-hidden="true"></div>
+<div class="bgshade" aria-hidden="true"></div>
+<div class="demo-flag">DEMO v5 · 背景可选（右下角"背景"按钮）· 数字均为演示数据</div>
+
+<!-- 左侧竖排导航 -->
+<nav class="dock" id="dock" aria-label="站点导航（演示）">
+  <div class="brand">XK-LAB</div>
+  <a href="/" class="{{ if eq $v "home" }}on{{ end }}">主页</a>
+  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">监测中心</a>
+  <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
+  <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
+  <a href="/labs/" class="{{ if eq $v "range" }}on{{ end }}">靶场</a>
+  <a href="/about/" class="{{ if eq $v "about" }}on{{ end }}">关于</a>
+</nav>
+
+<!-- HOLO 人物面板：左上角 -->
+<aside class="holo live" id="holo" role="complementary" aria-label="助手面板（演示）">
+  <div class="holo-hd">
+    <div class="holo-av"><canvas id="avCanvas" width="132" height="132" aria-hidden="true"></canvas></div>
+    <div>
+      <div class="holo-name"><span class="dot"></span>桐莉栖</div>
+      <div class="holo-sub">HOLO-LINK · TEXT ONLY</div>
+    </div>
+    <button class="holo-fold" id="holoFold" aria-label="折叠面板" title="折叠为头像泡">—</button>
+  </div>
+  <div class="holo-say" id="holoSay" aria-live="polite">过去 24 小时拦截了 <span class="qk">96 次</span> 暴力破解，蜜罐记录了 <span class="qk">37 条</span> 交互。都在「监测中心」的大屏里。</div>
+  <div class="holo-wf">
+    <div class="bars2"><i></i><i></i><i></i><i></i><i></i></div>
+    <span class="holo-state" id="holoState">SPEAKING</span>
+  </div>
+  <div class="holo-ft">
+    <span>语音未启用</span>
+    <div class="emos" id="emos" role="group" aria-label="情绪（演示）">
+      <b class="on" data-emo="normal"         style="background:#7cc4e8" title="普通"></b>
+      <b data-emo="happy"          style="background:#f2c14e" title="开心"></b>
+      <b data-emo="sided_thinking" style="background:#9a8cff" title="思考"></b>
+      <b data-emo="sad"            style="background:#6b7f96" title="难过"></b>
+      <b data-emo="blush"          style="background:#f0997b" title="害羞"></b>
+    </div>
+  </div>
+</aside>
+<div class="holo-bubble" id="holoBubble" title="展开面板"><canvas id="bubbleCanvas" width="132" height="132"></canvas></div>
+
+<!-- 背景选择器 -->
+<button class="bgbtn" id="bgBtn">背景 / 配色</button>
+<div class="bgpicker" id="bgPicker">
+  <h3>背景图（素材包候选 · 点击切换）</h3>
+  <div class="bggrid" id="bgGrid"></div>
+  <div class="bgctl">
+    <span>压暗</span>
+    <input type="range" id="shadeRange" min="0" max="80" value="42">
+    <div class="skin-toggle" role="group" aria-label="面板配色">
+      <button data-skin="warm" class="on">暖玻璃</button>
+      <button data-skin="light">亮</button>
+      <button data-skin="dark">暗</button>
+    </div>
+  </div>
+  <div class="bgctl">
+    <span>手机样式</span>
+    <div class="skin-toggle" role="group" aria-label="手机样式">
+      <button data-phone="v1" class="on">黑曜</button>
+      <button data-phone="v2">银白</button>
+      <button data-phone="v3">全息</button>
+      <button data-phone="v4">直角</button>
+    </div>
+  </div>
+  <div style="display:none">
+  </div>
+</div>

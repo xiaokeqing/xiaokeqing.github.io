@@ -1,0 +1,26 @@
+{{- /* ============================================================================
+   /alerts/ = `docs/demo-内容页外壳.html` 的 `v-monitor`（监测中心）那一屏**整份搬**（第四批口径）。
+   ----------------------------------------------------------------------------
+   搬过来的：外壳的 <style> 逐字、常驻件（底图/dock/HOLO/背景选择器）逐字、
+   六屏标记逐字、两段内联 <script> 逐字；本页初始 .on 落在 v-monitor。
+   只改两处：① 素材路径 → static/ 真文件 ② dock 的 <button data-v> → <a href="真路由">
+   不动：站点的 SPA 外层 / kurisu-player / 状态机 / 语音 / 口型。
+   保留的不可见契约：Hugo <head> + <main id="content" data-xk-ssr="monitor"> + #xk-views 占位。
+   重现方式：python _dev/gen-demo-pages.py
+   ============================================================================ */ -}}
+{{- $v := "monitor" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+{{ partial "xk-demo/shell-style.html" . }}
+</head>
+<body data-skin="warm"{{ if eq $v "home" }} class="is-home"{{ else if eq $v "ai" }} class="is-ai"{{ end }}>
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="monitor">
+{{ partial "xk-demo/shell-views.html" (dict "v" $v) }}
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

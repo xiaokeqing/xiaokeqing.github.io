@@ -1,0 +1,30 @@
+{{- /* 不可见契约：Hugo 的 head（标题/描述/canonical/OG/favicon）。
+       demo 文件自己的 <head> 只有 charset+viewport+title+<style>；这一份补上站点既有的 SEO 字段，
+       其余一个字节都不加。 */ -}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{{- $desc := .Description | default site.Params.description -}}
+{{- $ogTitle := cond .IsHome "xiaokeqing · 个人博客与安全运营工作台" .Title -}}
+{{- $ogImgPath := "/images/bg.jpg" -}}
+{{- with .Params.images }}{{ $ogImgPath = index . 0 }}{{ end -}}
+{{- $ogImg := $ogImgPath | absURL -}}
+<title>{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }} · xiaokeqing{{ end }}</title>
+<meta name="description" content="{{ $desc }}">
+<meta name="author" content="{{ site.Params.author }}">
+<meta name="color-scheme" content="dark">
+{{ hugo.Generator }}
+<meta name="wb-api" content="{{ site.Params.wbApiBase | default "https://demo.xiaokeqing.cn" }}">
+<link rel="icon" type="image/png" sizes="128x128" href="/favicon-128.png">
+<link rel="apple-touch-icon" sizes="256x256" href="/favicon-256.png">
+<link rel="canonical" href="{{ .Permalink }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ $ogTitle }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="{{ $ogImg }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $ogTitle }}">
+<meta name="twitter:description" content="{{ $desc }}">
+<meta name="twitter:image" content="{{ $ogImg }}">
