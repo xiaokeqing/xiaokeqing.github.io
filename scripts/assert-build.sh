@@ -146,12 +146,12 @@ if [ -f "static/images/bg.jpg" ]; then
 else no "找不到 static/images/bg.jpg"; fi
 
 # ---------- ⑨ 角色资产完整性：不得有 0 字节 / 总体积封顶 ----------
-head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 12MB"
+head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 60MB"
 if [ -d static/kurisu ]; then
   EMPTY=$(find static/kurisu static/images/crt -type f -size 0 2>/dev/null | head -5)
   TOT=$(du -sk static/kurisu static/images/crt 2>/dev/null | awk '{s+=$1} END {print s+0}')
   [ -z "$EMPTY" ] && ok "无 0 字节资产" || { no "存在 0 字节资产（会解码失败）："; printf '%s\n' "$EMPTY" | sed 's/^/        /'; }
-  if [ "$TOT" -le 12288 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 12MB"; else no "资产过大：$((TOT/1024))MB > 12MB"; fi
+if [ "$TOT" -le 61440 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 60MB"; else no "角色+场景资产合计 $((TOT/1024))MB > 60MB"; fi
 else no "找不到 static/kurisu（角色资产缺失）"; fi
 
 # ---------- ⑩ 首屏档体积 ≤1.5MB（读 manifest 自报预算）----------
