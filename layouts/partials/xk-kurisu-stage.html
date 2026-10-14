@@ -1,36 +1,59 @@
 {{/*
-  CRT 场景 + 小刻晴（主页整屏背景的那一层）
+  CRT 场景 + 桐莉栖（主页整屏背景的那一层）
   ============================================================================
-  分工：
-    · 这一层只负责"画场景"：实拍书桌底图（CSS 背景）+ CRT 屏幕里的实验室背景
-      + 角色画布 + 屏内字幕条 / 状态行。
-    · 位置几何全部是**底图上的百分比**（crtRectNorm），所以底图怎么缩放，
-      角色与字幕条都严丝合缝地待在 CRT 屏幕里。
-    · 开关有两层：
-        ① 构建期 site.Params.kurisuEnabled（false = 整块不渲染，全站回到纯文本版）
-        ② 运行期 <html data-xk-crt-on>（由 kurisu-player.js 按当前路由设置 ——
-           SPA 只换 <main>，这一层在 <main> 外面，所以必须靠属性开关）
-    · 两层画布（都是装饰，aria-hidden）：
-        .xk-kurisu__canvas--intro  开场"贴脸靠近镜头"的**原包成片帧序列**（整屏铺满）
-        .xk-kurisu__canvas         她本人（全身 idle / speaking / thinking 图集）
-      开场层在 [data-xk-crt-intro="1"] 时不透明，播完摘掉属性 → 420ms 互淡（见 zz-kurisu.css）。
-    · 可访问性：底图 / 两张画布全部 aria-hidden="true"（装饰）；
-      字幕条与状态行是**真文本节点** —— 读屏与爬虫读得到她说了什么。
-    · 这里刻意**不写 id**：同一份标记既渲染进主页外层的场景，也放进文末的 <template>
-      （SPA 从别的路由点回主页时用它现挂），写 id 就会在文档里重复。
+  结构 / 层序 **逐项照抄 `docs/demo-主页.html`**（步骤 2，2026-10-14）：
+
+    底图(书桌实拍)
+      └ 氛围光（screen 混合 + 呼吸）
+      └ CRT 屏幕（几何 = manifest.scene.crtBounds.pctOfStage）
+          └ CRT 裁剪容器（14 点多边形 clip-path = manifest.scene.crtPolygon.pointsPctOfBounds）
+              ├ 空房间底图（CSS 背景 var(--xk-kurisu-lab)，由播放器按 manifest.scene.images.lab 注入）
+              ├ <canvas> 角色（主层）+ <canvas> 开场特写层（原包 84 帧）
+              ├ 字幕板（subtitle_frame_big.webp，**在角色之上** —— 原版层序就是这样）
+              ├ 扫描线
+              └ 暗角
+          └ 屏内右上状态行（真文本）
+          └ 屏内底部字幕条（真文本 + 闪烁光标）
+
+  与 demo 的三处**故意**差异（都写在交付报告里，不是疏漏）：
+    ① 底图/氛围光用 CSS background 而不是 <img>：.xk-crt 在非主页是 display:none，
+       background-image 这时**不会被请求**；写成 <img src> 则会在每个路由都下载
+       desk.webp(76KB)+氛围光(45KB)。渲染结果相同（同一个盒子的 100%×100% 铺满）。
+    ② 状态行/字幕条是 `.xk-crt__screen` 的兄弟节点、**不在** clip 容器里（与 demo 的
+       .crt-status/.crt-sub 一样），所以不会被 14 边形裁掉；播放器的挂载点仍是
+       `.xk-crt__screen`（它在这两层之外，几何不变）。
+    ③ 字幕条没有抄 demo 的"逐字打字"效果：`textContent` 一次性写完整句 ——
+       读屏与爬虫读到的是完整一句话，而不是上百次文本变更。光标闪烁保留了。
+
+  开关有两层（既有契约，未改）：
+    ① 构建期 site.Params.kurisuEnabled（false = 整块不渲染）
+    ② 运行期 <html data-xk-crt-on>（kurisu-player.js 按当前路由设置）
+  可访问性：底图/氛围光/两张画布/字幕板/扫描线/暗角全部 aria-hidden（纯装饰）；
+  状态行与字幕条是**真文本节点**，读屏与爬虫读得到她说了什么。
+  这里刻意**不写 id**：同一份标记既渲染进主页，也放进文末的 <template>（SPA 现挂），
+  写 id 就会在文档里重复。
 */}}
 {{- if site.Params.kurisuEnabled }}
 <div class="xk-crt" data-xk-crt>
   <div class="xk-crt__stage">
+    {{- /* demo 的 .glow：整帧氛围光，mix-blend-mode:screen + 7s 呼吸（reduced-motion 下停） */}}
+    <div class="xk-crt__glow" aria-hidden="true"></div>
+
     <div class="xk-crt__screen xk-kurisu xk-kurisu--stage" data-xk-kurisu="stage"
          data-xk-kurisu-clip="idle">
-      <canvas class="xk-kurisu__canvas xk-kurisu__canvas--main" data-xk-kurisu-canvas
-              aria-hidden="true"></canvas>
-      <canvas class="xk-kurisu__canvas xk-kurisu__canvas--intro" data-xk-kurisu-canvas-intro
-              aria-hidden="true"></canvas>
+      <div class="xk-crt__clip">
+        <canvas class="xk-kurisu__canvas xk-kurisu__canvas--main" data-xk-kurisu-canvas
+                aria-hidden="true"></canvas>
+        <canvas class="xk-kurisu__canvas xk-kurisu__canvas--intro" data-xk-kurisu-canvas-intro
+                aria-hidden="true"></canvas>
+        <div class="xk-crt__plate" aria-hidden="true"></div>
+        <div class="xk-crt__scan" aria-hidden="true"></div>
+        <div class="xk-crt__vig" aria-hidden="true"></div>
+      </div>
+
       <p class="xk-kurisu__status" data-xk-kurisu-status>正在读取…</p>
-      <p class="xk-kurisu__say" data-xk-kurisu-say
-         data-xk-default-say="欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。">欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。</p>
+      <p class="xk-kurisu__say"><span class="xk-kurisu__saytext" data-xk-kurisu-say
+         data-xk-default-say="欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。">欢迎回来。这里的数字都来自真实只读接口 —— 取不到我就直说读不到。</span><span class="xk-kurisu__cursor" aria-hidden="true"></span></p>
     </div>
   </div>
 </div>

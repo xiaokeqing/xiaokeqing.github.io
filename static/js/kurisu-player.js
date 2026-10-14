@@ -497,17 +497,33 @@
     });
   };
 
-  /** 角色在画布里的摆放矩形。三种形态各自一套几何，来源都是 manifest.scene.compose：
-   *   stage（主页 CRT 屏内）：高 = 屏高 × charHRatio、脚踩 footYRatio —— 与构建期合成脚本一致；
+  /** 角色在画布里的摆放矩形。三种形态各自一套几何：
+   *   stage（主页 CRT 屏内）：**照抄原版 render/web/renderer.js:797-825 的落位公式**
+   *     （另一条线从源码换算进 manifest.scene.character）：
+   *       scale = min(bounds.w*0.64/canvasW, bounds.h*0.90/canvasH)
+   *       x = bounds.x + bounds.w*0.52（锚点在 52% 处、水平居中）；y 底 = bounds.bottom - max(3, bounds.h*0.012)
+   *     —— CSS 里的 .xk-crt__screen 就是 bounds 那个盒子，所以 bounds 在画布坐标里 = 整个画布。
+   *     旧版用的 charHRatio/footYRatio 是当初按"错的屏幕矩形"估计出来的，已在 manifest 里删掉；
+   *     这里保留它只作兜底（万一清单退回旧格式）。
    *   rail（右栏人物区，全身）：填满面板高度、贴底；
    *   头像（corner / 窄屏 / 右栏头像模式）：正方形居中。 */
   Player.prototype.charRect = function (bw, bh, aspect) {
-    var comp = ((this.manifest || {}).scene || {}).compose || {};
+    var scene = (this.manifest || {}).scene || {};
+    var comp = scene.compose || {};
     if (this.mode === 'stage') {
+      var ch = scene.character;
+      if (ch && ch.canvasSize && ch.maxWidthRatio && ch.maxHeightRatio) {
+        var w0 = ch.canvasSize.w || 764, h0 = ch.canvasSize.h || 1028;
+        var s = Math.min(bw * ch.maxWidthRatio / w0, bh * ch.maxHeightRatio / h0);
+        var dw = w0 * s, dh = h0 * s;
+        var cx = bw * (typeof ch.xRatio === 'number' ? ch.xRatio : 0.52);
+        var foot = Math.max(3, bh * (typeof ch.footRatio === 'number' ? ch.footRatio : 0.012));
+        return { x: cx - dw / 2, y: bh - foot - dh, w: dw, h: dh };
+      }
       var hr = comp.charHRatio || 0.66;
       var fy = (typeof comp.footYRatio === 'number') ? comp.footYRatio : 0.96;
-      var dh = bh * hr, dw = dh * aspect;
-      return { x: (bw - dw) / 2, y: bh * fy - dh, w: dw, h: dh };
+      var dh2 = bh * hr, dw2 = dh2 * aspect;
+      return { x: (bw - dw2) / 2, y: bh * fy - dh2, w: dw2, h: dh2 };
     }
     if (this.mode === 'rail' && !this.avatarFrame) {
       var h2 = bh * 0.98, w2 = h2 * aspect;
@@ -1156,9 +1172,22 @@
     mounts = [];
   }
 
+  /* ★ 2026-10-14（步骤 2 修的真 bug）：原来这里只看 hash，没有 hash 就默认 'home' ——
+     于是**直接打开** /posts/ /about/ /alerts/ 这类 URL（搜索引擎、分享链接、刷新后的常见路径）
+     会被判成主页：<html data-xk-crt-on> 被打开（全屏桌面底图盖住正文）、.xk-bg 被隐藏、
+     #tpl-kurisu-stage 被 clone 进 body、底部输入条也亮起来，还会白下一整套角色图集。
+     现在：没有 hash 就认构建期写在 <main data-xk-ssr> 上的真路由（与 app.js 的
+     routeFromPath 口径一致），都没有才回落到 'home'。 */
   function routeKey() {
     var h = (global.location.hash || '').replace(/^#/, '');
-    return h.split('/')[1] || 'home';
+    var key = h.split('/')[1];
+    if (key) { return key; }
+    var host = q('#content[data-xk-ssr]') || q('[data-xk-ssr]');
+    if (host) {
+      var ssr = host.getAttribute('data-xk-ssr');
+      if (ssr) { return ssr; }
+    }
+    return 'home';
   }
 
   /** 🔊 按钮的统一接线（实例内的按钮、以及页面底部输入条那颗，都用这一份）。
