@@ -1,6 +1,6 @@
 # ops：博客托管切换与回滚（srv2 直连 + CF 隧道备用）
 
-> 最后更新：2026-10-14 22:0x ｜ 执行人：DSH 会话（站主授权）｜ 状态：**srv2 侧就绪，主域名 DNS 未动**
+> 最后更新：2026-10-14 22:20 ｜ 执行人：DSH 会话（站主授权）｜ 状态：**✅ 已切换完成**（apex/www → A 43.143.114.79 灰云；4-SAN 证书生效）
 > 关联脚本：`scripts/publish-site-to-srv2.ps1`、`scripts/srv2-site-receive.sh`、`deploy/srv2-site/**`
 
 ---
@@ -93,7 +93,7 @@ bash deploy/srv2-site/switch-main-domain.sh --token-file /root/.cf-token --apply
 ```
 （该脚本按设计留待 token 到位后落地；DNS-01 在**切之前**就把 4-SAN 签好 ⇒ 用户看不到任何证书警告。）
 
-**路 2（站主点两下，代价是约 1 分钟的自签窗口）**
+**路 2（站主点两下，代价是约 1 分钟的自签窗口）—— 2026-10-14 实际走的就是这条**
 1. 站主在 Cloudflare 控制台：`xiaokeqing.cn` 与 `www` 的 A 记录 → `43.143.114.79`，**代理状态 DNS only（灰云）**
 2. 切换后**立刻**（脚本 40 秒内）在 srv2 上执行：
    ```bash
@@ -102,6 +102,52 @@ bash deploy/srv2-site/switch-main-domain.sh --token-file /root/.cf-token --apply
    ```
    （HTTP-01 走新指的 A 记录 → 公网 80，`/var/www/acme` 已就位）
 3. 复测：`curl -I https://xiaokeqing.cn/`（不带 -k）应 200 + 证书可信
+
+### 2.2.1 实际切换时间线与原始输出（2026-10-14）
+
+```
+21:53  srv2 发布当前产物（304 文件 / 85.74MB / index.html 72,262B，全量 sha256 零差异）
+21:47  站主改 www → A 43.143.114.79（灰云）→ 立刻补签 www+direct+static（certbot rc=0）
+22:0x  站主改 apex → A 43.143.114.79（灰云）→ srv2 本地解析器仍缓存 CF IP，
+       但 LE 用公共解析 ⇒ 跳过本地预检、直接补签 4-SAN
+22:08  4-SAN 签发成功（certbot rc=0），hook 同步 + reload
+22:12  切换后复测（下面的原始输出）
+22:15  续期 dry-run：--no-random-sleep-on-renew → "Congratulations, all simulated renewals succeeded"（rc=0）
+```
+
+**证书原文**：
+
+```
+subject=CN = xiaokeqing.cn
+issuer=C = US, O = Let's Encrypt, CN = YR2
+notBefore=Oct 14 13:08:06 2026 GMT   notAfter=Jan 12 13:08:05 2027 GMT
+X509v3 Subject Alternative Name:
+    DNS:direct.xiaokeqing.cn, DNS:static.xiaokeqing.cn, DNS:www.xiaokeqing.cn, DNS:xiaokeqing.cn
+certbot.timer 下次：2026-10-15 04:53（每 12h 检查，到期前 30 天自动续；deploy hook 自动同步+reload）
+```
+
+**切换后实测（站主这台机器）**：
+
+```
+不带 -k：curl -I https://xiaokeqing.cn/  → HTTP/1.1 200 OK / Server: nginx / Content-Length: 72262
+         verify=%{ssl_verify_result}=0（证书可信）；t = 0.52s / 0.20s / 0.21s
+         www.xiaokeqing.cn → 200 / verify=0（首轮 1.71s，TLS 冷启动）
+六路由（不带 -k，verify 全 0）：
+  /        200  72,262  0.53s  data-xk-ssr=home
+  /alerts/ 200  75,142  0.22s  data-xk-ssr=monitor
+  /posts/  200  84,608  0.38s  data-xk-ssr=notes
+  /labs/   200  74,601  4.89s  data-xk-ssr=range   ← 要等 demo API 的 403（CORS 预期），故首屏慢
+  /about/  200  94,977  0.24s  data-xk-ssr=about
+  /ai/     200  77,581  0.27s  data-xk-ssr=ai
+2MB 直连吞吐（站点根临时文件，测完已删，残留 0 个）：
+  不走代理 356.5 / 170.6 / 188.6 KB/s（三轮全部下完）
+  走代理     2.2（60s 超时）/ 144.2 / 167.0 KB/s
+首屏门禁（_dev/gate-firstscreen.mjs，真浏览器 1280×900，预算 1,536KB）：
+  home 1247KB ｜ monitor 964KB ｜ notes 1081KB ｜ labs 964KB ｜ about 1081KB ｜ ai 1516KB → PASS（0/6 超标）
+  六条 hash 路由 6/6 PASS
+回归：srv2-site-regression.sh → [PASS] 回归全过
+      （蜜罐隔离实测 rc=0 / 7 容器 Up / DOCKER-USER 顺序未变 / 隧道侧四域名仍 200）
+```
 
 ### 2.3 切换后立即复测清单
 ```bash
