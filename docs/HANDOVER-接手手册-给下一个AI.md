@@ -54,6 +54,9 @@ Amadeus 源码 clone：E:\DeepSeek1\work\_amadeus-src（素材包安装到这里
 | `deploy/srv2-site/README.md` | srv2 静态托管的落地物说明（nginx/服务/发布/回滚） |
 | `E:\DeepSeek1\work\_kurisu-017\{INVENTORY.md, VIDEO-OPTIMIZATION.md, video-assets\SIZES.md}` | 素材包清点、视频管线报告与逐文件体积/画质表 |
 | `E:\DeepSeek1\work\断点状态-20261014-*.md` 与 `E:\DeepSeek1\work\push-gate.ps1` | 我的断点笔记 + **上线闸门脚本**（9 组检查） |
+| `docs/demo-主页.html`（222 行，自包含） | **主页的设计基准**：自带 style/标记/内联脚本（4 剪辑逐帧 / 开场硬切 idle / HUD 打字 / 原版落位公式） |
+| `docs/demo-内容页外壳.html`（8 个 view） | **五页的设计基准**：作战室 OPS-ROOM 等；注意它自带三处缺陷（见 `docs/交接-六页整份搬demo-20261014.md`） |
+| `docs/HANDOVER-接手手册-给下一个AI.md` | **就是本文**（唯一入口，0~11 节） |
 
 ---
 
@@ -97,7 +100,7 @@ Amadeus 源码 clone：E:\DeepSeek1\work\_amadeus-src（素材包安装到这里
 ## 5. 当前进行中的活（接手前先决定它们的去留）
 
 ```
-① 语音真音色（子智能体）：GPT-SoVITS v3 本机批量。torch cu124(2415MB) 正在装；后处理链已跑通
+① 语音真音色（子智能体）：GPT-SoVITS v3 本机批量。**台词必须是日语** ✗（参考音频是日语；用中文文本等于没用上她的音色 —— 我犯过这个错）；第一句已出（GPU，热态 3~4s/句，显存峰值 4030MiB @6GB ✓），正在改双语台词库（ja 送 TTS / zh 做字幕）→ 批量 60 句
    （loudnorm -16 LUFS / 裁静音+fade / m4a(AAC)+webm(Opus) / 包络**从最终编码文件**重算，平均 41.9KB/句）
    60 句台词库已写（线上 12 条逐字未改）；**first sentence 未出**
 ② 六页原型缺陷修复（子智能体）：删 DEMO 横幅 → 换真接口数据 → 修攻击流叠行 → 修 CRT 暗块
@@ -172,6 +175,10 @@ ssh secagent-srv1 "curl -sS -k -o /dev/null -w '%{http_code} %{size_download}\n'
 # 4) 决定 §5 那三条在跑的活由谁继续，再动任何文件
 ```
 
+> **本地预览页面**（六页是 demo 整份，含大量静态素材，必须走 HTTP 而不是 file://）：
+> `hugo server` 或 `python -m http.server 8000 -d public` 然后开 `http://127.0.0.1:8000/`
+> ⚠️ `hugo server` 会给产物注入 livereload 脚本 ✗ —— **跑三道门禁前必须先停掉它**，否则断言可能被那行脚本干扰。
+>
 > 有问题优先查 §7 陷阱表与 §2 的文档；**不要凭猜改动线上**（push 之外还有 srv2 发布这一步 ✗）。
 
 ---
@@ -179,7 +186,7 @@ ssh secagent-srv1 "curl -sS -k -o /dev/null -w '%{http_code} %{size_download}\n'
 ## 10. 交接时点快照（写这份时）
 
 ```
-HEAD              = 2e37354（六页整份搬 demo 已提交，并已发布到 srv2）
+HEAD              = 1c3f5b0（写这份时的快照；后续提交会变，以 git log 为准 ✓）
 线上版本目录       = /opt/secagent/releases/site-20261014-230937（srv2，原子切换）
 三道门禁           = assert-build 16/16 ✓ ｜ gate-firstscreen 6/6 PASS ✓（预算已改 1650KB）｜ check-ssr-contract 6/6 ✓
 ⚠️ 工作区未提交    = 32 项（六页原型缺陷修复那条线正在改：layouts/*、_dev/gate-firstscreen.mjs、
