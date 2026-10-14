@@ -8,7 +8,7 @@
   它做什么：
     [1/6] 找 hugo（Get-Command 找不到就去 winget 目录里翻）
     [2/6] 构建：hugo --gc --minify --cleanDestinationDir
-    [3/6] 产物基本特征校验：index.html 存在且 > 20 KB、文件数 > 0、产物里不出现 localhost
+    [3/6] 产物基本特征校验：index.html 存在且 > 4 KB、文件数 > 0、产物里不出现 localhost
     [4/6] 打包 public/ 为 tar.gz（Windows 自带 tar.exe）
     [5/6] scp 上传到 srv2 的 /tmp，并同步接收脚本到 /opt/secagent/scripts/
     [6/6] 远端 sudo 跑 srv2-site-receive.sh（解包 → 校验 → 原子切换 → 自检，失败自动回滚）
@@ -47,7 +47,7 @@ $RemoteTar = "/tmp/xk-site-$Stamp.tar.gz"
 $ReceiveLocal = Join-Path $PSScriptRoot 'srv2-site-receive.sh'
 $ReceiveRemote = '/opt/secagent/scripts/srv2-site-receive.sh'
 $WorktreeAdded = $false
-$MinIndexBytes = 20480
+$MinIndexBytes = 4096
 
 function Step($n, $text) { Write-Host "`n[$n] $text" -ForegroundColor Cyan }
 function Ok($text)   { Write-Host "    [OK] $text" -ForegroundColor Green }

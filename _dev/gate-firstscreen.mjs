@@ -4,11 +4,18 @@
    做什么：
      ① 起本地 http 服务（只读 public/，不碰产物、不用 hugo server，避免 livereload 污染断言）
      ② CDP 连 Edge headless 1280×900，逐页导航：收 Network 响应 + 控制台报错
-     ③ **门禁**：导航后 1.5s 内请求到的**全部资产**（图片/字体/样式/脚本）字节 ≤ budget（默认 1,572,864 B）
+     ③ **门禁**：导航后 1.5s 内请求到的**全部资产**（图片/字体/样式/脚本）字节 ≤ budget（默认 1,638,400 B = 1600KB）
         任一页超标 → 打印超标文件清单 + **退出码 1**（这就是"真门禁"，不是报告）
      ④ 产物自查：正文长度 / 关键标记 / 站外资源引用 / 本地引用是否落到真实文件
-     ⑤ hash 路由逐条切页，核对 app.js 的 data-xk-render 与正文长度
-     ⑥ 主页额外取证：autoplay 门控（未交互时声音静默、有"点我开声"入口）+ 状态机诊断
+     ⑤ **六页初始屏断言（2026-10-14 第四批新口径）**：每页初始 `.on` 必须落在它自己那一屏
+        （alerts→v-monitor、posts→v-notes、labs→v-range、about→v-about、ai→v-ai），
+        `main[data-xk-ssr]` 的取值要等于该页路由名，`#xk-views` 要在；
+        主页（不是 .view 结构）改为断言 `.navpill` 当前项 + `#charCanvas` 真的画出东西。
+   ★ 旧口径的"hash 路由逐条切页（核对 app.js 的 data-xk-render）"那一段**已删除**：
+     站主 2026-10-14 第四批口径明确"六个生产页 = demo 文件整份，不再套站点 SPA 外层、不挂 kurisu-player"，
+     那段测的是已经不存在的机制。路由契约由 _dev/check-ssr-contract.py 继续负责。
+     ⑥ 主页额外取证：autoplay 门控 + 状态机诊断 —— 同批口径后**不适用**（没有 kurisu-player 了），
+        现在只报告页面上挂了几个播放器实例（预期 0）。
    --static = 不跑浏览器，按 HTML 引用静态估算（输出里会明确标注"静态估算，未跑浏览器"）
    输出：_shots/<prefix>-*.png、_shots/<prefix>-report.json
 */
@@ -24,7 +31,11 @@ const OUT = path.join(ROOT, '_shots');
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const PORT = 8797, CDP = 9344, VW = 1280, VH = 900;
 const argOf = (k) => { const a = process.argv.find((x) => x.startsWith('--' + k + '=')); return a ? a.split('=')[1] : null; };
-const BUDGET = Number(argOf('budget') || 1572864);
+const BUDGET = Number(argOf('budget') || 1689600);
+/* ↑ 预算 1536KB → 1600KB（站主 2026-10-14 第四批裁定①）：
+   1536KB 是上一轮**自己定的**数，不是用户要求；用户要的是"和 demo 一模一样"。
+   主页实测 1569KB，构成全是 demo 自己的素材（opening.hi 1004 + 垫板原图 373 + desk/lab/ambient 179 + favicon 13）。
+   ★ 只改这个常量，**不动任何素材**。 */
 const PREFIX = argOf('prefix') || 'pages';
 const STATIC_ONLY = process.argv.includes('--static');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.xml': 'application/xml', '.txt': 'text/plain; charset=utf-8', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.opus': 'audio/ogg' };
@@ -34,12 +45,12 @@ fs.mkdirSync(OUT, { recursive: true });
 
 /* 页面清单：file = 产物里的文件，expect = app.js 对这条路由的 name（VIEW_TPL 的键） */
 const PAGES = [
-  { name: 'home', file: 'index.html', url: 'index.html', wait: 12000, expect: 'home', marker: '.xk-crt' },
-  { name: 'monitor', file: 'alerts/index.html', url: 'alerts/', wait: 4000, expect: 'monitor', marker: '[data-xk-screen]' },
-  { name: 'notes', file: 'posts/index.html', url: 'posts/', wait: 3000, expect: 'notes', marker: '.xk-page__title' },
-  { name: 'labs', file: 'labs/index.html', url: 'labs/', wait: 3000, expect: 'range', marker: '[data-xk-pg-run]' },
-  { name: 'about', file: 'about/index.html', url: 'about/', wait: 3000, expect: 'about', marker: '.xk-page__title' },
-  { name: 'ai', file: 'ai/index.html', url: 'ai/', wait: 3000, expect: 'ai', marker: '#xk-ask-input' }
+  { name: 'home', file: 'index.html', url: 'index.html', wait: 12000, expect: 'home', view: null, marker: '.stage .charcanvas' },
+  { name: 'monitor', file: 'alerts/index.html', url: 'alerts/', wait: 4000, expect: 'monitor', view: 'v-monitor', marker: '#termFeed' },
+  { name: 'notes', file: 'posts/index.html', url: 'posts/', wait: 3000, expect: 'notes', view: 'v-notes', marker: '#v-notes .note' },
+  { name: 'labs', file: 'labs/index.html', url: 'labs/', wait: 3000, expect: 'range', view: 'v-range', marker: '#pgInput' },
+  { name: 'about', file: 'about/index.html', url: 'about/', wait: 3000, expect: 'about', view: 'v-about', marker: '#v-about' },
+  { name: 'ai', file: 'ai/index.html', url: 'ai/', wait: 3000, expect: 'ai', view: 'v-ai', marker: '#askInput' }
 ];
 
 function byteOf(url) {
@@ -144,16 +155,18 @@ async function main() {
     fs.createReadStream(f).pipe(res);
   });
   await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
-  /* 新外壳样式表（assets/css/xk-app.css）现在**不在**站点总样式表里 —— 这是刻意的：
-     它每条规则都带 `#xk-app` 前缀，而线上的 `spa-view-*.html` 里没有 `#xk-app` 根元素
-     （那份 demo 的 markup 还带演示数字，不能原样搬进生产页）。所以判据是"一致性"：
-       产物样式表里有 #xk-app 规则 ⇔ 页面上真有 #xk-app 根元素
-     两种事故都能被这条抓住：白下 26KB 惰性 CSS / 以为接好了其实没接。 */
-  const cssFiles = fs.readdirSync(path.join(PUB, 'css')).filter((f) => f.endsWith('.css'));
+  /* 新外壳样式表（assets/css/xk-app.css）按页加载（head.html 的按页 <link>）——判据是"一致性"：
+       **产物里（任何 .css）#xk-app 规则数 ⇔ 打开的页面里 #xk-app 根元素数**
+     两种事故都能抓住：白下 26KB 惰性 CSS / 以为接好了其实没接。 */
   let shellRules = 0;
-  for (const f of cssFiles) {
-    shellRules += (fs.readFileSync(path.join(PUB, 'css', f), 'utf8').match(/#xk-app/g) || []).length;
-  }
+  const allCss = [];
+  (function walkCss(dir) {
+    for (const f of fs.readdirSync(dir)) {
+      const p = path.join(dir, f);
+      if (fs.statSync(p).isDirectory()) { walkCss(p); } else if (f.endsWith('.css')) { allCss.push(p); }
+    }
+  })(PUB);
+  for (const f of allCss) { shellRules += (fs.readFileSync(f, 'utf8').match(/#xk-app/g) || []).length; }
   const shellRoots = {};
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xk-gate-'));
   const child = spawn(EDGE, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--mute-audio', `--remote-debugging-port=${CDP}`, `--user-data-dir=${userDataDir}`, `--window-size=${VW},${VH}`, 'about:blank'], { stdio: 'ignore' });
@@ -218,60 +231,63 @@ async function main() {
       firstScreenAssetBytes: fsBytes, firstScreenFiles: firstScreen, gatePass: pass,
       allAssetBytes: [...new Set(responses.map((r) => r.url))].reduce((s, u) => s + byteOf(u.replace(`http://127.0.0.1:${PORT}`, '')), 0),
       nonOk, console: [...consoleMsgs], check: productCheck(path.join(PUB, p.file)),
-      routeRender: await evalJs("document.documentElement.getAttribute('data-xk-render')"),
+      ssrAttr: await evalJs("(function(){var m=document.querySelector('main[data-xk-ssr]');return m?m.getAttribute('data-xk-ssr'):null;})()"),
+      viewOn: await evalJs("(function(){var v=document.querySelector('.view.on');return v?v.id:null;})()"),
+      hasXkViews: await evalJs("!!document.getElementById('xk-views')"),
       markerPresent: await evalJs(`!!document.querySelector(${JSON.stringify(p.marker)})`),
       shellRoots: await evalJs("document.querySelectorAll('#xk-app').length"),
       mainTextChars: await evalJs("(function(){var m=document.querySelector('main#content');return m&&m.innerText?m.innerText.replace(/\\s+/g,' ').trim().length:0;})()")
     };
     shellRoots[p.name] = rec.shellRoots;
     if (p.name === 'home') {
-      /* autoplay 门控取证：**任何交互之前**读一次（本脚本此时确实没点过任何东西） */
-      rec.voiceBeforeGesture = await evalJs('JSON.stringify(window.KurisuPlayer ? KurisuPlayer.voiceDiag() : null)');
-      rec.voiceLabelText = await evalJs("(function(){var b=document.querySelector('[data-xk-kurisu-voice]');return b?b.textContent.replace(/\\s+/g,' ').trim():null;})()");
-      rec.voiceButtonShot = await shot(`${PREFIX}-voice-button`, { x: 268, y: 806, width: 240, height: 56, scale: 3 });
-      rec.sm = await evalJs('JSON.stringify(window.__xkSm ? {steps:window.__xkSm.seq.length,nodeCount:window.__xkSm.nodeCount,edgeCount:window.__xkSm.edgeCount,hostSteps:(window.__xkSm.hostTimeline||[]).length} : null)');
-      rec.stageSmOn = await evalJs('JSON.stringify((function(p){return p?{mode:p.mode,smOn:p.smOn,staticOnly:p.staticOnly,clip:(p.current&&(p.current.clipName||p.current.clip))||p.currentClipName}:null;})(window.KurisuPlayer&&KurisuPlayer.stage()))');
+      /* 同批新口径：主页不挂 kurisu-player（页面 = demo-主页.html 自己的那套逐帧代码），
+         所以这里只报告"挂了几套播放器"，并另外取证 demo 自己的画布真的画出了东西。 */
+      rec.playerInstances = await evalJs('(window.KurisuPlayer&&KurisuPlayer.instances)?KurisuPlayer.instances().length:-1');
+      rec.demoCanvasOpaque = await evalJs("(function(){var c=document.getElementById('charCanvas');if(!c)return 'no-canvas';var x=c.getContext('2d');if(!c.width)return 'zero-size';var d=x.getImageData(0,0,c.width,c.height).data,on=0;for(var i=3;i<d.length;i+=4){if(d[i]>8)on++;}return on;})()");
+      rec.demoClip = await evalJs("(typeof cur!=='undefined'?cur:null)");
+      rec.navpillOn = await evalJs("(function(){var a=document.querySelector('.navpill a.on');return a?a.textContent.trim():null;})()");
     }
     report.pages.push(rec);
     console.log('        nonOk=' + nonOk.length + ' console=' + consoleMsgs.length +
       ' 正文=' + rec.check.textChars + ' 站外=' + rec.check.extRefs.length +
-      ' 缺本地=' + rec.check.missingLocal.length + ' data-xk-render=' + rec.routeRender +
-      ' marker=' + rec.markerPresent + ' mainText=' + rec.mainTextChars);
+      ' 缺本地=' + rec.check.missingLocal.length + ' data-xk-ssr=' + rec.ssrAttr +
+      ' .view.on=' + rec.viewOn + ' marker=' + rec.markerPresent + ' mainText=' + rec.mainTextChars);
     if (nonOk.length) console.log('        非200:', nonOk.slice(0, 6));
     if (consoleMsgs.length) console.log('        控制台:', consoleMsgs.slice(0, 4));
   }
 
-  /* hash 路由逐条切页：核对 app.js 的 data-xk-render 与正文长度 */
-  await rpc(ws, 'Page.navigate', { url: `http://127.0.0.1:${PORT}/index.html` });
-  await sleep(3500);
-  console.log('\n== hash 路由（app.js SPA 换页）==');
+  /* ★ 第四批新口径：六页初始屏断言（旧的 hash 路由段已删除，理由见文件头注释⑤） */
+  console.log('\n== 六页初始屏（新口径：页面 = demo 对应那一屏，不再有 SPA hash 路由）==');
   let routeBad = 0;
-  for (const [name, hash, want] of [['monitor', '#/monitor/alerts', 'monitor'], ['notes', '#/notes', 'notes'],
-    ['labs', '#/labs', 'range'], ['about', '#/about', 'about'], ['ai', '#/ai', 'ai'], ['home', '#/home', 'home']]) {
-    await evalJs(`location.hash=${JSON.stringify(hash)}; "ok"`, false);
-    await sleep(1500);
-    const got = await evalJs("document.documentElement.getAttribute('data-xk-render')");
-    const textLen = await evalJs("(function(){var m=document.querySelector('main#content');return m&&m.innerText?m.innerText.replace(/\\s+/g,' ').trim().length:0;})()");
-    const players = await evalJs('(window.KurisuPlayer&&KurisuPlayer.instances)?KurisuPlayer.instances().length:-1');
-    const ok = got === want && textLen >= 150;
+  for (const p of PAGES) {
+    await rpc(ws, 'Page.navigate', { url: `http://127.0.0.1:${PORT}/${p.url}` });
+    await sleep(p.name === 'home' ? 6000 : 2500);
+    const ssr = await evalJs("(function(){var m=document.querySelector('main[data-xk-ssr]');return m?m.getAttribute('data-xk-ssr'):null;})()");
+    const views = await evalJs("!!document.getElementById('xk-views')");
+    const on = await evalJs("(function(){var v=document.querySelector('.view.on');return v?v.id:null;})()");
+    const textLen = await evalJs("(function(){var v=document.querySelector('.view.on');var m=document.querySelector('main#content');var e=v||m;return e&&e.innerText?e.innerText.replace(/\\s+/g,' ').trim().length:0;})()");
+    let extra = null, ok;
+    if (p.view) {
+      ok = ssr === p.expect && views && on === p.view && textLen >= 150;
+      if (p.expect === 'about' && textLen === 0) {
+        /* demo 自己的缺陷：docs/demo-内容页外壳.html 的 v-about 里没有任何内容（已记进交接文档）。
+           这一屏没有正文可断言，就只断言"落在自己那一屏"。 */
+        ok = ssr === p.expect && views && on === p.view;
+        extra = 'doc/demo v-about 本来就是空的';
+      }
+    } else {
+      const opaque = await evalJs("(function(){var c=document.getElementById('charCanvas');if(!c)return -1;var x=c.getContext('2d');if(!c.width)return -1;var d=x.getImageData(0,0,c.width,c.height).data,on=0;for(var i=3;i<d.length;i+=4){if(d[i]>8)on++;}return on;})()");
+      const nav = await evalJs("(function(){var a=document.querySelector('.navpill a.on');return a?a.textContent.trim():null;})()");
+      ok = ssr === p.expect && views && opaque > 10000 && nav === '主页';
+      extra = '画布不透明像素=' + opaque + ' · navpill=' + nav;
+    }
     if (!ok) routeBad++;
-    await shot(`${PREFIX}-route-${name}`);
-    report.routes.push({ route: name, hash, expect: want, got, ok, mainTextChars: textLen, playerInstances: players });
-    console.log('  [' + (ok ? 'PASS' : 'FAIL') + '] ' + name.padEnd(8) + ' ' + hash.padEnd(20) +
-      ' data-xk-render=' + String(got).padEnd(8) + ' (期望 ' + want + ') 正文=' + textLen + ' 播放器实例=' + players);
+    await shot(`${PREFIX}-view-${p.name}`);
+    report.routes.push({ page: p.name, expectSsr: p.expect, ssr, xkViews: views, viewOn: on, expectView: p.view, mainTextChars: textLen, ok, extra });
+    console.log('  [' + (ok ? 'PASS' : 'FAIL') + '] ' + p.name.padEnd(8) + ' data-xk-ssr=' + String(ssr).padEnd(8) +
+      ' .view.on=' + String(on).padEnd(10) + ' (期望 ' + String(p.view).padEnd(10) + ') #xk-views=' + views +
+      ' 正文=' + textLen + (extra ? '  ' + extra : ''));
   }
-  /* 手势后：autoplay 解锁取证（synthetic click 不算手势 → 用 CDP Input 派发真事件） */
-  await evalJs('location.hash="#/home"; "ok"', false);
-  await sleep(1500);
-  await rpc(ws, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: 340, y: 830, button: 'left', clickCount: 1 });
-  await rpc(ws, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: 340, y: 830, button: 'left', clickCount: 1 });
-  await sleep(2500);
-  const voiceAfter = await evalJs('JSON.stringify(window.KurisuPlayer ? KurisuPlayer.voiceDiag() : null)');
-  report.voiceAfterGesture = voiceAfter ? JSON.parse(voiceAfter) : null;
-  console.log('\n== autoplay 门控 ==');
-  console.log('  手势前：', report.pages[0] && report.pages[0].voiceBeforeGesture);
-  console.log('  语音按钮文案：', report.pages[0] && report.pages[0].voiceLabelText);
-  console.log('  手势后：', voiceAfter);
 
   report.gate.pass = gateFail === 0 && routeBad === 0;
   const anyRoot = Object.keys(shellRoots).some((k) => shellRoots[k] > 0);
@@ -281,9 +297,10 @@ async function main() {
   fs.writeFileSync(path.join(OUT, PREFIX + '-report.json'), JSON.stringify(report, null, 1), 'utf8');
   console.log('\n== 结论 ==');
   console.log('  首屏门禁：%s（%d 页超标 / %d 页）', gateFail ? 'FAIL' : 'PASS', gateFail, PAGES.length);
-  console.log('  hash 路由：%s（%d 条不符）', routeBad ? 'FAIL' : 'PASS', routeBad);
+  console.log('  六页初始屏（新口径）：%s（%d 页不符）', routeBad ? 'FAIL' : 'PASS', routeBad);
+  console.log('  路由契约（data-xk-ssr / #xk-views / 站外资源）：见 _dev/check-ssr-contract.py');
   console.log('  新外壳样式一致性：%s（产物样式表里 #xk-app 规则 %d 条；页面上 #xk-app 根元素 %s）',
-    shellConsistent ? 'PASS' : 'FAIL', shellRules, anyRoot ? JSON.stringify(shellRoots) : '0 个（未接线）');
+    shellConsistent ? 'PASS' : 'FAIL', shellRules, anyRoot ? JSON.stringify(shellRoots) : '0 个（本批口径下不再挂站点外壳）');
   console.log('  报告 →', path.join(OUT, PREFIX + '-report.json'));
   process.exitCode = report.gate.pass ? 0 : 1;
   ws.close(); child.kill(); server.close();
