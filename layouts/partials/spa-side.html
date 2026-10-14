@@ -9,11 +9,16 @@
     → object-position: 78%（= (0.655×2.254−0.5)/(2.254−1)）刚好把脸放正中间。
   · 整栏不裁剪（overflow:visible），纵向滚动交给 .xk-side__nav，头像柔光不会被切。
 */}}
-{{- $avatarPos := "78% center" -}}
+{{- /* ★ 头像不再直接引用 bg.jpg（659KB）——40px 的圆头像会让**每一页**的首屏白多下 659KB。
+       改成离线裁好的缩略图 static/images/avatar-80.webp（1.9KB）：
+       裁切窗口就是原来 object-fit:cover + object-position:78% center 在 40×40 圆框里的可见区域
+       （源图 3245×1440 → 可见 x 1408..2848、y 0..1440，正好是 1440×1440 正方形），
+       所以视觉与原来完全一致。bg.jpg 一个字节没动（门禁⑧照旧 PASS），仍是非主页的页面底图。 */ -}}
 <aside class="xk-side" id="xk-side" aria-label="站点与作者">
   <a class="xk-side__me" href="/" data-xk-route aria-label="回到主页">
-    <img class="xk-side__avatar" src="/images/bg.jpg" alt="小刻晴（xiaokeqing）的头像" width="40" height="40"
-         decoding="async" style="object-position:{{ $avatarPos }}">
+    <img class="xk-side__avatar" src="/images/avatar-80.webp" alt="小刻晴（xiaokeqing）的头像"
+         width="40" height="40" srcset="/images/avatar-80.webp 1x, /images/avatar-160.webp 2x"
+         decoding="async" style="object-position:center">
   </a>
 
   <nav class="xk-side__nav" aria-label="主导航">

@@ -316,11 +316,18 @@
     about: 'tpl-about', notfound: 'tpl-notfound'
   };
   var NAV_OF_ROUTE = { home: 'home', notes: 'notes', note: 'notes', monitor: 'monitor', ai: 'ai', range: 'range', about: 'about' };
+  /* ★ 2026-10-14 修的一个真 bug：hugo.toml 的菜单是 `identifier = "labs"` + `url = "/#/labs"`，
+     而路由名/模板键是 `range` —— parseHash() 读到 'labs' 时 `VIEW_TPL['labs']` 不存在 → 返回 null
+     → currentRoute() 退化成 routeFromPath(location.pathname)。在主页点这条链接时 pathname 是 '/'
+     → **点「攻防靶场」会回到主页**（截图与深链都正常，所以一直没被发现）。
+     这里把 hash 名到路由名的别名补上，与 routeFromPath 的 `/labs → range` 保持一致。 */
+  var HASH_ALIAS = { labs: 'range' };
 
   function parseHash(hash) {
     var m = String(hash || '').replace(/^#/, '').match(/^\/?([a-z-]+)(?:\/([^/?#]+))?/i);
     if (!m) return null;
     var name = m[1].toLowerCase(), arg = m[2] ? decodeURIComponent(m[2]) : null;
+    if (HASH_ALIAS[name]) { name = HASH_ALIAS[name]; }
     if (!VIEW_TPL[name]) return null;
     if (name === 'note' && arg) return { name: 'note', slug: arg };
     if (name === 'monitor') return { name: 'monitor', tab: arg || 'alerts' };

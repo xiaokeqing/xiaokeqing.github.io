@@ -84,8 +84,8 @@
             <li class="xk-feed__row is-skeleton"><span class="xk-dot"></span><span class="xk-skel xk-skel--w80"></span></li>
           </ul>
           <details class="xk-caliber">
-            <summary>数据口径</summary>
-            <ul class="xk-meta">
+            <summary aria-controls="xk-caliber-monitor">数据口径</summary>
+            <ul class="xk-meta" id="xk-caliber-monitor">
               <li><span>条目</span><b>同类别 + 同来源 IP 聚合；只显示最近若干条（不是全量）</b></li>
               <li><span>同步</span><b>同步行的时间是浏览器这次成功取数的时刻，不是事件发生时刻</b></li>
               <li><span>来源</span><b class="xk-mono">/api/public/audit · /api/public/alerts · /api/public/honeypot</b></li>

@@ -1,0 +1,119 @@
+{
+ "format": "xiaokeqing.kurisu.voicebank.v1",
+ "generator": "_dev/synth-voice.ps1（Windows SAPI 5，Microsoft Huihui Desktop） + _dev/build_voice_bank.py",
+ "voiceNote": "音色是系统 TTS（Huihui），不是桐莉栖。换音色 = 换这批 wav，播放器不用改。",
+ "codec": "pcm_s16le",
+ "sampleRate": 8000,
+ "hopMs": 10,
+ "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0",
+ "lines": {
+  "greet_first": {
+   "text": "欢迎回来。屏上的数字都来自真实只读接口，取不到我就直说读不到。",
+   "scene": "首访进站（开场之后的第一次问候）",
+   "audio": "kurisu/voice/greet_first.wav",
+   "envelope": "kurisu/voice/greet_first.envelope.json",
+   "seconds": 6.704,
+   "audioBytes": 107312,
+   "envelopeValues": 671
+  },
+  "greet_back": {
+   "text": "又见面了。屏上还是那套真数据，没变过口径。",
+   "scene": "回访进站（localStorage 里有访问记录）",
+   "audio": "kurisu/voice/greet_back.wav",
+   "envelope": "kurisu/voice/greet_back.envelope.json",
+   "seconds": 4.989,
+   "audioBytes": 79860,
+   "envelopeValues": 499
+  },
+  "nav_home": {
+   "text": "回到主页了。我还是待在这台显示器里。",
+   "scene": "切到主页",
+   "audio": "kurisu/voice/nav_home.wav",
+   "envelope": "kurisu/voice/nav_home.envelope.json",
+   "seconds": 4.194,
+   "audioBytes": 67140,
+   "envelopeValues": 420
+  },
+  "nav_monitor": {
+   "text": "监测中心。这里的每一条都是真读取的告警记录。",
+   "scene": "切到监测中心",
+   "audio": "kurisu/voice/nav_monitor.wav",
+   "envelope": "kurisu/voice/nav_monitor.envelope.json",
+   "seconds": 4.787,
+   "audioBytes": 76640,
+   "envelopeValues": 479
+  },
+  "nav_notes": {
+   "text": "笔记都在这一页，按时间倒序排好了。",
+   "scene": "切到笔记",
+   "audio": "kurisu/voice/nav_notes.wav",
+   "envelope": "kurisu/voice/nav_notes.envelope.json",
+   "seconds": 3.638,
+   "audioBytes": 58246,
+   "envelopeValues": 364
+  },
+  "nav_labs": {
+   "text": "攻防靶场只做检测，不执行、不处置。",
+   "scene": "切到攻防靶场",
+   "audio": "kurisu/voice/nav_labs.wav",
+   "envelope": "kurisu/voice/nav_labs.envelope.json",
+   "seconds": 3.932,
+   "audioBytes": 62956,
+   "envelopeValues": 394
+  },
+  "nav_about": {
+   "text": "这一页讲的是项目本身，还有数据口径和取舍。",
+   "scene": "切到关于",
+   "audio": "kurisu/voice/nav_about.wav",
+   "envelope": "kurisu/voice/nav_about.envelope.json",
+   "seconds": 4.483,
+   "audioBytes": 71770,
+   "envelopeValues": 449
+  },
+  "nav_ai": {
+   "text": "问答走的是真实检索链路，回答非流式返回。",
+   "scene": "切到 AI 安全",
+   "audio": "kurisu/voice/nav_ai.wav",
+   "envelope": "kurisu/voice/nav_ai.envelope.json",
+   "seconds": 4.415,
+   "audioBytes": 70684,
+   "envelopeValues": 442
+  },
+  "fallback_no_data": {
+   "text": "这一次没读到数据。我不补数，读不到就是读不到。",
+   "scene": "接口拿不到数据（状态行显示读不到）",
+   "audio": "kurisu/voice/fallback_no_data.wav",
+   "envelope": "kurisu/voice/fallback_no_data.envelope.json",
+   "seconds": 4.973,
+   "audioBytes": 79618,
+   "envelopeValues": 498
+  },
+  "fallback_offline": {
+   "text": "请求没送达。我不编答案，等接口恢复再说。",
+   "scene": "请求没送达 / 超时",
+   "audio": "kurisu/voice/fallback_offline.wav",
+   "envelope": "kurisu/voice/fallback_offline.envelope.json",
+   "seconds": 5.064,
+   "audioBytes": 81068,
+   "envelopeValues": 507
+  },
+  "fallback_throttled": {
+   "text": "接口在限流，稍等一下再问。",
+   "scene": "被限流（HTTP 429）",
+   "audio": "kurisu/voice/fallback_throttled.wav",
+   "envelope": "kurisu/voice/fallback_throttled.envelope.json",
+   "seconds": 3.192,
+   "audioBytes": 51122,
+   "envelopeValues": 320
+  },
+  "tab_return": {
+   "text": "你回来了。刚才我没说话，只是在这儿等着。",
+   "scene": "切回标签页（隐藏超过 60 秒）",
+   "audio": "kurisu/voice/tab_return.wav",
+   "envelope": "kurisu/voice/tab_return.envelope.json",
+   "seconds": 4.724,
+   "audioBytes": 75632,
+   "envelopeValues": 473
+  }
+ }
+}

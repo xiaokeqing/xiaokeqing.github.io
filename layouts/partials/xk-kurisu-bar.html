@@ -15,9 +15,11 @@
 <form class="xk-kbar" data-xk-kurisu-bar>
   <label class="xk-sr" for="xk-kbar-input">向她提问（会送到真实的公开问答链路）</label>
   <div class="xk-kbar__in">
+    {{- /* 🔊 = 语音入口。autoplay 门控：未交互时它是"🔊 点我开声"（可见文案由
+           kurisu-player.js 写 [data-xk-voice-label]），点一下解锁并补放最近一句。 */ -}}
     <button class="xk-kbar__voice" type="button" data-xk-kurisu-voice aria-pressed="false"
-            title="语音未启用（本轮只上文本版）">
-      <span aria-hidden="true">🔊</span><span class="xk-sr">语音（未启用）</span>
+            title="点我开声（浏览器会拦自动播放）">
+      <span aria-hidden="true">🔊</span><span class="xk-kbar__voicelabel" data-xk-voice-label>点我开声</span>
     </button>
     <input class="xk-input xk-kbar__input" id="xk-kbar-input" type="text" autocomplete="off"
            spellcheck="false"

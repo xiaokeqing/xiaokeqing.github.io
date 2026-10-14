@@ -46,8 +46,14 @@ html[data-xk-crt-on="1"] .xk-crt { display: block; }
    场景层是固定定位 + pointer-events:none，主页也没有浅色玻璃正文要保对比度；
    read 主题下"深字压深照片"的那几处（导航、搜索胶囊、主题胶囊）由本文件末尾
    一组 [data-xk-crt-on="1"] 覆盖规则单独解决，别的页面完全不受影响。 */
-/* 场景生效时把 bg.jpg 那一层藏起来 —— 文件一个字节没动，只是不再显示（站主评审【补 5】允许） */
-html[data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
+/* 场景生效时把 bg.jpg 那一层藏起来 —— 文件一个字节没动，只是不再显示（站主评审【补 5】允许）。
+   ★ 2026-10-14 改（首屏字节门禁）：从 visibility:hidden 改成 background-image:none ——
+   visibility 只是不"显示"，浏览器**照样会把 659KB 的 bg.jpg 下载下来**；background-image:none
+   连请求都不会发生。主页的可见底图是 scene.images.desk（书桌照片，cover 铺满），
+   bg.jpg 本来就被它整张盖住，所以视觉零变化。直连主页时 <html> 上已经有服务端写好的
+   data-xk-crt-on="1"（见 layouts/baseof.html），所以这个请求从第一帧起就不会发出；
+   其它路由没有这个属性 → bg.jpg 照常是站点背景。 */
+html[data-xk-crt-on="1"] .xk-bg { visibility: hidden; background-image: none; }
 
 /* 场景层 = "那张书桌照片本身"：**纯 cover、零倍率、无相机动画**。
    这是原版行为，也是另一条线用"掩掉屏内区域的多尺度 NCC"配准参考录屏后得到的结论：
@@ -394,6 +400,9 @@ html[data-xk-kbar-on="1"] .xk-kbar { display: block; }
   cursor: pointer;
 }
 .xk-kbar__voice[aria-pressed="true"] { border-color: var(--xk-blue); }
+/* "🔊 点我开声"：未交互时要把入口**写出来**（站主评审要求显式入口，不能只有一个图标） */
+.xk-kbar__voicelabel { margin-left: 4px; font-size: 12px; white-space: nowrap; }
+@media (max-width: 520px) { .xk-kbar__voicelabel { display: none; } }   /* 太窄时退回纯图标 */
 .xk-kbar__input { flex: 1 1 auto; min-width: 0; }
 .xk-kbar__note { margin: 6px 2px 0; font-size: 11px; color: var(--xk-muted); min-height: 1.1em; }
 /* 固定条不能被内容盖住：给它让出底部空间（只在显示时生效，避免无谓留白） */

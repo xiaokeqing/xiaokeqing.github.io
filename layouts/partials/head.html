@@ -105,6 +105,13 @@
     if (/[?&]theme=read/.test(location.search)) t = 'read';
     if (/[?&]theme=tech/.test(location.search)) t = 'tech';
     d.setAttribute('data-xk-theme', t);
+    {{- if and site.Params.kurisuEnabled .IsHome }}
+    /* ★ 步骤 2：主页的 CRT 场景整屏铺在 bg.jpg 那一层之上，这个开关必须在这里打开
+       （本脚本在样式表之前同步执行），否则 .xk-bg 的背景图（674KB）会在属性打开之前
+       就被请求 —— 实测首屏白下 674KB，而且首帧会先闪一下 bg.jpg 再换成书桌照片。
+       kurisu-player.js 之后仍按当前 hash 路由维护同一个属性（SPA 换页时由它开关）。 */
+    d.setAttribute('data-xk-crt-on', '1');
+    {{- end }}
     try {
       localStorage.removeItem('pref-theme');
       localStorage.removeItem('pref-theme-default');
@@ -115,3 +122,21 @@
 {{/* 样式：assets/css/extended/*.css 按文件名顺序拼接（chroma.css → site.css），压缩 + 指纹 */}}
 {{- $css := resources.Match "css/extended/*.css" | resources.Concat "css/site.css" | resources.Minify | resources.Fingerprint -}}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
+
+{{/* ---------------------------------------------------------------------------
+   新外壳样式（assets/css/xk-app.css，来自 docs/demo-内容页外壳.html 的 <style> 机械前缀化）
+   ---------------------------------------------------------------------------
+   ★ 为什么**不**像 site.css 那样无条件并进总样式表：
+     · 这份文件的每条规则都带 `#xk-app` 前缀，而线上六个页面的 markup 里没有 `#xk-app`
+       根元素（那份 demo 的 markup 自带演示数字，不能原样搬进生产页）→ 无条件并进去就是
+       **每一页白下 26KB 惰性 CSS**（审计表第 7 项记的就是这件事）。
+     · 上线前实测：产物样式表里 `#xk-app` 规则 0 条、页面里 `#xk-app` 根元素 0 个 —— 一致，
+       不是漏接线（_dev/gate-firstscreen.mjs 会把这条一致性当门禁跑）。
+   ★ 接线方式（真要把外壳挂到某一页时，一行就够）：
+     · 页面 front matter 写 `xkAppShell: true`（或把 content 段的 params 设上），
+     · 同时该页的 partial 里给出 `<div id="xk-app">…</div>` 外壳根元素，
+     这一条 <link> 就会**只在这一页**加载，其它页零成本。 */}}
+{{- if or .Params.xkAppShell (and .Site.Params.xkAppShell .IsHome) }}
+{{- $shell := resources.Get "css/xk-app.css" | resources.Minify | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $shell.RelPermalink }}" integrity="{{ $shell.Data.Integrity }}">
+{{- end }}

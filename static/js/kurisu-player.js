@@ -65,6 +65,7 @@
   var VERSION = '1.0.0';
   var DEFAULT_MANIFEST = '/kurisu/manifest.json';
   var DEFAULT_DEFER_MS = 200;          // 规格：首屏渲染完成之后再载角色资源
+  var HI_DELAY_MS = 3000;              // hi 档最早什么时候开始补（首帧画出来起算；首屏门禁要它别抢首屏）
   var MAX_CLIPS_IN_MEMORY = 2;         // 只保留当前剪辑 + 下一个
   var MAX_ATLAS_PIXELS = 12000000;     // 单张图集像素上限（超过就别在移动端用）
 
@@ -112,6 +113,25 @@
     try { return global.matchMedia ? global.matchMedia(query) : null; } catch (e) { return null; }
   }
   function mqOn(m, fallback) { return m ? !!m.matches : !!fallback; }
+
+  /* ---------------------------------------------------- 状态机共用小工具 */
+  /** 可复现的伪随机（LCG）：自动游走要"每次跑都给出同一条节点序列"才好取证。
+   *  原版用的是真随机，这里的差别只在"可复现"，不影响加权掷骰子的分布。 */
+  var smRngState = 20261014;
+  function smSeed(s) { smRngState = (typeof s === 'number' && s) ? (s | 0) : 20261014; }
+  function smRand() {
+    smRngState = (smRngState * 1103515245 + 12345) & 0x7fffffff;
+    return smRngState / 0x7fffffff;
+  }
+  /** medium 档多分页：全局帧号 → 页对象 */
+  function smPageFor(pages, idx) {
+    for (var i = 0; i < pages.length; i++) {
+      var p = pages[i];
+      if (idx >= p.first_frame - 1 && idx <= p.last_frame - 1) { return p; }
+    }
+    var last = pages[pages.length - 1];
+    return (idx < 0) ? pages[0] : last;
+  }
 
   /** 环境探测：三种情况都必须降级成"只画静态一帧"（站主 06 补 2） */
   function probeEnv() {
@@ -339,6 +359,16 @@
     this._onResize = this.handleResize.bind(this);
     this._onMq = this.handleEnvChange.bind(this);
     this._askOff = null;
+    /* 状态机（37/87）默认关：由挂载点 data-xk-kurisu-sm="on" 或 opts.stateMachine 显式打开。
+       理由（字节代价）写在上面的状态机段注释里。 */
+    this.smOn = (opts.stateMachine === true || (opts.stateMachine !== false &&
+      this.mount.getAttribute('data-xk-kurisu-sm') === 'on')) &&
+      (opts.mode || this.mode) === 'stage';
+    this.smTimer = null;
+    this.smRunning = false;
+    this.smDiag = null;
+    this.graph = null;
+    this._graphPromise = null;
   }
 
   Player.prototype.ready = function () {
@@ -416,6 +446,17 @@
     // 舞台没有可读的真实节点（主页已删干净）→ 这里触发一次公开端点请求（TTL 内不会重复）
     if (this.mode === 'stage') { liveStatusTick(); }
     var txt = composeStatus();
+    /* 事件驱动的宿主触发 · 第 3 类：**真实数据有变化**才换情绪（不编阈值、不猜严重度）。
+       composeStatus() 的每个数字都来自页面上真实渲染出来的节点 / 白名单只读接口；
+       文本变了 = 真实状态变了 → 推一次情绪入口。20 秒最短间隔防抖。 */
+    if (this._lastStatusText && this._lastStatusText !== txt) {
+      var now = Date.now();
+      if (!this._lastEmotionAt || now - this._lastEmotionAt > 20000) {
+        this._lastEmotionAt = now;
+        this.smHostTrigger('emotion');
+      }
+    }
+    this._lastStatusText = txt;
     if (this.statusEl.textContent !== txt) { this.statusEl.textContent = txt; }
   };
 
@@ -534,26 +575,49 @@
     }
     var cur = this.current;
     var atlas = this.atlases[cur.clip];
-    var img = atlas && (atlas.hi || atlas.boot);
-    if (!img) { return; }
-    cur.tier = atlas.hi ? 'hi' : 'boot';     // boot → hi 平滑替换（同分辨率、帧序一致）
+    if (!atlas) { return; }
     var total = cur.frames;
     var idx;
     if (cur.fixedFrame != null) { idx = cur.fixedFrame; }
     else if (cur.once) { idx = Math.min(total - 1, Math.floor(this.elapsed / cur.interval)); }
     else { idx = Math.floor(this.elapsed / cur.interval) % total; }
     if (idx < 0) { idx = 0; }
-    // boot 图集只有前 N 帧：还没补到 hi 时用取模回绕，保证始终有画面
-    if (!atlas.hi && idx >= atlas.bootFrames) { idx = idx % atlas.bootFrames; }
-    var col = idx % cur.columns;
-    var row = Math.floor(idx / cur.columns);
+    var img = null, cols = cur.columns, fw = cur.fw, fh = cur.fh, local = idx;
+    if (atlas.pages && atlas.pages.length) {
+      /* 状态机剪辑：medium 档是**多分页**图集（9 个新生成的剪辑 2~4 页）。
+         全局帧号 idx → 落在哪一页 + 页内局部帧号。 */
+      var pg = smPageFor(atlas.pages, idx);
+      if (!pg || !pg.img) { return; }
+      img = pg.img; cols = pg.cols; fw = pg.tile_w; fh = pg.tile_h;
+      local = idx - (pg.first_frame - 1);
+      if (local < 0) { local = 0; }
+      if (local > pg.frames - 1) { local = pg.frames - 1; }
+      cur.tier = 'medium';
+      cur.page = pg.file || null;
+    } else {
+      img = atlas.hi || atlas.boot;
+      if (!img) { return; }
+      cur.tier = atlas.hi ? 'hi' : 'boot';   // boot → hi 平滑替换（同分辨率、帧序一致）
+      // boot 图集只有前 N 帧：还没补到 hi 时用取模回绕，保证始终有画面
+      if (!atlas.hi && atlas.bootFrames && idx >= atlas.bootFrames) { idx = idx % atlas.bootFrames; }
+      local = idx;
+      cur.page = null;
+    }
+    var col = local % cols;
+    var row = Math.floor(local / cols);
     var cw = this.canvas.width, ch = this.canvas.height;
     // fit:"screen" / "crt_screen" = 整屏绘制（原包场景成片：房间 + 她 + 显示器边框都在帧里）
     var r = (cur.fit === 'screen' || cur.fit === 'crt_screen')
-      ? { x: 0, y: 0, w: cw, h: ch } : this.charRect(cw, ch, cur.fw / cur.fh);
+      ? { x: 0, y: 0, w: cw, h: ch } : this.charRect(cw, ch, fw / fh);
     this.ctx.clearRect(0, 0, cw, ch);
     this.ctx.imageSmoothingQuality = 'high';
-    this.ctx.drawImage(img, col * cur.fw, row * cur.fh, cur.fw, cur.fh, r.x, r.y, r.w, r.h);
+    this.ctx.drawImage(img, col * fw, row * fh, fw, fh, r.x, r.y, r.w, r.h);
+    if (!this._firstPaintAt) { this._firstPaintAt = Date.now(); }
+    /* 叠闭嘴层：帧下标按"该剪辑自己的源帧序号"给（clips.speaking 是 stride=2 抽帧，
+       所以源帧号 = 图集帧号 × 2；状态机的 medium/hi 是 stride=1，直接就是图集帧号）。 */
+    var mouthClip = cur.clipName || cur.clip;
+    var srcIdx = local * (MOUTH_STRIDE[cur.clip] || 1);
+    this.drawMouth(r, srcIdx, mouthClip);
   };
 
   /* 开场序列：单独一条时间轴（不占 this.current，所以底下 idle 可以同时跑着）。
@@ -580,6 +644,7 @@
     if (this.paused || this.destroyed) { return; }
     if (!this.t0) { this.t0 = now; }
     this.elapsed = now - this.t0;
+    voiceMouthTick();                      // 用真实音频播放时钟推进 mouthValue（全局一份）
     if (this.introState) { this.introState.elapsed = now - this.introState.t0; }
     this.draw();
     this.drawIntro();
@@ -640,15 +705,23 @@
     var px = ((spec.atlas || {}).hi || {}).w * (((spec.atlas || {}).hi || {}).h || 0);
     if (this.staticOnly || px > MAX_ATLAS_PIXELS * 2) { return; }
     e.hiLoading = true;
-    // 站主要求：首屏渲染完成之后（默认 200ms）再补 hi；这里再让一次空闲，避免和首屏渲染抢带宽
-    whenIdle(function () {
-      loadImage(joinUrl(self.basePath, e.hiUrl)).then(function (img) {
-        if (self.destroyed) { return; }
-        e.hi = img; e.hiLoading = false;
-        self.setState('tier:hi');
-        self.draw();
-      }, function () { e.hiLoading = false; });
-    });
+    /* ★ 2026-10-14 改（首屏字节门禁）：hi 档**不许进首屏**。
+       老实现是"首帧画完 + 一次空闲"就补（约 200~400ms），于是 idle.hi(1285KB) 落进 1.5s 窗口。
+       现在：首帧画出来起算至少 HI_DELAY_MS(=3s)，或用户已经交互过 —— 两者先到先算。
+       降级路径不变：这 3 秒里放的是 boot 24 帧（同分辨率、帧序一致）。 */
+    var since = self._firstPaintAt ? (Date.now() - self._firstPaintAt) : 0;
+    var wait = Math.max(0, HI_DELAY_MS - since);
+    setTimeout(function () {
+      if (self.destroyed) { return; }
+      whenIdle(function () {
+        loadImage(joinUrl(self.basePath, e.hiUrl)).then(function (img) {
+          if (self.destroyed) { return; }
+          e.hi = img; e.hiLoading = false;
+          self.setState('tier:hi');
+          self.draw();
+        }, function () { e.hiLoading = false; });
+      });
+    }, wait);
   };
 
   Player.prototype.evictOtherClips = function (keep) {
@@ -862,7 +935,11 @@
       var hi = (spec.atlas || {}).hi;
       if (hi && hi.url && self.mode === 'stage' && !self.staticOnly) {
         self.introState.hiLoading = true;
-        loadImage(joinUrl(self.basePath, hi.url)).then(function (img) {
+        /* ★ 首屏门禁：开场 hi（1004KB）也不许落在导航后 1.5s 的窗口里。
+           延迟 1.8s（1.5s 窗口 + 余量）；延迟期间播 boot 的 24 帧。 */
+        setTimeout(function () {
+          if (self.destroyed) { return; }
+          loadImage(joinUrl(self.basePath, hi.url)).then(function (img) {
           var st = self.introState;
           if (self.destroyed || !st || st.clip !== name) { return; }
           st.img = img;
@@ -873,6 +950,7 @@
         }, function () {
           if (self.introState && self.introState.clip === name) { self.introState.hiLoading = false; }
         });
+        }, 1800);
       }
       return new Promise(function (resolve) {
         self.introState.onDone = function () {
@@ -1007,6 +1085,7 @@
     this.staticOnly = !!this.opts.staticOnly || env.reducedMotion || env.saveData ||
       (env.narrow && this.mode === 'rail');
     if (this.staticOnly && !wasStatic) {
+      this.smStop();
       this.stopLoop();
       this.current = null;
       this.currentClipName = this.currentClipName || 'idle';
@@ -1032,6 +1111,7 @@
 
   Player.prototype.destroy = function () {
     this.destroyed = true;
+    this.smStop();
     this.stopLoop();
     if (this._statusTimer) { clearInterval(this._statusTimer); }
     if (this._statusObs) { this._statusObs.disconnect(); }
@@ -1064,14 +1144,10 @@
      —— 比如页面底部输入条 —— 也能拿到同一份诚实契约）。 */
   function speakImpl(phraseId, text, cfg) {
     cfg = cfg || {};
-    var bank = cfg.voiceBank || global.KURISU_VOICE_BANK || null;
+    var base = cfg.basePath || '/';
     var endpoint = cfg.endpoint || global.KURISU_TTS_ENDPOINT || null;
-    if (phraseId && bank && bank[phraseId]) {
-      var url = joinUrl(cfg.basePath || '/', bank[phraseId]);
-      try { new global.Audio(url).play(); } catch (e) { /* 浏览器可能拦截自动播放；不重试 */ }
-      return Promise.resolve({ ok: true, source: 'bank', url: url });
-    }
-    if (endpoint) {
+    var viaEndpoint = function () {
+      if (!endpoint) { return null; }
       return fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1079,10 +1155,22 @@
       }).then(function (r) {
         return r.ok ? { ok: true, source: 'tts' } : { ok: false, reason: 'TTS_' + r.status };
       }, function () { return { ok: false, reason: 'TTS_UNREACHABLE' }; });
+    };
+    /* L1：固定台词走离线静态音频（bank.json）。带 autoplay 门控。 */
+    if (phraseId) {
+      return playLine(base, phraseId, text).then(function (r) {
+        if (r.ok || r.reason === 'AUTOPLAY_BLOCKED') { return r; }
+        var ep = viaEndpoint();          // 这句没有预生成音频时，才退到后端 TTS
+        if (ep) { return ep; }
+        return { ok: false, reason: r.reason || 'NO_SUCH_LINE', id: phraseId,
+                 detail: '该短语没有 L1 音频（本轮只上固定台词）' };
+      });
     }
+    var ep2 = viaEndpoint();
+    if (ep2) { return ep2; }
     return Promise.resolve({
       ok: false, reason: 'TTS_DISABLED',
-      detail: '语音线尚未接入（本轮只上文本版）'
+      detail: '这一路没有短语 id（L1 只覆盖固定台词；自由回答的语音线尚未接入）'
     });
   }
 
@@ -1092,11 +1180,20 @@
    *  TTS 本身仍是空实现（speakImpl 如实返回 TTS_DISABLED），两边不互相假装。 */
   Player.prototype.speak = function (phraseId, text) {
     var said = (text == null) ? '' : String(text);
+    var self = this;
+    var label = this.mouthLabelFor((this.current && (this.current.clipName || this.current.clip)) ||
+      this.currentClipName || 'speaking');
+    if (label) { this.loadMouth(label); }
     if (said) { this.animateSpeech(said); }
+    /* ★ 事件驱动的宿主触发：有台词/有音频在播 → 推 speaking 入口（原版 prob=0 只能宿主走） */
+    if (phraseId) { this.smHostTrigger('voice'); }
     return speakImpl(phraseId, said, {
       voiceBank: this.opts.voiceBank || null,
       endpoint: this.opts.ttsEndpoint || null,
       basePath: this.basePath
+    }).then(function (r) {
+      if (!said && r && r.text) { self.animateSpeech(r.text); }   // 用 L1 台词文本补字幕
+      return r;
     });
   };
 
@@ -1146,6 +1243,762 @@
     return Promise.resolve({ ok: false, reason: 'TTS_DISABLED', detail: '语音线尚未接入（本轮只上文本版）' });
   };
 
+  /* ==================================================================== 语音 L1
+     规格：docs/动画与语音实现规格-给外部AI.md §3.3（autoplay 门控）+ §4（口型两层）。
+     机制逐条照抄：
+       · 未交互态 = 动画与字幕照常、**声音静默**（绝不调 Audio.play()），并显式给"🔊 点我开声"
+       · 首次 pointerdown / keydown / touchstart → 解锁；解锁后**补放**被拦下的那一句
+       · mouthValue = clamp(RMS(10ms 窗) × 3.75, 0, 1)；首窗保底 0.12；停止发 0（离线算好存 JSON）
+       · 静音（mouthValue ≤ 0.08）时叠"闭嘴层"；说话中用基础帧自带的嘴
+     与本项目实际的一处**必要差异**（如实记录）：
+       上游 `shouldClose = !speaking || mouthValue <= 0.08` 里的 speaking 是"她在说话这个状态"，
+       因为上游没声音时不会停在说话剪辑上；我们这里**没有**语音也会自动游走到说话剪辑
+       （37/87 状态机 + 还没接 L2），照抄会让她全程闭着嘴。
+       所以本实现改成：**只有音频真的在播（VOICE.speaking）时才挂嘴罩**；没声音就退回
+       "字幕 + 帧里自带的嘴"（= 规格 §3.1 的 L3 降级），这正是规格 §4 末行写的那种观感。 */
+  var VOICE = {
+    bank: null, bankLoading: null, unlocked: false,
+    audio: null, line: null, envelope: null, speaking: false, mouthValue: 0,
+    pending: null, last: null,
+    variant: 'auto',        // 'auto' = 按每个 label 的 preferredVariant；'patch' / 'frame' = 强制
+    diag: {
+      unlockedBy: null, blockedPlays: 0, plays: 0, lastLine: null,
+      mouthShown: 0, mouthHidden: 0, variant: 'patch', bankLines: 0, errors: []
+    }
+  };
+
+  function voiceBankUrl(basePath) {
+    return joinUrl(basePath || '/', 'kurisu/voice/bank.json');
+  }
+  function loadVoiceBank(basePath) {
+    if (VOICE.bank) { return Promise.resolve(VOICE.bank); }
+    if (VOICE.bankLoading) { return VOICE.bankLoading; }
+    VOICE.bankLoading = fetch(voiceBankUrl(basePath), { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) { throw new Error('voice bank HTTP ' + r.status); } return r.json(); })
+      .then(function (b) {
+        VOICE.bank = b;
+        VOICE.diag.bankLines = Object.keys(b.lines || {}).length;
+        return b;
+      });
+    return VOICE.bankLoading;
+  }
+  function loadEnvelope(basePath, url) {
+    return fetch(joinUrl(basePath || '/', url), { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) { throw new Error('envelope HTTP ' + r.status); } return r.json(); });
+  }
+
+  function voiceNote(text) {
+    VOICE.diag.lastNote = text;
+    var els = qa('[data-xk-kurisu-voice-note]');
+    for (var i = 0; i < els.length; i++) { els[i].textContent = text; }
+  }
+  /** 未交互态必须能从界面上看出来："🔊 点我开声"（站主要求的显式入口） */
+  function refreshVoiceButtons() {
+    var btns = qa('[data-xk-kurisu-voice]');
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      b.setAttribute('aria-pressed', VOICE.unlocked ? 'true' : 'false');
+      b.setAttribute('title', VOICE.unlocked ? '声音已开：点一下重播最近一句' : '浏览器会拦自动播放：点我开声');
+      var lab = q('[data-xk-voice-label]', b);
+      if (lab) { lab.textContent = VOICE.unlocked ? '已开声' : '点我开声'; }
+    }
+  }
+
+  function unlockAudio(how) {
+    if (VOICE.unlocked) { return; }
+    VOICE.unlocked = true;
+    VOICE.diag.unlockedBy = how || 'unknown';
+    refreshVoiceButtons();
+    voiceNote('声音已开（' + VOICE.diag.unlockedBy + '）。');
+    var p = VOICE.pending;
+    VOICE.pending = null;
+    if (p) { playVoiceNow(p); }
+  }
+  function installAudioGate() {
+    if (installAudioGate.done) { return; }
+    installAudioGate.done = true;
+    ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+      global.addEventListener(ev, function () { unlockAudio(ev); }, { passive: true });
+    });
+    refreshVoiceButtons();
+    voiceNote('浏览器会拦自动播放：点 🔊 或按任意键开声（动画与字幕不受影响）。');
+  }
+
+  function playVoiceNow(line) {
+    if (!line || !line.url) { return false; }
+    try {
+      if (VOICE.audio) { try { VOICE.audio.pause(); } catch (e) { /* 忽略 */ } }
+      var a = new global.Audio(line.url);
+      a.preload = 'auto';
+      VOICE.audio = a;
+      VOICE.line = line.id;
+      VOICE.envelope = line.envelope || null;
+      VOICE.speaking = true;
+      VOICE.mouthValue = 0;
+      VOICE.diag.plays++;
+      VOICE.diag.lastLine = line.id;
+      VOICE.diag.envelopeLen = VOICE.envelope && VOICE.envelope.values ? VOICE.envelope.values.length : 0;
+      /* ⚠️ 只有"当前这一条"的事件才能改全局状态：换句子时旧 Audio 会以 AbortError 结束，
+         不过滤的话旧的 catch 会把新句子的 speaking 直接打成 false（实测踩过）。 */
+      var isCurrent = function () { return VOICE.audio === a; };
+      /* 口型的 mouthValue 是在 tick() 里按音频播放时钟算的 —— 所以播语音时必须保证
+         舞台的帧循环在跑（默认它就在跑；这里兜住"循环被别处停掉"的情况，不新开第二个循环）。 */
+      for (var mi = 0; mi < mounts.length; mi++) {
+        var mp = mounts[mi];
+        if (mp.mode === 'stage' && !mp.staticOnly && !mp.paused && !mp.destroyed && !mp.raf) {
+          mp.startLoop();
+        }
+      }
+      a.addEventListener('ended', function () {
+        if (!isCurrent()) { return; }
+        VOICE.speaking = false; VOICE.mouthValue = 0;
+        VOICE.diag.mouthHidden++;
+      });
+      var pr = a.play();
+      if (pr && pr.catch) {
+        pr.catch(function (err) {
+          if (!isCurrent()) { return; }
+          VOICE.speaking = false;
+          VOICE.diag.errors.push('play: ' + (err && err.name));
+          VOICE.diag.blockedPlays++;
+          VOICE.pending = line;
+          voiceNote('浏览器拦下了播放：点 🔊 开声。');
+        });
+      }
+      return true;
+    } catch (e) {
+      VOICE.diag.errors.push('audio: ' + e.message);
+      return false;
+    }
+  }
+
+  /** 播一句 L1 台词：先查 bank（静态文件），拿不到就只出字幕（L3 降级，绝不假装有声） */
+  function playLine(basePath, id, text) {
+    return loadVoiceBank(basePath).then(function (bank) {
+      var rec = (bank.lines || {})[id];
+      if (!rec) { return { ok: false, reason: 'NO_SUCH_LINE', id: id }; }
+      var line = { id: id, url: joinUrl(basePath || '/', rec.audio), text: rec.text || text || '' };
+      return loadEnvelope(basePath, rec.envelope).then(function (env) {
+        line.envelope = env;
+        VOICE.last = line;
+        if (!VOICE.unlocked) {
+          VOICE.pending = line;
+          VOICE.diag.blockedPlays++;
+          voiceNote('动画与字幕照常；声音被浏览器的自动播放策略拦住了 —— 点 🔊 或按任意键开声。');
+          return { ok: false, reason: 'AUTOPLAY_BLOCKED', needGesture: true, id: id,
+                   url: line.url, envelopeValues: (env.values || []).length };
+        }
+        var ok = playVoiceNow(line);
+        return { ok: ok, source: 'bank', id: id, url: line.url,
+                 seconds: rec.seconds, envelopeValues: (env.values || []).length };
+      });
+    }, function (err) {
+      return { ok: false, reason: 'BANK_UNAVAILABLE', detail: String(err && err.message) };
+    });
+  }
+
+  /** 用真实音频的播放时钟推进 mouthValue（包络是离线算好的 10ms 栅格，客户端零算力） */
+  function voiceMouthTick() {
+    if (!VOICE.speaking || !VOICE.audio) { return VOICE.mouthValue; }
+    var env = VOICE.envelope;
+    if (env && env.values && env.values.length) {
+      var hop = env.hopMs || 10;
+      var i = Math.floor((VOICE.audio.currentTime || 0) * 1000 / hop);
+      if (i < 0) { i = 0; }
+      var v = env.values[i];
+      if (typeof v !== 'number') { v = 0; }
+      VOICE.mouthValue = (VOICE.speaking && VOICE.mouthValue === 0 && i === 0)
+        ? Math.max(0.12, v) : Math.min(1, Math.max(0, v));
+    }
+    if (VOICE.audio.ended || VOICE.audio.paused) { VOICE.speaking = false; VOICE.mouthValue = 0; }
+    return VOICE.mouthValue;
+  }
+
+  /* ============================================================ 状态机
+     37 节点 / 87 边 —— 原版 graph_config.json 的机械提取，构建期落在
+     static/kurisu/statemachine.json（docs/ 下的原始副本不进产物；manifest.stateMachine.url 指过去）。
+     机制照抄原版（docs/amadeus-research/HOW-IT-WORKS.md）：
+       · 出边按 prob 归一化后掷骰子。原图里 trans_standby 的正概率出边和 = 0.4、
+         speaking_med = 1.2 —— 归一化正好抹平这个不一致；这是原版数据的现状，不改它。
+       · prob = 0 的 9 条边 = 宿主触发入口（host_triggered_entries）：自动游走**不掷**它们，
+         由宿主按事件触发。这里做成"每隔 hostTriggerEveryMs 插一次情绪入口"（原版的
+         "宿主"就是页面/用户，本模块只是把宿主换成定时器，语义与原版一致）。
+       · once_then_hold：播一遍并在最后一帧停住，然后按出边继续。
+       · 帧推进仍然是 tick() 里那**同一个** rAF + 时间累加，不新开循环、不用 setInterval 做帧循环。
+     资产：每个节点只发 medium 一档（48.15MB / 49 页），懒载 + 只留当前剪辑一个
+     （idle_closed_eye 4 页 = 约 96MB 解码位图，多留一份就可能吃满内存）。
+     诊断钩子（给验收脚本与站主演示用，不参与渲染）：
+       window.__xkSm = { seed, seq:[{clip,tMs,holdMs,frames,pages}], edges:[], visited:{}, errors:[] }
+     —— 测试/取证才显式开：挂载点属性 data-xk-kurisu-sm="on"（或 manifest.stateMachine.auto=true）。
+     默认**不自动开**：37 段 medium 全量懒载约 48MB，按每节点 ~2.6s 的节奏，一次 60s 的访问
+     会多拉 ~28MB —— 这是有代价的行为，必须由页面显式决定（见 docs/交接-P0第一阶段-20261014.md）。 */
+
+  var SM_MIN_HOLD_MS = 900;
+  var SM_MAX_HOLD_MS = 2600;      // 单节点驻留上限（否则 idle_closed_eye 12.5s 会卡住整段游走）
+  var SM_DEFAULT_TRIGGER_MS = 7000;
+  /* 带宽闸：一次访问里状态机最多拉多少字节的图集，超了就停在新节点上继续播（不回退、不报错）。
+     36 段 medium 全量是 48MB —— 不设闸的话一次 2 分钟的访问能拉 50MB+，
+     对 GitHub Pages 的流量额度和访客流量都不友好。默认 6MB ≈ 5 段左右。 */
+  var SM_DEFAULT_MAX_BYTES = 6 * 1024 * 1024;
+  /* 宿主触发的三类事件各自的入口剪辑（原版 `host_triggered_entries` 的 9 个按语义分组） */
+  var HOST_ENTRIES_BY_REASON = {
+    voice: ['speaking_trans', 'speaking_short'],
+    emotion: ['angry_trans', 'sad_trans', 'surprise_trans', 'shy_trans', 'trans_smile'],
+    idle: ['closed_eye_trans']
+  };
+  /* 自动巡演（兜底节拍）时轮着来，保证三类宿主事件都能被观测到 */
+  var SM_CADENCE_REASONS = ['voice', 'emotion', 'idle'];
+
+  Player.prototype.loadGraph = function () {
+    var self = this;
+    if (this._graphPromise) { return this._graphPromise; }
+    var m = this.manifest || {};
+    var url = (m.stateMachine && m.stateMachine.url) || 'kurisu/statemachine.json';
+    this._graphPromise = fetch(joinUrl(this.basePath, url), { credentials: 'same-origin' })
+      .then(function (r) {
+        if (!r.ok) { throw new Error('statemachine HTTP ' + r.status); }
+        return r.json();
+      })
+      .then(function (g) {
+        if (!g || !g.nodes || !g.edges) { throw new Error('statemachine 结构不对'); }
+        self.graph = g;
+        self.graphByClip = {};
+        for (var i = 0; i < g.nodes.length; i++) { self.graphByClip[g.nodes[i].clip] = g.nodes[i]; }
+        self.smOut = {};
+        self.smIn = {};
+        for (var j = 0; j < g.edges.length; j++) {
+          var e = g.edges[j];
+          (self.smOut[e.from] = self.smOut[e.from] || []).push(e);
+          (self.smIn[e.to] = self.smIn[e.to] || []).push(e);
+        }
+        return g;
+      });
+    return this._graphPromise;
+  };
+
+  /** 加权掷骰子：只在 prob > 0 的出边上归一化（prob=0 的宿主入口不参与） */
+  Player.prototype.smPick = function (clip) {
+    var out = (this.smOut && this.smOut[clip]) || [];
+    var pos = [];
+    var i, sum = 0;
+    for (i = 0; i < out.length; i++) { if (out[i].prob > 0) { pos.push(out[i]); sum += out[i].prob; } }
+    if (!pos.length) { return null; }
+    var r = smRand() * sum;
+    for (i = 0; i < pos.length; i++) {
+      r -= pos[i].prob;
+      if (r <= 0) { return pos[i]; }
+    }
+    return pos[pos.length - 1];
+  };
+
+  /** hi 档该不该用：hi 的 tile 是 medium 的 2 倍（268×360 vs 134×180），
+   *  解码位图是 4 倍。只在画布背板 ≥480px（桌面档的 CRT 屏）时才值 ——
+   *  窄屏屏宽 ~380px、角色 ~243px，medium 的 1.8× 放大还能接受，不必付 4 倍内存。 */
+  Player.prototype.smUseHi = function (node) {
+    if (!node || !node.hi || !node.hi.pages || !node.hi.pages.length) { return false; }
+    if (this.staticOnly) { return false; }
+    var w = (this.canvas && this.canvas.width) || 0;
+    return w >= 480;
+  };
+
+  /** 载入一个状态机节点的图集（medium 或 hi，可能 2~4 页）。只保留当前这一个剪辑。 */
+  Player.prototype.ensureMediumClip = function (node) {
+    var self = this;
+    var key = 'sm:' + node.clip;
+    var have = this.atlases[key];
+    if (have && have.pages) { return Promise.resolve(have); }
+    var useHi = this.smUseHi(node);
+    var pages = (useHi && node.hi && node.hi.pages) ? node.hi.pages : node.medium.pages;
+    var tier = useHi ? 'hi' : 'medium';
+    var chain = Promise.resolve([]);
+    pages.forEach(function (p) {
+      chain = chain.then(function (acc) {
+        if (self.destroyed) { throw new Error('destroyed'); }
+        return loadImage(joinUrl(self.basePath, p.url)).then(function (img) {
+          acc.push({
+            img: img, file: p.file, url: p.url, cols: p.cols, rows: p.rows, frames: p.frames,
+            first_frame: p.first_frame, last_frame: p.last_frame,
+            tile_w: p.tile_w, tile_h: p.tile_h, bytes: p.bytes
+          });
+          return acc;
+        });
+      });
+    });
+    return chain.then(function (imgs) {
+      if (self.destroyed) { throw new Error('destroyed'); }
+      var e = { clip: key, pages: imgs, tier: tier, bytes: node.medium.bytes,
+        boot: null, hi: null, bootFrames: node.frames };
+      self.atlases[key] = e;
+      self.smEvict(key);
+      return e;
+    });
+  };
+
+  /** 状态机模式下的内存回收：只留 keep 这一个剪辑（clips.* 那几段也一起摘掉） */
+  Player.prototype.smEvict = function (keep) {
+    var self = this;
+    Object.keys(this.atlases).forEach(function (k) {
+      if (k === keep) { return; }
+      var e = self.atlases[k];
+      if (!e) { return; }
+      if (e.pages) {
+        e.pages.forEach(function (pg) { try { pg.img.src = ''; } catch (err) { /* 忽略 */ } });
+      }
+      if (e.boot) { try { e.boot.src = ''; } catch (err2) { /* 忽略 */ } }
+      if (e.hi) { try { e.hi.src = ''; } catch (err3) { /* 忽略 */ } }
+      delete self.atlases[k];
+    });
+  };
+
+  /** 把一个状态机节点变成 current（几何全部来自节点里的 medium 分页元数据） */
+  Player.prototype.smSetCurrent = function (node, atlas) {
+    var p0 = atlas.pages[0];
+    this.current = {
+      clip: 'sm:' + node.clip,
+      clipName: node.clip,
+      frames: node.frames,
+      columns: p0.cols,
+      fw: p0.tile_w,
+      fh: p0.tile_h,
+      interval: Math.max(16, node.frameIntervalMs || 42),
+      tier: 'medium',
+      fit: 'char',
+      once: node.loopMode === 'once_then_hold',
+      fixedFrame: null,
+      page: null,
+      smNode: node
+    };
+    this.currentClipName = 'sm:' + node.clip;
+    this.t0 = 0;
+    this.elapsed = 0;
+    this.onceResolve = null;
+    this.draw();
+    this.startLoop();
+    this.setState('sm:' + node.clip);
+  };
+
+  /** 单节点驻留时长：loop 取一整圈但封顶 SM_MAX_HOLD_MS；once_then_hold 取整段 */
+  function smHoldMs(node) {
+    var full = node.frames * Math.max(16, node.frameIntervalMs || 42);
+    if (node.loopMode === 'once_then_hold') { return Math.min(full, SM_MAX_HOLD_MS * 2); }
+    return Math.max(SM_MIN_HOLD_MS, Math.min(full, SM_MAX_HOLD_MS));
+  }
+
+  /** 播一个状态机节点（载入 → 换 current → 记诊断） */
+  Player.prototype.smPlayNode = function (clip) {
+    var self = this;
+    var node = this.graphByClip && this.graphByClip[clip];
+    if (!node) { return Promise.reject(new Error('状态机里没有节点 ' + clip)); }
+    return this.ensureMediumClip(node).then(function (atlas) {
+      if (self.destroyed) { return null; }
+      self.smSetCurrent(node, atlas);
+      if (self.smDiag) {
+        self.smDiag.seq.push({
+          clip: clip, tMs: Date.now() - self.smDiag.startedAt, holdMs: smHoldMs(node),
+          frames: node.frames, frameIntervalMs: node.frameIntervalMs,
+          loopMode: node.loopMode, pages: atlas.pages.length, tier: atlas.tier,
+          bytes: atlas.pages.reduce(function (s, p) { return s + p.bytes; }, 0)
+        });
+        self.smDiag.visited[clip] = (self.smDiag.visited[clip] || 0) + 1;
+      }
+      return node;
+    });
+  };
+
+  /** 宿主触发入口（原版语义：prob=0 的边**只有宿主能走**，概率游走永远不选它们）。
+   *  实测：只按正概率出边走，2000 步只覆盖 9/37 个节点，全困在 idle 变体簇里 ——
+   *  她永远不说话、不换表情。所以"宿主"必须真的存在：
+   *    voice   播一句台词 / 事件播报 → speaking 入口
+   *    emotion 真实数据有变化（状态行文本变了）→ 情绪入口
+   *    idle    长时间待机 → thinking_* / idle_closed_eye / closed_eye_trans
+   *    cadence 自动巡演时的兜底节拍（保证取证时一定能看到宿主触发） */
+  Player.prototype.smHostTrigger = function (reason, entries) {
+    if (!this.smOn) { return false; }
+    this.smPending = this.smPending || [];
+    var entry = this.smHostEntryFor(reason, entries);
+    if (!entry) { return false; }
+    this.smPending.push({ reason: reason || 'host', entry: entry, tMs: Date.now() });
+    return true;
+  };
+
+  /** 按"宿主事件类型"挑入口剪辑（都要真在状态机里，否则退回全部宿主入口） */
+  Player.prototype.smHostEntryFor = function (reason, entries) {
+    var self = this;
+    var list = (entries && entries.length) ? entries
+      : (HOST_ENTRIES_BY_REASON[reason] || ((this.graph && this.graph.host_triggered_entries) || []));
+    var ok = [];
+    for (var i = 0; i < list.length; i++) {
+      if (!this.graphByClip || this.graphByClip[list[i]]) { ok.push(list[i]); }
+    }
+    if (!ok.length) { ok = (this.graph && this.graph.host_triggered_entries) || []; }
+    if (!ok.length) { return null; }
+    // 尽量不连着挑同一个入口（否则时间线看着像卡了）
+    var pick = ok[Math.floor(smRand() * ok.length) % ok.length];
+    if (ok.length > 1 && pick === self._lastHostEntry) {
+      pick = ok[(ok.indexOf(pick) + 1) % ok.length];
+    }
+    self._lastHostEntry = pick;
+    return pick;
+  };
+
+  /** 自动游走：按加权出边一段一段播下去。
+   *  opts = { durationMs: 30000（0=不限）, hostTriggerEveryMs, seed, stopAfterNodes } */
+  Player.prototype.smStart = function (opts) {
+    opts = opts || {};
+    var self = this;
+    if (this.smTimer || this.smRunning) { return Promise.resolve(this.smDiag); }
+    var duration = (typeof opts.durationMs === 'number') ? opts.durationMs : 30000;
+    var triggerMs = (typeof opts.hostTriggerEveryMs === 'number') ? opts.hostTriggerEveryMs : SM_DEFAULT_TRIGGER_MS;
+    var m2 = this.manifest || {};
+    var maxBytes = (typeof opts.maxBytes === 'number') ? opts.maxBytes
+      : ((m2.stateMachine && typeof m2.stateMachine.maxWalkBytes === 'number')
+        ? m2.stateMachine.maxWalkBytes : SM_DEFAULT_MAX_BYTES);
+    if (typeof opts.seed === 'number') { smSeed(opts.seed); }
+    this.smRunning = true;
+    this.smDiag = {
+      seed: smRngState, durationMs: duration, hostTriggerEveryMs: triggerMs, maxBytes: maxBytes,
+      startedAt: Date.now(), seq: [], edges: [], visited: {}, errors: [], bytes: 0,
+      hostTimeline: [], nodeCount: 0, edgeCount: 0, stoppedBy: null
+    };
+    global.__xkSm = this.smDiag;
+    var hostEntries = (this.graph && this.graph.host_triggered_entries) || [];
+    var started = Date.now();
+    var lastTrigger = started;
+    var cadenceIdx = 0;
+
+    return this.loadGraph().then(function (g) {
+      self.smDiag.nodeCount = g.node_count;
+      self.smDiag.edgeCount = g.edge_count;
+      self.smDiag.root = g.root;
+      var cur = g.root || 'idle';
+      if (opts.startClip && self.graphByClip[opts.startClip]) { cur = opts.startClip; }
+      return new Promise(function (resolve) {
+        function finish(err, why) {
+          if (err) { self.smDiag.errors.push(String(err.message || err)); }
+          self.smRunning = false;
+          self.smDiag.stoppedBy = why || (err ? 'error' : null);
+          self.smDiag.finishedAt = Date.now();
+          self.smDiag.wallMs = self.smDiag.finishedAt - self.smDiag.startedAt;
+          resolve(self.smDiag);
+        }
+        function step() {
+          if (self.destroyed || self.paused) { self.smTimer = setTimeout(step, 400); return; }
+          if (duration > 0 && Date.now() - started >= duration) { finish(null, 'duration'); return; }
+          if (opts.stopAfterNodes && self.smDiag.seq.length >= opts.stopAfterNodes) { finish(null, 'nodes'); return; }
+          if (maxBytes > 0 && self.smDiag.bytes >= maxBytes) { finish(null, 'bytes'); return; }
+          self.smPlayNode(cur).then(function (node) {
+            if (!node) { finish(null, 'no-node'); return; }
+            self.smDiag.bytes += node.medium.bytes;
+            /* 空闲计时（真事件，不是定时器编的）：连续待在待机类剪辑上超过 12s → 推一次"闭眼休息"入口 */
+            if (/^idle/.test(node.clip)) {
+              self._idleAccumMs = (self._idleAccumMs || 0) + smHoldMs(node);
+              if (self._idleAccumMs >= 12000) {
+                self._idleAccumMs = 0;
+                self.smHostTrigger('idle');
+              }
+            } else {
+              self._idleAccumMs = 0;
+            }
+            var hold = smHoldMs(node);
+            self.smTimer = setTimeout(function () {
+              self.smTimer = null;
+              if (self.destroyed) { finish(null); return; }
+              var next = null, reason = null, now = Date.now();
+              /* ① 宿主队列优先（voice / emotion / idle —— 原版语义：prob=0 只能宿主走） */
+              if (self.smPending && self.smPending.length) {
+                var pend = self.smPending.shift();
+                next = pend.entry; reason = pend.reason;
+              } else if (hostEntries.length && (now - lastTrigger) >= triggerMs) {
+                /* ② 兜底节拍：轮着来，保证取证时三类宿主事件都能被观测到 */
+                reason = SM_CADENCE_REASONS[cadenceIdx % SM_CADENCE_REASONS.length];
+                cadenceIdx++;
+                next = self.smHostEntryFor(reason);
+                lastTrigger = now;
+              }
+              var tRel = now - self.smDiag.startedAt;
+              if (next) {
+                self.smDiag.edges.push({ from: cur, to: next, prob: 0, hostTriggered: true,
+                                         reason: reason, tMs: tRel });
+                self.smDiag.hostTimeline.push({ tMs: tRel, reason: reason, from: cur, entry: next });
+              } else {
+                var e = self.smPick(cur);
+                if (e) {
+                  next = e.to;
+                  self.smDiag.edges.push({ from: e.from, to: e.to, prob: e.prob, tMs: tRel });
+                }
+              }
+              if (!next) { next = self.graph.root || 'idle'; }
+              cur = next;
+              step();
+            }, hold);
+          }, function (err) { finish(err); });
+        }
+        step();
+      });
+    });
+  };
+
+  Player.prototype.smStop = function () {
+    if (this.smTimer) { clearTimeout(this.smTimer); this.smTimer = null; }
+    this.smRunning = false;
+  };
+
+  /** 覆盖取证：37 个节点逐一真载真画（帧 0 与中间帧），并逐条核对 87 条边的两端。
+   *  返回一张"每个剪辑都能播"的表 —— 这是"37/87 真能跑满"的硬证据。 */
+  Player.prototype.smCoverage = function () {
+    var self = this;
+    var out = { nodes: [], edges: [], nodeCount: 0, edgeCount: 0, ok: 0, failed: [] };
+    if (!this.ctx) { out.failed.push('没有 canvas（staticOnly 或非舞台形态）'); return Promise.resolve(out); }
+    return this.loadGraph().then(function (g) {
+      out.nodeCount = g.node_count;
+      out.edgeCount = g.edge_count;
+      var chain = Promise.resolve();
+      g.nodes.forEach(function (node) {
+        chain = chain.then(function () {
+          return self.ensureMediumClip(node).then(function (atlas) {
+            self.smSetCurrent(node, atlas);
+            var cur = self.current;
+            var probes = [0, Math.floor(node.frames / 2), node.frames - 1];
+            var rec = { clip: node.clip, frames: node.frames, pages: atlas.pages.length,
+              tier: atlas.tier, frameIntervalMs: node.frameIntervalMs, loopMode: node.loopMode,
+              bytes: atlas.pages.reduce(function (s, p) { return s + p.bytes; }, 0),
+              probes: [] };
+            probes.forEach(function (k) {
+              cur.fixedFrame = k;
+              self.draw();
+              var d = self.ctx.getImageData(0, 0, self.canvas.width, self.canvas.height).data;
+              var opaque = 0, hash = 0;
+              for (var i = 3; i < d.length; i += 4) { if (d[i] > 8) { opaque++; } }
+              for (var j = 0; j < d.length; j += 397) { hash = (hash * 31 + d[j]) >>> 0; }
+              rec.probes.push({ frame: k, opaque: opaque, hash: hash });
+            });
+            cur.fixedFrame = null;
+            var anyOpaque = rec.probes.some(function (p) { return p.opaque > 0; });
+            rec.ok = !!anyOpaque;
+            if (anyOpaque) { out.ok++; } else { out.failed.push(node.clip + ': 画布全透明'); }
+            out.nodes.push(rec);
+          }, function (err) {
+            out.failed.push(node.clip + ': ' + (err && err.message));
+            out.nodes.push({ clip: node.clip, ok: false, error: String(err && err.message) });
+          });
+        });
+      });
+      return chain.then(function () {
+        g.edges.forEach(function (e) {
+          var a = self.graphByClip[e.from], b = self.graphByClip[e.to];
+          out.edges.push({
+            from: e.from, to: e.to, prob: e.prob,
+            ok: !!(a && b && a.medium && b.medium),
+            hostTriggered: e.prob === 0
+          });
+        });
+        return out;
+      });
+    });
+  };
+
+  /* ------------------------------------------------------- 口型两层（P0-④）
+     数据：static/kurisu/mouth/<label>.json（逐帧锚点）+ <label>.patch.webp（嘴部小补丁）
+           + <label>.closedRegion.webp（闭嘴源帧的 74×52 截块，给"原方案"用）
+     只有上游 _MOUTH_SYNC_LABELS 那 16 个剪辑戴嘴罩（过渡剪辑与 smile/sad 不戴）。 */
+  var MOUTH_LABELS = ['speaking_trans', 'speaking_loop1', 'speaking_loop2', 'speaking_short',
+    'speaking_med', 'speaking_long', 'speaking_closed_eye_1', 'speaking_closed_eye_2',
+    'thinking_speaking1', 'thinking_speaking2', 'key_point_speaking', 'smile_speaking',
+    'sad_speaking', 'shy_speaking1', 'shy_speaking2', 'surprise_speaking', 'angry_speaking'];
+  /* manifest 里的 4 段主推剪辑没有自己的口型 profile，借用上游的对应关系 */
+  var MOUTH_ALIAS = { speaking: 'speaking_loop1', thinking: 'thinking_speaking1' };
+  /* 图集帧号 → 源帧号的抽帧倍率（只有 manifest 的 clips.* 那 4 段是 stride 2） */
+  var MOUTH_STRIDE = { speaking: 2, thinking: 2 };
+
+  Player.prototype.mouthLabelFor = function (clipName) {
+    if (!clipName) { return null; }
+    var n = MOUTH_ALIAS[clipName] || clipName;
+    return MOUTH_LABELS.indexOf(n) >= 0 ? n : null;
+  };
+
+  Player.prototype.loadMouth = function (label) {
+    var self = this;
+    if (!label) { return Promise.resolve(null); }
+    this.mouth = this.mouth || {};
+    if (this.mouth[label]) { return Promise.resolve(this.mouth[label]); }
+    this._mouthLoading = this._mouthLoading || {};
+    if (this._mouthLoading[label]) { return this._mouthLoading[label]; }
+    var url = joinUrl(this.basePath, 'kurisu/mouth/' + label + '.json');
+    this._mouthLoading[label] = fetch(url, { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) { throw new Error('mouth json HTTP ' + r.status); } return r.json(); })
+      .then(function (d) {
+        return Promise.all([
+          loadImage(joinUrl(self.basePath, d.patch)),
+          loadImage(joinUrl(self.basePath, d.closedRegion))
+        ]).then(function (imgs) {
+          var m = { data: d, patch: imgs[0], region: imgs[1] };
+          self.mouth[label] = m;
+          return m;
+        });
+      });
+    return this._mouthLoading[label];
+  };
+
+  /** 在**刚刚画完基础帧**之后叠闭嘴层。
+   *  r = 基础帧在画布里的目标矩形；frameIdx = 该剪辑自己的帧下标（anchor_track 按它取）。
+   *  源帧坐标（764×1028）→ 画布：sx = r.w/764、sy = r.h/1028（图集 tile 是源帧的等比缩小，所以这条对
+   *  medium / hi 两档都成立，不需要按 tile 尺寸另算）。 */
+  Player.prototype.drawMouth = function (r, frameIdx, clipName) {
+    if (!this.ctx || !r) { return; }
+    var label = this.mouthLabelFor(clipName);
+    var m = label && this.mouth && this.mouth[label];
+    var speaking = VOICE.speaking;
+    var mv = VOICE.mouthValue;
+    var shouldClose = speaking && mv <= 0.08;
+    this.mouthDiag = { label: label, speaking: speaking, mouthValue: mv, shown: false,
+                       variant: VOICE.variant, frame: frameIdx };
+    if (!shouldClose || !m) { return; }
+    var d = m.data;
+    var track = d.anchorTrack || [];
+    var a = track[frameIdx] || d.sourceAnchor;
+    var bw = d.box[0], bh = d.box[1];
+    var sx = r.w / 764, sy = r.h / 1028;
+    var mx = 382 + a[0], my = 514 + a[1];
+    var ew = bw / 2 * (d.ellipse ? d.ellipse[0] / bw : 1.8);
+    var eh = bh / 2 * (d.ellipse ? d.ellipse[1] / bh : 2.125);
+    var ctx = this.ctx;
+    /* 变体：'auto' 时按 label 自己的偏好 —— 12 个"用自己的闭嘴帧"的剪辑走小补丁（等价、少一张图），
+       4 个"借别的剪辑的闭嘴帧"的剪辑走原方案（截块 + 椭圆遮罩），因为借来的帧肤色略不同，
+       补丁的矩形硬边看得出来（实测见 _shots/mouth-compare.json）。 */
+    var variant = (VOICE.variant && VOICE.variant !== 'auto')
+      ? VOICE.variant : (d.preferredVariant || 'patch');
+    this.mouthDiag.variant = variant;
+    ctx.save();
+    if (variant === 'frame') {
+      /* 原方案（上游算法）：闭嘴源帧的截块按"锚点差"整体平移，再用椭圆遮罩只露嘴。
+         截块 74×52 完全包含椭圆 61×38 ⇒ 与"整帧 + 椭圆遮罩"在可视区域内逐像素等价
+         （离线已证：见 _dev/mouth-verify.json 的 A_vs_Aregion）。 */
+      var dx = a[0] - d.sourceAnchor[0], dy = a[1] - d.sourceAnchor[1];
+      var rx = 382 + d.sourceAnchor[0] - 37 + dx;
+      var ry = 514 + d.sourceAnchor[1] - 26 + dy;
+      ctx.beginPath();
+      ctx.ellipse(r.x + mx * sx, r.y + my * sy, ew * sx, eh * sy, 0, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(m.region, r.x + rx * sx, r.y + ry * sy, 74 * sx, 52 * sy);
+    } else {
+      /* 新方案（评审建议）：34×18 的嘴部小补丁按锚点直接贴，不裁不遮。
+         补丁本身就是那个嘴框的内容，所以不需要椭圆。 */
+      ctx.drawImage(m.patch, r.x + (mx - bw / 2) * sx, r.y + (my - bh / 2) * sy, bw * sx, bh * sy);
+    }
+    ctx.restore();
+    this.mouthDiag.shown = true;
+    VOICE.diag.mouthShown++;
+  };
+
+  /** 强制画出"某一变体的闭嘴层"（截图 / 现场演示用；不改动任何默认行为） */
+  Player.prototype.mouthRender = function (opts) {
+    var self = this;
+    opts = opts || {};
+    var label = opts.label || 'speaking_loop1';
+    var frame = opts.frame || 0;
+    return this.loadGraph().then(function (g) {
+      var node = null;
+      for (var i = 0; i < g.nodes.length; i++) { if (g.nodes[i].clip === label) { node = g.nodes[i]; break; } }
+      if (!node) { return false; }
+      return self.ensureMediumClip(node).then(function (atlas) {
+        self.smSetCurrent(node, atlas);
+        self.stopLoop();
+        self.current.fixedFrame = frame;
+        return self.loadMouth(label).then(function (m) {
+          if (!m) { return false; }
+          VOICE.variant = (opts.variant === 'frame') ? 'frame' : 'patch';
+          VOICE.speaking = opts.speaking !== false;
+          VOICE.mouthValue = (typeof opts.mouthValue === 'number') ? opts.mouthValue : 0;
+          self.draw();
+          return true;
+        });
+      });
+    });
+  };
+
+  /** 同帧并排对照（验收用）：同一个基础帧 + 同一条锚点，两种闭嘴层各画一遍，
+   *  在"嘴框"区域内量 NCC / 最大差 / 平均差。返回数字，不靠人眼看。 */
+  Player.prototype.mouthCompare = function (opts) {
+    opts = opts || {};
+    var self = this;
+    var label = opts.label || 'speaking_loop1';
+    var frame = opts.frame || 0;
+    var out = { label: label, frame: frame, variantA: 'frame', variantB: 'patch' };
+    if (!this.ctx) { return Promise.resolve({ error: '没有 canvas' }); }
+    return this.loadGraph().then(function (g) {
+      var node = null;
+      for (var i = 0; i < g.nodes.length; i++) {
+        if (g.nodes[i].clip === label) { node = g.nodes[i]; break; }
+      }
+      if (!node) { return { error: 'label 不在状态机里：' + label }; }
+      return self.ensureMediumClip(node).then(function (atlas) {
+        self.smSetCurrent(node, atlas);
+        self.current.fixedFrame = frame;
+        self.stopLoop();
+        return self.loadMouth(label).then(function (m) {
+          if (!m) { return { error: '口型数据载不到' }; }
+          var d = m.data;
+          var track = d.anchorTrack || [];
+          var a = track[frame] || d.sourceAnchor;
+          var r = self.charRect(self.canvas.width, self.canvas.height, self.current.fw / self.current.fh);
+          var sx = r.w / 764, sy = r.h / 1028;
+          var bw = d.box[0], bh = d.box[1];
+          var boxCanvas = {
+            x: r.x + (382 + a[0] - bw / 2) * sx,
+            y: r.y + (514 + a[1] - bh / 2) * sy,
+            w: bw * sx, h: bh * sy
+          };
+          var grab = function (variant) {
+            VOICE.variant = variant;
+            VOICE.speaking = true;
+            VOICE.mouthValue = 0;
+            self.draw();
+            var x = Math.max(0, Math.floor(boxCanvas.x)), y = Math.max(0, Math.floor(boxCanvas.y));
+            var w = Math.max(1, Math.ceil(boxCanvas.w)), h = Math.max(1, Math.ceil(boxCanvas.h));
+            return self.ctx.getImageData(x, y, w, h).data;
+          };
+          var A = grab('frame');
+          var B = grab('patch');
+          VOICE.speaking = false;
+          VOICE.mouthValue = 0;
+          VOICE.variant = 'patch';
+          self.draw();
+          var n = Math.min(A.length, B.length) / 4;
+          var sa = 0, sb = 0, i, va, vb;
+          for (i = 0; i < n; i++) {
+            va = (A[i * 4] + A[i * 4 + 1] + A[i * 4 + 2]) / 3;
+            vb = (B[i * 4] + B[i * 4 + 1] + B[i * 4 + 2]) / 3;
+            sa += va; sb += vb;
+          }
+          sa /= n; sb /= n;
+          var cov = 0, va2 = 0, vb2 = 0, maxd = 0, sumd = 0, over2 = 0;
+          for (i = 0; i < n; i++) {
+            va = (A[i * 4] + A[i * 4 + 1] + A[i * 4 + 2]) / 3;
+            vb = (B[i * 4] + B[i * 4 + 1] + B[i * 4 + 2]) / 3;
+            var da = va - sa, db = vb - sb, dd = Math.abs(va - vb);
+            cov += da * db; va2 += da * da; vb2 += db * db;
+            sumd += dd;
+            if (dd > maxd) { maxd = dd; }
+            if (dd > 2) { over2++; }
+          }
+          out.pixels = n;
+          out.ncc = (va2 > 0 && vb2 > 0) ? (cov / Math.sqrt(va2 * vb2)) : 1;
+          out.meanAbsDiff = sumd / n;
+          out.maxAbsDiff = maxd;
+          out.pixelsOver2 = over2;
+          out.boxCanvas = boxCanvas;
+          out.frameSize = { srcW: 764, srcH: 1028, scaleX: sx, scaleY: sy,
+                            tile: [self.current.fw, self.current.fh] };
+          out.anchor = { cx: a[0], cy: a[1], deltaFromSource: [a[0] - d.sourceAnchor[0], a[1] - d.sourceAnchor[1]] };
+          out.ellipseSourcePx = d.ellipse;
+          out.boxSourcePx = [bw, bh];
+          self.current.fixedFrame = null;
+          return out;
+        });
+      });
+    });
+  };
+
   /* ------------------------------------------------------- 自动挂载/路由 */
   /* 不碰 app.js：自己监听路由 + 监听 #content 的子节点变化，重新扫描挂载点。 */
   var mounts = [];
@@ -1156,9 +2009,36 @@
     mounts = [];
   }
 
+  /* 语音/口型的诊断与手动入口（验收脚本与站主演示用；不参与渲染） */
+  function voiceDiag() {
+    var p = mounts.filter(function (x) { return x.mode === 'stage'; })[0] || mounts[0] || null;
+    return {
+      unlocked: VOICE.unlocked, unlockedBy: VOICE.diag.unlockedBy,
+      blockedPlays: VOICE.diag.blockedPlays, plays: VOICE.diag.plays,
+      lastLine: VOICE.diag.lastLine, bankLines: VOICE.diag.bankLines,
+      mouthShown: VOICE.diag.mouthShown, mouthHidden: VOICE.diag.mouthHidden,
+      variant: VOICE.variant,
+      speaking: VOICE.speaking, mouthValue: VOICE.mouthValue,
+      currentTime: VOICE.audio ? VOICE.audio.currentTime : null,
+      paused: VOICE.audio ? VOICE.audio.paused : null,
+      errors: VOICE.diag.errors.slice(-5),
+      mouthDiag: p ? p.mouthDiag || null : null
+    };
+  }
+
   function routeKey() {
+    /* ★ 2026-10-14 修（首屏字节）：老实现只认 hash。直接访问 `/alerts/`、`/posts/` 这类 URL 时
+       hash 是空的 → 它把**每个直连页面都当成 home**，于是每个页面都 ensureStage() +
+       实例化 CRT 舞台，白拉 idle.boot(519KB) + medium/idle.atlas(777KB) + idle.hi(1285KB)。
+       现在：有 hash（= SPA 导航中）以 hash 为准；没有 hash（= 直连/SSR）以
+       <main id="content" data-xk-ssr> 这个服务端标记为准。 */
     var h = (global.location.hash || '').replace(/^#/, '');
-    return h.split('/')[1] || 'home';
+    var fromHash = h.split('/')[1] || '';
+    if (fromHash) { return fromHash; }
+    var host = document.getElementById('content');
+    var ssr = host && host.getAttribute('data-xk-ssr');
+    if (ssr && ssr !== 'notfound') { return ssr; }
+    return 'home';
   }
 
   /** 🔊 按钮的统一接线（实例内的按钮、以及页面底部输入条那颗，都用这一份）。
@@ -1295,6 +2175,8 @@
     if (route === 'home') { document.documentElement.setAttribute('data-xk-crt-on', '1'); }
     else { document.documentElement.removeAttribute('data-xk-crt-on'); }
     wireBar();
+    /* 事件驱动的宿主触发 · 第 4 类：切页 → 切页解说（有台词就一定会推 speaking 入口） */
+    navCommentary(route, mounts);
     if (!nodes.length) { return; }
     var playIntro = route === 'home' && shouldPlayIntro();
     nodes.forEach(function (node) {
@@ -1330,10 +2212,19 @@
             return p.play('idle').then(function () { return p.intro(); }).then(function (r) {
               if (!r || !r.played) { return null; }
               return new Promise(function (res) { setTimeout(res, 460); }).then(function () {
-                p.speak(null, p.placeholderSay || '');
+                /* 首访 / 回访分流（P1-⑧）：台词 id 不同，音色与链路完全一样；
+                   音频受 autoplay 门控，未交互时只出字幕（动画照常）。 */
+                p.speak(visitedBefore() ? 'greet_back' : 'greet_first', null);
+                markVisited();
                 return r;
               });
             });
+          }).then(function () {
+            // ④ 开场走完（或本轮不播开场）→ 状态机 37 节点 / 87 边自动游走
+            //    manifest.stateMachine.auto === false 是运行期总闸（改一个 JSON 就能全站关掉）
+            var smOff = !!(p.manifest && p.manifest.stateMachine && p.manifest.stateMachine.auto === false);
+            if (p.smOn && !smOff && !p.staticOnly && !p.destroyed) { return p.smStart({ durationMs: 0 }); }
+            return null;
           }).catch(function () { /* 单个模块失败不影响页面 */ });
         });
       });
@@ -1345,8 +2236,46 @@
     rescanTimer = setTimeout(function () { rescanTimer = null; scan(); }, 60);
   }
 
+  /* ------------------------------------------------ 首访/回访分流 + 切页解说 */
+  var VISIT_KEY = 'xk-kurisu-visited';
+  function visitedBefore() {
+    try { return global.localStorage.getItem(VISIT_KEY) === '1'; } catch (e) { return false; }
+  }
+  function markVisited() {
+    try { global.localStorage.setItem(VISIT_KEY, '1'); } catch (e) { /* 隐私模式忽略 */ }
+  }
+  var NAV_LINE = { home: 'nav_home', notes: 'nav_notes', monitor: 'nav_monitor', ai: 'nav_ai',
+                   range: 'nav_labs', labs: 'nav_labs', about: 'nav_about' };
+  var lastNavLine = null;
+
+  /** 切页解说：一个路由只讲解一次（同一路由的重复 scan 不重复说话） */
+  function navCommentary(route, mounts) {
+    var id = NAV_LINE[route];
+    if (!id || lastNavLine === route) { return; }
+    lastNavLine = route;
+    var p = mounts.length ? mounts[0] : null;
+    if (p) { p.speak(id, null); } else { speakImpl(id, null, { basePath: '/' }); }
+  }
+
+  /* 切回标签页打招呼（隐藏 > 60s 才算"离开过"） */
+  var hiddenAt = 0;
+  function tabReturnWatch() {
+    if (tabReturnWatch.done) { return; }
+    tabReturnWatch.done = true;
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { hiddenAt = Date.now(); return; }
+      var away = hiddenAt ? (Date.now() - hiddenAt) : 0;
+      hiddenAt = 0;
+      if (away < 60000) { return; }
+      var p = mounts.length ? mounts[0] : null;
+      if (p) { p.speak('tab_return', null); } else { speakImpl('tab_return', null, { basePath: '/' }); }
+    }, false);
+  }
+
   function watch() {
     installAskHook();
+    installAudioGate();
+    tabReturnWatch();
     var host = q('#content') || document.body;
     if (global.MutationObserver && host) {
       new MutationObserver(scheduleScan).observe(host, { childList: true });
@@ -1369,7 +2298,59 @@
       return KurisuPlayer;
     },
     // 供验收/调试用：当前挂载的实例
-    instances: function () { return mounts.slice(); }
+    instances: function () { return mounts.slice(); },
+    /* 状态机取证入口（给 _dev/shot-preview-1280.mjs 这类本地验收脚本用；
+       不参与渲染，也不改变任何默认行为） */
+    stage: function () {
+      for (var i = 0; i < mounts.length; i++) { if (mounts[i].mode === 'stage') { return mounts[i]; } }
+      return mounts[0] || null;
+    },
+    smDiag: function () { return global.__xkSm || null; },
+    /** 跑一次覆盖取证：37 节点逐一真载真画 + 87 条边逐一核对（会真下载 48MB，只在本地取证时调） */
+    smCoverage: function () {
+      var p = KurisuPlayer.stage();
+      if (!p) { return Promise.reject(new Error('页面上没有舞台实例')); }
+      return p.smCoverage();
+    },
+    /** 跑一段限时自动游走并返回节点序列（取证用） */
+    smWalk: function (opts) {
+      var p = KurisuPlayer.stage();
+      if (!p) { return Promise.reject(new Error('页面上没有舞台实例')); }
+      return p.smStart(opts || { durationMs: 30000 });
+    },
+    smStop: function () {
+      var p = KurisuPlayer.stage();
+      if (p) { p.smStop(); }
+    },
+    /* 语音/口型（P0-③④）的取证入口 */
+    voiceDiag: voiceDiag,
+    unlockAudio: function (how) { unlockAudio(how || 'api'); return VOICE.unlocked; },
+    speakLine: function (id, text) {
+      var p = mounts.length ? mounts[0] : null;
+      return p ? p.speak(id, text) : speakImpl(id, text, { basePath: '/' });
+    },
+    /** 宿主触发（事件驱动入口的手动版，演示/验收用）：reason = voice|emotion|idle */
+    hostTrigger: function (reason) {
+      var p = KurisuPlayer.stage();
+      return p ? p.smHostTrigger(reason || 'voice') : false;
+    },
+    setMouthVariant: function (v) {
+      VOICE.variant = (v === 'frame') ? 'frame' : 'patch';
+      VOICE.diag.variant = VOICE.variant;
+      return VOICE.variant;
+    },
+    /** 口型两层的同帧并排对照（返回数字，不靠人眼看） */
+    mouthCompare: function (opts) {
+      var p = KurisuPlayer.stage();
+      if (!p) { return Promise.reject(new Error('页面上没有舞台实例')); }
+      return p.mouthCompare(opts || {});
+    },
+    /** 画出指定变体的闭嘴层（截图/演示） */
+    mouthRender: function (opts) {
+      var p = KurisuPlayer.stage();
+      if (!p) { return Promise.resolve(false); }
+      return p.mouthRender(opts || {});
+    }
   };
 
   global.KurisuPlayer = KurisuPlayer;

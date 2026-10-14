@@ -1,0 +1,3032 @@
+{
+ "format": "xiaokeqing.kurisu.statemachine.v1",
+ "provenance": {
+  "source": "docs/amadeus-research/data/statemachine.json（原版 graph_config.json 的机械提取）",
+  "builtBy": "_dev/build_statemachine_manifest.py",
+  "atlasDir": "static/kurisu/medium/",
+  "note": "每个节点补上 medium 档图集分页几何 + 真实字节数；帧播放契约与 manifest.json 的 clips.* 一致 （columns/rows/tile 尺寸来自图集本身，frameIntervalMs/loopMode/frames 来自原状态机）"
+ },
+ "root": "idle",
+ "node_count": 37,
+ "edge_count": 87,
+ "host_triggered_entries": [
+  "angry_trans",
+  "closed_eye_trans",
+  "sad_trans",
+  "shy_trans",
+  "speaking_short",
+  "speaking_trans",
+  "surprise_trans",
+  "trans_smile"
+ ],
+ "clips_not_in_graph": [
+  "sad",
+  "smile"
+ ],
+ "loop_mode_counts": {
+  "loop": 27,
+  "once_then_hold": 12
+ },
+ "medium_total_bytes": 50492702,
+ "hi_total_bytes": 20568710,
+ "hi_clips": [
+  "idle",
+  "idle1",
+  "speaking_short",
+  "speaking_med",
+  "thinking_speaking2",
+  "surprise_speaking"
+ ],
+ "nodes": [
+  {
+   "id": "_8ms718k",
+   "clip": "idle",
+   "is_root": true,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 6,
+   "has_mouth_profile": false,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle.atlas.webp",
+      "file": "idle.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 777400
+     }
+    ],
+    "bytes": 777400
+   },
+   "hi": {
+    "pages": [
+     {
+      "url": "kurisu/hi/idle.atlas.webp",
+      "file": "idle.atlas.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       2144,
+       5400
+      ],
+      "bytes": 2312750
+     }
+    ],
+    "bytes": 2312750
+   },
+   "mouthPatch": {
+    "file": "idle.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_6fknbp9",
+   "clip": "idle2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 290,
+   "frame_size": [
+    764,
+    1026
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1026
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle2.atlas.webp",
+      "file": "idle2.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1363112
+     },
+     {
+      "url": "kurisu/medium/idle2.atlas.p01.webp",
+      "file": "idle2.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 12,
+      "frames": 90,
+      "first_frame": 201,
+      "last_frame": 290,
+      "pixels": [
+       1072,
+       2160
+      ],
+      "bytes": 605084
+     }
+    ],
+    "bytes": 1968196
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "idle2.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_sugrzf5",
+   "clip": "idle_mic_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 194,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle_mic_wind.atlas.webp",
+      "file": "idle_mic_wind.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 194,
+      "first_frame": 1,
+      "last_frame": 194,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1484378
+     }
+    ],
+    "bytes": 1484378
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "idle_mic_wind.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_478pebn",
+   "clip": "idle_str_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 194,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle_str_wind.atlas.webp",
+      "file": "idle_str_wind.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 194,
+      "first_frame": 1,
+      "last_frame": 194,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1590472
+     }
+    ],
+    "bytes": 1590472
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "idle_str_wind.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_5qqy7vp",
+   "clip": "idle1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle1.atlas.webp",
+      "file": "idle1.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 914710
+     }
+    ],
+    "bytes": 914710
+   },
+   "hi": {
+    "pages": [
+     {
+      "url": "kurisu/hi/idle1.atlas.webp",
+      "file": "idle1.atlas.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       2144,
+       5400
+      ],
+      "bytes": 2311002
+     }
+    ],
+    "bytes": 2311002
+   },
+   "mouthPatch": {
+    "file": "idle1.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_h60jwtz",
+   "clip": "trans_standby",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 21,
+   "fps": 47.6,
+   "frames": 196,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/trans_standby.atlas.webp",
+      "file": "trans_standby.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 196,
+      "first_frame": 1,
+      "last_frame": 196,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1191988
+     }
+    ],
+    "bytes": 1191988
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "trans_standby.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_tj6uxlr",
+   "clip": "trans_smile",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 5,
+   "fps": 200.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1027
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1027
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/trans_smile.atlas.webp",
+      "file": "trans_smile.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 883450
+     }
+    ],
+    "bytes": 883450
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "trans_smile.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_tcjdzf0",
+   "clip": "speaking_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "in",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    18,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_trans.atlas.webp",
+      "file": "speaking_trans.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 793910
+     }
+    ],
+    "bytes": 793910
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "speaking_trans.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_iomne8b",
+   "clip": "speaking_loop1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    156,
+    0,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_loop1.atlas.webp",
+      "file": "speaking_loop1.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 979366
+     }
+    ],
+    "bytes": 979366
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "speaking_loop1.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/speaking_loop1/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_afk0000",
+   "clip": "speaking_loop2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 240,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    0,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_loop2.atlas.webp",
+      "file": "speaking_loop2.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1347582
+     },
+     {
+      "url": "kurisu/medium/speaking_loop2.atlas.p01.webp",
+      "file": "speaking_loop2.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 5,
+      "frames": 40,
+      "first_frame": 201,
+      "last_frame": 240,
+      "pixels": [
+       1072,
+       900
+      ],
+      "bytes": 254994
+     }
+    ],
+    "bytes": 1602576
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "speaking_loop2.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/speaking_loop2/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_cpu0zpb",
+   "clip": "idle_side_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    175,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle_side_wind.atlas.webp",
+      "file": "idle_side_wind.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1211630
+     }
+    ],
+    "bytes": 1211630
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "idle_side_wind.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_vo874gi",
+   "clip": "idle_side_soft_wind",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    175,
+    0,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": false,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle_side_soft_wind.atlas.webp",
+      "file": "idle_side_soft_wind.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1087574
+     }
+    ],
+    "bytes": 1087574
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "idle_side_soft_wind.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_k5b3qvq",
+   "clip": "speaking_short",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_short.atlas.webp",
+      "file": "speaking_short.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 818112
+     }
+    ],
+    "bytes": 818112
+   },
+   "hi": {
+    "pages": [
+     {
+      "url": "kurisu/hi/speaking_short.atlas.webp",
+      "file": "speaking_short.atlas.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       2144,
+       5400
+      ],
+      "bytes": 2091890
+     }
+    ],
+    "bytes": 2091890
+   },
+   "mouthPatch": {
+    "file": "speaking_short.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/speaking_short/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_kg5obtl",
+   "clip": "speaking_med",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 240,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_med.atlas.webp",
+      "file": "speaking_med.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1219136
+     },
+     {
+      "url": "kurisu/medium/speaking_med.atlas.p01.webp",
+      "file": "speaking_med.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 5,
+      "frames": 40,
+      "first_frame": 201,
+      "last_frame": 240,
+      "pixels": [
+       1072,
+       900
+      ],
+      "bytes": 226170
+     }
+    ],
+    "bytes": 1445306
+   },
+   "hi": {
+    "pages": [
+     {
+      "url": "kurisu/hi/speaking_med.atlas.webp",
+      "file": "speaking_med.atlas.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       2144,
+       9000
+      ],
+      "bytes": 3919742
+     },
+     {
+      "url": "kurisu/hi/speaking_med.atlas.p01.webp",
+      "file": "speaking_med.atlas.p01.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 5,
+      "frames": 40,
+      "first_frame": 201,
+      "last_frame": 240,
+      "pixels": [
+       2144,
+       1800
+      ],
+      "bytes": 747882
+     }
+    ],
+    "bytes": 4667624
+   },
+   "mouthPatch": {
+    "file": "speaking_med.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/speaking_med/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_9ejqr4v",
+   "clip": "speaking_long",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 360,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_long.atlas.webp",
+      "file": "speaking_long.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1390990
+     },
+     {
+      "url": "kurisu/medium/speaking_long.atlas.p01.webp",
+      "file": "speaking_long.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 20,
+      "frames": 160,
+      "first_frame": 201,
+      "last_frame": 360,
+      "pixels": [
+       1072,
+       3600
+      ],
+      "bytes": 1097714
+     }
+    ],
+    "bytes": 2488704
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "speaking_long.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/speaking_long/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_m1sdkop",
+   "clip": "smile_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    17,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/smile_speaking.atlas.webp",
+      "file": "smile_speaking.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1272766
+     }
+    ],
+    "bytes": 1272766
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "smile_speaking.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/smile_speaking/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_5t4fqvt",
+   "clip": "sad_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/sad_trans.atlas.webp",
+      "file": "sad_trans.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 8,
+      "frames": 60,
+      "first_frame": 1,
+      "last_frame": 60,
+      "pixels": [
+       1072,
+       1440
+      ],
+      "bytes": 426166
+     }
+    ],
+    "bytes": 426166
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "sad_trans.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_a998p67",
+   "clip": "sad_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    15,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/sad_speaking.atlas.webp",
+      "file": "sad_speaking.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 851770
+     }
+    ],
+    "bytes": 851770
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "sad_speaking.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/sad_speaking/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_cckcbim",
+   "clip": "thinking_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    18,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/thinking_trans.atlas.webp",
+      "file": "thinking_trans.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 899690
+     }
+    ],
+    "bytes": 899690
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "thinking_trans.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_20x9amw",
+   "clip": "thinking_speaking1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 5,
+   "has_mouth_profile": true,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/thinking_speaking1.atlas.webp",
+      "file": "thinking_speaking1.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1030518
+     }
+    ],
+    "bytes": 1030518
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "thinking_speaking1.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/thinking_speaking1/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_lmwgyyi",
+   "clip": "thinking_speaking2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 300,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 4,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/thinking_speaking2.atlas.webp",
+      "file": "thinking_speaking2.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1365130
+     },
+     {
+      "url": "kurisu/medium/thinking_speaking2.atlas.p01.webp",
+      "file": "thinking_speaking2.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 13,
+      "frames": 100,
+      "first_frame": 201,
+      "last_frame": 300,
+      "pixels": [
+       1072,
+       2340
+      ],
+      "bytes": 661066
+     }
+    ],
+    "bytes": 2026196
+   },
+   "hi": {
+    "pages": [
+     {
+      "url": "kurisu/hi/thinking_speaking2.atlas.webp",
+      "file": "thinking_speaking2.atlas.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       2144,
+       9000
+      ],
+      "bytes": 3882952
+     },
+     {
+      "url": "kurisu/hi/thinking_speaking2.atlas.p01.webp",
+      "file": "thinking_speaking2.atlas.p01.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 13,
+      "frames": 100,
+      "first_frame": 201,
+      "last_frame": 300,
+      "pixels": [
+       2144,
+       4680
+      ],
+      "bytes": 1895954
+     }
+    ],
+    "bytes": 5778906
+   },
+   "mouthPatch": {
+    "file": "thinking_speaking2.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/thinking_speaking2/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_wov3kn0",
+   "clip": "thinking_to_serious",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/thinking_to_serious.atlas.webp",
+      "file": "thinking_to_serious.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 888204
+     }
+    ],
+    "bytes": 888204
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "thinking_to_serious.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_nnu2yb5",
+   "clip": "thinking_to_key_point",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    176,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/thinking_to_key_point.atlas.webp",
+      "file": "thinking_to_key_point.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 910014
+     }
+    ],
+    "bytes": 910014
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "thinking_to_key_point.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_8zysg7u",
+   "clip": "key_point_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    148,
+    24,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/key_point_speaking.atlas.webp",
+      "file": "key_point_speaking.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1313844
+     }
+    ],
+    "bytes": 1313844
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "key_point_speaking.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/key_point_speaking/loop/kurisu_speaking_loop0155.ktx2",
+    "closed_frame_idx": 154
+   }
+  },
+  {
+   "id": "_wvjuqyw",
+   "clip": "serious_to_thinking",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    156,
+    20,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/serious_to_thinking.atlas.webp",
+      "file": "serious_to_thinking.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 847326
+     }
+    ],
+    "bytes": 847326
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "serious_to_thinking.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_la21lrm",
+   "clip": "shy_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/shy_trans.atlas.webp",
+      "file": "shy_trans.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 8,
+      "frames": 60,
+      "first_frame": 1,
+      "last_frame": 60,
+      "pixels": [
+       1072,
+       1440
+      ],
+      "bytes": 409876
+     }
+    ],
+    "bytes": 409876
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "shy_trans.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_ezyyvyu",
+   "clip": "shy_speaking1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/shy_speaking1.atlas.webp",
+      "file": "shy_speaking1.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1221814
+     }
+    ],
+    "bytes": 1221814
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "shy_speaking1.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
+    "closed_frame_idx": 32
+   }
+  },
+  {
+   "id": "_ivj6gek",
+   "clip": "shy_speaking2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 300,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/shy_speaking2.atlas.webp",
+      "file": "shy_speaking2.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1459012
+     },
+     {
+      "url": "kurisu/medium/shy_speaking2.atlas.p01.webp",
+      "file": "shy_speaking2.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 13,
+      "frames": 100,
+      "first_frame": 201,
+      "last_frame": 300,
+      "pixels": [
+       1072,
+       2340
+      ],
+      "bytes": 683718
+     }
+    ],
+    "bytes": 2142730
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "shy_speaking2.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
+    "closed_frame_idx": 299
+   }
+  },
+  {
+   "id": "_wpmgajp",
+   "clip": "surprise_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/surprise_trans.atlas.webp",
+      "file": "surprise_trans.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 8,
+      "frames": 60,
+      "first_frame": 1,
+      "last_frame": 60,
+      "pixels": [
+       1072,
+       1440
+      ],
+      "bytes": 395228
+     }
+    ],
+    "bytes": 395228
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "surprise_trans.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_bqm6hqs",
+   "clip": "surprise_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    116,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/surprise_speaking.atlas.webp",
+      "file": "surprise_speaking.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1222136
+     }
+    ],
+    "bytes": 1222136
+   },
+   "hi": {
+    "pages": [
+     {
+      "url": "kurisu/hi/surprise_speaking.atlas.webp",
+      "file": "surprise_speaking.atlas.webp",
+      "tile_w": 268,
+      "tile_h": 360,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       2144,
+       8280
+      ],
+      "bytes": 3406538
+     }
+    ],
+    "bytes": 3406538
+   },
+   "mouthPatch": {
+    "file": "surprise_speaking.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/surprise_trans/loop/kurisu_surprise_trans0001.ktx2",
+    "closed_frame_idx": 5
+   }
+  },
+  {
+   "id": "_24e7jnz",
+   "clip": "angry_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "loop",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 60,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/angry_trans.atlas.webp",
+      "file": "angry_trans.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 8,
+      "frames": 60,
+      "first_frame": 1,
+      "last_frame": 60,
+      "pixels": [
+       1072,
+       1440
+      ],
+      "bytes": 436630
+     }
+    ],
+    "bytes": 436630
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "angry_trans.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_ijtkrmm",
+   "clip": "angry_speaking",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    112,
+    16,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/angry_speaking.atlas.webp",
+      "file": "angry_speaking.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1262542
+     }
+    ],
+    "bytes": 1262542
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "angry_speaking.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/angry_trans/loop/kurisu_angry_trans0001.ktx2",
+    "closed_frame_idx": 11
+   }
+  },
+  {
+   "id": "_t0sryza",
+   "clip": "idle_side_butterfly",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 600,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    175,
+    0,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 2,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle_side_butterfly.atlas.webp",
+      "file": "idle_side_butterfly.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1496590
+     },
+     {
+      "url": "kurisu/medium/idle_side_butterfly.atlas.p01.webp",
+      "file": "idle_side_butterfly.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 201,
+      "last_frame": 400,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1563310
+     },
+     {
+      "url": "kurisu/medium/idle_side_butterfly.atlas.p02.webp",
+      "file": "idle_side_butterfly.atlas.p02.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 401,
+      "last_frame": 600,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1402258
+     }
+    ],
+    "bytes": 4462158
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "idle_side_butterfly.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_khp4i06",
+   "clip": "closed_eye_trans",
+   "is_root": false,
+   "loopMode": "once_then_hold",
+   "phase": "in",
+   "frameIntervalMs": 8,
+   "fps": 125.0,
+   "frames": 120,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    115,
+    18,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/closed_eye_trans.atlas.webp",
+      "file": "closed_eye_trans.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 15,
+      "frames": 120,
+      "first_frame": 1,
+      "last_frame": 120,
+      "pixels": [
+       1072,
+       2700
+      ],
+      "bytes": 983250
+     }
+    ],
+    "bytes": 983250
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "closed_eye_trans.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  },
+  {
+   "id": "_7jh10a4",
+   "clip": "speaking_closed_eye_1",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 180,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    136,
+    20,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_closed_eye_1.atlas.webp",
+      "file": "speaking_closed_eye_1.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 23,
+      "frames": 180,
+      "first_frame": 1,
+      "last_frame": 180,
+      "pixels": [
+       1072,
+       4140
+      ],
+      "bytes": 1246618
+     }
+    ],
+    "bytes": 1246618
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "speaking_closed_eye_1.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/speaking_closed_eye_1/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_vudn3h4",
+   "clip": "speaking_closed_eye_2",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 300,
+   "frame_size": [
+    764,
+    1028
+   ],
+   "opaque_bbox": [
+    136,
+    20,
+    764,
+    1028
+   ],
+   "tier": "general",
+   "incoming_prob_positive": 3,
+   "has_mouth_profile": true,
+   "atlas_source": "copied",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/speaking_closed_eye_2.atlas.webp",
+      "file": "speaking_closed_eye_2.atlas.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1072,
+       4500
+      ],
+      "bytes": 1423396
+     },
+     {
+      "url": "kurisu/medium/speaking_closed_eye_2.atlas.p01.webp",
+      "file": "speaking_closed_eye_2.atlas.p01.webp",
+      "tile_w": 134,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 13,
+      "frames": 100,
+      "first_frame": 201,
+      "last_frame": 300,
+      "pixels": [
+       1072,
+       2340
+      ],
+      "bytes": 682222
+     }
+    ],
+    "bytes": 2105618
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "speaking_closed_eye_2.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": "textures/speaking_closed_eye_2/loop/kurisu_speaking_loop0001.ktx2",
+    "closed_frame_idx": 0
+   }
+  },
+  {
+   "id": "_bcg75h5",
+   "clip": "idle_closed_eye",
+   "is_root": false,
+   "loopMode": "loop",
+   "phase": "loop",
+   "frameIntervalMs": 17,
+   "fps": 58.8,
+   "frames": 738,
+   "frame_size": [
+    960,
+    1028
+   ],
+   "opaque_bbox": [
+    98,
+    0,
+    764,
+    1028
+   ],
+   "tier": "featured",
+   "incoming_prob_positive": 1,
+   "has_mouth_profile": false,
+   "atlas_source": "generated(0.5x q=72)",
+   "medium": {
+    "pages": [
+     {
+      "url": "kurisu/medium/idle_closed_eye.atlas.webp",
+      "file": "idle_closed_eye.atlas.webp",
+      "tile_w": 168,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 1,
+      "last_frame": 200,
+      "pixels": [
+       1344,
+       4500
+      ],
+      "bytes": 1367032
+     },
+     {
+      "url": "kurisu/medium/idle_closed_eye.atlas.p01.webp",
+      "file": "idle_closed_eye.atlas.p01.webp",
+      "tile_w": 168,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 201,
+      "last_frame": 400,
+      "pixels": [
+       1344,
+       4500
+      ],
+      "bytes": 1242000
+     },
+     {
+      "url": "kurisu/medium/idle_closed_eye.atlas.p02.webp",
+      "file": "idle_closed_eye.atlas.p02.webp",
+      "tile_w": 168,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 25,
+      "frames": 200,
+      "first_frame": 401,
+      "last_frame": 600,
+      "pixels": [
+       1344,
+       4500
+      ],
+      "bytes": 1534260
+     },
+     {
+      "url": "kurisu/medium/idle_closed_eye.atlas.p03.webp",
+      "file": "idle_closed_eye.atlas.p03.webp",
+      "tile_w": 168,
+      "tile_h": 180,
+      "cols": 8,
+      "rows": 18,
+      "frames": 138,
+      "first_frame": 601,
+      "last_frame": 738,
+      "pixels": [
+       1344,
+       3240
+      ],
+      "bytes": 756544
+     }
+    ],
+    "bytes": 4899836
+   },
+   "hi": null,
+   "mouthPatch": {
+    "file": "idle_closed_eye.patch.png",
+    "size": [
+     34,
+     18
+    ],
+    "overlay_entry": null,
+    "closed_frame_idx": null
+   }
+  }
+ ],
+ "edges": [
+  {
+   "from": "idle",
+   "to": "idle",
+   "from_id": "_8ms718k",
+   "to_id": "_8ms718k",
+   "prob": 0.7
+  },
+  {
+   "from": "idle",
+   "to": "idle2",
+   "from_id": "_8ms718k",
+   "to_id": "_6fknbp9",
+   "prob": 0.05
+  },
+  {
+   "from": "idle",
+   "to": "idle_mic_wind",
+   "from_id": "_8ms718k",
+   "to_id": "_sugrzf5",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_mic_wind",
+   "to": "idle_mic_wind",
+   "from_id": "_sugrzf5",
+   "to_id": "_sugrzf5",
+   "prob": 0.6
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "idle_str_wind",
+   "from_id": "_478pebn",
+   "to_id": "_478pebn",
+   "prob": 0.3
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "idle_mic_wind",
+   "from_id": "_478pebn",
+   "to_id": "_sugrzf5",
+   "prob": 0.5
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "idle",
+   "from_id": "_478pebn",
+   "to_id": "_8ms718k",
+   "prob": 0.2
+  },
+  {
+   "from": "idle_mic_wind",
+   "to": "idle_str_wind",
+   "from_id": "_sugrzf5",
+   "to_id": "_478pebn",
+   "prob": 0.2
+  },
+  {
+   "from": "idle_mic_wind",
+   "to": "idle",
+   "from_id": "_sugrzf5",
+   "to_id": "_8ms718k",
+   "prob": 0.2
+  },
+  {
+   "from": "idle",
+   "to": "idle1",
+   "from_id": "_8ms718k",
+   "to_id": "_5qqy7vp",
+   "prob": 0.05
+  },
+  {
+   "from": "idle1",
+   "to": "idle1",
+   "from_id": "_5qqy7vp",
+   "to_id": "_5qqy7vp",
+   "prob": 0.15
+  },
+  {
+   "from": "idle1",
+   "to": "idle",
+   "from_id": "_5qqy7vp",
+   "to_id": "_8ms718k",
+   "prob": 0.85
+  },
+  {
+   "from": "idle2",
+   "to": "idle2",
+   "from_id": "_6fknbp9",
+   "to_id": "_6fknbp9",
+   "prob": 0.7
+  },
+  {
+   "from": "idle2",
+   "to": "idle",
+   "from_id": "_6fknbp9",
+   "to_id": "_8ms718k",
+   "prob": 0.3
+  },
+  {
+   "from": "idle",
+   "to": "trans_standby",
+   "from_id": "_8ms718k",
+   "to_id": "_h60jwtz",
+   "prob": 0.05
+  },
+  {
+   "from": "idle",
+   "to": "trans_smile",
+   "from_id": "_8ms718k",
+   "to_id": "_tj6uxlr",
+   "prob": 0
+  },
+  {
+   "from": "idle",
+   "to": "speaking_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_tcjdzf0",
+   "prob": 0
+  },
+  {
+   "from": "speaking_loop1",
+   "to": "speaking_loop1",
+   "from_id": "_iomne8b",
+   "to_id": "_iomne8b",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_loop2",
+   "to": "speaking_loop2",
+   "from_id": "_afk0000",
+   "to_id": "_afk0000",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_loop2",
+   "to": "speaking_loop1",
+   "from_id": "_afk0000",
+   "to_id": "_iomne8b",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_loop1",
+   "to": "speaking_loop2",
+   "from_id": "_iomne8b",
+   "to_id": "_afk0000",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_trans",
+   "to": "speaking_loop2",
+   "from_id": "_tcjdzf0",
+   "to_id": "_afk0000",
+   "prob": 0.6
+  },
+  {
+   "from": "speaking_trans",
+   "to": "speaking_loop1",
+   "from_id": "_tcjdzf0",
+   "to_id": "_iomne8b",
+   "prob": 0.4
+  },
+  {
+   "from": "idle_side_wind",
+   "to": "idle_side_wind",
+   "from_id": "_cpu0zpb",
+   "to_id": "_cpu0zpb",
+   "prob": 0.3
+  },
+  {
+   "from": "trans_standby",
+   "to": "idle_side_soft_wind",
+   "from_id": "_h60jwtz",
+   "to_id": "_vo874gi",
+   "prob": 0.3
+  },
+  {
+   "from": "trans_standby",
+   "to": "idle_side_wind",
+   "from_id": "_h60jwtz",
+   "to_id": "_cpu0zpb",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_side_soft_wind",
+   "to": "idle_side_soft_wind",
+   "from_id": "_vo874gi",
+   "to_id": "_vo874gi",
+   "prob": 0.6
+  },
+  {
+   "from": "idle_side_soft_wind",
+   "to": "idle_side_wind",
+   "from_id": "_vo874gi",
+   "to_id": "_cpu0zpb",
+   "prob": 0.3
+  },
+  {
+   "from": "idle_side_wind",
+   "to": "idle_side_soft_wind",
+   "from_id": "_cpu0zpb",
+   "to_id": "_vo874gi",
+   "prob": 0.6
+  },
+  {
+   "from": "speaking_short",
+   "to": "speaking_short",
+   "from_id": "_k5b3qvq",
+   "to_id": "_k5b3qvq",
+   "prob": 0.2
+  },
+  {
+   "from": "idle",
+   "to": "speaking_short",
+   "from_id": "_8ms718k",
+   "to_id": "_k5b3qvq",
+   "prob": 0
+  },
+  {
+   "from": "speaking_short",
+   "to": "speaking_med",
+   "from_id": "_k5b3qvq",
+   "to_id": "_kg5obtl",
+   "prob": 0.3
+  },
+  {
+   "from": "speaking_short",
+   "to": "speaking_long",
+   "from_id": "_k5b3qvq",
+   "to_id": "_9ejqr4v",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_long",
+   "to": "speaking_long",
+   "from_id": "_9ejqr4v",
+   "to_id": "_9ejqr4v",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_long",
+   "to": "speaking_med",
+   "from_id": "_9ejqr4v",
+   "to_id": "_kg5obtl",
+   "prob": 0.3
+  },
+  {
+   "from": "speaking_long",
+   "to": "speaking_short",
+   "from_id": "_9ejqr4v",
+   "to_id": "_k5b3qvq",
+   "prob": 0.2
+  },
+  {
+   "from": "speaking_med",
+   "to": "speaking_med",
+   "from_id": "_kg5obtl",
+   "to_id": "_kg5obtl",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_med",
+   "to": "speaking_long",
+   "from_id": "_kg5obtl",
+   "to_id": "_9ejqr4v",
+   "prob": 0.4
+  },
+  {
+   "from": "speaking_med",
+   "to": "speaking_short",
+   "from_id": "_kg5obtl",
+   "to_id": "_k5b3qvq",
+   "prob": 0.4
+  },
+  {
+   "from": "trans_smile",
+   "to": "smile_speaking",
+   "from_id": "_tj6uxlr",
+   "to_id": "_m1sdkop",
+   "prob": 1
+  },
+  {
+   "from": "smile_speaking",
+   "to": "smile_speaking",
+   "from_id": "_m1sdkop",
+   "to_id": "_m1sdkop",
+   "prob": 1
+  },
+  {
+   "from": "idle",
+   "to": "sad_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_5t4fqvt",
+   "prob": 0
+  },
+  {
+   "from": "sad_trans",
+   "to": "sad_speaking",
+   "from_id": "_5t4fqvt",
+   "to_id": "_a998p67",
+   "prob": 1
+  },
+  {
+   "from": "sad_speaking",
+   "to": "sad_speaking",
+   "from_id": "_a998p67",
+   "to_id": "_a998p67",
+   "prob": 1
+  },
+  {
+   "from": "idle_str_wind",
+   "to": "thinking_trans",
+   "from_id": "_478pebn",
+   "to_id": "_cckcbim",
+   "prob": 0
+  },
+  {
+   "from": "thinking_trans",
+   "to": "thinking_speaking2",
+   "from_id": "_cckcbim",
+   "to_id": "_lmwgyyi",
+   "prob": 0.65
+  },
+  {
+   "from": "thinking_trans",
+   "to": "thinking_speaking1",
+   "from_id": "_cckcbim",
+   "to_id": "_20x9amw",
+   "prob": 0.35
+  },
+  {
+   "from": "thinking_speaking1",
+   "to": "thinking_speaking1",
+   "from_id": "_20x9amw",
+   "to_id": "_20x9amw",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_speaking1",
+   "to": "thinking_speaking2",
+   "from_id": "_20x9amw",
+   "to_id": "_lmwgyyi",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_speaking1",
+   "from_id": "_lmwgyyi",
+   "to_id": "_20x9amw",
+   "prob": 0.4
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_speaking2",
+   "from_id": "_lmwgyyi",
+   "to_id": "_lmwgyyi",
+   "prob": 0.3
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_to_serious",
+   "from_id": "_lmwgyyi",
+   "to_id": "_wov3kn0",
+   "prob": 0.15
+  },
+  {
+   "from": "thinking_to_serious",
+   "to": "speaking_loop2",
+   "from_id": "_wov3kn0",
+   "to_id": "_afk0000",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_to_serious",
+   "to": "speaking_loop1",
+   "from_id": "_wov3kn0",
+   "to_id": "_iomne8b",
+   "prob": 0.5
+  },
+  {
+   "from": "thinking_speaking2",
+   "to": "thinking_to_key_point",
+   "from_id": "_lmwgyyi",
+   "to_id": "_nnu2yb5",
+   "prob": 0.15
+  },
+  {
+   "from": "thinking_to_key_point",
+   "to": "key_point_speaking",
+   "from_id": "_nnu2yb5",
+   "to_id": "_8zysg7u",
+   "prob": 1
+  },
+  {
+   "from": "key_point_speaking",
+   "to": "key_point_speaking",
+   "from_id": "_8zysg7u",
+   "to_id": "_8zysg7u",
+   "prob": 0.5
+  },
+  {
+   "from": "key_point_speaking",
+   "to": "thinking_speaking1",
+   "from_id": "_8zysg7u",
+   "to_id": "_20x9amw",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_loop2",
+   "to": "serious_to_thinking",
+   "from_id": "_afk0000",
+   "to_id": "_wvjuqyw",
+   "prob": 0.1
+  },
+  {
+   "from": "speaking_loop1",
+   "to": "serious_to_thinking",
+   "from_id": "_iomne8b",
+   "to_id": "_wvjuqyw",
+   "prob": 0.1
+  },
+  {
+   "from": "serious_to_thinking",
+   "to": "thinking_speaking1",
+   "from_id": "_wvjuqyw",
+   "to_id": "_20x9amw",
+   "prob": 0.4
+  },
+  {
+   "from": "serious_to_thinking",
+   "to": "thinking_speaking2",
+   "from_id": "_wvjuqyw",
+   "to_id": "_lmwgyyi",
+   "prob": 0.6
+  },
+  {
+   "from": "idle",
+   "to": "shy_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_la21lrm",
+   "prob": 0
+  },
+  {
+   "from": "shy_trans",
+   "to": "shy_speaking1",
+   "from_id": "_la21lrm",
+   "to_id": "_ezyyvyu",
+   "prob": 0.4
+  },
+  {
+   "from": "shy_trans",
+   "to": "shy_speaking2",
+   "from_id": "_la21lrm",
+   "to_id": "_ivj6gek",
+   "prob": 0.6
+  },
+  {
+   "from": "shy_speaking1",
+   "to": "shy_speaking1",
+   "from_id": "_ezyyvyu",
+   "to_id": "_ezyyvyu",
+   "prob": 0.5
+  },
+  {
+   "from": "shy_speaking2",
+   "to": "shy_speaking2",
+   "from_id": "_ivj6gek",
+   "to_id": "_ivj6gek",
+   "prob": 0.6
+  },
+  {
+   "from": "shy_speaking2",
+   "to": "shy_speaking1",
+   "from_id": "_ivj6gek",
+   "to_id": "_ezyyvyu",
+   "prob": 0.4
+  },
+  {
+   "from": "shy_speaking1",
+   "to": "shy_speaking2",
+   "from_id": "_ezyyvyu",
+   "to_id": "_ivj6gek",
+   "prob": 0.5
+  },
+  {
+   "from": "idle",
+   "to": "surprise_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_wpmgajp",
+   "prob": 0
+  },
+  {
+   "from": "surprise_trans",
+   "to": "surprise_speaking",
+   "from_id": "_wpmgajp",
+   "to_id": "_bqm6hqs",
+   "prob": 1
+  },
+  {
+   "from": "surprise_speaking",
+   "to": "surprise_speaking",
+   "from_id": "_bqm6hqs",
+   "to_id": "_bqm6hqs",
+   "prob": 1
+  },
+  {
+   "from": "idle",
+   "to": "angry_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_24e7jnz",
+   "prob": 0
+  },
+  {
+   "from": "angry_trans",
+   "to": "angry_speaking",
+   "from_id": "_24e7jnz",
+   "to_id": "_ijtkrmm",
+   "prob": 1
+  },
+  {
+   "from": "angry_speaking",
+   "to": "angry_speaking",
+   "from_id": "_ijtkrmm",
+   "to_id": "_ijtkrmm",
+   "prob": 1
+  },
+  {
+   "from": "idle_side_wind",
+   "to": "idle_side_butterfly",
+   "from_id": "_cpu0zpb",
+   "to_id": "_t0sryza",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_side_soft_wind",
+   "to": "idle_side_butterfly",
+   "from_id": "_vo874gi",
+   "to_id": "_t0sryza",
+   "prob": 0.1
+  },
+  {
+   "from": "idle_side_butterfly",
+   "to": "idle_side_wind",
+   "from_id": "_t0sryza",
+   "to_id": "_cpu0zpb",
+   "prob": 1
+  },
+  {
+   "from": "idle",
+   "to": "closed_eye_trans",
+   "from_id": "_8ms718k",
+   "to_id": "_khp4i06",
+   "prob": 0
+  },
+  {
+   "from": "closed_eye_trans",
+   "to": "speaking_closed_eye_1",
+   "from_id": "_khp4i06",
+   "to_id": "_7jh10a4",
+   "prob": 0.5
+  },
+  {
+   "from": "closed_eye_trans",
+   "to": "speaking_closed_eye_2",
+   "from_id": "_khp4i06",
+   "to_id": "_vudn3h4",
+   "prob": 0.5
+  },
+  {
+   "from": "speaking_closed_eye_2",
+   "to": "speaking_closed_eye_1",
+   "from_id": "_vudn3h4",
+   "to_id": "_7jh10a4",
+   "prob": 0.6
+  },
+  {
+   "from": "speaking_closed_eye_1",
+   "to": "speaking_closed_eye_2",
+   "from_id": "_7jh10a4",
+   "to_id": "_vudn3h4",
+   "prob": 0.35
+  },
+  {
+   "from": "speaking_closed_eye_1",
+   "to": "speaking_closed_eye_1",
+   "from_id": "_7jh10a4",
+   "to_id": "_7jh10a4",
+   "prob": 0.65
+  },
+  {
+   "from": "speaking_closed_eye_2",
+   "to": "speaking_closed_eye_2",
+   "from_id": "_vudn3h4",
+   "to_id": "_vudn3h4",
+   "prob": 0.4
+  },
+  {
+   "from": "idle",
+   "to": "idle_closed_eye",
+   "from_id": "_8ms718k",
+   "to_id": "_bcg75h5",
+   "prob": 0.05
+  },
+  {
+   "from": "idle_closed_eye",
+   "to": "idle",
+   "from_id": "_bcg75h5",
+   "to_id": "_8ms718k",
+   "prob": 1
+  }
+ ]
+}

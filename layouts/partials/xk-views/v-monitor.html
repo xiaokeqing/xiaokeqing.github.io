@@ -1,0 +1,120 @@
+<section class="view" id="v-monitor">
+    <div class="screen">
+      <div class="screen-hd">
+        <span class="led"></span>
+        <span class="t">XK-LAB // 作战室 <em class="ops-en">OPS-ROOM</em></span>
+        <nav class="ops-tabs" id="opsTabs">
+          <button data-tab="live" class="on">实时攻击</button>
+          <button data-tab="graph">攻击图谱</button>
+          <button data-tab="matrix">威胁矩阵</button>
+          <button data-tab="stats">数据统计</button>
+        </nav>
+        <span class="sync">● SYNC 12s 前 · 全部来自 /api/public/* 只读端点</span>
+      </div>
+      <div class="screen-bd">
+
+        <!-- 视图 1：实时攻击 -->
+        <div class="ops-tab on" data-pane="live">
+          <div class="ops-live">
+            <div class="term">
+              <div class="term-hd"><span>实时攻击流</span><span class="term-path">tail -f /var/log/xk-lab/alerts.log</span><span class="term-live"><i></i>LIVE</span></div>
+              <div class="term-bd" id="termFeed"></div>
+            </div>
+            <div class="ops-rail">
+              <div class="mod"><div class="mod-hd"><span class="led"></span>威胁等级</div>
+                <div class="mod-bd"><div class="threat"><span class="lv">较高</span><span class="trend">▲ 较 24h 前 +12%</span></div></div>
+              </div>
+              <div class="mod"><div class="mod-hd"><span class="led"></span>TOP 攻击来源<span class="tag">/geo</span></div>
+                <div class="mod-bd">
+                  <div class="row"><span class="k">45.155.x.x · 中国</span><span class="chip bad">412 次</span></div>
+                  <div class="row"><span class="k">185.220.x.x · 荷兰</span><span class="chip warn">238 次</span></div>
+                  <div class="row"><span class="k">91.240.x.x · 俄罗斯</span><span class="chip warn">197 次</span></div>
+                  <div class="row"><span class="k">103.99.x.x · 新加坡</span><span class="chip">121 次</span></div>
+                </div>
+              </div>
+              <div class="mod"><div class="mod-hd"><span class="led"></span>蜜罐捕获凭据<span class="tag">已脱敏 · 只给结构</span></div>
+                <div class="mod-bd">
+                  <div class="row"><span class="k">root / admin···</span><span class="chip">×61 · 字母+数字</span></div>
+                  <div class="row"><span class="k">admin / passw···</span><span class="chip">×44 · 纯数字</span></div>
+                  <div class="row"><span class="k">oracle / 1234···</span><span class="chip">×38 · 含特殊字符</span></div>
+                  <div class="row"><span class="k">pi / raspbe···</span><span class="chip">×22 · 字典命中</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时攻击时序<span class="tag">/overview</span></div>
+            <div class="mod-bd"><canvas id="spark24" class="spark24"></canvas></div>
+          </div>
+        </div>
+
+        <!-- 视图 2：攻击图谱 -->
+        <div class="ops-tab" data-pane="graph">
+          <div class="mod"><div class="mod-hd"><span class="led"></span>实时攻击路径 · 攻击者 → 本站传感器<span class="tag">动画 · 数据 /alerts</span></div>
+            <div class="mod-bd graphwrap"><canvas id="atkGraph"></canvas>
+              <div class="graph-legend"><span><i class="lg red"></i>攻击来源</span><span><i class="lg teal"></i>蜜罐传感器</span><span><i class="lg dot"></i>实时命中</span></div>
+            </div>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="n" data-count="1284">0</div><div class="l">24h 告警</div></div>
+            <div class="stat"><div class="n" data-count="96">0</div><div class="l">暴力破解拦截</div></div>
+            <div class="stat"><div class="n" data-count="37">0</div><div class="l">蜜罐交互</div></div>
+            <div class="stat"><div class="n" data-count="22">0</div><div class="l">活跃攻击源</div></div>
+          </div>
+        </div>
+
+        <!-- 视图 3：威胁矩阵 -->
+        <div class="ops-tab" data-pane="matrix">
+          <div class="mod"><div class="mod-hd"><span class="led"></span>ATT&amp;CK 威胁矩阵 · 真实告警自动归类<span class="tag">MITRE ATT&amp;CK</span></div>
+            <div class="mod-bd"><div class="attk" id="attkGrid"></div>
+              <p class="attk-note">每格是一种攻击战术，数字为本站真实命中次数（演示为样例值）；命中越多颜色越热，线上可点击下钻到对应告警。</p></div>
+          </div>
+        </div>
+
+        <!-- 视图 4：数据统计 -->
+        <div class="ops-tab" data-pane="stats">
+          <div class="mod"><div class="mod-hd"><span class="led"></span>7×24 访问统计<span class="tag">类别门槛 ≥5 · 零 IP</span></div>
+            <div class="mod-bd"><div class="bars anim">
+              <i style="height:22%;--i:0"></i><i style="height:35%;--i:1"></i><i style="height:18%;--i:2"></i><i style="height:50%;--i:3"></i>
+              <i style="height:64%;--i:4"></i><i style="height:41%;--i:5"></i><i style="height:30%;--i:6"></i><i style="height:72%;--i:7"></i>
+              <i style="height:58%;--i:8"></i><i style="height:80%;--i:9"></i><i style="height:66%;--i:10"></i><i style="height:45%;--i:11"></i>
+              <i style="height:38%;--i:12"></i><i style="height:52%;--i:13"></i><i style="height:60%;--i:14"></i><i style="height:47%;--i:15"></i>
+              <i style="height:33%;--i:16"></i><i style="height:25%;--i:17"></i><i style="height:44%;--i:18"></i><i style="height:57%;--i:19"></i>
+              <i style="height:70%;--i:20"></i><i style="height:62%;--i:21"></i><i style="height:48%;--i:22"></i><i style="height:36%;--i:23"></i>
+              <i style="height:28%;--i:24"></i><i style="height:40%;--i:25"></i><i style="height:55%;--i:26"></i><i style="height:63%;--i:27"></i>
+            </div></div>
+          </div>
+          <div class="grid32">
+            <div class="mod"><div class="mod-hd"><span class="led"></span>来源 TOP5<span class="tag">/geo</span></div>
+              <ul class="mod-bd geo">
+                <li><span class="cc">CN</span><span class="bar"><i style="width:82%"></i></span><span>32%</span></li>
+                <li><span class="cc">US</span><span class="bar"><i style="width:61%"></i></span><span>24%</span></li>
+                <li><span class="cc">DE</span><span class="bar"><i style="width:44%"></i></span><span>17%</span></li>
+                <li><span class="cc">NL</span><span class="bar"><i style="width:28%"></i></span><span>11%</span></li>
+                <li><span class="cc">—</span><span class="bar"><i style="width:16%"></i></span><span>6%</span></li>
+              </ul>
+            </div>
+            <div class="mod"><div class="mod-hd"><span class="led"></span>一次真实攻击的故事线<span class="tag">/stories</span></div>
+              <div class="mod-bd">
+                <div class="row"><span class="k">T+0s</span><span>扫描器命中诱饵端口 2222</span><span class="chip">suricata</span></div>
+                <div class="row"><span class="k">T+4s</span><span>引导至 Cowrie 蜜罐，记录交互</span><span class="chip">cowrie</span></div>
+                <div class="row"><span class="k">T+31s</span><span>凭据尝试 12 组（已脱敏）</span><span class="chip warn">凭据结构</span></div>
+                <div class="row"><span class="k">T+58s</span><span>来源 IP 进入处置审计</span><span class="chip bad">处置</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="mod"><div class="mod-hd"><span class="led"></span>协议分布 · 按传感器类型<span class="tag">/overview</span></div>
+            <div class="mod-bd proto">
+              <div class="donut"><span class="donut-c">24h</span></div>
+              <ul class="proto-lg">
+                <li><i class="lg teal"></i>SSH 暴力破解<b>46%</b></li>
+                <li><i class="lg warn"></i>端口扫描<b>26%</b></li>
+                <li><i class="lg purp"></i>Web 攻击<b>16%</b></li>
+                <li><i class="lg ok"></i>IoT / 其他<b>12%</b></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>

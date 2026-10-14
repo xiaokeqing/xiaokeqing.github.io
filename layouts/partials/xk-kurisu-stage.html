@@ -22,6 +22,11 @@
 {{- if site.Params.kurisuEnabled }}
 <div class="xk-crt" data-xk-crt>
   <div class="xk-crt__stage">
+    {{- /* ★ 状态机开关（37 节点 / 87 边自动游走）：**默认关**。
+           打开 = 在这里加 data-xk-kurisu-sm="on"（或在 manifest.stateMachine.auto 上做总闸）。
+           为什么默认关：37 段 medium 全量 48MB，按每节点 ~2.6s 的节奏，一次 60 秒的访问
+           会多拉 ~28MB（已加 6MB 带宽闸，但仍取决于访问量）。站主裁定：等 srv2 直连 +
+           Cloudflare 边缘缓存生效之后再打开。现在的动画仍是"逐帧真动画 + 开场真序列"。 */ -}}
     <div class="xk-crt__screen xk-kurisu xk-kurisu--stage" data-xk-kurisu="stage"
          data-xk-kurisu-clip="idle">
       <canvas class="xk-kurisu__canvas xk-kurisu__canvas--main" data-xk-kurisu-canvas

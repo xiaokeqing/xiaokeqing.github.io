@@ -271,9 +271,9 @@
   /* 手机里的她：全身剪辑，与 CRT 同源（用 /kurisu/scene/ 下已拷进来的那 4 段图集，
      这样与 preview-shell.html 内联场景脚本共用同一份 HTTP 缓存，不重复下载） */
   var BODY = {
-    idle:     { src: '/kurisu/scene/idle.hi.webp',     frames: 60, interval: 42 },
-    speaking: { src: '/kurisu/scene/speaking.hi.webp', frames: 90, interval: 34 },
-    thinking: { src: '/kurisu/scene/thinking.hi.webp', frames: 90, interval: 34 }
+    idle:     { src: '/kurisu/full/idle.hi.webp',     frames: 60, interval: 42 },
+    speaking: { src: '/kurisu/full/speaking.hi.webp', frames: 90, interval: 34 },
+    thinking: { src: '/kurisu/full/thinking.hi.webp', frames: 90, interval: 34 }
   };
   function makeBodyPlayer(canvas) {
     if (!canvas) return { set: function () {} };

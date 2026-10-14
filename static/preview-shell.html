@@ -440,12 +440,12 @@
 
   <section class="view on" id="v-home">
 <div class="stage" id="stage">
-  <img class="desk" src="/kurisu/scene/desk.webp" alt="" aria-hidden="true" decoding="async" fetchpriority="high">
+  <img class="desk" src="/images/crt/desk.webp" alt="" aria-hidden="true" decoding="async" fetchpriority="high">
   <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true" decoding="async" loading="lazy">
 
   <div class="crt" id="crt">
     <div class="crt-clip" id="crtClip">
-      <img class="backplate" src="/kurisu/scene/lab.webp" alt="" aria-hidden="true" decoding="async">
+      <img class="backplate" src="/images/crt/lab.webp" alt="" aria-hidden="true" decoding="async">
       <canvas class="charcanvas" id="charCanvas" aria-hidden="true"></canvas>
       <img class="plate" src="/kurisu/scene/subtitle_frame_big.webp" alt="" aria-hidden="true" decoding="async">
       <div class="scan"></div>
@@ -694,9 +694,9 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CLIPS = {
   opening:  {src:'/kurisu/full/opening.boot.webp', frames:24, interval:33.33, cols:8, cw:380, ch:290, fit:'screen', next:'idle'},
   idle:     {src:'/kurisu/full/idle.boot.webp',    frames:24, interval:42,    cols:8, cw:321, ch:432, fit:'anchor'},
-  idleHi:   {src:'/kurisu/scene/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor'},
-  speaking: {src:'/kurisu/scene/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'},
-  thinking: {src:'/kurisu/scene/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'}
+  idleHi:   {src:'/kurisu/full/idle.hi.webp',      frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor'},
+  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'},
+  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'}
 };
 /* 角色落位（scene.character 源码公式）：scale=min(w*0.64/764,h*0.90/1028), x=0.52w, y=bottom-h*0.012, anchor=(0.5,1) */
 const CHAR_BOX = {w:764, h:1028, maxW:0.64, maxH:0.90, xRatio:0.52, footRatio:0.012};
@@ -717,7 +717,7 @@ const CHAR_BOX = {w:764, h:1028, maxW:0.64, maxH:0.90, xRatio:0.52, footRatio:0.
       （idle + speaking + thinking 三段自动轮换）。
 
    活动位：任务给的层序是「空房间底图 → canvas 角色 → 字幕板 → 场景整图（可选）→ 扫描线/暗角」。
-   空房间底图用的是 /kurisu/scene/lab.webp（manifest.scene.images.lab，912×750，无外框的屏内空房间）。
+   空房间底图用的是 /images/crt/lab.webp（manifest.scene.images.lab，912×750，无外框的屏内空房间）。
    ★ 不用 /kurisu/scene/bg/room_*.webp 当屏内底图：那 8 张是 1398×1125 的"整屏成片"，
      其中除 room_empty 外的 7 张（room_computer/room_sleep/room_crt/room_coffee/room_thinking/
      room_whiteboard/light_*）**已经把角色烘进图里**了（已逐张看图确认 room_computer、room_thinking），

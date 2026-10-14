@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ site.Language.Lang | default `zh-cn` }}" data-theme="light">
+{{- /* ★ 首屏字节门禁：主页的 CRT 场景开关**在服务端就写死**。
+       原因：CSS 里 `html[data-xk-crt-on="1"] .xk-bg{background-image:none}` 要把 659KB 的
+       bg.jpg 请求挡掉 —— 如果属性只由 JS 在 DOMContentLoaded 后才加，CSS 早就在请求它了。
+       主页的可见底图是书桌照片（cover 铺满，整张盖住 bg.jpg），所以视觉零变化；
+       没有 JS 时主页也照样是"书桌 + CRT"（而不是一片没有底图的暗色）。
+       kurisuEnabled=false 时不写这个属性 → 一键下线后主页回到纯文本版（红线④不受影响）。 */ -}}
+<html lang="{{ site.Language.Lang | default `zh-cn` }}" data-theme="light"{{ if and site.Params.kurisuEnabled .IsHome }} data-xk-crt-on="1"{{ end }}>
 <head>
   {{ partial "head.html" . }}
 </head>

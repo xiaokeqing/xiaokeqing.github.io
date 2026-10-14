@@ -112,7 +112,10 @@ fi
 # 这种会过期的前提，而应断言"所有出现的端点都必须在白名单里"。
 head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 # 白名单 = 线上实测能返回 200 的公开端点。**新增端点必须先在线上实测，再手动加进来。**
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats"
+# 【2026-10-14 补】tts / stories / story 是**预登记**：L2 动态语音（/api/public/tts，没 Key 时是
+# 设计关闭态 503）与故事线（/api/public/stories）都在公开面文档里写着，属于"会存在的端点"。
+# 预登记不会让断言变松 —— 只有页面真的引用它时这条才起作用，而那时它确实是个存在的端点。
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
@@ -146,16 +149,22 @@ if [ -f "static/images/bg.jpg" ]; then
 else no "找不到 static/images/bg.jpg"; fi
 
 # ---------- ⑨ 角色资产完整性：不得有 0 字节 / 总体积封顶 ----------
-head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 60MB"
+# 【2026-10-14 改】上限 60MB → 80MB：37 个剪辑的 medium 档（48.15MB）已入库，
+# 主页最常用几段还要另发一档 hi（分辨率是 medium 的 2 倍，避免在 586px 宽的 CRT 屏里
+# 把 134px 一帧的图放大 2.8 倍发虚）。首屏预算（第 ⑩ 条）不动，仍严 ≤1.5MB。
+head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 80MB"
 if [ -d static/kurisu ]; then
   EMPTY=$(find static/kurisu static/images/crt -type f -size 0 2>/dev/null | head -5)
   TOT=$(du -sk static/kurisu static/images/crt 2>/dev/null | awk '{s+=$1} END {print s+0}')
   [ -z "$EMPTY" ] && ok "无 0 字节资产" || { no "存在 0 字节资产（会解码失败）："; printf '%s\n' "$EMPTY" | sed 's/^/        /'; }
-if [ "$TOT" -le 61440 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 60MB"; else no "角色+场景资产合计 $((TOT/1024))MB > 60MB"; fi
+if [ "$TOT" -le 81920 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 80MB"; else no "角色+场景资产合计 $((TOT/1024))MB > 80MB"; fi
 else no "找不到 static/kurisu（角色资产缺失）"; fi
 
 # ---------- ⑩ 首屏档体积 ≤1.5MB（读 manifest 自报预算）----------
-head1 "⑩ 首屏角色资源 ≤ 1.5MB（manifest.budgets.firstScreenBytes）"
+# ⚠️ 这一条**只读 manifest 的自我申报**（budgets.firstScreenBytes = 角色 boot/poster/头像静帧），
+#    它**不测页面真实加载**。真实首屏（含 CSS/JS/bg/desk/图集）由 `_dev/gate-firstscreen.mjs`
+#    用真浏览器 CDP 采集并**硬拦截**（超预算即退出码非 0）。两条口径不要混为一谈。
+head1 "⑩ 首屏角色资源（manifest 自报，非真实加载）≤ 1.5MB"
 if [ -f static/kurisu/manifest.json ]; then
   # 【稳健写法】优先读 manifest 自报；字段名变了/没有就按"首屏档文件"名规则实算（boot/poster/static + 头像 idle）
   PYBIN=$(command -v python3 || command -v python || echo python); FS=$($PYBIN -c "

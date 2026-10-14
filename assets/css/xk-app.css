@@ -1,7 +1,12 @@
 /* xk-app 新外壳的样式（来源：docs/demo-内容页外壳.html 的 <style> 机械前缀化）
    ============================================================================
-   · 每条选择器都带 #xk-app 前缀 —— 因为这文件会随 assets/css/extended/*.css 进站点总样式表
-     （layouts/partials/head.html 做 resources.Match），不加前缀会污染全站。历史事故：
+   ★ 2026-10-14 位置修正（本文件从 assets/css/extended/zz-app.css 移到 assets/css/xk-app.css）：
+     原来放在 extended/ 下会被 layouts/partials/head.html 的 `resources.Match "css/extended/*.css"`
+     自动拼进**每一页**的总样式表 —— 而站点里没有 #xk-app 根元素，等于每页白下 26KB 惰性 CSS
+     （审计表第 7 项）。现在它不再被自动打包，只作为"外壳接线时要用的前缀化样式"留在仓库里；
+     接线的正确做法：给外壳页挂 <div id="xk-app"> 根元素 + 单独 <link> 本文件（见
+     docs/交接-P0第二阶段-逐页界面与声音-20261014.md）。
+   · 每条选择器都带 #xk-app 前缀 —— 不加前缀会污染全站。历史事故：
      整份搬入时 `.view{display:none}` 把全站隐藏过一次。
    · 挂 <body> 的状态类改名成 xk-app-*（is-home→xk-app-home、is-ai→xk-app-ai、
      holo-min→xk-app-holo-min；data-skin→data-xk-skin、data-phone→data-xk-phone），
@@ -9,9 +14,7 @@
      不可能是 #xk-app 的后代，原来的写法永远不会命中。
    · 唯一保留在 body 上的规则是 `body.xk-app-home{overflow:hidden}` —— 祖先的滚动锁没法下放到子节点。
    · 「背景选择器」相关样式（.bgbtn/.bgpicker/.bggrid/.bgopt/.bgctl/.skin-toggle）已整体删除。
-   · @keyframes 名字是全局的，不能加前缀：第二个 blink 已改名 crtblink（终端光标与字幕光标不再互踩）。
-   · ⚠️ 当前站点里还没有 #xk-app 这个根元素（有的只是文档末尾的 #xk-views 模板表），
-     所以除了上面那条 body.xk-app-home，本文件目前对线上页面是惰性的 —— 接线时再挂根元素。 */
+   · @keyframes 名字是全局的，不能加前缀：第二个 blink 已改名 crtblink（终端光标与字幕光标不再互踩）。 */
 
   #xk-app{
     --shade:.08;

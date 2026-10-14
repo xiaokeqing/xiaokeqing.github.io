@@ -54,3 +54,12 @@ _shot_*.png
 docs/demo-assets/
 _shots/
 _dev/
+
+# _*/ 会连目录一起忽略，所以先把 _dev/ 放回来、再按文件白名单（5 个：2 个门禁 + 3 个素材生成链）
+!_dev/
+_dev/*
+!_dev/gate-firstscreen.mjs
+!_dev/check-ssr-contract.py
+!_dev/build_statemachine_manifest.py
+!_dev/build_voice_bank.py
+!_dev/build_mouth_data.py
