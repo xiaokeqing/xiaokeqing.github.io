@@ -12,7 +12,7 @@
 #
 # 产物：
 #   /etc/letsencrypt/live/xk-site/                          （certbot 管）
-#   /etc/ssl/secagent/site-fullchain.pem|site-privkey.pem   （nginx 读的稳定路径，root:www-data）
+#   /etc/ssl/secagent/site-fullchain.pem|site-privkey.pem   （nginx 读的稳定路径，root:xksite）
 #   /etc/letsencrypt/renewal-hooks/deploy/xk-site-sync.sh   （续期后自动同步 + reload nginx）
 # 用法（srv2，root）：
 #   sudo bash srv2-site-tls-issue.sh                      # 默认只签 static.xiaokeqing.cn
@@ -50,8 +50,8 @@ done
 [[ ${#DOMAINS[@]} -eq 0 ]] && DOMAINS=(static.xiaokeqing.cn)
 
 log "1/7 前置：certbot + ACME webroot"
-install -d -o www-data -g www-data -m 0755 "$ACME_ROOT"
-install -d -o root -g www-data -m 0750 "$CERTDIR"
+install -d -o xksite -g xksite -m 0755 "$ACME_ROOT"
+install -d -o root -g xksite -m 0750 "$CERTDIR"
 if ! command -v certbot >/dev/null 2>&1; then
   warn "没装 certbot，apt 安装中…"
   DEBIAN_FRONTEND=noninteractive timeout 300 apt-get install -y --no-install-recommends certbot 2>&1 | tail -3
@@ -129,7 +129,7 @@ grep -c 'acme-challenge' "$LOCS" | sed 's/^/   locs: /'
 log "4/7 nginx -t → 修日志属主 → 重启（再同步两个变体）"
 nginx -t 2>&1 | sed 's/^/  /' || die "配置语法不过，备份在 $BACKUP"
 rm -f /var/log/nginx/secagent-static-access.log /var/log/nginx/secagent-static-traffic.log
-chown -R www-data:www-data /var/log/nginx /var/lib/nginx 2>/dev/null || true
+chown -R xksite:xksite /var/log/nginx /var/lib/nginx 2>/dev/null || true
 systemctl restart secagent-static
 sleep 2
 systemctl is-active secagent-static | sed 's/^/  is-active: /'
@@ -153,8 +153,8 @@ set -euo pipefail
 SRC=/etc/letsencrypt/live/xk-site
 DST=/etc/ssl/secagent
 [ -s "$SRC/fullchain.pem" ] || exit 0
-install -m 0644 -o root -g www-data "$SRC/fullchain.pem" "$DST/site-fullchain.pem"
-install -m 0640 -o root -g www-data "$SRC/privkey.pem"   "$DST/site-privkey.pem"
+install -m 0644 -o root -g xksite "$SRC/fullchain.pem" "$DST/site-fullchain.pem"
+install -m 0640 -o root -g xksite "$SRC/privkey.pem"   "$DST/site-privkey.pem"
 # reload 需要 pid 文件在位（踩过：删了 pid 再 reload 必失败）
 systemctl reload secagent-static || systemctl restart secagent-static
 HOOK

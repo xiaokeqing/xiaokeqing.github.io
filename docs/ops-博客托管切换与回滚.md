@@ -31,7 +31,9 @@
 |---|---|---|
 | nginx 配置 | `/etc/nginx/nginx.conf` | `0b3e64bbd4a2dae1…` |
 | 站点 location 集 | `/etc/nginx/xk-site-locations.conf` | `05544c0b70dc5c5d…` |
-| 服务单元 | `/etc/systemd/system/secagent-static.service` | `f449f203a8e4802e…` |
+| 服务单元 | `/etc/systemd/system/secagent-static.service` | `6be76b06b527ab65…` |
+| 服务账号 | **`xksite`**（专用系统账号：no-login、无 home、uid 997）—— 不再用通用的 `www-data` | — |
+| 沙箱与限额 | `ReadOnlyPaths=/opt/secagent/{static,releases}`、`CPUQuota=25%`、`MemoryMax=128M`、`TasksMax=64`、`AmbientCapabilities=CAP_NET_BIND_SERVICE` | — |
 | 隧道 ingress | `/etc/cloudflared/static-config.yml` | `34f8f7e510f6ce23…` |
 | 站点根（符号链接） | `/opt/secagent/site` → `/opt/secagent/releases/site-*` | 当前 `site-20261014-215320` |
 | 素材根 | `/opt/secagent/static` | 0555 root:root |
@@ -70,6 +72,17 @@
 
 > ⚠️ 关 1 目前是 **2-SAN**（`direct` + `static`）。主域名切过去**之前**必须补签成 4-SAN
 > （`xiaokeqing.cn` / `www` / `direct` / `static`），否则浏览器对主域名报证书名不匹配。
+
+### 2.1.1 切换的**触发条件与回滚条件**（照这个判，不靠感觉）
+```
+立即回滚（改回 CNAME → xiaokeqing.github.io + 橙云）的条件，任意一条命中即回滚：
+  ① 4-SAN 补签失败（certbot 非 0）且 5 分钟内重试仍失败
+  ② https://xiaokeqing.cn/ 不带 -k 不是 200（证书不可信 / 502）
+  ③ 六条路由里有任何一条不是 200 或 data-xk-ssr 不对
+  ④ 首屏门禁（_dev/gate-firstscreen.mjs）任一页 > 1536KB
+回滚动作：站主在 Cloudflare 把 apex/www 改回 CNAME → xiaokeqing.github.io → Proxied（约 2 分钟生效）
+          + 可选：srv2 上 `sudo bash /opt/secagent/scripts/srv2-site-killswitch.sh off` 收掉公网口
+```
 
 ### 2.2 两条路，二选一
 
@@ -130,8 +143,9 @@ Cloudflare 控制台操作（**站主执行，约 2 分钟生效**）：
 
 | 记录 | 现在（切换后） | 回滚成 |
 |---|---|---|
-| `xiaokeqing.cn` A | `43.143.114.79`（灰云） | GitHub Pages 的 A：`185.199.108.153`、`185.199.109.153`、`185.199.110.153`、`185.199.111.153`（原为橙云代理） |
-| `www` | `43.143.114.79`（灰云） | 原始 CNAME/值（**原文见 §5 DNS 备份**） |
+| `xiaokeqing.cn`(apex) | 切换后：A `43.143.114.79` + 灰云 | **回滚成：CNAME `xiaokeqing.github.io` + Proxied（橙云）** |
+| `www` | 切换后：A `43.143.114.79` + 灰云 | **回滚成：CNAME `xiaokeqing.github.io` + Proxied（橙云）** |
+| `static` / `direct` / `demo` | 不动 | 不动 |
 
 > ⚠️ **回滚前必须先把 DNS 原文备份（§5）确认到位**：没有原文就只能靠记忆重建，可能把 www 或 MX 弄错。
 > 复活 Pages 的另外两个条件：① 仓库里 `gh-pages` 仍是完整产物；② `static/CNAME` = `xiaokeqing.cn` 仍在。
@@ -185,30 +199,44 @@ Cloudflare 控制台操作（**站主执行，约 2 分钟生效**）：
 | `direct.xiaokeqing.cn` | A | **43.143.114.79** | **DNS only** | 2026-10-14 新增，验证用 |
 | NS | — | `clay.ns.cloudflare.com`、`gabriella.ns.cloudflare.com` | — | Cloudflare 托管 |
 
-**为什么读不到"原文"**：`xiaokeqing.cn` / `www` 都是**橙云代理**，公网只能看到 CF 边缘 IP，
-看不到背后的真实记录（A 4 个 GitHub IP、还是 CNAME→`xiaokeqing.github.io`）与代理开关。
-需要 `Zone.DNS:Read` 的 token 才能用 API 逐条抄录 → **这是当前交付缺口**（已多次向站主要 token）。
-拿到 token 后一条命令补齐：
-```bash
-# 只读，不打印 token
-TOKEN=... ; ZID=$(curl -s -H "Authorization: Bearer $TOKEN" \
-  'https://api.cloudflare.com/client/v4/zones?name=xiaokeqing.cn' | python3 -c 'import json,sys;print(json.load(sys.stdin)["result"][0]["id"])')
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.cloudflare.com/client/v4/zones/$ZID/dns_records?per_page=200" \
-  | python3 -m json.tool > docs/dns-backup-xiaokeqing-$(date +%F).json
+### 5.1 切换前的**原文**（站主 2026-10-14 从 Cloudflare 面板逐条誊录）
+
+| 类型 | 名称 | 值 | 代理状态 | 本次动作 |
+|---|---|---|---|---|
+| A | `direct.xiaokeqing.cn` | `43.143.114.79` | **DNS only（灰云）** | **不动** |
+| Tunnel | `demo.xiaokeqing.cn` | 隧道 `secagent`（**srv1**） | Proxied | **绝对不动**（另一条线的隧道） |
+| Tunnel | `static.xiaokeqing.cn` | 隧道 `secagent-static`（srv2） | Proxied | **不动**（备用路径） |
+| CNAME | `www.xiaokeqing.cn` | `xiaokeqing.github.io` | **Proxied（橙云）** | → 改成 A `43.143.114.79` + 灰云 |
+| CNAME | `xiaokeqing.cn`（apex） | `xiaokeqing.github.io` | **Proxied（橙云）** | → 改成 A `43.143.114.79` + 灰云 |
+| NS | 整个 zone | `clay.ns.cloudflare.com`、`gabriella.ns.cloudflare.com` | — | 不动 |
+
+**回滚原文（一条也不能错）**：
 ```
+www.xiaokeqing.cn   CNAME   xiaokeqing.github.io   →  Proxied（橙云）
+xiaokeqing.cn       CNAME   xiaokeqing.github.io   →  Proxied（橙云）
+```
+站主誊录的副本另存：`E:\DeepSeek1\work\_cf-dns-baseline-before-switch.md`（站主机器侧）。
+> 公网侧只能看到 Cloudflare 边缘 IP（`104.21.28.174` / `172.67.146.238`），看不到 CNAME 指向与代理开关 ——
+> 所以这份**面板誊录**就是唯一的原文基线；`Zone.DNS:Read` 的 API token 站主给过一次但**不是有效 token**
+> （CF 返回 `code 1000 Invalid API Token` / `9109 Invalid access token`），DNS-01 方案随之作废，
+> 改走"站主点两下 + 事后 40 秒补签"。**gh-pages 仍是可用备份**（未验证：本机对 `ssh.github.com:443` 被重置）。
 
 ---
 
 ## 6. 待办 / 欠账（诚实清单）
 
-1. **DNS 原文备份**：缺 Cloudflare API Token（或站主手动导出）—— 见 §5。
-2. **4-SAN 证书**：等主域名 DNS 指向 srv2（或 token 走 DNS-01）。
-3. **Wazuh 盯 web 进程**：本轮**未做**。计划：在 Wazuh manager 上加一个
+1. ~~**DNS 原文备份**~~ ✅ **已补齐**（站主面板誊录，见 §5.1）；API token 无效，不再指望 API。
+2. **4-SAN 证书**：脚本已预置在 srv2（`/opt/secagent/scripts/srv2-site-tls-4san.sh`），
+   DNS 一变就一条命令补签（含解析等待 `--wait=180`），实测签发 + 同步 + reload 在 **40 秒内**。
+3. ~~**独立低权用户**~~ ✅ **已做**：专用系统账号 `xksite`（uid 997），服务 `User/Group=xksite`；
+   日志/临时/证书/ACME webroot 均已移交，续期 hook 也改成 `root:xksite` 并**实跑验证过**。
+   保留 systemd 沙箱与限额（ReadOnlyPaths / CPUQuota 25% / MemoryMax 128M / TasksMax 64）。
+4. **Wazuh 盯 web 进程**：本轮**未做**。计划：在 Wazuh manager 上加一个
    `localfile`（`/var/log/nginx/*.log` 与 `journalctl -u secagent-static`）+ 规则
    （unit 重启 / 5xx 突增 / `limit_req` 大量 429）；需要改容器内 `ossec.conf`，属于检测栈改动，
    按站主"不动检测职责"的纪律**单独提审**再做。
-4. **落点基线**：`deploy/srv2-site/**` 与本文件需要进 `srv1-installed-manifest.sh` 同类口径（下一轮）。
+5. **落点基线**：`deploy/srv2-site/**` 与本文件已入仓（提交 `64bd01d`）；与 `srv1-installed-manifest.sh`
+   同类口径的清单生成待下一轮（本轮已给出全量 sha256 快照，见 §1 与交付报告）。
 5. **流量基线偏移**：本次落地产生约 20–30MB 测试流量（2MB 测速文件反复下、隧道缓存回源），
    已把 `srv2-static-traffic.sh` 的基线覆盖窗口内含进去（其 `DEFAULT_BASELINE=45,000,000` 是上界整数，
    宁多不少）；测试文件已删除。

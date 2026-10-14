@@ -40,7 +40,7 @@ nginx_apply() { # $1 = 要落盘的变体
   chmod 0644 "$CONF"; chown root:root "$CONF"
   # root 跑过 nginx -t 会把日志弄成 root:root，服务降权后打不开 → 立刻修回
   rm -f /var/log/nginx/secagent-static-access.log /var/log/nginx/secagent-static-traffic.log
-  chown -R www-data:www-data /var/log/nginx /var/lib/nginx 2>/dev/null || true
+  chown -R xksite:xksite /var/log/nginx /var/lib/nginx 2>/dev/null || true
   systemctl restart "$UNIT"
   sleep 2
 }

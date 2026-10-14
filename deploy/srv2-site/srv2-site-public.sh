@@ -7,7 +7,7 @@
 #   · 同一套宿主 nginx（不新起第二套 web 服务），公网仅 80 + 443
 #   · 只读静态：只 GET/HEAD、autoindex off、无任何动态/上传/代理、无 Symlink 逃逸
 #   · 限速与限连接：limit_req（30 r/s，burst 60）+ limit_conn（24/每 IP）+ 单连接速率上限
-#   · 降权与加固：继续用 www-data + 现有 secagent-static.service 沙箱
+#   · 降权与加固：继续用 xksite + 现有 secagent-static.service 沙箱
 #     （新增 AmbientCapabilities=CAP_NET_BIND_SERVICE —— 非 root 绑 <1024 端口必须要它）
 #   · 日志：并入现有竖线流量口径（同一 access_log）
 #   · 证书：先自签占位（SAN 覆盖四个域名），DNS 就绪后由 srv2-site-tls-issue.sh 换 Let's Encrypt
@@ -72,7 +72,7 @@ sha256sum "$CONF" "$UNIT" | sed 's/^/  /'
 ok "备份目录：$BACKUP"
 
 log "2/8 证书：自签占位（SAN 覆盖 xiaokeqing.cn / www / direct / static）"
-install -d -o root -g www-data -m 0750 "$CERTDIR"
+install -d -o root -g xksite -m 0750 "$CERTDIR"
 if [[ -f $CERTDIR/site-fullchain.pem && -f $CERTDIR/site-privkey.pem ]]; then
   ok "证书已存在（$(openssl x509 -in $CERTDIR/site-fullchain.pem -noout -enddate 2>/dev/null | cut -d= -f2)）——不覆盖"
 else
@@ -81,7 +81,7 @@ else
     -subj "/CN=xiaokeqing.cn/O=xiaokeqing self-signed (pre-LE)" \
     -addext "subjectAltName=DNS:xiaokeqing.cn,DNS:www.xiaokeqing.cn,DNS:direct.xiaokeqing.cn,DNS:static.xiaokeqing.cn" \
     >/dev/null 2>&1
-  chown root:www-data "$CERTDIR/site-privkey.pem" "$CERTDIR/site-fullchain.pem"
+  chown root:xksite "$CERTDIR/site-privkey.pem" "$CERTDIR/site-fullchain.pem"
   chmod 0640 "$CERTDIR/site-privkey.pem"; chmod 0644 "$CERTDIR/site-fullchain.pem"
   ok "已生成自签证书（90 天）"
 fi
@@ -307,10 +307,10 @@ http {
 }
 NGINXCONF
 
-install -d -o www-data -g www-data -m 0755 "$ACME_ROOT"
-install -d -o www-data -g www-data -m 0755 /run/nginx
+install -d -o xksite -g xksite -m 0755 "$ACME_ROOT"
+install -d -o xksite -g xksite -m 0755 /run/nginx
 
-log "5/8 nginx -t（root 跑完必须把日志属主修回 www-data，否则服务起不来）"
+log "5/8 nginx -t（root 跑完必须把日志属主修回 xksite，否则服务起不来）"
 cp -a /tmp/nginx.conf.public "$CONF.new"
 nginx -t -c "$CONF.new" 2>&1 | sed 's/^/  /' || { rm -f "$CONF.new"; die "公网版配置语法不过，未落盘"; }
 
@@ -340,8 +340,8 @@ systemctl daemon-reload
 log "7/8 修复日志/运行目录属主并重启"
 rm -f /var/log/nginx/secagent-static-access.log /var/log/nginx/secagent-static-traffic.log
 rm -rf /run/nginx
-install -d -o www-data -g www-data -m 0755 /run/nginx
-chown -R www-data:www-data /var/log/nginx /var/lib/nginx
+install -d -o xksite -g xksite -m 0755 /run/nginx
+chown -R xksite:xksite /var/log/nginx /var/lib/nginx
 chmod 0644 /var/log/nginx/*.log 2>/dev/null || true
 systemctl restart secagent-static.service
 sleep 2
