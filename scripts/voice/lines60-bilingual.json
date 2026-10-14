@@ -1,0 +1,632 @@
+{
+ "format": "xiaokeqing.kurisu.voice-lines.v1",
+ "note": "60 句台词库（按 trigger 分组）。前 12 条与线上 static/kurisu/voice/bank.json 的文本**逐字一致**（source=existing），其余 48 条为本轮新写（source=new），全部列在 REPORT.md 表格里供站长逐条审。红线：不编造任何数字（凡涉及数量的句子都不报具体值，或明确指向屏上真实数据）。 ｜ 双语：`ja` 送进 TTS（桐莉栖的自然日语台词），`zh` 只用于页面字幕与审阅。参考音频是日语（kurisu_reference.wav，7.56s 自我介绍），所以目标语言 = 日文。",
+ "groups": {
+  "greeting": "进站问候（首访/回访/时段/久未访问）——首屏只预载这一组的第一句",
+  "page_intro": "六个页面各自的进入介绍",
+  "status": "状态行播报（正常/告警/降级/离线/深夜/限流…）",
+  "event": "安全事件播报（暴力破解/扫描/蜜罐/新口令…）",
+  "idle_banter": "待机闲聊（她的碎碎念，避免重复感）",
+  "fallback": "接口异常兜底（3 条，与线上一致）",
+  "emotion": "语气示范（平静/严肃/开心/惊讶）"
+ },
+ "emotion_labels_available": [
+  "angry",
+  "sad",
+  "shy",
+  "blush",
+  "surprised",
+  "disappointed"
+ ],
+ "lines": [
+  {
+   "id": "greet_first",
+   "trigger": "greeting",
+   "source": "existing",
+   "emotion": "shy",
+   "scene": "首访进站（开场之后的第一次问候）",
+   "text": "欢迎回来。屏上的数字都来自真实只读接口，取不到我就直说读不到。",
+   "ja": "おかえりなさい。画面の数字は全部、実際の読み取り専用インターフェースから来てるの。取れないときは取れないって、はっきり言うから。",
+   "zh": "欢迎回来。屏上的数字都来自真实只读接口，取不到我就直说读不到。"
+  },
+  {
+   "id": "greet_back",
+   "trigger": "greeting",
+   "source": "existing",
+   "emotion": "shy",
+   "scene": "回访进站（localStorage 里有访问记录）",
+   "text": "又见面了。屏上还是那套真数据，没变过口径。",
+   "ja": "また会ったわね。画面のデータは同じ、基準も変わってないわ。",
+   "zh": "又见面了。屏上还是那套真数据，没变过口径。"
+  },
+  {
+   "id": "greet_morning",
+   "trigger": "greeting",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "本地时间 05:00-11:00 且是当天首次进入",
+   "text": "早上好。这个点你倒是起得挺早。",
+   "ja": "おはよう。この時間に起きてるなんて、珍しいじゃない。",
+   "zh": "早上好。这个点你倒是起得挺早。"
+  },
+  {
+   "id": "greet_late_night",
+   "trigger": "greeting",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "本地时间 23:00-05:00 的首次进入",
+   "text": "这个点还不睡？明天别指望我替你写检讨。",
+   "ja": "こんな時間まで起きてるの？明日、反省文を代わりに書いてあげる気はないから。",
+   "zh": "这个点还不睡？明天别指望我替你写检讨。"
+  },
+  {
+   "id": "greet_long_absence",
+   "trigger": "greeting",
+   "source": "new",
+   "emotion": "sad",
+   "scene": "距上次访问超过 30 天",
+   "text": "好久不见。你不在的时候，我还是照常把数据核对了一遍。",
+   "ja": "久しぶりね。あなたがいない間も、データの照合は続けてたわ。",
+   "zh": "好久不见。你不在的时候，我还是照常把数据核对了一遍。"
+  },
+  {
+   "id": "greet_quick_return",
+   "trigger": "greeting",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "距上次访问不到 5 分钟（来回切）",
+   "text": "又回来了？你的鼠标倒是比脑子快。",
+   "ja": "また戻ってきたの？マウスだけは頭より速いのね。",
+   "zh": "又回来了？你的鼠标倒是比脑子快。"
+  },
+  {
+   "id": "greet_first_ever",
+   "trigger": "greeting",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "无任何访问记录的历史首访",
+   "text": "初次见面。我是牧濑红莉栖——名字别念错。",
+   "ja": "はじめまして。牧瀬紅莉栖よ——名前、間違えないで。",
+   "zh": "初次见面。我是牧濑红莉栖——名字别念错。"
+  },
+  {
+   "id": "greet_cold_open",
+   "trigger": "greeting",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "直接落到内页（没有走主页）",
+   "text": "来了？自己看屏。我不重复第二遍。",
+   "ja": "来たの？画面は自分で見て。二度は言わないから。",
+   "zh": "来了？自己看屏。我不重复第二遍。"
+  },
+  {
+   "id": "nav_home",
+   "trigger": "page_intro",
+   "source": "existing",
+   "emotion": "",
+   "scene": "切到主页",
+   "text": "回到主页了。我还是待在这台显示器里。",
+   "ja": "ホームに戻ったわ。私は相変わらず、このモニターの中よ。",
+   "zh": "回到主页了。我还是待在这台显示器里。"
+  },
+  {
+   "id": "nav_monitor",
+   "trigger": "page_intro",
+   "source": "existing",
+   "emotion": "",
+   "scene": "切到监测中心",
+   "text": "监测中心。这里的每一条都是真读取的告警记录。",
+   "ja": "監視センター。ここにあるのは全部、実際に読み取ったアラート記録よ。",
+   "zh": "监测中心。这里的每一条都是真读取的告警记录。"
+  },
+  {
+   "id": "nav_notes",
+   "trigger": "page_intro",
+   "source": "existing",
+   "emotion": "",
+   "scene": "切到笔记",
+   "text": "笔记都在这一页，按时间倒序排好了。",
+   "ja": "ノートはこのページ。時系列の逆順で並べてあるわ。",
+   "zh": "笔记都在这一页，按时间倒序排好了。"
+  },
+  {
+   "id": "nav_labs",
+   "trigger": "page_intro",
+   "source": "existing",
+   "emotion": "",
+   "scene": "切到攻防靶场",
+   "text": "攻防靶场只做检测，不执行、不处置。",
+   "ja": "攻防ラボは検知だけ。実行も処置もしないわ。",
+   "zh": "攻防靶场只做检测，不执行、不处置。"
+  },
+  {
+   "id": "nav_about",
+   "trigger": "page_intro",
+   "source": "existing",
+   "emotion": "",
+   "scene": "切到关于",
+   "text": "这一页讲的是项目本身，还有数据口径和取舍。",
+   "ja": "このページはプロジェクト自体のこと。データの基準と取捨選択も書いてあるわ。",
+   "zh": "这一页讲的是项目本身，还有数据口径和取舍。"
+  },
+  {
+   "id": "nav_ai",
+   "trigger": "page_intro",
+   "source": "existing",
+   "emotion": "",
+   "scene": "切到 AI 安全",
+   "text": "问答走的是真实检索链路，回答非流式返回。",
+   "ja": "質問応答は実際の検索経路を通ってるの。回答はストリーミングじゃないわ。",
+   "zh": "问答走的是真实检索链路，回答非流式返回。"
+  },
+  {
+   "id": "status_all_clear",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "",
+   "scene": "接口正常且无告警",
+   "text": "当前一切正常。没有告警就是没有告警，我不会替你编一个。",
+   "ja": "現状はすべて正常よ。アラートが無いなら無いって言うわ。嘘のアラートを作ったりしない。",
+   "zh": "当前一切正常。没有告警就是没有告警，我不会替你编一个。"
+  },
+  {
+   "id": "status_alerts_present",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "disappointed",
+   "scene": "有未处理告警（数量看屏上）",
+   "text": "有告警。数量看屏上那条，我不复述数字。",
+   "ja": "アラートがあるわ。件数は画面のそれを見て。私、数字を復唱しないの。",
+   "zh": "有告警。数量看屏上那条，我不复述数字。"
+  },
+  {
+   "id": "status_degraded",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "disappointed",
+   "scene": "部分接口失败、数据不完整",
+   "text": "接口在重试。数据不完整的时候我会直接说，不给你看半份。",
+   "ja": "インターフェースが再試行中よ。データが不完全なら、はっきりそう言うわ。中途半端なものは見せない。",
+   "zh": "接口在重试。数据不完整的时候我会直接说，不给你看半份。"
+  },
+  {
+   "id": "status_offline",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "disappointed",
+   "scene": "上游全部不可达",
+   "text": "上游断了。等它回来我再说结论。",
+   "ja": "上流が切れてるわ。戻ってから結論を言う。",
+   "zh": "上游断了。等它回来我再说结论。"
+  },
+  {
+   "id": "status_late_night",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "深夜时段的状态播报",
+   "text": "深夜了。这个点还在线的，只剩你和日志。",
+   "ja": "深夜ね。この時間に起きてるのは、あなたとログだけよ。",
+   "zh": "深夜了。这个点还在线的，只剩你和日志。"
+  },
+  {
+   "id": "status_stale_data",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "",
+   "scene": "数据来自缓存且已过期",
+   "text": "缓存里那份数据过期了，别拿它当刚发生的。",
+   "ja": "キャッシュのデータは期限切れよ。さっき起きたことみたいに扱わないで。",
+   "zh": "缓存里那份数据过期了，别拿它当刚发生的。"
+  },
+  {
+   "id": "status_recovered",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "",
+   "scene": "接口从失败恢复",
+   "text": "接口恢复了。刚才那段空档我记得，不装作没发生。",
+   "ja": "インターフェースは復旧したわ。さっきの空白は覚えてるから、無かったことにはしない。",
+   "zh": "接口恢复了。刚才那段空档我记得，不装作没发生。"
+  },
+  {
+   "id": "status_rate_limited",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "disappointed",
+   "scene": "被限流（HTTP 429）",
+   "text": "被限流了。你先等等，别一直点。",
+   "ja": "レート制限よ。少し待って。連打しないで。",
+   "zh": "被限流了。你先等等，别一直点。"
+  },
+  {
+   "id": "status_no_events_today",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "",
+   "scene": "当日无新事件",
+   "text": "今天没有新事件。安静也是情报。",
+   "ja": "今日は新しい事象なしよ。静かなのも情報のうち。",
+   "zh": "今天没有新事件。安静也是情报。"
+  },
+  {
+   "id": "status_first_load",
+   "trigger": "status",
+   "source": "new",
+   "emotion": "",
+   "scene": "首次拉取完成",
+   "text": "刚拉完第一批数据。让我先把口径对齐。",
+   "ja": "最初のデータを取り終えたわ。まず基準を揃えさせて。",
+   "zh": "刚拉完第一批数据。让我先把口径对齐。"
+  },
+  {
+   "id": "event_bruteforce",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "angry",
+   "scene": "检测到暴力破解尝试",
+   "text": "暴力破解尝试。日志里连着来，我按来源分了组。",
+   "ja": "ブルートフォースの試行よ。ログに連続してるから、発信元ごとにまとめたわ。",
+   "zh": "暴力破解尝试。日志里连着来，我按来源分了组。"
+  },
+  {
+   "id": "event_scan",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "angry",
+   "scene": "检测到端口扫描",
+   "text": "有人在扫端口。看着像常规探测，但我没放松。",
+   "ja": "ポートスキャンされてるわ。定型的な探索に見えるけど、手は緩めてない。",
+   "zh": "有人在扫端口。看着像常规探测，但我没放松。"
+  },
+  {
+   "id": "event_honeypot_hit",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "surprised",
+   "scene": "蜜罐被触碰",
+   "text": "蜜罐被碰了。对方以为捡到了便宜。",
+   "ja": "ハニーポットに触られたわ。向こうは安く上がったと思ってるんでしょうね。",
+   "zh": "蜜罐被碰了。对方以为捡到了便宜。"
+  },
+  {
+   "id": "event_new_credential",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "surprised",
+   "scene": "蜜罐出现新的凭据尝试",
+   "text": "蜜罐上又出现一组新口令。谁在试，我记下来了。",
+   "ja": "ハニーポットに新しい認証情報がまた出たわ。誰が試してるのかは記録した。",
+   "zh": "蜜罐上又出现一组新口令。谁在试，我记下来了。"
+  },
+  {
+   "id": "event_alert_detail",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "",
+   "scene": "告警展开详情",
+   "text": "这条告警有细节。展开看原文，别只看结论。",
+   "ja": "このアラートには詳細があるわ。原文を開いて。結論だけ見ないで。",
+   "zh": "这条告警有细节。展开看原文，别只看结论。"
+  },
+  {
+   "id": "event_repeat_offender",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "angry",
+   "scene": "同一来源重复出现",
+   "text": "同一个来源，第二次了。不是巧合就写清楚。",
+   "ja": "同じ発信元、これで二度目よ。偶然じゃないなら、はっきり書くわ。",
+   "zh": "同一个来源，第二次了。不是巧合就写清楚。"
+  },
+  {
+   "id": "event_geo_shift",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "",
+   "scene": "来源地区发生变化",
+   "text": "来源地区变了。也许是代理，先标着。",
+   "ja": "発信元の地域が変わったわ。プロキシかもしれない。とりあえず印をつけておく。",
+   "zh": "来源地区变了。也许是代理，先标着。"
+  },
+  {
+   "id": "event_payload_seen",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "",
+   "scene": "负载命中可疑特征",
+   "text": "负载里有可疑特征。我标了，不确定的部分写不确定。",
+   "ja": "ペイロードに怪しい特徴があったわ。印はつけたけど、不確かな部分は不確かなまま書く。",
+   "zh": "负载里有可疑特征。我标了，不确定的部分写不确定。"
+  },
+  {
+   "id": "event_defense_no_action",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "angry",
+   "scene": "有人期待自动处置时",
+   "text": "只做检测，不执行。别让我替你动手。",
+   "ja": "検知だけよ、実行はしない。私に代わりに手を出させる気？",
+   "zh": "只做检测，不执行。别让我替你动手。"
+  },
+  {
+   "id": "event_report_written",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "",
+   "scene": "事件播报入队",
+   "text": "事件播报在队列里，马上念。数据优先，语气其次。",
+   "ja": "事象の読み上げはキューに入ったわ。すぐ読む。データが先、語気は後。",
+   "zh": "事件播报在队列里，马上念。数据优先，语气其次。"
+  },
+  {
+   "id": "event_quiet_after_storm",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "",
+   "scene": "攻击潮结束",
+   "text": "热闹过去了。剩下的都是复盘。",
+   "ja": "騒ぎは終わったわ。残ってるのは振り返りだけ。",
+   "zh": "热闹过去了。剩下的都是复盘。"
+  },
+  {
+   "id": "event_unknown_source",
+   "trigger": "event",
+   "source": "new",
+   "emotion": "",
+   "scene": "来源无法归属",
+   "text": "来源未知。未知就写未知，不许猜。",
+   "ja": "発信元は不明よ。不明なものは不明と書くの。推測しちゃだめ。",
+   "zh": "来源未知。未知就写未知，不许猜。"
+  },
+  {
+   "id": "tab_return",
+   "trigger": "idle_banter",
+   "source": "existing",
+   "emotion": "shy",
+   "scene": "切回标签页（隐藏超过 60 秒）",
+   "text": "你回来了。刚才我没说话，只是在这儿等着。",
+   "ja": "戻ったのね。さっきは黙ってたけど、ここで待ってただけよ。",
+   "zh": "你回来了。刚才我没说话，只是在这儿等着。"
+  },
+  {
+   "id": "banter_coffee",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "",
+   "scene": "长时间无操作",
+   "text": "别盯着屏幕发呆。要发呆就先把咖啡放稳。",
+   "ja": "画面をぼんやり見てないで。ぼんやりするなら、まずコーヒーを安定させて。",
+   "zh": "别盯着屏幕发呆。要发呆就先把咖啡放稳。"
+  },
+  {
+   "id": "banter_typo",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "输入框出现连续删改",
+   "text": "又打错字了。这么明显，我都不用猜。",
+   "ja": "また打ち間違えたわね。これだけ露骨だと、推測する必要もないわ。",
+   "zh": "又打错字了。这么明显，我都不用猜。"
+  },
+  {
+   "id": "banter_slow_human",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "输入停顿很久",
+   "text": "你手速跟不上思路的时候，我就当你在思考。",
+   "ja": "手が思考に追いつかないときは、考えてるってことにしてあげる。",
+   "zh": "你手速跟不上思路的时候，我就当你在思考。"
+  },
+  {
+   "id": "banter_lab_order",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "",
+   "scene": "闲聊随机",
+   "text": "实验室的规矩：数据说话，情绪靠后。",
+   "ja": "ラボのルール：データが語る、感情は後回し。",
+   "zh": "实验室的规矩：数据说话，情绪靠后。"
+  },
+  {
+   "id": "banter_no_flattery",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "",
+   "scene": "闲聊随机",
+   "text": "别指望我夸你。做得对，我就说做得对。",
+   "ja": "褒めてほしいなんて思わないで。正しいことは正しいって言うだけよ。",
+   "zh": "别指望我夸你。做得对，我就说做得对。"
+  },
+  {
+   "id": "banter_time",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "闲聊随机",
+   "text": "时间过得挺快。你的进度可没这么快。",
+   "ja": "時間は早いわね。あなたの進み方はそうでもないけど。",
+   "zh": "时间过得挺快。你的进度可没这么快。"
+  },
+  {
+   "id": "banter_screen_saver",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "",
+   "scene": "长时间空闲",
+   "text": "屏保都比你动得多。",
+   "ja": "スクリーンセーバーのほうが、あなたより動いてるわ。",
+   "zh": "屏保都比你动得多。"
+  },
+  {
+   "id": "banter_tsundere",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "shy",
+   "scene": "闲聊随机（傲娇）",
+   "text": "不是特意等你……只是我恰好还在算。",
+   "ja": "別に待ってたわけじゃないの……たまたま計算が終わってなかっただけ。",
+   "zh": "不是特意等你……只是我恰好还在算。"
+  },
+  {
+   "id": "banter_note_taking",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "",
+   "scene": "闲聊随机",
+   "text": "有想法就写下来，别指望我替你记住。",
+   "ja": "思いついたら書き留めなさい。私が覚えてあげるとは思わないで。",
+   "zh": "有想法就写下来，别指望我替你记住。"
+  },
+  {
+   "id": "banter_wind_down",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "",
+   "scene": "一天结束前的最后一次空闲",
+   "text": "今天到这儿吧。剩下的明天还在。",
+   "ja": "今日はここまでにしましょう。残りは明日もそこにあるわ。",
+   "zh": "今天到这儿吧。剩下的明天还在。"
+  },
+  {
+   "id": "banter_mic_check",
+   "trigger": "idle_banter",
+   "source": "new",
+   "emotion": "",
+   "scene": "闲聊随机",
+   "text": "我没在听你说话，我在听数据。",
+   "ja": "あなたの話は聞いてないわ。聞いてるのはデータ。",
+   "zh": "我没在听你说话，我在听数据。"
+  },
+  {
+   "id": "fallback_no_data",
+   "trigger": "fallback",
+   "source": "existing",
+   "emotion": "disappointed",
+   "scene": "接口拿不到数据（状态行显示读不到）",
+   "text": "这一次没读到数据。我不补数，读不到就是读不到。",
+   "ja": "今回はデータが読めなかったわ。数字を補ったりしない。読めないものは読めないの。",
+   "zh": "这一次没读到数据。我不补数，读不到就是读不到。"
+  },
+  {
+   "id": "fallback_offline",
+   "trigger": "fallback",
+   "source": "existing",
+   "emotion": "disappointed",
+   "scene": "请求没送达 / 超时",
+   "text": "请求没送达。我不编答案，等接口恢复再说。",
+   "ja": "リクエストが届かなかったわ。答えを捏造しない。インターフェースが戻るまで待つ。",
+   "zh": "请求没送达。我不编答案，等接口恢复再说。"
+  },
+  {
+   "id": "fallback_throttled",
+   "trigger": "fallback",
+   "source": "existing",
+   "emotion": "disappointed",
+   "scene": "被限流（HTTP 429）",
+   "text": "接口在限流，稍等一下再问。",
+   "ja": "インターフェースが流量制限中よ。少し待ってから聞いて。",
+   "zh": "接口在限流，稍等一下再问。"
+  },
+  {
+   "id": "emo_calm_1",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "",
+   "scene": "语气示范：平静",
+   "text": "嗯，我看过了。没什么可紧张的。",
+   "ja": "うん、見たわ。別に緊張することなんてない。",
+   "zh": "嗯，我看过了。没什么可紧张的。"
+  },
+  {
+   "id": "emo_calm_2",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "",
+   "scene": "语气示范：平静",
+   "text": "慢慢来。数据不会跑。",
+   "ja": "ゆっくりでいいわ。データは逃げないから。",
+   "zh": "慢慢来。数据不会跑。"
+  },
+  {
+   "id": "emo_serious_1",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "angry",
+   "scene": "语气示范：严肃",
+   "text": "这不是小事。先看日志，再下结论。",
+   "ja": "これは些事じゃない。まずログを見て、それから結論を出すの。",
+   "zh": "这不是小事。先看日志，再下结论。"
+  },
+  {
+   "id": "emo_serious_2",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "angry",
+   "scene": "语气示范：严肃",
+   "text": "口径必须写清楚。含糊的结论我不认。",
+   "ja": "基準は明確に書くこと。曖昧な結論は認めないわ。",
+   "zh": "口径必须写清楚。含糊的结论我不认。"
+  },
+  {
+   "id": "emo_serious_3",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "angry",
+   "scene": "语气示范：严肃",
+   "text": "有人在试探。把证据留全。",
+   "ja": "誰かが探ってるわ。証拠は全部残しておいて。",
+   "zh": "有人在试探。把证据留全。"
+  },
+  {
+   "id": "emo_happy_1",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "blush",
+   "scene": "语气示范：开心（情绪包里没有 happy 参考，用 blush/shy 近似）",
+   "text": "这次做得不错。勉强算你合格。",
+   "ja": "今回はよくできたわ。ぎりぎり合格ってところね。",
+   "zh": "这次做得不错。勉强算你合格。"
+  },
+  {
+   "id": "emo_happy_2",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "blush",
+   "scene": "语气示范：开心（同上）",
+   "text": "数据对上了。看，这才是正常的样子。",
+   "ja": "データが一致したわ。ほら、これが正常な姿よ。",
+   "zh": "数据对上了。看，这才是正常的样子。"
+  },
+  {
+   "id": "emo_surprised_1",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "surprised",
+   "scene": "语气示范：惊讶",
+   "text": "等等——这个变化我没预料到。",
+   "ja": "ちょっと——この変化は予想してなかったわ。",
+   "zh": "等等——这个变化我没预料到。"
+  },
+  {
+   "id": "emo_surprised_2",
+   "trigger": "emotion",
+   "source": "new",
+   "emotion": "surprised",
+   "scene": "语气示范：惊讶",
+   "text": "什么？再说一遍，我刚才没在听你。",
+   "ja": "何？もう一度言って。今、あなたの話は聞いてなかったから。",
+   "zh": "什么？再说一遍，我刚才没在听你。"
+  }
+ ],
+ "ttsField": "ja",
+ "subtitleField": "zh",
+ "reference": {
+  "audio": "./assets/audio/reference/kurisu_reference.wav",
+  "language": "日文",
+  "transcript": "そういえば,正式に自己紹介していませんでしたね……牧瀬紅莉栖です.改めてまして,よろしく",
+  "transcriptSource": "config/catalog/voice/voice_reference_profile.json 的 default（catalog 默认值）",
+  "seconds": 7.56
+ }
+}
