@@ -49,3 +49,8 @@ _shot_*.png
 # 上面的 `_*/` 会把它一起忽略掉 —— 结果是 CI 构建时找不到 single/list 模板。
 # 2026-10-12 前端改版时踩到（本地能构建，Actions 上会失败），这里显式放行。
 !layouts/_default/
+
+# 端侧实验/取证产物：绝不进仓库（防止 git add -A 误提交）
+docs/demo-assets/
+_shots/
+_dev/
