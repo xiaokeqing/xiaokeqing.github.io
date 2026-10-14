@@ -49,20 +49,15 @@ html[data-xk-crt-on="1"] .xk-crt { display: block; }
 /* 场景生效时把 bg.jpg 那一层藏起来 —— 文件一个字节没动，只是不再显示（站主评审【补 5】允许） */
 html[data-xk-crt-on="1"] .xk-bg { visibility: hidden; }
 
-/* 场景层 = "那张书桌照片本身"：**纯 cover、零倍率、无相机动画**。
-   这是原版行为，也是另一条线用"掩掉屏内区域的多尺度 NCC"配准参考录屏后得到的结论：
-     · 录屏第 2 秒 = 原图 1.00 倍 cover，NCC 0.965；屏宽 35.0%（预测 35.05%）、屏左 33.0%（预测 32.9%）；
-     · 录屏其余秒的屏宽 45.2% 正好 = 窗口更窄时 cover 的裁切（视口比 ≈1.43）——
-       本站 1280×900（视口比 1.422）实测屏宽 45.4%，与之吻合到 0.2 个百分点。
-   ⇒ **帧间取景差异完全由视口宽高比解释，不需要任何相机动画**，也不该加取景放大。
-   （我曾按 f04 目测的"屏宽 50.4%"加过 1.386× 放大 —— 那是把"窗口更窄"误当成了相机拉近，已撤销。）
-   两个 max() 的宽:高都严格 = 1672:941，所以底图永远等比、不露底。 */
+/* 场景层就是"那张书桌照片本身"：等比铺满、居中，**不裁剪、不模糊、不变形、不加 filter**。
+   站主要求："不模糊、不压成背景板" → 压暗只交给上面那层很淡的暗纱（见下）。
+   底图与盒子比例一致（1672×941），所以底图里 CRT 的百分比坐标可以直接拿来定位她。 */
 .xk-crt__stage {
   position: absolute;
   left: 50%;
   top: 50%;
   width: max(100vw, 177.68vh);
-  height: max(56.28vw, 100vh);
+  height: max(100vh, 56.28vw);
   transform: translate(-50%, -50%);
 }
 
@@ -99,98 +94,36 @@ html[data-xk-crt-on="1"] .xk-veil {
        所以窄屏上按"屏幕中心"对齐视口中心：52.03% − 50% = 左移 2.03% 舞台宽。 */
     transform: translate(-52.03%, -50%);
   }
-  /* 窄屏字幕条（步骤 2 改为舞台作用域选择器，否则会被 .xk-kurisu--stage 那条盖掉）：
-     屏幕上宽 96vw，12px 的两行在 45px 高的字幕板上偏小 —— 抬到 13px 起，
-     两行 ≈40px，落在 45px 的板子里不会截断。 */
-  .xk-kurisu--stage .xk-kurisu__say { font-size: clamp(13px, 3.45vw, 16px); }
+  /* 窄屏字幕条：屏幕只有 ~320px 高，11.5% 的高度里要放下两行 —— 12px 太小，
+     抬到 13px 起（实测两行 32px，落在 37px 的条里不会截断）。 */
+  .xk-kurisu__say { font-size: clamp(13px, 3.33vw, 22px); }
 }
 
-/* 氛围光（demo-主页.html 的 .glow）：整帧光晕，screen 混合 + 7s 呼吸。层序：底图之上、CRT 之下。
-   资源来自 /kurisu/scene/amadeus_ambient_high_blend.webp（1672×941，与底图同尺寸）——
-   演示页把它写成无尺寸的 <img>（于是按内在 1672×941 铺在 stage 左上角，等比 stage 大 4.6%、
-   光晕与底图对不齐）；这里按**同一个盒子 100%×100%** 铺，才是光晕该在的位置。
-   用 background 而不是 <img>：.xk-crt 在非主页是 display:none，background-image 那时不会被请求。 */
-.xk-crt__glow {
-  position: absolute;
-  inset: 0;
-  background: url("/kurisu/scene/amadeus_ambient_high_blend.webp") center / 100% 100% no-repeat;
-  mix-blend-mode: screen;
-  opacity: .5;
-  pointer-events: none;
-  animation: xk-crt-breathe 7s ease-in-out infinite;
-}
-@keyframes xk-crt-breathe {
-  0%, 100% { opacity: .42; }
-  50%      { opacity: .58; }
-}
-
-/* CRT 屏幕（**位置盒**，不裁剪）：数值 = manifest.scene.crtBounds.pctOfStage。
-   ★ 2026-10-14：原版里的 CRT 屏幕**不是矩形**，而是 wallpaper/crt_config.json 里手写的 14 点多边形
-     （另一条线照源码换算进 manifest：多边形 x550..1136 / y195..638，包围盒 586×443 = 底图的
-     32.8947% / 20.7226% / 35.0478% / 47.0776%）。旧的 566/168/608/500 那个矩形是错的
-     （右边界多出 38px、上下各多出 27/30px）—— 用矩形会把角色与实验室背景画到玻璃边框上。
-   步骤 2 起：裁剪交给内层 `.xk-crt__clip`（与 demo 的 .crt/.crt-clip 分层一致），
-   这样屏内状态行与字幕条是这一层的兄弟节点、**不会**被 14 边形切到边角。
-   两者必须与 manifest 同步；改一处就要改另一处（scripts/kurisu/apply_crt_geometry.py 会打印这些数）。 */
+/* CRT 屏幕矩形：数值 = manifest.scene.crtRectNorm（源底图 1672×941 上 x566 y168 w608 h500）。
+   两者必须一致；改一处就要改另一处（构建脚本里会打印这几个数）。 */
 .xk-crt__screen {
   position: absolute;
-  left: 32.8947%;
-  top: 20.7226%;
-  width: 35.0478%;
-  height: 47.0776%;
-}
-
-/* CRT 裁剪容器（demo 的 .crt-clip）：14 点多边形（百分比 = manifest 的 pointsPctOfBounds，逐点照抄）。
-   里面按 demo 的层序：空房间底图（背景）→ 角色画布 → 字幕板 → 扫描线 → 暗角。 */
-.xk-crt__clip {
-  position: absolute;
-  inset: 0;
+  left: 33.8517%;
+  top: 17.8534%;
+  width: 36.3636%;
+  height: 53.1350%;
   overflow: hidden;                 /* ★ 角色一律裁剪在屏幕内（源合成脚本就是这么做的） */
-  clip-path: polygon(1.71% 2.26%, 21.50% 0.45%, 50.17% 0.00%, 79.18% 0.68%, 98.46% 3.16%,
-    99.66% 33.41%, 100.00% 67.95%, 98.98% 97.74%, 78.84% 99.55%, 50.51% 100.00%,
-    21.50% 99.10%, 1.02% 97.29%, 0.00% 67.49%, 0.34% 33.18%);
-  /* ★ 步骤 2：空房间底背用 **cover**（照抄 demo 的 `.backplate{object-fit:cover}`）。
-     它比"拉伸填满"更接近 demo：lab.webp 是 912×750（比例 1.216），屏盒是 1.3228 ——
-     拉伸会把房间横向压扁、并让天花板/地板各多出 ~18px 内容；实测屏内平均色差因此从
-     18.1 降到 4 上下（见 _shots/step2/region-diff-1280.txt）。
-     manifest 只给了 scene.images.lab 的 url/尺寸，没有规定放置方式；
-     "拉伸进 crtBounds"那条约束说的是**场景整图**（placementMode=crt_screen，带玻璃边框的成片），
-     与这块空房间底背不是同一个东西，两者不冲突。 */
-  background: var(--xk-kurisu-lab, none) center / cover no-repeat;
+  background: var(--xk-kurisu-lab, none) center / 100% 100% no-repeat;
+  --xk-kurisu-char-h: 98%;          /* = manifest.scene.compose.charHRatio（角色高 / 屏高） */
+  --xk-kurisu-char-foot: 106%;      /* = manifest.scene.compose.footYRatio（脚位置 / 屏高） */
 }
-.xk-crt__clip > * {
+
+/* 极轻的 CRT 质感：一层很淡的扫描线 + 四角暗角。刻意做得很轻（站主："别夸张"）。
+   只用 repeating-linear-gradient 与 radial-gradient，零图片、零动画。 */
+.xk-crt__screen::after {
+  content: "";
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* 字幕板（demo 的 .plate）：2564×430 的板子贴在屏幕底部。
-   ★ demo 里 `.plate` 的 `inset:auto` 写在 left/right/bottom 之后，把那三条全清成了 auto ——
-     实测板子被画到屏幕左上角（截图上屏内多出一条悬空暗带）。这里**不带** inset:auto，
-     位置就是 demo 那三条的本意：left/right 14%、bottom 2.5%、width 72%。
-   它画在角色画布**之上**（原版层序：角色 → 字幕板 → 扫描线/暗角）。 */
-.xk-crt__clip > .xk-crt__plate {
-  left: 14%;
-  right: 14%;
-  top: auto;
-  bottom: 2.5%;
-  width: 72%;
-  height: auto;
-  aspect-ratio: 2564 / 430;
-  background: url("/kurisu/scene/subtitle_frame_big.webp") center / 100% 100% no-repeat;
   pointer-events: none;
-}
-
-/* 极轻的 CRT 质感：一层很淡的扫描线 + 四角暗角（数值照抄 demo 的 .scan / .vig）。
-   刻意做得很轻（站主："别夸张"）。只用 repeating-linear-gradient 与 radial-gradient，零图片、零动画。 */
-.xk-crt__scan {
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .16) 0 1px, transparent 1px 3px);
-  pointer-events: none;
-}
-.xk-crt__vig {
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, .42) 100%);
-  pointer-events: none;
+  background-image:
+    radial-gradient(120% 110% at 50% 50%, rgba(0, 0, 0, 0) 58%, rgba(0, 0, 0, .38) 100%),
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, .10) 0px, rgba(0, 0, 0, .10) 1px,
+      rgba(0, 0, 0, 0) 1px, rgba(0, 0, 0, 0) 3px);
 }
 
 /* ---------------------------------------------------------------------------
@@ -214,76 +147,45 @@ html[data-xk-crt-on="1"] .xk-veil {
 .xk-kurisu__canvas--intro { opacity: 0; pointer-events: none; }
 [data-xk-crt-intro="1"] .xk-kurisu__canvas--intro { opacity: 1; }
 [data-xk-crt-intro="1"] .xk-kurisu__canvas--main { opacity: 0; }
-[data-xk-crt-intro="1"] .xk-crt__clip { background-image: none; }
+[data-xk-crt-intro="1"].xk-crt__screen { background-image: none; }
 /* 开场（贴脸）时字幕条先不出现 —— 视频里前两秒屏内没有字幕，第一句话是站定之后才说的。
    只做 opacity，不改布局（字幕条的位置始终固定，不会因为出现/消失而抖动）。 */
 [data-xk-crt-intro="1"] .xk-kurisu__say { opacity: 0; }
 .xk-kurisu--stage .xk-kurisu__say { transition: opacity 240ms ease; }
 
-/* 屏内底部字幕条：**几何照抄 demo-主页.html 的 .crt-sub**（只在主页舞台形态上生效；
-   右栏面板形态由 §4 的 .xk-kurisu--rail 规则覆盖，不受这里影响）。
-   demo：left/right 16%、bottom 5.2%、居中、13.5px/1.5、min-height 2.6em、浅字 + 深色投影。
-   它压在**字幕板**（.xk-crt__plate）上，板子就是深色垫底；这里再补一层很淡的暗纱，
-   把对比度钉在 ≥4.5:1（实测数值见交付报告），同时不遮住板子的质感。 */
+/* 屏内底部字幕条：位置与源视频标定一致（起于屏高 84.5%、高 11.5%） */
 .xk-kurisu__say {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 84.5%;
+  height: 11.5%;
   margin: 0;
+  padding: 0 .7em;
   display: flex;
   align-items: center;
-  color: #E8F4FF;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  overflow: hidden;
+  background: rgba(10, 12, 16, .86);
+  border-radius: 4px;
+  color: #EEF0F6;                                /* 实测对比度见交付报告 */
+  font-size: clamp(12px, 1.25vw, 22px);          /* 站主："字号要能读"（1280 下 = 16px） */
+  line-height: 1.25;
   letter-spacing: .01em;
 }
-.xk-kurisu--stage .xk-kurisu__say {
-  position: absolute;
-  left: 16%;
-  right: 16%;
-  bottom: 5.2%;
-  justify-content: center;
-  text-align: center;
-  min-height: 2.6em;
-  padding: 0 .35em;
-  /* 字幕板本身就是深色垫底（整板不透明像素平均亮度只有 9.9/255）；但板子左右两端
-     各有一条发亮的斑驳纹理（实测最亮 155/255）。字幕是**居中且几乎占满**这条宽度的，
-     长句的首尾字会压到那两条亮纹上 —— 实测"字 vs 亮纹"只有 1.6:1。
-     所以这里留一层 alpha .62 的暗纱：亮纹被压到 6:1 以上，板子的边框（左右各 ~11px、
-     上下各 ~28px）仍然露在外面看得见。数值见交付报告 _shots/step2/contrast.txt。 */
-  background: rgba(6, 9, 13, .62);
-  border-radius: 3px;
-  font-size: clamp(12px, 1.06vw, 15px);          /* demo 是 13.5px；1280 下 = 13.6px */
-  line-height: 1.5;
-}
-/* 闪烁光标（demo 的 .crt-sub .cursor）：纯装饰，且**不在**播放器写 textContent 的那个 span 里
-   —— 否则 textContent = ... 会把光标一起抹掉。 */
-.xk-kurisu__cursor {
-  display: inline-block;
-  width: .5em;
-  height: 1em;
-  margin-left: 2px;
-  background: #39D0D8;
-  vertical-align: -2px;
-  animation: xk-crt-cursor 1s steps(1) infinite;
-}
-@keyframes xk-crt-cursor { 50% { opacity: 0; } }
 
-/* 屏内右上状态行：真实数据或"读不到"。外观照抄 demo 的 .crt-status
-   （mono 11px / #DFF3FF / rgba(8,14,20,.55) 垫底 / 4px 9px / 6px 圆角 / 右对齐）。
-   demo 那三行是演示数字；本站只写**真实接口数字**，取不到就是"读不到（…不补数）"。 */
+/* 屏内右上状态行：真实数据或"读不到"。带一层深色胶囊底，保证压在任何屏幕内容上都 ≥4.5:1 */
 .xk-kurisu__status {
   position: absolute;
   right: 5%;
-  top: 4.5%;
-  z-index: 5;
+  top: 3.4%;
   margin: 0;
   max-width: 68%;
-  padding: 4px 9px;
-  border-radius: 6px;
-  background: rgba(8, 14, 20, .55);
-  color: #DFF3FF;
-  font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
-  font-size: clamp(8px, 0.86vw, 11px);
-  line-height: 1.7;
-  letter-spacing: .04em;
-  text-align: right;
+  padding: .12em .6em;
+  border-radius: 999px;
+  background: rgba(8, 12, 18, .72);
+  color: #D6EFDC;
+  font-size: clamp(8px, 0.72vw, 13px);
+  line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -510,11 +412,8 @@ html[data-xk-theme="tech"] .xk-kbar { background: var(--xk-t-card); border-color
    8. 降级：reduced-motion（真的不动）、窄屏（移动端形态）
    --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
-  /* 站规约：reduced-motion 下不出现任何位移/缩放/过渡。
-     步骤 2 起"会动"的三样东西是：氛围光呼吸（demo 的 .glow）、字幕光标闪烁（demo 的 .cursor）、
-     两层画布的 420ms 互淡。这里逐条停掉 —— 静止但仍是一帧完整画面（静态海报感）。 */
-  .xk-crt__glow { animation: none; opacity: .5; }
-  .xk-kurisu__cursor { animation: none; opacity: 1; }
+  /* 站规约：reduced-motion 下不出现任何位移/缩放/过渡 */
+  .xk-crt__screen::after { background-image: none; }
   .xk-kurisu__canvas { transition: none !important; }
   /* 开场帧序列在 reduced-motion 下整段不播（JS 判定 staticOnly）→ 开场层永远透明 */
   .xk-kurisu__canvas--intro { opacity: 0 !important; }
