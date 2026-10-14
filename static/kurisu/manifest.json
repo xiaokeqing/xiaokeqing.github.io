@@ -9,15 +9,15 @@
  },
  "budgets": {
   "firstScreenBudgetBytes": 1500000,
-  "firstScreenBytes": 971422,
+  "firstScreenBytes": 927562,
   "firstScreenFiles": {
-   "full/lookcrt.boot.webp": 325524,
+   "full/opening.boot.webp": 281664,
    "full/idle.boot.webp": 531854,
    "full/idle.poster.webp": 23114,
    "avatar/normal.idle.webp": 86696,
    "avatar/normal.static.webp": 4234
   },
-  "note": "首屏 = 开场图集(lookcrt.boot) + idle boot 图集 + 静帧 + 头像静帧；hi 图集在首屏渲染完成后后台补",
+  "note": "首屏 = 开场 boot 图集 + idle boot 图集 + 静帧 + 头像静帧；hi 图集首屏渲染完成后后台补",
   "warnings": [
    "speaking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）",
    "thinking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）"
@@ -26,26 +26,14 @@
  "scene": {
   "source": {
    "w": 1672,
-   "h": 941
-  },
-  "crtRect": {
-   "x": 566,
-   "y": 168,
-   "w": 608,
-   "h": 500
-  },
-  "crtRectNorm": {
-   "x": 0.338517,
-   "y": 0.178533,
-   "w": 0.363636,
-   "h": 0.53135
+   "h": 941,
+   "note": "实拍桌面大图（原版 amadeus_desktop_wallpaper.png）"
   },
   "compose": {
-   "charHRatio": 0.98,
-   "footYRatio": 1.06,
    "bgZoom": 1.45,
    "bgBright": 1.3,
-   "bgSaturate": 1.1
+   "bgSaturate": 1.1,
+   "note": "bgZoom/bgBright/bgSaturate 是底图烘焙时的历史参数；角色落位已改用 scene.character 的源码公式，不再用估计值"
   },
   "images": {
    "desk": {
@@ -70,6 +58,266 @@
     "h": 750,
     "bytes": 59950
    }
+  },
+  "crtPolygon": {
+   "provenance": "source-checkout:E:\\DeepSeek1\\work\\_amadeus-src\\wallpaper\\crt_config.json",
+   "units": "底图 px（1672x941）",
+   "points": [
+    [
+     560,
+     205
+    ],
+    [
+     676,
+     197
+    ],
+    [
+     844,
+     195
+    ],
+    [
+     1014,
+     198
+    ],
+    [
+     1127,
+     209
+    ],
+    [
+     1134,
+     343
+    ],
+    [
+     1136,
+     496
+    ],
+    [
+     1130,
+     628
+    ],
+    [
+     1012,
+     636
+    ],
+    [
+     846,
+     638
+    ],
+    [
+     676,
+     634
+    ],
+    [
+     556,
+     626
+    ],
+    [
+     550,
+     494
+    ],
+    [
+     552,
+     342
+    ]
+   ],
+   "pointsNorm": [
+    [
+     0.334928,
+     0.217853
+    ],
+    [
+     0.404306,
+     0.209352
+    ],
+    [
+     0.504785,
+     0.207226
+    ],
+    [
+     0.606459,
+     0.210414
+    ],
+    [
+     0.674043,
+     0.222104
+    ],
+    [
+     0.67823,
+     0.364506
+    ],
+    [
+     0.679426,
+     0.527099
+    ],
+    [
+     0.675837,
+     0.667375
+    ],
+    [
+     0.605263,
+     0.675877
+    ],
+    [
+     0.505981,
+     0.678002
+    ],
+    [
+     0.404306,
+     0.673751
+    ],
+    [
+     0.332536,
+     0.66525
+    ],
+    [
+     0.328947,
+     0.524973
+    ],
+    [
+     0.330144,
+     0.363443
+    ]
+   ],
+   "pointsPctOfBounds": [
+    [
+     1.7065,
+     2.2573
+    ],
+    [
+     21.5017,
+     0.4515
+    ],
+    [
+     50.1706,
+     0.0
+    ],
+    [
+     79.1809,
+     0.6772
+    ],
+    [
+     98.4642,
+     3.1603
+    ],
+    [
+     99.6587,
+     33.4086
+    ],
+    [
+     100.0,
+     67.9458
+    ],
+    [
+     98.9761,
+     97.7427
+    ],
+    [
+     78.8396,
+     99.5485
+    ],
+    [
+     50.5119,
+     100.0
+    ],
+    [
+     21.5017,
+     99.0971
+    ],
+    [
+     1.0239,
+     97.2912
+    ],
+    [
+     0.0,
+     67.4944
+    ],
+    [
+     0.3413,
+     33.1828
+    ]
+   ],
+   "cornersApprox": [
+    [
+     556,
+     629
+    ],
+    [
+     560,
+     199
+    ],
+    [
+     1127,
+     204
+    ],
+    [
+     1132,
+     630
+    ]
+   ],
+   "note": "原版手写的 14 点 CRT 屏幕多边形（不是矩形）。CSS 里用 clip-path: polygon() 套在 .xk-crt__screen 上，顶点就是 pointsPctOfBounds。"
+  },
+  "crtBounds": {
+   "px": {
+    "x": 550,
+    "y": 195,
+    "w": 586,
+    "h": 443,
+    "right": 1136,
+    "bottom": 638
+   },
+   "pctOfStage": {
+    "x": 32.8947,
+    "y": 20.7226,
+    "w": 35.0478,
+    "h": 47.0776
+   },
+   "aspect": 1.322799,
+   "note": "多边形包围盒；角色落位与场景图拉伸都以它为基准（原版 bounds）"
+  },
+  "cover": {
+   "imgW": 1672,
+   "imgH": 941,
+   "css": {
+    "width": "max(100vw, 177.68vh)",
+    "height": "max(56.28vw, 100vh)"
+   },
+   "formula": "scale = max(screenW/imgW, screenH/imgH); t.x = (screenW - imgW*scale)/2; t.y = (screenH - imgH*scale)/2; stage 元素按底图比例 cover 铺满 → 底图 px 坐标映射到 stage 只是 x/1672、y/941，与视口无关，所以百分比可写死",
+   "note": "★ 2026-10-14 返工：删掉上一版 1.386 倍的『取景放大』。实测站主录屏第 2 秒 = 原图 1.00 倍 cover（masked NCC 0.965，屏宽 35.0% vs 预测 35.05%），所以正解就是原版的 cover，不加任何倍率。"
+  },
+  "character": {
+   "canvasSize": {
+    "w": 764,
+    "h": 1028
+   },
+   "formula": "scale = min(bounds.w*0.64/canvasW, bounds.h*0.90/canvasH); x = bounds.x + bounds.w*0.52; y = bounds.bottom - max(3, bounds.h*0.012); anchor=(0.5,1.0)",
+   "maxWidthRatio": 0.64,
+   "maxHeightRatio": 0.9,
+   "xRatio": 0.52,
+   "footRatio": 0.012,
+   "source": "render/web/renderer.js:797-825"
+  },
+  "sourceCrop": {
+   "norm": [
+    0.08083,
+    0.105778,
+    0.845494,
+    0.801778
+   ],
+   "px": {
+    "x0": 113,
+    "y0": 119,
+    "w": 1182,
+    "h": 902
+   },
+   "note": "场景图/特写帧先按这个框裁掉外圈玻璃，再拉伸进 crtBounds（placementMode=crt_screen）",
+   "source": "wallpaper/scene_assets.py:62-67"
+  },
+  "subtitlePlate": {
+   "srcW": 2564,
+   "srcH": 430,
+   "aspect": 5.9628,
+   "formula": "w = clamp(bounds.w*0.72, 180, bounds.w-24); h = clamp(w/aspect, 34, bounds.h*0.16); x = bounds.x + (bounds.w-w)/2; y = bounds.bottom - h",
+   "source": "render/web/wallpaper_scene.js:176-196"
   }
  },
  "clips": {
@@ -189,38 +437,53 @@
    },
    "intro": null
   },
-  "lookcrt": {
-   "frames": 30,
-   "frameIntervalMs": 100,
+  "opening": {
+   "frames": 84,
+   "frameIntervalMs": 33.333333333333336,
    "loopMode": "once_then_hold",
-   "fit": "screen",
    "role": "intro",
-   "next": "idle",
+   "fit": "crt_screen",
+   "next": "empty",
    "columns": 8,
-   "frameWidth": 392,
-   "frameHeight": 315,
+   "frameWidth": 380,
+   "frameHeight": 290,
    "source": {
     "bundle": "amadeus-visual-runtime-2026-09-26.zip",
     "clip": "look_at_CRT_loop",
-    "frames": 180,
-    "frameIntervalMs": 33,
-    "stride": 3,
-    "note": "原包 assets/scenarios/runtime/look_at_CRT/look_at_CRT_loop/loop/ 的现成 PNG 序列：整段就是「贴脸靠近镜头」的成片，含房间与 CRT 边框，所以按整屏绘制（fit=screen）。原包没有「镜头拉远」的序列，开场结束后由播放器做一次淡入淡出切到 idle。"
+    "sourceFrames": 180,
+    "sourceFps": 30.0,
+    "stride": 1,
+    "cropNorm": [
+     0.08082975679542204,
+     0.10577777777777778,
+     0.9263233190271817,
+     0.9075555555555556
+    ],
+    "shippedFrames": 84,
+    "note": "原包 look_at_CRT_loop 的真序列（180 帧 @30fps）。逐帧 stride=1，所以第 38–43 帧那一次真眨眼在图集里是帧对齐的（实测闭眼 39–42）。拼装时间线里特写在 ≈2.0s 被交叉淡入到空房间，故只发前 84 帧。"
    },
    "atlas": {
     "boot": {
-     "url": "kurisu/full/lookcrt.boot.webp",
-     "frames": 30,
-     "w": 3136,
-     "h": 1260,
-     "bytes": 325524
+     "url": "kurisu/full/opening.boot.webp",
+     "frames": 24,
+     "w": 3040,
+     "h": 870,
+     "bytes": 281664
+    },
+    "hi": {
+     "url": "kurisu/full/opening.hi.webp",
+     "frames": 84,
+     "w": 3040,
+     "h": 3190,
+     "bytes": 1027750,
+     "decodedBytes": 38790400
     }
    },
    "poster": {
-    "url": "kurisu/full/lookcrt.poster.webp",
-    "w": 392,
-    "h": 315,
-    "bytes": 13906
+    "url": "kurisu/full/opening.poster.webp",
+    "w": 380,
+    "h": 290,
+    "bytes": 15244
    }
   }
  },

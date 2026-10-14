@@ -40,10 +40,23 @@
        instance.setEmotion(name)              -> Promise（头像模式；8 情绪）
        instance.showSubtitle(text)            -> 写入真文本节点
        instance.status(text|object)           -> 屏内右上状态行
-       instance.intro(opts)                   -> Promise（"大头出场"：特写 → 拉远到全身）
+       instance.intro(opts)                   -> Promise（开场：原包现成帧序列 + 淡切到全身）
        instance.pause() / resume() / destroy()
        instance.speak(phraseId, text)         -> Promise<{ok:false, reason:'TTS_DISABLED'}>
-                                                 ★ 语音线（另派）从这里接进来
+                                                 ★ 有 text 时【同时】驱动“说话”帧动画 + 字幕（TTS 语音线另派，本轮仍是空实现）
+   ============================================================================
+   开场（“贴脸大头 → 拉远到全身站定”怎么做的）：
+     · 帧序列**不是** transform: scale() 缩出来的 —— 全部来自原包现成序列：
+       04 场景包 assets/scenarios/runtime/look_at_CRT/look_at_CRT_loop/loop/ 的 180 张 PNG
+       （整段就是“贴脸靠近镜头”的成片），由 scripts/kurisu/build_intro_clip.py 打成
+       full/opening.{boot,hi,poster}.webp；清单里是 clips.opening（role:"intro"、fit:"crt_screen"、
+        stride=1、boot 24 帧 + hi 84 帧）。
+     · 原包里【没有】“镜头拉远”的序列（39 个角色剪辑都是同一机位的全身动作：
+       idle / trans_standby / speaking…）。所以开场结束后由本模块做一次 420ms 的
+       淡入淡出切到 idle 全身 —— 交付报告里明说，不吹成“拉远动画”。
+     · 状态行取真实数据：先从页面上真实渲染出来的节点读（其它路由 / AI 页），
+       主页那些节点已经按站主要求删掉了，于是退回**自己请求** /api/public/overview
+       （已上线白名单端点）；两条都取不到就如实写“读不到”，绝不编数字。
    ============================================================================ */
 
 (function (global) {
@@ -147,6 +160,68 @@
     };
   }
 
+  /* ------------------------------------------- 屏内状态行的"真实数据"来源 */
+  /* 主页把指标卡 / 统计节点全删了（站主：主页其它内容一个都不留），状态行不能再指望
+     页面里已经有数字可读 —— 但也不许写死。这里自己请求已在白名单里的公开端点
+     /api/public/overview（只读、无鉴权），把 nodes[].online 与告警窗口计数拼成人话；
+     请求失败 / 超时 / 字段缺失一律退回"读不到"。60s 一次，失败也退避，不刷屏。 */
+  var liveStatus = { data: null, at: 0, loading: false, failed: false };
+  var LIVE_STATUS_TTL = 60000;
+
+  function apiBaseUrl() {
+    try {
+      var el = document.getElementById('xk-boot');
+      if (el) {
+        var j = JSON.parse(el.textContent || '{}');
+        if (j && j.apiBase) { return String(j.apiBase).replace(/\/+$/, ''); }
+      }
+    } catch (e) { /* 读不到就用相对路径 */ }
+    return '';
+  }
+
+  function liveStatusTick() {
+    var now = Date.now();
+    if (liveStatus.loading) { return; }
+    if (liveStatus.at && (now - liveStatus.at) < LIVE_STATUS_TTL) { return; }
+    if (!global.fetch) { liveStatus.failed = true; liveStatus.at = now; return; }
+    liveStatus.loading = true;
+    fetch(apiBaseUrl() + '/api/public/overview', {
+      method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store'
+    }).then(function (r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    }).then(function (b) {
+      var d = (b && b.data) ? b.data : b;
+      liveStatus.data = d || null;
+      liveStatus.failed = !d;
+      liveStatus.at = Date.now();
+      liveStatus.loading = false;
+      mounts.forEach(function (p) { try { p.refreshStatus(); } catch (e) { /* 忽略 */ } });
+    }, function () {
+      liveStatus.failed = true;
+      liveStatus.at = Date.now();
+      liveStatus.loading = false;
+    });
+  }
+
+  function composeLiveStatus() {
+    var d = liveStatus.data;
+    if (!d) { return ''; }
+    var parts = [];
+    var nodes = d.nodes || [];
+    nodes.slice(0, 2).forEach(function (n) {
+      if (!n) { return; }
+      var label = String(n.label || '节点').split('·')[0].replace(/\s+$/, '');
+      parts.push(label + (n.online ? ' 在线' : ' 掉线'));
+    });
+    var al = d.alerts || {};
+    if (al.windowCount !== null && al.windowCount !== undefined) {
+      parts.push('告警窗口 ' + al.windowCount + ' 条');
+    }
+    if (al.high !== null && al.high !== undefined) { parts.push('高危 ' + al.high); }
+    return parts.length ? parts.join(' · ') : '';
+  }
+
   /* ------------------------------------------------------------- 状态行 */
   /* 站主红线：状态行不许写死数字，必须是【真实数据】或"读不到"。
      这里不去自己打接口（那会多一次请求、也会多一处口径），而是读页面上
@@ -194,7 +269,14 @@
 
   function composeStatus() {
     var pairs = readRealPairs();
-    if (!pairs || !pairs.length) { return '读不到实时数字（本页没有可核验的数据节点）'; }
+    if (!pairs || !pairs.length) {
+      /* 主页的数据节点已经整块删掉了（站主要求）→ 退回自己请求的真实公开端点 */
+      liveStatusTick();
+      var live = composeLiveStatus();
+      if (live) { return live; }
+      if (liveStatus.loading || (!liveStatus.failed && !liveStatus.data)) { return '正在读取…'; }
+      return '读不到实时数字（接口本次取不到，不补数）';
+    }
     if (pairs.some(function (p) { return p.raw === '未接入' || p.raw === '读不到'; })) {
       return '读不到（接口本次取不到，不补数）';
     }
@@ -228,17 +310,27 @@
     this.elapsed = 0;
     this.paused = false;
     this.destroyed = false;
+    /* 降级：reduced-motion / saveData 只画静态一帧。
+       ★ 窄屏（≤980px）**只有右栏面板**还降级（那是别的栏目页的既有行为，保持现状）；
+         舞台（CRT 屏内）在窄屏上也播逐帧动画 —— 站主要"网页一进来就是这个大屏效果"。 */
     this.staticOnly = !!opts.staticOnly || this.env.reducedMotion || this.env.saveData ||
-      (this.env.narrow && (this.mode === 'stage' || this.mode === 'rail'));
-    // 头像模式：非 AI 页的右栏、角落点缀、以及所有窄屏 —— 用 132px 图集而不是全身序列
-    this.avatarMode = this.mode === 'corner' || this.env.narrow ||
-      this.mount.hasAttribute('data-xk-kurisu-avatar');
+      (this.env.narrow && this.mode === 'rail');
+    /* 头像形态（132px 图集）：只剩"角落点缀"、显式标了 data-xk-kurisu-avatar 的面板、
+       以及窄屏右栏面板用；**舞台（CRT 屏内）永远是全身序列**，手机上也一样。 */
+    this.avatarMode = this.mode === 'corner' || this.mount.hasAttribute('data-xk-kurisu-avatar') ||
+      (this.env.narrow && this.mode === 'rail');
     this.avatarFrame = this.avatarMode;
     this.inactive = false;     // 挂载点不可见（display:none）时为 true：一个字节都不载
     this.canvas = q('[data-xk-kurisu-canvas]', this.mount);
     this.sayEl = q('[data-xk-kurisu-say]', this.mount);
     this.statusEl = q('[data-xk-kurisu-status]', this.mount);
     this.introEl = q('[data-xk-kurisu-intro]', this.mount);
+    /* 开场序列画在**单独一层画布**上（整屏铺满），底下 idle 同时跑着：
+       序列播完只要摘掉 data-xk-crt-intro，两层各做 420ms 的 opacity 过渡 = 淡切到全身。 */
+    this.introCanvas = q('[data-xk-kurisu-canvas-intro]', this.mount);
+    this.introCtx = null;
+    this.introState = null;
+    this.onceResolve = null;
     this.voiceBtn = q('[data-xk-kurisu-voice]', this.mount);
     this.emoEl = q('[data-xk-kurisu-emo]', this.mount);
     this.placeholderSay = this.sayEl ? (this.sayEl.getAttribute('data-xk-default-say') ||
@@ -293,12 +385,10 @@
       this.canvas.setAttribute('aria-hidden', 'true');
       this.ctx = this.canvas.getContext('2d');
     }
-    if (this.introEl) {
-      this.introEl.setAttribute('aria-hidden', 'true');
-      // 特写静帧在模板里只有 data-src（不是 src）：站主要求角色资源在首屏渲染完成之后
-      // 才开始加载。走到这里说明已经过了延迟窗口，这时候才赋 src。
-      var ds = this.introEl.getAttribute('data-src');
-      if (ds && !this.introEl.getAttribute('src')) { this.introEl.setAttribute('src', ds); }
+    if (this.introCanvas) {
+      // 开场那一层同样是装饰（真文字在字幕条里）
+      this.introCanvas.setAttribute('aria-hidden', 'true');
+      this.introCtx = this.introCanvas.getContext('2d');
     }
     if (this.statusEl) {
       this.statusEl.textContent = '正在读取…';
@@ -323,6 +413,8 @@
 
   Player.prototype.refreshStatus = function () {
     if (!this.statusEl || this.destroyed) { return; }
+    // 舞台没有可读的真实节点（主页已删干净）→ 这里触发一次公开端点请求（TTL 内不会重复）
+    if (this.mode === 'stage') { liveStatusTick(); }
     var txt = composeStatus();
     if (this.statusEl.textContent !== txt) { this.statusEl.textContent = txt; }
   };
@@ -355,20 +447,27 @@
     return { w: 132, h: 132 };   // corner
   };
 
-  Player.prototype.handleResize = function () {
-    if (!this.canvas || this.destroyed) { return; }
+  /* 两张画布同一套尺寸（开场层 + 角色层），DRP 上限与显存上限共用一份逻辑 */
+  Player.prototype.sizeCanvases = function () {
+    if (!this.canvas || this.destroyed) { return null; }
     var box = this.boxSize();
     var dpr = Math.min(global.devicePixelRatio || 1, 2);
-    // 上限：别在 4K 上开一张巨画布（省显存也是省电）
     dpr = Math.min(dpr, Math.max(1, Math.sqrt(MAX_ATLAS_PIXELS / Math.max(1, box.w * box.h))));
     var w = Math.max(1, Math.round(box.w * dpr));
     var h = Math.max(1, Math.round(box.h * dpr));
-    if (this.canvas.width !== w || this.canvas.height !== h) {
-      this.canvas.width = w;
-      this.canvas.height = h;
-    }
+    [this.canvas, this.introCanvas].forEach(function (c) {
+      if (!c) { return; }
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    });
     this._cssW = box.w; this._cssH = box.h;
+    return { w: w, h: h };
+  };
+
+  Player.prototype.handleResize = function () {
+    if (!this.canvas || this.destroyed) { return; }
+    this.sizeCanvases();
     this.draw();
+    this.drawIntro();
   };
 
   Player.prototype.clear = function () {
@@ -439,18 +538,41 @@
     if (!img) { return; }
     cur.tier = atlas.hi ? 'hi' : 'boot';     // boot → hi 平滑替换（同分辨率、帧序一致）
     var total = cur.frames;
-    var idx = cur.fixedFrame != null ? cur.fixedFrame
-      : Math.floor(this.elapsed / cur.interval) % total;
+    var idx;
+    if (cur.fixedFrame != null) { idx = cur.fixedFrame; }
+    else if (cur.once) { idx = Math.min(total - 1, Math.floor(this.elapsed / cur.interval)); }
+    else { idx = Math.floor(this.elapsed / cur.interval) % total; }
     if (idx < 0) { idx = 0; }
     // boot 图集只有前 N 帧：还没补到 hi 时用取模回绕，保证始终有画面
     if (!atlas.hi && idx >= atlas.bootFrames) { idx = idx % atlas.bootFrames; }
     var col = idx % cur.columns;
     var row = Math.floor(idx / cur.columns);
     var cw = this.canvas.width, ch = this.canvas.height;
-    var r = this.charRect(cw, ch, cur.fw / cur.fh);
+    // fit:"screen" / "crt_screen" = 整屏绘制（原包场景成片：房间 + 她 + 显示器边框都在帧里）
+    var r = (cur.fit === 'screen' || cur.fit === 'crt_screen')
+      ? { x: 0, y: 0, w: cw, h: ch } : this.charRect(cw, ch, cur.fw / cur.fh);
     this.ctx.clearRect(0, 0, cw, ch);
     this.ctx.imageSmoothingQuality = 'high';
     this.ctx.drawImage(img, col * cur.fw, row * cur.fh, cur.fw, cur.fh, r.x, r.y, r.w, r.h);
+  };
+
+  /* 开场序列：单独一条时间轴（不占 this.current，所以底下 idle 可以同时跑着）。
+     绘制用 **cover**（等比放大到铺满，居中裁掉多余的边）—— 开场图集是"裁掉显示器边框后的
+     屏幕内容"，它的宽高比（380×290 / 392×315）与屏幕矩形（608×500）不完全一致，
+     拉伸会把人压扁，cover 只是裁掉一点边。 */
+  Player.prototype.drawIntro = function () {
+    if (!this.introCtx || !this.introState) { return; }
+    var s = this.introState;
+    var idx = Math.min(s.frames - 1, Math.floor(s.elapsed / s.interval));
+    if (idx < 0) { idx = 0; }
+    var col = idx % s.columns, row = Math.floor(idx / s.columns);
+    var cw = this.introCanvas.width, ch = this.introCanvas.height;
+    var k = Math.max(cw / s.fw, ch / s.fh);
+    var dw = s.fw * k, dh = s.fh * k;
+    this.introCtx.clearRect(0, 0, cw, ch);
+    this.introCtx.imageSmoothingQuality = 'high';
+    this.introCtx.drawImage(s.img, col * s.fw, row * s.fh, s.fw, s.fh,
+      (cw - dw) / 2, (ch - dh) / 2, dw, dh);
   };
 
   /* ------------------------------------------------------------ 播放控制 */
@@ -458,7 +580,21 @@
     if (this.paused || this.destroyed) { return; }
     if (!this.t0) { this.t0 = now; }
     this.elapsed = now - this.t0;
+    if (this.introState) { this.introState.elapsed = now - this.introState.t0; }
     this.draw();
+    this.drawIntro();
+    var cur = this.current;
+    if (cur && cur.once && this.onceResolve && this.elapsed >= cur.interval * cur.frames) {
+      var done = this.onceResolve;
+      this.onceResolve = null;
+      done(cur);
+    }
+    var s = this.introState;
+    if (s && s.elapsed >= s.duration && s.onDone) {
+      var f = s.onDone;
+      s.onDone = null;
+      f();
+    }
     var self = this;
     this.raf = global.requestAnimationFrame(function (n) { self.tick(n); });
   };
@@ -537,6 +673,10 @@
       fh: spec.frameHeight,
       interval: Math.max(16, spec.frameIntervalMs || 42),
       tier: atlas.hi ? 'hi' : 'boot',
+      // fit:"screen" = 整屏铺满（原包场景成片）；默认 "char" = 按 charRect 站在屏幕里
+      fit: spec.fit || 'char',
+      // once_then_hold = 只播一遍并停在最后一帧（开场的贴脸序列就是这种）
+      once: spec.loopMode === 'once_then_hold',
       fixedFrame: null
     };
   };
@@ -557,11 +697,23 @@
       // 只播 1 秒的 idle 循环，boot 的 24 帧同分辨率已经够用 —— 这样 AI 页的角色字节
       // 从 519KB(boot)+1.3MB(hi) 降到 519KB，稳稳落在 1.5MB 首屏预算内。
       if (self.mode === 'stage') { self.loadHi(name); }
-      if (self.current.fixedFrame == null) { self.elapsed = self.elapsed % (self.current.interval * self.current.frames); }
+      // 换剪辑 = 时间轴从头开始（once 剪辑靠这个保证每次都从第一帧播）
+      self.t0 = 0;
+      self.elapsed = 0;
+      self.onceResolve = null;
       self.draw();
       self.startLoop();
       self.setState('clip:' + name);
       return self.current;
+    });
+  };
+
+  /** 播一个 once_then_hold 剪辑，播完（最后一帧也放完）resolve —— 开场用 */
+  Player.prototype.playOnce = function (name) {
+    var self = this;
+    return this.play(name).then(function (cur) {
+      if (!cur || !cur.once) { return cur; }
+      return new Promise(function (resolve) { self.onceResolve = resolve; });
     });
   };
 
@@ -645,33 +797,112 @@
     this.statusEl.textContent = (typeof v === 'string' && v) ? v : composeStatus();
   };
 
-  /* -------------------------------------------------- "大头出场"（主页） */
-  /* 素材里【没有】独立的贴脸特写镜头 → 用 idle 首帧的**原生分辨率静帧**当特写底图，
-     再用 CSS transform scale 从 2.6 倍缩到 1 倍（transform-origin 在头部），
-     同时画布在下面按正常比例播 idle；结尾静帧淡出 → 看起来就是"贴脸 → 拉远到全身"。
-     用 CSS transform 而不是逐帧缩放：不占主线程、不掉帧；reduced-motion 下直接跳过。 */
+  /* --------------------------------------------------------- 开场（主页） */
+  /* ★ 站主 2026-10-14 返工："开场贴脸→拉远→站定不要用 CSS 造假，原包里是做好的动画"。
+     所以这段现在**只用原包现成的帧序列**：
+       · clips.opening = 04 场景包 assets/scenarios/runtime/look_at_CRT/look_at_CRT_loop/loop/
+         的 180 张 PNG（整段就是"贴脸靠近镜头"的成片），按原版 placementMode="crt_screen"
+         的归一化裁剪框 [113/1398, 119/1125, 1182/1398, 902/1125] 切掉外圈玻璃，
+         再拉伸进 CRT 多边形包围盒；逐帧 stride=1（第 38–43 帧那一次真眨眼因此不会被抽掉）。
+         由 scripts/kurisu/build_intro_clip.py 打成 full/opening.{boot,hi,poster}.webp：
+         boot 24 帧（首屏，0.28MB）+ hi 84 帧（≈2.8s，1.0MB，首帧之后后台补）。
+       · 画在**单独一层画布**（.xk-kurisu__canvas--intro）上整屏铺满（cover 不拉伸）；
+         底下 idle 全身同时在跑。序列播完 → 摘掉 [data-xk-crt-intro] → 两层各 420ms 互淡。
+      ⚠️ 诚实声明：原包里**没有**"镜头拉远"的序列（39 个角色剪辑全是同一机位的全身动作），
+         所以最后这一步是**淡入淡出**，不是 zoom。若映射表里找到真正的过渡序列，
+         只要把 manifest 的 clips.<name>.role 改成 "intro"，这里一行都不用改。 */
   Player.prototype.intro = function (o) {
     o = o || {};
     var self = this;
-    var el = this.introEl;
-    var dur = o.durationMs || 2400;
-    var from = o.from || 2.6;
-    if (!el || this.staticOnly || this.env.reducedMotion) {
-      if (el) { el.style.opacity = '0'; }
-      return Promise.resolve({ played: false, reason: this.env.reducedMotion ? 'reduced-motion' : 'no-intro-asset' });
+    var m = this.manifest || {};
+    var name = o.clip || introClipName(m);
+    if (!name) { this.endIntro(); return Promise.resolve({ played: false, reason: 'no-intro-clip' }); }
+    if (this.staticOnly || !this.introCanvas) {
+      this.endIntro();
+      return Promise.resolve({
+        played: false,
+        reason: this.staticOnly ? 'static-only(reduced-motion/saveData)' : 'no-intro-canvas'
+      });
     }
-    el.style.transition = 'none';
-    el.style.transform = 'translateX(-50%) scale(' + from + ')';
-    el.style.opacity = '1';
-    this.setState('intro');
-    return nextFrame().then(function () {
-      el.style.transition = 'transform ' + dur + 'ms cubic-bezier(.22,.61,.36,1), opacity 500ms ' +
-        Math.max(0, dur - 500) + 'ms ease-out';
-      el.style.transform = 'translateX(-50%) scale(1)';
-      el.style.opacity = '0';
-      return new Promise(function (r) { setTimeout(function () { r({ played: true }); }, dur + 60); });
+    var spec = (m.clips || {})[name];
+    if (!spec) { this.endIntro(); return Promise.resolve({ played: false, reason: 'no-intro-spec' }); }
+    // 先挂属性（此时画布是空的、屏幕背景也收起来）—— 避免"全身先闪一下再贴脸"
+    this.mount.setAttribute('data-xk-crt-intro', '1');
+    this.setState('intro:loading');
+    return this.ensureClip(name, true).then(function (atlas) {
+      if (self.destroyed) { return { played: false, reason: 'destroyed' }; }
+      if (!atlas || !atlas.boot) { self.endIntro(); return { played: false, reason: 'no-intro-atlas' }; }
+      var interval = Math.max(16, spec.frameIntervalMs || 100);
+      var hold = o.holdMs || 300;
+      /* 开场时长：清单里可能给了 180 帧 @30fps（=6s）的完整序列，但"贴脸 → 站定"不该拖 6 秒。
+         所以：先按 boot 图集能给的帧数播；hi 档到了再续上，但整体封顶 introMaxMs（默认 2800ms，
+         清单可用 clips.<name>.introMaxMs 覆盖）。原包 look_at_CRT_loop 的前 ~84 帧（2.8s）就是
+         "贴脸靠近"那一段，够用。 */
+      var bootFrames = atlas.bootFrames || spec.frames;
+      var capFrames = Math.max(1, Math.round((spec.introMaxMs || o.maxMs || 2800) / interval));
+      var frames = Math.min(spec.frames, bootFrames, capFrames);
+      self.introState = {
+        clip: name,
+        img: atlas.boot,
+        frames: frames,
+        maxFrames: Math.min(spec.frames, capFrames),
+        columns: spec.columns || 8,
+        fw: spec.frameWidth,
+        fh: spec.frameHeight,
+        interval: interval,
+        duration: interval * frames + hold,
+        hold: hold,
+        hiLoading: false,
+        t0: 0, elapsed: 0, onDone: null
+      };
+      self.setState('intro:' + name + '(' + frames + ')');
+      self.startLoop();
+      /* hi 档（全帧图集）后台补：到了就把开场无缝续到 maxFrames —— 不阻塞首屏，
+         拿不到就播 boot 那几十帧（并如实把帧数写进 state 给取证用）。 */
+      var hi = (spec.atlas || {}).hi;
+      if (hi && hi.url && self.mode === 'stage' && !self.staticOnly) {
+        self.introState.hiLoading = true;
+        loadImage(joinUrl(self.basePath, hi.url)).then(function (img) {
+          var st = self.introState;
+          if (self.destroyed || !st || st.clip !== name) { return; }
+          st.img = img;
+          st.frames = st.maxFrames;
+          st.duration = interval * st.frames + hold;
+          st.hiLoading = false;
+          self.setState('intro:' + name + '(hi/' + st.frames + ')');
+        }, function () {
+          if (self.introState && self.introState.clip === name) { self.introState.hiLoading = false; }
+        });
+      }
+      return new Promise(function (resolve) {
+        self.introState.onDone = function () {
+          var played = self.introState ? self.introState.frames : frames;
+          self.endIntro();
+          resolve({ played: true, clip: name, frames: played });
+        };
+      });
     });
   };
+
+  /** 开场结束：摘属性 → CSS 让两层同时过渡（贴脸淡出 / 全身淡入） */
+  Player.prototype.endIntro = function () {
+    this.mount.removeAttribute('data-xk-crt-intro');
+    this.introState = null;
+    if (this.introCtx && this.introCanvas) {
+      this.introCtx.clearRect(0, 0, this.introCanvas.width, this.introCanvas.height);
+    }
+    this.setState('intro:done');
+  };
+
+  /** 清单里哪个剪辑是开场：认 role:"intro"（没有就退化成"没有开场动画"，绝不用假动画顶替） */
+  function introClipName(m) {
+    var clips = (m && m.clips) || {};
+    var names = Object.keys(clips);
+    for (var i = 0; i < names.length; i++) {
+      if (clips[names[i]] && clips[names[i]].role === 'intro') { return names[i]; }
+    }
+    return null;
+  }
 
   Player.prototype.setState = function (s, detail) {
     this.state = s;
@@ -761,19 +992,12 @@
     if (document.hidden) { this.pause(); } else { this.resume(); }
   };
 
+  /* 注：尺寸计算已经统一到 sizeCanvases()（上面那份定义才是生效的实现）。 */
   Player.prototype.handleResize = function () {
     if (!this.canvas || this.destroyed) { return; }
-    var box = this.boxSize();
-    var dpr = Math.min(global.devicePixelRatio || 1, 2);
-    dpr = Math.min(dpr, Math.max(1, Math.sqrt(MAX_ATLAS_PIXELS / Math.max(1, box.w * box.h))));
-    var w = Math.max(1, Math.round(box.w * dpr));
-    var h = Math.max(1, Math.round(box.h * dpr));
-    if (this.canvas.width !== w || this.canvas.height !== h) {
-      this.canvas.width = w;
-      this.canvas.height = h;
-    }
-    this._cssW = box.w; this._cssH = box.h;
+    this.sizeCanvases();
     this.draw();
+    this.drawIntro();
   };
 
   Player.prototype.handleEnvChange = function () {
@@ -781,7 +1005,7 @@
     var wasStatic = this.staticOnly;
     this.env = env;
     this.staticOnly = !!this.opts.staticOnly || env.reducedMotion || env.saveData ||
-      (env.narrow && (this.mode === 'stage' || this.mode === 'rail'));
+      (env.narrow && this.mode === 'rail');
     if (this.staticOnly && !wasStatic) {
       this.stopLoop();
       this.current = null;
@@ -862,13 +1086,40 @@
     });
   }
 
-  /** 实例方法：语音线接入时把 opts.voiceBank / opts.ttsEndpoint 传进来即可，其它不用改。 */
+  /** 实例方法：语音线接入时把 opts.voiceBank / opts.ttsEndpoint 传进来即可，其它不用改。
+   *  ★ 本轮扩展：有 text 时**同时**驱动"说话"帧动画 + 屏内字幕条（站主要求
+   *  "说话时嘴在动且字幕同步"），播完自动回 idle 并在一会儿后还原默认字幕。
+   *  TTS 本身仍是空实现（speakImpl 如实返回 TTS_DISABLED），两边不互相假装。 */
   Player.prototype.speak = function (phraseId, text) {
-    return speakImpl(phraseId, text, {
+    var said = (text == null) ? '' : String(text);
+    if (said) { this.animateSpeech(said); }
+    return speakImpl(phraseId, said, {
       voiceBank: this.opts.voiceBank || null,
       endpoint: this.opts.ttsEndpoint || null,
       basePath: this.basePath
     });
+  };
+
+  /** 说话：切 speaking 帧序列（嘴在动）+ 字幕同步显示同一段文本。
+   *  时长按字数估（每字 260ms，2.6s–12s），字幕跟着这条时间轴走。 */
+  Player.prototype.animateSpeech = function (text, opts) {
+    opts = opts || {};
+    var self = this;
+    var chars = String(text || '').length;
+    var dur = opts.durationMs || Math.max(2600, Math.min(12000, chars * 260));
+    this.showSubtitle(text);
+    this.emotionVariant = 'speaking';
+    if (!this.staticOnly) { this.play('speaking'); }
+    if (this._speakTimer) { clearTimeout(this._speakTimer); }
+    if (this._restoreTimer) { clearTimeout(this._restoreTimer); }
+    this._speakTimer = setTimeout(function () {
+      if (self.destroyed) { return; }
+      self.emotionVariant = 'idle';
+      if (!self.staticOnly) { self.play('idle'); }
+      self._restoreTimer = setTimeout(function () {
+        if (!self.destroyed) { self.restoreSubtitle(); }
+      }, 6000);
+    }, dur);
   };
 
   /* 历史实现，已不再调用（保留是为了让 diff 能看出语音契约是怎么从"绑在实例上"
@@ -929,10 +1180,47 @@
     });
   }
 
+  /** 主页输入条 = "她的嘴"：直接打真实的 POST /api/public/ask（既有端点，不新增后端）。
+   *  等待期间播 thinking 帧序列，拿到答案播 speaking 帧序列 + 把答案开头写进屏内字幕条；
+   *  失败 / 限流 / 没有正文一律如实写进字幕，绝不编一句"像答案"的话。 */
+  function askOnStage(p, question) {
+    p.showSubtitle('正在检索与研判 —— 这个问题走真实的检索增强链路。');
+    p.emotionVariant = 'idle';
+    if (!p.staticOnly) { p.play('thinking'); }
+    var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, 20000);
+    fetch(apiBaseUrl() + '/api/public/ask', {
+      method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      signal: ctrl ? ctrl.signal : undefined,
+      body: JSON.stringify({ question: String(question).slice(0, 600) })
+    }).then(function (r) {
+      return r.json().then(function (b) { return { ok: r.ok, status: r.status, body: b }; },
+        function () { return { ok: r.ok, status: r.status, body: null }; });
+    }).then(function (res) {
+      clearTimeout(timer);
+      if (p.destroyed) { return; }
+      var d = (res.body && res.body.data) ? res.body.data : res.body;
+      var ans = d && (d.answer || d.text || (d.reply && d.reply.answer));
+      if (res.ok && ans) {
+        p.speak(null, String(ans).replace(/\s+/g, ' ').slice(0, 120));
+        return;
+      }
+      var why = res.ok ? '返回里没有可显示的答案正文' : ('HTTP ' + res.status);
+      p.showSubtitle('这次没拿到答案（' + why + '）—— 完整问答请到 AI 问答页。');
+      if (!p.staticOnly) { p.play('idle'); }
+    }, function () {
+      clearTimeout(timer);
+      if (p.destroyed) { return; }
+      p.showSubtitle('这次请求没送达（网络或超时）—— 不补话；完整问答请到 AI 问答页。');
+      if (!p.staticOnly) { p.play('idle'); }
+    });
+  }
+
   /** 页面底部输入条：显示规则 + 提交规则。
    *  · 显示：桌面只在主页；窄屏所有栏目页都显示（AI 页除外 —— 它自己的对话输入区就是"嘴"）。
-   *  · 提交：**不新增后端端点** —— 切到 AI 问答页，把文字写进那个真实的输入框，
-   *    再触发同一个发送按钮，于是走的还是 POST /api/public/ask 那条既有链路。 */
+   *  · 提交（主页）：**就在大屏里**走 POST /api/public/ask —— 她说话、字幕同步（站主要的效果）。
+   *    不新增任何后端端点；没有实例时（极端降级）才退回"切到 AI 页填进真实输入框"。 */
   function wireBar() {
     var bar = q('[data-xk-kurisu-bar]');
     var route = routeKey();
@@ -941,6 +1229,12 @@
     var root = document.documentElement;
     if (on) { root.setAttribute('data-xk-kbar-on', '1'); } else { root.removeAttribute('data-xk-kbar-on'); }
     if (!bar) { return; }
+    // 占位文案跟路由走：主页是"在屏幕里回答"，其它路由仍是"切到 AI 问答页"
+    var ph = (route === 'home')
+      ? '问她一个安全相关的问题…（Enter 发送；她会在屏幕里回答，走真实接口）'
+      : '问她一个安全相关的问题…（Enter 发送；会切到 AI 问答页，走真实链路）';
+    var phEl = q('#xk-kbar-input', bar);
+    if (phEl && phEl.getAttribute('placeholder') !== ph) { phEl.setAttribute('placeholder', ph); }
     wireVoiceButton(q('[data-xk-kurisu-voice]', bar), q('[data-xk-kurisu-voice-note]', bar));
     if (bar.getAttribute('data-xk-kbar-wired')) { return; }
     bar.setAttribute('data-xk-kbar-wired', '1');
@@ -949,13 +1243,15 @@
       var input = q('#xk-kbar-input', bar);
       var text = (input && input.value || '').trim();
       if (!text) { if (input) { input.focus(); } return; }
+      if (input) { input.value = ''; }
+      var stage = mounts.filter(function (p) { return p.mode === 'stage'; })[0];
+      if (route === 'home' && stage) { askOnStage(stage, text); return; }
       global.location.hash = '#/ai';
       var tries = 0;
       (function waitForChat() {
         var ta = q('#xk-ask-input'), run = q('[data-xk-ask-run]');
         if (ta && run) {
           ta.value = text;
-          if (input) { input.value = ''; }
           try { run.click(); } catch (err) { /* 按钮可能被改；至少文字已经填进真实输入框 */ }
           return;
         }
@@ -963,6 +1259,17 @@
         setTimeout(waitForChat, 100);
       })();
     });
+  }
+
+  /* ------------------------------------------------ 开场只在该会话的第一次播 */
+  var INTRO_KEY = 'xk-kurisu-intro-played';
+  function shouldPlayIntro() {
+    // 取证/调试用：?xk_intro=always 强制每次都播（默认每个浏览器会话只播一次）
+    if (/(^|[?&])xk_intro=always(&|$)/.test(global.location.search)) { return true; }
+    try { return global.sessionStorage.getItem(INTRO_KEY) !== '1'; } catch (e) { return true; }
+  }
+  function markIntroPlayed() {
+    try { global.sessionStorage.setItem(INTRO_KEY, '1'); } catch (e) { /* 隐私模式忽略 */ }
   }
 
   /** 从非主页路由点回主页时，<main> 外面那一层 CRT 场景并没有随 SSR 渲染出来，
@@ -984,11 +1291,12 @@
       if ((n.getAttribute('data-xk-kurisu') || '') === 'stage' && route !== 'home') { return false; }
       return true;
     });
-    // 主页桌面端：把 CRT 场景层打开（CSS 只认这个开关，且只在 tech 主题 + 非窄屏生效）
+    // 主页：把 CRT 场景层打开（CSS 只认这个开关）
     if (route === 'home') { document.documentElement.setAttribute('data-xk-crt-on', '1'); }
     else { document.documentElement.removeAttribute('data-xk-crt-on'); }
     wireBar();
     if (!nodes.length) { return; }
+    var playIntro = route === 'home' && shouldPlayIntro();
     nodes.forEach(function (node) {
       var mode = node.getAttribute('data-xk-kurisu') || 'auto';
       try {
@@ -1000,6 +1308,11 @@
           defer: DEFAULT_DEFER_MS
         });
         mounts.push(p);
+        // 开场要播：**先**把屏内两层切到"只有开场层"（属性在，画布还没画 = 空屏，
+        // 不会先闪一下全身），再等清单/图集就绪。
+        if (playIntro && mode === 'stage' && !p.staticOnly) {
+          p.mount.setAttribute('data-xk-crt-intro', '1');
+        }
       } catch (e) { /* 单个挂载点失败不影响别人 */ }
     });
 
@@ -1009,10 +1322,18 @@
       whenIdle(function () {
         mounts.forEach(function (p) {
           p.ready().then(function () {
-            if (p.mode === 'stage' && p.opts.autoIntro !== false) {
-              return p.intro({ durationMs: 2400 }).then(function () { return p.play('idle'); });
-            }
-            return null;
+            if (p.mode !== 'stage' || !playIntro) { return null; }
+            markIntroPlayed();
+            // ① 底层先把"全身 idle"跑起来（开场层淡出时立刻就是站定画面）
+            // ② 开场：原包 look_at_CRT_loop 的真实帧序列（clips.opening，role:"intro"）
+            // ③ 站定之后她开口说第一句 —— speaking 帧序列 + 字幕同步
+            return p.play('idle').then(function () { return p.intro(); }).then(function (r) {
+              if (!r || !r.played) { return null; }
+              return new Promise(function (res) { setTimeout(res, 460); }).then(function () {
+                p.speak(null, p.placeholderSay || '');
+                return r;
+              });
+            });
           }).catch(function () { /* 单个模块失败不影响页面 */ });
         });
       });
