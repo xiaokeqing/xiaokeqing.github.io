@@ -231,6 +231,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 10-15 | 规划侧 | 接手批工作入库（host_triggered_entries 派生 9 个 / /ai/ 真调 API / 语音 L1 播放 / 表情 5→8 套 / #fallback 保护） | 提交 `9e8094e` | 站点代码 |
 | 10-15 | 规划侧 | 接手方评审复核：F1~F4 全中；纠正其 E4-①（assert 实为 16 项）；确认 CORS 允许主域 | `docs/总账…` §3 | 口径 |
 | 10-15 | 规划侧 | 定 IP 展示规则（最后一段→x，只掩显示、分组用原值；访客/内网 IP 绝不上页面）；R1 存量三处据此免改；同步 T20~T22 与 Kimi 设计任务书 | 提交 `38fe210` + 本节 ⑨ | 站点展示口径 |
+| 10-15 | A（评测） | 复核发现 **T4 早已完成**（`3ef5790`，12 句日语 v3 已入库、sha256 12/12 与 `out-ja\dist` 一致）⇒ 活文档 §4b 状态订正 ✓；另发现总账 §2.4 的 greet_first 数字漂移（重新渲染过） | `git log -- static/kurisu/voice`、sha256 对比 | 状态订正 |
 | 10-15 | E（文档设计） | T19 双智能体协作方案落成可执行规格（权限矩阵/审计字段/失败回滚/限流配额/成本熔断 + 铁律与注入防护 + 三端点契约）+ persona.md（可直接作 system prompt） | `docs/双智能体协作规格-20261015.md`、`docs/persona.md` | 设计/契约 |
 
 ## 12. 错误与返工记录（**append-only，做错就记，写清根因与影响面** ✗）
@@ -284,7 +285,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | **T13 评测包**（CER / 问答质量集 / MOS） | **A** | 读文档阶段 |
 | **T17 声音换代 A/B** | **B** | 读文档阶段 |
 | **F 后端功能与展示规划**（盘点 + A/B/C 判定） | **F** | 读文档阶段 |
-| **T4 语音素材替换**（日语 12 句） | B（T17 之后） | 播放链已接好 ✓，只差换素材 |
+| ~~T4 语音素材替换（日语 12 句）~~ → **✅ 已完成**（窗口 A 复核发现） | 已入库 | 提交 `3ef5790` 已把 12 句 L1 换成 GPT-SoVITS v3 **日语** m4a/webm ✓；`static/kurisu/voice/` 12 个 m4a 的 sha256 **逐个等于** `_tts-trial\out-ja\dist\`（12/12 一致 ✓）；bank.json `lineCount=12 / totalBytes=716,960`，text 是中文（字幕）、音频是日语 ⇒ 符合 D3 ✓ |
 
 ### ❌ 未开始
 | 任务 | 归谁 | 前置 |
