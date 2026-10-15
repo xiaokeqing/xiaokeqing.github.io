@@ -151,10 +151,10 @@
 /* ================= 数据：全部来自 static/kurisu/manifest.json ================= */
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CLIPS = {
-  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle'},
-  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor'},
-  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'},
-  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'}
+  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24},
+  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24},
+  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24},
+  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24}
 };
 /* 角色落位（scene.character 源码公式）：scale=min(w*0.64/764,h*0.90/1028), x=0.52w, y=bottom-h*0.012, anchor=(0.5,1) */
 const CHAR_BOX = {w:764, h:1028, maxW:0.64, maxH:0.90, xRatio:0.52, footRatio:0.012};
@@ -185,8 +185,8 @@ function drawFrame(){
   if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */
   if(TRANS){ xkDrawTrans(Math.min(1, (performance.now() - TRANS) / 900)); return; }   /* ★L1：推拉中以过渡渲染为准 */
   if(!cur) return;
-  const c = CLIPS[cur];
-  const im = img(c.src);
+  const _xk = xkClipIm(cur);
+  const c = _xk.c, im = _xk.im;
   if(!im.complete || !im.naturalWidth) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const sx = (fi % c.cols) * c.cw, sy = Math.floor(fi / c.cols) * c.ch;
@@ -210,12 +210,27 @@ function drawFrame(){
   }
 }
 
+/* ★T5.6 boot→hi：hi 已就绪就用 hi；否则 boot 小图集（前 24 帧，网格/瓦片同规格）先播，
+   hi 由 play() 延迟触发（越过首屏窗口）；到位后按同一帧号无缝接力，画质不变。
+   警告：hi 只能 peek 缓存、不能 img() 创建 —— img() 创建即发请求，会把 hi 拉回首屏；
+   且必须先 peek hi 再兜底 boot —— 顺序反了会永远卡在 boot 档，开场永不落幕。 */
+function xkClipIm(name){
+  const c = CLIPS[name];
+  const px = cache[c.src];
+  if(px && px.complete && px.naturalWidth) return {im:px, c:c};
+  if(c.bootSrc){
+    const bt = img(c.bootSrc);
+    if(bt.complete && bt.naturalWidth) return {im:bt, c:Object.assign({}, c, {frames:c.bootFrames})};
+    return {im:bt, c:Object.assign({}, c, {frames:c.bootFrames})};
+  }
+  return {im:img(c.src), c:c};
+}
 /* ★CRT 通电（约 0.55s）：老显示器开机四拍——亮线 → 竖向展开（画面压进亮线里）→
    抖动闪烁 → 稳定（含一帧过冲白光）。替代黑场直出，正好露出她的脸。
    RM 用户不走 opening 所以永远看不到；删本函数 + PWR 引用即回退。 */
 function xkPowerOn(k){
   const cOpen = CLIPS.opening;
-  const im = img(cOpen.src);
+  const im = xkClipIm('opening').im;
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
   if(!im.complete || !im.naturalWidth) return;
@@ -245,7 +260,7 @@ function xkPowerOn(k){
    零新素材；TRANS=0 且本函数不被引用即回到硬切行为。 */
 function xkDrawTrans(k){
   const cOpen = CLIPS.opening, cIdle = CLIPS.idle;
-  const imO = img(cOpen.src), imI = img(cIdle.src);
+  const imO = xkClipIm('opening').im, imI = xkClipIm('idle').im;
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
   const lastF = cOpen.frames - 1;
@@ -268,15 +283,23 @@ function play(name){
   XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */
   const c = CLIPS[name];
   cur = name; fi = 0; acc = 0;
-  img(c.src); drawFrame();
+  /* ★T5.6：boot 先上（首屏只吃小图集）；hi 推迟到 boot 就绪 +1.7s 再取 ——
+     越过首屏门禁的 1.5s 窗口，入户字节才真的降下来。boot 加载失败则立刻回退 hi。 */
+  if(c.bootSrc){
+    const bt = img(c.bootSrc);
+    const late = ()=>{ setTimeout(()=>{ img(c.src); }, 1700); };
+    if(bt.complete && bt.naturalWidth){ late(); }
+    else { bt.addEventListener('load', late, {once:true}); bt.addEventListener('error', ()=>{ img(c.src); }, {once:true}); }
+  } else { img(c.src); }
+  drawFrame();
 }
 
 function loop(t){
   if(!started) return;
   if(XK_ACT){ xkmTick(t); lastT = t; requestAnimationFrame(loop); return; }   /* ★表情模式接管画布 */
   if(cur){
-    const c = CLIPS[cur];
-    const im = img(c.src);
+    const _xk = xkClipIm(cur);
+    const c = _xk.c, im = _xk.im;
     if((im.complete && im.naturalWidth) && !RM){
       acc += t - lastT;
       if(acc >= c.interval){
@@ -289,9 +312,15 @@ function loop(t){
         if(cur === 'opening' && !PWR && fi === 0) PWR = t;   /* ★CRT 通电：opening 首帧就绪那一刻起振（图片晚到也能吃上） */
         fi++;
         if(fi >= c.frames){
-          if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */
+          if(cur === 'opening' && c.frames !== CLIPS.opening.frames){   /* ★T5.6：还在 boot 档——循环等 hi 到位接力，不当开场播完 */
+            fi = fi % c.frames;
+          }
+          else if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */
             fi = c.frames - 1;
-            const idleIm = img(CLIPS.idle.src);
+            const idleR = xkClipIm('idle');
+            const idleIm = idleR.im;
+            const btIdle = img(CLIPS.idle.bootSrc);
+            if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
             if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }
             else {
               idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});

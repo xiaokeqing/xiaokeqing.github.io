@@ -993,6 +993,103 @@ s1 = sub1(
     "  if(!RM && !played && document.getElementById('v-home').classList.contains('on')){ play('opening'); sessionStorage.setItem('xk-demo-intro','1'); }",
     'scene-js: __enterHome 的 opening 门控')
 shell_scripts[1] = s1
+
+# =====================================================================
+# T12（2026-10-15）：删右下角「背景/配色」面板 + 配套 CSS/JS/背景图
+#   —— 站长原话"加载太卡"；内容页首屏 267KB → 约 190KB（不再载 room_empty 84KB）
+#   保留：--shade 默认 .08（CSS 里有）、body 静态 data-skin="warm"、data-phone="v1"（模板补）
+#   只动五页外壳（chrome / shell_style / sc）；主页没有这套东西。
+# =====================================================================
+chrome = subn(chrome,
+              r'<!-- 背景选择器 -->.*?</div>\s*\Z',
+              '', 1, 'T12: 删背景选择器标记')
+chrome = sub1(chrome,
+              '<div class="bg" id="bgEl" aria-hidden="true"></div>\n<div class="bgshade" aria-hidden="true"></div>\n',
+              '', 'T12: 删背景 div')
+shell_style = subn(shell_style,
+                   r'\n  /\* 背景选择器 \*/\n  \.bgbtn\{.*?\.skin-toggle button\.on\{color:var\(--acc\);border-color:var\(--acc\)\}\n',
+                   '\n', 1, 'T12: 删选择器 CSS')
+shell_style = subn(shell_style,
+                   r'  \.bg\{position:fixed;inset:0;z-index:-2;[^\n]*\n  \.bgshade\{position:fixed;inset:0;z-index:-1;\n    background:linear-gradient\(180deg,rgba\(8,10,14,var\(--shade\)\),rgba\(8,10,14,var\(--shade\)\)\)\}\n',
+                   '', 1, 'T12: 删 .bg/.bgshade CSS')
+shell_style = sub1(shell_style, '    .bggrid{grid-template-columns:repeat(3,1fr)}\n', '', 'T12: 删媒体查询 bggrid')
+shell_style = sub1(shell_style, '  body.is-home .bg,body.is-home .bgshade{display:none}\n', '', 'T12: 删 is-home 背景规则')
+shell_style = sub1(shell_style,
+                   '  body.is-home .holo,body.is-home .holo-bubble,body.is-home .bgbtn,body.is-home .bgpicker{display:none}',
+                   '  body.is-home .holo,body.is-home .holo-bubble{display:none}',
+                   'T12: 收敛 is-home 规则')
+sc = subn(sc,
+          r'/\* ============ 背景选择器 ============ \*/.*?x\.dataset\.phone===savedPhone\)\);\n',
+          '', 1, 'T12: 删背景 JS')
+
+# =====================================================================
+# T5.6（2026-10-15）：boot→hi 两段式 —— boot 小图集（前 24 帧，网格/瓦片与 hi
+#   同规格）先播，hi 后台下载、到位后按同一帧号无缝接力。主页首屏 1569KB → 约 823KB。
+#   落点：主页脚本（opening/idle）+ 壳 scene-js（speaking/thinking 在 /ai/ 播）。
+# =====================================================================
+CLIPS_BOOT_OLD = (
+    "  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle'},\n"
+    "  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor'},\n"
+    "  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'},\n"
+    "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'}")
+CLIPS_BOOT_NEW = (
+    "  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24},\n"
+    "  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24},\n"
+    "  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24},\n"
+    "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24}")
+
+XK_CLIPIM_JS = (
+    "/* ★T5.6 boot→hi：hi 已就绪就用 hi；否则 boot 小图集（前 24 帧，网格/瓦片同规格）先播，\n"
+    "   hi 由 play() 延迟触发（越过首屏窗口）；到位后按同一帧号无缝接力，画质不变。\n"
+    "   警告：hi 只能 peek 缓存、不能 img() 创建 —— img() 创建即发请求，会把 hi 拉回首屏；\n"
+    "   且必须先 peek hi 再兜底 boot —— 顺序反了会永远卡在 boot 档，开场永不落幕。 */\n"
+    "function xkClipIm(name){\n"
+    "  const c = CLIPS[name];\n"
+    "  const px = cache[c.src];\n"
+    "  if(px && px.complete && px.naturalWidth) return {im:px, c:c};\n"
+    "  if(c.bootSrc){\n"
+    "    const bt = img(c.bootSrc);\n"
+    "    if(bt.complete && bt.naturalWidth) return {im:bt, c:Object.assign({}, c, {frames:c.bootFrames})};\n"
+    "    return {im:bt, c:Object.assign({}, c, {frames:c.bootFrames})};\n"
+    "  }\n"
+    "  return {im:img(c.src), c:c};\n"
+    "}\n")
+
+def xk_boot_patches(script, is_home):
+    s = script
+    s = sub1(s, CLIPS_BOOT_OLD, CLIPS_BOOT_NEW, 'T5.6: CLIPS 加 boot 档')
+    s = sub1(s,
+             "function play(name){\n",
+             XK_CLIPIM_JS + "function play(name){\n",
+             'T5.6: xkClipIm helper')
+    s = sub1(s,
+             "  if(cur){\n    const c = CLIPS[cur];\n    const im = img(c.src);\n    if((im.complete && im.naturalWidth) && !RM){",
+             "  if(cur){\n    const _xk = xkClipIm(cur);\n    const c = _xk.c, im = _xk.im;\n    if((im.complete && im.naturalWidth) && !RM){",
+             'T5.6: loop 取图走 boot→hi')
+    s = sub1(s,
+             "  if(!cur) return;\n  const c = CLIPS[cur];\n  const im = img(c.src);\n  if(!im.complete || !im.naturalWidth) return;",
+             "  if(!cur) return;\n  const _xk = xkClipIm(cur);\n  const c = _xk.c, im = _xk.im;\n  if(!im.complete || !im.naturalWidth) return;",
+             'T5.6: drawFrame 取图走 boot→hi')
+    s = sub1(s,
+             "  cur = name; fi = 0; acc = 0;\n  img(c.src); drawFrame();",
+             "  cur = name; fi = 0; acc = 0;\n"
+             "  /* ★T5.6：boot 先上（首屏只吃小图集）；hi 推迟到 boot 就绪 +1.7s 再取 ——\n"
+             "     越过首屏门禁的 1.5s 窗口，入户字节才真的降下来。boot 加载失败则立刻回退 hi。 */\n"
+             "  if(c.bootSrc){\n"
+             "    const bt = img(c.bootSrc);\n"
+             "    const late = ()=>{ setTimeout(()=>{ img(c.src); }, 1700); };\n"
+             "    if(bt.complete && bt.naturalWidth){ late(); }\n"
+             "    else { bt.addEventListener('load', late, {once:true}); bt.addEventListener('error', ()=>{ img(c.src); }, {once:true}); }\n"
+             "  } else { img(c.src); }\n"
+             "  drawFrame();",
+             'T5.6: play() boot 优先预载 + hi 延迟')
+    return s
+
+s1 = xk_boot_patches(s1, False)
+shell_scripts[1] = s1
+home_script = xk_boot_patches(home_script, True)
+# 注：下面三条锚定 L1/CRT 生成代码的补丁必须放在 L1 段之后（见 L1 段末尾），
+#   因为它们在 L1 补丁跑完之前目标文本还不存在。
 # 图谱数据不再是写死的样例
 sc = sub1(
     sc,
@@ -1446,7 +1543,10 @@ home_script = sub1(home_script,
                    "        if(cur === 'opening' && !PWR && fi === 0) PWR = t;   /* ★CRT 通电：opening 首帧就绪那一刻起振（图片晚到也能吃上） */\n"
                    "        fi++;\n"
                    "        if(fi >= c.frames){\n"
-                   "          if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */\n"
+                   "          if(cur === 'opening' && c.frames !== CLIPS.opening.frames){   /* ★T5.6：还在 boot 档——循环等 hi 到位接力，不当开场播完 */\n"
+                   "            fi = fi % c.frames;\n"
+                   "          }\n"
+                   "          else if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */\n"
                    "            fi = c.frames - 1;\n"
                    "            const idleIm = img(CLIPS.idle.src);\n"
                    "            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }\n"
@@ -1459,6 +1559,34 @@ home_script = sub1(home_script,
                    "        }\n"
                    "        drawFrame();",
                    'L1: loop 拦截硬切')
+
+# ---- T5.6 收尾：通电/推拉两个函数也走 boot→hi（opening 开头 boot 已在播）----
+home_script = sub1(home_script,
+                   "  const cOpen = CLIPS.opening;\n  const im = img(cOpen.src);\n  const W = canvas.width, H = canvas.height;",
+                   "  const cOpen = CLIPS.opening;\n  const im = xkClipIm('opening').im;\n  const W = canvas.width, H = canvas.height;",
+                   'T5.6: 通电取图走 boot→hi')
+home_script = sub1(home_script,
+                   "  const imO = img(cOpen.src), imI = img(cIdle.src);",
+                   "  const imO = xkClipIm('opening').im, imI = xkClipIm('idle').im;",
+                   'T5.6: 推拉取图走 boot→hi')
+# L1 等 idle → 改为等 boot（531KB）就绪即进场，hi 中途接力
+home_script = sub1(home_script,
+                   "            const idleIm = img(CLIPS.idle.src);\n"
+                   "            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }\n"
+                   "            else {\n"
+                   "              idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n"
+                   "              idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});\n"
+                   "            }",
+                   "            const idleR = xkClipIm('idle');\n"
+                   "            const idleIm = idleR.im;\n"
+                   "            const btIdle = img(CLIPS.idle.bootSrc);\n"
+                   "            if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n"
+                   "            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }\n"
+                   "            else {\n"
+                   "              idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n"
+                   "              idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});\n"
+                   "            }",
+                   'T5.6: L1 等 idle boot 就绪即进场')
 
 # --------------------------------------------------------------------- 落盘
 print('生成：')
@@ -1556,7 +1684,7 @@ for section, view, cname in PAGES:
 {{ partial "xk-demo/head-meta.html" . }}
 {{ partial "xk-demo/shell-style.html" . }}
 </head>
-<body data-skin="warm"%s>
+<body data-skin="warm" data-phone="v1"%s>
 {{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
 <main class="main" id="content" data-xk-ssr="%s">
 {{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}

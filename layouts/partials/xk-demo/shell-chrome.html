@@ -1,8 +1,6 @@
 {{- /* 外壳常驻件（逐字）：底图两层 / demo 标识条 / 左侧 .dock / HOLO 面板 / 背景选择器。
       唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。 */ -}}
 {{- $v := .v -}}
-<div class="bg" id="bgEl" aria-hidden="true"></div>
-<div class="bgshade" aria-hidden="true"></div>
 
 <!-- 左侧竖排导航 -->
 <nav class="dock" id="dock" aria-label="站点导航（演示）">
@@ -46,29 +44,4 @@
 </aside>
 <div class="holo-bubble" id="holoBubble" title="展开面板"><canvas id="bubbleCanvas" width="132" height="132"></canvas></div>
 
-<!-- 背景选择器 -->
-<button class="bgbtn" id="bgBtn">背景 / 配色</button>
-<div class="bgpicker" id="bgPicker">
-  <h3>背景图（素材包候选 · 点击切换）</h3>
-  <div class="bggrid" id="bgGrid"></div>
-  <div class="bgctl">
-    <span>压暗</span>
-    <input type="range" id="shadeRange" min="0" max="80" value="42">
-    <div class="skin-toggle" role="group" aria-label="面板配色">
-      <button data-skin="warm" class="on">暖玻璃</button>
-      <button data-skin="light">亮</button>
-      <button data-skin="dark">暗</button>
-    </div>
-  </div>
-  <div class="bgctl">
-    <span>手机样式</span>
-    <div class="skin-toggle" role="group" aria-label="手机样式">
-      <button data-phone="v1" class="on">黑曜</button>
-      <button data-phone="v2">银白</button>
-      <button data-phone="v3">全息</button>
-      <button data-phone="v4">直角</button>
-    </div>
-  </div>
-  <div style="display:none">
-  </div>
-</div>
+

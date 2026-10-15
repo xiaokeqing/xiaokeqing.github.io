@@ -15,7 +15,7 @@
 {{ partial "xk-demo/head-meta.html" . }}
 {{ partial "xk-demo/shell-style.html" . }}
 </head>
-<body data-skin="warm"{{ if eq $v "home" }} class="is-home"{{ else if eq $v "ai" }} class="is-ai"{{ end }}>
+<body data-skin="warm" data-phone="v1"{{ if eq $v "home" }} class="is-home"{{ else if eq $v "ai" }} class="is-ai"{{ end }}>
 {{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
 <main class="main" id="content" data-xk-ssr="monitor">
 {{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}

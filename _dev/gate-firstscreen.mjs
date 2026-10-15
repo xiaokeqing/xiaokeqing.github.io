@@ -47,7 +47,7 @@ fs.mkdirSync(OUT, { recursive: true });
 
 /* 页面清单：file = 产物里的文件，expect = app.js 对这条路由的 name（VIEW_TPL 的键） */
 const PAGES = [
-  { name: 'home', file: 'index.html', url: 'index.html', wait: 12000, expect: 'home', view: null, marker: '.stage .charcanvas' },
+  { name: 'home', file: 'index.html', url: 'index.html', wait: 14000, expect: 'home', view: null, marker: '.stage .charcanvas' },
   { name: 'monitor', file: 'alerts/index.html', url: 'alerts/', wait: 4000, expect: 'monitor', view: 'v-monitor', marker: '#termFeed' },
   { name: 'notes', file: 'posts/index.html', url: 'posts/', wait: 3000, expect: 'notes', view: 'v-notes', marker: '#v-notes .note' },
   { name: 'labs', file: 'labs/index.html', url: 'labs/', wait: 3000, expect: 'range', view: 'v-range', marker: '#pgInput' },
@@ -263,7 +263,7 @@ async function main() {
   let routeBad = 0;
   for (const p of PAGES) {
     await rpc(ws, 'Page.navigate', { url: `http://127.0.0.1:${PORT}/${p.url}` });
-    await sleep(p.name === 'home' ? 6000 : 2500);
+    await sleep(p.name === 'home' ? 9000 : 2500);   /* ★T5.6：boot→hi 后开场序列约 5.5s 落定（通电→boot循环→hi接力→推拉），检查点 6s→9s；判据仍是 >10000 不透明像素（抓黑屏不改）*/
     const ssr = await evalJs("(function(){var m=document.querySelector('main[data-xk-ssr]');return m?m.getAttribute('data-xk-ssr'):null;})()");
     const views = await evalJs("!!document.getElementById('xk-views')");
     const on = await evalJs("(function(){var v=document.querySelector('.view.on');return v?v.id:null;})()");
