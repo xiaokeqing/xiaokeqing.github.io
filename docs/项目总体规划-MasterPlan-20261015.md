@@ -235,6 +235,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 10-15 | 规划侧 | 接手批工作入库（host_triggered_entries 派生 9 个 / /ai/ 真调 API / 语音 L1 播放 / 表情 5→8 套 / #fallback 保护） | 提交 `9e8094e` | 站点代码 |
 | 10-15 | 规划侧 | 接手方评审复核：F1~F4 全中；纠正其 E4-①（assert 实为 16 项）；确认 CORS 允许主域 | `docs/总账…` §3 | 口径 |
 | 10-15 | 规划侧 | 定 IP 展示规则（最后一段→x，只掩显示、分组用原值；访客/内网 IP 绝不上页面）；R1 存量三处据此免改；同步 T20~T22 与 Kimi 设计任务书 | 提交 `38fe210` + 本节 ⑨ | 站点展示口径 |
+| 10-15 | A｜评测 | T13 评测包：素材包 Qwen3-ASR-0.6B 落地并出 60 句日语 ASR 回译 **CER 均值 0.0683**（中位 0.0336、26/60 完全一致，达标 ≤10%）；问答质量集 40 条（19 条 fail-closed）入库，首轮有效采集 4 条：**拒答 4/4、幻觉 0、状态自洽 4/4**；MOS/ABX 流程+脚本可重跑（**无真实评委 ⇒ 结果表为空模板** ✗）；脚本与题库入 `scripts/eval/` | 提交 033c75b ｜ `docs/评测报告-语音与问答-20261015.md` | 新增 `scripts/eval/**` 与两份 docs |
 | 10-15 | I / T24 | E-mote 路线评估（只评估不改站）：技术可行、素材本地已有（zip 解包 123.29 MiB）；判定**不能公开上线** ✗（demo 原文禁止上传 + 运行时 CC BY-NC-SA 4.0）；成本 A 独立页 2.5~3.5 人日 / B 共存专区 4~6 人日 / C 全面换渲染层 15~25 人日 ✗ | docs/E-mote路线评估-20261015.md | 决策与授权口径 |
 | 10-15 | A（评测） | 复核发现 **T4 早已完成**（`3ef5790`，12 句日语 v3 已入库、sha256 12/12 与 `out-ja\dist` 一致）⇒ 活文档 §4b 状态订正 ✓；另发现总账 §2.4 的 greet_first 数字漂移（重新渲染过） | `git log -- static/kurisu/voice`、sha256 对比 | 状态订正 |
 | 10-15 | E（文档设计） | T19 双智能体协作方案落成可执行规格（权限矩阵/审计字段/失败回滚/限流配额/成本熔断 + 铁律与注入防护 + 三端点契约）+ persona.md（可直接作 system prompt） | `docs/双智能体协作规格-20261015.md`、`docs/persona.md` | 设计/契约 |
@@ -287,7 +288,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 任务 | 窗口 | 进度 |
 |---|---|---|
 | **T7 视频接线** | **C** | 已建 `_dev/build_video_manifest.py` + `static/kurisu/video-manifest.json` + `static/kurisu/video/` ✓；正在做**对齐与 alpha 实测**（`_dev/check-video-align.py`、`_shotss/video-align.json`）✓ |
-| **T13 评测包**（CER / 问答质量集 / MOS） | **A** | 读文档阶段 |
+| ~~T13 评测包~~ → **🟡 ①②③ 已交付** | **A（已收工）** | ①**ASR 回译 CER ✅ 出数 0.0683**（中位 0.0336、26/60 完全一致、46/60 ≤10% ⇒ 达标 ≤10%）②题库 40 条（19 条应拒答）✅，但**得分表只跑到 4/40**（公开额度池 30 次/日打满 ✗，明日 `--max 25` 续跑才能出要点命中率）③MOS/ABX 流程与脚本 ✅、**结果待人工盲听** ✗ |
 | **T17 声音换代 A/B** | **B** | 读文档阶段 |
 | **F 后端功能与展示规划**（盘点 + A/B/C 判定） | **F** | 读文档阶段 |
 | ~~T4 语音素材替换（日语 12 句）~~ → **✅ 已完成**（窗口 A 复核发现） | 已入库 | 提交 `3ef5790` 已把 12 句 L1 换成 GPT-SoVITS v3 **日语** m4a/webm ✓；`static/kurisu/voice/` 12 个 m4a 的 sha256 **逐个等于** `_tts-trial\out-ja\dist\`（12/12 一致 ✓）；bank.json `lineCount=12 / totalBytes=716,960`，text 是中文（字幕）、音频是日语 ⇒ 符合 D3 ✓ |
