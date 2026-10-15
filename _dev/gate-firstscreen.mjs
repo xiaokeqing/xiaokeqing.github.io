@@ -187,6 +187,7 @@ async function main() {
     if (m.method === 'Network.responseReceived') { const r = m.params.response; responses.push({ status: r.status, url: r.url, type: m.params.type }); }
     if (m.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(m.params.type)) consoleMsgs.push(m.params.type + ': ' + (m.params.args || []).map((a) => a.value || a.description || '').join(' '));
     if (m.method === 'Runtime.exceptionThrown') consoleMsgs.push('EXCEPTION: ' + (m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text));
+    if (m.method === 'Runtime.exceptionThrown') consoleMsgs.push('EXCEPTION: ' + (m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text));
   });
   await rpc(ws, 'Page.enable'); await rpc(ws, 'Runtime.enable'); await rpc(ws, 'Network.enable');
   await rpc(ws, 'Emulation.setDeviceMetricsOverride', { width: VW, height: VH, deviceScaleFactor: 1, mobile: false });
@@ -203,7 +204,20 @@ async function main() {
   };
 
   const report = { mode: 'cdp', budget: BUDGET, pages: [], routes: [], gate: { pass: true, pages: [] } };
-  let gateFail = 0;
+  /* T5.2 已知无害控制台错误白名单：只收【实测出现过且确认无害】的条目，空启动。
+   命中白名单的错误报 WARN-OK 不拦；未命中的一律算真错误。新增条目必须在提交信息里说明理由。 */
+const CONSOLE_WHITELIST = [];
+function consoleBlocking(msgs) {
+  const bad = [];
+  for (const m of msgs) {
+    if (/^warning:/i.test(m)) continue;          /* warning 一律只报不拦（本门禁拦的是 error/EXCEPTION） */
+    if (CONSOLE_WHITELIST.some((re) => re.test(m))) continue;
+    bad.push(m);
+  }
+  return bad;
+}
+
+let gateFail = 0;
 
   console.log('== 首屏字节门禁（预算 %d B = %s KB）· 真浏览器 1280×900 ==', BUDGET, (BUDGET / 1024).toFixed(0));
   for (const p of PAGES) {
@@ -218,12 +232,13 @@ async function main() {
     await sleep(Math.max(0, p.wait - 1500));
     const home = await shot(`${PREFIX}-${p.name}`);
     const nonOk = responses.filter((r) => r.status >= 400 || r.status === 0).map((r) => r.status + ' ' + r.url.replace(`http://127.0.0.1:${PORT}`, ''));
-    const pass = fsBytes <= BUDGET;
+    const consoleBad = consoleBlocking(consoleMsgs);
+    const pass = fsBytes <= BUDGET && consoleBad.length === 0;   /* T5.2：字节 + 控制台错误双闸 */
     if (!pass) { gateFail++; report.gate.pass = false; }
     report.gate.pages.push({ page: p.name, bytes: fsBytes, pass, files: firstScreen });
     console.log('  [' + (pass ? 'PASS' : 'FAIL') + '] ' + p.name.padEnd(8) +
       ' 首屏 ' + (fsBytes / 1024).toFixed(0).padStart(5) + ' KB / 预算 ' + (BUDGET / 1024).toFixed(0) +
-      ' KB' + (pass ? '' : '  ← 超标'));
+      ' KB' + (pass ? '' : (fsBytes > BUDGET ? '  ← 超标' : '') + (consoleBad.length ? '  ← 控制台错误 ' + consoleBad.length + ' 条' : '')));
     if (!pass) {
       console.log('        超标文件（按字节降序，前 8）：');
       for (const x of over.slice(0, 8)) console.log('          ' + (x.b / 1024).toFixed(0).padStart(6) + ' KB  ' + x.u);
@@ -232,7 +247,9 @@ async function main() {
       page: p.name, url: p.url, shot: home, expectRoute: p.expect,
       firstScreenAssetBytes: fsBytes, firstScreenFiles: firstScreen, gatePass: pass,
       allAssetBytes: [...new Set(responses.map((r) => r.url))].reduce((s, u) => s + byteOf(u.replace(`http://127.0.0.1:${PORT}`, '')), 0),
-      nonOk, console: [...consoleMsgs], check: productCheck(path.join(PUB, p.file)),
+      nonOk, console: [...consoleMsgs], consoleBlocking: consoleBad,
+      smReasons: await evalJs('(window.__xkSM && window.__xkSM.reasons) ? window.__xkSM.reasons() : null'),
+      check: productCheck(path.join(PUB, p.file)),
       ssrAttr: await evalJs("(function(){var m=document.querySelector('main[data-xk-ssr]');return m?m.getAttribute('data-xk-ssr'):null;})()"),
       viewOn: await evalJs("(function(){var v=document.querySelector('.view.on');return v?v.id:null;})()"),
       hasXkViews: await evalJs("!!document.getElementById('xk-views')"),
@@ -256,6 +273,7 @@ async function main() {
       ' .view.on=' + rec.viewOn + ' marker=' + rec.markerPresent + ' mainText=' + rec.mainTextChars);
     if (nonOk.length) console.log('        非200:', nonOk.slice(0, 6));
     if (consoleMsgs.length) console.log('        控制台:', consoleMsgs.slice(0, 4));
+    if (consoleBad.length) console.log('        阻断性控制台错误:', consoleBad.slice(0, 4));
   }
 
   /* ★ 第四批新口径：六页初始屏断言（旧的 hash 路由段已删除，理由见文件头注释⑤） */

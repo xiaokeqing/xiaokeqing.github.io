@@ -234,7 +234,33 @@
   <!-- 关于 -->
 
 <section class="view{{ if eq $v "about" }} on{{ end }}" id="v-about">
-        </div>
-      </div>
+    <div class="card">
+      <div class="card-hd"><span class="led"></span>ABOUT · 这是哪<span style="margin-left:auto;font-size:11px;color:var(--acc)">xiaokeqing.cn</span></div>
+      <p class="card-lead">小可清的安全博客：<b>一半是文字</b>——真实攻防过程、告警研判与处置留痕的复盘；
+        <b>一半是数据屏</b>——监测中心、笔记、靶场、AI 问答四屏，上面的数字全部来自
+        <code class="k">/api/public/*</code> 只读端点的实时读取。<b>取不到就写"读不到"，不补数、不编造。</b></p>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="led"></span>SOURCES · 数据从哪来<span style="margin-left:auto;font-size:11px;color:var(--acc)">自托管检测栈</span></div>
+      <ul class="bl">
+        <li><b>蜜罐</b>：Cowrie（SSH 暴力破解观察）与 Dionaea（多协议恶意软件捕获），记录每一次真实交互。</li>
+        <li><b>检测</b>：Suricata IDS 规则 + Wazuh SIEM 聚合，告警按严重度入账。</li>
+        <li><b>口径</b>：对外只有聚合后的只读端点；每屏顶栏的 sync 时间，就是最近一次成功读取的时间。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="led"></span>KURISU · 显示器里的她<span style="margin-left:auto;font-size:11px;color:var(--acc)">同人实验 · 非商业</span></div>
+      <ul class="bl">
+        <li><b>她是牧瀬紅莉栖</b>（《命运石之门》角色）：canvas 逐帧图集动画 + 预渲染日语语音（自训音色合成），字幕为中文。</li>
+        <li><b>她的纪律和站点一样</b>：检索不到依据就说"读不到"，不编答案；语音在手势之后才播，不自动出声。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="led" style="background:#5A6B7A;box-shadow:none"></span>RULES · 这里没什么<span style="margin-left:auto;font-size:11px;color:var(--acc)">纪律清单</span></div>
+      <ul class="bl">
+        <li><b>零第三方请求</b>：不引外部 CDN、字体与统计脚本——打不开只能是因为站点自己或网络。</li>
+        <li><b>公开面只解释概念与防御</b>：需要内部事件数据的问题明确拒答——匿名身份能读内部数据，本身就不该存在。</li>
+        <li><b>只做检测，不执行、不处置</b>：靶场页面送进去的样本只过检测链，不在服务器上真实运行。</li>
+      </ul>
     </div>
   </section>
