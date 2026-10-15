@@ -252,6 +252,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 10-14 | 规划侧 | 把"未备案直连被阻断"误判为"本地 SNI 过滤" | 只看到现象（换 SNI 就好），没查 HTTP 302 拦截页 | 找到 `302 → dnspod.qcloud.com/static/webblock.html` 铁证，改走 CF 隧道 | 定位绕了两小时 ✗ |
 | 10-14 | 规划侧 | 擅自把字幕垫板 382KB 重编码成 87KB（降质） | 为了压首屏字节，违反"不许降质"口径 | 换回原图，改用延迟加载 | 用户不满，已回退 ✓ |
 | 10-14 | 规划侧 | 状态机契约写错（nodes 写成对象、无 frame_size、漏 from_id/to_id、once_then_hold 写 12、9/38） | 凭记忆写文档，没逐字段核对 | 接手方实测发现，我复核确认并在 §2/§3 更正（13 个、10/38、数组） | 差点让施工卡住 ✗ |
+| 10-15 | K｜模型取证 | 声称产出两份文档（后端问答模型取证 / 状态-K-模型取证），**磁盘上并不存在** ✗（内容在回复里但没落盘） | 只报告未验证落盘 | 已要求它重写并**用 Get-Item + git status 自证** ✓；规划侧同时把其结论先入库（事实不丢 ✓） | 交付可信度 ✗；已立规矩：**凡声称写了文件，必须附 Get-Item 或 git status 证据** ✓ |
 | 10-15 | 规划侧 | 接线方案 §3.1/§7 写口型用 `mouthPatch.preferredVariant`、`has_mouth_profile` 为 12+4 | 我又凭记忆写规格，没逐字段核对 statemachine.json | 窗口 C 实测：真实字段是 `file/size/overlay_entry/closed_frame_idx`，**没有 preferredVariant**；`has_mouth_profile=true` 是 **16 个** ⇒ 文档已更正，并要求执行方按实测决定路线 | 第二批若照旧文档做会白费工 ✗ |
 | 10-15 | 规划侧 | 接线方案 §10 PR-3 写"替换原型 4 剪辑循环"，忽略 opening/speaking/thinking 无视频无替代 | 没核对"原型剪辑 vs 状态机剪辑"的交集 | 改为"只换 idle，opening 保留或另出素材" | 方向性问题，已更正 ✓ |
 | 10-15 | 规划侧 | 用中文文本合成日语参考音频的语音（等于没用上音色） | 没核对参考音频语种 | 改日语台词 + 双语库（ja 送 TTS / zh 字幕） | 白跑一轮 ✗ |
@@ -259,6 +260,9 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 10-15 | 规划侧 | PowerShell 多次低级错（用 `if` 当表达式、单引号里套单引号、here-string 终止符没顶格） | 对 PS5.1 限制不熟 | 记进陷阱表；改用数组拼接写文件 | 浪费几轮 ✗ |
 
 | 10-15 | 窗口 H | 站点探测自检想用"站点未知路径"注入失败，实测本站对未知路径**回落 200 主页** ⇒ 自检会**假通过** ✗ | 注入前没先验"未知路径返回什么" | 改用 `.invalid` 保留域注入并复测告警链路（notify HTTP 200 ✓） | 多花 1 轮 |
+
+> **交付自证规矩（2026-10-15 立）**：任何窗口声称"写了文件"，必须附 `Get-Item` 或 `git status --short` 的原文输出 ✓；
+> 只写"已产出 xxx.md"而无证据的，规划侧一律按"未交付"处理 ✗（当天已发生一次 ✗）。
 
 ## 13. 活文档的使用规则（每个会话都必须遵守 ✗）
 
