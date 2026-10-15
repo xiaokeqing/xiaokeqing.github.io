@@ -6,14 +6,13 @@
         <a class="on" href="#">主页</a><a href="#">监测中心</a><a href="#">笔记</a>
         <a href="#">靶场</a><a href="#">AI 问答</a><a href="#">关于</a></nav>
   唯一差异（按站主口径④"路由仍只由 app.js 一套"）：`href="#"` 换成站点的真实 hash 路由
-  `/ /#/monitor/alerts /#/notes /#/labs /#/ai /#/about` + `data-xk-route`，点击由 app.js 处理；
+  `/ /#/monitor/alerts /#/notes /#/ai` + `data-xk-route`，点击由 app.js 处理；
   当前项用 demo 的 `.on` 类（app.js 换页时按 `data-xk-nav` 同步）。
+  ★T27 收尾（2026-10-15 窗口 Q）：靶场(/labs/)与关于(/about/)两项随页面删除摘掉（六项 → 四项）。
 */}}
 <nav class="navpill" aria-label="站点导航">
   <a class="{{ if eq . "home" }}on{{ end }}" href="/#/home" data-xk-route data-xk-nav="home">主页</a>
   <a class="{{ if eq . "monitor" }}on{{ end }}" href="/#/monitor/alerts" data-xk-route data-xk-nav="monitor">监测中心</a>
   <a class="{{ if eq . "notes" }}on{{ end }}" href="/#/notes" data-xk-route data-xk-nav="notes">笔记</a>
-  <a class="{{ if eq . "labs" }}on{{ end }}" href="/#/labs" data-xk-route data-xk-nav="range">靶场</a>
   <a class="{{ if eq . "ai" }}on{{ end }}" href="/#/ai" data-xk-route data-xk-nav="ai">AI 问答</a>
-  <a class="{{ if eq . "about" }}on{{ end }}" href="/#/about" data-xk-route data-xk-nav="about">关于</a>
 </nav>

@@ -5,12 +5,10 @@
   · 每页 <main id="content"> 必须有 `data-xk-ssr="<路由名>"`；
   · 路由名 = app.js 的 VIEW_TPL 键（routeFromPath 的返回值），**不是** URL 段的名字：
       /            → home      /alerts/  → monitor   /posts/  → notes
-      /labs/       → range     /about/   → about     /ai/     → ai
-    ⚠️ 因为 `layouts/baseof.html` 里也写着 `eq .Section "labs"` → `$cur = "range"`，
-       而 app.js 的 `parseHash/routeFromPath` 对 /labs 同样返回 `{name:'range'}`
-       —— 两边必须同名，app.js 才会复用构建期视图（app.js L455 `data-xk-ssr === route`）。
+      /ai/         → ai
+    ★T27（2026-10-15 站主）：/labs/ 与 /about/ 两页已删 ⇒ 六页 → 四页，本清单同步删两行。
   · 每页必须有 `#xk-views` 模板表（SPA 换页依赖它）；
-  · 六页都不得出现站外资源引用。
+  · 四页都不得出现站外资源引用。
 用法：python _dev/check-ssr-contract.py [public]
 退出码：0 全通过 / 1 有不合格项
 """
@@ -23,8 +21,6 @@ PAGES = [
     ('index.html', 'home'),
     ('alerts/index.html', 'monitor'),
     ('posts/index.html', 'notes'),
-    ('labs/index.html', 'range'),
-    ('about/index.html', 'about'),
     ('ai/index.html', 'ai'),
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)

@@ -3,7 +3,9 @@
    ----------------------------------------------------------------------------
    做法：只往 demo **原有元素** 里写值 —— 不新增元素、不改结构、不动版式。
    数据源：<meta name="wb-api"> + 站点既有公开只读端点：
-     /api/public/alerts · overview · honeypot · audit · geo · webstats · stories
+     /api/public/alerts · overview · honeypot · audit · geo · webstats · stories · story?src= · kb?q=
+   ★T20/T21/T22（本批）：封禁榜 /audit · 故事线候选池 /stories + 点击懒加载 /story?src= · 知识库 /kb?q=
+     IP 显示一律走 maskIp（前三段 + 末段 x；分组与取数用原值）；空态照 F 的稿；不做轮询 ✗
    取数范围按页面裁剪（端点有 20 次/分钟限流）：
      主页（data-xk-ssr=home）→ alerts + audit + honeypot（CRT 状态行三个数字）
      /alerts/（data-xk-ssr=monitor）→ 上面 7 个端点（作战室整屏）
@@ -32,6 +34,24 @@
   }
   function fmt(v) {
     return (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v).toLocaleString('en-US');
+  }
+  /* ★IP 显示口径（站主 2026-10-15 拍板）：**保留前三段、最后一段换 x**（45.83.91.55 → 45.83.91.x）。
+     纪律：① 只作用于"显示"，分组/去重/取数一律用原值 ✗不许拿掩码值当 key；
+            ② 后端已写死"内网/内部/未知"的取值原样显示，不再加工；
+            ③ F 的 §4.0 R-IP-1 写的是"前两段 + x.x" ⇒ 与站主口径不一致，本文件按**站主口径**实现
+               （差异已记入 UI批实施件文档 §口径冲突）；
+            ④ 其它形状（含 IPv6）原样透传 —— 当前端点的 IP 字段实测都是 IPv4 [待核对]。 */
+  function maskIp(v) {
+    var s = String(v === null || v === undefined ? '' : v).trim();
+    if (!s) return '—';
+    if (/内网|内部|未知/.test(s)) return s;
+    var m = s.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}$/);
+    if (m) return m[1] + '.x';
+    return s;
+  }
+  /* ★R-IP-2：自由文本里的 IPv4 一律掩码（stories/story 的 summary、honeypot 的 detail、audit 的 reason） */
+  function maskText(t) {
+    return String(t === null || t === undefined ? '' : t).replace(/(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}/g, '$1.x');
   }
   function txt(el, s) { if (el) el.textContent = s; }
   function textNodes(el) {
@@ -220,7 +240,9 @@
     var al = pick(parts, 'alerts'), hp = pick(parts, 'honeypot');
     var ips = [];
     if (al && Array.isArray(al.list)) {
-      al.list.forEach(function (a) { var ip = String(a.srcIp || ''); if (ip && ip.indexOf('内网') < 0 && ips.indexOf(ip) < 0 && ips.length < 5) ips.push(ip); });
+      /* ★R1-①：去重仍用原值、进图层才打码（掩码值不当 key ✗） */
+    var seenIp = {};
+    al.list.forEach(function (a) { var ip = String(a.srcIp || ''); if (ip && ip.indexOf('内网') < 0 && !seenIp[ip] && ips.length < 5) { seenIp[ip] = 1; ips.push(maskIp(ip)); } });
     }
     var clients = (hp && Array.isArray(hp.topClients)) ? hp.topClients.filter(function (c) { return String(c.key || '').indexOf('\\x') !== 0; }).slice(0, 6).map(function (c) { return [String(c.key || '—'), fmt(c.count) + ' 次']; }) : [];
     window.XK_ATTACKERS = ips;
@@ -264,33 +286,9 @@
       txt(pct, (c.sharePercent !== undefined ? c.sharePercent : '—') + '%');
     }
 
-    /* 故事线 ← /api/public/stories：拿阶段最全的那一条来源，逐阶段写真实计数与"确实没有数据" */
-    var st = pick(parts, 'stories');
-    var rows = document.querySelectorAll('.ops-tab[data-pane="stats"] .grid32 .mod:nth-child(2) .row');
-    var s0 = st && Array.isArray(st.sources) && st.sources.length ? st.sources[0] : null;
-    var labels = (st && st.stageLabels) ? st.stageLabels : null;
-    if (rows.length) {
-      if (s0 && labels) {
-        var stageKeys = Object.keys(labels);
-        var tagEl = document.querySelector('.ops-tab[data-pane="stats"] .grid32 .mod:nth-child(2) .mod-hd .tag');
-        if (tagEl) tagEl.textContent = '/stories · ' + s0.srcIp;
-        for (var r = 0; r < rows.length; r++) {
-          var key = stageKeys[r], kEl = rows[r].querySelector('.k'), mid = rows[r].querySelector('span:not(.k):not(.chip)'), chip = rows[r].querySelector('.chip');
-          if (!key) { txt(kEl, ''); txt(mid, ''); txt(chip, ''); continue; }
-          var cnt = Number((s0.stages || {})[key]) || 0;
-          txt(kEl, labels[key] || key);
-          txt(mid, cnt > 0 ? ('该来源真实命中 ' + fmt(cnt) + ' 条') : '这个来源该阶段确实没有数据（不是"未接入"）');
-          txt(chip, cnt > 0 ? fmt(cnt) : '0');
-        }
-      } else {
-        for (var q = 0; q < rows.length; q++) {
-          txt(rows[q].querySelector('.k'), ''); txt(rows[q].querySelector('span:not(.k):not(.chip)'), ''); txt(rows[q].querySelector('.chip'), '');
-        }
-        var tg = document.querySelector('.ops-tab[data-pane="stats"] .grid32 .mod:nth-child(2) .mod-hd .tag');
-        if (tg) tg.textContent = '/stories · ' + NA;
-        txt(rows[0].querySelector('span:not(.k):not(.chip)'), NA);
-      }
-    }
+    /* ★T21：故事线已挪到 bindStories()（候选池 + 点击懒加载时间线），这里不再直接写那 4 行 ✗ */
+
+    /* 告警来源分布（原"协议分布"）← /api/public/overview alerts.bySource：甜甜圈与图例都是真值 */
 
     /* 告警来源分布（原"协议分布"）← /api/public/overview alerts.bySource：甜甜圈与图例都是真值 */
     var ov = pick(parts, 'overview');
@@ -332,7 +330,7 @@
         var cls = CLS[String(a.type || '').toUpperCase()] || 'dns';
         var tag = '[' + String(a.typeLabel || a.sourceLabel || '告警').replace(/\s*告警$/, '') + ']';
         var text = String(a.title || a.ruleName || '（无规则名）').replace(/\s+/g, ' ').slice(0, 90) +
-          ' → ×' + (Number(a.count) || 1) + ' · ' + String(a.srcIp || '—');
+          ' → ×' + (Number(a.count) || 1) + ' · ' + maskIp(a.srcIp);
         return { key: String(a.aggId || t + a.title), ts: t, cls: cls, tag: tag, text: text };
       });
     }
@@ -341,6 +339,8 @@
 
   function bindOps(parts) {
     bindSync(parts);
+    bindBans(parts);          /* ★T20 */
+    bindStories(parts);       /* ★T21 */
     bindRail(parts);
     bindSpark(parts);
     bindTypes(parts);
@@ -348,6 +348,269 @@
     bindGraphData(parts);
     bindStats(parts);
     bindFeed(parts);
+  }
+
+  /* ---------------------------------------------------------------- ★T20 处置成果 · 封禁榜
+     数据源 /api/public/audit（summary 四数 + blocks[]）；IP 走 maskIp（前三段+x，只作用于显示）。
+     空态口径照 F §4.1：端点不可达 → 读不到 + 原因；blocks=[] → "本窗口没有封禁记录（不是取不到）"；
+     summary 缺失 → 四个数字各自写"读不到"；一律不补 0、不补样例（R-COUNT-1）。 */
+  function banWhen(b) {
+    var t = String(b.createdAt || '').replace('T', ' ');
+    return t ? t.slice(5, 16) : '时间读不到';
+  }
+  function bindBans(parts) {
+    var box = document.querySelector('[data-xk-block="bans"]');
+    if (!box) return;
+    var p = parts.filter(function (x) { return x.path.indexOf('/audit') >= 0; })[0];
+    var au = (p && p.ok) ? p.d : null;
+    var sum = au && au.summary ? au.summary : null;
+    var KEYS = [['total', 'blockTotal'], ['active', 'blockActive'], ['guard', 'blockedByGuard'], ['actions', 'executedActions']];
+    KEYS.forEach(function (kv) {
+      var el = box.querySelector('[data-ban="' + kv[0] + '"]');
+      if (!el) return;
+      var v = sum ? fmt(sum[kv[1]]) : null;
+      el.textContent = (v === null) ? NA : v;       /* 取不到写"读不到"，绝不补 0 */
+    });
+    var note = box.querySelector('[data-ban-note]');
+    var rows = box.querySelectorAll('[data-ban-list] .row');
+    function blankRow(row, k, mid, chip, cls) {
+      row.style.display = '';
+      row.innerHTML = '<span class="k">' + esc(k) + '</span><span>' + esc(mid) + '</span>' +
+        (chip ? '<span class="chip ' + (cls || '') + '">' + esc(chip) + '</span>' : '<span class="chip" style="display:none"></span>');
+    }
+    function hideFrom(i) { for (var j = i; j < rows.length; j++) { rows[j].style.display = 'none'; } }
+    var blocks = (au && Array.isArray(au.blocks)) ? au.blocks.slice(0, rows.length) : null;
+    if (!au) {
+      var why = !p ? '端点在本次取数清单外' : (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达');
+      txt(note, '读不到（/audit 未取到：' + why + '）—— 不补数');
+      blankRow(rows[0], NA, '', '', '');
+      hideFrom(1);
+      return;
+    }
+    if (!sum) { txt(note, '读不到（/audit.summary 缺失：四个数字各自写"读不到"）—— 不补数'); }
+    if (blocks && blocks.length) {
+      for (var i = 0; i < rows.length; i++) {
+        var b = blocks[i];
+        if (!b) { rows[i].style.display = 'none'; continue; }
+        var un = b.unblocked === true;
+        var mid = (b.durationMinutes === undefined || b.durationMinutes === null ? '时长读不到' : b.durationMinutes + ' min') +
+          ' · ' + banWhen(b) + (b.auditId ? ' · ' + String(b.auditId) : '');
+        blankRow(rows[i], maskIp(b.ip) + ' · ' + (b.source || b.actor || '来源读不到'), mid,
+          un ? ('已解封' + (b.unblockMode ? '（' + b.unblockMode + '）' : '')) : '生效中', un ? 'warn' : 'ok');
+      }
+      if (sum) txt(note, '最近 ' + blocks.length + ' 条封禁留痕（原值分组、显示打码）· 触发方/处置者/留痕号来自 /audit；' +
+        '护栏拦下 = blockedByGuard（是"动作数"，不是封禁数）');
+    } else if (blocks) {
+      txt(note, '本窗口没有封禁记录（不是取不到，是真的没有）');
+      blankRow(rows[0], '—', '', '', '');
+      hideFrom(1);
+    } else {
+      txt(note, '读不到（/audit.blocks 不是数组）—— 不补数');
+      blankRow(rows[0], NA, '', '', '');
+      hideFrom(1);
+    }
+  }
+
+  /* ---------------------------------------------------------------- ★T21 攻击故事线
+     ① 候选池 /api/public/stories 跟随 40s 刷新（已在 7 端点清单里，不新增请求）；
+     ② 单源时间线 /api/public/story?src=<原值> **只在点击时**拉一次，15s 内不重复（对齐后端 cache-seconds）；
+     ③ 段语义必须分开写：coverage.status=NOT_WIRED → "这一段尚未接入"；gaps → "这一段确实没有数据"（F §4.2）。 */
+  var STORY_CACHE = {};     /* 原值 srcIp → {at, d}；只为省一次请求，不做轮询 */
+  var STORY_TTL = 15000;
+  var STAGE_CLS = { alerts: 'scan', decoyPorts: 'web', honeypotLogins: 'ssh', auditActions: 'dns' };
+  var STAGE_FALLBACK = { alerts: '告警', decoyPorts: '诱饵端口', honeypotLogins: '蜜罐登录', auditActions: '处置动作' };
+  function storyLabel(key, d, st) {
+    if (st && st.stageLabels && st.stageLabels[key]) return st.stageLabels[key];
+    var ev = (d && Array.isArray(d.events)) ? d.events.filter(function (e) { return e.stage === key; })[0] : null;
+    return (ev && ev.stageLabel) || STAGE_FALLBACK[key] || key;
+  }
+  function bindStories(parts) {
+    var box = document.querySelector('[data-xk-block="stories"]');
+    if (!box) return;
+    var p = parts.filter(function (x) { return x.path.indexOf('/stories') >= 0; })[0];
+    var st = (p && p.ok) ? p.d : null;
+    var tag = box.querySelector('[data-story-tag]');
+    var note = box.querySelector('[data-story-note]');
+    var rows = box.querySelectorAll('[data-story-list] .row');
+    var srcs = (st && Array.isArray(st.sources)) ? st.sources.slice(0, rows.length) : null;
+    function blank(row, k, mid, chip) {
+      row.style.display = '';
+      row.removeAttribute('data-src'); row.style.cursor = '';
+      row.innerHTML = '<span class="k">' + esc(k) + '</span><span>' + esc(mid) + '</span>' +
+        '<span class="chip">' + esc(chip) + '</span>';
+    }
+    if (srcs && srcs.length) {
+      tag.textContent = '/stories · ' + srcs.length + ' 个候选来源';
+      for (var i = 0; i < rows.length; i++) {
+        var s = srcs[i];
+        if (!s) { rows[i].style.display = 'none'; continue; }
+        rows[i].setAttribute('data-src', String(s.srcIp || ''));   /* ★分组/取数用原值，显示才打码 */
+        rows[i].setAttribute('role', 'button');
+        rows[i].setAttribute('tabindex', '0');
+        rows[i].style.cursor = 'pointer';
+        rows[i].innerHTML = '<span class="k">' + esc(maskIp(s.srcIp)) + '</span><span>' +
+          esc((Number(s.stageCount) || 0) + ' 段命中 · 最后 ' + String(s.lastSeen || '').replace('T', ' ').slice(5, 16)) +
+          '</span><span class="chip">' + esc(s.severityMaxLabel || '—') + '</span>';
+      }
+      if (note) note.textContent = '点任一条来源 → 载入它的事件时间线（点了才请求一次，15s 内不重复；IP 只打码显示，请求用原值）。';
+      if (!box.getAttribute('data-story-wired')) {
+        box.setAttribute('data-story-wired', '1');
+        box.addEventListener('click', function (ev) {
+          var row = ev.target.closest ? ev.target.closest('[data-src]') : null;
+          if (row) { storyPick(row); }
+        });
+        box.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          var row = ev.target.closest ? ev.target.closest('[data-src]') : null;
+          if (row) { ev.preventDefault(); storyPick(row); }
+        });
+      }
+    } else if (!p) {
+      txt(tag, '/stories');
+      blank(rows[0], NA, '读不到（/stories 在本次取数清单外）—— 不补样例', '');
+      for (var a = 1; a < rows.length; a++) { rows[a].style.display = 'none'; }
+    } else if (!st) {
+      txt(tag, '/stories · ' + NA);
+      blank(rows[0], NA, '读不到（/stories 未取到：' + (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达') + '）—— 不补样例', '');
+      for (var b2 = 1; b2 < rows.length; b2++) { rows[b2].style.display = 'none'; }
+    } else {
+      txt(tag, '/stories · 0');
+      blank(rows[0], '—', '本窗口没有够格的故事线（候选池为空，不是取不到）', '');
+      for (var c2 = 1; c2 < rows.length; c2++) { rows[c2].style.display = 'none'; }
+    }
+  }
+  function storyPick(row) {
+    var src = row.getAttribute('data-src');
+    if (!src) return;
+    var box = document.querySelector('[data-xk-block="stories"]');
+    var det = box.querySelector('[data-story-detail]');
+    var tl = box.querySelector('[data-story-tl]');
+    det.hidden = false;
+    box.querySelector('[data-story-head]').textContent = maskIp(src);
+    box.querySelector('[data-story-meta]').textContent = '载入中…';
+    box.querySelector('[data-story-chip]').textContent = '…';
+    tl.innerHTML = '';
+    var hit = STORY_CACHE[src];
+    if (hit && (Date.now() - hit.at) < STORY_TTL) { renderStory(det, tl, src, hit.d); return; }
+    settle('/api/public/story?src=' + encodeURIComponent(src)).then(function (r) {
+      if (!r.ok) {
+        box.querySelector('[data-story-meta]').textContent =
+          '时间线读不到（/story 未取到：' + (r.err && r.err.status ? 'HTTP ' + r.err.status : '不可达') + '）';
+        box.querySelector('[data-story-chip]').textContent = NA;
+        return;
+      }
+      STORY_CACHE[src] = { at: Date.now(), d: r.d };
+      renderStory(det, tl, src, r.d);
+    });
+  }
+  function renderStory(det, tl, src, d) {
+    var box = document.querySelector('[data-xk-block="stories"]');
+    var cov = (d && d.coverage) || {};
+    var keys = ['alerts', 'decoyPorts', 'honeypotLogins', 'auditActions'];
+    var html = '';
+    keys.forEach(function (k) {
+      var c = cov[k] || {};
+      var cnt = Number((d.stages || {})[k]) || 0;
+      var status = String(c.status || '');
+      var mid;
+      if (status === 'NOT_WIRED') mid = '这一段尚未接入（coverage.status=NOT_WIRED）—— 不是"没有发生"';        /* ✗ 两者绝不混写 */
+      else if (cnt > 0) mid = '该来源真实命中 ' + fmt(cnt) + ' 条';
+      else mid = '该来源这一段确实没有数据（不是"未接入"）';
+      html += '<div class="row"><span class="k">' + esc(storyLabel(k, d, null)) + '</span><span>' + esc(mid) +
+        '</span><span class="chip">' + esc(cnt > 0 ? fmt(cnt) : '0') + '</span></div>';
+    });
+    var evs = Array.isArray(d.events) ? d.events : [];
+    var head = box.querySelector('[data-story-head]');
+    var meta = box.querySelector('[data-story-meta]');
+    var chip = box.querySelector('[data-story-chip]');
+    head.textContent = maskIp(d.srcIp || src);
+    chip.textContent = d.severityMaxLabel || '—';
+    meta.textContent = '事件 ' + evs.length + ' 条' + (d.truncated ? '（truncated=true：每段最多 ' +
+      ((d.limits && d.limits.maxEventsPerStage) || 40) + ' 条，仅显示查得的部分）' : '') +
+      ' · 首次 ' + String(d.firstSeen || '').replace('T', ' ').slice(5, 16) +
+      ' · 最近 ' + String(d.lastSeen || '').replace('T', ' ').slice(5, 16);
+    if (!evs.length) { html += '<div class="tl">时间线为空：该来源这一段确实没有数据</div>'; }
+    evs.forEach(function (e) {
+      var ts = String(e.ts || '').slice(11, 19) || '--:--:--';
+      html += '<div class="tl"><span class="ts">' + esc(ts) + '</span> ' +
+        '<span class="tg ' + (STAGE_CLS[e.stage] || 'dns') + '">[' + esc(e.stageLabel || e.stage || '事件') + ']</span>' +
+        esc(maskText(e.summary)) + '</div>';                    /* R-TXT-2：外部文本进 innerHTML 前先转义 */
+    });
+    var note = box.querySelector('[data-story-note]');
+    if (d.commandsAvailable === false && note) {
+      note.textContent += ' （后端 commandsAvailable=false，不编命令序列）';
+    }
+    tl.innerHTML = html;
+    det.hidden = false;
+  }
+
+  /* ---------------------------------------------------------------- ★T22 公开知识库检索（/ai/）
+     纪律：只在用户操作时请求（话题词 1 次/词、自由输入按 Enter）；结果会话内缓存；不轮询 ✗。
+     /kb 是独立的 20 次/分钟上限（有 embedding 成本）⇒ 边打字边请求会把额度打光 ✗。 */
+  var KB_TOPICS = ['蜜罐', '弱口令', '暴力破解', 'WebShell', 'SQL 注入', '路径穿越', '端口扫描', '纵深防御'];
+  var KB_CACHE = {};
+  function bindKb() {
+    var box = document.querySelector('[data-xk-block="kb"]');
+    if (!box) return;
+    var row = box.querySelector('[data-kb-topics]');
+    var out = box.querySelector('[data-kb-out]');
+    var note = box.querySelector('[data-kb-note]');
+    var input = box.querySelector('#kbInput');
+    var btn = box.querySelector('#kbBtn');
+    row.innerHTML = KB_TOPICS.map(function (t) {
+      return '<a href="#" data-kb-q="' + esc(t) + '">' + esc(t) + '</a>';
+    }).join('');
+    function askQ(q) {
+      q = String(q || '').trim();
+      if (!q) { txt(note, '先选一个话题词或输入关键词'); return; }
+      if (KB_CACHE[q]) { renderKb(q, KB_CACHE[q]); return; }
+      txt(note, '检索「' + q + '」…（/kb 每次提问算一次 embedding 调用）');
+      settle('/api/public/kb?q=' + encodeURIComponent(q)).then(function (r) {
+        if (!r.ok) {
+          txt(note, '读不到（/kb 未取到：' + (r.err && r.err.status ? 'HTTP ' + r.err.status : '不可达') + '）');
+          return;
+        }
+        KB_CACHE[q] = r.d;
+        renderKb(q, r.d);
+      });
+    }
+    row.addEventListener('click', function (ev) {
+      var a = ev.target.closest ? ev.target.closest('[data-kb-q]') : null;
+      if (!a) return;
+      ev.preventDefault();
+      askQ(a.getAttribute('data-kb-q'));
+    });
+    if (btn) btn.addEventListener('click', function () { askQ(input && input.value); });
+    if (input) input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); askQ(input.value); }   /* 只按 Enter 才发，防抖不是靠 800ms 计时器 */
+    });
+  }
+  function renderKb(q, d) {
+    var box = document.querySelector('[data-xk-block="kb"]');
+    var out = box.querySelector('[data-kb-out]');
+    var note = box.querySelector('[data-kb-note]');
+    var rule = box.querySelector('[data-kb-rule]');
+    var results = (d && Array.isArray(d.results)) ? d.results : [];
+    var avail = !(d && d.available === false);
+    if (rule && d && d.rule && d.rule.note) rule.textContent = ' ' + d.rule.note;
+    if (!avail) {                       /* R-UNIT-1：后端给了原因就必须人读化显示，不许只写"读不到" */
+      out.innerHTML = '';
+      txt(note, '读不到：' + (d.note || '后端 available=false（原因未给）'));
+      return;
+    }
+    if (!results.length) {
+      out.innerHTML = '';
+      txt(note, '公开知识库里没有命中「' + q + '」的内容（不是取不到，是确实没有）');
+      return;
+    }
+    out.innerHTML = results.slice(0, 3).map(function (x) {
+      var score = (x.score === undefined || x.score === null || isNaN(Number(x.score))) ? '—' : Number(x.score).toFixed(2);
+      return '<div class="comp"><div class="hd"><span class="sev" style="background:var(--acc)"></span>' +
+        esc(x.title || '（无标题）') + '<b style="margin-left:auto;color:var(--acc)">' + esc(score) + '</b></div>' +
+        '<p>' + esc(x.snippet) + '</p>' +
+        '<p style="opacity:.75">' + esc([x.sourceTypeLabel, x.trustLevelLabel, x.publicRule].filter(Boolean).join(' · ')) + '</p></div>';
+    }).join('');
+    txt(note, '命中 ' + (d.hitCount === undefined ? results.length : d.hitCount) + ' 条 · 后端 top-k=3（前端不分页、不轮询）· 只检索公开白名单');
   }
 
   /* ---------------------------------------------------------------- 取数调度 */
@@ -404,5 +667,7 @@
     setInterval(load, REFRESH);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   }
+  /* ★T22：/ai/ 不轮询（有 embedding 成本）—— 只在用户点话题词 / 按 Enter 时请求一次 */
+  if (SSR === 'ai') bindKb();
 })();
 </script>

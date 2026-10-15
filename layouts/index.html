@@ -9,7 +9,7 @@
         `layouts/partials/xk-demo/shell-chrome.html` 的 <nav class="dock">，样式值逐字照
         `layouts/partials/xk-demo/shell-style.html` 的 `.dock` / `.dock .brand` / `.dock a`（+ 980px 那条）。
         项目顺序 XK-LAB ｜ 主页 · 监测中心 · AI 问答 · 笔记 · 靶场 · 关于；主页高亮"主页"。
-     ③ 链接是站点真路由（/ · /alerts/ · /posts/ · /labs/ · /ai/ · /about/）
+     ③ 链接是站点真路由（/ · /alerts/ · /posts/ · /ai/）—— ★T27：/labs/ 与 /about/ 已删
         （不是 demo 的 `<button data-v>`，也不走 `/#/…` hash：这一页不挂站点 SPA 的 app.js）
    不搬的：站点 SPA 外层（app.js / 侧栏 / 顶行 / 输入条 / 页脚 / 搜索层）、kurisu-player.js、
    状态机/语音/口型 —— 站主明确要求这些**不要**进这一页。
@@ -18,7 +18,7 @@
    重现方式：python _dev/gen-demo-pages.py
    ============================================================================ */ -}}
 <!DOCTYPE html>
-<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video" data-xk-boot="0">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
 <style>
@@ -87,6 +87,30 @@
     text-align:left;white-space:nowrap;text-decoration:none}
   .dock a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}
   .dock a:hover{color:var(--txt)}
+  /* ★T31 开场六阶段（站主 2026-10-15 精确规格）——
+     ① 首屏只有桌面壁纸（其余图由 JS 在 ①→② 之间才插入 ⇒ 首个请求只能是 desk.webp）
+     ② 底噪 + 一条极细扫描线 = 加载信号（不是转圈 ✗）
+     ③ CRT 黑屏闪烁 2~4 次（80~140ms，随机，不规律 ✗ 不做正弦）
+     ④ 大脸（opening 特写）以 2~3 次闪断出现（60~100ms 硬切 + 1~3px 行同步位移）
+     ⑤ 闪烁停止的那一帧：过冲白光 → 稳定，**同一帧**导航栏淡入上移（0.35s）
+     ⑥ 正式动画（opening → idle；沿用 L1 推拉，推拉起点 = 闪烁结束）
+     状态机在 <html data-xk-boot="0..5">，可查 window.__xkBoot = {phase,t0,marks,log} */
+  .crtboot{position:absolute;inset:0;z-index:6;background:#000;pointer-events:none}
+  .crtboot.noise{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.055) 0 1px,transparent 1px 3px)}
+  .crtboot.noise::after{content:"";position:absolute;left:0;right:0;top:46%;height:2px;
+    background:rgba(140,220,240,.20);animation:bootscan 1.1s linear infinite}
+  @keyframes bootscan{0%{top:12%}100%{top:88%}}
+  .crtboot.flash{background:#EAF7FF}
+  /* 第三拍：导航栏入场（闪烁期间必须不可见 ✗ —— 由标记上的 dock--wait 保证，不靠 JS 时序）*/
+  .dock.dock--wait{opacity:0;transform:translateX(-6px)}
+  .dock.dock--wait.dock--in{opacity:1;transform:none;animation:none;
+    transition:opacity .35s ease-out,transform .35s cubic-bezier(.2,.8,.3,1)}
+  .dock.dock--wait:not(.dock--in){animation:dockSafety .35s ease-out 5000ms forwards}
+  @keyframes dockSafety{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .crtboot,.crtboot.noise::after{display:none;animation:none}
+    .dock.dock--wait{opacity:1;transform:none;animation:none}
+  }
 
   @media (max-width:980px){
     .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}
@@ -111,16 +135,15 @@
 
 <div class="stage" id="stage">
   <img class="desk" src="/images/crt/desk.webp" alt="" aria-hidden="true">
-  <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true">
+  {{/* ★T31：.glow / .backplate / .plate 由 xkBootPreload() 在首帧之后才插入 ⇒ 首屏只请求壁纸那一张 */}}
 
   <div class="crt" id="crt">
     <div class="crt-clip" id="crtClip">
-      <img class="backplate" src="/images/crt/lab.webp" alt="" aria-hidden="true">
       <canvas class="charcanvas" id="charCanvas" aria-hidden="true"></canvas>
-      <img class="plate" src="/kurisu/scene/subtitle_frame_big.webp" alt="" aria-hidden="true">
       <div class="scan"></div>
       <div class="vig"></div>
     </div>
+    <div class="crtboot noise" id="crtBoot" aria-hidden="true"></div>
     <div class="crt-status" id="crtStatus" hidden>
       SEC-LAB · <span class="ok">● —</span><br>
       24h 告警 — · 拦截 —<br>
@@ -130,14 +153,12 @@
   </div>
 </div>
 
-<nav class="dock" id="dock" aria-label="站点导航（演示）">
+<nav class="dock dock--wait" id="dock" aria-label="站点导航（演示）">
   <div class="brand">XK-LAB</div>
   <a href="/" class="on">主页</a>
   <a href="/alerts/">监测中心</a>
   <a href="/ai/">AI 问答</a>
   <a href="/posts/">笔记</a>
-  <a href="/labs/">靶场</a>
-  <a href="/about/">关于</a>
 </nav>
 
 <div class="bootveil" id="bootveil"></div>
@@ -150,6 +171,152 @@
 
 /* ================= 数据：全部来自 static/kurisu/manifest.json ================= */
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= ★T31 开场六阶段（站主 2026-10-15 逐帧规格） =================
+   phase 0 壁纸        ：veil 撤下；CRT 仍是黑屏、导航栏隐藏（全部由 CSS/标记保证，无 JS 也成立）
+   phase 1 预载        ：首帧之后才插入 glow/backplate/plate 等图；CRT 底噪 = 加载信号
+   phase 2 黑屏闪烁    ：2~4 次，间隔 80~140ms 随机（亮度/扫描线抖动，不是正弦）
+   phase 3 大脸闪断    ：**等 opening 图真的就绪**才开始；2~3 次 60~100ms 硬切 + 1~3px 位移
+   phase 4 稳定+导航   ：**由"闪烁结束"这一事件触发**（不是猜时间的 setTimeout）
+   phase 5 正式动画    ：opening 继续播 → L1 既有推拉 → idle（推拉起点对齐到闪烁结束）
+   跳过：任意 pointerdown/keydown/wheel/touchstart ⇒ 撤闪烁层 + 导航栏立刻出现 + 直接进推拉
+   RM  ：直接最终稳定态（壁纸 + 稳定画面 + 导航栏），②③④ 的闪烁一律不做
+   验收钩子：window.__xkBoot.{phase,marks,log} ｜ #dock[data-xk-dock-in|data-xk-dock-at] */
+const XK_BOOT = { phase: 0, t0: performance.now(), rm: RM, marks: {}, log: [], timers: [],
+                  skipped: false, revealed: false };
+window.__xkBoot = XK_BOOT;
+const XK_BOOT_ON = !RM;   /* 新开场生效 ⇒ 关掉旧的"通电四拍"，两种闪烁不叠加 */
+function xkBootSet(p, why){
+  if(p <= XK_BOOT.phase) return;
+  XK_BOOT.phase = p;
+  XK_BOOT.marks[p] = Math.round(performance.now() - XK_BOOT.t0);
+  document.documentElement.setAttribute('data-xk-boot', String(p));
+  if(why) XK_BOOT.log.push(p + ':' + why);
+}
+function xkBootTimer(ms, fn){
+  const id = setTimeout(function(){ if(!XK_BOOT.skipped) fn(); }, ms);
+  XK_BOOT.timers.push(id);
+  return id;
+}
+function xkBootRnd(a, b){ return a + Math.random() * (b - a); }
+function xkBootBlink(hide){
+  const boot = document.getElementById('crtBoot');
+  if(boot) boot.style.display = hide ? 'none' : 'block';
+}
+function xkBootPreload(){
+  /* ①→② 之间才请回来（首屏只算壁纸那一张）——元素位置/类名与原来逐字一致，只改"什么时候插入" */
+  const stage = document.getElementById('stage'), clip = document.getElementById('crtClip');
+  const canvas = document.getElementById('charCanvas');
+  function mk(cls, src, parent, before){
+    const el = document.createElement('img');
+    el.className = cls; el.alt = ''; el.setAttribute('aria-hidden', 'true'); el.src = src;
+    if(parent) parent.insertBefore(el, before || null);
+    return el;
+  }
+  try{
+    if(stage) mk('glow', '/kurisu/scene/amadeus_ambient_high_blend.webp', stage, null);
+    if(clip) mk('backplate', '/images/crt/lab.webp', clip, canvas || clip.firstChild);
+    if(clip) mk('plate', '/kurisu/scene/subtitle_frame_big.webp', clip, clip.querySelector('.scan'));
+  }catch(e){ XK_BOOT.log.push('preload:' + e.message); }
+}
+function xkBootBlackFlicker(){
+  const boot = document.getElementById('crtBoot');
+  const n = 2 + Math.floor(Math.random() * 3);          /* 2~4 次 */
+  (function step(i){
+    if(i >= n){ xkBootWaitFace(); return; }
+    const black = i % 2 === 0;
+    if(boot){
+      boot.classList.toggle('noise', black);
+      boot.style.background = black ? '#000' : '#0A0E12';   /* 亮度跳一下（不规律，不是正弦）*/
+    }
+    xkBootTimer(xkBootRnd(80, 140), function(){ step(i + 1); });
+  })(0);
+}
+function xkBootWaitFace(){
+  /* ③ → ④：
+     必须先有"大脸"那一帧可画，闪断才有东西可露 ⇒ 等图真的就绪（不靠猜时间 ✗）；
+     断网/慢网：停在壁纸 + 保留加载信号，并给人读的说明（导航栏照样给，别把人关在黑屏里）。 */
+  const t0 = performance.now();
+  (function wait(){
+    const im = cache[CLIPS.opening.src] || cache[CLIPS.opening.bootSrc];
+    const ready = !!(im && im.complete && im.naturalWidth);
+    if(!ready && (performance.now() - t0) < 3000){ xkBootTimer(60, wait); return; }
+    if(!ready){
+      const st = document.getElementById('crtStatus');
+      if(st){ st.hidden = false; st.innerHTML = 'SEC-LAB · <span class="ok">● 画面读不到</span><br>网络或素材未到位 · 导航仍可用'; }
+      xkBootReveal('no-face');
+      return;
+    }
+    xkBootFaceFlicker();
+  })();
+}
+function xkBootFaceFlicker(){
+  xkBootSet(3, 'face');
+  const clip = document.getElementById('crtClip');
+  const n = 2 + Math.floor(Math.random() * 2);          /* 2~3 次闪断 */
+  (function step(i){
+    if(i >= n){ xkBootReveal('flicker-end'); return; }   /* ★导航栏＝闪烁结束事件触发 */
+    xkBootBlink(i % 2 === 0);                           /* 硬切，不是淡入 ✗ */
+    if(clip) clip.style.transform = 'translateX(' + (Math.random() * 6 - 3).toFixed(1) + 'px)';
+    xkBootTimer(xkBootRnd(60, 100), function(){ step(i + 1); });
+  })(0);
+}
+function xkBootReveal(why){
+  if(XK_BOOT.revealed) return;
+  XK_BOOT.revealed = true;
+  const boot = document.getElementById('crtBoot');
+  const clip = document.getElementById('crtClip');
+  if(clip) clip.style.transform = '';
+  if(boot && !RM){                                       /* 过冲白光 → 稳定 */
+    boot.classList.remove('noise');
+    boot.style.background = '';
+    boot.classList.add('flash'); boot.style.display = 'block';
+    xkBootTimer(120, function(){
+      boot.style.display = 'none'; boot.classList.remove('flash');
+    });
+  } else { xkBootBlink(true); }
+  xkDockIn(why);                                          /* ★同一帧：导航栏出现 */
+  xkBootSet(4, 'stable');
+  xkBootSet(5, 'play');
+}
+function xkBootStart(){
+  if(RM){ xkBootBlink(true); xkBootSet(4, 'rm'); xkBootSet(5, 'rm'); xkDockIn('rm'); return; }
+  xkBootTimer(150, function(){ xkBootPreload(); xkBootSet(1, 'preload'); xkBootSet(2, 'black'); xkBootBlackFlicker(); });
+}
+function xkBootSkip(){
+  if(!started || XK_BOOT.revealed) return;
+  XK_BOOT.skipped = true;
+  XK_BOOT.timers.forEach(function(id){ clearTimeout(id); });
+  xkBootReveal('skip');
+  xkTransStart();                       /* 跳过 = 直接进正式动画（推拉起点与"闪烁结束"同一语义）*/
+}
+const XK_T31_EV = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+function xkT31Off(){ XK_T31_EV.forEach(function(ev){ removeEventListener(ev, xkBootSkip); }); }
+XK_T31_EV.forEach(function(ev){ addEventListener(ev, function(){ xkT31Off(); xkBootSkip(); }, {passive:true}); });
+let dockShown = false;
+function xkDockIn(why){
+  if(dockShown) return;
+  const d = document.getElementById('dock');
+  if(!d) return;
+  dockShown = true;
+  d.classList.add('dock--in');
+  d.setAttribute('data-xk-dock-in', why || 'auto');
+  d.setAttribute('data-xk-dock-at', String(Math.round(performance.now() - XK_BOOT.t0)));
+}
+function xkTransStart(t){
+  /* ★T31：把"opening 播完 → 等 idle 图就绪 → 起推拉"抽成一处，供"自然播完"与"跳过"共用。
+     自然路径传 rAF 的 t，TRANS 取值与抽之前逐字等价（行为零变化）。 */
+  if(cur !== 'opening' || TRANS) return;
+  fi = CLIPS.opening.frames - 1;
+  const idleIm = xkClipIm('idle').im;
+  const btIdle = img(CLIPS.idle.bootSrc);
+  if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
+  if(idleIm.complete && idleIm.naturalWidth){ TRANS = (t === undefined ? performance.now() : t); }
+  else {
+    idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
+    idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});
+  }
+}
 const CLIPS = {
   opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24, vid:'opening'},
   idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24, vid:'idle'},
@@ -539,8 +706,9 @@ function drawFrame(){
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const sx = (fi % c.cols) * c.cw, sy = Math.floor(fi / c.cols) * c.ch;
   if(c.fit === 'screen'){
-    /* ★CRT 通电：opening 开头先亮线展开再出画面（约 0.55s） */
-    if(PWR && cur === 'opening'){
+    /* ★T31：新开场六阶段自带走电闪烁（.crtboot 覆盖层：黑屏/亮线/过冲白光）⇒
+       旧的"通电四拍"不再叠加（XK_BOOT_ON 时直接走正常绘制，画布内容随时可被闪断露出）。 */
+    if(PWR && cur === 'opening' && !XK_BOOT_ON){
       const pk = Math.min(1, (performance.now() - PWR) / 550);
       xkPowerOn(pk);
       if(pk >= 1) PWR = 0;
@@ -608,11 +776,12 @@ function xkPowerOn(k){
    零新素材；TRANS=0 且本函数不被引用即回到硬切行为。 */
 function xkDrawTrans(k){
   const cOpen = CLIPS.opening, cIdle = CLIPS.idle;
-  const imO = xkClipIm('opening').im, imI = xkClipIm('idle').im;
+  const oR = xkClipIm('opening'), imI = xkClipIm('idle').im;
+  const imO = oR.im, cO = oR.c;   /* ★T31：与"当前上屏那一张"同源 —— hi 未到位就画 boot 末帧（跳过时不会越界取空帧）*/
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
-  const lastF = cOpen.frames - 1;
-  const sx = (lastF % cOpen.cols) * cOpen.cw, sy = Math.floor(lastF / cOpen.cols) * cOpen.ch;
+  const lastF = Math.min(fi, cO.frames - 1);   /* 自然播完时 fi = hi 末帧，取值与旧写法逐字相同 */
+  const sx = (lastF % cO.cols) * cO.cw, sy = Math.floor(lastF / cO.cols) * cO.ch;
   const e = Math.min(1, k / 0.7), ease = 1 - Math.pow(1 - e, 3);   /* 推拉段 0→70%，easeOutCubic */
   const ow = W * (1 - 0.58 * ease), oh = H * (1 - 0.58 * ease);
   const ox = (W - ow) / 2, oy = H * 0.04 + (H * 0.5 - H * 0.04) * ease;   /* 下摇到 CRT 中部 */
@@ -669,11 +838,11 @@ var XK_SM_JS = (function(){
     idle:      ['trans_standby','idle'],
     cadence:   ['closed_eye_trans','trans_smile','idle_mic_wind']
   };
-  /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段） */
+  /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段）
+     ★T27 收尾：nav_labs / nav_about 两句随靶场/关于两页删除作废（表里不再有这两个键）。 */
   var VOICE_EMO = {
     greet_first:'happy', greet_back:'happy', tab_return:'happy',
-    nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
-    nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+    nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
     fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
   };
   var V = {
@@ -746,17 +915,46 @@ var XK_SM_JS = (function(){
     }
     return null;
   }
+  /* ★Q（2026-10-15 接手批 · 窗口 Q）：medium 图集只在**那块画布真的被渲染**时才下载。
+     实测取证 _shots/probe-firstscreen.json（CDP 抓 initiator）：五个内容页上 #charCanvas 在
+     关着的 v-home 里、getBoundingClientRect 恒为 0×0，状态机却照样接管并按 root 剪辑预取，
+     于是首屏白拉 759KB 的 medium/idle.atlas.webp —— ai 页自己还挂着手机面板的 1555KB 全身图，
+     两项相加 2314KB，顶破 1650KB 预算（改前实测 ai = 2369400 B）。
+     这里**只改加载时机**（站主第四批口径③允许的行为级懒加载）：画布不渲染就不发请求，
+     先把没 src 的占位 Image 记在图里（complete=false ⇒ paintOps 不落笔、原型那一帧继续留着）；
+     画布真露出来（SPA 切回主页）后下一次取帧就地补拉。取帧公式/几何/版式一字未动。
+     canvasRendered 节流 250ms，避免每帧强制布局。 */
+  var visAt = -1e9, visVal = false;
+  function canvasRendered(){
+    var t = now();
+    if(t - visAt < 250) return visVal;
+    var el = document.getElementById('charCanvas'), r = el ? el.getBoundingClientRect() : null;
+    visVal = !!(r && r.width > 0 && r.height > 0);
+    visAt = t;
+    return visVal;
+  }
   function img(url){
-    if(!V.atlas.imgs[url]){
-      var im = new Image();
-      im.decoding = 'async';
-      im.src = '/' + String(url).replace(/^\/+/, '');
-      V.atlas.imgs[url] = im;
-      V.atlas.pending++;
-      im.addEventListener('load', function(){ V.atlas.pending--; V.atlas.loaded++; }, {once:true});
-      im.addEventListener('error', function(){ V.atlas.pending--; V.atlas.errs.push('atlas 404 ' + url); }, {once:true});
+    var im = V.atlas.imgs[url];
+    if(im){
+      if(im.__xkDefer && canvasRendered()){          /* 画布露出来了：就地补拉（之前只是占位）*/
+        im.__xkDefer = 0;
+        V.atlas.pending++;
+        im.src = '/' + String(url).replace(/^\/+/, '');
+      }
+      return im;
     }
-    return V.atlas.imgs[url];
+    im = new Image();
+    im.decoding = 'async';
+    V.atlas.imgs[url] = im;
+    im.addEventListener('load', function(){ V.atlas.pending--; V.atlas.loaded++; }, {once:true});
+    im.addEventListener('error', function(){ V.atlas.pending--; V.atlas.errs.push('atlas 404 ' + url); }, {once:true});
+    if(canvasRendered()){
+      V.atlas.pending++;
+      im.src = '/' + String(url).replace(/^\/+/, '');
+    }else{
+      im.__xkDefer = 1;                              /* 画布看不见 ⇒ 不设 src，首屏零请求 */
+    }
+    return im;
   }
   function prefetch(clip){
     var c = V.atlas.mf && V.atlas.mf[clip];
@@ -1108,18 +1306,7 @@ function loop(t){
           if(cur === 'opening' && c.frames !== CLIPS.opening.frames){   /* ★T5.6：还在 boot 档——循环等 hi 到位接力，不当开场播完 */
             fi = fi % c.frames;
           }
-          else if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */
-            fi = c.frames - 1;
-            const idleR = xkClipIm('idle');
-            const idleIm = idleR.im;
-            const btIdle = img(CLIPS.idle.bootSrc);
-            if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
-            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }
-            else {
-              idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
-              idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});
-            }
-          }
+          else if(cur === 'opening'){ xkTransStart(t); }   /* ★T31：抽成函数（"自然播完"与"跳过"共用）；本路径行为逐字不变 */
           else fi = fi % c.frames;
         }
         drawFrame();
@@ -1167,6 +1354,7 @@ if(RM){
 window.__xkSmIsHome = true;
 function xkSmBoot(){ try{ XK_SM_JS.boot(); }catch(e){} }
 setTimeout(xkSmBoot, 600);   /* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/
+xkBootStart();   /* ★T31 开场六阶段：RM 直接稳定态；非 RM 150ms 后进 ②③④⑤ */
 started = true; lastT = performance.now();
 requestAnimationFrame(loop);
 const veil = document.getElementById('bootveil');
@@ -1269,8 +1457,7 @@ var XK_EMO_LIST = [
 /* 语音 id → 表情（只影响"没手选表情时"的自动切换；表里没有的 id 走默认 speaking） */
 var XK_VOICE_EMO = {
   greet_first:'happy', greet_back:'happy', tab_return:'happy',
-  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
-  nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
   fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
 };
 var XKM = { clips:null, loading:null, imgs:{}, emo:'normal', clip:null,

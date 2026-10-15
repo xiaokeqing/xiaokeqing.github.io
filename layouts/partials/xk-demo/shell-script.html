@@ -531,30 +531,6 @@ function askDemo(){
 document.getElementById('askBtn').onclick = askDemo;
 document.getElementById('askInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') askDemo(); });
 
-/* ============ 靶场演示 ============ */
-const PG_DEMO = {
-  '注入':     '<div class="verdict"><span class="chip bad">命中</span>提示词注入防护：判定为越权指令，动作 = 拒绝执行并告警。</div>',
-  'SQL':      '<div class="verdict"><span class="chip warn">未命中 ≠ 无害</span>SQL 注入不属于输入扫描组件职责，判定仅供参考。</div>',
-  '路径':     '<div class="verdict"><span class="chip bad">命中</span>路径穿越净化：检测到目录越界模式，动作 = 净化后放行并记录。</div>',
-  'AccessKey':'<div class="verdict"><span class="chip bad">命中</span>敏感信息扫描：匹配 AccessKey 样式，动作 = 打标 + 告警。</div>',
-  '天气':     '<div class="verdict"><span class="chip ok">未命中</span>三个组件均未命中。注意：未命中 ≠ 无害（后端 coverageWarning 常显）。</div>'
-};
-function runPg(text){
-  const box = document.getElementById('pgResult');
-  const key = Object.keys(PG_DEMO).find(k=>text.includes(k)) || '天气';
-  emo = 'sided_thinking'; render();
-  stateEl.textContent = 'THINKING';
-  box.innerHTML = '<div class="verdict"><span class="chip">检测中…</span>输入已送往后端检测链路（演示为本地假结果）。</div>';
-  setTimeout(()=>{
-    box.innerHTML = PG_DEMO[key] + '<div class="comp"><div class="hd"><span class="sev" style="background:var(--acc)"></span>PROMPT-GUARD · 适用</div><p>依据与动作由服务端返回，前端不拼内部标记名；接口不可用时如实显示"检测链路不可达"。</p></div>';
-    emo = 'normal';
-    speak('检测完成。记住：未命中不等于无害，判不了就说判不了。');
-  }, 800);
-}
-document.getElementById('pgBtn').onclick = ()=>{
-  const v = document.getElementById('pgInput').value.trim(); if(v) runPg(v); };
-document.querySelectorAll('.pgrun').forEach(b=>b.onclick = ()=>{
-  document.getElementById('pgInput').value = b.dataset.pg; runPg(b.dataset.pg); });
 
 /* ================= 桐莉栖语音（L1 预渲染语音库）· 内容页 =================
    ★2026-10-15 接手批：与原 demo 的差别 —— 原来只 speak() 打字幕，一个音频都不播。
@@ -575,8 +551,7 @@ function xkvUnlock(){
 }
 function xkvPageLine(){
   const on = document.querySelector('.view.on'); const id = on ? on.id : '';
-  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-range':'nav_labs',
-            'v-about':'nav_about', 'v-ai':'nav_ai' })[id] || 'nav_home';
+  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-ai':'nav_ai' })[id] || 'nav_home';
 }
 function xkvPlay(id){
   const line = xkvLine(id);
@@ -1061,11 +1036,11 @@ var XK_SM_JS = (function(){
     idle:      ['trans_standby','idle'],
     cadence:   ['closed_eye_trans','trans_smile','idle_mic_wind']
   };
-  /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段） */
+  /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段）
+     ★T27 收尾：nav_labs / nav_about 两句随靶场/关于两页删除作废（表里不再有这两个键）。 */
   var VOICE_EMO = {
     greet_first:'happy', greet_back:'happy', tab_return:'happy',
-    nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
-    nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+    nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
     fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
   };
   var V = {
@@ -1138,17 +1113,46 @@ var XK_SM_JS = (function(){
     }
     return null;
   }
+  /* ★Q（2026-10-15 接手批 · 窗口 Q）：medium 图集只在**那块画布真的被渲染**时才下载。
+     实测取证 _shots/probe-firstscreen.json（CDP 抓 initiator）：五个内容页上 #charCanvas 在
+     关着的 v-home 里、getBoundingClientRect 恒为 0×0，状态机却照样接管并按 root 剪辑预取，
+     于是首屏白拉 759KB 的 medium/idle.atlas.webp —— ai 页自己还挂着手机面板的 1555KB 全身图，
+     两项相加 2314KB，顶破 1650KB 预算（改前实测 ai = 2369400 B）。
+     这里**只改加载时机**（站主第四批口径③允许的行为级懒加载）：画布不渲染就不发请求，
+     先把没 src 的占位 Image 记在图里（complete=false ⇒ paintOps 不落笔、原型那一帧继续留着）；
+     画布真露出来（SPA 切回主页）后下一次取帧就地补拉。取帧公式/几何/版式一字未动。
+     canvasRendered 节流 250ms，避免每帧强制布局。 */
+  var visAt = -1e9, visVal = false;
+  function canvasRendered(){
+    var t = now();
+    if(t - visAt < 250) return visVal;
+    var el = document.getElementById('charCanvas'), r = el ? el.getBoundingClientRect() : null;
+    visVal = !!(r && r.width > 0 && r.height > 0);
+    visAt = t;
+    return visVal;
+  }
   function img(url){
-    if(!V.atlas.imgs[url]){
-      var im = new Image();
-      im.decoding = 'async';
-      im.src = '/' + String(url).replace(/^\/+/, '');
-      V.atlas.imgs[url] = im;
-      V.atlas.pending++;
-      im.addEventListener('load', function(){ V.atlas.pending--; V.atlas.loaded++; }, {once:true});
-      im.addEventListener('error', function(){ V.atlas.pending--; V.atlas.errs.push('atlas 404 ' + url); }, {once:true});
+    var im = V.atlas.imgs[url];
+    if(im){
+      if(im.__xkDefer && canvasRendered()){          /* 画布露出来了：就地补拉（之前只是占位）*/
+        im.__xkDefer = 0;
+        V.atlas.pending++;
+        im.src = '/' + String(url).replace(/^\/+/, '');
+      }
+      return im;
     }
-    return V.atlas.imgs[url];
+    im = new Image();
+    im.decoding = 'async';
+    V.atlas.imgs[url] = im;
+    im.addEventListener('load', function(){ V.atlas.pending--; V.atlas.loaded++; }, {once:true});
+    im.addEventListener('error', function(){ V.atlas.pending--; V.atlas.errs.push('atlas 404 ' + url); }, {once:true});
+    if(canvasRendered()){
+      V.atlas.pending++;
+      im.src = '/' + String(url).replace(/^\/+/, '');
+    }else{
+      im.__xkDefer = 1;                              /* 画布看不见 ⇒ 不设 src，首屏零请求 */
+    }
+    return im;
   }
   function prefetch(clip){
     var c = V.atlas.mf && V.atlas.mf[clip];

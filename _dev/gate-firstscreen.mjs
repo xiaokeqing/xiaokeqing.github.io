@@ -7,8 +7,8 @@
      ③ **门禁**：导航后 1.5s 内请求到的**全部资产**（图片/字体/样式/脚本）字节 ≤ budget（默认 1,638,400 B = 1600KB）
         任一页超标 → 打印超标文件清单 + **退出码 1**（这就是"真门禁"，不是报告）
      ④ 产物自查：正文长度 / 关键标记 / 站外资源引用 / 本地引用是否落到真实文件
-     ⑤ **六页初始屏断言（2026-10-14 第四批新口径）**：每页初始 `.on` 必须落在它自己那一屏
-        （alerts→v-monitor、posts→v-notes、labs→v-range、about→v-about、ai→v-ai），
+     ⑤ **四页初始屏断言（2026-10-14 第四批口径 + 2026-10-15 T27 六页→四页）**：每页初始 `.on` 必须落在它自己那一屏
+        （alerts→v-monitor、posts→v-notes、ai→v-ai），
         `main[data-xk-ssr]` 的取值要等于该页路由名，`#xk-views` 要在；
         主页（不是 .view 结构）改为断言 `.dock` 当前项 + `#charCanvas` 真的画出东西。
         ★ 主页导航本批已与内容页统一为左侧竖排 `.dock`（原顶部胶囊 `.navpill` 已删除），
@@ -50,8 +50,6 @@ const PAGES = [
   { name: 'home', file: 'index.html', url: 'index.html', wait: 14000, expect: 'home', view: null, marker: '.stage .charcanvas' },
   { name: 'monitor', file: 'alerts/index.html', url: 'alerts/', wait: 4000, expect: 'monitor', view: 'v-monitor', marker: '#termFeed' },
   { name: 'notes', file: 'posts/index.html', url: 'posts/', wait: 3000, expect: 'notes', view: 'v-notes', marker: '#v-notes .note' },
-  { name: 'labs', file: 'labs/index.html', url: 'labs/', wait: 3000, expect: 'range', view: 'v-range', marker: '#pgInput' },
-  { name: 'about', file: 'about/index.html', url: 'about/', wait: 3000, expect: 'about', view: 'v-about', marker: '#v-about' },
   { name: 'ai', file: 'ai/index.html', url: 'ai/', wait: 3000, expect: 'ai', view: 'v-ai', marker: '#askInput' }
 ];
 
@@ -276,8 +274,8 @@ let gateFail = 0;
     if (consoleBad.length) console.log('        阻断性控制台错误:', consoleBad.slice(0, 4));
   }
 
-  /* ★ 第四批新口径：六页初始屏断言（旧的 hash 路由段已删除，理由见文件头注释⑤） */
-  console.log('\n== 六页初始屏（新口径：页面 = demo 对应那一屏，不再有 SPA hash 路由）==');
+  /* ★ 第四批新口径 + T27（六页→四页）：四页初始屏断言（旧 hash 路由段已删除，理由见文件头注释⑤） */
+  console.log('\n== 四页初始屏（新口径：页面 = demo 对应那一屏，不再有 SPA hash 路由）==');
   let routeBad = 0;
   for (const p of PAGES) {
     await rpc(ws, 'Page.navigate', { url: `http://127.0.0.1:${PORT}/${p.url}` });
@@ -289,12 +287,7 @@ let gateFail = 0;
     let extra = null, ok;
     if (p.view) {
       ok = ssr === p.expect && views && on === p.view && textLen >= 150;
-      if (p.expect === 'about' && textLen === 0) {
-        /* demo 自己的缺陷：docs/demo-内容页外壳.html 的 v-about 里没有任何内容（已记进交接文档）。
-           这一屏没有正文可断言，就只断言"落在自己那一屏"。 */
-        ok = ssr === p.expect && views && on === p.view;
-        extra = 'doc/demo v-about 本来就是空的';
-      }
+      /* ★T27：原来的 about 特例（demo 的 v-about 是空屏）随 /about/ 页一起删除 */
     } else {
       const opaque = await evalJs("(function(){var c=document.getElementById('charCanvas');if(!c)return -1;var x=c.getContext('2d');if(!c.width)return -1;var d=x.getImageData(0,0,c.width,c.height).data,on=0;for(var i=3;i<d.length;i+=4){if(d[i]>8)on++;}return on;})()");
       const nav = await evalJs("(function(){var a=document.querySelector('.dock a.on');return a?a.textContent.trim():null;})()");
@@ -317,7 +310,7 @@ let gateFail = 0;
   fs.writeFileSync(path.join(OUT, PREFIX + '-report.json'), JSON.stringify(report, null, 1), 'utf8');
   console.log('\n== 结论 ==');
   console.log('  首屏门禁：%s（%d 页超标 / %d 页）', gateFail ? 'FAIL' : 'PASS', gateFail, PAGES.length);
-  console.log('  六页初始屏（新口径）：%s（%d 页不符）', routeBad ? 'FAIL' : 'PASS', routeBad);
+  console.log('  四页初始屏（新口径）：%s（%d 页不符）', routeBad ? 'FAIL' : 'PASS', routeBad);
   console.log('  路由契约（data-xk-ssr / #xk-views / 站外资源）：见 _dev/check-ssr-contract.py');
   console.log('  新外壳样式一致性：%s（产物样式表里 #xk-app 规则 %d 条；页面上 #xk-app 根元素 %s）',
     shellConsistent ? 'PASS' : 'FAIL', shellRules, anyRoot ? JSON.stringify(shellRoots) : '0 个（本批口径下不再挂站点外壳）');

@@ -95,16 +95,6 @@ hasCJKLanguage = true
   name = "AI 安全"
   url = "/#/ai"
   weight = 40
-[[menu.main]]
-  identifier = "range"
-  name = "攻防靶场"
-  url = "/#/range"
-  weight = 50
-[[menu.main]]
-  identifier = "about"
-  name = "关于"
-  url = "/#/about"
-  weight = 60
 
 # ---------- 分页 ----------
 [pagination]

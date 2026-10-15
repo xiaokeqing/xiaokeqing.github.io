@@ -172,6 +172,6 @@ comments: false
 ---
 
 <div class="demo-back">
-    想看它是怎么做出来的 → <a href="/#/about">项目介绍</a><br>
-    想看能动手的安全演示 → <a href="/#/range">攻防靶场</a>
+    想看它是怎么做出来的 → <a href="/projects/">项目介绍</a><br>
+    想提问或查文档 → <a href="/ai/">AI 问答</a>
 </div>

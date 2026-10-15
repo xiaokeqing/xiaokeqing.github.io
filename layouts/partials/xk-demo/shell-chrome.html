@@ -1,5 +1,6 @@
 {{- /* 外壳常驻件（逐字）：底图两层 / demo 标识条 / 左侧 .dock / HOLO 面板 / 背景选择器。
-      唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。 */ -}}
+      唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。
+      ★T27（2026-10-15 站主）：/labs/ 与 /about/ 两页已删 ⇒ dock 六项 → 四项（主页 / 监测中心 / AI 问答 / 笔记）。 */ -}}
 {{- $v := .v -}}
 
 <!-- 左侧竖排导航 -->
@@ -9,9 +10,7 @@
   <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">监测中心</a>
   <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
   <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
-  <a href="/labs/" class="{{ if eq $v "range" }}on{{ end }}">靶场</a>
-  <a href="/about/" class="{{ if eq $v "about" }}on{{ end }}">关于</a>
-</nav>
+    </nav>
 
 <!-- HOLO 人物面板：左上角 -->
 <aside class="holo live" id="holo" role="complementary" aria-label="助手面板（演示）">

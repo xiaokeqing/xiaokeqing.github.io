@@ -76,3 +76,7 @@ _dev/*
 # T8 状态机工装（窗口 C，2026-10-15 批准入库）
 !_dev/verify-sm-walker.mjs
 !_dev/refresh_manifest_voice.py
+
+# 窗口 Q 站点接手批（2026-10-15 批准入库）：首屏 initiator 取证 / 开场六阶段逐帧取证
+!_dev/probe-firstscreen-initiator.mjs
+!_dev/probe-boot-phases.mjs

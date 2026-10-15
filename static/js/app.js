@@ -312,16 +312,13 @@
      ========================================================================== */
   var VIEW_TPL = {
     home: 'tpl-home', notes: 'tpl-notes', note: 'tpl-note',
-    monitor: 'tpl-monitor', ai: 'tpl-ai', range: 'tpl-range',
+    monitor: 'tpl-monitor', ai: 'tpl-ai',
     about: 'tpl-about', notfound: 'tpl-notfound'
   };
-  var NAV_OF_ROUTE = { home: 'home', notes: 'notes', note: 'notes', monitor: 'monitor', ai: 'ai', range: 'range', about: 'about' };
-  /* ★ 2026-10-14 修的一个真 bug：hugo.toml 的菜单是 `identifier = "labs"` + `url = "/#/labs"`，
-     而路由名/模板键是 `range` —— parseHash() 读到 'labs' 时 `VIEW_TPL['labs']` 不存在 → 返回 null
-     → currentRoute() 退化成 routeFromPath(location.pathname)。在主页点这条链接时 pathname 是 '/'
-     → **点「攻防靶场」会回到主页**（截图与深链都正常，所以一直没被发现）。
-     这里把 hash 名到路由名的别名补上，与 routeFromPath 的 `/labs → range` 保持一致。 */
-  var HASH_ALIAS = { labs: 'range' };
+  var NAV_OF_ROUTE = { home: 'home', notes: 'notes', note: 'notes', monitor: 'monitor', ai: 'ai', about: 'about' };
+  /* ★T27 收尾（2026-10-15 窗口 Q）：靶场页已删 ⇒ hash 别名表（labs→range）与
+     tpl-range 一起作废。原来那段注释记录的 bug（hugo.toml 菜单 identifier="labs" 找不到
+     VIEW_TPL['labs']）随菜单项一起消失：hugo.toml 里已经没有 range 这一项了。 */
 
   function parseHash(hash) {
     var m = String(hash || '').replace(/^#/, '').match(/^\/?([a-z-]+)(?:\/([^/?#]+))?/i);
@@ -342,7 +339,8 @@
     if (m) return { name: 'note', slug: m[1] };
     if (/^\/posts\/?$/.test(p) || /^\/categories/.test(p) || /^\/tags/.test(p)) return { name: 'notes' };
     if (/^\/alerts/.test(p)) return { name: 'monitor', tab: 'alerts' };
-    if (/^\/labs/.test(p)) return { name: 'range' };
+    /* ★T27 收尾：靶场页的路由匹配（labs → range）随页面删除一起摘掉（老地址由
+       content/alerts 的 aliases 0 秒跳到监测中心，不再经过前端路由）。 */
     /* ★ 第十一轮修的一个真 bug：以前这里没有 /ai/ 分支 —— 所以直接打开 /ai/（服务端渲染正确）
        之后，app.js 会把路由判成 notfound 并把整页替换成 404。实测就是"无 JS 正常、有 JS 变 404"。
        现在补上，并把这个坑写进断言（见 _dev/verify-redesign.ps1 第 12 组）。 */
@@ -360,7 +358,7 @@
     if (!href) return false;
     if (/^(https?:)?\/\//i.test(href) || /^(mailto|tel):/i.test(href)) return false;
     if (href.charAt(0) === '#') return href.indexOf('#/') === 0;
-    return /^\/(posts|about|projects|demo|alerts|labs|categories|tags)/.test(href) || href === '/';
+    return /^\/(posts|about|projects|demo|alerts|categories|tags)/.test(href) || href === '/';
   }
 
   /** 站内跳转：URL 统一收敛成 /#/<route>，只替换 #content，绝不整页刷新 */
@@ -542,7 +540,7 @@
     else if (route.name === 'notes') initNotes();
     else if (route.name === 'note') { initNote(route.slug); initNoteExtras(); }
     else if (route.name === 'monitor') initMonitor(route.tab);
-    else if (route.name === 'range') initRange();
+    /* ★T27 收尾：route.name === 'range' 的分支随靶场页删除一起摘掉（initRange 已无路由可进）*/
     else if (route.name === 'ai') initAi();
     else if (route.name === 'about') initAbout();
     else if (route.name === 'notfound') { /* 静态内容 */ }
@@ -1444,6 +1442,9 @@
 
   /* ==========================================================================
      10. 攻防靶场：两张卡都真的打到 /api/playground/check
+     ★T27 收尾（2026-10-15）：靶场页已删 ⇒ 下面这段 initRange() 已**没有路由入口**
+       （VIEW_TPL / routeFromPath / 渲染分发里的 range 分支都已摘掉）。函数体保留不删，
+       是为了不在"删页面"这一批里顺手动 playground 取数逻辑；它随旧 SPA 一起下线。
      ========================================================================== */
   function initRange() {
     var available = null;

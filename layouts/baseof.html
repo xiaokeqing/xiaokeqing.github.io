@@ -48,8 +48,8 @@
   {{- else if or (eq .Section "posts") (eq .Kind "taxonomy") (eq .Kind "term") -}}{{- $cur = "notes" -}}
   {{- else if eq .Section "alerts" -}}{{- $cur = "monitor" -}}
   {{- else if eq .Section "ai" -}}{{- $cur = "ai" -}}
-  {{- else if eq .Section "labs" -}}{{- $cur = "range" -}}
-  {{- else if or (eq .Section "about") (eq .Section "projects") (eq .Section "demo") -}}{{- $cur = "about" -}}
+  {{- /* ★T27：/about/ 页已删；projects/demo 仍回落 about 视图（旧 SPA 遗留页，见实施件文档 §冲突-6） */ -}}
+  {{- else if or (eq .Section "projects") (eq .Section "demo") -}}{{- $cur = "about" -}}
   {{- end -}}
   {{- $slug := "" -}}
   {{- with .File -}}{{ $slug = .BaseFileName }}{{- end -}}
@@ -73,7 +73,8 @@
     {{- else if eq $cur "note" -}}{{ partial "spa-view-note.html" (dict "page" . "mode" "ssr") }}
     {{- else if eq $cur "monitor" -}}{{ partial "spa-view-monitor.html" . }}
     {{- else if eq $cur "ai" -}}{{ partial "spa-view-ai.html" . }}
-    {{- else if eq $cur "range" -}}{{ partial "spa-view-range.html" . }}
+    {{- /* ★T27 收尾（2026-10-15 窗口 Q）：/labs/ 页删除 ⇒ `$cur=="range"` 已成死分支，
+           `spa-view-range.html` 也随之下线（补丁 09 之外的那一份删除）。 */}}
     {{- else if eq $cur "about" -}}{{ partial "spa-view-about.html" . }}
     {{- else -}}{{ partial "spa-view-notfound.html" . }}
     {{- end -}}
@@ -84,10 +85,9 @@
   {{ partial "spa-footer.html" . }}
   {{ partial "spa-search.html" . }}
   {{- end }}
-  {{- if and site.Params.kurisuEnabled (not .IsHome) }}
-  {{/* 页面底部输入条：窄屏栏目页显示（kurisu-player.js 写开关）；主页不渲染（demo 里没有） */}}
-  {{ partial "xk-kurisu-bar.html" . }}
-  {{- end }}
+  {{- /* ★T28（2026-10-15 站主）：旧 SPA 的底部问答输入条已收口 —— 问答只有 /ai/ 一个入口。
+       只删 DOM 是安全的：static/js/kurisu-player.js:2152 有 `if (!bar) { return; }`、
+       static/js/app.js:1853 有 `if (!log || !askInput) return;` ⇒ 缺席即静默返回（已核实）。 */}}
 
   {{/* 路由启动参数（接口基址只在这里出现一次，JS 不写死域名） */}}
   <script type="application/json" id="xk-boot">{{ dict
@@ -114,7 +114,8 @@
     <template id="tpl-note">{{ partial "spa-view-note.html" (dict "page" . "mode" "shell") }}</template>
     <template id="tpl-monitor">{{ partial "spa-view-monitor.html" . }}</template>
     <template id="tpl-ai">{{ partial "spa-view-ai.html" . }}</template>
-    <template id="tpl-range">{{ partial "spa-view-range.html" . }}</template>
+    {{- /* ★T27 收尾：tpl-range 与 spa-view-range.html 一起下线 —— 这一行原来是**无条件**求值的，
+           文件删掉后必须同时摘掉，否则 Hugo 构建直接报 "partial not found"。 */}}
     <template id="tpl-about">{{ partial "spa-view-about.html" . }}</template>
     <template id="tpl-notfound">{{ partial "spa-view-notfound.html" . }}</template>
     {{- if site.Params.kurisuEnabled }}

@@ -1,19 +1,24 @@
 {{/*
-  ⑥ 关于 —— 规格 §4⑥：项目说明、SecAgent 架构/护栏/取舍与踩坑、个人介绍（原「项目」内容并入）。
-  正文直接取仓库里的 Markdown（content/about、content/projects、content/demo），
-  不做二次改写：文字是站主自己写的，前端只负责版面。
-  三块合并成一栏，所以 /about/、/projects/、/demo/ 三个老地址都落到这里，不会出现 404。
+  ⑥ 项目 / 在线 Demo —— 规格 §4⑥：项目说明、SecAgent 架构/护栏/取舍与踩坑。
+  正文直接取仓库里的 Markdown（content/projects、content/demo），不做二次改写：
+  文字是站主自己写的，前端只负责版面。
+  ★T27（2026-10-15 站主）：/about/ 关于页已删 ⇒ 这份视图现在只服务 /projects/ 与 /demo/
+    两个老地址（baseof 把这两节映射到 `about` 路由名，仅路由名，页面标题已按节改名）。
+    个人介绍那一段的正文来源 content/about/_index.md 已随页删除，对应的卡片与锚点也一并摘掉
+    （站主口径："内容改作知识库条目（T30）"）。
 */}}
   <div class="xk-wrap xk-page">
     {{/* 追加要求 ②：顶部介绍大卡已删除（返工后连整段说明也去掉）。
-         这里只留【模块名 + 一行极简副标题】+ 本页小节锚点（锚点是真导航，不是介绍）。 */}}
+         这里只留【模块名 + 一行极简副标题】+ 本页小节锚点（锚点是真导航，不是介绍）。
+         ★T27：标题/副标题按当前节取（不再出现"关于"字样）。 */}}
+    {{- $isDemo := eq .Section "demo" -}}
+    {{- $isProjects := eq .Section "projects" -}}
     <header class="xk-page__hd">
       <div class="xk-page__plate">
-        <h1 class="xk-page__title">关于</h1>
-        <p class="xk-page__lead">个人介绍 · SecAgent · 在线 Demo</p>
+        <h1 class="xk-page__title">{{ if $isDemo }}在线 Demo{{ else if $isProjects }}项目{{ else }}项目 · Demo{{ end }}</h1>
+        <p class="xk-page__lead">{{ if $isDemo }}在线 Demo{{ else if $isProjects }}SecAgent{{ else }}SecAgent · 在线 Demo{{ end }}</p>
       </div>
       <nav class="xk-anchors" aria-label="本页小节">
-        <a class="xk-chip" href="#xk-about-me" data-xk-anchor>我是谁</a>
         <a class="xk-chip" href="#xk-about-project" data-xk-anchor>项目：SecAgent</a>
         <a class="xk-chip" href="#xk-about-demo" data-xk-anchor>在线 Demo</a>
         {{/* 站主第九轮 ⑤：主页不再出现技术免责 → 「数据来源 / 口径 / 免责」整块落在这一节 */}}
@@ -23,11 +28,6 @@
 
     <div class="xk-portal">
       <div class="xk-portal__main">
-        <section class="xk-card" id="xk-about-me">
-          <header class="xk-card__hd"><h2 class="xk-card__title">个人介绍</h2></header>
-          <div class="xk-md">{{ with site.GetPage "/about" }}{{ .Content }}{{ end }}</div>
-        </section>
-
         <section class="xk-card" id="xk-about-project">
           <header class="xk-card__hd"><h2 class="xk-card__title">项目：SecAgent</h2></header>
           <div class="xk-md">{{ with site.GetPage "/projects" }}{{ .Content }}{{ end }}</div>
@@ -71,7 +71,7 @@
             ② <code>/api/public/audit</code> 展示的是真实封禁与处置留痕，并在卡片里写明来源，而不是编一条 live 数据；
             ③ <code>/api/public/latest</code> <b>已上线</b>：返回窗口聚合（<code>windowSize=200 / windowAlertCount /
             severityCounts / sourceCounts / latestEvent / latestBlock</code>），字段全部来自公开白名单
-            （来源 IP 已掩码到网段，不含标题、内网目的地址、聚合 id）。此前文档里写的"404 未上线"是旧结论，已更正；
+            （来源 IP 显示为前三段 + 末段 x，不含标题、内网目的地址、聚合 id）。此前文档里写的"404 未上线"是旧结论，已更正；
             ④ 明细下钻端点 <code>/api/public/alerts/{aggId}</code> 仍未上线，所以监测中心只展示聚合记录自带的字段，
             不额外拼一份「原始事件列表」；
             ⑤ 蜜罐命令时间线（<code>commandsAvailable=false</code>）保持「数据源未接入」，不编造命令内容；
@@ -92,7 +92,7 @@
           <ul class="xk-bullets xk-note">
             <li><b>监测中心</b>：主机层（Wazuh）与网络层（Suricata）告警、蜜罐战报、处置审计与系统指纹 —— 全部来自公开只读端点，源 IP 已掩码，只读不可写。</li>
             <li><b>笔记</b>：按分类整理的学习与实践记录：渗透文档、课堂笔记、个人总结、CVE 复现、速查表。</li>
-            <li><b>攻防靶场</b>：只剩两种互动，真的把输入送进我方后端检测组件、看它原样返回什么；公网不放真实漏洞应用，模拟器也不假装能防住攻击。</li>
+            {{/* ★T27：靶场(/labs/)整页已删 ⇒ 这一条说明也一并摘掉（留着一句就是假描述） */}}
             <li><b>AI 安全</b>：对着知识库提问、或直接检索文档库；答案、引用与状态标注全部来自后端公开只读端点，模型没生成就如实写原因，不补假结论。</li>
           </ul>
           <p class="xk-note">这四段说明原来挂在各模块顶部（占掉半屏），现在集中放在这里。</p>
@@ -112,7 +112,7 @@
           <ul class="xk-list">
             <li><a class="xk-link" href="/#/notes" data-xk-route>全部笔记</a></li>
             <li><a class="xk-link" href="/#/monitor/alerts" data-xk-route>监测中心</a></li>
-            <li><a class="xk-link" href="/#/range" data-xk-route>攻防靶场</a></li>
+            {{/* ★T27：攻防靶场(/#/range)入口随页面删除摘掉 */}}
           </ul>
         </section>
       </aside>

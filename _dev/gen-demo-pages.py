@@ -281,14 +281,13 @@ NAVPILL_HTML = (
     '  <a href="#">靶场</a><a href="#">AI 问答</a><a href="#">关于</a>\n'
     '</nav>')
 DOCK_HTML = (
-    '<nav class="dock" id="dock" aria-label="站点导航（演示）">\n'
+    '<nav class="dock dock--wait" id="dock" aria-label="站点导航（演示）">\n'
     '  <div class="brand">XK-LAB</div>\n'
     '  <a href="/" class="on">主页</a>\n'
     '  <a href="/alerts/">监测中心</a>\n'
     '  <a href="/ai/">AI 问答</a>\n'
     '  <a href="/posts/">笔记</a>\n'
-    '  <a href="/labs/">靶场</a>\n'
-    '  <a href="/about/">关于</a>\n'
+
     '</nav>')
 NAVPILL_CSS = (
     '  /* 屏外：导航浮条 */\n'
@@ -297,6 +296,39 @@ NAVPILL_CSS = (
     '    padding:4px;backdrop-filter:blur(8px)}\n'
     '  .navpill a{font:12.5px var(--sans);color:#8CA3B8;text-decoration:none;padding:5px 12px;border-radius:99px}\n'
     '  .navpill a.on{color:#39D0D8;background:rgba(57,208,216,.1)}\n')
+# ---- ★T31 第三拍：导航栏入场（站主 2026-10-15 口径）----------------------------------
+#   主页 CSS/JS 与生成器同源：DOCK_CSS 里追加 T31_CSS，home_script 里注入 T31_JS，
+#   并把"opening 播完 → 起推拉"抽成 xkTransStart()（自然路径行为逐字不变，跳过路径共用它）。
+#   三拍时序：#1 通电闪烁（xkPowerOn）→ #2 助手大脸（opening 特写）→ #3 导航栏落入（本段）。
+T31_CSS = '  /* ★T31 开场六阶段（站主 2026-10-15 精确规格）——\n     ① 首屏只有桌面壁纸（其余图由 JS 在 ①→② 之间才插入 ⇒ 首个请求只能是 desk.webp）\n     ② 底噪 + 一条极细扫描线 = 加载信号（不是转圈 ✗）\n     ③ CRT 黑屏闪烁 2~4 次（80~140ms，随机，不规律 ✗ 不做正弦）\n     ④ 大脸（opening 特写）以 2~3 次闪断出现（60~100ms 硬切 + 1~3px 行同步位移）\n     ⑤ 闪烁停止的那一帧：过冲白光 → 稳定，**同一帧**导航栏淡入上移（0.35s）\n     ⑥ 正式动画（opening → idle；沿用 L1 推拉，推拉起点 = 闪烁结束）\n     状态机在 <html data-xk-boot="0..5">，可查 window.__xkBoot = {phase,t0,marks,log} */\n  .crtboot{position:absolute;inset:0;z-index:6;background:#000;pointer-events:none}\n  .crtboot.noise{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.055) 0 1px,transparent 1px 3px)}\n  .crtboot.noise::after{content:"";position:absolute;left:0;right:0;top:46%;height:2px;\n    background:rgba(140,220,240,.20);animation:bootscan 1.1s linear infinite}\n  @keyframes bootscan{0%{top:12%}100%{top:88%}}\n  .crtboot.flash{background:#EAF7FF}\n  /* 第三拍：导航栏入场（闪烁期间必须不可见 ✗ —— 由标记上的 dock--wait 保证，不靠 JS 时序）*/\n  .dock.dock--wait{opacity:0;transform:translateX(-6px)}\n  .dock.dock--wait.dock--in{opacity:1;transform:none;animation:none;\n    transition:opacity .35s ease-out,transform .35s cubic-bezier(.2,.8,.3,1)}\n  .dock.dock--wait:not(.dock--in){animation:dockSafety .35s ease-out 5000ms forwards}\n  @keyframes dockSafety{to{opacity:1;transform:none}}\n  @media (prefers-reduced-motion:reduce){\n    .crtboot,.crtboot.noise::after{display:none;animation:none}\n    .dock.dock--wait{opacity:1;transform:none;animation:none}\n  }\n'
+T31_JS = '\n/* ================= ★T31 开场六阶段（站主 2026-10-15 逐帧规格） =================\n   phase 0 壁纸        ：veil 撤下；CRT 仍是黑屏、导航栏隐藏（全部由 CSS/标记保证，无 JS 也成立）\n   phase 1 预载        ：首帧之后才插入 glow/backplate/plate 等图；CRT 底噪 = 加载信号\n   phase 2 黑屏闪烁    ：2~4 次，间隔 80~140ms 随机（亮度/扫描线抖动，不是正弦）\n   phase 3 大脸闪断    ：**等 opening 图真的就绪**才开始；2~3 次 60~100ms 硬切 + 1~3px 位移\n   phase 4 稳定+导航   ：**由"闪烁结束"这一事件触发**（不是猜时间的 setTimeout）\n   phase 5 正式动画    ：opening 继续播 → L1 既有推拉 → idle（推拉起点对齐到闪烁结束）\n   跳过：任意 pointerdown/keydown/wheel/touchstart ⇒ 撤闪烁层 + 导航栏立刻出现 + 直接进推拉\n   RM  ：直接最终稳定态（壁纸 + 稳定画面 + 导航栏），②③④ 的闪烁一律不做\n   验收钩子：window.__xkBoot.{phase,marks,log} ｜ #dock[data-xk-dock-in|data-xk-dock-at] */\nconst XK_BOOT = { phase: 0, t0: performance.now(), rm: RM, marks: {}, log: [], timers: [],\n                  skipped: false, revealed: false };\nwindow.__xkBoot = XK_BOOT;\nconst XK_BOOT_ON = !RM;   /* 新开场生效 ⇒ 关掉旧的"通电四拍"，两种闪烁不叠加 */\nfunction xkBootSet(p, why){\n  if(p <= XK_BOOT.phase) return;\n  XK_BOOT.phase = p;\n  XK_BOOT.marks[p] = Math.round(performance.now() - XK_BOOT.t0);\n  document.documentElement.setAttribute(\'data-xk-boot\', String(p));\n  if(why) XK_BOOT.log.push(p + \':\' + why);\n}\nfunction xkBootTimer(ms, fn){\n  const id = setTimeout(function(){ if(!XK_BOOT.skipped) fn(); }, ms);\n  XK_BOOT.timers.push(id);\n  return id;\n}\nfunction xkBootRnd(a, b){ return a + Math.random() * (b - a); }\nfunction xkBootBlink(hide){\n  const boot = document.getElementById(\'crtBoot\');\n  if(boot) boot.style.display = hide ? \'none\' : \'block\';\n}\nfunction xkBootPreload(){\n  /* ①→② 之间才请回来（首屏只算壁纸那一张）——元素位置/类名与原来逐字一致，只改"什么时候插入" */\n  const stage = document.getElementById(\'stage\'), clip = document.getElementById(\'crtClip\');\n  const canvas = document.getElementById(\'charCanvas\');\n  function mk(cls, src, parent, before){\n    const el = document.createElement(\'img\');\n    el.className = cls; el.alt = \'\'; el.setAttribute(\'aria-hidden\', \'true\'); el.src = src;\n    if(parent) parent.insertBefore(el, before || null);\n    return el;\n  }\n  try{\n    if(stage) mk(\'glow\', \'/kurisu/scene/amadeus_ambient_high_blend.webp\', stage, null);\n    if(clip) mk(\'backplate\', \'/images/crt/lab.webp\', clip, canvas || clip.firstChild);\n    if(clip) mk(\'plate\', \'/kurisu/scene/subtitle_frame_big.webp\', clip, clip.querySelector(\'.scan\'));\n  }catch(e){ XK_BOOT.log.push(\'preload:\' + e.message); }\n}\nfunction xkBootBlackFlicker(){\n  const boot = document.getElementById(\'crtBoot\');\n  const n = 2 + Math.floor(Math.random() * 3);          /* 2~4 次 */\n  (function step(i){\n    if(i >= n){ xkBootWaitFace(); return; }\n    const black = i % 2 === 0;\n    if(boot){\n      boot.classList.toggle(\'noise\', black);\n      boot.style.background = black ? \'#000\' : \'#0A0E12\';   /* 亮度跳一下（不规律，不是正弦）*/\n    }\n    xkBootTimer(xkBootRnd(80, 140), function(){ step(i + 1); });\n  })(0);\n}\nfunction xkBootWaitFace(){\n  /* ③ → ④：\n     必须先有"大脸"那一帧可画，闪断才有东西可露 ⇒ 等图真的就绪（不靠猜时间 ✗）；\n     断网/慢网：停在壁纸 + 保留加载信号，并给人读的说明（导航栏照样给，别把人关在黑屏里）。 */\n  const t0 = performance.now();\n  (function wait(){\n    const im = cache[CLIPS.opening.src] || cache[CLIPS.opening.bootSrc];\n    const ready = !!(im && im.complete && im.naturalWidth);\n    if(!ready && (performance.now() - t0) < 3000){ xkBootTimer(60, wait); return; }\n    if(!ready){\n      const st = document.getElementById(\'crtStatus\');\n      if(st){ st.hidden = false; st.innerHTML = \'SEC-LAB · <span class="ok">● 画面读不到</span><br>网络或素材未到位 · 导航仍可用\'; }\n      xkBootReveal(\'no-face\');\n      return;\n    }\n    xkBootFaceFlicker();\n  })();\n}\nfunction xkBootFaceFlicker(){\n  xkBootSet(3, \'face\');\n  const clip = document.getElementById(\'crtClip\');\n  const n = 2 + Math.floor(Math.random() * 2);          /* 2~3 次闪断 */\n  (function step(i){\n    if(i >= n){ xkBootReveal(\'flicker-end\'); return; }   /* ★导航栏＝闪烁结束事件触发 */\n    xkBootBlink(i % 2 === 0);                           /* 硬切，不是淡入 ✗ */\n    if(clip) clip.style.transform = \'translateX(\' + (Math.random() * 6 - 3).toFixed(1) + \'px)\';\n    xkBootTimer(xkBootRnd(60, 100), function(){ step(i + 1); });\n  })(0);\n}\nfunction xkBootReveal(why){\n  if(XK_BOOT.revealed) return;\n  XK_BOOT.revealed = true;\n  const boot = document.getElementById(\'crtBoot\');\n  const clip = document.getElementById(\'crtClip\');\n  if(clip) clip.style.transform = \'\';\n  if(boot && !RM){                                       /* 过冲白光 → 稳定 */\n    boot.classList.remove(\'noise\');\n    boot.style.background = \'\';\n    boot.classList.add(\'flash\'); boot.style.display = \'block\';\n    xkBootTimer(120, function(){\n      boot.style.display = \'none\'; boot.classList.remove(\'flash\');\n    });\n  } else { xkBootBlink(true); }\n  xkDockIn(why);                                          /* ★同一帧：导航栏出现 */\n  xkBootSet(4, \'stable\');\n  xkBootSet(5, \'play\');\n}\nfunction xkBootStart(){\n  if(RM){ xkBootBlink(true); xkBootSet(4, \'rm\'); xkBootSet(5, \'rm\'); xkDockIn(\'rm\'); return; }\n  xkBootTimer(150, function(){ xkBootPreload(); xkBootSet(1, \'preload\'); xkBootSet(2, \'black\'); xkBootBlackFlicker(); });\n}\nfunction xkBootSkip(){\n  if(!started || XK_BOOT.revealed) return;\n  XK_BOOT.skipped = true;\n  XK_BOOT.timers.forEach(function(id){ clearTimeout(id); });\n  xkBootReveal(\'skip\');\n  xkTransStart();                       /* 跳过 = 直接进正式动画（推拉起点与"闪烁结束"同一语义）*/\n}\nconst XK_T31_EV = [\'pointerdown\', \'keydown\', \'wheel\', \'touchstart\'];\nfunction xkT31Off(){ XK_T31_EV.forEach(function(ev){ removeEventListener(ev, xkBootSkip); }); }\nXK_T31_EV.forEach(function(ev){ addEventListener(ev, function(){ xkT31Off(); xkBootSkip(); }, {passive:true}); });\nlet dockShown = false;\nfunction xkDockIn(why){\n  if(dockShown) return;\n  const d = document.getElementById(\'dock\');\n  if(!d) return;\n  dockShown = true;\n  d.classList.add(\'dock--in\');\n  d.setAttribute(\'data-xk-dock-in\', why || \'auto\');\n  d.setAttribute(\'data-xk-dock-at\', String(Math.round(performance.now() - XK_BOOT.t0)));\n}\nfunction xkTransStart(t){\n  /* ★T31：把"opening 播完 → 等 idle 图就绪 → 起推拉"抽成一处，供"自然播完"与"跳过"共用。\n     自然路径传 rAF 的 t，TRANS 取值与抽之前逐字等价（行为零变化）。 */\n  if(cur !== \'opening\' || TRANS) return;\n  fi = CLIPS.opening.frames - 1;\n  const idleIm = xkClipIm(\'idle\').im;\n  const btIdle = img(CLIPS.idle.bootSrc);\n  if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener(\'load\', ()=>{ if(cur === \'opening\' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n  if(idleIm.complete && idleIm.naturalWidth){ TRANS = (t === undefined ? performance.now() : t); }\n  else {\n    idleIm.addEventListener(\'load\', ()=>{ if(cur === \'opening\' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n    idleIm.addEventListener(\'error\', ()=>{ if(cur === \'opening\' && !TRANS) TRANS = performance.now(); }, {once:true});\n  }\n}\n'
+T31_JS_ANCHOR = "const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;\n"
+T31_TRANS_OLD = "          else if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */\n            fi = c.frames - 1;\n            const idleR = xkClipIm('idle');\n            const idleIm = idleR.im;\n            const btIdle = img(CLIPS.idle.bootSrc);\n            if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }\n            else {\n              idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n              idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});\n            }\n          }"
+T31_TRANS_NEW = '          else if(cur === \'opening\'){ xkTransStart(t); }   /* ★T31：抽成函数（"自然播完"与"跳过"共用）；本路径行为逐字不变 */'
+# ⚠ T8 接手批（2026-10-15）钉的口径：原锚点是
+#     "}else{\n  play('opening');\n}\nstarted = true; lastT = performance.now();"
+#   但 T8 在 `}` 与 `started = true;` 之间插入了三行（window.__xkSmIsHome / xkSmBoot / setTimeout），
+#   于是这个锚点不再匹配（实测：跑生成器直接 SystemExit '出现 0 次'）。
+#   改成只钉 `started = true; lastT = performance.now();` 这一行（demo 主页里唯一一处）——
+#   xkBootStart() 仍然紧贴在启动之前执行；中间那三行是**声明 + 一个 setTimeout 注册**，
+#   执行顺序语义与原来的"紧跟 } 之后"完全一致 ✓。
+T31_START_OLD = "\nstarted = true; lastT = performance.now();"
+T31_START_NEW = "\nxkBootStart();   /* ★T31 开场六阶段：RM 直接稳定态；非 RM 150ms 后进 ②③④⑤ */\nstarted = true; lastT = performance.now();"
+T31_DRAW_OLD = "  const imO = xkClipIm('opening').im, imI = xkClipIm('idle').im;\n  const W = canvas.width, H = canvas.height;\n  ctx.clearRect(0, 0, W, H);\n  const lastF = cOpen.frames - 1;\n  const sx = (lastF % cOpen.cols) * cOpen.cw, sy = Math.floor(lastF / cOpen.cols) * cOpen.ch;"
+T31_DRAW_NEW = '  const oR = xkClipIm(\'opening\'), imI = xkClipIm(\'idle\').im;\n  const imO = oR.im, cO = oR.c;   /* ★T31：与"当前上屏那一张"同源 —— hi 未到位就画 boot 末帧（跳过时不会越界取空帧）*/\n  const W = canvas.width, H = canvas.height;\n  ctx.clearRect(0, 0, W, H);\n  const lastF = Math.min(fi, cO.frames - 1);   /* 自然播完时 fi = hi 末帧，取值与旧写法逐字相同 */\n  const sx = (lastF % cO.cols) * cO.cw, sy = Math.floor(lastF / cO.cols) * cO.ch;'
+T31_PWR_OLD = "    /* ★CRT 通电：opening 开头先亮线展开再出画面（约 0.55s） */\n    if(PWR && cur === 'opening'){"
+T31_PWR_NEW = '    /* ★T31：新开场六阶段自带走电闪烁（.crtboot 覆盖层：黑屏/亮线/过冲白光）⇒\n       旧的"通电四拍"不再叠加（XK_BOOT_ON 时直接走正常绘制，画布内容随时可被闪断露出）。 */\n    if(PWR && cur === \'opening\' && !XK_BOOT_ON){'
+T31_GLOW_OLD = '  <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true">\n'
+T31_GLOW_NEW = '  {{/* ★T31：.glow / .backplate / .plate 由 xkBootPreload() 在首帧之后才插入 ⇒ 首屏只请求壁纸那一张 */}}\n'
+T31_BACKPLATE_OLD = '      <img class="backplate" src="/images/crt/lab.webp" alt="" aria-hidden="true">\n'
+T31_PLATE_OLD = '      <img class="plate" src="/kurisu/scene/subtitle_frame_big.webp" alt="" aria-hidden="true">\n'
+T31_CRTBOOT_ANCHOR = '    <div class="crt-status" id="crtStatus" hidden>'
+T31_CRTBOOT_NEW = '    <div class="crtboot noise" id="crtBoot" aria-hidden="true"></div>\n    <div class="crt-status" id="crtStatus" hidden>'
+T31_HTML_OLD = '<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">'
+T31_HTML_NEW = '<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video" data-xk-boot="0">'
+if 'dock--wait' not in DOCK_HTML:
+    raise SystemExit('T31: DOCK_HTML 没带 dock--wait（导航入场 class 丢了）')
+
 DOCK_CSS = (
     '  /* 屏外：左侧竖排导航 dock（值逐字照 xk-demo/shell-style.html 的 .dock / .dock .brand / .dock a） */\n'
     '  .dock{position:fixed;left:0;top:14px;z-index:60;\n'
@@ -310,7 +342,7 @@ DOCK_CSS = (
     '    text-align:left;white-space:nowrap;text-decoration:none}\n'
     '  .dock a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}\n'
     '  .dock a:hover{color:var(--txt)}\n'
-    '\n'
+    + T31_CSS + '\n'
     '  @media (max-width:980px){\n'
     '    .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}\n'
     '    .dock .brand{display:none}\n'
@@ -920,7 +952,8 @@ sc = subn(sc, r'/\* =+ AI 问答演示 =+ \*/.*?askDemo\(\); \}\);', lambda m: A
 # ---- ⑯ 内容页语音：把 L1 预渲染语音接上（与主页同一套资产，独立成模块）----
 # 【2026-10-15 接手批】五个内容页同样"只会打字幕、不播音频"。这里在**第一段**脚本（外壳逻辑）里
 #   接一个语音模块 —— 刻意不放进第二段（scene-js），因为那一段当前会在 resize() 抛 TypeError 中止。
-#   进页台词按当前 view 选：v-monitor→nav_monitor … v-range→nav_labs。
+#   进页台词按当前 view 选：v-monitor→nav_monitor … v-ai→nav_ai（★T27：v-range/v-about 两屏已删，
+#   对应的 nav_labs / nav_about 两句一起作废）。
 #   纪律同主页：手势前只记 pending；取不到只显示字幕；语音与字幕同一句文案；诊断挂 window.__xkVoice。
 CONTENT_VOICE = r'''
 /* ================= 桐莉栖语音（L1 预渲染语音库）· 内容页 =================
@@ -942,8 +975,7 @@ function xkvUnlock(){
 }
 function xkvPageLine(){
   const on = document.querySelector('.view.on'); const id = on ? on.id : '';
-  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-range':'nav_labs',
-            'v-about':'nav_about', 'v-ai':'nav_ai' })[id] || 'nav_home';
+  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-ai':'nav_ai' })[id] || 'nav_home';
 }
 function xkvPlay(id){
   const line = xkvLine(id);
@@ -994,44 +1026,35 @@ s1 = sub1(
     'scene-js: __enterHome 的 opening 门控')
 shell_scripts[1] = s1
 
+# ---- ★T20/T21/T22 的 DOM 片段（与 layouts/partials/xk-demo/shell-views.html 逐字同源）----
+MOD_STORY_OLD = '            <div class="mod"><div class="mod-hd"><span class="led"></span>一次真实攻击的故事线<span class="tag">/stories</span></div>\n              <div class="mod-bd">\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n              </div>\n            </div>'
+MOD_STORY_NEW = '            <div class="mod" data-xk-block="stories"><div class="mod-hd"><span class="led"></span>攻击故事线 · 候选来源<span class="tag" data-story-tag>/stories</span></div>\n              <div class="mod-bd">\n                <div data-story-list>\n                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                </div>\n                <div data-story-detail hidden>\n                  <div class="row"><span class="k" data-story-head>—</span><span data-story-meta>—</span><span class="chip" data-story-chip>—</span></div>\n                  <div data-story-tl></div>\n                </div>\n                <p class="attk-note" data-story-note>点上面任一条来源 → 载入它的四段时间线（点了才请求一次，不轮询）。</p>\n              </div>\n            </div>'
+BAN_ANCHOR = '          <div class="mod"><div class="mod-hd"><span class="led"></span>告警来源分布'
+MOD_BANS = '          <div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>\n            <div class="mod-bd">\n              <div class="stats">\n                <div class="stat"><div class="n" data-ban="total">—</div><div class="l">累计封禁 blockTotal</div></div>\n                <div class="stat"><div class="n" data-ban="active">—</div><div class="l">当前生效 blockActive</div></div>\n                <div class="stat"><div class="n" data-ban="guard">—</div><div class="l">护栏拦下动作 blockedByGuard</div></div>\n                <div class="stat"><div class="n" data-ban="actions">—</div><div class="l">已执行动作 executedActions</div></div>\n              </div>\n              <div data-ban-list>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n              </div>\n              <p class="attk-note" data-ban-note>取数中…</p>\n            </div>\n          </div>\n'
+KB_ANCHOR = '      <p class="chat-note">回答非流式传输（一次性返回 + 前端渐进显示）· 取不到就显示原因，绝不编答案</p>\n'
+MOD_KB = '      <p class="chat-note">回答非流式传输（一次性返回 + 前端渐进显示）· 取不到就显示原因，绝不编答案</p>\n      <div class="card" data-xk-block="kb" style="margin-top:16px">\n        <div class="card-hd"><span class="led"></span>知识库检索 · 公开白名单<span style="margin-left:auto;font-size:11px;color:var(--acc)">GET /api/public/kb?q=</span></div>\n        <ul class="bl" style="padding-top:12px">\n          <li><b>检索范围是白名单</b>：只检索公开白名单目录下的文档（<code class="k">security-docs</code>、<code class="k">data/kb-approved</code>，来源类型 <code class="k">community</code>）——内部文档即使被语义命中也不会出现在这里。<span data-kb-rule></span></li>\n        </ul>\n        <div class="anchor-row" data-kb-topics style="padding:0 15px;margin:0"></div>\n        <div style="display:flex;gap:10px;padding:10px 15px 4px">\n          <input id="kbInput" placeholder="输入关键词…（只按 Enter / 点检索才请求，不边打字边请求）"\n            style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line2);border-radius:99px;color:var(--txt);padding:9px 14px;font-size:13px;outline:none">\n          <button id="kbBtn" style="background:var(--acc);border:0;color:#04282b;font-weight:600;padding:0 18px;border-radius:99px;cursor:pointer">检索</button>\n        </div>\n        <div data-kb-out></div>\n        <p class="attk-note" data-kb-note style="padding:0 15px 12px">选一个话题词或自己输入关键词 —— 后端 top-k=3，前端不分页、不轮询。</p>\n      </div>\n'
+
 # =====================================================================
-# T5.3（2026-10-15）：/about/ 空白屏填真实内容（demo 的 v-about 只剩 3 个孤 </div>）
-#   口径：只写仓库/台账可证的事实 + 站点真实行为；数字不写死（写死就是假数字），取不到写"读不到"。
+# ★T27（2026-10-15 站主决议）：删 /labs/ 靶场页 + /about/ 关于页 ⇒ 六页 → 四页、导航六项 → 四项
+#   · 原 T5.3 给 v-about 填的四张真实卡（站点性质/数据来源/她/纪律）按站主口径**改作知识库条目**，
+#     草案见仓库外 E:\DeepSeek1\work\_ui-batch\data\kb-条目草案-T5.3迁移.md（本生成器不再注入 v-about）。
+#   · v-range / v-about 两屏整段删除；dock 六项 → 四项（主页 DOCK_HTML 与外壳 chrome 同步）。
+#   · 页数/链接/sitemap 的连带改动见 _dev/check-ssr-contract.py、_dev/gate-firstscreen.mjs、hugo.toml。
 # =====================================================================
-views_out = subn(views_out,
-                 r'<section class="view\{\{ if eq \$v "about" \}\} on\{\{ end \}\}" id="v-about">.*?</section>',
-                 u'''<section class="view{{ if eq $v "about" }} on{{ end }}" id="v-about">
-    <div class="card">
-      <div class="card-hd"><span class="led"></span>ABOUT · 这是哪<span style="margin-left:auto;font-size:11px;color:var(--acc)">xiaokeqing.cn</span></div>
-      <p class="card-lead">小可清的安全博客：<b>一半是文字</b>——真实攻防过程、告警研判与处置留痕的复盘；
-        <b>一半是数据屏</b>——监测中心、笔记、靶场、AI 问答四屏，上面的数字全部来自
-        <code class="k">/api/public/*</code> 只读端点的实时读取。<b>取不到就写"读不到"，不补数、不编造。</b></p>
-    </div>
-    <div class="card">
-      <div class="card-hd"><span class="led"></span>SOURCES · 数据从哪来<span style="margin-left:auto;font-size:11px;color:var(--acc)">自托管检测栈</span></div>
-      <ul class="bl">
-        <li><b>蜜罐</b>：Cowrie（SSH 暴力破解观察）与 Dionaea（多协议恶意软件捕获），记录每一次真实交互。</li>
-        <li><b>检测</b>：Suricata IDS 规则 + Wazuh SIEM 聚合，告警按严重度入账。</li>
-        <li><b>口径</b>：对外只有聚合后的只读端点；每屏顶栏的 sync 时间，就是最近一次成功读取的时间。</li>
-      </ul>
-    </div>
-    <div class="card">
-      <div class="card-hd"><span class="led"></span>KURISU · 显示器里的她<span style="margin-left:auto;font-size:11px;color:var(--acc)">同人实验 · 非商业</span></div>
-      <ul class="bl">
-        <li><b>她是牧瀬紅莉栖</b>（《命运石之门》角色）：canvas 逐帧图集动画 + 预渲染日语语音（自训音色合成），字幕为中文。</li>
-        <li><b>她的纪律和站点一样</b>：检索不到依据就说"读不到"，不编答案；语音在手势之后才播，不自动出声。</li>
-      </ul>
-    </div>
-    <div class="card">
-      <div class="card-hd"><span class="led" style="background:#5A6B7A;box-shadow:none"></span>RULES · 这里没什么<span style="margin-left:auto;font-size:11px;color:var(--acc)">纪律清单</span></div>
-      <ul class="bl">
-        <li><b>零第三方请求</b>：不引外部 CDN、字体与统计脚本——打不开只能是因为站点自己或网络。</li>
-        <li><b>公开面只解释概念与防御</b>：需要内部事件数据的问题明确拒答——匿名身份能读内部数据，本身就不该存在。</li>
-        <li><b>只做检测，不执行、不处置</b>：靶场页面送进去的样本只过检测链，不在服务器上真实运行。</li>
-      </ul>
-    </div>
-  </section>''',
-                 1, 'T5.3: /about/ 真实内容')
+views_out = subn(views_out, r'\n  <!-- 靶场 -->.*?\n  </section>\n', '\n', 1, 'T27: 删 v-range 整屏')
+views_out = subn(views_out, r'\n  <!-- 关于 -->.*?\n  </section>\n\s*$', '\n', 1, 'T27: 删 v-about 整屏')
+# dock 六项 → 四项：demo 的 6 个 <button data-v> 先按原表（DOCK_HREF 保持 6 项）换成 <a>，
+# 再按行删掉 range/about —— 这样 rewrite_dock 的硬断言（n != len(DOCK_HREF)）仍然是 6 == 6 ✓
+for _line in ('<a href="/labs/" class="{{ if eq $v "range" }}on{{ end }}">靶场</a>\n',
+              '<a href="/about/" class="{{ if eq $v "about" }}on{{ end }}">关于</a>\n'):
+    chrome = sub1(chrome, _line, '', 'T27: chrome dock 删项')
+
+# --------------------------------------------------------------------- ★T20/T21/T22（窗口 F 的字段映射）
+#   T20 封禁榜 ← /audit（summary + blocks[]）；T21 故事线 ← /stories + 点击懒加载 /story?src=；
+#   T22 知识库 ← /kb?q=（都在 /ai/ 页，只在用户操作时请求）。绑定实现在手写的 api-bind.html 里。
+views_out = sub1(views_out, MOD_STORY_OLD, MOD_STORY_NEW, 'T21: 故事线卡 → 候选池 + 时间线容器')
+views_out = sub1(views_out, BAN_ANCHOR, MOD_BANS + BAN_ANCHOR, 'T20: 封禁榜 mod')
+views_out = sub1(views_out, KB_ANCHOR, MOD_KB, 'T22: /ai/ 知识库检索卡')
 
 # =====================================================================
 # T12（2026-10-15）：删右下角「背景/配色」面板 + 配套 CSS/JS/背景图
@@ -1246,8 +1269,7 @@ var XK_EMO_LIST = [
 /* 语音 id → 表情（只影响"没手选表情时"的自动切换；表里没有的 id 走默认 speaking） */
 var XK_VOICE_EMO = {
   greet_first:'happy', greet_back:'happy', tab_return:'happy',
-  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
-  nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
   fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
 };
 var XKM = { clips:null, loading:null, imgs:{}, emo:'normal', clip:null,
@@ -2018,11 +2040,11 @@ var XK_SM_JS = (function(){
     idle:      ['trans_standby','idle'],
     cadence:   ['closed_eye_trans','trans_smile','idle_mic_wind']
   };
-  /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段） */
+  /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段）
+     ★T27 收尾：nav_labs / nav_about 两句随靶场/关于两页删除作废（表里不再有这两个键）。 */
   var VOICE_EMO = {
     greet_first:'happy', greet_back:'happy', tab_return:'happy',
-    nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
-    nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+    nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
     fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
   };
   var V = {
@@ -2095,17 +2117,46 @@ var XK_SM_JS = (function(){
     }
     return null;
   }
+  /* ★Q（2026-10-15 接手批 · 窗口 Q）：medium 图集只在**那块画布真的被渲染**时才下载。
+     实测取证 _shots/probe-firstscreen.json（CDP 抓 initiator）：五个内容页上 #charCanvas 在
+     关着的 v-home 里、getBoundingClientRect 恒为 0×0，状态机却照样接管并按 root 剪辑预取，
+     于是首屏白拉 759KB 的 medium/idle.atlas.webp —— ai 页自己还挂着手机面板的 1555KB 全身图，
+     两项相加 2314KB，顶破 1650KB 预算（改前实测 ai = 2369400 B）。
+     这里**只改加载时机**（站主第四批口径③允许的行为级懒加载）：画布不渲染就不发请求，
+     先把没 src 的占位 Image 记在图里（complete=false ⇒ paintOps 不落笔、原型那一帧继续留着）；
+     画布真露出来（SPA 切回主页）后下一次取帧就地补拉。取帧公式/几何/版式一字未动。
+     canvasRendered 节流 250ms，避免每帧强制布局。 */
+  var visAt = -1e9, visVal = false;
+  function canvasRendered(){
+    var t = now();
+    if(t - visAt < 250) return visVal;
+    var el = document.getElementById('charCanvas'), r = el ? el.getBoundingClientRect() : null;
+    visVal = !!(r && r.width > 0 && r.height > 0);
+    visAt = t;
+    return visVal;
+  }
   function img(url){
-    if(!V.atlas.imgs[url]){
-      var im = new Image();
-      im.decoding = 'async';
-      im.src = '/' + String(url).replace(/^\/+/, '');
-      V.atlas.imgs[url] = im;
-      V.atlas.pending++;
-      im.addEventListener('load', function(){ V.atlas.pending--; V.atlas.loaded++; }, {once:true});
-      im.addEventListener('error', function(){ V.atlas.pending--; V.atlas.errs.push('atlas 404 ' + url); }, {once:true});
+    var im = V.atlas.imgs[url];
+    if(im){
+      if(im.__xkDefer && canvasRendered()){          /* 画布露出来了：就地补拉（之前只是占位）*/
+        im.__xkDefer = 0;
+        V.atlas.pending++;
+        im.src = '/' + String(url).replace(/^\/+/, '');
+      }
+      return im;
     }
-    return V.atlas.imgs[url];
+    im = new Image();
+    im.decoding = 'async';
+    V.atlas.imgs[url] = im;
+    im.addEventListener('load', function(){ V.atlas.pending--; V.atlas.loaded++; }, {once:true});
+    im.addEventListener('error', function(){ V.atlas.pending--; V.atlas.errs.push('atlas 404 ' + url); }, {once:true});
+    if(canvasRendered()){
+      V.atlas.pending++;
+      im.src = '/' + String(url).replace(/^\/+/, '');
+    }else{
+      im.__xkDefer = 1;                              /* 画布看不见 ⇒ 不设 src，首屏零请求 */
+    }
+    return im;
   }
   function prefetch(clip){
     var c = V.atlas.mf && V.atlas.mf[clip];
@@ -2584,6 +2635,37 @@ home_script = sub1(home_script,
                    "            }",
                    'T5.6: L1 等 idle boot 就绪即进场')
 
+# ---- ★T31 开场六阶段（注入位置必须在 T5.6 之后，理由见 T31 段注释）----
+home_script = sub1(home_script, T31_JS_ANCHOR, T31_JS_ANCHOR + T31_JS, 'T31: 注入六阶段状态机 JS')
+home_script = sub1(home_script, T31_PWR_OLD, T31_PWR_NEW, 'T31: 旧通电四拍让位')
+home_script = sub1(home_script, T31_TRANS_OLD, T31_TRANS_NEW, 'T31: opening 末帧 → xkTransStart()')
+home_script = sub1(home_script, T31_START_OLD, T31_START_NEW, 'T31: 启动处起六阶段')
+home_script = sub1(home_script, T31_DRAW_OLD, T31_DRAW_NEW, 'T31: xkDrawTrans 同源取帧')
+
+# 首屏只留壁纸：三张非壁纸图从标记里拿掉（改由 xkBootPreload() 在 phase① 之后插入）
+home_body = sub1(home_body, T31_GLOW_OLD, T31_GLOW_NEW, 'T31: .glow 改成 phase① 插入')
+home_body = sub1(home_body, T31_BACKPLATE_OLD, '', 'T31: .backplate 改成 phase① 插入')
+home_body = sub1(home_body, T31_PLATE_OLD, '', 'T31: .plate 改成 phase① 插入')
+home_body = sub1(home_body, T31_CRTBOOT_ANCHOR, T31_CRTBOOT_NEW, 'T31: 插入 .crtboot 覆盖层')
+
+# =====================================================================================
+# ★T27 收尾（2026-10-15 窗口 Q）：靶场页(v-range)删了，但 demo 自带的那段**靶场演示脚本**
+#   还留在外壳的第一段 <script> 里 —— 它开头就是
+#       document.getElementById('pgBtn').onclick = ...
+#   而 pgBtn 随 v-range 一起消失 ⇒ 五个内容页每页抛一条
+#       TypeError: Cannot set properties of null (setting 'onclick')
+#   （实测：gate-firstscreen 报 monitor/notes/ai console=2）。这段本来就是站主点名的"本地假结果"
+#   （PG_DEMO 里写死五条判定文案），所以整段删掉，而不是加个 if 守卫留尸体。
+#   删完做残留断言：PG_DEMO / runPg / pgBtn / pgInput / .pgrun 一个都不许剩。
+# =====================================================================================
+_pg_re = re.compile(r"\n/\* ============ 靶场演示 ============ \*/.*?runPg\(b\.dataset\.pg\); \}\);\n", re.S)
+shell_scripts[0], _pg_n = _pg_re.subn('\n', shell_scripts[0], count=1)
+if _pg_n != 1:
+    raise SystemExit('T27: 靶场演示脚本块匹配 %d 次（期望 1）—— demo 外壳的第一段 <script> 动过？' % _pg_n)
+_pg_left = [k for k in ('PG_DEMO', 'runPg(', "'pgBtn'", "'pgInput'", "'.pgrun'", 'pgResult') if k in shell_scripts[0]]
+if _pg_left:
+    raise SystemExit('T27: 靶场演示脚本还残留 %s' % ','.join(_pg_left))
+
 # --------------------------------------------------------------------- 落盘
 print('生成：')
 
@@ -2602,7 +2684,7 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
         `layouts/partials/xk-demo/shell-chrome.html` 的 <nav class="dock">，样式值逐字照
         `layouts/partials/xk-demo/shell-style.html` 的 `.dock` / `.dock .brand` / `.dock a`（+ 980px 那条）。
         项目顺序 XK-LAB ｜ 主页 · 监测中心 · AI 问答 · 笔记 · 靶场 · 关于；主页高亮"主页"。
-     ③ 链接是站点真路由（/ · /alerts/ · /posts/ · /labs/ · /ai/ · /about/）
+     ③ 链接是站点真路由（/ · /alerts/ · /posts/ · /ai/）—— ★T27：/labs/ 与 /about/ 已删
         （不是 demo 的 `<button data-v>`，也不走 `/#/…` hash：这一页不挂站点 SPA 的 app.js）
    不搬的：站点 SPA 外层（app.js / 侧栏 / 顶行 / 输入条 / 页脚 / 搜索层）、kurisu-player.js、
    状态机/语音/口型 —— 站主明确要求这些**不要**进这一页。
@@ -2611,7 +2693,7 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
    重现方式：python _dev/gen-demo-pages.py
    ============================================================================ */ -}}
 <!DOCTYPE html>
-<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video" data-xk-boot="0">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
 <style>%s
@@ -2637,10 +2719,11 @@ write(os.path.join(PART, 'shell-style.html'),
       u'<style>%s%s</style>\n' % (shell_style, DOCK_A_CSS))
 write(os.path.join(PART, 'shell-chrome.html'),
       u'{{- /* 外壳常驻件（逐字）：底图两层 / demo 标识条 / 左侧 .dock / HOLO 面板 / 背景选择器。\n'
-      u'      唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。 */ -}}\n'
+      u'      唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。\n'
+      u'      ★T27（2026-10-15 站主）：/labs/ 与 /about/ 两页已删 ⇒ dock 六项 → 四项（主页 / 监测中心 / AI 问答 / 笔记）。 */ -}}\n'
       u'{{- $v := .v -}}\n%s\n' % chrome)
 write(os.path.join(PART, 'shell-views.html'),
-      u'{{- /* 六屏 <section class="view"> 逐字；只有哪一屏带 .on 由参数 v 决定 */ -}}\n'
+      u'{{- /* 四屏 <section class="view"> 逐字（★T27：靶场/关于两屏已删）；只有哪一屏带 .on 由参数 v 决定 */ -}}\n'
       u'{{- $v := .v -}}\n%s' % views_out)
 _script_header = (u'{{- /* 外壳的两段内联 <script> 逐字（切 view / 作战室 / 聊天 / 靶场演示 / 雪碧条播放器 / CRT 场景）。\n'
                   u'      改动只有两类：① 素材路径 ② 站主第四批口径③允许的"行为级懒加载"（只改加载时机）。\n'
@@ -2654,20 +2737,17 @@ write(os.path.join(PART, 'shell-script.html'),
 PAGES = [
     ('alerts', 'monitor', '监测中心'),
     ('posts', 'notes', '笔记'),
-    ('labs', 'range', '靶场'),
-    ('about', 'about', '关于'),
     ('ai', 'ai', 'AI 问答'),
 ]
-# content/about/_index.md 的 front matter 写着 layout: "single"（Hugo 只认 <type>/single.html），
-# 所以这一页要多落一份同样的模板，否则会落回老的 _default/single.html（实测踩过）。
-ALSO_SINGLE = {'about'}
+# ★T27：about 页已删 ⇒ 不再需要单落一份 single.html（原 about/single.html 由删除补丁一并清掉）。
+ALSO_SINGLE = set()
 for section, view, cname in PAGES:
     body_class = u'{{ if eq $v "home" }} class="is-home"{{ else if eq $v "ai" }} class="is-ai"{{ end }}'
     tpl = u'''{{- /* ============================================================================
    /%s/ = `docs/demo-内容页外壳.html` 的 `v-%s`（%s）那一屏**整份搬**（第四批口径）。
    ----------------------------------------------------------------------------
    搬过来的：外壳的 <style> 逐字、常驻件（底图/dock/HOLO/背景选择器）逐字、
-   六屏标记逐字、两段内联 <script> 逐字；本页初始 .on 落在 v-%s。
+   四屏标记逐字（★T27：靶场/关于两屏已删）、两段内联 <script> 逐字；本页初始 .on 落在 v-%s。
    只改两处：① 素材路径 → static/ 真文件 ② dock 的 <button data-v> → <a href="真路由">
    不动：站点的 SPA 外层 / kurisu-player / 状态机 / 语音 / 口型。
    保留的不可见契约：Hugo <head> + <main id="content" data-xk-ssr="%s"> + #xk-views 占位。
