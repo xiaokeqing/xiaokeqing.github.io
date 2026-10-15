@@ -1,0 +1,31 @@
+{{- /* ============================================================================
+   /test/ = 测试模块页（在试功能一处看全，每块一个独立开关）。
+   ----------------------------------------------------------------------------
+   配方照抄 layouts/alerts/list.html（27 行）：同样 4 个 shell partial + **完整 shell-views**。
+   ★为什么不走"只留实验区"的省事路线：shell-script.html 依赖
+     #dock / #holoFold / #holoBubble / #holoCanvas / #bubbleCanvas / #bootveil /
+     #v-home..#v-notes / #crtSub 一大堆 id，缺一个就在控制台报错（门禁要求 console 0）
+     ⇒ 最稳的是**整份照搬**外壳，实验区块挂在后面的 `<section class="view on lab" id="v-test">`。
+   · 传 v="test" ⇒ 四屏（v-home/v-monitor/v-ai/v-notes）全部不带 .on，只有 v-test 是初始屏。
+   · 本页**不挂 api-bind.html**（那是按页轮询真值的绑定层，测试页的取数逻辑自带在实验区里）。
+   · 门禁口径：页数 4 → 5（_dev/check-ssr-contract.py 与 _dev/gate-firstscreen.mjs 都已同步）。
+   · 本站是静态产物，本页只读：不发 POST、不写数据、不引站外资源。
+   重现方式：无需生成器（本页不是从 demo 抽的），改本文件 + layouts/partials/xk-demo/test-lab.html。
+   ============================================================================ */ -}}
+{{- $v := "test" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+{{ partial "xk-demo/shell-style.html" . }}
+</head>
+<body data-skin="warm" data-phone="v1">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="test">
+{{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}
+{{ partial "xk-demo/test-lab.html" (dict "v" $v "page" .) }}
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

@@ -1,0 +1,620 @@
+{{- /* ============================================================================
+   /test/ 的实验区（测试模块页：在试功能一处看全）
+   ---------------------------------------------------------------------------
+   为什么要单独一个 partial：页面本体照抄 layouts/alerts/list.html 的 27 行配方
+   （同 4 个 shell partial + **完整 shell-views**），实验体挂在这里。
+   · 本区自带 <section class="view on lab" id="v-test"> ⇒ 四屏全部不激活（传 v="test"），
+     门禁 gate-firstscreen 的 expectView 直接写 'v-test' 就能复用现成断言，不用改门禁逻辑。
+   · 每块：独立开关（localStorage 持久化）+ 一行说明 + 已知问题 + 实验体。
+   · 状态徽章三种：已接线 / 只读实测 / NOT_WIRED（未接线，写清为什么 + 接上时的落点）。
+   · 纪律：只用**真实只读端点**（/api/public/* 的 GET；assert-build 第⑥条白名单）；
+     取不到写"读不到"；**不造假数字**、不编字段；失败保留上一次成功数据；
+     超时 22s + 失败重试 2 次（退避 1s/3s），文案写"接口慢/正在重试"而不是笼统"读不到"。
+   ============================================================================ */ -}}
+<style>
+  /* 全部前缀 .lab- / #v-test，不碰外壳任何现有类 */
+  #v-test.lab{padding-top:14px}
+  .lab-hero{border:1px solid var(--line2);border-radius:14px;background:var(--panel);padding:14px 16px;margin-bottom:14px}
+  .lab-hero h2{font-size:18px;margin-bottom:6px}
+  .lab-hero p{font-size:12.5px;color:var(--mut);line-height:1.65}
+  .lab-hero code{font:12px var(--mono);color:var(--acc)}
+  .lab-blk{border:1px solid var(--line2);border-radius:14px;background:var(--panel);padding:12px 14px;margin-bottom:12px}
+  .lab-blk.off{opacity:.55}
+  .lab-blk.off .lab-body,.lab-blk.off .lab-iss{display:none}
+  .lab-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .lab-hd h3{font-size:14.5px;font-weight:600}
+  .lab-hd .lab-sw{margin-left:auto;display:flex;align-items:center;gap:6px;font:11.5px var(--mono);color:var(--mut);cursor:pointer;user-select:none}
+  .lab-hd .lab-sw input{width:16px;height:16px;accent-color:var(--acc)}
+  .lab-badge{font:10.5px var(--mono);letter-spacing:.06em;padding:2px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
+  .lab-badge.ok{color:var(--ok);border-color:rgba(62,207,142,.45)}
+  .lab-badge.ro{color:var(--acc);border-color:rgba(127,212,216,.45)}
+  .lab-badge.nw{color:#F5A623;border-color:rgba(245,166,35,.45)}
+  .lab-desc{font-size:12.5px;color:var(--txt);line-height:1.6;margin:8px 0 10px}
+  .lab-iss{font-size:11.5px;color:var(--mut);line-height:1.6;margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  .lab-iss b{color:#F5A623;font-weight:600}
+  .lab-body .lab-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .lab-btn{background:none;border:1px solid var(--line2);color:var(--txt);font:12px var(--sans);
+    padding:7px 12px;border-radius:9px;cursor:pointer;min-height:34px}
+  .lab-btn:hover{color:var(--acc);border-color:var(--acc)}
+  .lab-btn[disabled]{opacity:.45;cursor:not-allowed}
+  .lab-inp{background:rgba(0,0,0,.25);border:1px solid var(--line2);border-radius:9px;color:var(--txt);
+    font:12px var(--sans);padding:7px 10px;min-height:34px;min-width:180px}
+  .lab-tbl{width:100%;border-collapse:collapse;font:11.5px var(--mono);margin-top:6px}
+  .lab-tbl th,.lab-tbl td{border-bottom:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+  .lab-tbl th{color:var(--mut);font-weight:500}
+  .lab-tbl td.bad{color:#F5A623}
+  .lab-tbl td.good{color:var(--ok)}
+  .lab-rig{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 8px}
+  .lab-frame{flex:none;border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:#0b1118}
+  .lab-frame .lab-frame-hd{font:10.5px var(--mono);color:var(--mut);padding:5px 8px;border-bottom:1px solid var(--line)}
+  .lab-frame iframe{display:block;border:0;background:#0b1118}
+  .lab-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:12px}
+  .lab-card{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(0,0,0,.18)}
+  .lab-card h4{font-size:13px;display:flex;align-items:center;gap:7px;margin-bottom:6px}
+  .lab-kv{font:11.5px var(--mono);color:var(--mut);line-height:1.75;word-break:break-all}
+  .lab-kv b{color:var(--txt);font-weight:500}
+  .lab-note{font-size:11px;color:var(--mut);line-height:1.55;margin-top:7px}
+  .lab-state{font:11px var(--mono);color:var(--mut);margin-top:6px;min-height:1.4em}
+  .lab-state.busy{color:var(--acc)}
+  .lab-state.bad{color:#F5A623}
+  @media (max-width:980px){
+    #v-test.lab{padding-top:78px}
+    .lab-cards{grid-template-columns:1fr}
+    .lab-hd h3{font-size:13.5px}
+  }
+</style>
+
+<section class="view on lab" id="v-test">
+  <div class="lab-hero">
+    <h2>测试模块页 · 在试功能一处看全</h2>
+    <p>这一页不是展示页，是**实验台**：每一块都能**单独开关**（开关状态存在浏览器 <code>localStorage['xk-lab-off']</code>）。
+       口径：只用真实只读端点 <code>/api/public/*</code> 的 GET（白名单见 <code>scripts/assert-build.sh</code> 第⑥条）；
+       取不到就写"读不到"，没接线的写 <code>NOT_WIRED</code> 并说明接上时的落点 —— <b>不补数、不编字段</b>。
+       慢端点（alerts 4.9~15s · audit 11~30s · geo 首调 15s · webstats 30s）统一按 22s 超时 + 失败重试 2 次（退避 1s/3s）取，
+       失败时保留上一次成功数据，文案写"接口慢/正在重试"。</p>
+  </div>
+
+  <!-- ① T14 位置与开关 -->
+  <section class="lab-blk" data-lab="t14">
+    <div class="lab-hd">
+      <h3>① T14 位置与开关（情绪决策从哪来 / 开关在哪）</h3>
+      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：情绪/动作/台词**由服务端决策**，前端只消费；决策字段还没上线，所以本块先只展示"位置与开关"的事实，接上即自动生效。</p>
+    <div class="lab-body">
+      <div class="lab-cards">
+        <div class="lab-card">
+          <h4>决策位置（服务端）</h4>
+          <div class="lab-kv">
+            · prompt = <b>Java 字符串常量</b>（<b>改它必须重建镜像</b>，不是前端配置）<br>
+            · 白名单校验也在服务端：<b>38 动作 / 8 情绪 / 12 句</b><br>
+            · 情绪是**二元组**：<b>from → to</b>（不是单值）<br>
+            · 出处：<code>docs/T14-情绪决策改动包-20261015.md</code> · <code>docs/U6-prompt定位-20261015.md</code>
+          </div>
+        </div>
+        <div class="lab-card">
+          <h4>前端消费点（预留，未硬编码）</h4>
+          <div class="lab-kv">
+            · 播放器：<code>KurisuPlayer.speakGroup</code>（按 lineId 取句 + 防复读）<br>
+            · 状态机：<code>window.__xkSM</code>（情绪 → 剪辑/口型）<br>
+            · 接线判据：响应里出现 <code>data.decision</code>（<b>当前没有</b>）<br>
+            · 拿到 <code>state / stateLabel</code> 时先按它驱动；没有就 <code>normal</code> + 只出字幕
+          </div>
+        </div>
+      </div>
+      <div class="lab-note">开关：后端 T25+T14+U6 那一次重建上线后，<code>data.decision</code> 一出现即自动接上（消费点已留好，无需改本页）。</div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：<code>data.decision</code> 还没上线（后端正在做一次重建）⇒ 本块状态只能是 NOT_WIRED；情绪 8 类的真值表在服务端，前端不重复一份。</p>
+  </section>
+
+  <!-- ② 移动端三视口试验台 -->
+  <section class="lab-blk" data-lab="rig">
+    <div class="lab-hd">
+      <h3>② 移动端三视口试验台（375 / 390 / 414）</h3>
+      <span class="lab-badge ro" data-lab-status>只读实测</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：把真页面塞进三个真实宽度的 iframe，点一次"量一遍"就同时量出**横向溢出 / 底部导航是否在视口内 / 触控目标最小边 / 面板是否压正文**。</p>
+    <div class="lab-body">
+      <div class="lab-row">
+        <label class="lab-kv" for="labRigPage">页面</label>
+        <select class="lab-inp" id="labRigPage">
+          <option value="/alerts/">/alerts/ 监测中心</option>
+          <option value="/posts/">/posts/ 笔记</option>
+          <option value="/ai/">/ai/ AI 问答</option>
+          <option value="/">/ 主页</option>
+        </select>
+        <button class="lab-btn" id="labRigLoad">载入 3 个视口</button>
+        <button class="lab-btn" id="labRigMeasure" disabled>量一遍</button>
+        <span class="lab-state" id="labRigState"></span>
+      </div>
+      <div class="lab-rig" id="labRig"></div>
+      <table class="lab-tbl" id="labRigTbl">
+        <thead><tr><th>视口</th><th>溢出(与 visualViewport 比)</th><th>dock 在视口内</th><th>触控最小边</th><th>aside.holo 压 main</th><th>console</th></tr></thead>
+        <tbody><tr><td colspan="6">还没量（先点"载入 3 个视口"，再点"量一遍"）</td></tr></tbody>
+      </table>
+      <div class="lab-note">口径与 <code>_mobile-check.mjs</code> 完全一致：溢出必须与 <code>visualViewport.width</code> 比（窄屏下 <code>innerWidth</code> 会被内容撑宽，用它永远得 0）。</div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：iframe 里的页面会真的发 <code>/api/public/*</code> 请求（慢端点最长 30s）⇒ 量出来的 <code>console</code> 可能与外网状态有关；三个 iframe 同时载入时本机 CPU 会顶一下。</p>
+  </section>
+
+  <!-- ③ B 类 5 块可核验面板 -->
+  <section class="lab-blk" data-lab="api">
+    <div class="lab-hd">
+      <h3>③ B 类 5 块可核验面板（AI 质量 / 接口健康 / 部署可追溯 / 知识库 / 处置运维）</h3>
+      <span class="lab-badge ro" data-lab-status>只读实测</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：五张卡各取一个**真实只读端点**；取不到写"读不到"，没接线的写 <code>NOT_WIRED</code>；数字全部来自响应，不补不编。</p>
+    <div class="lab-body">
+      <div class="lab-row">
+        <button class="lab-btn" id="labApiAll">全部取数（只读 GET）</button>
+        <span class="lab-state" id="labApiState"></span>
+      </div>
+      <div class="lab-cards">
+        <div class="lab-card" data-panel="aiq">
+          <h4>AI 质量 <span class="lab-badge nw">NOT_WIRED</span></h4>
+          <div class="lab-kv" data-out>未接线：公开面**没有**只读的质量/评测端点（<code>/api/public/ask</code> 是 POST、有额度）。</div>
+          <div class="lab-note">接上时的落点：后端重建后读 <code>data.decision</code> 与 <code>state/stateLabel</code>（本页第①块已留消费点）。</div>
+          <div class="lab-state" data-state></div>
+        </div>
+        <div class="lab-card" data-panel="health">
+          <h4>接口健康 <span class="lab-badge ro">只读实测</span></h4>
+          <div class="lab-kv" data-out>点"全部取数"后逐个探白名单里的 GET 端点（状态码 + 用时）。</div>
+          <div class="lab-note">口径：**不用** <code>/api/health</code>（C 类：返回构建指纹与 mock 开关，站主已定"不展示"）。</div>
+          <div class="lab-state" data-state></div>
+        </div>
+        <div class="lab-card" data-panel="deploy">
+          <h4>部署可追溯 <span class="lab-badge ro">只读实测</span></h4>
+          <div class="lab-kv" data-out>来源 <code>/api/public/overview</code>：快照时间 / 缓存窗口 / 数据源 / 节点。</div>
+          <div class="lab-note">只展示"数据快照与来源"，**不读** <code>/api/health</code> 的提交号与内部运行手册信息。
+            另实测发现：<code>/api/public/overview</code> 的 <code>nodes[].detail</code> 里带着构建提交号（形如 <code>build da9d1dba…</code>）
+            ⇒ 本面板**刻意只渲染 id/label/online，不渲染 detail**（与"不露构建指纹"同一口径）。</div>
+          <div class="lab-state" data-state></div>
+        </div>
+        <div class="lab-card" data-panel="kb">
+          <h4>知识库 <span class="lab-badge ro">只读实测</span></h4>
+          <div class="lab-row" style="margin:6px 0">
+            <input class="lab-inp" id="labKbQ" value="口令" aria-label="检索词">
+            <button class="lab-btn" id="labKbGo">检索</button>
+          </div>
+          <div class="lab-kv" data-out>来源 <code>/api/public/kb?q=</code>：命中数 / 结果（标题·来源类型·可信级别·分数）/ 可用性。</div>
+          <div class="lab-note">空态照后端原话：未给 q 时 <code>note="未提供查询词（q）"</code>；命中 0 = 公开库里确实没有，不是取不到。</div>
+          <div class="lab-state" data-state></div>
+        </div>
+        <div class="lab-card" data-panel="ops">
+          <h4>处置运维 <span class="lab-badge ro">只读实测</span></h4>
+          <div class="lab-kv" data-out>来源 <code>/api/public/audit</code>：summary 四数 / blocks[] / IP 披露口径。</div>
+          <div class="lab-note">IP 按后端 <code>ipDisclosure</code> 口径展示（脱敏）；只给结构与计数。</div>
+          <div class="lab-state" data-state></div>
+        </div>
+      </div>
+      <div class="lab-note" id="labApiRaw"></div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：alerts/audit/geo/webstats 是慢端点（4.9~30s）⇒ 首次取数会等；<code>story</code> 需要 <code>?src=</code> 才有内容，本页不猜 src，故不展示该端点；<code>ask</code> 是 POST 且有额度，只读面板一律不调。</p>
+  </section>
+
+  <!-- ④ 原声库试听入口 -->
+  <section class="lab-blk" data-lab="orig">
+    <div class="lab-hd">
+      <h3>④ 原声库试听入口</h3>
+      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：原声优先查找表（<code>bank-merged.origfirst.json</code> 的 <code>lookup[id]={orig,synth}</code>）与试听台都还没入库，入库后这里给"只取播出的那一句"的入口。</p>
+    <div class="lab-body">
+      <div class="lab-kv">契约（语音线定义）：<b>有原声先播原声 · 没有播合成 · 都没有才只出字幕</b>；分片与现有 <code>static/kurisu/voice/bank.json</code> 分开，现有 12 句一个字节不动。</div>
+      <div class="lab-note">接上时的落点：分片入库后此块给"试听台"链接 + 抽查若干 id 的 orig/synth 命中情况（只请求播出的那一句，不整库预载）。</div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：分片目录（原声 ≤64MiB / 合成 ≤32MiB）尚未入库 ⇒ 门禁第⑨条现在显示"尚未入库（跳过）"。</p>
+  </section>
+
+  <!-- ⑤ 语音接线 + 连点 10 次自检 -->
+  <section class="lab-blk" data-lab="voice">
+    <div class="lab-hd">
+      <h3>⑤ 语音接线 + 连点 10 次自检</h3>
+      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：接上后**同一个入口连点 10 次**，把每次实际播出的 lineId 打出来，验"最近 4 条内不重复"。</p>
+    <div class="lab-body">
+      <div class="lab-row">
+        <label class="lab-kv" for="labVoiceEntry">入口</label>
+        <select class="lab-inp" id="labVoiceEntry">
+          <option value="nav_home">导航·主页</option>
+          <option value="nav_monitor">导航·监测中心</option>
+          <option value="nav_ai">导航·AI 问答</option>
+          <option value="nav_notes">导航·笔记</option>
+        </select>
+        <button class="lab-btn" id="labVoice10" disabled>连点 10 次</button>
+        <span class="lab-state" id="labVoiceState">未接线：补丁 kurisu-player-lineselect.patch 还没应用</span>
+      </div>
+      <div class="lab-kv" id="labVoiceSeq">序列：（未开始）</div>
+      <div class="lab-note">判据：最近 4 条内不重复；<code>greeting</code> 只有 2 条 ⇒ **交替出现是正确行为**，不算复读。</div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：未接线（下一批：应用补丁并让 <code>index.html</code> 那份简化播放器只转调 <code>KurisuPlayer.speakGroup</code>，不许再实现一遍随机）。</p>
+  </section>
+
+  <!-- ⑥ 统一播放器接管试验 -->
+  <section class="lab-blk" data-lab="player">
+    <div class="lab-hd">
+      <h3>⑥ 统一播放器接管试验（<code>?xk-render=inline|player</code>）</h3>
+      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：方案① —— 默认 <code>inline</code>（现在这份内联渲染），每帧末尾调**唯一钩子**画叠加层；<code>player</code> = 统一播放器接管。</p>
+    <div class="lab-body">
+      <div class="lab-kv">接上时的验收：4 条边（进入/切情绪/说话/回 idle）在内联状态机里的覆盖数字，探针 <code>window.__xkSM</code>，参考 <code>_dev/verify-sm-walker.mjs</code>。</div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：未接线；两条路径**默认值必须是 inline**，切换开关只影响本页实验，不动线上默认。</p>
+  </section>
+
+  <!-- ⑦ 头像实验室 -->
+  <section class="lab-blk" data-lab="avatar">
+    <div class="lab-hd">
+      <h3>⑦ 头像实验室（动态随机 / 点头像切动作 / 长按开面板）</h3>
+      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：用官方包 webp 图集（单元 132px · 8 列；<code>normal/idle</code> 3 帧 510ms/帧），**按需只取用到的组**，不整包预载。</p>
+    <div class="lab-body">
+      <div class="lab-kv">交互口径：点头像 = 切下一个情绪/动作 + 念一句；长按 ≥500ms = 开面板（8 情绪 / 6~10 动作）；左上角与手机卡用**同一张头像**（手机卡现在还是空白灰块 ⇒ 必修）。</div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：未接线（素材在图集包里，下一批按需取组）。</p>
+  </section>
+
+  <!-- ⑧ 手机+助手右侧面板 -->
+  <section class="lab-blk" data-lab="rail">
+    <div class="lab-hd">
+      <h3>⑧ 「手机+助手」右侧面板（窄屏收起）</h3>
+      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：用现成 partial <code>layouts/partials/xk-kurisu-rail.html</code>（自带 <code>[data-xk-kurisu-canvas]</code>）放到右侧；窄屏收起与助手面板同一口径（见本页第②块量的值）。</p>
+    <p class="lab-iss"><b>已知问题</b>：未接线；接上时必须确认窄屏不压正文（本页②的"aside.holo 压 main"那列就是判据）。</p>
+  </section>
+
+  <!-- ⑨ 底部对话输入栏第 1 期 -->
+  <section class="lab-blk" data-lab="askbar">
+    <div class="lab-hd">
+      <h3>⑨ 底部对话输入栏（第 1 期）</h3>
+      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
+    </div>
+    <p class="lab-desc">一行说明：接 <code>POST /api/public/ask</code>（白名单端点），动作/表情**只按回答里的真字段 <code>state/stateLabel</code>** 驱动；拿不到就 <code>normal</code> + 只字幕。</p>
+    <div class="lab-body">
+      <div class="lab-kv">硬性口径：<code>🔊</code> 开关**默认关**；失败/超时写"接口慢/读不到"；只出字幕，不报错刷屏；额度提示照后端原话。</div>
+    </div>
+    <p class="lab-iss"><b>已知问题</b>：未接线（下一批；代码里先留好 <code>data.decision</code> 的精确消费点）。</p>
+  </section>
+</section>
+
+<script>
+/* ============ 测试页实验区（自足：不依赖 shell-script 的任何内部变量） ============ */
+(function(){
+  'use strict';
+  var OFF_KEY = 'xk-lab-off';
+  function offList(){ try { var v = JSON.parse(localStorage.getItem(OFF_KEY) || '[]'); return Object.prototype.toString.call(v) === '[object Array]' ? v : []; } catch(e){ return []; } }
+  function saveOff(list){ try { localStorage.setItem(OFF_KEY, JSON.stringify(list)); } catch(e){} }
+  function applyOff(){
+    var off = offList();
+    Array.prototype.forEach.call(document.querySelectorAll('.lab-blk'), function(b){
+      var id = b.getAttribute('data-lab');
+      var isOff = off.indexOf(id) >= 0;
+      b.classList.toggle('off', isOff);
+      var sw = b.querySelector('[data-lab-sw]'); if (sw) sw.checked = !isOff;
+    });
+  }
+  document.addEventListener('change', function(ev){
+    var t = ev.target;
+    if (!t || !t.hasAttribute || !t.hasAttribute('data-lab-sw')) return;
+    var blk = t.closest ? t.closest('.lab-blk') : null; if (!blk) return;
+    var id = blk.getAttribute('data-lab');
+    var off = offList().filter(function(x){ return x !== id; });
+    if (!t.checked) off.push(id);
+    saveOff(off); applyOff();
+  });
+  applyOff();
+
+  /* ---- 只读取数：22s 超时 + 失败重试 2 次（退避 1s/3s）+ 保留上一次成功数据 ---- */
+  var API = ((document.querySelector('meta[name="wb-api"]') || {}).content || '').replace(/\/+$/, '');
+  var lastGood = {};
+  function setState(panel, text, cls){
+    var el = panel ? panel.querySelector('[data-state]') : null;
+    if (el) { el.textContent = text; el.className = 'lab-state' + (cls ? ' ' + cls : ''); }
+    return el;
+  }
+  function outEl(panel){ return panel ? panel.querySelector('[data-out]') : null; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  /* 真实响应里有**对象/数组**字段（如 dataSource / nodes / ipDisclosure / summary），
+     直接塞进 innerHTML 会渲染成 "[object Object]"（第一版就是这个 bug，夹具实测抓到的）。
+     这里统一走 fmt：对象 → "k=v · k=v"；数组 → 逐项 fmt 再用 · 连起来；最多 6 项。 */
+  function fmtItem(x){
+    if (x == null) return '—';
+    if (typeof x !== 'object') return esc(x);
+    if (Object.prototype.toString.call(x) === '[object Array]') return x.slice(0, 6).map(fmtItem).join(' · ');
+    return Object.keys(x).slice(0, 6).map(function(k){
+      var v = x[k];
+      return esc(k) + '=' + (v && typeof v === 'object' ? '…' : esc(v));
+    }).join(' · ');
+  }
+  function fmt(x){
+    if (x == null) return '—';
+    if (typeof x !== 'object') return esc(x);
+    if (Object.prototype.toString.call(x) === '[object Array]') {
+      if (!x.length) return '（空）';
+      return x.slice(0, 6).map(fmtItem).join(' · ') + (x.length > 6 ? (' …共 ' + x.length) : '');
+    }
+    return fmtItem(x);
+  }
+  function ms(v){ return (v == null ? '—' : (Math.round(v) + ' ms')); }
+  function tryFetch(url, timeoutMs){
+    return new Promise(function(resolve, reject){
+      var ctrl = ('AbortController' in window) ? new AbortController() : null;
+      var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, timeoutMs);
+      fetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+        .then(function(r){ clearTimeout(timer); return r.text().then(function(txt){ return { status: r.status, ok: r.ok, txt: txt }; }); })
+        .then(resolve, function(e){ clearTimeout(timer); reject(e); });
+    });
+  }
+  /* 重试 2 次（共 3 次尝试），退避 1s / 3s；失败文案区分"慢"与"读不到" */
+  function getJson(path, panel, onOk){
+    var url = API + path, attempt = 0, t0 = Date.now();
+    function step(){
+      attempt++;
+      setState(panel, attempt === 1 ? ('正在取 ' + path + ' …') : ('接口慢 · 正在重试（第 ' + attempt + ' 次）…'), 'busy');
+      return tryFetch(url, 22000).then(function(res){
+        if (!res.ok) { var e = new Error('HTTP ' + res.status); e.status = res.status; e.txt = res.txt; throw e; }
+        var d; try { d = JSON.parse(res.txt); } catch(e2){ throw new Error('返回不是 JSON'); }
+        return d;
+      });
+    }
+    function loop(){
+      return step().catch(function(err){
+        if (attempt <= 2) {
+          var wait = attempt === 1 ? 1000 : 3000;
+          setState(panel, '接口慢 · ' + wait + 'ms 后重试（' + (err && err.status ? ('HTTP ' + err.status) : (err && err.name === 'AbortError' ? '超时 22s' : '不可达')) + '）…', 'busy');
+          return new Promise(function(r){ setTimeout(r, wait); }).then(loop);
+        }
+        throw err;
+      });
+    }
+    return loop().then(function(d){
+      lastGood[path] = { at: Date.now(), d: d };
+      setState(panel, '刚刚取到（' + ms(Date.now() - t0) + '）', '');
+      if (onOk) onOk(d, path);
+      return d;
+    }).catch(function(err){
+      var why = err && err.status ? ('HTTP ' + err.status) : (err && err.name === 'AbortError' ? '超时 22s' : '不可达');
+      var had = lastGood[path];
+      setState(panel, '读不到（' + path + ' ' + why + '）' + (had ? ' · 下面是上一次成功数据（' + new Date(had.at).toLocaleTimeString() + '）' : ''), 'bad');
+      var o = outEl(panel);
+      if (o && had) { /* 保留上一次成功数据：不覆盖 */ }
+      else if (o) { o.innerHTML = '读不到（' + esc(path) + ' ' + esc(why) + '）'; }
+      return null;
+    });
+  }
+  function card(name){ return document.querySelector('.lab-card[data-panel="' + name + '"]'); }
+  function kv(panel, html){ var o = outEl(panel); if (o) o.innerHTML = html; }
+
+  /* ---- ③-B 五块面板 ---- */
+  var PANELS = {
+    health: function(){ return undefined; },   /* 单独实现：逐个探状态码 */
+    deploy: function(){
+      var p = card('deploy');
+      return getJson('/api/public/overview', p, function(d){
+        var x = (d && d.data) || {};
+        var nodes = Array.isArray(x.nodes) ? x.nodes : [];
+        var ips = x.ipDisclosure || {};
+        kv(p, [ '快照时间 <b>' + esc(x.generatedAt || '—') + '</b>',
+                '缓存窗口 <b>' + esc(x.cacheSeconds == null ? '—' : (x.cacheSeconds + 's')) + '</b>',
+                '数据源 <b>' + fmt(x.dataSource) + '</b>',
+                '节点 <b>' + nodes.length + '</b>：' + (nodes.length ? nodes.slice(0, 4).map(function(n){
+                  return esc(n.id || '?') + '·' + esc(n.label || '') + '·' + (n.online ? '在线' : '离线');
+                }).join(' ｜ ') : '—'),
+                '告警窗口 <b>' + fmt(x.alerts && { windowSize: x.alerts.windowSize, windowCount: x.alerts.windowCount, critical: x.alerts.critical, high: x.alerts.high }) + '</b>',
+                'IP 披露口径 <b>' + esc(ips.masked == null ? '—' : ('masked=' + ips.masked)) + '</b> ' + esc(ips.notice || '') ].join('<br>'));
+      });
+    },
+    kb: function(q){
+      var p = card('kb');
+      var path = '/api/public/kb' + (q ? ('?q=' + encodeURIComponent(q)) : '');
+      return getJson(path, p, function(d){
+        var x = (d && d.data) || {};
+        var rows = Array.isArray(x.results) ? x.results : [];
+        var html = [ '命中 <b>' + esc(x.hitCount == null ? '—' : x.hitCount) + '</b>',
+                     '可用 <b>' + esc(x.available == null ? '—' : x.available) + '</b>',
+                     '后端原话 <b>' + esc(x.note || '—') + '</b>' ];
+        if (rows.length) {
+          html.push('<br>结果：');
+          rows.slice(0, 5).forEach(function(r){
+            html.push('· <b>' + esc(r.title || '(无标题)') + '</b> — ' + esc(r.sourceTypeLabel || r.sourceType || '—')
+              + ' · ' + esc(r.trustLevelLabel || r.trustLevel || '—') + ' · score ' + esc(r.score == null ? '—' : r.score));
+          });
+        }
+        kv(p, html.join('<br>'));
+      });
+    },
+    ops: function(){
+      var p = card('ops');
+      return getJson('/api/public/audit', p, function(d){
+        var x = (d && d.data) || {};
+        var blocks = Array.isArray(x.blocks) ? x.blocks : [];
+        var actions = Array.isArray(x.actions) ? x.actions : [];
+        var ips = x.ipDisclosure || {};
+        kv(p, [ 'summary <b>' + fmt(x.summary) + '</b>',
+                'blocks <b>' + blocks.length + '</b> · actions <b>' + actions.length + '</b>',
+                'IP 披露口径 <b>' + esc(ips.masked == null ? '—' : ('masked=' + ips.masked)) + '</b> ' + esc(ips.notice || ''),
+                '快照 <b>' + esc(x.generatedAt || '—') + '</b>',
+                '只读 <b>' + esc(x.readOnly == null ? '—' : x.readOnly) + '</b>' ].join('<br>'));
+      });
+    },
+    aiq: function(){ return Promise.resolve(null); }   /* NOT_WIRED：不动 */
+  };
+
+  /* 接口健康：探白名单里的 GET 端点（不含 POST 的 ask；story 需要 src，故只探不带参的） */
+  var HEALTH_PATHS = ['/api/public/overview', '/api/public/latest', '/api/public/audit',
+                      '/api/public/alerts', '/api/public/honeypot', '/api/public/kb', '/api/public/geo', '/api/public/webstats'];
+  function healthPanel(){
+    var p = card('health'), tb = document.createElement('table');
+    tb.className = 'lab-tbl';
+    tb.innerHTML = '<thead><tr><th>端点</th><th>HTTP</th><th>用时</th><th>快照 generatedAt</th></tr></thead><tbody></tbody>';
+    var out = outEl(p); if (out) { out.innerHTML = ''; out.appendChild(tb); }
+    var tbody = tb.querySelector('tbody');
+    setState(p, '正在逐端点探测（慢端点最长 22s，失败会重试 1s/3s）…', 'busy');
+    var idx = 0, bad = 0;
+    function next(){
+      if (idx >= HEALTH_PATHS.length) {
+        setState(p, bad === 0 ? '全部取到（' + HEALTH_PATHS.length + ' 个只读端点）' : (bad + ' 个读不到 / 其余正常'), bad === 0 ? '' : 'bad');
+        return Promise.resolve();
+      }
+      var path = HEALTH_PATHS[idx++], t0 = Date.now();
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + esc(path.replace('/api/public/', '')) + '</td><td>…</td><td>…</td><td>…</td>';
+      tbody.appendChild(tr);
+      var attempt = 0;
+      function step(){
+        attempt++;
+        return tryFetch(API + path, 22000);
+      }
+      function loop(){
+        return step().catch(function(err){
+          if (attempt <= 2) { return new Promise(function(r){ setTimeout(r, attempt === 1 ? 1000 : 3000); }).then(loop); }
+          throw err;
+        });
+      }
+      return loop().then(function(res){
+        var gen = '—';
+        try { var d = JSON.parse(res.txt); gen = (d && d.data && d.data.generatedAt) || '—'; } catch(e){}
+        tr.children[1].textContent = String(res.status);
+        tr.children[2].textContent = ms(Date.now() - t0) + (attempt > 1 ? ('（重试 ' + (attempt - 1) + ' 次）') : '');
+        tr.children[3].textContent = gen;
+        tr.children[1].className = res.ok ? 'good' : 'bad';
+        lastGood[path] = { at: Date.now(), d: true };
+      }).catch(function(err){
+        bad++;
+        var why = err && err.status ? ('HTTP ' + err.status) : (err && err.name === 'AbortError' ? '超时 22s' : '不可达');
+        tr.children[1].textContent = why;
+        tr.children[1].className = 'bad';
+        tr.children[2].textContent = ms(Date.now() - t0);
+      }).then(next);
+    }
+    return next();
+  }
+
+  function runAll(){
+    var st = document.getElementById('labApiState');
+    if (st) { st.textContent = '取数中…（慢端点可能等 20~30s，失败会自己重试）'; st.className = 'lab-state busy'; }
+    var jobs = [];
+    jobs.push(healthPanel());
+    jobs.push(PANELS.deploy());
+    jobs.push(PANELS.ops());
+    var q = (document.getElementById('labKbQ') || {}).value || '';
+    jobs.push(PANELS.kb(q));
+    return Promise.all(jobs).then(function(){
+      if (st) { st.textContent = '取数结束（每张卡的用时/口径写在卡内；读不到的已保留上一次成功数据）'; st.className = 'lab-state'; }
+    });
+  }
+  var allBtn = document.getElementById('labApiAll');
+  if (allBtn) allBtn.addEventListener('click', function(){ allBtn.disabled = true; runAll().then(function(){ allBtn.disabled = false; }); });
+  var kbGo = document.getElementById('labKbGo');
+  if (kbGo) kbGo.addEventListener('click', function(){ PANELS.kb((document.getElementById('labKbQ') || {}).value || ''); });
+  var kbQ = document.getElementById('labKbQ');
+  if (kbQ) kbQ.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') PANELS.kb(kbQ.value || ''); });
+
+  /* ---- ② 三视口试验台 ---- */
+  var RIG = [{ w: 375, h: 812 }, { w: 390, h: 844 }, { w: 414, h: 896 }];
+  var rigBuilt = false, rigPage = '/alerts/';
+  function buildRig(){
+    var box = document.getElementById('labRig'); if (!box) return;
+    box.innerHTML = '';
+    RIG.forEach(function(vp){
+      var f = document.createElement('div');
+      f.className = 'lab-frame';
+      f.style.width = vp.w + 'px';
+      var hd = document.createElement('div');
+      hd.className = 'lab-frame-hd';
+      hd.textContent = vp.w + 'x' + vp.h;
+      var ifr = document.createElement('iframe');
+      ifr.setAttribute('title', 'viewport ' + vp.w);
+      ifr.setAttribute('width', String(vp.w));
+      ifr.setAttribute('height', String(vp.h));
+      ifr.style.width = vp.w + 'px';
+      ifr.style.height = vp.h + 'px';
+      ifr.dataset.vw = String(vp.w);
+      f.appendChild(hd); f.appendChild(ifr); box.appendChild(f);
+    });
+    rigBuilt = true;
+  }
+  var rigLoad = document.getElementById('labRigLoad');
+  if (rigLoad) rigLoad.addEventListener('click', function(){
+    var sel = document.getElementById('labRigPage');
+    rigPage = sel ? sel.value : '/alerts/';
+    buildRig();
+    var st = document.getElementById('labRigState');
+    if (st) { st.textContent = '正在载入 ' + rigPage + ' …'; st.className = 'lab-state busy'; }
+    var left = RIG.length;
+    Array.prototype.forEach.call(document.querySelectorAll('#labRig iframe'), function(ifr){
+      ifr.addEventListener('load', function(){
+        left--;
+        if (st && left <= 0) { st.textContent = '三个视口已载入（等页面里的慢端点自己结束再量更准）'; st.className = 'lab-state'; }
+      });
+      ifr.setAttribute('src', rigPage);
+    });
+    var mb = document.getElementById('labRigMeasure'); if (mb) mb.disabled = false;
+  });
+  function rigProbe(win, doc){
+    var de = doc.documentElement, vv = win.visualViewport;
+    var dock = doc.getElementById('dock');
+    var links = dock ? Array.prototype.slice.call(dock.querySelectorAll('a,button')) : [];
+    var minSide = null;
+    links.forEach(function(a){ var r = a.getBoundingClientRect(); var m = Math.min(r.width, r.height);
+      if (m > 0 && (minSide === null || m < minSide)) minSide = Math.round(m); });
+    var holo = doc.querySelector('aside.holo, .holo');
+    var main = doc.getElementById('content') || doc.querySelector('main');
+    var hr = holo ? holo.getBoundingClientRect() : null, mr = main ? main.getBoundingClientRect() : null;
+    var ov = 'none';
+    if (hr && mr) {
+      var w = Math.min(hr.right, mr.right) - Math.max(hr.left, mr.left);
+      var h = Math.min(hr.bottom, mr.bottom) - Math.max(hr.top, mr.top);
+      ov = (w > 0 && h > 0) ? (Math.round(w) + 'x' + Math.round(h)) : 'none';
+    }
+    var dr = dock ? dock.getBoundingClientRect() : null;
+    return {
+      vw: vv ? Math.round(vv.width) : win.innerWidth,
+      scrollW: de.scrollWidth,
+      overflow: de.scrollWidth - (vv ? Math.round(vv.width) : win.innerWidth),
+      dockInView: (dr && vv) ? (dr.top >= -1 && dr.bottom <= vv.height + 1) : null,
+      touch: minSide,
+      holo: ov
+    };
+  }
+  var rigMeasure = document.getElementById('labRigMeasure');
+  if (rigMeasure) rigMeasure.addEventListener('click', function(){
+    var st = document.getElementById('labRigState');
+    var tbody = document.querySelector('#labRigTbl tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    Array.prototype.forEach.call(document.querySelectorAll('#labRig iframe'), function(ifr){
+      var tr = document.createElement('tr');
+      var label = (ifr.dataset.vw || '?') + 'px';
+      try {
+        var r = rigProbe(ifr.contentWindow, ifr.contentDocument);
+        tr.innerHTML = '<td>' + esc(label) + '</td><td class="' + (r.overflow === 0 ? 'good' : 'bad') + '">' + esc(r.overflow) + ' px (vw=' + esc(r.vw) + ')</td>'
+          + '<td class="' + (r.dockInView ? 'good' : 'bad') + '">' + esc(String(r.dockInView)) + '</td>'
+          + '<td class="' + (r.touch >= 44 ? 'good' : 'bad') + '">' + esc(String(r.touch)) + ' px</td>'
+          + '<td>' + esc(r.holo) + '</td><td>本页控制台（iframe 内见 DevTools）</td>';
+      } catch(e) {
+        tr.innerHTML = '<td>' + esc(label) + '</td><td colspan="5" class="bad">量不到（' + esc(e && e.message ? e.message : '跨源或未载入') + '）</td>';
+      }
+      tbody.appendChild(tr);
+    });
+    if (st) { st.textContent = '已量一遍（口径同 _mobile-check.mjs）'; st.className = 'lab-state'; }
+  });
+
+  /* 诊断挂载点：便于取证（只读，不影响页面） */
+  window.__xkLab = { api: API, lastGood: lastGood, healthPaths: HEALTH_PATHS,
+                     help: 'window.__xkLab.lastGood 里是各端点最近一次成功响应；healthPaths 是"接口健康"探的那批只读端点' };
+})();
+</script>

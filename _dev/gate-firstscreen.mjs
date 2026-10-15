@@ -45,12 +45,15 @@ const ASSET_RE = /\.(webp|png|jpe?g|gif|svg|ico|css|js|woff2?|wav|opus|m4a)$/i;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
 
-/* 页面清单：file = 产物里的文件，expect = app.js 对这条路由的 name（VIEW_TPL 的键） */
+/* 页面清单：file = 产物里的文件，expect = app.js 对这条路由的 name（VIEW_TPL 的键）
+   ★2026-10-16（窗口 Q）：新增第 5 页 /test/（测试模块页）—— 它的初始屏是实验区自己那一屏
+     `<section class="view on lab" id="v-test">`，所以 expectView 直接写 'v-test'，复用现成断言。 */
 const PAGES = [
   { name: 'home', file: 'index.html', url: 'index.html', wait: 14000, expect: 'home', view: null, marker: '.stage .charcanvas' },
   { name: 'monitor', file: 'alerts/index.html', url: 'alerts/', wait: 4000, expect: 'monitor', view: 'v-monitor', marker: '#termFeed' },
   { name: 'notes', file: 'posts/index.html', url: 'posts/', wait: 3000, expect: 'notes', view: 'v-notes', marker: '#v-notes .note' },
-  { name: 'ai', file: 'ai/index.html', url: 'ai/', wait: 3000, expect: 'ai', view: 'v-ai', marker: '#askInput' }
+  { name: 'ai', file: 'ai/index.html', url: 'ai/', wait: 3000, expect: 'ai', view: 'v-ai', marker: '#askInput' },
+  { name: 'test', file: 'test/index.html', url: 'test/', wait: 3000, expect: 'test', view: 'v-test', marker: '#v-test .lab-blk' }
 ];
 
 function byteOf(url) {
