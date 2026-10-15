@@ -235,6 +235,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 10-15 | 规划侧 | 接手批工作入库（host_triggered_entries 派生 9 个 / /ai/ 真调 API / 语音 L1 播放 / 表情 5→8 套 / #fallback 保护） | 提交 `9e8094e` | 站点代码 |
 | 10-15 | 规划侧 | 接手方评审复核：F1~F4 全中；纠正其 E4-①（assert 实为 16 项）；确认 CORS 允许主域 | `docs/总账…` §3 | 口径 |
 | 10-15 | 规划侧 | 定 IP 展示规则（最后一段→x，只掩显示、分组用原值；访客/内网 IP 绝不上页面）；R1 存量三处据此免改；同步 T20~T22 与 Kimi 设计任务书 | 提交 `38fe210` + 本节 ⑨ | 站点展示口径 |
+| 10-15 | D｜素材产线 | T18 段一/段二 + T23 可行性：交付 `tools/asset-align.py`（对齐+图集+透明WebM+逐帧QA，0.70 s/帧）、`tools/asset-consistency.py`（rgbNcc+edgeNcc+关键点，阈值用 210 帧互测标定）、`tools/asset-refset.py`（定妆集 21 张 + 38 剪辑锚点表）；**锚点与上游 SpriteForge 逐位一致**；SpriteForge 最小示例**纯 CPU 跑通**（生成是远端付费服务，无需 GPU）；出报价单与 SOP 一页 ✓ | 提交 7538904 ｜ docs/素材产线能力-T18-20261015.md（603 行） | 素材产线能力；未接线未发布 |
 | 10-15 | H｜运维 | T11①②③④：srv2 证书到期三级告警 timer（未动证书/nginx）｜srv1 每 5 分钟站点可用性外部探测（走真实 CF 访客路径，失败注入用 .invalid 验证告警 HTTP 200）｜补齐配置类备份（/etc/nginx + systemd 单元 + letsencrypt + scripts，98 文件/124K）并恢复演练 PASS（98/98 sha256）｜备案材料清单 | 提交 1f418ae ｜ docs/运维-T11-*.md ×3 | 服务器新增 3 个 timer；**DNS/nginx/证书/容器零变更** ✓ |
 | 10-15 | A｜评测 | T13 评测包：素材包 Qwen3-ASR-0.6B 落地并出 60 句日语 ASR 回译 **CER 均值 0.0683**（中位 0.0336、26/60 完全一致，达标 ≤10%）；问答质量集 40 条（19 条 fail-closed）入库，首轮有效采集 4 条：**拒答 4/4、幻觉 0、状态自洽 4/4**；MOS/ABX 流程+脚本可重跑（**无真实评委 ⇒ 结果表为空模板** ✗）；脚本与题库入 `scripts/eval/` | 提交 033c75b ｜ `docs/评测报告-语音与问答-20261015.md` | 新增 `scripts/eval/**` 与两份 docs |
 | 10-15 | I / T24 | E-mote 路线评估（只评估不改站）：技术可行、素材本地已有（zip 解包 123.29 MiB）；判定**不能公开上线** ✗（demo 原文禁止上传 + 运行时 CC BY-NC-SA 4.0）；成本 A 独立页 2.5~3.5 人日 / B 共存专区 4~6 人日 / C 全面换渲染层 15~25 人日 ✗ | docs/E-mote路线评估-20261015.md | 决策与授权口径 |
@@ -306,9 +307,9 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | ~~T11 服务器与运维~~ → **✅ 已完成（窗口 H，提交 1f418ae）** | 已收工 | ①srv2 证书到期 **21/7/1 三级告警** timer（复用 notify.sh，未动证书/nginx ✓，dry-run 实测三级 + 真发飞书 200 ✓）②srv1 **每 5 分钟站点可用性探测**（走真实 CF 路径：200 + ≥10KB + title + 内容特征 + ≤15s，连败 3 次告警 ✓，实测自动 200+200 ✓，流量 ≈0.53 GiB/月 ✓）③**补齐配置类备份**（/etc/nginx + systemd 单元 + /etc/letsencrypt + scripts，98 文件/124K/留 14 份）并**恢复演练 PASS**（98/98 sha256，0.05s，未碰线上 ✓）④**备案材料清单**已产出（实际提交需站主操作 ✓）|
 | T15 语音闭环（ASR→LLM→TTS + 打断） | 待开窗口 | T14 + TTS 通路 |
 | T16 《AI 项目说明书》 | E | T13 出数字后 |
-| T18 素材产线能力（生成→对齐→筛→入库 + SOP） | D（待开） | 云 GPU 成本拍板 |
+| ~~T18 素材产线能力~~ → **✅ 段一/段二已完成（窗口 D，提交 7538904）** | 已收工 | ①`tools/asset-align.py`（任意生成结果 → 764×1028 + 既有锚点 + 8/17/21/5ms 逐帧时长 ⇒ 出帧序/图集/透明 WebM/逐帧 QA ✓；实测 **0.70 s/帧**、180 帧真实剪辑 QA 180/180 通过 ✓）②`tools/asset-consistency.py`（rgbNcc + edgeNcc + Harris 关键点距离；阈值用 38 剪辑 210 帧**互测标定** ✓）③定妆集 21 张 + 38 剪辑实测锚点表 ✓ ④**锚点口径与上游 SpriteForge 逐位一致**（idle-reference.png 上 21 / 387.66 / 370096 三项全等 ✓）｜**段三（注册进 statemachine）未做** ⇒ 另派给 C ✓ |
 | T19 双智能体协作方案（三层 + persona.md） | E（待开） | 无 |
 | **G 后端功能展示设计**（封禁榜/故事线/知识库 UI 设计 + 原型） | **G = Kimi 窗口** | 任务书已就位 `docs/交接-Kimi-UI展示设计任务.md` ✓ |
 | T20/T21/T22 后端展示落地（封禁榜 / 故事线 / 知识库） | C | 等 F 的建议 + G 的设计 |
-| T23 SpriteForge 试点（参考图→静帧→i2v→审片→导出） | D | 云 GPU 拍板 |
+| ~~T23 SpriteForge 试点~~ → **✅ 可行性已确认（窗口 D）** | 已收工 | **最小示例本机全流程跑通，且与显存无关** ✓：SpriteForge 本体 = 纯 CPU + 本地 HTTP（`python -m spriteforge init workspace --demo` → review 200 → 参考图→静帧→排片段→首尾帧全通 ✓；零付费调用 ✓）；**生成那一半是远端付费服务**（wan/seedance/wan-cli/生图，六个 provider key 全 missing ✗）⇒ **不需要买 GPU** ✓ `[纠正：前置不是"云 GPU 成本拍板"，而是"要不要开一个付费生成账号" ✗]` |
 | T24 E-mote 路线评估（含**授权结论** ✗，全身/换装捷径） | 待开窗口 | 无 |
