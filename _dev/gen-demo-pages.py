@@ -559,16 +559,17 @@ chrome = sub1(
     'chrome: holo-say 假数字')
 
 # ---- ⑤ demo 自身缺陷：五页的 scene-js 依赖不存在的 #fallback / #bootveil ----
-# 【2026-10-14 第十二批 · 站主砍范围】这条**本轮不做**，原样保留 demo 的行为。
-#   为什么不能顺手修：五个内容页的 scene-js 现在会在启动处抛 TypeError 提前中止，
-#   于是「opening.hi.webp（1004KB）」根本没被请求；一旦补上存在性判断让 IIFE 跑完，
-#   五页都会去载 opening.hi，/ai/ 的首屏从 1637KB 直接涨到 2640KB —— 首屏门禁（≤1650KB）立刻红。
-#   所以它与首屏预算是**耦合**的，留给下一批连同 /ai/ 的图集一起处理。
-#   （补丁文本保留在这里，下一批打开即可；本轮不应用。）
+# 【2026-10-15 T1 已修】判据收紧：原来是"CRT 高度 <260px 就降级"—— 手机横屏 CRT 实测 224px，
+#   被整屏 fallback（position:fixed;inset:0;z-index:70）盖住 ⇒ 动画被静帧顶掉（站长投诉"动画不放"根因 ✓ CDP 实测）。
+#   现在 = 只有"桌面细指针 + 高度不足"才降级；触屏（pointer:coarse = 手机/平板）一律播动画，只是更小。
+#   桌面窄窗降级行为不变（视觉不变，只改判据 ✓）。
+#   注：第十二批的存在性判断已应用 ✓；当时"与首屏预算耦合、暂不整体应用"的顾虑，
+#   存在性判断部分照常应用，阈值部分由本条 T1 修订。
 S_FALLBACK_OLD = "document.getElementById('fallback').style.display = r.height < 260 ? 'grid' : 'none';"
 S_FALLBACK_NEW = ("const fb = document.getElementById('fallback');   /* ★第十二批：五个内容页没有 #fallback，\n"
                   "      demo 这里直接 .style 会抛 TypeError 让整个 IIFE 中止 —— 加存在性判断，行为不变 */\n"
-                  "  if(fb) fb.style.display = r.height < 260 ? 'grid' : 'none';")
+                  "  /* ★2026-10-15 T1：桌面窄窗才降级；触屏（手机/平板）一律播动画，只是更小。视觉不变 */\n"
+                  "  if(fb) fb.style.display = (r.height < 260 && !matchMedia('(pointer: coarse)').matches) ? 'grid' : 'none';")
 S_BOOT_OLD = ("document.getElementById('bootveil').style.opacity = 0;\n"
               "  setTimeout(()=>document.getElementById('bootveil').remove(), 450);")
 S_BOOT_NEW = ("const bv = document.getElementById('bootveil');   /* ★第十二批：同上，五个内容页没有 #bootveil */\n"
@@ -1297,6 +1298,12 @@ home_script = sub1(home_script,
                    "      if(typeof xkVoiceEnd === 'function'){ xkVoiceEnd(); }\n"
                    "      else if(typeof play === 'function'){ play('idle'); }",
                    '主页语音 ended: 交给表情层')
+home_script = sub1(home_script,
+                   "  /* 桌面实拍照常驻、CRT 完整可见的硬不变量：CRT 高度 <260px 触发降级 */\n"
+                   "  document.getElementById('fallback').style.display = r.height < 260 ? 'grid' : 'none';",
+                   "  /* ★2026-10-15 T1：桌面窄窗才降级；触屏（手机/平板）一律播动画，只是更小。视觉不变 */\n"
+                   "  document.getElementById('fallback').style.display = (r.height < 260 && !matchMedia('(pointer: coarse)').matches) ? 'grid' : 'none';",
+                   '主页 fallback: 触屏不降级')
 home_script = home_script + HOME_ANIM
 
 # --------------------------------------------------------------------- 落盘

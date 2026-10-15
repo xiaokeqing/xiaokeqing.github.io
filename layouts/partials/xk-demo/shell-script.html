@@ -691,7 +691,8 @@ function resize(){
   /* 桌面实拍照常驻、CRT 完整可见的硬不变量：CRT 高度 <260px 触发降级 */
   const fb = document.getElementById('fallback');   /* ★第十二批：五个内容页没有 #fallback，
       demo 这里直接 .style 会抛 TypeError 让整个 IIFE 中止 —— 加存在性判断，行为不变 */
-  if(fb) fb.style.display = r.height < 260 ? 'grid' : 'none';
+  /* ★2026-10-15 T1：桌面窄窗才降级；触屏（手机/平板）一律播动画，只是更小。视觉不变 */
+  if(fb) fb.style.display = (r.height < 260 && !matchMedia('(pointer: coarse)').matches) ? 'grid' : 'none';
 }
 
 function drawFrame(){
