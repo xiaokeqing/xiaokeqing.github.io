@@ -15,8 +15,12 @@
 
 > **追加（同日晚些，站主追加要求）**：另建了一个 `language_hints=["zh"]` 的音色
 > `cosyvoice-v3.5-plus-kurisuzh-f14ecf82e7244fa494055493e85ec5dd`（prefix `kurisuzh`），并用中文试了 2 句。
-> **结论：即使指定 `zh`，这个（以日语素材复刻的）音色念中文仍被按日语读音念** ✗
-> ⇒ 完整证据（ASR 回译 + 日语对照）见 `docs/接线-CosyVoice前端念回答-20261016.md` **§5.1b**。
+> **结论（已由规划侧拍板）：中文念读 = 不可行** ✗ —— 即使指定 `zh`，这个（以日语素材复刻的）音色
+> 念中文仍被按**日语读音**念（ASR 回译给出日文假名与汉字近音；同一 ASR 对日语合成几乎逐字全对）
+> ⇒ 完整证据见 `docs/接线-CosyVoice前端念回答-20261016.md` **§5.1b**。
+> **处置**：`kurisuzh` 音色**已删** ✓（`delete_voice` HTTP 200；`list_voice prefix=kurisuzh` → `total_count=0`）；
+> `kurisu`（ja）音色**保留** ✓。**替代方案**：她本就"**说日语、配中文字幕**"⇒ "念回答"应念**日语版**
+> （需后端多输出 `speakJa` ⇒ 属后端改动、需一次重建 ⇒ **列为二期项** ✗ 今天不下手）。
 > 另记一条实测：`prefix` **不允许连字符**（`kurisu-zh` → 400 `prefix should be english letter and number`）✗
 
 ---
@@ -278,13 +282,22 @@ curl.exe -s -X POST 'https://dashscope.aliyuncs.com/api/v1/services/audio/tts/Sp
 `voice-enrollment` 的 create_voice（`target_model=cosyvoice-v3.5-plus` / `prefix=kurisu` / `language_hints=["ja"]`）
 一次成功，`voice_id=cosyvoice-v3.5-plus-kurisu-8eacef0d36b44939b7b9009046e335d1`（4.94 s / usage.count=1）；
 用该音色合成 **3/3 句日语**成功（3.20 s/153,644 B・4.96 s/238,124 B・5.92 s/284,204 B；响应 TTFB 1.81~2.06 s）；
-计费 **112 / 10,000 字符 = 1.12%**（≈0.0168 元）；**无任何权限缺失** ✗；
+**★中文念读判不可行** ✗：另建 `language_hints=["zh"]` 音色（prefix `kurisuzh`）试 2 句中文，
+ASR 回译（同模型同口径）给出**日文假名/汉字近音**（「这个问题我需要查一下公开端点」→「萨卡文大噶主要赛者公开探听」），
+而同一 ASR 对日语合成**几乎逐字全对** ⇒ **排除"ASR 背锅"**，证实"仍按日语读音念"；且本项目**无中文参考音频**（穷尽）
+⇒ 处置：**删 kurisuzh**（`delete_voice` 200 / `list_voice` total_count=0）、**留 ja**；
+**替代方案（二期，先记录不实现）**：她本就"说日语 + 中文字幕"⇒ "念回答"念**日语版**（后端加 `speakJa` 字段 ⇒ 需一次重建 ✗）；
+计费 **173 / 10,000 字符 = 1.73%**（≈0.0260 元；额度为**总量、非每日**，**不按天归零** —— 依据站主控制台"10,000/10,000 · 过期 2026/12/21"）；
+**无任何权限缺失** ✗；实测补充：`prefix` **不允许连字符**（`kurisu-zh` → 400）；
 踩坑：DashScope 从 **Cloudflare** 链路的 URL 拉参考音频会 `BadRequest.InputDownloadFailed`（50.5 s 失败），
 换 **`direct.xiaokeqing.cn`（绕开 CF，A 记录直连 43.143.114.79、证书 SAN 已含该名）** 后一次成功
 ⇒ **★凡是要第三方服务回源拉本站文件，一律给 `direct.` 域，不给 apex/www** ✓；
-临时公网文件（release 内旁路写入）**已全部删除并验证**（FS 0 命中 + 公网只剩 SPA 兜底）✓ |
-`docs/CosyVoice声音复刻-20261016.md`、`docs/状态-Y-CosyVoice.md` ｜ 产物 `E:\DeepSeek1\work\_cosy\**`（仓库外） |
-音频样本已就绪；**未部署/未改线上/未 commit** ✓ ｜ 遗留 `[待核对]`：音色相似度听感、平台计费字符口径 |
+前端包络**实测可现算**（24k WAV 窗数 640/992/1184 逐条 = 字节÷480，与 12 句 envelopeFormula 同口径）⇒ 后端不必写包络；
+形态 B（只读代理）契约已出草案并**标注"暂不部署"**（若做 ⇒ ffmpeg 走 **apt 官方包**、nginx 反代**须先报站主**）；
+临时公网文件（release 内旁路写入）**两轮共托管/删除两次，均已删除并验证**（FS 0 命中 + 公网只剩 SPA 兜底）✓ |
+`docs/CosyVoice声音复刻-20261016.md`、`docs/接线-CosyVoice前端念回答-20261016.md`、`docs/状态-Y-CosyVoice.md`
+｜ 产物 `E:\DeepSeek1\work\_cosy\**`（仓库外） | 音频样本已就绪；**未部署/未改线上/未 commit** ✓
+｜ 遗留 `[待核对]`：音色相似度听感（我无听觉）、平台计费字符口径、代理转 m4a 实测、429 响应体 |
 ```
 
 **→ 另建议记进 `docs/总账-决策与事实台账-20261015.md` §2.5（服务器与链路）**：`direct.xiaokeqing.cn` 是**绕开 CF 的直连入口**（A 记录 43.143.114.79，证书 SAN 已含该名），第三方服务回源拉本站文件必须用它 ✓
@@ -293,16 +306,28 @@ curl.exe -s -X POST 'https://dashscope.aliyuncs.com/api/v1/services/audio/tts/Sp
 
 ## 10. `[待核对]` 清单（没数的地方都在这儿，别当结论 ✗）
 
-1. **音色相似度（像不像）**：本窗口未做人工盲听 / MOS / ABX ⇒ **只证明接口成功与可合成，不代表音色质量** ✗
+**已结清（不再待核对）**
+```
+· 中文念读可行性 → **判不可行** ✗（依据：zh 提示无效 + 无中文参考音频）｜处置：删 kurisuzh、留 ja ✓
+· 额度是否按天归零 → **不归零** ✓（依据：站主控制台"免费额度"页截图 = 10,000/10,000 剩余 · 过期 2026/12/21
+  ⇒ 总量额度 + 固定过期日，非每日额度）✓
+· prefix 是否允许连字符 → **不允许** ✓（`kurisu-zh` → 400 `prefix should be english letter and number`）
+```
+
+**仍待核对**
+1. **音色相似度（像不像）**：本窗口**无听觉**，未做人工盲听 / MOS / ABX
+   ⇒ **只证明接口成功、能合成、日语可懂度过关，不代表音色质量** ✗
 2. **平台计费字符口径**：文本 26/36/29 字 vs 计费 29/42/33 字符（+14.3%）⇒ 差异来源未核
 3. **cosyvoice-v3.5-plus 是否真的没有任何预置音色**：我实测 `longxiaochun`/`longxiaochun_v2`/
    `longxiaochun_v3`/`longwan`/`longcheng`/`longhua`/`longanyang`/`Cherry`/`Ethan` 在该模型下**全部**
    返回引擎错误 418；`cosyvoice-v3-flash`（longanyang）与 `cosyvoice-v2`（longxiaochun_v2）在同端点
    **均 200** ⇒ 判"该模型只吃复刻/设计音色"，**但未逐条比对官方音色表**（该文档正文抓取被截断）
-4. **`create_voice` 的计费方式**（按次 `usage.count=1` 还是含隐式字符）未核
-5. **日语 `language_hints` 是否真正生效**：无法从返回判断（接口未回显），仅按官方支持列表传入
+4. **`create_voice` / `delete_voice` 的计费方式**（均按次 `usage.count=1`，是否含隐式字符）未核
+5. **日语 `language_hints`（ja 音色）是否真正生效**：无法从返回判断（接口未回显）；
+   但**间接正面证据**：ASR 回译 3 句日语几乎逐字全对（含人名 `マキセクリス`）✓
 6. **站主"免费额度用完即停"是否已生效**：我未登录控制台核实，按任务给定的前提记录
+7. **`speakJa` 替代方案的生成质量**：未测（属二期后端改动）
 
 ---
 
-*窗口 Y · 2026-10-16 · 未 commit / 未 push ✓ · 临时公网文件已删净并验证 ✓*
+*窗口 Y · 2026-10-16 · 未 commit / 未 push ✓ · 临时公网文件两轮均已删净并验证 ✓*

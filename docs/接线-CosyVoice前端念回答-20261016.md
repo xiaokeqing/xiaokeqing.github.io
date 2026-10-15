@@ -197,12 +197,12 @@ WAV 传输耗时（从签名 OSS 短链取，本机直连）：0.156 ~ 0.593 s �
 端到端可播时延（合成 TTFB + 下载总）≈ 1.91 s ~ 2.16 s → 首字节约 **1.8 ~ 2.1 s**
 ```
 
-### 5.1b ★ `language_hints=["zh"]` 中文音色实测（**追加，2026-10-16**）
+### 5.1b ★ 中文念读：**判定不可行** ✗（2026-10-16 定案 · 依据 + 替代方案）
 
-站主采纳"不赌日语念中文"⇒ 又建了一个 `zh` 音色并用**中文**试了 2 句：
+**起因**：站主不赌"日语复刻音色念中文"⇒ 另建一个 `language_hints=["zh"]` 的音色并用**中文**试 2 句。
 
 ```
-voice_id = cosyvoice-v3.5-plus-kurisuzh-f14ecf82e7244fa494055493e85ec5dd
+（已删）voice_id = cosyvoice-v3.5-plus-kurisuzh-f14ecf82e7244fa494055493e85ec5dd
 create_voice: HTTP 200 / 4.417 s / usage.count=1 / language_hints=["zh"] / prefix=kurisuzh
 参考音频仍是 crs_1393.wav（日语素材）—— 目的是"用她的音色说中文"⇒ 用 zh 提示建音色 ✓
 ```
@@ -223,13 +223,26 @@ create_voice: HTTP 200 / 4.417 s / usage.count=1 / language_hints=["zh"] / prefi
 ⇒ ★**判定：即使指定 `language_hints=["zh"]`，这个（以日语素材复刻的）音色念中文时仍被按"日语读音"念** ✗
 （ASR 不给中文提示时直接吐**日文假名** `サカムンダイ…`；给了 `zh` 提示后仍是"日语音节 + 汉字近音"；
 而**同一 ASR 对日语合成几乎逐字全对** ⇒ 排除了"ASR 本身不行"这个替代解释 ✓）
-⇒ **"洋腔"这一项有客观证据支持：日语口音明显、中文可懂度低** ✗
-⇒ **只把 `language_hints` 改成 `zh` 不解决问题**；要念中文回答，需要**中文参考音频**
-（同一说话人 10–20 s 中文清晰语音），或换中文更强的模型 `[待核对]`
+
+**★ 最终判定（2026-10-16 由规划侧拍板）：中文念读 = 不可行** ✗
+```
+两条依据（都实测过，不是推测）：
+  ① `language_hints=["zh"]` 单独无效 —— 仍按日语读音念（上表 zh1/zh2）；且删掉 zh 音色也改变不了这一点
+  ② 本项目**没有可用的中文参考音频**：既有参考音频 crs_1393.wav 是**日语**素材；
+     资源盘点里也没有同一说话人的 10–20 s 中文清晰语音 ⇒ **穷尽** ✗
+处置：`kurisuzh` 音色**已删** ✓（`delete_voice` HTTP 200；随后 `list_voice prefix=kurisuzh` → `total_count=0` ✓）
+      `kurisu`（ja）音色**保留** ✓（日语合成 ASR 几乎逐字全对 ✓ 有需要时可用）
+```
+
+> ★**替代方案（正解，先记录不实现）**：她本来就"**说日语、配中文字幕**"—— 这是全项目既定口径 ✓
+> ⇒ "念 AI 回答"的正解 = **念日语版**：模型把回答转成**一句日语口吻**（中文字幕照旧），用 **ja 音色** 合成 ✓
+> ⇒ 这需要后端多输出一个字段（例如 `speakJa`，一句 ≤40 字）⇒ **属于后端改动 ⇒ 需一次重建** ✗
+> ⇒ **列为二期项**（2026-10-16 不下手：当天后端已重建两次 ✗）
+> ⇒ 触发条件：**站主明确要"她真的出声念回答"** 时再排期 ✓
 
 > **"像不像她"我给不出结论** ✗ —— 我是文本模型，**没有听觉**。
-> 我只能给上面这张**客观可懂度**证据；**音色相似度请人耳盲听**（样本 `_cosy\zh1_endpoint.wav` / `zh2_no_basis.wav`）。
-> 建议对照听：`_cosy\s1_intro.wav`（日语，音色本身）↔ `_cosy\zh1_endpoint.wav`（同音色念中文）↔
+> 我只能给上面这张**客观可懂度**证据；**音色相似度请人耳盲听**。
+> 建议对照听：`_cosy\s1_intro.wav`（日语，音色本身）↔ `_cosy\zh1_endpoint.wav`（同音色念中文，**已判不可行**）↔
 > `static/kurisu/voice/greet_first.m4a`（线上现有 12 句）✓
 
 ### 5.2 两条路的取舍（**站点线请选一条**）
@@ -306,21 +319,41 @@ estChars(text) 估算口径：实测平台计数 ≈ 文本字数 × 1.143（3 �
 
 ## 8. `[待核对]` 清单
 
-1. **中文回答用这个音色的效果**：**已测** ⇒ 见 §5.1b：即使 `language_hints=["zh"]`，仍被按**日语读音**念 ✗
-   ⇒ 要念中文必须换**中文参考音频**（同一说话人 10–20 s 清晰中文）或换模型；**只改 `language_hints` 无效** ✓
-1b. **"像不像她"（音色相似度）**：我**无听觉**，给不出结论 ✗ ⇒ 需人耳盲听（样本与对照见 §5.1b 末尾）
-2. **代理转 m4a 的实际端到端时延**：未实测（我没有代理环境）✗ —— 上表是**估算**
+**已结清（不再是待核对）**
+```
+① 中文念读可行性 → **判不可行** ✗（§5.1b：zh 提示无效 + 无中文参考音频）｜处置：删 kurisuzh、留 ja ✓
+② ffmpeg 依赖选型 → **选 A（apt 官方包）** ✓（§9.3）｜部署本身仍**暂不部署** ✗
+③ 额度是否跨天归零 → **不归零** ✓（依据：站主控制台"10,000/10,000 剩余 · 过期 2026/12/21"= 总量额度）（§9.5）
+④ `kurisuzh` 音色是否保留 → **已删** ✓（`delete_voice` 200；`list_voice prefix=kurisuzh` → total_count=0）
+```
+
+**仍待核对**
+1. **"像不像她"（音色相似度）**：我**无听觉**，给不出结论 ✗ ⇒ 需人耳盲听（样本与对照见 §5.1b 末尾）
+2. **代理转 m4a 的实际端到端时延与码率**：未实测（我没有代理环境）✗ —— §9.4 的尺寸是**估算**
 3. **签名 OSS 短链的精确有效期**：只知 `expires_at` 是 Unix 秒，未测到期边界 ✗
-4. **429 限流（RPM 180）的真实响应体**：未触发（本次只发了 ~10 次请求）✗
+4. **429 限流（RPM 180）的真实响应体**：未触发（本次只发了 ~12 次请求）✗
 5. **`sample_rate` 非 24000 时的实际输出采样率**：`12345` 返回 200，但未核产出的 WAV 采样率 ✗
 6. **单次合成文本长度上限**：未测（本次最长 36 字）✗ —— 长回答建议**按句切分**多次合成
 7. **成本口径**：本文按 1.5 元/万字符线性估算；未核"最小计费单位/取整规则" ✗
-8. **代理转 m4a 的实测**：**未做**（按父指示"给出方案草案即可，不急着上线"✗）⇒ §9 里所有转码尺寸是**估算**
-9. **`kurisuzh` 音色是否值得保留**：念中文表现差（§5.1b）⇒ 若无中文参考音频，建议**不必留**（平台侧可删除）
+8. **`speakJa`（替代方案的日语字段）的生成质量**：未测（属二期后端改动）✗
 
 ---
 
-## 9. 形态 B 实施草案（**只出方案，不部署** ✗；落点由父/站点线定）
+## 9. 形态 B 实施草案（**只出方案，暂不部署** ✗；落点由父/站点线定）
+
+> ### ★ 部署状态：**暂不部署** ✗（2026-10-16 规划侧拍板）
+> ```
+> 触发条件：**站主明确要"她真的出声念回答"** 时才排期 ✓
+> 前置：① 先报规划侧（我这边今天不部署、不动服务器 ✗）② 站主点头后才派运维/站点线执行
+> 已定：**若做 ⇒ ffmpeg 走 A（apt 官方包）** ✓ —— 理由：来源可信、可 apt 审计升级，
+>       比静态包（来源非 Ubuntu 官方 ✗ 供应链面更大）稳 ✓；`+100MB` 依赖可接受 ✓
+>       ★「纯 Python 编 AAC」**已排除且经确认** ✗ 别再试 ✓
+> 但：**nginx 反代（§9.6）属于"须先报站主"的动作** ✗ —— 即便将来做，也要先报 ✓
+> ```
+> ### ★ 前置的另一条（若走替代方案）
+> 若采 §5.1b 的**替代方案（念日语版 + 中文字幕）**，则"念回答"用的是 **ja 音色** ⇒
+> 仍需 §9 这个代理（key 不进前端 + 记账 + 转 m4a + 降级），只是 `voice` 固定为 ja ✓
+> 另需后端多输出 `speakJa` 字段 ⇒ **属后端改动、需一次重建** ⇒ **二期项** ✗
 
 ### 9.1 落点与环境实测（**srv2，2026-10-16 实测**）
 
@@ -389,15 +422,15 @@ Content-Type: application/json
 ③ 音频 URL 用**同源短链**（代理内存/临时文件，TTL 60 s，一次性删），不转发签名 OSS 短链 ✗
 ```
 
-### 9.3 ffmpeg 依赖（**必须站主拍板**）
+### 9.3 ffmpeg 依赖（**已定案：走 A（apt 官方包）** ✓）
 
-`srv2` 现状 **完全没有任何转码器**（§9.1 实测）⇒ 转 m4a 有两条路：
+`srv2` 现状 **完全没有任何转码器**（§9.1 实测）⇒ 转 m4a 曾有三条路，**2026-10-16 规划侧已拍板选 A** ✓：
 
-| 方案 | 具体 | 优点 | 风险/代价 |
-|---|---|---|---|
-| **A（推荐）** | apt 装系统包 `ffmpeg 7:4.4.2`（Ubuntu jammy universe，腾讯云源 ✓） | 来源可信、可 `apt` 审计与升级、`libavcodec` 带 native AAC 编码器 ⇒ `-c:a aac` 可用 ✓ | 约 +100 MB 依赖；**改服务器软件环境 ⇒ 须站主批** ✗ |
-| B | 静态单文件（johnvansickle `ffmpeg-release-amd64-static` 或 BtbN builds 的 linux64）⇒ 解到 `/opt/secagent/tools/ffmpeg/` | 不污染系统包管理 | **需外网下载 + 校验 SHA256**；来源非 Ubuntu 官方 ⇒ 供应链面更大；本机（Windows）已有 BtbN 便携版经验 ✓ |
-| C | 不转码，回吐 **wav** | 零新依赖 ✓ | 150–290 KB/句 ✗ 体积目标（≤100 KB）达不到；HTMLAudio 播 24k PCM WAV 通常可以，但流量痛 ✗ |
+| 方案 | 具体 | 优点 | 风险/代价 | 结论 |
+|---|---|---|---|---|
+| **A** | apt 装系统包 `ffmpeg 7:4.4.2`（Ubuntu jammy universe，腾讯云源 ✓） | 来源可信、可 `apt` 审计与升级、`libavcodec` 带 native AAC 编码器 ⇒ `-c:a aac` 可用 ✓ | 约 +100 MB 依赖（**已确认可接受** ✓）；改服务器软件环境 ⇒ 部署时须先报规划侧 ✗ | ★**选定** ✓ |
+| B | 静态单文件（johnvansickle `ffmpeg-release-amd64-static` 或 BtbN builds 的 linux64）⇒ 解到 `/opt/secagent/tools/ffmpeg/` | 不污染系统包管理 | 需外网下载 + 校验 SHA256；来源非 Ubuntu 官方 ⇒ **供应链面更大** ✗ | 落选 ✗ |
+| C | 不转码，回吐 **wav** | 零新依赖 ✓ | 150–290 KB/句 ✗ 体积目标（≤100 KB）达不到 | 落选 ✗ |
 
 **建议**：A（或 B，若站主不希望动 apt）。**无论 A/B，都必须先 `ffprobe` 自检**（能解出音频头）再上线 ✓
 **纯 Python 编 AAC 不可行** ✗（无库、无编码器；`audioop` 只能算/重采样 PCM）—— 不浪费时间试
@@ -423,8 +456,11 @@ ffmpeg -v error -y -i in.wav -ac 1 -ar 24000 -c:a aac -b:a 32k -movflags +fastst
        口径：**只在 HTTP 200 且上游返回 usage.characters 时累加** ✓（实测失败调用无 usage ⇒ 不计费 ✓）
        估算（发之前预判）：ceil(len(text) * 1.20)（实测平台计数 ≈ 字数×1.143）
 音频   临时目录 /run/secagent-voice-proxy/（RuntimeDirectory，重启即清 ✓），音频 TTL 60 s 由代理自清 ✓
-跨天   按本地日期归零（与站主口径「免费额度到 2026-12-21」不冲突；额度是**总量**不是每日 ⇒ 跨天**不**归零 ✗
-       除非站主另有美元/日额度口径 —— 这点请站点线确认 `[待核对]`）
+额度归零口径  ★**已定案：不按天归零** ✓（**不**归零）
+       依据：站主控制台"免费额度"页截图 —— **10,000 / 10,000 剩余 · 过期时间 2026/12/21**
+             ⇒ 这是**总量额度 + 固定过期日**，**不是每日额度** ⇒ 计数器**只增不减**，跨天**不**归零 ✓
+       ⇒ 即 `usedChars` 一直累计到 2026-12-21；软阈值 80%（8,000 字符）一旦越过，
+         代理**永久**返回 `degraded`（除非运维手工重置或站主扩容）✓
 ```
 
 ### 9.6 暴露方式（**需改 nginx 配置 ⇒ 属于"须先报站主"的动作** ✗）
@@ -453,17 +489,21 @@ ffmpeg -v error -y -i in.wav -ac 1 -ar 24000 -c:a aac -b:a 32k -movflags +fastst
 ### 9.8 部署步骤草案（**给运维/站点线，按序执行；未执行** ✗）
 
 ```
-0. 拍板：§9.3 选 A 还是 B；确认 §9.5 的额度归零口径
-1. 装 ffmpeg（A: apt-get install -y ffmpeg ／ B: 下载静态包 + sha256 校验）→ `ffprobe -version` 自检
+0. ★**前置：先报规划侧并取得站主点头**（今天**不做** ✗）；选型已定：**A（apt 官方包）** ✓；额度口径已定：**不归零** ✓
+1. 装 ffmpeg：`apt-get install -y ffmpeg`（Ubuntu jammy universe，7:4.4.2）→ `ffprobe -version` 自检
 2. 放代理脚本 /opt/secagent/scripts/voice-proxy.py（stdlib only，含 §9.2 契约）
 3. 建 /opt/secagent/.env.voice-proxy（0640 root:xksite，含 DASHSCOPE_API_KEY）—— **key 从 srv1 .env 取，不经人眼** ✓
 4. 建单元 secagent-voice-proxy.service（User=xksite / 绑 127.0.0.1:18190 / CPUQuota=50% / MemoryMax=256M）
-5. 改 nginx：加 `location ^~ /api/voice/` 反代 + limit_req → `nginx -t` → `nginx -s reload`
+5. ★改 nginx：加 `location ^~ /api/voice/` 反代 + limit_req → `nginx -t` → `nginx -s reload`
+   （**这一步属于"须先报站主"的动作** ✗ 且与站点线互斥写 nginx ⇒ 同文件单写纪律）
 6. 自检：curl 回环 127.0.0.1:18190 一次"你好"（走真实 key）→ 校验 m4a 可解、usage 落盘
 7. 外网自检：curl https://xiaokeqing.cn/api/voice/speak（**注意 CF 链路**）→ 200 + m4a
 8. 回归：主页/六页仍 200；`/api/voice/*` 非 GET/POST 405；限流生效（连打 20 次看 429）
 9. 回滚预案：停单元 + 删 nginx location + reload（同现有 killswitch 纪律）
 ```
+
+> ### ★ 本节全部为**草案**，**未执行任何一步** ✗（我未装 ffmpeg、未放脚本、未建单元、未改 nginx）
+> 触发条件与前置见本节开头的"部署状态"横幅 ✓
 
 ---
 
@@ -471,11 +511,13 @@ ffmpeg -v error -y -i in.wav -ac 1 -ar 24000 -c:a aac -b:a 32k -movflags +fastst
 
 ```
 音频样本（仓库外）
-  E:\DeepSeek1\work\_cosy\s1_intro.wav  s2_business.wav  s3_emotion.wav    （日语 3 句，音色 kurisu）
-  E:\DeepSeek1\work\_cosy\zh1_endpoint.wav  zh2_no_basis.wav               （中文 2 句，音色 kurisuzh）
+  E:\DeepSeek1\work\_cosy\s1_intro.wav  s2_business.wav  s3_emotion.wav    （日语 3 句，音色 kurisu ✓ 保留）
+  E:\DeepSeek1\work\_cosy\zh1_endpoint.wav  zh2_no_basis.wav               （中文 2 句；音色 kurisuzh **已删** ✗
+                                                                            样本留作"不可行"的证据 ✓）
 留证
   resp-s{1,2,3}*.json / resp-zh{1,2}*.json          合成响应（含 usage.characters）
-  create-voice-direct.out.json / create-voice-zh.out.json   两次复刻响应（含 voice_id）
+  create-voice-direct.out.json                       ja 音色复刻响应（含 voice_id）
+  create-voice-zh.out.json / delete-voice-zh.out.json / list-kurisuzh.out.json   zh 音色：建 → 删 → 列表复核
   asr2-zh1_endpoint.json / asr2-zh2_no_basis.json / asr2-s1_intro.json / asr2-s3_emotion.json
   envelope-verify.json  synth-result.json  zh-result.json  probe-bill.json
 ```
