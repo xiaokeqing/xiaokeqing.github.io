@@ -350,10 +350,6 @@ render();
 setTimeout(()=>{ mode = 'idle'; render(); }, 2600);
 document.getElementById('holoFold').onclick = ()=>{ document.body.classList.add('holo-min'); render(); };
 document.getElementById('holoBubble').onclick = ()=>document.body.classList.remove('holo-min');
-document.querySelectorAll('#emos b').forEach(b=>b.onclick = ()=>{
-  document.querySelectorAll('#emos b').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); emo = b.dataset.emo; mode = 'idle'; render();
-});
 
 /* ============ 页面切换 ============ */
 const views = {home:'v-home', monitor:'v-monitor', ai:'v-ai', notes:'v-notes', range:'v-range', about:'v-about'};

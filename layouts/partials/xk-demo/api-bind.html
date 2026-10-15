@@ -106,25 +106,6 @@
       (f.err && f.err.status ? ' HTTP ' + f.err.status : ' 不可达');
   }
 
-  /* ---------------------------------------------------------------- 主页 CRT 状态行 */
-  function bindCrt(parts) {
-    var el = document.getElementById('crtStatus');
-    if (!el) return;
-    var al = pick(parts, 'alerts'), au = pick(parts, 'audit'), hp = pick(parts, 'honeypot');
-    var s24 = al && al.stats24h;
-    var v24 = (s24 && s24.available !== false) ? fmt(s24.total) : null;
-    var guard = (au && au.summary) ? fmt(au.summary.blockedByGuard) : null;
-    var hpN = hp ? fmt(hp.total) : null;
-    var anyOk = parts.some(function (p) { return p.ok; });
-    var okEl = el.querySelector('.ok');
-    if (okEl) okEl.textContent = anyOk ? '● LIVE' : '● ' + NA;
-    var tn = textNodes(el);
-    if (tn.length >= 3) {
-      tn[1].nodeValue = '24h 告警 ' + (v24 || NA) + ' · 拦截 ' + (guard || NA);
-      tn[2].nodeValue = '蜜罐交互 ' + (hpN || NA) + ' · sync ' + syncAgeText();
-    }
-  }
-
   /* ---------------------------------------------------------------- 作战室各格 */
   function bindSync(parts) {
     var el = document.querySelector('.screen-hd .sync');
@@ -621,7 +602,7 @@
   function render(parts) {
     if (parts.some(function (p) { return p.ok; })) lastSync = Date.now();
     lastParts = parts;
-    if (SSR === 'home') bindCrt(parts);
+    /* ★Q-2（2026-10-15 站主）：主页 CRT 那块 SEC-LAB 状态卡已删 ⇒ 这里的 bindCrt 一并摘掉 */
     if (SSR === 'monitor') bindOps(parts);
   }
   /* 服务端"冷缓存"时会返回一版"这次没数据"的降级响应（app.js 里记录的同一个现象：
@@ -660,8 +641,8 @@
         }).catch(function () { render(parts); return parts; });
     });
   }
-  /* CRT 那一行里的 "sync Ns" 要自己往上走（不额外发请求，只用上次成功同步的时间） */
-  if (SSR === 'home') setInterval(function () { if (lastParts) bindCrt(lastParts); }, 5000);
+  /* ★Q-2：CRT 那一行的 "sync Ns" 靠 bindCrt 往上走 —— 那一行随状态卡一起删了，
+     这个 5s 定时器也一并摘掉（主页不再有这块 DOM，留着就是空转）。 */
   if (JOBS.length) {
     load();
     setInterval(load, REFRESH);

@@ -300,7 +300,7 @@ NAVPILL_CSS = (
 #   主页 CSS/JS 与生成器同源：DOCK_CSS 里追加 T31_CSS，home_script 里注入 T31_JS，
 #   并把"opening 播完 → 起推拉"抽成 xkTransStart()（自然路径行为逐字不变，跳过路径共用它）。
 #   三拍时序：#1 通电闪烁（xkPowerOn）→ #2 助手大脸（opening 特写）→ #3 导航栏落入（本段）。
-T31_CSS = '  /* ★T31 开场六阶段（站主 2026-10-15 精确规格）——\n     ① 首屏只有桌面壁纸（其余图由 JS 在 ①→② 之间才插入 ⇒ 首个请求只能是 desk.webp）\n     ② 底噪 + 一条极细扫描线 = 加载信号（不是转圈 ✗）\n     ③ CRT 黑屏闪烁 2~4 次（80~140ms，随机，不规律 ✗ 不做正弦）\n     ④ 大脸（opening 特写）以 2~3 次闪断出现（60~100ms 硬切 + 1~3px 行同步位移）\n     ⑤ 闪烁停止的那一帧：过冲白光 → 稳定，**同一帧**导航栏淡入上移（0.35s）\n     ⑥ 正式动画（opening → idle；沿用 L1 推拉，推拉起点 = 闪烁结束）\n     状态机在 <html data-xk-boot="0..5">，可查 window.__xkBoot = {phase,t0,marks,log} */\n  .crtboot{position:absolute;inset:0;z-index:6;background:#000;pointer-events:none}\n  .crtboot.noise{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.055) 0 1px,transparent 1px 3px)}\n  .crtboot.noise::after{content:"";position:absolute;left:0;right:0;top:46%;height:2px;\n    background:rgba(140,220,240,.20);animation:bootscan 1.1s linear infinite}\n  @keyframes bootscan{0%{top:12%}100%{top:88%}}\n  .crtboot.flash{background:#EAF7FF}\n  /* 第三拍：导航栏入场（闪烁期间必须不可见 ✗ —— 由标记上的 dock--wait 保证，不靠 JS 时序）*/\n  .dock.dock--wait{opacity:0;transform:translateX(-6px)}\n  .dock.dock--wait.dock--in{opacity:1;transform:none;animation:none;\n    transition:opacity .35s ease-out,transform .35s cubic-bezier(.2,.8,.3,1)}\n  .dock.dock--wait:not(.dock--in){animation:dockSafety .35s ease-out 5000ms forwards}\n  @keyframes dockSafety{to{opacity:1;transform:none}}\n  @media (prefers-reduced-motion:reduce){\n    .crtboot,.crtboot.noise::after{display:none;animation:none}\n    .dock.dock--wait{opacity:1;transform:none;animation:none}\n  }\n'
+T31_CSS = '  /* ★T31 开场六阶段（站主 2026-10-15 精确规格）——\n     ① 首屏只有桌面壁纸（其余图由 JS 在 ①→② 之间才插入 ⇒ 首个请求只能是 desk.webp）\n     ② 底噪 + 一条极细扫描线 = 加载信号（不是转圈 ✗）\n     ③ CRT 黑屏闪烁 2~4 次（80~140ms，随机，不规律 ✗ 不做正弦）\n     ④ 大脸（opening 特写）以 2~3 次闪断出现（60~100ms 硬切 + 1~3px 行同步位移）\n     ⑤ 闪烁停止的那一帧：过冲白光 → 稳定，**同一帧**导航栏淡入上移（0.35s）\n     ⑥ 正式动画（opening → idle；沿用 L1 推拉，推拉起点 = 闪烁结束）\n     状态机在 <html data-xk-boot="0..5">，可查 window.__xkBoot = {phase,t0,marks,log} */\n  .crtboot{position:absolute;inset:0;z-index:6;background:#000;pointer-events:none}\n  .crtboot.noise{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.055) 0 1px,transparent 1px 3px)}\n  .crtboot.noise::after{content:"";position:absolute;left:0;right:0;top:46%;height:2px;\n    background:rgba(140,220,240,.20);animation:bootscan 1.1s linear infinite}\n  @keyframes bootscan{0%{top:12%}100%{top:88%}}\n  .crtboot.flash{background:#EAF7FF}\n  /* 第三拍：导航栏入场（闪烁期间必须不可见 ✗ —— 由标记上的 dock--wait 保证，不靠 JS 时序）*/\n  .dock.dock--wait{opacity:0;transform:translateX(-6px)}\n  .dock.dock--wait.dock--in{opacity:1;transform:none;animation:none;\n    transition:opacity .35s ease-out,transform .35s cubic-bezier(.2,.8,.3,1)}\n  .dock.dock--wait:not(.dock--in){animation:dockSafety .35s ease-out 1500ms forwards}\n  @keyframes dockSafety{to{opacity:1;transform:none}}\n  @media (prefers-reduced-motion:reduce){\n    .crtboot,.crtboot.noise::after{display:none;animation:none}\n    .dock.dock--wait{opacity:1;transform:none;animation:none}\n  }\n  /* ★批次1（2026-10-15 站主决定）：三张背景层 .glow/.backplate/.plate **留在标记里**（与 T7 完全一致），\n     "T=0 只见壁纸"改用**可见性门控**实现 —— 不再把这三张图从标记里删掉。\n     phase 0 三层不可见 · phase 1 露 glow · phase 4 起三层全部可见 ⇒ 终态与 T7 逐像素一致 ✓\n     （删层那条路已被站主否掉：实测后果就是"房间全黑 / 背景像没了" ✗）。*/\n  html[data-xk-boot="0"] .glow,\n  html[data-xk-boot="0"] .backplate,\n  html[data-xk-boot="0"] .plate{opacity:0 !important}\n  html[data-xk-boot="1"] .backplate,\n  html[data-xk-boot="1"] .plate,\n  html[data-xk-boot="2"] .backplate,\n  html[data-xk-boot="2"] .plate,\n  html[data-xk-boot="3"] .backplate,\n  html[data-xk-boot="3"] .plate{opacity:0 !important}\n'
 T31_JS = '\n/* ================= ★T31 开场六阶段（站主 2026-10-15 逐帧规格） =================\n   phase 0 壁纸        ：veil 撤下；CRT 仍是黑屏、导航栏隐藏（全部由 CSS/标记保证，无 JS 也成立）\n   phase 1 预载        ：首帧之后才插入 glow/backplate/plate 等图；CRT 底噪 = 加载信号\n   phase 2 黑屏闪烁    ：2~4 次，间隔 80~140ms 随机（亮度/扫描线抖动，不是正弦）\n   phase 3 大脸闪断    ：**等 opening 图真的就绪**才开始；2~3 次 60~100ms 硬切 + 1~3px 位移\n   phase 4 稳定+导航   ：**由"闪烁结束"这一事件触发**（不是猜时间的 setTimeout）\n   phase 5 正式动画    ：opening 继续播 → L1 既有推拉 → idle（推拉起点对齐到闪烁结束）\n   跳过：任意 pointerdown/keydown/wheel/touchstart ⇒ 撤闪烁层 + 导航栏立刻出现 + 直接进推拉\n   RM  ：直接最终稳定态（壁纸 + 稳定画面 + 导航栏），②③④ 的闪烁一律不做\n   验收钩子：window.__xkBoot.{phase,marks,log} ｜ #dock[data-xk-dock-in|data-xk-dock-at] */\nconst XK_BOOT = { phase: 0, t0: performance.now(), rm: RM, marks: {}, log: [], timers: [],\n                  skipped: false, revealed: false };\nwindow.__xkBoot = XK_BOOT;\nconst XK_BOOT_ON = !RM;   /* 新开场生效 ⇒ 关掉旧的"通电四拍"，两种闪烁不叠加 */\nfunction xkBootSet(p, why){\n  if(p <= XK_BOOT.phase) return;\n  XK_BOOT.phase = p;\n  XK_BOOT.marks[p] = Math.round(performance.now() - XK_BOOT.t0);\n  document.documentElement.setAttribute(\'data-xk-boot\', String(p));\n  if(why) XK_BOOT.log.push(p + \':\' + why);\n}\nfunction xkBootTimer(ms, fn){\n  const id = setTimeout(function(){ if(!XK_BOOT.skipped) fn(); }, ms);\n  XK_BOOT.timers.push(id);\n  return id;\n}\nfunction xkBootRnd(a, b){ return a + Math.random() * (b - a); }\nfunction xkBootBlink(hide){\n  const boot = document.getElementById(\'crtBoot\');\n  if(boot) boot.style.display = hide ? \'none\' : \'block\';\n}\nfunction xkBootPreload(){\n  /* ①→② 之间才请回来（首屏只算壁纸那一张）——元素位置/类名与原来逐字一致，只改"什么时候插入" */\n  const stage = document.getElementById(\'stage\'), clip = document.getElementById(\'crtClip\');\n  const canvas = document.getElementById(\'charCanvas\');\n  function mk(cls, src, parent, before){\n    const el = document.createElement(\'img\');\n    el.className = cls; el.alt = \'\'; el.setAttribute(\'aria-hidden\', \'true\'); el.src = src;\n    if(parent) parent.insertBefore(el, before || null);\n    return el;\n  }\n  try{\n    if(stage) mk(\'glow\', \'/kurisu/scene/amadeus_ambient_high_blend.webp\', stage, null);\n    if(clip) mk(\'backplate\', \'/images/crt/lab.webp\', clip, canvas || clip.firstChild);\n    if(clip) mk(\'plate\', \'/kurisu/scene/subtitle_frame_big.webp\', clip, clip.querySelector(\'.scan\'));\n  }catch(e){ XK_BOOT.log.push(\'preload:\' + e.message); }\n}\nfunction xkBootBlackFlicker(){\n  const boot = document.getElementById(\'crtBoot\');\n  const n = 2 + Math.floor(Math.random() * 3);          /* 2~4 次 */\n  (function step(i){\n    if(i >= n){ xkBootWaitFace(); return; }\n    const black = i % 2 === 0;\n    if(boot){\n      boot.classList.toggle(\'noise\', black);\n      boot.style.background = black ? \'#000\' : \'#0A0E12\';   /* 亮度跳一下（不规律，不是正弦）*/\n    }\n    xkBootTimer(xkBootRnd(80, 140), function(){ step(i + 1); });\n  })(0);\n}\nfunction xkBootWaitFace(){\n  /* ③ → ④：\n     必须先有"大脸"那一帧可画，闪断才有东西可露 ⇒ 等图真的就绪（不靠猜时间 ✗）；\n     断网/慢网：停在壁纸 + 保留加载信号，并给人读的说明（导航栏照样给，别把人关在黑屏里）。 */\n  const t0 = performance.now();\n  (function wait(){\n    const im = cache[CLIPS.opening.src] || cache[CLIPS.opening.bootSrc];\n    const ready = !!(im && im.complete && im.naturalWidth);\n    if(!ready && (performance.now() - t0) < 3000){ xkBootTimer(60, wait); return; }\n    if(!ready){\n      const st = document.getElementById(\'crtStatus\');\n      if(st){ st.hidden = false; st.innerHTML = \'SEC-LAB · <span class="ok">● 画面读不到</span><br>网络或素材未到位 · 导航仍可用\'; }\n      xkBootReveal(\'no-face\');\n      return;\n    }\n    xkBootFaceFlicker();\n  })();\n}\nfunction xkBootFaceFlicker(){\n  xkBootSet(3, \'face\');\n  const clip = document.getElementById(\'crtClip\');\n  const n = 2 + Math.floor(Math.random() * 2);          /* 2~3 次闪断 */\n  (function step(i){\n    if(i >= n){ xkBootReveal(\'flicker-end\'); return; }   /* ★导航栏＝闪烁结束事件触发 */\n    xkBootBlink(i % 2 === 0);                           /* 硬切，不是淡入 ✗ */\n    if(clip) clip.style.transform = \'translateX(\' + (Math.random() * 6 - 3).toFixed(1) + \'px)\';\n    xkBootTimer(xkBootRnd(60, 100), function(){ step(i + 1); });\n  })(0);\n}\nfunction xkBootReveal(why){\n  if(XK_BOOT.revealed) return;\n  XK_BOOT.revealed = true;\n  const boot = document.getElementById(\'crtBoot\');\n  const clip = document.getElementById(\'crtClip\');\n  if(clip) clip.style.transform = \'\';\n  if(boot && !RM){                                       /* 过冲白光 → 稳定 */\n    boot.classList.remove(\'noise\');\n    boot.style.background = \'\';\n    boot.classList.add(\'flash\'); boot.style.display = \'block\';\n    xkBootTimer(120, function(){\n      boot.style.display = \'none\'; boot.classList.remove(\'flash\');\n    });\n  } else { xkBootBlink(true); }\n  xkDockIn(why);                                          /* ★同一帧：导航栏出现 */\n  xkBootSet(4, \'stable\');\n  xkBootSet(5, \'play\');\n}\nfunction xkBootStart(){\n  if(RM){ xkBootBlink(true); xkBootSet(4, \'rm\'); xkBootSet(5, \'rm\'); xkDockIn(\'rm\'); return; }\n  xkBootTimer(150, function(){ xkBootPreload(); xkBootSet(1, \'preload\'); xkBootSet(2, \'black\'); xkBootBlackFlicker(); });\n}\nfunction xkBootSkip(){\n  if(!started || XK_BOOT.revealed) return;\n  XK_BOOT.skipped = true;\n  XK_BOOT.timers.forEach(function(id){ clearTimeout(id); });\n  xkBootReveal(\'skip\');\n  xkTransStart();                       /* 跳过 = 直接进正式动画（推拉起点与"闪烁结束"同一语义）*/\n}\nconst XK_T31_EV = [\'pointerdown\', \'keydown\', \'wheel\', \'touchstart\'];\nfunction xkT31Off(){ XK_T31_EV.forEach(function(ev){ removeEventListener(ev, xkBootSkip); }); }\nXK_T31_EV.forEach(function(ev){ addEventListener(ev, function(){ xkT31Off(); xkBootSkip(); }, {passive:true}); });\nlet dockShown = false;\nfunction xkDockIn(why){\n  if(dockShown) return;\n  const d = document.getElementById(\'dock\');\n  if(!d) return;\n  dockShown = true;\n  d.classList.add(\'dock--in\');\n  d.setAttribute(\'data-xk-dock-in\', why || \'auto\');\n  d.setAttribute(\'data-xk-dock-at\', String(Math.round(performance.now() - XK_BOOT.t0)));\n}\nfunction xkTransStart(t){\n  /* ★T31：把"opening 播完 → 等 idle 图就绪 → 起推拉"抽成一处，供"自然播完"与"跳过"共用。\n     自然路径传 rAF 的 t，TRANS 取值与抽之前逐字等价（行为零变化）。 */\n  if(cur !== \'opening\' || TRANS) return;\n  fi = CLIPS.opening.frames - 1;\n  const idleIm = xkClipIm(\'idle\').im;\n  const btIdle = img(CLIPS.idle.bootSrc);\n  if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener(\'load\', ()=>{ if(cur === \'opening\' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n  if(idleIm.complete && idleIm.naturalWidth){ TRANS = (t === undefined ? performance.now() : t); }\n  else {\n    idleIm.addEventListener(\'load\', ()=>{ if(cur === \'opening\' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n    idleIm.addEventListener(\'error\', ()=>{ if(cur === \'opening\' && !TRANS) TRANS = performance.now(); }, {once:true});\n  }\n}\n'
 T31_JS_ANCHOR = "const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;\n"
 T31_TRANS_OLD = "          else if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */\n            fi = c.frames - 1;\n            const idleR = xkClipIm('idle');\n            const idleIm = idleR.im;\n            const btIdle = img(CLIPS.idle.bootSrc);\n            if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }\n            else {\n              idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n              idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});\n            }\n          }"
@@ -2642,10 +2642,23 @@ home_script = sub1(home_script, T31_TRANS_OLD, T31_TRANS_NEW, 'T31: opening 末�
 home_script = sub1(home_script, T31_START_OLD, T31_START_NEW, 'T31: 启动处起六阶段')
 home_script = sub1(home_script, T31_DRAW_OLD, T31_DRAW_NEW, 'T31: xkDrawTrans 同源取帧')
 
-# 首屏只留壁纸：三张非壁纸图从标记里拿掉（改由 xkBootPreload() 在 phase① 之后插入）
-home_body = sub1(home_body, T31_GLOW_OLD, T31_GLOW_NEW, 'T31: .glow 改成 phase① 插入')
-home_body = sub1(home_body, T31_BACKPLATE_OLD, '', 'T31: .backplate 改成 phase① 插入')
-home_body = sub1(home_body, T31_PLATE_OLD, '', 'T31: .plate 改成 phase① 插入')
+# ★批次1（2026-10-15 站主决定）：三张非壁纸图 **不再从标记里拿掉** ✗
+#   —— `.glow/.backplate/.plate` 就留在标记里（与 T7 逐字一致），"T=0 只见壁纸"由 T31_CSS 的
+#      `html[data-xk-boot="…"]` 可见性门控实现。同时必须**禁掉 xkBootPreload 的插入**，
+#      否则同一个 class 会在页面上出现两份（第一份静态、第二份 JS 插入）。
+home_script, _n = re.subn(
+    r"\nfunction xkBootPreload\(\)\{\n.*?\n\}\n",
+    "\nfunction xkBootPreload(){\n"
+    "  /* ★批次1（2026-10-15 站主）：三张背景层已经在标记里（与 T7 一致）⇒ 这里不再 createElement 插入，\n"
+    "     只标记\"预载阶段已到\"；开场靠 CSS 的 data-xk-boot 可见性门控逐层显示。*/\n"
+    "  document.documentElement.setAttribute('data-xk-boot-ready', '1');\n"
+    "}\n",
+    home_script, count=1, flags=re.S)
+if _n != 1:
+    raise SystemExit('批次1: xkBootPreload 匹配 %d 次（期望 1）' % _n)
+for _cls in ('glow', 'backplate', 'plate'):
+    if len(re.findall(r'class="%s"' % _cls, home_body)) != 1:
+        raise SystemExit('批次1: 标记里的 .%s 不是恰好 1 个' % _cls)
 home_body = sub1(home_body, T31_CRTBOOT_ANCHOR, T31_CRTBOOT_NEW, 'T31: 插入 .crtboot 覆盖层')
 
 # =====================================================================================
@@ -2665,6 +2678,74 @@ if _pg_n != 1:
 _pg_left = [k for k in ('PG_DEMO', 'runPg(', "'pgBtn'", "'pgInput'", "'.pgrun'", 'pgResult') if k in shell_scripts[0]]
 if _pg_left:
     raise SystemExit('T27: 靶场演示脚本还残留 %s' % ','.join(_pg_left))
+
+# =====================================================================================
+# ★Q-2（2026-10-15 站主两条意见 · 规划侧转达 · 窗口 Q 落地）
+#   ① "左上角 CRT 屏内一排彩色圆点（主题/配色切换器）"：
+#      那是 **T8 给"手工宿主情绪触发"加的表情圆点条** `.xk-emo-bar`（xkmBuild 造点 + xkmReveal 显示
+#      + document 上的 `[data-emo]` click 委托）。**情绪能力保留**（语音 → XK_VOICE_EMO →
+#      XK_SM_JS.host('emotion') 那条路一字不动，T14 的 LLM 决策也从这条路进来），只删**控件**。
+#   ② "屏内右侧 SEC-LAB · 读不到 数据卡"：demo 主页自带的 `#crtStatus`
+#      （24h 告警 / 拦截 / 蜜罐交互 / sync）。**只从主页删**整块（含 CSS 与 showHud 里那一行），
+#      /alerts/ 上的同类信息不动。
+#   ③ 同时把五个内容页 HOLO 面板里 demo 自带的那排情绪点（`.emos` / `#emos`）也收掉：
+#      它和①是**两个**东西（主页 demo 里根本没有 emos），但都是"一排彩色圆点外观控件"，
+#      站主口径是"所有页面都不要这种控件"。删除的是控件本身（标记 + CSS + 点击绑定），
+#      情绪状态机与语音联动不动（emotion 仍由语音/宿主驱动）。
+#   删完逐个断言：这些 class/id 在主页产物里必须 0 命中。
+# =====================================================================================
+def _q2_drop(hay, pat, what, repl=''):
+    global _Q2_N
+    out, n = re.subn(pat, repl, hay, count=1, flags=re.S)
+    if n != 1:
+        raise SystemExit('Q-2: %s 匹配 %d 次（期望 1）' % (what, n))
+    return out
+
+# ① 主页表情圆点条（T8 加的控件）
+home_script = _q2_drop(home_script, r"\nfunction xkmBuild\(\)\{.*?\n\}\nfunction xkmReveal\(\)\{.*?\n\}\n",
+                       '主页 .xk-emo-bar 构造/显示函数', '\n')
+home_script = _q2_drop(home_script, r"\nxkmBuild\(\);\n", '主页 xkmBuild() 调用', '\n')
+home_script = _q2_drop(home_script,
+                       r"\n/\* [^\n]*点表情点[^\n]*\*/\ndocument\.addEventListener\('click', function\(ev\)\{\n.*?\}, true\);\n",
+                       '主页表情点 click 委托', '\n')
+home_script = _q2_drop(home_script, r"\n[ \t]*if\(typeof xkmReveal === 'function'\) xkmReveal\(\);[^\n]*",
+                       'showHud 里的 xkmReveal() 调用')
+# 圆点条没了 ⇒ "高亮当前情绪那一个点"的 xkmMark 也成了纯死码，连函数带唯一调用点一起删
+home_script = _q2_drop(home_script, r"\nfunction xkmMark\(name\)\{.*?\n\}\n", '主页 xkmMark() 定义', '\n')
+home_script = _q2_drop(home_script, r"; xkmMark\(name\);", '主页 xkmSetEmotion 里的 xkmMark() 调用', ';')
+
+# ② 主页 SEC-LAB 状态卡（demo 自带）—— CSS / 标记 / 三处脚本引用
+home_style = _q2_drop(home_style, r"\n[ \t]*\.crt-status\{[^}]*\}\n[ \t]*\.crt-status \.ok\{[^}]*\}",
+                      '主页 .crt-status CSS')
+home_body = _q2_drop(home_body, r"\n[ \t]*<div class=\"crt-status\" id=\"crtStatus\" hidden>.*?\n[ \t]*</div>",
+                     '主页 #crtStatus 标记')
+home_script = _q2_drop(home_script, r"\n[ \t]*const st = document\.getElementById\('crtStatus'\);\n[ \t]*if\(st\)\{[^\n]*\}\n",
+                       '主页降级分支里的 #crtStatus 写入', '\n')
+home_script = _q2_drop(home_script, r"\n[ \t]*document\.getElementById\('crtStatus'\)\.hidden = false;",
+                       '主页 showHud 里的 #crtStatus 显示')
+home_script = _q2_drop(home_script,
+                       r"document\.querySelector\('\.crt-status'\) \|\| document\.getElementById\('crtStatus'\) \|\| ",
+                       '主页状态行观察器的 .crt-status 选择器')
+
+# ③ 五个内容页 HOLO 面板里的 demo 表情点（控件）
+chrome = _q2_drop(chrome, r"\n[ \t]*<div class=\"emos\" id=\"emos\"[^>]*>.*?\n[ \t]*</div>",
+                  '内容页 .emos 标记')
+for _rule in (r"\.holo-ft \.emos\{", r"\.holo-ft \.emos b\{", r"\.holo-ft \.emos b\.on\{"):
+    shell_style = _q2_drop(shell_style, r"\n[ \t]*" + _rule + r"[^}]*\}", '内容页 CSS ' + _rule)
+shell_scripts[0] = _q2_drop(shell_scripts[0],
+                            r"\ndocument\.querySelectorAll\('#emos b'\)\.forEach\(b=>b\.onclick = \(\)=>\{\n.*?\n\}\);\n",
+                            '内容页 #emos 点击绑定', '\n')
+
+# 断言：主页产物里不许再出现这些 class/id（站主要求 grep 命中 = 0）
+_home_all = home_style + home_body + home_script
+_q2_left = [k for k in ('crt-status', 'crtStatus', 'SEC-LAB', 'xk-emo-bar', 'xkEmoBar', 'xkmBuild', 'xkmReveal')
+            if k in _home_all]
+if _q2_left:
+    raise SystemExit('Q-2: 主页残留 %s' % ','.join(_q2_left))
+_cont_all = chrome + shell_style + shell_scripts[0]
+_q2_left2 = [k for k in ('class="emos"', "id=\"emos\"", '#emos', '.holo-ft .emos') if k in _cont_all]
+if _q2_left2:
+    raise SystemExit('Q-2: 内容页残留 %s' % ','.join(_q2_left2))
 
 # --------------------------------------------------------------------- 落盘
 print('生成：')

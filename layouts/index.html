@@ -64,10 +64,6 @@
   @keyframes breathe{0%,100%{opacity:.42}50%{opacity:.58}}
 
   /* 屏内 DOM：状态行 / 字幕条（垫板 + 浅字，对比度实测口径 ≥4.5:1） */
-  .crt-status{position:absolute;top:4.5%;right:5%;z-index:5;text-align:right;
-    font:11px/1.7 var(--mono);color:#DFF3FF;background:rgba(8,14,20,.55);
-    padding:4px 9px;border-radius:6px;letter-spacing:.04em;white-space:nowrap}
-  .crt-status .ok{color:#3ECF8E}
   .crt-sub{position:absolute;left:16%;right:16%;bottom:5.2%;z-index:5;text-align:center;
     font:13.5px/1.5 var(--sans);color:#E8F4FF;text-shadow:0 1px 2px rgba(0,0,0,.8);
     min-height:2.6em;display:flex;align-items:center;justify-content:center}
@@ -105,12 +101,25 @@
   .dock.dock--wait{opacity:0;transform:translateX(-6px)}
   .dock.dock--wait.dock--in{opacity:1;transform:none;animation:none;
     transition:opacity .35s ease-out,transform .35s cubic-bezier(.2,.8,.3,1)}
-  .dock.dock--wait:not(.dock--in){animation:dockSafety .35s ease-out 5000ms forwards}
+  .dock.dock--wait:not(.dock--in){animation:dockSafety .35s ease-out 1500ms forwards}
   @keyframes dockSafety{to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){
     .crtboot,.crtboot.noise::after{display:none;animation:none}
     .dock.dock--wait{opacity:1;transform:none;animation:none}
   }
+  /* ★批次1（2026-10-15 站主决定）：三张背景层 .glow/.backplate/.plate **留在标记里**（与 T7 完全一致），
+     "T=0 只见壁纸"改用**可见性门控**实现 —— 不再把这三张图从标记里删掉。
+     phase 0 三层不可见 · phase 1 露 glow · phase 4 起三层全部可见 ⇒ 终态与 T7 逐像素一致 ✓
+     （删层那条路已被站主否掉：实测后果就是"房间全黑 / 背景像没了" ✗）。*/
+  html[data-xk-boot="0"] .glow,
+  html[data-xk-boot="0"] .backplate,
+  html[data-xk-boot="0"] .plate{opacity:0 !important}
+  html[data-xk-boot="1"] .backplate,
+  html[data-xk-boot="1"] .plate,
+  html[data-xk-boot="2"] .backplate,
+  html[data-xk-boot="2"] .plate,
+  html[data-xk-boot="3"] .backplate,
+  html[data-xk-boot="3"] .plate{opacity:0 !important}
 
   @media (max-width:980px){
     .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}
@@ -135,20 +144,17 @@
 
 <div class="stage" id="stage">
   <img class="desk" src="/images/crt/desk.webp" alt="" aria-hidden="true">
-  {{/* ★T31：.glow / .backplate / .plate 由 xkBootPreload() 在首帧之后才插入 ⇒ 首屏只请求壁纸那一张 */}}
+  <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true">
 
   <div class="crt" id="crt">
     <div class="crt-clip" id="crtClip">
+      <img class="backplate" src="/images/crt/lab.webp" alt="" aria-hidden="true">
       <canvas class="charcanvas" id="charCanvas" aria-hidden="true"></canvas>
+      <img class="plate" src="/kurisu/scene/subtitle_frame_big.webp" alt="" aria-hidden="true">
       <div class="scan"></div>
       <div class="vig"></div>
     </div>
     <div class="crtboot noise" id="crtBoot" aria-hidden="true"></div>
-    <div class="crt-status" id="crtStatus" hidden>
-      SEC-LAB · <span class="ok">● —</span><br>
-      24h 告警 — · 拦截 —<br>
-      蜜罐交互 — · sync —   /* ★T5.4：静态占位，真值由 api-bind 从 /api/public/* 写 */
-    </div>
     <div class="crt-sub" id="crtSub" hidden><span id="subText"></span><span class="cursor"></span></div>
   </div>
 </div>
@@ -204,20 +210,9 @@ function xkBootBlink(hide){
   if(boot) boot.style.display = hide ? 'none' : 'block';
 }
 function xkBootPreload(){
-  /* ①→② 之间才请回来（首屏只算壁纸那一张）——元素位置/类名与原来逐字一致，只改"什么时候插入" */
-  const stage = document.getElementById('stage'), clip = document.getElementById('crtClip');
-  const canvas = document.getElementById('charCanvas');
-  function mk(cls, src, parent, before){
-    const el = document.createElement('img');
-    el.className = cls; el.alt = ''; el.setAttribute('aria-hidden', 'true'); el.src = src;
-    if(parent) parent.insertBefore(el, before || null);
-    return el;
-  }
-  try{
-    if(stage) mk('glow', '/kurisu/scene/amadeus_ambient_high_blend.webp', stage, null);
-    if(clip) mk('backplate', '/images/crt/lab.webp', clip, canvas || clip.firstChild);
-    if(clip) mk('plate', '/kurisu/scene/subtitle_frame_big.webp', clip, clip.querySelector('.scan'));
-  }catch(e){ XK_BOOT.log.push('preload:' + e.message); }
+  /* ★批次1（2026-10-15 站主）：三张背景层已经在标记里（与 T7 一致）⇒ 这里不再 createElement 插入，
+     只标记"预载阶段已到"；开场靠 CSS 的 data-xk-boot 可见性门控逐层显示。*/
+  document.documentElement.setAttribute('data-xk-boot-ready', '1');
 }
 function xkBootBlackFlicker(){
   const boot = document.getElementById('crtBoot');
@@ -242,8 +237,6 @@ function xkBootWaitFace(){
     const ready = !!(im && im.complete && im.naturalWidth);
     if(!ready && (performance.now() - t0) < 3000){ xkBootTimer(60, wait); return; }
     if(!ready){
-      const st = document.getElementById('crtStatus');
-      if(st){ st.hidden = false; st.innerHTML = 'SEC-LAB · <span class="ok">● 画面读不到</span><br>网络或素材未到位 · 导航仍可用'; }
       xkBootReveal('no-face');
       return;
     }
@@ -1209,7 +1202,7 @@ var XK_SM_JS = (function(){
     var seen = null, last = -1e9;
     setInterval(function(){
       if(!V.on || V.fixed) return;                     /* 固定步进（验收）模式下，宿主事件只由脚本注入 */
-      var el = document.querySelector('.crt-status') || document.getElementById('crtStatus') || document.querySelector('[data-xk-kurisu-status]');
+      var el = document.querySelector('[data-xk-kurisu-status]');
       var txt = el ? String(el.textContent || '').replace(/\s+/g, ' ').trim() : '';
       if(!txt || txt === seen) return;
       seen = txt;
@@ -1322,11 +1315,9 @@ let hudShown = false;
 function showHud(){
   if(hudShown) return; hudShown = true;
   if(typeof XK_SM_JS !== 'undefined') XK_SM_JS.takeOver();   /* ★T8：开场落定后交给状态机 */
-  document.getElementById('crtStatus').hidden = false;
   /* ★2026-10-15：语音正在说的时候字幕归语音那条，别被这句默认文案顶掉 */
   const _v = window.__xkVoice;
   if(!(_v && _v.audio && !_v.audio.paused)) typeSub('你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。');
-  if(typeof xkmReveal === 'function') xkmReveal();   /* ★2026-10-15：表情条随 HUD 一起出现 */
 }
 let typeTimer = null;
 function typeSub(text){
@@ -1535,14 +1526,6 @@ function xkmTick(t){
   }
   xkmPaint();
 }
-function xkmMark(name){
-  var bar = document.getElementById('xkEmoBar');
-  if(!bar) return;
-  var bs = bar.querySelectorAll('b'), i;
-  for(i = 0; i < bs.length; i++){
-    bs[i].className = (bs[i].getAttribute('data-emo') === name) ? 'on' : '';
-  }
-}
 function xkmPlayClip(name, next){        /* 真正上屏：取图集 → 接管画布；next = 这一段播完接哪一段 */
   xkmLoad().then(function(clips){
     if(!clips){ XKM.err.push('无 clipsMedium'); return; }
@@ -1566,7 +1549,7 @@ function xkmSetEmotion(name){
   var item = null, i;
   for(i = 0; i < XK_EMO_LIST.length; i++){ if(XK_EMO_LIST[i][0] === name){ item = XK_EMO_LIST[i]; } }
   if(!item) return false;
-  XKM.emo = name; window.__xkEmo.emotion = name; xkmMark(name);
+  XKM.emo = name; window.__xkEmo.emotion = name;
   /* ★2026-10-15：表情可能在开场还没播完时接管画布（语音自动切表情就会）——
      这时 loop() 不再走 opening 那一支，showHud() 就永远不会被调 → 状态行 / 字幕 / 表情条
      一个都不出现。所以这里补一次"开场被打断也要出 HUD"。 */
@@ -1581,40 +1564,6 @@ function xkmSetEmotion(name){
   if(item[4]){ xkmPlayClip(item[4], item[3] || null); }
   else { xkmPlayClip(item[3], null); }
   return true;
-}
-function xkmBuild(){
-  var crtEl = document.getElementById('crt');
-  if(!crtEl || document.getElementById('xkEmoBar')) return;
-  var st = document.createElement('style');
-  st.textContent =
-    '.xk-emo-bar{position:absolute;top:5%;left:5%;display:flex;gap:6px;z-index:6;' +
-    'opacity:0;transition:opacity .5s}' +
-    '.xk-emo-bar.on{opacity:1}' +
-    '.xk-emo-bar b{width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.45);' +
-    'cursor:pointer;opacity:.45;transition:opacity .2s,box-shadow .2s}' +
-    '.xk-emo-bar b:hover{opacity:.85}' +
-    '.xk-emo-bar b.on{opacity:1;box-shadow:0 0 0 2px rgba(57,208,216,.55)}';
-  document.head.appendChild(st);
-  var bar = document.createElement('div');
-  bar.className = 'xk-emo-bar'; bar.id = 'xkEmoBar';
-  bar.setAttribute('role', 'group');
-  bar.setAttribute('aria-label', '桐莉栖表情');
-  bar.innerHTML = XK_EMO_LIST.map(function(e){
-    return '<b data-emo="' + e[0] + '" style="background:' + e[2] + '" title="' + e[1] + '"></b>';
-  }).join('');
-  crtEl.appendChild(bar);
-  bar.addEventListener('click', function(ev){
-    var b = (ev.target && ev.target.closest) ? ev.target.closest('b[data-emo]') : null;
-    if(!b) return;
-    var nm = b.getAttribute('data-emo');
-    XKM.manual = (nm !== 'normal');
-    xkmSetEmotion(nm);
-  });
-  xkmMark(XKM.emo);
-}
-function xkmReveal(){
-  var bar = document.getElementById('xkEmoBar');
-  if(bar) bar.classList.add('on');
 }
 /* 语音联动（HOME_VOICE 的两处 handler 会调这两个）：手选表情时不抢画布 */
 function xkVoiceAnim(id){
@@ -1635,14 +1584,6 @@ function xkVoiceAnim(id){
 function xkVoiceEnd(){
   if(!XK_ACT && typeof play === 'function') play('idle');
 }
-xkmBuild();
-/* ★T8：点表情点 = 宿主触发 emotion（映射到 prob=0 的情绪入口剪辑）*/
-document.addEventListener('click', function(ev){
-  var b = ev.target && ev.target.closest ? ev.target.closest('[data-emo]') : null;
-  if(!b) return;
-  if(window.__xkSM && window.__xkSM.on && typeof XK_SM_JS !== 'undefined')
-    XK_SM_JS.host('emotion', {emotion:b.getAttribute('data-emo')});
-}, true);
 /* manifest 在首屏门禁 1.5s 窗口之后才取 —— 表情资产绝不进首屏字节 */
 if(!RM){ setTimeout(xkmLoad, 2000); }
 
