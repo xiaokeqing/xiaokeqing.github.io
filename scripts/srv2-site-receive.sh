@@ -162,15 +162,28 @@ fi
 INDEX_SZ=$(cat /tmp/.site-receive-index-size)
 ok "index.html=$INDEX_SZ B；文件数 $(find "$STAGING" -type f | wc -l)"
 
-log "4/7 幂等检查（与线上同 hash 就跳过）"
+# ★窗口 Q 修（2026-10-16）：幂等检查原来**只比 index.html 的 sha256**。
+#   后果：任何"只改资源（JS/CSS/图集）"的发布都会被判成"内容无变化"而**静默跳过切换**，
+#   而且暂存目录被 rm -rf 掉，连手动切换的机会都没有（实测：动画二批只改了
+#   static/js/kurisu-player.js + 新增 static/kurisu/eye/，index.html 逐字节未变 ⇒ RESULT=no-change，
+#   新播放器根本没上线，但脚本退出码 0、上层视为发布成功）。
+#   改成**整树内容哈希**：文件名（相对路径）+ 内容一起哈希。
+tree_hash() { # $1 = 产物根目录
+  ( cd "$1" 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+}
+
+log "4/7 幂等检查（与线上**整树内容**同 hash 才跳过）"
 CUR=$(current_target)
 if [[ -n $CUR && -f $CUR/index.html ]]; then
-  if [[ "$(sha256sum "$CUR/index.html" | cut -d' ' -f1)" == "$(sha256sum "$STAGING/index.html" | cut -d' ' -f1)" ]]; then
-    warn "index.html 与线上完全一致 → 内容无变化，跳过切换（部署视为成功）"
+  CUR_HASH=$(tree_hash "$CUR" || true)
+  NEW_HASH=$(tree_hash "$STAGING" || true)
+  if [[ -n $CUR_HASH && "$CUR_HASH" == "$NEW_HASH" ]]; then
+    warn "整树内容与线上完全一致（${CUR_HASH:0:16}…）→ 跳过切换（部署视为成功）"
     rm -rf -- "$STAGING"
     echo "RESULT=no-change"
     exit 0
   fi
+  ok "整树内容与线上不同（线上 ${CUR_HASH:0:16}… / 本次 ${NEW_HASH:0:16}…）⇒ 继续切换"
 fi
 
 log "5/7 就位为新版本 $NEW + 原子切换"
