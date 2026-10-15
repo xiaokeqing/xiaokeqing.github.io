@@ -293,6 +293,13 @@
     .dock .brand{display:none}
     .main{padding:70px 12px 90px 12px;margin:0}
     .stats{grid-template-columns:repeat(2,1fr)}.grid23,.grid32,.grid22{grid-template-columns:1fr}
+    /* ★窗口 Q（2026-10-16）移动端硬伤 1 修复：`.ai-grid` 是 `1fr 292px`，`1fr` 那列受子内容
+       min-content 约束不能收缩 ⇒ 网格最小宽 ≈608px ⇒ 窄屏下整个**布局视口**被撑到 620px，
+       而 `#dock{position:fixed;bottom:10px}` 相对布局视口定位 ⇒ used top = 1343-47-10 = 1286，
+       落在 812 高的**视觉视口之外**：手机上导航"看不到也点不到"（实测 375/390/414 三视口都复现）。
+       口径：判溢出一律用 visualViewport.width，不许用 innerWidth（窄屏下后者会被内容撑宽）。 */
+    .ai-grid{grid-template-columns:1fr;gap:14px}
+    .ai-grid>*{min-width:0}
     .holo{left:10px;right:10px;top:52px;width:auto}
     .holo-bubble{left:auto;right:12px;top:52px}
     .chat{height:calc(100vh - 240px)}
