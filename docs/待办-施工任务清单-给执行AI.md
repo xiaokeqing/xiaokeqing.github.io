@@ -423,8 +423,8 @@ E4 文档漂移：`docs/交接-六页整份搬demo-20261014.md:114` 仍写旧断
 
 | 编号 | 任务 | 归谁 | 工时 | 要点 |
 |---|---|---|---|---|
-| **T20** | **处置成果「封禁榜」上屏** | C 落地 + G 出 UI | 2~3h | 放 `/alerts/`「数据统计」pane 的 grid32（现有故事线卡旁）；数据 `GET /api/public/audit`：`summary{blockTotal,blockActive,blockedByGuard,executedActions}` + `blocks[]{ip,durationMinutes,source,actor,createdAt,unblocked,unblockMode,auditId}`；**IP 必须打码**（`A.B.***.***`）；空态区分"读不到（HTTP xxx）"与"本窗口没有封禁记录"✓；复用 `.mod/.row/.chip` 不新增 CSS ✓；**验收含"渲染后 DOM 里 IPv4 正则 0 命中"** ✓ |
-| **T21** | **攻击故事线上屏** | C + G | 5~6h | `/alerts/` 现有故事线卡原地升级；候选池 `/stories` + **点击才懒加载** `GET /api/public/story?src=` 画时间线（`events[]` 升序、每段 ≤40、`truncated` 如实标注 ✓）；必须区分"该来源这段没数据"与"尚未接入（coverage.status=NOT_WIRED）"✗；脱敏要覆盖 `srcIp` **与 `events[].summary` 内嵌 IP** ✗；**验收含"点击前 0 个 /story 请求"** ✓ |
+| **T20** | **处置成果「封禁榜」上屏** | C 落地 + G 出 UI | 2~3h | 放 `/alerts/`「数据统计」pane 的 grid32（现有故事线卡旁）；数据 `GET /api/public/audit`：`summary{blockTotal,blockActive,blockedByGuard,executedActions}` + `blocks[]{ip,durationMinutes,source,actor,createdAt,unblocked,unblockMode,auditId}`；**IP 按站主规则掩码**：保留前三段、最后一段换 `x`（`172.16.18.12` → `172.16.18.x`）✓；空态区分"读不到（HTTP xxx）"与"本窗口没有封禁记录"✓；复用 `.mod/.row/.chip` 不新增 CSS ✓；**验收含"DOM 里不出现完整四段 IP"** ✓（掩码函数只改显示、**不改用于分组的原始值** ✗ 否则同 /24 攻击者会被合并 ✓） |
+| **T21** | **攻击故事线上屏** | C + G | 5~6h | `/alerts/` 现有故事线卡原地升级；候选池 `/stories` + **点击才懒加载** `GET /api/public/story?src=` 画时间线（`events[]` 升序、每段 ≤40、`truncated` 如实标注 ✓）；必须区分"该来源这段没数据"与"尚未接入（coverage.status=NOT_WIRED）"✗；脱敏要覆盖 `srcIp` **与 `events[].summary` 内嵌 IP**（同一规则：最后一段 → `x` ✓）；**验收含"点击前 0 个 /story 请求"** ✓ |
 | **T22** | **知识库栏目** | C + G | 2~3h | 放 `/ai/`（该页现在 0 轮询、最干净 ✓）；`GET /api/public/kb?q=`（独立 20 次/分钟上限、有 embedding 成本 ✗）⇒ 固定话题按钮 + Enter 才发 + 会话内缓存 + **不轮询** ✓；显著写明后端白名单口径（`allowed-roots=security-docs,data/kb-approved`、`allowed-source-types=community`）；结果最多 3 条；空态写"公开知识库没有命中「X」的内容（不是取不到，是确实没有）"✓；**验收含"静置 60s 0 请求"** ✓ |
 
 ### 问题单（按优先级，需要拍板或修 ✗）
@@ -433,7 +433,9 @@ U1【红线冲突·最重要】后端**早就有全局 IP 掩码开关**（`app.
    但**生产默认 = false ⇒ 展示真实 IP** ✗；实测所有响应 ipDisclosure.masked=false、stories[].srcIp 是完整公网 IP。
    ① 后端翻开关（≈1 个环境变量，所有端点含存量页面一次性合规 ✓ 但属后端线操作 + 要重启应用）
    ② 不翻、只在前端脱敏（存量页面继续打完整 IP ✗ ）——**我的建议是 ①**，需站主一句话 ✓
-R1【存量违规】老页面已经在渲染完整攻击者 IP ✗：`layouts/partials/xk-demo/api-bind.html` L223（路径图节点）·
+R1【站主已裁定：**不算违规、保留** ✓】
+   掩码规则改为"只掩最后一段"⇒ 存量三处（api-bind.html L223/L276/L335）**无需改动即可接受** ✓；
+   若要统一成掩码显示，顺手加一个 `maskIp()` 即可（非必须 ✗）。原描述：老页面渲染攻击者 IP：`layouts/partials/xk-demo/api-bind.html` L223（路径图节点）·
    L276（/stories tag）· L335（攻击流终端行）⇒ 必须与 T20/T21 同批改，或明确豁免 ✓
 U5【信息泄漏】`/api/health` **无鉴权且 200** ✗，泄漏 embeddedGitCommit/提交信息/mock 开关/documentVectors ⇒ 建议收口 ✓
 R3【文案与实现不符】靶场页卡头写 `POST /api/playground/check`，实现却是 `PG_DEMO` 本地假结果 ✗ ⇒ 要么接真接口、要么改文案 ✓
@@ -448,4 +450,14 @@ U4【后端线提醒】`/opt/secagent/src` 源码树**落后于运行 jar** ✗�
 ② "短期 branch 只把可验证证据交回主线" 对应"处置留痕 auditId/actions 才算证据，模型自述不算"✓（与 T20 展示 auditId 同源）
 ③ "边界必须靠对照实验定义" 正对应 R3 这类"文案承诺了接口、实现却是本地演示"的坑 ✓
 旁证：maintainer 自述"做 Kurisu 角色与执行解耦" ⇒ **角色层不承担执行**是被上游认可的架构 ✓（与我们的铁律同源 ✓）
+```
+### U1 决议（站主 2026-10-15 拍板）
+
+```
+**不翻转后端全局 mask-ips 开关** ✓（保留真实攻击源地址）
+**展示规则**：攻击者 IP **保留前三段、最后一段换成 x** ✓（例 `172.16.18.12` → `172.16.18.x`）
+  · 实现：一个 `maskIp(s)` 只作用于**显示**；用于分组的原始值**不许改** ✗（否则同 /24 攻击者会被合并 ✗）
+  · 已对 `***`/`x` 之类的字符串做幂等处理（避免二次掩码 ✗）
+**唯一真红线**：访客自己的 IP、我们内部/内网地址 —— **一律不上页面** ✗（与攻击源地址区分对待 ✓）
+⇒ 影响：T20/T21/T22 与 Kimi 设计稿全部按此改；**R1 存量三处不算违规、无需改动** ✓（能顺手统一更好，非必须 ✗）
 ```
