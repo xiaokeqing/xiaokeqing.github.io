@@ -927,3 +927,14 @@ T14 白名单来源：`_asset-review\\03-character-kurisu\\clip-transition-table
   · 唯一缺素材处：**默认 idle 没有闭眼帧** ✗（与 idle1 不同姿态 ✓）⇒ 等 E-mote 出片或另做仿射 ✓
   · 等 UI 批落地后重出补丁再应用 ✓（预计应用后 1.5~2.5h 可验收 ✓）
 ```
+### 里程碑通知规矩（2026-10-15 立，站主要求）
+
+```
+站主要求：每当完成一个重要任务或取得重大突破，用飞书通知他 ✓
+可用命令（已验证 ✓ 必须 HIGH + --force ✗ 因为夜间静默 22:00-07:00 只放行 HIGH/CRITICAL ✓）：
+  ssh secagent-srv1 'bash /opt/secagent/scripts/notify.sh HIGH "[DSH] 标题" "正文" --force'
+  含特殊字符时用 base64 封装：ssh secagent-srv1 "bash /opt/secagent/scripts/notify-dsh.sh HIGH <b64标题> <b64正文> --force"
+发送成功判据：notify.log 里出现 "已发送 HTTP 200" + 中继日志 feishu=sent ✓
+注意：手工 notify.sh **不写** notify-audit.jsonl（那是应用侧账本 ✓）；不许为了造记录去调 watchdog 端点 ✗
+需要通知的节点（固定清单 ✓）：站点每批发布上线 · 声音库里程碑 · 动画功能上线 · 重大发现或回滚 ✓
+```
