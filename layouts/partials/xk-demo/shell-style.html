@@ -291,7 +291,19 @@
   @media (max-width:980px){
     .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}
     .dock .brand{display:none}
+    /* ★窗口 Q（2026-10-16）移动端硬伤 3 修复：`.dock button` 原值 padding 7px + font 13px，
+       实测触控目标最小边 **33px**（375/390/414 三视口 × 四页全部一模一样），低于站主定的最小 44px。
+       只抬高/加宽**命中区**（min-height/min-width:44px + 垂直内边距 13px ⇒ 实测 44~46px），
+       **配色 / 字号 / 边框色一个字节都不动**。 */
+    .dock{gap:4px;padding:6px}
+    .dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
     .main{padding:70px 12px 90px 12px;margin:0}
+    /* ★硬伤 2 追加（实测发现的真因）：`.main` 的 padding-top 被 base 里那条特异性更高的
+       `body:not(.is-home) .main{padding-top:14px}` 压成 14px ⇒ 上面这条里的 70px **从未生效**，
+       正文从 y=14 就开始（这就是"浮层一压就压到字"的第二个原因）。
+       收起后的头像泡是 60px 高、放在 top:6px ⇒ 需要一条 ≥66px 的顶部带。
+       口径：内容页（也就是有头像泡的那两页）明确留 76px；/ai/ 与主页没有泡，维持原样。 */
+    body:not(.is-home):not(.is-ai) .main{padding-top:76px}
     .stats{grid-template-columns:repeat(2,1fr)}.grid23,.grid32,.grid22{grid-template-columns:1fr}
     /* ★窗口 Q（2026-10-16）移动端硬伤 1 修复：`.ai-grid` 是 `1fr 292px`，`1fr` 那列受子内容
        min-content 约束不能收缩 ⇒ 网格最小宽 ≈608px ⇒ 窄屏下整个**布局视口**被撑到 620px，
@@ -300,8 +312,14 @@
        口径：判溢出一律用 visualViewport.width，不许用 innerWidth（窄屏下后者会被内容撑宽）。 */
     .ai-grid{grid-template-columns:1fr;gap:14px}
     .ai-grid>*{min-width:0}
-    .holo{left:10px;right:10px;top:52px;width:auto}
-    .holo-bubble{left:auto;right:12px;top:52px}
+    /* ★窗口 Q（2026-10-16）移动端硬伤 2 修复：`.holo` 是 `position:fixed` 浮层，窄屏被拉成
+       左10/右10 的整幅面板（实测 355×219 / 370×219 / 394×219，与 `.main` 重叠 355×219 等），
+       正好压住正文顶部 ⇒ 手机上看不到正文。
+       口径（站主给的选项）：**窄屏收起** —— 复用既有 `.holo-min`（隐藏面板、显示头像泡），
+       由脚本在 ≤980px 启动时挂上；展开态也限高+内部滚动，不盖住底部 dock。
+       头像泡挪进 `.main` 的 70px 上内边距带里（top:6px + 60px 高 = 底 66px < 70px）⇒ 不压正文。 */
+    .holo{left:10px;right:10px;top:52px;width:auto;max-height:calc(100vh - 150px);overflow:auto}
+    .holo-bubble{left:auto;right:8px;top:6px}
     .chat{height:calc(100vh - 240px)}
   }
 
@@ -377,4 +395,11 @@
     text-align:left;white-space:nowrap;text-decoration:none}
   .dock a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}
   .dock a:hover{color:var(--txt)}
+  /* ★窗口 Q（2026-10-16）移动端硬伤 3（配对修复）：demo 那份 980px 加高规则写在
+     `.dock button` 上，生产页的元素是 <a> ⇒ 选择器不命中，必须给同一组值。
+     值 = demo 的 `.dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}`。 */
+  @media (max-width:980px){
+    .dock{gap:4px;padding:6px}
+    .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
+  }
 </style>

@@ -348,6 +348,13 @@ function speak(html){
 }
 render();
 setTimeout(()=>{ mode = 'idle'; render(); }, 2600);
+/* ★窗口 Q（2026-10-16）移动端硬伤 2（配对修复）：窄屏**默认收起**为头像泡 ——
+   .holo 是 fixed 浮层，窄屏整幅（355/370/394 × 219）压住正文；收起后与 .main 零重叠。
+   断点与 CSS 的 @media (max-width:980px) 同口径；越过断点回桌面语义（把 class 摘掉，
+   否则"手机上收起了"这个状态会漂到桌面，桌面就看不到面板了）。≥981px 行为与改前逐字相同。 */
+const mqNarrow = matchMedia('(max-width:980px)');
+if (mqNarrow.matches) document.body.classList.add('holo-min');
+mqNarrow.addEventListener('change', e=>{ if(!e.matches) document.body.classList.remove('holo-min'); });
 document.getElementById('holoFold').onclick = ()=>{ document.body.classList.add('holo-min'); render(); };
 document.getElementById('holoBubble').onclick = ()=>document.body.classList.remove('holo-min');
 

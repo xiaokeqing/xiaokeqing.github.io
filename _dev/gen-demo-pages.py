@@ -182,6 +182,13 @@ DOCK_A_CSS = u'''
     text-align:left;white-space:nowrap;text-decoration:none}
   .dock a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}
   .dock a:hover{color:var(--txt)}
+  /* ★窗口 Q（2026-10-16）移动端硬伤 3（配对修复）：demo 那份 980px 加高规则写在
+     `.dock button` 上，生产页的元素是 <a> ⇒ 选择器不命中，必须给同一组值。
+     值 = demo 的 `.dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}`。 */
+  @media (max-width:980px){
+    .dock{gap:4px;padding:6px}
+    .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
+  }
 '''
 
 # 主页脚本里的路径也要改（CLIPS 表）
@@ -346,6 +353,9 @@ DOCK_CSS = (
     '  @media (max-width:980px){\n'
     '    .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}\n'
     '    .dock .brand{display:none}\n'
+    '    /* ★窗口 Q（2026-10-16）移动端硬伤 3（配对修复）：主页 dock 也是 <a>，值同 shell-style 的那一组 */\n'
+    '    .dock{gap:4px;padding:6px}\n'
+    '    .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}\n'
     '  }\n')
 ROOT_ANCHOR = ('    --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;\n'
                '    /* —— 来自 static/kurisu/manifest.json scene.*（底图 1672×941） —— */\n')

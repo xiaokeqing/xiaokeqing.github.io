@@ -124,6 +124,9 @@
   @media (max-width:980px){
     .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}
     .dock .brand{display:none}
+    /* ★窗口 Q（2026-10-16）移动端硬伤 3（配对修复）：主页 dock 也是 <a>，值同 shell-style 的那一组 */
+    .dock{gap:4px;padding:6px}
+    .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
   }
 
   /* 开场遮罩（避免底图未载时露白） */
