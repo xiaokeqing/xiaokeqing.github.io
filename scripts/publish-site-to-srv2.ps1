@@ -26,7 +26,17 @@
                         避免把别人未完成的改版一起发出去。
     -CheckUrl <url>     发布后在站主这台机器上再验一次公网 URL（期望 200 且字节数与本地一致）
     -KeepRemoteTarball  保留远端 /tmp 里的 tar 包（默认删掉）
-    -DryRun             只构建+校验+打包，不上传
+    -DryRun             只构建+校验+打包+**整树哈希判定**，不上传
+
+  ★2026-10-16（窗口 Q）整树内容哈希：**发送侧不再只比 index.html**。
+    真事：接收侧 2026-10-16 已改成"与线上**整树内容**同 hash 才跳过切换"（f47c678），
+    但发送侧的核对仍只盯 index.html ⇒ 只换资源（JS/图集/语音分片）的发布会显示"index.html 与线上一致"，
+    看不出资源到底上没上，也没法在上传前判"内容不同"。
+    现在发送侧用**与 scripts/srv2-site-receive.sh 的 tree_hash() 逐字节同口径**的算法：
+      LC_ALL=C find . -type f | LC_ALL=C sort | xargs sha256sum | sha256sum
+    （LC_ALL=C = 路径字节序；不钉住的话线上是 en_US.UTF-8，GNU sort 走 glibc collation，
+      Windows 侧不可能复现同一个哈希。）判定结果在上传前就打印，DryRun 下也能验。
+    切换后还会**重算线上整树哈希**与本地比，作为发布的最终核对（index.html 那次核对保留，用于查截断）。
 #>
 [CmdletBinding()]
 param(
@@ -63,6 +73,73 @@ function Invoke-Checked {
     $ErrorActionPreference = 'Continue'
     try { & $Exe @CmdArgs } finally { $ErrorActionPreference = $eap }
     if ($LASTEXITCODE -ne 0) { Die "$What 失败（$Exe 退出码 $LASTEXITCODE）" }
+}
+
+# ---------- 整树内容哈希（与 srv2-site-receive.sh 的 tree_hash() 逐字节同口径）----------
+function Get-TreeFiles {
+    # 口径：LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum
+    #   ⇒ 每个文件一行 "<sha256>  ./<相对路径>"（两个空格、LF 结尾），路径按 **UTF-8 字节序**排序，
+    #     再对整段文本做一次 sha256。
+    # Windows 侧复现要点：① 相对路径统一 './a/b' 正斜杠 ② 排序不能用文化比较
+    #   （Sort-Object 默认走当前区域设置）⇒ 先把路径编成"每字节两位十六进制"的排序键，
+    #   这样纯 ASCII 十六进制串的文化序 = 字节序 ③ 行尾必须 LF（不能 CRLF）。
+    # ★已标定：本机结果与 Linux 侧 `LC_ALL=C … | sha256sum` 逐字节一致（同一个树双侧都得 8c17af0d…）。
+    param([string]$Dir)
+    $root = (Resolve-Path -LiteralPath $Dir).Path.TrimEnd('\')
+    $rows = New-Object System.Collections.ArrayList
+    $map = @{}
+    foreach ($f in (Get-ChildItem -LiteralPath $root -Recurse -File -Force)) {
+        $rel = './' + ($f.FullName.Substring($root.Length).TrimStart('\', '/') -replace '\\', '/')
+        $h = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLower()
+        $map[$rel] = $h
+        $key = -join ([Text.Encoding]::UTF8.GetBytes($rel) | ForEach-Object { $_.ToString('x2') })
+        [void]$rows.Add([pscustomobject]@{ Key = $key; Line = ($h + '  ' + $rel) })
+    }
+    $sorted = @($rows | Sort-Object -Property Key)
+    $sb = New-Object Text.StringBuilder
+    foreach ($r in $sorted) { [void]$sb.Append($r.Line).Append("`n") }
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { $hb = $sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($sb.ToString())) } finally { $sha.Dispose() }
+    return @{ Hash = (-join ($hb | ForEach-Object { $_.ToString('x2') })); Count = $sorted.Count; Files = $map }
+}
+
+function Get-RemoteTreeFiles {
+    # 只读：不需要 sudo（/opt/secagent/site 是 a+rX）。取不到就返回 $null（不当作失败）。
+    # 返回 @{ Hash = 整树哈希; Files = @{ './rel' = 'sha256' }; Count }
+    $cmdList = "cd /opt/secagent/site && LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum"
+    $cmdHash = "cd /opt/secagent/site && LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1"
+    $eap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = & ssh -o BatchMode=yes -o ConnectTimeout=15 $SshHost $cmdList 2>$null
+        $hashOut = & ssh -o BatchMode=yes -o ConnectTimeout=15 $SshHost $cmdHash 2>$null
+    } catch { return $null } finally { $ErrorActionPreference = $eap }
+    $map = @{}
+    foreach ($line in @($lines)) {
+        if ("$line" -match '^([0-9a-f]{64})  (.+)$') { $map[$Matches[2]] = $Matches[1] }
+    }
+    if ($map.Count -eq 0) { return $null }
+    $hash = (($hashOut | Out-String).Trim() -split '\s+')[0]
+    return @{ Hash = $hash; Files = $map; Count = $map.Count }
+}
+
+# 已知"每次构建都不同"的文件（整树比对时忽略，否则永远不会走「无变化」分支）：
+#   ./index.json ← layouts/index.json 模板里带 generatedAt（构建时刻），两次构建必然不同
+$TreeNondet = @('./index.json')
+
+# 逐文件差异分类（忽略 $TreeNondet）
+function Compare-TreeFiles {
+    param($Local, $Remote)
+    $changed = @(); $added = @(); $removed = @(); $nondetHit = @()
+    foreach ($k in $Local.Files.Keys) {
+        if ($Remote.Files.ContainsKey($k)) {
+            if ($Remote.Files[$k] -ne $Local.Files[$k]) {
+                if ($TreeNondet -contains $k) { $nondetHit += $k } else { $changed += $k }
+            }
+        } else { $added += $k }
+    }
+    foreach ($k in $Remote.Files.Keys) { if (-not $Local.Files.ContainsKey($k)) { $removed += $k } }
+    return @{ Changed = $changed; Added = $added; Removed = $removed; Nondet = $nondetHit }
 }
 
 # ---------- 0) 前置 ----------
@@ -135,6 +212,28 @@ $localhostHits = @(Select-String -Path (Join-Path $PublicDir '*.html') -Pattern 
 if ($localhostHits.Count -gt 0) { Warn "产物里出现 localhost（$($localhostHits.Count) 处）—— SEO canonical 可能不对" }
 else { Ok '产物里没有 localhost' }
 
+# 整树内容哈希（★2026-10-16 窗口 Q：发送侧不再只比 index.html）
+$tree = Get-TreeFiles $PublicDir
+Ok ("本地整树内容 sha256 = {0}…（{1} 个文件；口径与接收侧 tree_hash 逐字节相同：LC_ALL=C 路径字节序）" -f $tree.Hash.Substring(0,16), $tree.Count)
+$onlineTree = Get-RemoteTreeFiles
+$treeDiff = $null
+if ($onlineTree) {
+    $treeDiff = Compare-TreeFiles $tree $onlineTree
+    $realN = $treeDiff.Changed.Count + $treeDiff.Added.Count + $treeDiff.Removed.Count
+    Ok ("线上整树内容 sha256 = {0}…（{1} 个文件）" -f $onlineTree.Hash.Substring(0,16), $onlineTree.Count)
+    if ($realN -eq 0) {
+        Ok "逐文件比对：与线上**一致**（改 0 / 增 0 / 删 0）⇒ 走「无变化」：接收侧会跳过切换，部署仍算成功"
+    } else {
+        Ok ("逐文件比对：**内容不同** —— 改 {0} 个 / 增 {1} 个 / 删 {2} 个 ⇒ 走「内容不同」分支：接收侧会原子切换（只换资源、index.html 一个字节没变也照样切）" -f $treeDiff.Changed.Count, $treeDiff.Added.Count, $treeDiff.Removed.Count)
+        foreach ($k in (@($treeDiff.Changed) + @($treeDiff.Added) + @($treeDiff.Removed) | Select-Object -First 8)) { Write-Host "        · $k" -ForegroundColor DarkGray }
+    }
+    if ($treeDiff.Nondet.Count -gt 0) {
+        Ok ("另有 {0} 个文件只有构建时间戳差异、不算内容变化，已忽略：{1}" -f $treeDiff.Nondet.Count, ($treeDiff.Nondet -join ' '))
+    }
+} else {
+    Warn '取不到线上整树清单（ssh 只读探测失败）⇒ 跳过"内容不同"判定，其余流程不变'
+}
+
 # ---------- 4) 打包 ----------
 Step '4/6' "打包 → $TmpTar"
 if (Test-Path -LiteralPath $TmpTar) { Remove-Item -LiteralPath $TmpTar -Force }
@@ -143,7 +242,7 @@ $tarLen = (Get-Item -LiteralPath $TmpTar).Length
 Ok ("tar.gz = {0:N2} MB" -f ($tarLen / 1MB))
 
 if ($DryRun) {
-    Write-Host "`n[DryRun] 已构建 + 校验 + 打包，未上传。包在：$TmpTar" -ForegroundColor Yellow
+    Write-Host "`n[DryRun] 已构建 + 校验 + **整树哈希判定**（上面那两行就是上传前的判定）+ 打包，未上传。包在：$TmpTar" -ForegroundColor Yellow
     exit 0
 }
 
@@ -166,12 +265,40 @@ if ($remoteText -notmatch 'RESULT=ok' -and $remoteText -notmatch 'RESULT=no-chan
 }
 $release = ''
 if ($remoteText -match 'RELEASE=(\S+)') { $release = $Matches[1] }
+$incomingHash = ''
+if ($remoteText -match 'TREE_HASH_INCOMING=([0-9a-f]{64})') { $incomingHash = $Matches[1] }
+$onlineBeforeHash = ''
+if ($remoteText -match 'TREE_HASH_ONLINE=([0-9a-f]{64})') { $onlineBeforeHash = $Matches[1] }
+if ($incomingHash -and $onlineBeforeHash) {
+    if ($incomingHash -eq $onlineBeforeHash) { Ok "接收侧判定：整树内容与线上一致（$($incomingHash.Substring(0,16))…）⇒ 未切换" }
+    else { Ok "接收侧判定：整树内容不同（线上 $($onlineBeforeHash.Substring(0,16))… → 本次 $($incomingHash.Substring(0,16))…）" }
+}
 if ($release) {
     Ok "线上版本目录：$release"
     $remoteSha = (& ssh -o BatchMode=yes $SshHost "sudo -n sha256sum '$release/index.html' | cut -d' ' -f1") -join ''
     $remoteSha = $remoteSha.Trim()
     if ($remoteSha -ne $indexSha) { Die "远端 index.html sha256 与本地不一致（远端 $($remoteSha.Substring(0,16))… / 本地 $($indexSha.Substring(0,16))…）" }
     Ok "远端 index.html sha256 与本地一致（$($remoteSha.Substring(0,16))…）"
+    # ★整树核对（2026-10-16）：index.html 只查截断，资源有没有传全必须看整树
+    $remoteTreeNow = Get-RemoteTreeFiles
+    if ($incomingHash -and $incomingHash -ne $tree.Hash) {
+        Warn "接收侧上报的整树哈希（$($incomingHash.Substring(0,16))…）与本地发送侧口径不一致（本地 $($tree.Hash.Substring(0,16))…）—— 两侧 tree_hash 口径可能不同版本，请核对"
+    }
+    if (-not $remoteTreeNow) {
+        Warn '切换后取不到线上整树哈希 ⇒ 跳过整树核对（上面的 index.html 核对已通过）'
+    } elseif ($remoteTreeNow.Hash -ne $tree.Hash) {
+        $msg = "线上整树内容哈希与本地不一致（线上 $($remoteTreeNow.Hash.Substring(0,16))… / 本地 $($tree.Hash.Substring(0,16))…）—— 资源没传全或切换没生效（index.html 一致不能证明整树一致）"
+        if ($FromRef) {
+            Die $msg
+        } else {
+            # 没给 -FromRef 时构建用的是**当前工作区**：工作区里可能有 CRLF 陈旧副本
+            # （.gitattributes 规定 `* text=auto eol=lf`，git 提交/检出是 LF，但被 Python 文本模式重写过的
+            #  生成物在工作区里会是 CRLF），于是本地树与线上树在换行上不同 —— 这是环境问题，不是发布失败。
+            Warn "$msg（未给 -FromRef：请用 -FromRef <已提交 ref> 发布，或先 git checkout 刷新工作区换行）"
+        }
+    } else {
+        Ok "线上整树内容哈希与本地一致（$($remoteTreeNow.Hash.Substring(0,16))…，$($tree.Count) 个文件）"
+    }
 }
 
 # 公网复核（可选）

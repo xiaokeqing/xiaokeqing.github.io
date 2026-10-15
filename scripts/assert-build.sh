@@ -148,16 +148,38 @@ if [ -f "static/images/bg.jpg" ]; then
   [ "$BG_GOT" = "$BG_WANT" ] && ok "bg.jpg SHA256 与基线一致" || no "bg.jpg 被改动（红线②）：want=$BG_WANT got=$BG_GOT"
 else no "找不到 static/images/bg.jpg"; fi
 
-# ---------- ⑨ 角色资产完整性：不得有 0 字节 / 总体积封顶 ----------
+# ---------- ⑨ 角色资产完整性：不得有 0 字节 / 总体积封顶 / 分片各自封顶 ----------
 # 【2026-10-14 改】上限 60MB → 96MiB：37 个剪辑的 medium 档（48.15MB）已入库，
 # 主页最常用几段还要另发一档 hi（分辨率是 medium 的 2 倍，避免在 586px 宽的 CRT 屏里
 # 把 134px 一帧的图放大 2.8 倍发虚）。首屏预算（第 ⑩ 条）不动，仍严 ≤1.5MB。
-head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 96MiB"
+# 【2026-10-16 改】96MiB → **160MiB**（站主口径）：原声库可发布集 46.2MB
+# （dist 968 个 m4a/webm + envelope 484 个 + 3 个 bank 文件，见 docs/台词库扩容与合成交付-20261015.md）
+# 要随发布一起上，96MiB 会被顶爆。同时**给每一路分片各自的上限**，防以后某一路失控靠总量兜着：
+#   · 原声分片  static/kurisu/voice/orig*   ≤ 64MiB
+#   · 合成分片  static/kurisu/voice/synth*  ≤ 32MiB
+#   分片目录还不存在时 = 该路尚未入库 ⇒ 打印"尚未入库（跳过）"，**不判失败**。
+#   算术交代（别把两个数当互相等价）：当前角色+场景 ≈88MB，原声入库后 ≈134MB，距 160MiB 还有 ≈26MB；
+#   合成分片一旦超过 ≈26MB 会**先撞总量门禁**（这是有意的：总量是全局闸，分片上限是单路闸）。
+#   到那天按站主口径再调总量，**不许顺手把分片上限抬上去**。
+head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 160MiB、分片各自封顶（原声 64MiB / 合成 32MiB）"
 if [ -d static/kurisu ]; then
   EMPTY=$(find static/kurisu static/images/crt -type f -size 0 2>/dev/null | head -5)
   TOT=$(du -sk static/kurisu static/images/crt 2>/dev/null | awk '{s+=$1} END {print s+0}')
   [ -z "$EMPTY" ] && ok "无 0 字节资产" || { no "存在 0 字节资产（会解码失败）："; printf '%s\n' "$EMPTY" | sed 's/^/        /'; }
-if [ "$TOT" -le 98304 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 96MiB"; else no "角色+场景资产合计 $((TOT/1024))MB > 96MiB"; fi
+  if [ "$TOT" -le 163840 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 160MiB"; else no "角色+场景资产合计 $((TOT/1024))MB > 160MiB"; fi
+  # 分片各自封顶（$1=glob $2=上限KiB $3=中文名；目录不存在 = 跳过，不算失败）
+  shard_cap() {
+    local g=$1 cap=$2 name=$3 dirs s
+    # shellcheck disable=SC2086
+    dirs=$(ls -d $g 2>/dev/null || true)
+    if [ -z "$dirs" ]; then ok "$name 分片尚未入库（跳过上限检查：$g）"; return; fi
+    # shellcheck disable=SC2086
+    s=$(du -sk $dirs 2>/dev/null | awk '{s+=$1} END {print s+0}')
+    if [ "$s" -le "$cap" ]; then ok "$name 分片 $((s/1024))MB ≤ $((cap/1024))MiB（$(echo $dirs | tr '\n' ' ')）"
+    else no "$name 分片 $((s/1024))MB > $((cap/1024))MiB（$(echo $dirs | tr '\n' ' ')）—— 这一路失控了，先查产物再发"; fi
+  }
+  shard_cap 'static/kurisu/voice/orig*' 65536 '原声'
+  shard_cap 'static/kurisu/voice/synth*' 32768 '合成'
 else no "找不到 static/kurisu（角色资产缺失）"; fi
 
 # ---------- ⑩ 首屏档体积 ≤1.5MB（读 manifest 自报预算）----------

@@ -168,23 +168,37 @@ ok "index.html=$INDEX_SZ B；文件数 $(find "$STAGING" -type f | wc -l)"
 #   static/js/kurisu-player.js + 新增 static/kurisu/eye/，index.html 逐字节未变 ⇒ RESULT=no-change，
 #   新播放器根本没上线，但脚本退出码 0、上层视为发布成功）。
 #   改成**整树内容哈希**：文件名（相对路径）+ 内容一起哈希。
+#   ★2026-10-16（窗口 Q）：加 `LC_ALL=C` —— 默认 locale 是 en_US.UTF-8，GNU sort 会按 glibc
+#   collation 排序（大小写/标点权重不按字节序），这样算出来的哈希**只有同一台机器、同一套 locale
+#   才能复现**，Windows 发送侧永远算不出同一个值，发送侧就没法在上传前判"内容不同"。
+#   钉到 LC_ALL=C（find/sort/xargs 全带）后 = 路径字节序 + 逐文件 sha256 + 对整段文本再 sha256，
+#   跨平台可复现（发送侧 scripts/publish-site-to-srv2.ps1 的 Get-TreeHash 与这里逐字节同口径）。
+#   行为不变：仍然只比"整树内容是否完全一致"，只是哈希取值本身变了（不对外，无兼容问题）。
 tree_hash() { # $1 = 产物根目录
-  ( cd "$1" 2>/dev/null && find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+}
+# 供发送侧核对用：把两个哈希打成机器可读行（纯追加，不影响上面的人类可读日志）
+emit_hashes() { # $1 = 线上树哈希  $2 = 待发布树哈希
+  echo "TREE_HASH_ONLINE=${1:-}"
+  echo "TREE_HASH_INCOMING=${2:-}"
 }
 
 log "4/7 幂等检查（与线上**整树内容**同 hash 才跳过）"
 CUR=$(current_target)
+NEW_HASH=$(tree_hash "$STAGING" || true)
+CUR_HASH=""
 if [[ -n $CUR && -f $CUR/index.html ]]; then
   CUR_HASH=$(tree_hash "$CUR" || true)
-  NEW_HASH=$(tree_hash "$STAGING" || true)
   if [[ -n $CUR_HASH && "$CUR_HASH" == "$NEW_HASH" ]]; then
     warn "整树内容与线上完全一致（${CUR_HASH:0:16}…）→ 跳过切换（部署视为成功）"
+    emit_hashes "$CUR_HASH" "$NEW_HASH"
     rm -rf -- "$STAGING"
     echo "RESULT=no-change"
     exit 0
   fi
   ok "整树内容与线上不同（线上 ${CUR_HASH:0:16}… / 本次 ${NEW_HASH:0:16}…）⇒ 继续切换"
 fi
+emit_hashes "$CUR_HASH" "$NEW_HASH"
 
 log "5/7 就位为新版本 $NEW + 原子切换"
 mv "$STAGING" "$NEW"
