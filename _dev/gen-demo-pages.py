@@ -188,7 +188,9 @@ DOCK_A_CSS = u'''
 home_script = rewrite_assets(home_script)
 
 # ---- ⑮ 主页语音：把桐莉栖的 L1 预渲染语音**真接上**（真播放，不是"打字幕假装会说话"）----
-# 【2026-10-15 接手批】资产早已就绪：static/kurisu/voice/ = bank.json + 12 条 wav + 逐条包络。
+# 【2026-10-15 接手批】资产早已就绪：static/kurisu/voice/ = bank.json + 12 条语音 + 逐条包络。
+#   （T4：2026-10-15 已把这 12 条从 Windows SAPI 占位 wav 换成 GPT-SoVITS v3 日语 m4a/webm，
+#    播放器读 bank.json 的 line.audio，契约不变 ⇒ 这里一行都不用改。）
 #   但主页那段内联脚本只 typeSub() 打字幕，一个音频都不播 —— "她会说"这件事其实没实现。
 #   这里在主页脚本**末尾**接一个自足的语音模块（不引新文件、不动任何版式/标记）：
 #     · 手势前不播（浏览器 autoplay 限制）→ 只记 pending，首次 pointerdown/keydown 后补放最近一条；
@@ -200,7 +202,7 @@ HOME_VOICE = r'''
 
 /* ================= 桐莉栖语音（L1 预渲染语音库 · 真实播放） =================
    ★2026-10-15 接手批：这一段是**新接的**。原 demo 主页只会打字幕，从不播音频。
-   资产：static/kurisu/voice/bank.json（12 条 wav，逐条带 text / seconds / 包络）。
+   资产：static/kurisu/voice/bank.json（12 条日语 m4a，逐条带 text / seconds / 包络）。
    纪律：手势前不播（只记 pending）；取不到就只显示字幕，绝不假装在播；RM 不自动播。 */
 const XK_VOICE_BANK = '/kurisu/voice/bank.json';
 const XK_DEFAULT_SAY = '你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。';

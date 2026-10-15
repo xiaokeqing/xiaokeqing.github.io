@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
-"""L1 语音产物：母带（16k/16bit PCM）→ 站点用 8kHz G.711 µ-law WAV + 口型包络 JSON + bank.json
+"""【已退役 · 2026-10-15 · T4】**不要再运行本脚本**。
+
+原来的 L1 语音是 Windows SAPI（Huihui）占位音，靠本脚本从 _dev/voice-masters/*.wav
+生成 static/kurisu/voice/*.wav + 包络 + bank.json，并覆盖 manifest.json 的 voice 段。
+T4 已把这 12 句换成 GPT-SoVITS v3 日语 m4a/webm（真音色桐莉栖），产物由新管线
+`scripts/voice/`（synth.py / postprocess.py / build_bank.py）生成。
+本脚本若再跑一次，会把 bank.json 与 manifest.voice **改回 SAPI wav**，覆盖日语素材 ✗。
+保留它只是为了留档（母带切分 / 包络口径的历史实现）。新管线见 scripts/voice/README.md。
+
+---- 以下为退役前的原始说明 ----
+L1 语音产物：母带（16k/16bit PCM）→ 站点用 8kHz G.711 µ-law WAV + 口型包络 JSON + bank.json
 
 为什么**不是** µ-law：第一版发的是 8kHz G.711 µ-law（更小），但真浏览器实测
   `Audio.play()` 抛 `NotSupportedError` —— Chrome 的 WAV 解复用器不吃 µ-law（ffmpeg 里

@@ -2764,121 +2764,241 @@
  },
  "voice": {
   "bank": "kurisu/voice/bank.json",
-  "codec": "pcm_s16le",
+  "codec": "aac(m4a) + opus(webm)",
   "sampleRate": 8000,
   "hopMs": 10,
-  "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0",
-  "voiceNote": "音色是系统 TTS（Huihui），不是桐莉栖。换音色 = 换这批 wav，播放器不用改。",
-  "totalBytes": 882048,
+  "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
+  "voiceNote": "音色 = GPT-SoVITS v3 桐莉栖（本机合成）。换音色/换句子 = 换 voice/ 下的文件 + 改 bank.json，播放器不用改。",
+  "totalBytes": 716960,
   "lineCount": 12,
   "lines": [
    {
     "id": "greet_first",
-    "audio": "kurisu/voice/greet_first.wav",
+    "trigger": "greeting",
+    "audio": "kurisu/voice/greet_first.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/greet_first.m4a",
+     "webm": "kurisu/voice/greet_first.webm"
+    },
     "envelope": "kurisu/voice/greet_first.envelope.json",
     "text": "欢迎回来。屏上的数字都来自真实只读接口，取不到我就直说读不到。",
     "scene": "首访进站（开场之后的第一次问候）",
-    "seconds": 6.704,
-    "audioBytes": 107312
+    "seconds": 9.533,
+    "durationMs": 9533,
+    "audioBytes": 58873,
+    "sha256": {
+     "m4a": "7b2f11962e3db34aecc2f5db842b377658c58b7e7e9eed24b9ee661ad04bb9c6",
+     "webm": "df0f7aa7234df490e74448aa52c56661aca59136586c65dd9d8a846b82001a8d"
+    }
    },
    {
     "id": "greet_back",
-    "audio": "kurisu/voice/greet_back.wav",
+    "trigger": "greeting",
+    "audio": "kurisu/voice/greet_back.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/greet_back.m4a",
+     "webm": "kurisu/voice/greet_back.webm"
+    },
     "envelope": "kurisu/voice/greet_back.envelope.json",
     "text": "又见面了。屏上还是那套真数据，没变过口径。",
     "scene": "回访进站（localStorage 里有访问记录）",
-    "seconds": 4.989,
-    "audioBytes": 79860
+    "seconds": 4.729,
+    "durationMs": 4729,
+    "audioBytes": 29548,
+    "sha256": {
+     "m4a": "74d01d8b21253344d8943076ac8c9ac264776c1533a9df469840c2d439ea34ff",
+     "webm": "5f4cc2f34dd72b59d799ca3dc1fce0fb9ec4e181fd49eab6677ff6f1dac837d7"
+    }
    },
    {
     "id": "nav_home",
-    "audio": "kurisu/voice/nav_home.wav",
+    "trigger": "page_intro",
+    "audio": "kurisu/voice/nav_home.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/nav_home.m4a",
+     "webm": "kurisu/voice/nav_home.webm"
+    },
     "envelope": "kurisu/voice/nav_home.envelope.json",
     "text": "回到主页了。我还是待在这台显示器里。",
     "scene": "切到主页",
-    "seconds": 4.194,
-    "audioBytes": 67140
+    "seconds": 4.326,
+    "durationMs": 4326,
+    "audioBytes": 27249,
+    "sha256": {
+     "m4a": "7af21669eba88842ed700c67952104035b0f4af1823bfaa6b204acd4c212406d",
+     "webm": "3dce22a5ed76dcd98fd45b7a1d10077f0cbbd4a6bec9f25ec62dfe3a7038a63e"
+    }
    },
    {
     "id": "nav_monitor",
-    "audio": "kurisu/voice/nav_monitor.wav",
+    "trigger": "page_intro",
+    "audio": "kurisu/voice/nav_monitor.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/nav_monitor.m4a",
+     "webm": "kurisu/voice/nav_monitor.webm"
+    },
     "envelope": "kurisu/voice/nav_monitor.envelope.json",
     "text": "监测中心。这里的每一条都是真读取的告警记录。",
     "scene": "切到监测中心",
-    "seconds": 4.787,
-    "audioBytes": 76640
+    "seconds": 5.282,
+    "durationMs": 5282,
+    "audioBytes": 32865,
+    "sha256": {
+     "m4a": "f8c3086472c6b95d97a0dc7e3717d3dad7d860347f0c8d23fe34ff8508f10afb",
+     "webm": "897f0fe675b12229438b7beb94762c687638988e3c7071b50f23364eefd598ad"
+    }
    },
    {
     "id": "nav_notes",
-    "audio": "kurisu/voice/nav_notes.wav",
+    "trigger": "page_intro",
+    "audio": "kurisu/voice/nav_notes.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/nav_notes.m4a",
+     "webm": "kurisu/voice/nav_notes.webm"
+    },
     "envelope": "kurisu/voice/nav_notes.envelope.json",
     "text": "笔记都在这一页，按时间倒序排好了。",
     "scene": "切到笔记",
-    "seconds": 3.638,
-    "audioBytes": 58246
+    "seconds": 3.872,
+    "durationMs": 3872,
+    "audioBytes": 24515,
+    "sha256": {
+     "m4a": "777de9c76874a81a81a81815ad52af7603ab5783c275d962af2a362a03767203",
+     "webm": "6794b017b84be5e1c62e3ada4a6efc0f5ff614e426b5168ee1647b906d7adf4c"
+    }
    },
    {
     "id": "nav_labs",
-    "audio": "kurisu/voice/nav_labs.wav",
+    "trigger": "page_intro",
+    "audio": "kurisu/voice/nav_labs.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/nav_labs.m4a",
+     "webm": "kurisu/voice/nav_labs.webm"
+    },
     "envelope": "kurisu/voice/nav_labs.envelope.json",
     "text": "攻防靶场只做检测，不执行、不处置。",
     "scene": "切到攻防靶场",
-    "seconds": 3.932,
-    "audioBytes": 62956
+    "seconds": 3.486,
+    "durationMs": 3486,
+    "audioBytes": 22124,
+    "sha256": {
+     "m4a": "d9418cba540ce4ad3704b94e06cfe28bf212992bd864c2faaef91203204ad3ca",
+     "webm": "b23e9f7f4c1a4bc046c883a24860d2b3b132676ba32a9c57575993dec37de4b6"
+    }
    },
    {
     "id": "nav_about",
-    "audio": "kurisu/voice/nav_about.wav",
+    "trigger": "page_intro",
+    "audio": "kurisu/voice/nav_about.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/nav_about.m4a",
+     "webm": "kurisu/voice/nav_about.webm"
+    },
     "envelope": "kurisu/voice/nav_about.envelope.json",
     "text": "这一页讲的是项目本身，还有数据口径和取舍。",
     "scene": "切到关于",
-    "seconds": 4.483,
-    "audioBytes": 71770
+    "seconds": 5.138,
+    "durationMs": 5138,
+    "audioBytes": 32361,
+    "sha256": {
+     "m4a": "1abbcf99dd2dd30e44cbe3d082e530f1f2eb618943085944d496ef9bdd8e6d7b",
+     "webm": "c4c5e1dee5c65fdac7ba88046020166239aba742d682b3cebe78c59247600217"
+    }
    },
    {
     "id": "nav_ai",
-    "audio": "kurisu/voice/nav_ai.wav",
+    "trigger": "page_intro",
+    "audio": "kurisu/voice/nav_ai.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/nav_ai.m4a",
+     "webm": "kurisu/voice/nav_ai.webm"
+    },
     "envelope": "kurisu/voice/nav_ai.envelope.json",
     "text": "问答走的是真实检索链路，回答非流式返回。",
     "scene": "切到 AI 安全",
-    "seconds": 4.415,
-    "audioBytes": 70684
+    "seconds": 5.471,
+    "durationMs": 5471,
+    "audioBytes": 34237,
+    "sha256": {
+     "m4a": "564113bf9ba7421ac8aa628aecfe3b0258d83a38d73cfe9fc6320aabacf26eab",
+     "webm": "1c4c99319c2f4c8da4ac975e6bb99c409616c60c1777ec1ee889dc622fa4dbec"
+    }
    },
    {
     "id": "fallback_no_data",
-    "audio": "kurisu/voice/fallback_no_data.wav",
+    "trigger": "fallback",
+    "audio": "kurisu/voice/fallback_no_data.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/fallback_no_data.m4a",
+     "webm": "kurisu/voice/fallback_no_data.webm"
+    },
     "envelope": "kurisu/voice/fallback_no_data.envelope.json",
     "text": "这一次没读到数据。我不补数，读不到就是读不到。",
     "scene": "接口拿不到数据（状态行显示读不到）",
-    "seconds": 4.973,
-    "audioBytes": 79618
+    "seconds": 5.919,
+    "durationMs": 5919,
+    "audioBytes": 36410,
+    "sha256": {
+     "m4a": "ec801b017be60fedadaf2e0d29277e2b4e23b48118bc7ead9a68260611b66ee9",
+     "webm": "905bce73b976f6f8d4254e219f10a7a4966ffa9a574980ff78c7c78e13be9550"
+    }
    },
    {
     "id": "fallback_offline",
-    "audio": "kurisu/voice/fallback_offline.wav",
+    "trigger": "fallback",
+    "audio": "kurisu/voice/fallback_offline.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/fallback_offline.m4a",
+     "webm": "kurisu/voice/fallback_offline.webm"
+    },
     "envelope": "kurisu/voice/fallback_offline.envelope.json",
     "text": "请求没送达。我不编答案，等接口恢复再说。",
     "scene": "请求没送达 / 超时",
-    "seconds": 5.064,
-    "audioBytes": 81068
+    "seconds": 6.281,
+    "durationMs": 6281,
+    "audioBytes": 38998,
+    "sha256": {
+     "m4a": "837a8b34485a94caf2971963ec111cfb170375671426a4d721dd5be51e21744a",
+     "webm": "2185f82653e324c2a522d3747884591ffc2b2a452e1c7018007dfae5ff57d760"
+    }
    },
    {
     "id": "fallback_throttled",
-    "audio": "kurisu/voice/fallback_throttled.wav",
+    "trigger": "fallback",
+    "audio": "kurisu/voice/fallback_throttled.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/fallback_throttled.m4a",
+     "webm": "kurisu/voice/fallback_throttled.webm"
+    },
     "envelope": "kurisu/voice/fallback_throttled.envelope.json",
     "text": "接口在限流，稍等一下再问。",
     "scene": "被限流（HTTP 429）",
-    "seconds": 3.192,
-    "audioBytes": 51122
+    "seconds": 3.92,
+    "durationMs": 3920,
+    "audioBytes": 24854,
+    "sha256": {
+     "m4a": "3d272bad406f0074a87d29cd4e0692d70c132e6f6e80c291fa0777d8211b1d07",
+     "webm": "95cc605d523618394ddbcdd8313ead29d91c46316f80debc312eed556d315664"
+    }
    },
    {
     "id": "tab_return",
-    "audio": "kurisu/voice/tab_return.wav",
+    "trigger": "idle_banter",
+    "audio": "kurisu/voice/tab_return.m4a",
+    "audioSources": {
+     "m4a": "kurisu/voice/tab_return.m4a",
+     "webm": "kurisu/voice/tab_return.webm"
+    },
     "envelope": "kurisu/voice/tab_return.envelope.json",
     "text": "你回来了。刚才我没说话，只是在这儿等着。",
     "scene": "切回标签页（隐藏超过 60 秒）",
-    "seconds": 4.724,
-    "audioBytes": 75632
+    "seconds": 4.393,
+    "durationMs": 4393,
+    "audioBytes": 27536,
+    "sha256": {
+     "m4a": "d08169d1c9c8a7931af7516f877e898f326d173777cafc6a3b35e794a765a040",
+     "webm": "672a770174867452b7259767f13b0d24050992b563b91837e4306a17b831d0aa"
+    }
    }
   ]
  }

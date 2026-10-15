@@ -23,6 +23,11 @@
 *.woff2 binary
 *.ttf binary
 
+# 音频（L1 语音库：m4a/webm/wav）—— 与图片同理，绝不能被换行转换碰
+*.m4a binary
+*.webm binary
+*.wav binary
+
 # 生成物在 diff 中折叠
 *.min.js -diff
 *.min.css -diff
