@@ -524,6 +524,27 @@ VL = [
 for _old, _new in VL:
     views_out = sub1(views_out, _old, _new, 'views: ' + _old[:40])
 
+# ---- ②b 主页自己的 CRT 状态行假数字（VL 只清五页 views_out 的副本；主页这份在 home_body）----
+home_body = sub1(home_body,
+                 u"      SEC-LAB · <span class=\"ok\">● LIVE</span><br>\n"
+                 u"      24h 告警 1,284 · 拦截 96<br>\n"
+                 u"      蜜罐交互 37 · sync 12s",
+                 u"      SEC-LAB · <span class=\"ok\">● —</span><br>\n"
+                 u"      24h 告警 — · 拦截 —<br>\n"
+                 u"      蜜罐交互 — · sync —   /* ★T5.4：静态占位，真值由 api-bind 从 /api/public/* 写 */",
+                 '主页 CRT 状态行假数字')
+
+# ---- ②c T5.5：v-notes 的 4 条死笔记 → /posts/ 页渲染真实文章链接（Hugo range，同 class 不改视觉）----
+views_out = sub1(views_out,
+                 u'      <div class="note"><span class="dt">2026-10-12</span><div><div class="tt">用 Cowrie 观察一次真实的 SSH 扫密</div><div class="ds">凭据结构分析 · 蜜罐 · 12 min</div></div></div>\n'
+                 u'      <div class="note"><span class="dt">2026-10-08</span><div><div class="tt">Suricata 规则调优：减少误报的五个开关</div><div class="ds">IDS · 调优 · 8 min</div></div></div>\n'
+                 u'      <div class="note"><span class="dt">2026-09-30</span><div><div class="tt">Wazuh 最小权限接入实践</div><div class="ds">SIEM · 权限 · 10 min</div></div></div>\n'
+                 u'      <div class="note"><span class="dt">2026-09-18</span><div><div class="tt">Dionaea 多协议蜜罐上线记录</div><div class="ds">蜜罐 · 部署 · 6 min</div></div></div>',
+                 u'{{ if eq .page.Section "posts" }}{{ range .page.Pages }}<div class="note"><span class="dt">{{ .Date.Format "2006-01-02" }}</span>'
+                 u'<div><a class="tt" href="{{ .RelPermalink }}" style="color:inherit;text-decoration:none">{{ .Title }}</a>'
+                 u'<div class="ds">阅读约 {{ .ReadingTime }} min</div></div></div>{{ end }}{{ end }}',
+                 'v-notes: 真文章链接')
+
 # 7×24 的 28 根柱子：清掉写死的高度（真值由 api-bind 按 /webstats heatmap 写）
 views_out = subn(views_out, r'<i style="height:\d+%;--i:(\d+)"></i>', r'<i style="--i:\1"></i>', 28, 'views: bars 28 根')
 # 来源 TOP5 的 5 行
@@ -1538,7 +1559,7 @@ for section, view, cname in PAGES:
 <body data-skin="warm"%s>
 {{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
 <main class="main" id="content" data-xk-ssr="%s">
-{{ partial "xk-demo/shell-views.html" (dict "v" $v) }}
+{{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
 {{ partial "xk-demo/shell-script.html" . }}

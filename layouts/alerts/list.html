@@ -18,7 +18,7 @@
 <body data-skin="warm"{{ if eq $v "home" }} class="is-home"{{ else if eq $v "ai" }} class="is-ai"{{ end }}>
 {{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
 <main class="main" id="content" data-xk-ssr="monitor">
-{{ partial "xk-demo/shell-views.html" (dict "v" $v) }}
+{{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
 {{ partial "xk-demo/shell-script.html" . }}
