@@ -231,6 +231,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 10-15 | 规划侧 | 接手批工作入库（host_triggered_entries 派生 9 个 / /ai/ 真调 API / 语音 L1 播放 / 表情 5→8 套 / #fallback 保护） | 提交 `9e8094e` | 站点代码 |
 | 10-15 | 规划侧 | 接手方评审复核：F1~F4 全中；纠正其 E4-①（assert 实为 16 项）；确认 CORS 允许主域 | `docs/总账…` §3 | 口径 |
 | 10-15 | 规划侧 | 定 IP 展示规则（最后一段→x，只掩显示、分组用原值；访客/内网 IP 绝不上页面）；R1 存量三处据此免改；同步 T20~T22 与 Kimi 设计任务书 | 提交 `38fe210` + 本节 ⑨ | 站点展示口径 |
+| 10-15 | E（文档设计） | T19 双智能体协作方案落成可执行规格（权限矩阵/审计字段/失败回滚/限流配额/成本熔断 + 铁律与注入防护 + 三端点契约）+ persona.md（可直接作 system prompt） | `docs/双智能体协作规格-20261015.md`、`docs/persona.md` | 设计/契约 |
 
 ## 12. 错误与返工记录（**append-only，做错就记，写清根因与影响面** ✗）
 
