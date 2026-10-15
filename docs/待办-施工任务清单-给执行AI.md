@@ -520,3 +520,22 @@ U4【后端线提醒】`/opt/secagent/src` 源码树**落后于运行 jar** ✗�
 新增情报 S2：一致性判定结论（标定数据得出，非偏好）—— **rgbNcc 是"是不是她"的主判据**（反相假素材 edgeNcc 0.83 能过、
   但 rgbNcc −0.9999 一票否决 ✓），**edgeNcc 只做"姿态有没有跑偏"的辅助** ✗，且**不能跨姿态用** ✓
 ```
+### K（后端问答模型取证）结论与登记（2026-10-15）
+```
+已确认（不再标 [待核对]）：模型 = **DashScope qwen-plus**（Spring AI Alibaba 1.1.0.0-RC2）；
+  temperature=0.0 / topP=0.1 / **max_tokens=800** ✗；单次硬超时 15s；失败冷却 60s；SDK retry 3 次；
+  ANALYST 最多重试 2 次；每次提问最多 2 次模型调用；**无多轮**（空历史 ✗）；**工具调用恒禁止** ✓；
+  maxQuestionChars=600 / body≤4000 / deadlineMs=20000 / 6 次·分·IP / 同 IP 并发 1；公开池 30 次/日
+  **无本地推理** ✓（无 ollama/vLLM/权重/GPU；本机 1870MB RAM 跑不了可用本地模型 ✗）
+  jar 内 yml 与权威源码 F:\\7AAA\\AI\\SecAgent\\sec-agent（HEAD=da9d1db）去 CRLF 后 md5 完全一致 ✓（部署可追溯）
+★ 最大短板：**max_tokens=800 硬天花板** ✗ ⇒ 答案一展开就截断 → JSON 校验失败 → 重试仍失败 → 报 model-failed
+  ⇒ **"答案太长"会被表现成"模型不可用"** ✓（最容易误诊的一条 ✓）
+★ 第二个坑：yml 的 `rag.model` **不控制公开问答** ✗（公开链路用硬编码 DEFAULT_MODEL_NAME）⇒ 改 yml 换模型无效 ✗
+新增任务 T25（归后端线，需站主/运维动手 ✗）：**提高 max_tokens 800→2000+ 并评估换 qwen-max**
+  · 路线 A：改一行 Java（模型名硬编码）+ yml 的 max-tokens + 重建镜像 ⇒ 收效最大 ✓
+  · 路线 B：切 DeepSeek（.env 设 APP_LLM_PROVIDER=deepseek + KEY ✓）但 **DASHSCOPE_API_KEY 不能撤** ✗（embedding 仍要它）
+  · 路线 C：本地推理 ⇒ 现机不可行 ✗（要换机型或新增 7×24 推理服务）
+  · 共通：升级后核对启动自检行 `LLM-PROVIDER-SELFCHECK` ✓；`fallback-provider` 现为空 ⇒ 跨供应商回退关闭（fail-closed ✓）
+★★ 安全：K 取证时一次白名单 grep 误把 **APP_TTS_API_KEY（Fish Audio TTS 凭据）** 打进了工具输出 ✗
+  （未写入任何文件 ✓ 已 grep 校验，但**建议轮换该 TTS Key** ✗ —— 这已是该凭据第二次暴露 ✓）
+```
