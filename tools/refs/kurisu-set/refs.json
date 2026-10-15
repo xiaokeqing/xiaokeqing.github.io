@@ -1,0 +1,814 @@
+{
+ "format": "xiaokeqing.kurisu.refset.v1",
+ "builtBy": "tools/asset-refset.py",
+ "purpose": "一致性判据基准（指标空间 191×257 = 画布 ÷4）；不是展示素材",
+ "anchorDefinition": "headTopY = 第一条 alpha>128 的行；headCenterX = 头部带（headTopY 往下 4% 画布高）内 alpha>128 像素的 x 均值；area = alpha>128 像素数。与上游 SpriteForge docs/production.md §Character contract 同定义，且已用上游公布的已发布包锚点复算验证。",
+ "canvas": [
+  764,
+  1028
+ ],
+ "metricSize": [
+  191,
+  257
+ ],
+ "count": 21,
+ "familyCounts": {
+  "closed": 2,
+  "emotion": 7,
+  "front": 7,
+  "side": 5
+ },
+ "totalBytes": 1133054,
+ "anchorsSummary": {
+  "headTopY": {
+   "min": 19.0,
+   "median": 21.0,
+   "max": 37.0
+  },
+  "headCenterX": {
+   "min": 374.75,
+   "median": 387.715,
+   "max": 393.917
+  },
+  "note": "跨全部族；几何容差判定用**同族**或指定目标剪辑的锚点，不用全局中位数硬套"
+ },
+ "refs": [
+  {
+   "id": "front-idle-f000",
+   "family": "front",
+   "clip": "idle",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\idle.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [764, 1028] 裁窄、padX=0 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/front-idle-f000.png",
+   "bytes": 54169,
+   "sha256": "02382cbdac21365c00f704d18b36d14e148b8f24e91321d0f738b75a5f94783c",
+   "anchorsCanvas": {
+    "headTopY": 20.0,
+    "headCenterX": 387.82,
+    "area": 368233
+   },
+   "alphaBBoxCanvasThr8": [
+    117,
+    18,
+    665,
+    1025
+   ],
+   "note": "待机起始姿态（站点 root）"
+  },
+  {
+   "id": "front-idle-f059",
+   "family": "front",
+   "clip": "idle",
+   "frame": 59,
+   "frameIsFirstOfClip": false,
+   "sourceKind": "atlas(medium atlas)",
+   "sourcePath": "F:\\7AAA\\AI\\blog\\static\\kurisu\\medium\\idle.atlas.webp",
+   "sourceNativeSize": [
+    134,
+    180
+   ],
+   "resample": "medium 瓦片 134×180 → 画布 764×1028（LANCZOS 上采样 5.701×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/front-idle-f059.png",
+   "bytes": 55746,
+   "sha256": "458484500b8054efe8629e685b805b4d54d704075833de4443e640af9a93d3d7",
+   "anchorsCanvas": {
+    "headTopY": 20.0,
+    "headCenterX": 387.02,
+    "area": 369223
+   },
+   "alphaBBoxCanvasThr8": [
+    11,
+    15,
+    664,
+    1023
+   ],
+   "note": "同一剪辑中段，验证\"同人不同帧\"的指标下界"
+  },
+  {
+   "id": "front-speaking-med",
+   "family": "front",
+   "clip": "speaking_med",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\speaking_med.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/front-speaking-med.png",
+   "bytes": 53702,
+   "sha256": "4561a77d27ea2f23db3365a9382ce29a13d9e0cf7f275180bcb1b71d3835f560",
+   "anchorsCanvas": {
+    "headTopY": 19.0,
+    "headCenterX": 387.715,
+    "area": 373480
+   },
+   "alphaBBoxCanvasThr8": [
+    116,
+    16,
+    668,
+    1028
+   ],
+   "note": "说话循环起始"
+  },
+  {
+   "id": "front-speaking-short",
+   "family": "front",
+   "clip": "speaking_short",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\speaking_short.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/front-speaking-short.png",
+   "bytes": 53569,
+   "sha256": "a86880f2f388980f4555cb0417ea048af6595f9ff46aede740db719a7f2da78c",
+   "anchorsCanvas": {
+    "headTopY": 20.0,
+    "headCenterX": 387.077,
+    "area": 371706
+   },
+   "alphaBBoxCanvasThr8": [
+    118,
+    17,
+    668,
+    1028
+   ],
+   "note": "短句说话（有 hi 档）"
+  },
+  {
+   "id": "front-smile-speaking",
+   "family": "front",
+   "clip": "smile_speaking",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\smile_speaking.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/front-smile-speaking.png",
+   "bytes": 53644,
+   "sha256": "3758698c0113be5f669cb3a45728dc13ec6a3120082eecf841731e17730a35a0",
+   "anchorsCanvas": {
+    "headTopY": 21.0,
+    "headCenterX": 387.742,
+    "area": 368953
+   },
+   "alphaBBoxCanvasThr8": [
+    116,
+    19,
+    666,
+    1028
+   ],
+   "note": "微笑说话"
+  },
+  {
+   "id": "front-trans-standby",
+   "family": "front",
+   "clip": "trans_standby",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\trans_standby.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [636, 1028] 裁窄、padX=64 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/front-trans-standby.png",
+   "bytes": 53456,
+   "sha256": "05d8c63971c7a9bd8cb96693fa1e14d7192d05c8819561df21b9b247113a5e64",
+   "anchorsCanvas": {
+    "headTopY": 20.0,
+    "headCenterX": 387.472,
+    "area": 371842
+   },
+   "alphaBBoxCanvasThr8": [
+    118,
+    18,
+    668,
+    1028
+   ],
+   "note": "待机转场"
+  },
+  {
+   "id": "front-speakclosedeye1",
+   "family": "front",
+   "clip": "speaking_closed_eye_1",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\speaking_closed_eye_1.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/front-speakclosedeye1.png",
+   "bytes": 54018,
+   "sha256": "33c829885aaa2e3e41dee399e24e665a9729ac9d21e3bae543675ddadda038b3",
+   "anchorsCanvas": {
+    "headTopY": 24.0,
+    "headCenterX": 386.645,
+    "area": 371235
+   },
+   "alphaBBoxCanvasThr8": [
+    138,
+    22,
+    665,
+    1028
+   ],
+   "note": "说话闭眼（正）"
+  },
+  {
+   "id": "side-idle-wind",
+   "family": "side",
+   "clip": "idle_side_wind",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\idle_side_wind.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [684, 1028] 裁窄、padX=40 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/side-idle-wind.png",
+   "bytes": 48454,
+   "sha256": "8455e32736930d6c1b7ffe477c49d9b569ead4ebe535127bc421c39f823fa0f8",
+   "anchorsCanvas": {
+    "headTopY": 37.0,
+    "headCenterX": 374.75,
+    "area": 313525
+   },
+   "alphaBBoxCanvasThr8": [
+    176,
+    34,
+    647,
+    1028
+   ],
+   "note": "侧身靠窗·风（上游公布 side 锚点 37 / 375）"
+  },
+  {
+   "id": "side-idle-soft-wind",
+   "family": "side",
+   "clip": "idle_side_soft_wind",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\idle_side_soft_wind.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [684, 1028] 裁窄、padX=40 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/side-idle-soft-wind.png",
+   "bytes": 48372,
+   "sha256": "fc6206e376082387b83546989beb98daeb1862e03d58714ea1411bd067d2f21f",
+   "anchorsCanvas": {
+    "headTopY": 37.0,
+    "headCenterX": 374.757,
+    "area": 313510
+   },
+   "alphaBBoxCanvasThr8": [
+    176,
+    34,
+    647,
+    1028
+   ],
+   "note": "侧身柔风"
+  },
+  {
+   "id": "side-butterfly",
+   "family": "side",
+   "clip": "idle_side_butterfly",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\idle_side_butterfly.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [764, 1028] 裁窄、padX=0 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/side-butterfly.png",
+   "bytes": 48811,
+   "sha256": "d6094a617a07a1c674c8d5c31fbb212463c3f5bfc76042265e0a471f3a7a34a2",
+   "anchorsCanvas": {
+    "headTopY": 37.0,
+    "headCenterX": 374.803,
+    "area": 313070
+   },
+   "alphaBBoxCanvasThr8": [
+    177,
+    35,
+    647,
+    1028
+   ],
+   "note": "侧身蝴蝶"
+  },
+  {
+   "id": "side-thinking1",
+   "family": "side",
+   "clip": "thinking_speaking1",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\thinking_speaking1.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [564, 1028] 裁窄、padX=100 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/side-thinking1.png",
+   "bytes": 52220,
+   "sha256": "704201b183aea78a0ad1990c88a5f62dc7510b85945e92d69e71a8da00613f83",
+   "anchorsCanvas": {
+    "headTopY": 23.0,
+    "headCenterX": 392.919,
+    "area": 335020
+   },
+   "alphaBBoxCanvasThr8": [
+    178,
+    21,
+    637,
+    1028
+   ],
+   "note": "侧身思考说话"
+  },
+  {
+   "id": "side-keypoint",
+   "family": "side",
+   "clip": "key_point_speaking",
+   "frame": 90,
+   "frameIsFirstOfClip": false,
+   "sourceKind": "atlas(medium atlas)",
+   "sourcePath": "F:\\7AAA\\AI\\blog\\static\\kurisu\\medium\\key_point_speaking.atlas.webp",
+   "sourceNativeSize": [
+    134,
+    180
+   ],
+   "resample": "medium 瓦片 134×180 → 画布 764×1028（LANCZOS 上采样 5.701×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/side-keypoint.png",
+   "bytes": 59953,
+   "sha256": "d3a9582d55f13c247667c5b1c4e2270565cc7a9e5be0a97665e628fd96b9d6ba",
+   "anchorsCanvas": {
+    "headTopY": 27.0,
+    "headCenterX": 393.917,
+    "area": 350459
+   },
+   "alphaBBoxCanvasThr8": [
+    146,
+    22,
+    649,
+    1028
+   ],
+   "note": "\"关键点\"姿态中段"
+  },
+  {
+   "id": "emo-angry",
+   "family": "emotion",
+   "clip": "angry_speaking",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\angry_speaking.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/emo-angry.png",
+   "bytes": 53399,
+   "sha256": "60531afc1d7aa8119f8a8db86a135556475729af811f0569dcf5e17edd9a230a",
+   "anchorsCanvas": {
+    "headTopY": 21.0,
+    "headCenterX": 388.223,
+    "area": 369746
+   },
+   "alphaBBoxCanvasThr8": [
+    115,
+    19,
+    665,
+    1028
+   ],
+   "note": "生气说话（口气重的表现层对应）"
+  },
+  {
+   "id": "emo-sad",
+   "family": "emotion",
+   "clip": "sad_speaking",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\sad_speaking.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/emo-sad.png",
+   "bytes": 53569,
+   "sha256": "0144af736444faa6b701ebd47c35ed7de78245c5479999bad0833ca87b65237f",
+   "anchorsCanvas": {
+    "headTopY": 19.0,
+    "headCenterX": 388.425,
+    "area": 371603
+   },
+   "alphaBBoxCanvasThr8": [
+    116,
+    16,
+    666,
+    1028
+   ],
+   "note": "难过说话"
+  },
+  {
+   "id": "emo-shy1",
+   "family": "emotion",
+   "clip": "shy_speaking1",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\shy_speaking1.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/emo-shy1.png",
+   "bytes": 53184,
+   "sha256": "e08819b646285b70d5ff61504fa377beec21d7eda67aca24e2592e56cc707709",
+   "anchorsCanvas": {
+    "headTopY": 20.0,
+    "headCenterX": 387.682,
+    "area": 371088
+   },
+   "alphaBBoxCanvasThr8": [
+    116,
+    18,
+    665,
+    1028
+   ],
+   "note": "害羞说话"
+  },
+  {
+   "id": "emo-surprise",
+   "family": "emotion",
+   "clip": "surprise_speaking",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\surprise_speaking.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [620, 1028] 裁窄、padX=72 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/emo-surprise.png",
+   "bytes": 53531,
+   "sha256": "912b42147420f1627fbe4d3720380123be6bc13e847aec0f0edc20bfd5e99ea2",
+   "anchorsCanvas": {
+    "headTopY": 20.0,
+    "headCenterX": 386.668,
+    "area": 370913
+   },
+   "alphaBBoxCanvasThr8": [
+    116,
+    17,
+    665,
+    1028
+   ],
+   "note": "惊讶说话"
+  },
+  {
+   "id": "emo-smile-atlas",
+   "family": "emotion",
+   "clip": "smile_speaking",
+   "frame": 90,
+   "frameIsFirstOfClip": false,
+   "sourceKind": "atlas(medium atlas)",
+   "sourcePath": "F:\\7AAA\\AI\\blog\\static\\kurisu\\medium\\smile_speaking.atlas.webp",
+   "sourceNativeSize": [
+    134,
+    180
+   ],
+   "resample": "medium 瓦片 134×180 → 画布 764×1028（LANCZOS 上采样 5.701×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/emo-smile-atlas.png",
+   "bytes": 57536,
+   "sha256": "b4dfa2cf8eedbb412833b8cdfe690c7b49438a01f31f9d5017fcd300874bd4e1",
+   "anchorsCanvas": {
+    "headTopY": 21.0,
+    "headCenterX": 387.754,
+    "area": 369362
+   },
+   "alphaBBoxCanvasThr8": [
+    113,
+    15,
+    669,
+    1028
+   ],
+   "note": "图集来源的微笑（与 front-smile-speaking 同剪辑不同源，用于跨源稳健性）"
+  },
+  {
+   "id": "emo-angry-atlas",
+   "family": "emotion",
+   "clip": "angry_speaking",
+   "frame": 90,
+   "frameIsFirstOfClip": false,
+   "sourceKind": "atlas(medium atlas)",
+   "sourcePath": "F:\\7AAA\\AI\\blog\\static\\kurisu\\medium\\angry_speaking.atlas.webp",
+   "sourceNativeSize": [
+    134,
+    180
+   ],
+   "resample": "medium 瓦片 134×180 → 画布 764×1028（LANCZOS 上采样 5.701×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/emo-angry-atlas.png",
+   "bytes": 56992,
+   "sha256": "3983b93df16d0254698df47e09daa4749f5902a778283410121a4a191d95f9cf",
+   "anchorsCanvas": {
+    "headTopY": 21.0,
+    "headCenterX": 388.197,
+    "area": 370035
+   },
+   "alphaBBoxCanvasThr8": [
+    112,
+    16,
+    669,
+    1028
+   ],
+   "note": "图集来源的生气"
+  },
+  {
+   "id": "emo-sadtail-atlas",
+   "family": "emotion",
+   "clip": "sad_trans",
+   "frame": 59,
+   "frameIsFirstOfClip": false,
+   "sourceKind": "atlas(medium atlas)",
+   "sourcePath": "F:\\7AAA\\AI\\blog\\static\\kurisu\\medium\\sad_trans.atlas.webp",
+   "sourceNativeSize": [
+    134,
+    180
+   ],
+   "resample": "medium 瓦片 134×180 → 画布 764×1028（LANCZOS 上采样 5.701×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/emo-sadtail-atlas.png",
+   "bytes": 57153,
+   "sha256": "0fe5e2bd2ca6f01acf7507fad20b899026a2b918bf9b501ac264354263ba65de",
+   "anchorsCanvas": {
+    "headTopY": 21.0,
+    "headCenterX": 388.397,
+    "area": 370937
+   },
+   "alphaBBoxCanvasThr8": [
+    113,
+    15,
+    668,
+    1028
+   ],
+   "note": "难过转场末帧（收尾姿态）"
+  },
+  {
+   "id": "closed-trans-tail",
+   "family": "closed",
+   "clip": "closed_eye_trans",
+   "frame": 0,
+   "frameIsFirstOfClip": true,
+   "sourceKind": "poster(video first frame)",
+   "sourcePath": "E:\\DeepSeek1\\work\\_kurisu-017\\video-assets\\video\\closed_eye_trans.poster.webp",
+   "sourceNativeSize": [
+    268,
+    360
+   ],
+   "resample": "视频首帧 268×360（转码前先按码流 [700, 1028] 裁窄、padX=32 补回画布）→ 画布 764×1028（LANCZOS 等比 2.8507×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/closed-trans-tail.png",
+   "bytes": 53881,
+   "sha256": "54d824912bcb516f4ef147dce1977d3d768ce86684c12f9f17d374a194660223",
+   "anchorsCanvas": {
+    "headTopY": 20.0,
+    "headCenterX": 388.109,
+    "area": 371024
+   },
+   "alphaBBoxCanvasThr8": [
+    116,
+    19,
+    665,
+    1028
+   ],
+   "note": "闭眼转场（上游公布末帧锚点 24 / 387.14；海报=首帧）"
+  },
+  {
+   "id": "closed-atlas-tail",
+   "family": "closed",
+   "clip": "closed_eye_trans",
+   "frame": 119,
+   "frameIsFirstOfClip": false,
+   "sourceKind": "atlas(medium atlas)",
+   "sourcePath": "F:\\7AAA\\AI\\blog\\static\\kurisu\\medium\\closed_eye_trans.atlas.webp",
+   "sourceNativeSize": [
+    134,
+    180
+   ],
+   "resample": "medium 瓦片 134×180 → 画布 764×1028（LANCZOS 上采样 5.701×）",
+   "canvas": [
+    764,
+    1028
+   ],
+   "metricSize": [
+    191,
+    257
+   ],
+   "file": "tools/refs/kurisu-set/closed-atlas-tail.png",
+   "bytes": 57695,
+   "sha256": "bdd1f5c6206f25f487829c46627415ed21b13ba30ef6fb46f2aad0ff00e728e9",
+   "anchorsCanvas": {
+    "headTopY": 24.0,
+    "headCenterX": 387.21,
+    "area": 364241
+   },
+   "alphaBBoxCanvasThr8": [
+    136,
+    20,
+    664,
+    1028
+   ],
+   "note": "闭眼转场末帧（图集）——上游 24 / 387.14 的复算基准"
+  }
+ ]
+}

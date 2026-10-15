@@ -1,0 +1,1770 @@
+{
+ "format": "xiaokeqing.kurisu.anchors.v1",
+ "builtBy": "tools/asset-refset.py anchors",
+ "method": "对每个剪辑在 5 个采样帧（0 / 1/4 / 1/2 / 3/4 / 末帧）上实测 alpha 外框与头部锚点，取中位数。口径与上游 SpriteForge docs/production.md §Character contract 一致。",
+ "canvas": [
+  764,
+  1028
+ ],
+ "clipCount": 38,
+ "base764Count": 35,
+ "consensus764": {
+  "headTopY": 21.0,
+  "headCenterX": 387.674,
+  "area": 369144,
+  "visibleWidthPx": 550.0,
+  "visibleHeightPx": 1012.0,
+  "visibleWidthFracOfCanvas": 0.7199,
+  "note": "\"既有锚点\"的全局共识。上游文档写基准姿态的取景为\"可见宽 = 画布 71%、头顶在画布高 2%\"；本文实测 38 个剪辑的中位可见宽 = 550.0 px = 71.99%、头顶中位 = 21.0 px ≈ 画布高 2.04%，与该取景规则吻合。"
+ },
+ "clips": [
+  {
+   "clip": "idle",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 21,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 20.0,
+    "min": 19.0,
+    "max": 20.0
+   },
+   "headCenterX": {
+    "median": 387.09959499263624,
+    "min": 387.0955097534045,
+    "max": 387.8202205195291
+   },
+   "area": {
+    "median": 368249,
+    "min": 367164,
+    "max": 368819
+   },
+   "alphaBBoxThr8Median": [
+    10.0,
+    15.0,
+    664.0,
+    1023.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "idle2",
+   "canvas": [
+    764,
+    1026
+   ],
+   "frames": 290,
+   "frameIntervalMs": 21,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    72,
+    145,
+    217,
+    289
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 17.0,
+    "max": 20.0
+   },
+   "headCenterX": {
+    "median": 387.77232727953566,
+    "min": 380.4578896418199,
+    "max": 400.4269306930693
+   },
+   "area": {
+    "median": 368512,
+    "min": 367345,
+    "max": 369639
+   },
+   "alphaBBoxThr8Median": [
+    116.0,
+    15.0,
+    666.0,
+    1026.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    0,
+    764,
+    1026
+   ]
+  },
+  {
+   "clip": "idle_mic_wind",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 194,
+   "frameIntervalMs": 21,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    48,
+    97,
+    145,
+    193
+   ],
+   "headTopY": {
+    "median": 20.0,
+    "min": 20.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 386.58070937386896,
+    "min": 386.4331780055918,
+    "max": 387.80727889873657
+   },
+   "area": {
+    "median": 368428,
+    "min": 368072,
+    "max": 379089
+   },
+   "alphaBBoxThr8Median": [
+    116.0,
+    15.0,
+    663.0,
+    1022.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "idle_str_wind",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 194,
+   "frameIntervalMs": 21,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    48,
+    97,
+    145,
+    193
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 19.0,
+    "max": 20.0
+   },
+   "headCenterX": {
+    "median": 386.50386282268704,
+    "min": 386.4093972295021,
+    "max": 387.70295548073324
+   },
+   "area": {
+    "median": 369989,
+    "min": 368159,
+    "max": 387582
+   },
+   "alphaBBoxThr8Median": [
+    116.0,
+    15.0,
+    666.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "idle1",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 21,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 20.0,
+    "min": 20.0,
+    "max": 20.0
+   },
+   "headCenterX": {
+    "median": 387.0835634087981,
+    "min": 387.0504047093451,
+    "max": 387.7765101926314
+   },
+   "area": {
+    "median": 368231,
+    "min": 367133,
+    "max": 368805
+   },
+   "alphaBBoxThr8Median": [
+    10.0,
+    15.0,
+    664.0,
+    1023.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "trans_standby",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 196,
+   "frameIntervalMs": 21,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    49,
+    98,
+    147,
+    195
+   ],
+   "headTopY": {
+    "median": 22.0,
+    "min": 20.0,
+    "max": 37.0
+   },
+   "headCenterX": {
+    "median": 384.9549492385787,
+    "min": 374.8391659111514,
+    "max": 414.41613144137415
+   },
+   "area": {
+    "median": 321788,
+    "min": 313696,
+    "max": 371780
+   },
+   "alphaBBoxThr8Median": [
+    169.0,
+    0.0,
+    652.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "trans_smile",
+   "canvas": [
+    764,
+    1027
+   ],
+   "frames": 120,
+   "frameIntervalMs": 5,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 21.0,
+    "min": 20.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 386.6727867660425,
+    "min": 385.6641488577745,
+    "max": 387.32811059907834
+   },
+   "area": {
+    "median": 371996,
+    "min": 371622,
+    "max": 372476
+   },
+   "alphaBBoxThr8Median": [
+    114.0,
+    15.0,
+    742.0,
+    1027.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    16,
+    764,
+    1027
+   ]
+  },
+  {
+   "clip": "speaking_trans",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 21.0,
+    "min": 21.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 389.9126870990734,
+    "min": 388.1375545851528,
+    "max": 393.7067968185105
+   },
+   "area": {
+    "median": 369144,
+    "min": 330818,
+    "max": 371166
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    0.0,
+    668.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    18,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "speaking_loop1",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 23.0,
+    "min": 23.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 393.98371801753444,
+    "min": 393.9034396273737,
+    "max": 394.0759312320917
+   },
+   "area": {
+    "median": 330237,
+    "min": 329866,
+    "max": 330293
+   },
+   "alphaBBoxThr8Median": [
+    155.0,
+    19.0,
+    601.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    156,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "speaking_loop2",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 240,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    60,
+    120,
+    180,
+    239
+   ],
+   "headTopY": {
+    "median": 23.0,
+    "min": 22.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 393.67215189873417,
+    "min": 393.61024619840697,
+    "max": 396.5119199272066
+   },
+   "area": {
+    "median": 331864,
+    "min": 331449,
+    "max": 332043
+   },
+   "alphaBBoxThr8Median": [
+    156.0,
+    19.0,
+    601.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    0,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "idle_side_wind",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 36.0,
+    "min": 36.0,
+    "max": 36.0
+   },
+   "headCenterX": {
+    "median": 374.81849501359926,
+    "min": 374.7579479768786,
+    "max": 374.8665824155985
+   },
+   "area": {
+    "median": 315067,
+    "min": 313695,
+    "max": 322746
+   },
+   "alphaBBoxThr8Median": [
+    175.0,
+    32.0,
+    653.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    175,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "idle_side_soft_wind",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 36.0,
+    "min": 36.0,
+    "max": 36.0
+   },
+   "headCenterX": {
+    "median": 374.8200761007429,
+    "min": 374.757166035695,
+    "max": 374.8460566684714
+   },
+   "area": {
+    "median": 315087,
+    "min": 313677,
+    "max": 322747
+   },
+   "alphaBBoxThr8Median": [
+    175.0,
+    0.0,
+    653.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    175,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "speaking_short",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 19.0,
+    "max": 19.0
+   },
+   "headCenterX": {
+    "median": 387.09903021260726,
+    "min": 387.0717747949292,
+    "max": 387.15306886227546
+   },
+   "area": {
+    "median": 371852,
+    "min": 371592,
+    "max": 374147
+   },
+   "alphaBBoxThr8Median": [
+    116.0,
+    15.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "speaking_med",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 240,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    60,
+    120,
+    180,
+    239
+   ],
+   "headTopY": {
+    "median": 18.0,
+    "min": 18.0,
+    "max": 19.0
+   },
+   "headCenterX": {
+    "median": 387.6647705726204,
+    "min": 387.6145971563981,
+    "max": 387.71993969091596
+   },
+   "area": {
+    "median": 375171,
+    "min": 373500,
+    "max": 376058
+   },
+   "alphaBBoxThr8Median": [
+    114.0,
+    0.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "speaking_long",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 360,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    90,
+    180,
+    270,
+    359
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 19.0,
+    "max": 19.0
+   },
+   "headCenterX": {
+    "median": 387.33383093860795,
+    "min": 387.33108361454816,
+    "max": 387.4586046511628
+   },
+   "area": {
+    "median": 373157,
+    "min": 371589,
+    "max": 374307
+   },
+   "alphaBBoxThr8Median": [
+    117.0,
+    15.0,
+    670.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "smile_speaking",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 21.0,
+    "min": 20.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 387.6741573033708,
+    "min": 387.64373642288194,
+    "max": 387.75376793172325
+   },
+   "area": {
+    "median": 371208,
+    "min": 369076,
+    "max": 372058
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    15.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    17,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "sad_trans",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 60,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    15,
+    30,
+    45,
+    59
+   ],
+   "headTopY": {
+    "median": 21.0,
+    "min": 18.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 388.4507913407313,
+    "min": 388.00345517366793,
+    "max": 395.5409219190969
+   },
+   "area": {
+    "median": 371397,
+    "min": 369609,
+    "max": 375194
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    15.0,
+    668.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "sad_speaking",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 18.0,
+    "min": 18.0,
+    "max": 18.0
+   },
+   "headCenterX": {
+    "median": 388.4870360007461,
+    "min": 388.4737922029472,
+    "max": 388.5020606968902
+   },
+   "area": {
+    "median": 372095,
+    "min": 371479,
+    "max": 372736
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    15.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    15,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "thinking_trans",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 22.0,
+    "min": 16.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 392.67552083333334,
+    "min": 388.07821729013784,
+    "max": 393.46225600276387
+   },
+   "area": {
+    "median": 342688,
+    "min": 335666,
+    "max": 375404
+   },
+   "alphaBBoxThr8Median": [
+    146.0,
+    16.0,
+    641.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    18,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "thinking_speaking1",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 23.0,
+    "min": 23.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 392.8241337280167,
+    "min": 392.66992323796234,
+    "max": 392.8597072150575
+   },
+   "area": {
+    "median": 335037,
+    "min": 334831,
+    "max": 335437
+   },
+   "alphaBBoxThr8Median": [
+    175.0,
+    0.0,
+    641.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    176,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "thinking_speaking2",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 300,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    75,
+    150,
+    225,
+    299
+   ],
+   "headTopY": {
+    "median": 23.0,
+    "min": 23.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 392.9240396314966,
+    "min": 392.88688410825813,
+    "max": 393.0015671251959
+   },
+   "area": {
+    "median": 334668,
+    "min": 334333,
+    "max": 334941
+   },
+   "alphaBBoxThr8Median": [
+    175.0,
+    19.0,
+    641.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    176,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "thinking_to_serious",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 17.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 391.50531135531133,
+    "min": 387.8366505289582,
+    "max": 394.0965215807685
+   },
+   "area": {
+    "median": 335180,
+    "min": 330674,
+    "max": 336509
+   },
+   "alphaBBoxThr8Median": [
+    157.0,
+    15.0,
+    624.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    176,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "thinking_to_key_point",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 23.0,
+    "min": 21.0,
+    "max": 28.0
+   },
+   "headCenterX": {
+    "median": 393.79521276595744,
+    "min": 392.90338332752003,
+    "max": 413.19481405663595
+   },
+   "area": {
+    "median": 350692,
+    "min": 335171,
+    "max": 351791
+   },
+   "alphaBBoxThr8Median": [
+    154.0,
+    19.0,
+    641.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    176,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "key_point_speaking",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 27.0,
+    "min": 27.0,
+    "max": 28.0
+   },
+   "headCenterX": {
+    "median": 393.92832641270985,
+    "min": 393.9068825910931,
+    "max": 393.97834325933945
+   },
+   "area": {
+    "median": 350777,
+    "min": 350406,
+    "max": 350919
+   },
+   "alphaBBoxThr8Median": [
+    146.0,
+    22.0,
+    641.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    148,
+    24,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "serious_to_thinking",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 23.0,
+    "min": 23.0,
+    "max": 23.0
+   },
+   "headCenterX": {
+    "median": 393.8284731026988,
+    "min": 392.6953904368765,
+    "max": 394.5687317659173
+   },
+   "area": {
+    "median": 335841,
+    "min": 329940,
+    "max": 338804
+   },
+   "alphaBBoxThr8Median": [
+    156.0,
+    19.0,
+    619.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    156,
+    20,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "shy_trans",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 60,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    15,
+    30,
+    45,
+    59
+   ],
+   "headTopY": {
+    "median": 20.0,
+    "min": 20.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 387.6203805342115,
+    "min": 387.57043541895354,
+    "max": 387.8390741753235
+   },
+   "area": {
+    "median": 372138,
+    "min": 371760,
+    "max": 373628
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    15.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "shy_speaking1",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 19.0,
+    "max": 20.0
+   },
+   "headCenterX": {
+    "median": 387.7362938596491,
+    "min": 387.7009941849559,
+    "max": 387.80405405405406
+   },
+   "area": {
+    "median": 373186,
+    "min": 371149,
+    "max": 373394
+   },
+   "alphaBBoxThr8Median": [
+    112.0,
+    15.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "shy_speaking2",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 300,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    75,
+    150,
+    225,
+    299
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 19.0,
+    "max": 19.0
+   },
+   "headCenterX": {
+    "median": 387.6603210153042,
+    "min": 387.6489520958084,
+    "max": 387.717723880597
+   },
+   "area": {
+    "median": 373025,
+    "min": 370366,
+    "max": 373827
+   },
+   "alphaBBoxThr8Median": [
+    112.0,
+    15.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "surprise_trans",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 60,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    15,
+    30,
+    45,
+    59
+   ],
+   "headTopY": {
+    "median": 20.0,
+    "min": 19.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 387.2554367858459,
+    "min": 386.80063587058163,
+    "max": 387.54970866715223
+   },
+   "area": {
+    "median": 371637,
+    "min": 371045,
+    "max": 372070
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    15.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "surprise_speaking",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 19.0,
+    "min": 19.0,
+    "max": 19.0
+   },
+   "headCenterX": {
+    "median": 386.62821468505405,
+    "min": 386.5638198467576,
+    "max": 386.66535211267603
+   },
+   "area": {
+    "median": 372799,
+    "min": 370692,
+    "max": 373187
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    15.0,
+    668.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    116,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "angry_trans",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 60,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    15,
+    30,
+    45,
+    59
+   ],
+   "headTopY": {
+    "median": 21.0,
+    "min": 21.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 388.04496435752145,
+    "min": 387.9247819767442,
+    "max": 388.19041521858423
+   },
+   "area": {
+    "median": 370929,
+    "min": 370229,
+    "max": 371271
+   },
+   "alphaBBoxThr8Median": [
+    113.0,
+    16.0,
+    739.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "angry_speaking",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 21.0,
+    "min": 21.0,
+    "max": 21.0
+   },
+   "headCenterX": {
+    "median": 388.19719090741086,
+    "min": 388.11156037493106,
+    "max": 388.26723184666423
+   },
+   "area": {
+    "median": 372610,
+    "min": 369848,
+    "max": 372917
+   },
+   "alphaBBoxThr8Median": [
+    112.0,
+    16.0,
+    669.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    112,
+    16,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "idle_side_butterfly",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 600,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    150,
+    300,
+    450,
+    599
+   ],
+   "headTopY": {
+    "median": 36.0,
+    "min": 36.0,
+    "max": 37.0
+   },
+   "headCenterX": {
+    "median": 374.756308452444,
+    "min": 374.7215764620414,
+    "max": 375.5440071556351
+   },
+   "area": {
+    "median": 314187,
+    "min": 313253,
+    "max": 324503
+   },
+   "alphaBBoxThr8Median": [
+    175.0,
+    32.0,
+    652.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    175,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "closed_eye_trans",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 22.0,
+    "min": 21.0,
+    "max": 24.0
+   },
+   "headCenterX": {
+    "median": 389.43631436314365,
+    "min": 387.20952556765735,
+    "max": 393.91556776556774
+   },
+   "area": {
+    "median": 374222,
+    "min": 364241,
+    "max": 380709
+   },
+   "alphaBBoxThr8Median": [
+    112.0,
+    18.0,
+    670.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    115,
+    18,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "speaking_closed_eye_1",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 180,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    45,
+    90,
+    135,
+    179
+   ],
+   "headTopY": {
+    "median": 24.0,
+    "min": 24.0,
+    "max": 24.0
+   },
+   "headCenterX": {
+    "median": 386.56622023809524,
+    "min": 386.50723830734967,
+    "max": 386.60610545790934
+   },
+   "area": {
+    "median": 371674,
+    "min": 371262,
+    "max": 372000
+   },
+   "alphaBBoxThr8Median": [
+    135.0,
+    20.0,
+    668.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    136,
+    20,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "speaking_closed_eye_2",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 300,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    75,
+    150,
+    225,
+    299
+   ],
+   "headTopY": {
+    "median": 24.0,
+    "min": 24.0,
+    "max": 24.0
+   },
+   "headCenterX": {
+    "median": 387.2710810316444,
+    "min": 387.22463235294117,
+    "max": 387.2858974358974
+   },
+   "area": {
+    "median": 372105,
+    "min": 371613,
+    "max": 372889
+   },
+   "alphaBBoxThr8Median": [
+    134.0,
+    20.0,
+    665.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    136,
+    20,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "idle_closed_eye",
+   "canvas": [
+    960,
+    1028
+   ],
+   "frames": 738,
+   "frameIntervalMs": 17,
+   "loopMode": "loop",
+   "reverse": false,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    184,
+    369,
+    553,
+    737
+   ],
+   "headTopY": {
+    "median": 24.0,
+    "min": 21.0,
+    "max": 26.0
+   },
+   "headCenterX": {
+    "median": 486.63546617915904,
+    "min": 486.2168320470415,
+    "max": 486.91050295857985
+   },
+   "area": {
+    "median": 373400,
+    "min": 372822,
+    "max": 381115
+   },
+   "alphaBBoxThr8Median": [
+    216.0,
+    0.0,
+    763.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    98,
+    0,
+    764,
+    1028
+   ]
+  },
+  {
+   "clip": "key_point_to_thinking",
+   "canvas": [
+    764,
+    1028
+   ],
+   "frames": 120,
+   "frameIntervalMs": 8,
+   "loopMode": "once_then_hold",
+   "reverse": true,
+   "inGraph": true,
+   "probedFrames": [
+    0,
+    30,
+    60,
+    90,
+    119
+   ],
+   "headTopY": {
+    "median": 23.0,
+    "min": 21.0,
+    "max": 28.0
+   },
+   "headCenterX": {
+    "median": 393.79521276595744,
+    "min": 392.90338332752003,
+    "max": 413.19481405663595
+   },
+   "area": {
+    "median": 350692,
+    "min": 335171,
+    "max": 351791
+   },
+   "alphaBBoxThr8Median": [
+    154.0,
+    19.0,
+    641.0,
+    1028.0
+   ],
+   "statemachineOpaqueBbox": [
+    176,
+    0,
+    764,
+    1028
+   ]
+  }
+ ]
+}

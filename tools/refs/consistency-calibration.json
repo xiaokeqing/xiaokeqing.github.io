@@ -1,0 +1,1444 @@
+{
+ "format": "xiaokeqing.kurisu.consistency-calibration.v1",
+ "builtBy": "tools/asset-consistency.py calibrate",
+ "canvas": [
+  764,
+  1028
+ ],
+ "metricSpace": [
+  191,
+  257
+ ],
+ "kpGatePx": 102.465,
+ "positives": {
+  "what": "\"像\"= 38 个已发布剪辑的 medium 图集帧，逐帧与定妆集比（**留一剪辑出**：排除同剪辑的参考帧，否则会跟同一帧自己比，虚高 ✗）",
+  "framesPerClip": 6,
+  "queries": 210,
+  "clipsUsed": 35,
+  "clipsSkippedNon764Canvas": [
+   "idle2",
+   "trans_smile",
+   "idle_closed_eye"
+  ],
+  "metrics": {
+   "edgeNcc": {
+    "n": 210,
+    "min": 0.17692,
+    "p05": 0.2611365,
+    "p10": 0.290675,
+    "p25": 0.6735625000000001,
+    "median": 0.844165,
+    "p75": 0.9083375,
+    "p95": 0.949279,
+    "max": 0.96146
+   },
+   "rgbNcc": {
+    "n": 210,
+    "min": 0.49869,
+    "p05": 0.650335,
+    "p10": 0.665929,
+    "p25": 0.917985,
+    "median": 0.981475,
+    "p75": 0.9917825,
+    "p95": 0.995429,
+    "max": 0.99745
+   },
+   "alphaIoU": {
+    "n": 210,
+    "min": 0.82481,
+    "p05": 0.8722815,
+    "p10": 0.878204,
+    "p25": 0.9671425,
+    "median": 0.9878899999999999,
+    "p75": 0.9936075,
+    "p95": 0.996854,
+    "max": 0.99809
+   },
+   "kpMeanDistPx": {
+    "n": 210,
+    "min": 3.2083756539579436,
+    "p05": 3.6967445061473567,
+    "p10": 3.9417605395755118,
+    "p25": 4.431146490655488,
+    "median": 5.610650857465238,
+    "p75": 7.579793362638352,
+    "p95": 18.24202900595292,
+    "max": 19.499577741232756
+   },
+   "areaRatio": {
+    "n": 210,
+    "min": 0.94124,
+    "p05": 0.946192,
+    "p10": 0.955887,
+    "p25": 0.9989525,
+    "median": 1.00295,
+    "p75": 1.0070675,
+    "p95": 1.0301885,
+    "max": 1.08116
+   },
+   "absHeadTopDeltaPx": {
+    "n": 210,
+    "min": 0.0,
+    "p05": 0.0,
+    "p10": 0.0,
+    "p25": 0.0,
+    "median": 1.0,
+    "p75": 2.75,
+    "p95": 5.0,
+    "max": 16.0
+   },
+   "absHeadCenterDeltaPx": {
+    "n": 210,
+    "min": 0.001,
+    "p05": 0.019350000000000003,
+    "p10": 0.0439,
+    "p25": 0.142,
+    "median": 0.5225,
+    "p75": 1.0995,
+    "p95": 4.874599999999997,
+    "max": 26.554
+   }
+  },
+  "perClip": {
+   "idle": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 21,
+    "edgeNccMin": 0.80608,
+    "edgeNccMedian": 0.82671,
+    "rgbNccMin": 0.98067,
+    "kpMeanMax": 6.531,
+    "bestRefs": [
+     "emo-angry-atlas"
+    ]
+   },
+   "idle_mic_wind": {
+    "frames": [
+     0,
+     39,
+     77,
+     116,
+     154,
+     193
+    ],
+    "frameIntervalMs": 21,
+    "edgeNccMin": 0.63941,
+    "edgeNccMedian": 0.80431,
+    "rgbNccMin": 0.87707,
+    "kpMeanMax": 7.487,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas",
+     "emo-smile-atlas",
+     "front-idle-f059"
+    ]
+   },
+   "idle_str_wind": {
+    "frames": [
+     0,
+     39,
+     77,
+     116,
+     154,
+     193
+    ],
+    "frameIntervalMs": 21,
+    "edgeNccMin": 0.57632,
+    "edgeNccMedian": 0.81655,
+    "rgbNccMin": 0.87691,
+    "kpMeanMax": 8.773,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas",
+     "emo-smile-atlas"
+    ]
+   },
+   "idle1": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 21,
+    "edgeNccMin": 0.85252,
+    "edgeNccMedian": 0.86844,
+    "rgbNccMin": 0.97454,
+    "kpMeanMax": 6.125,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas",
+     "front-idle-f059"
+    ]
+   },
+   "trans_standby": {
+    "frames": [
+     0,
+     39,
+     78,
+     117,
+     156,
+     195
+    ],
+    "frameIntervalMs": 21,
+    "edgeNccMin": 0.17692,
+    "edgeNccMedian": 0.62813,
+    "rgbNccMin": 0.5126,
+    "kpMeanMax": 15.521,
+    "bestRefs": [
+     "front-idle-f059",
+     "front-speaking-short",
+     "side-butterfly",
+     "side-idle-wind"
+    ]
+   },
+   "speaking_trans": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.249,
+    "edgeNccMedian": 0.36529,
+    "rgbNccMin": 0.6002,
+    "kpMeanMax": 18.612,
+    "bestRefs": [
+     "closed-atlas-tail",
+     "emo-angry-atlas",
+     "side-keypoint"
+    ]
+   },
+   "speaking_loop1": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.26272,
+    "edgeNccMedian": 0.26752,
+    "rgbNccMin": 0.66301,
+    "kpMeanMax": 18.787,
+    "bestRefs": [
+     "side-keypoint"
+    ]
+   },
+   "speaking_loop2": {
+    "frames": [
+     0,
+     48,
+     96,
+     143,
+     191,
+     239
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.2345,
+    "edgeNccMedian": 0.25411,
+    "rgbNccMin": 0.63069,
+    "kpMeanMax": 19.396,
+    "bestRefs": [
+     "side-keypoint"
+    ]
+   },
+   "idle_side_wind": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.70608,
+    "edgeNccMedian": 0.83244,
+    "rgbNccMin": 0.9554,
+    "kpMeanMax": 8.795,
+    "bestRefs": [
+     "side-idle-soft-wind"
+    ]
+   },
+   "idle_side_soft_wind": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.64105,
+    "edgeNccMedian": 0.77544,
+    "rgbNccMin": 0.9513,
+    "kpMeanMax": 9.143,
+    "bestRefs": [
+     "side-idle-wind"
+    ]
+   },
+   "speaking_short": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.85156,
+    "edgeNccMedian": 0.86067,
+    "rgbNccMin": 0.98738,
+    "kpMeanMax": 6.683,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas"
+    ]
+   },
+   "speaking_med": {
+    "frames": [
+     0,
+     48,
+     96,
+     143,
+     191,
+     239
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.6461,
+    "edgeNccMedian": 0.735,
+    "rgbNccMin": 0.93748,
+    "kpMeanMax": 8.724,
+    "bestRefs": [
+     "emo-angry-atlas"
+    ]
+   },
+   "speaking_long": {
+    "frames": [
+     0,
+     72,
+     144,
+     215,
+     287,
+     359
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.78957,
+    "edgeNccMedian": 0.82746,
+    "rgbNccMin": 0.96273,
+    "kpMeanMax": 6.775,
+    "bestRefs": [
+     "emo-smile-atlas",
+     "front-speaking-med",
+     "front-speaking-short"
+    ]
+   },
+   "smile_speaking": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.88407,
+    "edgeNccMedian": 0.93075,
+    "rgbNccMin": 0.96304,
+    "kpMeanMax": 5.47,
+    "bestRefs": [
+     "emo-angry-atlas"
+    ]
+   },
+   "sad_trans": {
+    "frames": [
+     0,
+     12,
+     24,
+     35,
+     47,
+     59
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.77669,
+    "edgeNccMedian": 0.92568,
+    "rgbNccMin": 0.96133,
+    "kpMeanMax": 7.725,
+    "bestRefs": [
+     "emo-angry-atlas"
+    ]
+   },
+   "sad_speaking": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.83968,
+    "edgeNccMedian": 0.8976,
+    "rgbNccMin": 0.95777,
+    "kpMeanMax": 6.905,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas",
+     "emo-smile-atlas"
+    ]
+   },
+   "thinking_trans": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.31254,
+    "edgeNccMedian": 0.84276,
+    "rgbNccMin": 0.72738,
+    "kpMeanMax": 16.379,
+    "bestRefs": [
+     "closed-atlas-tail",
+     "emo-sadtail-atlas",
+     "side-thinking1"
+    ]
+   },
+   "thinking_speaking1": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.43554,
+    "edgeNccMedian": 0.43864,
+    "rgbNccMin": 0.75296,
+    "kpMeanMax": 9.599,
+    "bestRefs": [
+     "side-keypoint"
+    ]
+   },
+   "thinking_speaking2": {
+    "frames": [
+     0,
+     60,
+     120,
+     179,
+     239,
+     299
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.81593,
+    "edgeNccMedian": 0.86572,
+    "rgbNccMin": 0.9695,
+    "kpMeanMax": 5.24,
+    "bestRefs": [
+     "side-thinking1"
+    ]
+   },
+   "thinking_to_serious": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.25039,
+    "edgeNccMedian": 0.37517,
+    "rgbNccMin": 0.65214,
+    "kpMeanMax": 17.546,
+    "bestRefs": [
+     "side-keypoint",
+     "side-thinking1"
+    ]
+   },
+   "thinking_to_key_point": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.57346,
+    "edgeNccMedian": 0.87302,
+    "rgbNccMin": 0.86847,
+    "kpMeanMax": 9.08,
+    "bestRefs": [
+     "side-keypoint",
+     "side-thinking1"
+    ]
+   },
+   "key_point_speaking": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.44708,
+    "edgeNccMedian": 0.45211,
+    "rgbNccMin": 0.73974,
+    "kpMeanMax": 9.439,
+    "bestRefs": [
+     "side-thinking1"
+    ]
+   },
+   "serious_to_thinking": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.24804,
+    "edgeNccMedian": 0.47291,
+    "rgbNccMin": 0.63988,
+    "kpMeanMax": 19.5,
+    "bestRefs": [
+     "side-keypoint",
+     "side-thinking1"
+    ]
+   },
+   "shy_trans": {
+    "frames": [
+     0,
+     12,
+     24,
+     35,
+     47,
+     59
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.90794,
+    "edgeNccMedian": 0.95698,
+    "rgbNccMin": 0.98991,
+    "kpMeanMax": 4.825,
+    "bestRefs": [
+     "emo-sadtail-atlas"
+    ]
+   },
+   "shy_speaking1": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.93887,
+    "edgeNccMedian": 0.94586,
+    "rgbNccMin": 0.99392,
+    "kpMeanMax": 5.305,
+    "bestRefs": [
+     "emo-sadtail-atlas"
+    ]
+   },
+   "shy_speaking2": {
+    "frames": [
+     0,
+     60,
+     120,
+     179,
+     239,
+     299
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.70884,
+    "edgeNccMedian": 0.91142,
+    "rgbNccMin": 0.90047,
+    "kpMeanMax": 7.4,
+    "bestRefs": [
+     "emo-sadtail-atlas",
+     "emo-smile-atlas"
+    ]
+   },
+   "surprise_trans": {
+    "frames": [
+     0,
+     12,
+     24,
+     35,
+     47,
+     59
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.92806,
+    "edgeNccMedian": 0.94326,
+    "rgbNccMin": 0.98924,
+    "kpMeanMax": 4.645,
+    "bestRefs": [
+     "emo-sadtail-atlas"
+    ]
+   },
+   "surprise_speaking": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.90864,
+    "edgeNccMedian": 0.91409,
+    "rgbNccMin": 0.98726,
+    "kpMeanMax": 5.118,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas"
+    ]
+   },
+   "angry_trans": {
+    "frames": [
+     0,
+     12,
+     24,
+     35,
+     47,
+     59
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.94032,
+    "edgeNccMedian": 0.94905,
+    "rgbNccMin": 0.99354,
+    "kpMeanMax": 4.941,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas"
+    ]
+   },
+   "angry_speaking": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.89645,
+    "edgeNccMedian": 0.91009,
+    "rgbNccMin": 0.97945,
+    "kpMeanMax": 5.449,
+    "bestRefs": [
+     "emo-sadtail-atlas",
+     "emo-smile-atlas"
+    ]
+   },
+   "idle_side_butterfly": {
+    "frames": [
+     0,
+     120,
+     240,
+     359,
+     479,
+     599
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.32485,
+    "edgeNccMedian": 0.76182,
+    "rgbNccMin": 0.65039,
+    "kpMeanMax": 13.742,
+    "bestRefs": [
+     "side-idle-wind"
+    ]
+   },
+   "closed_eye_trans": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.18741,
+    "edgeNccMedian": 0.62766,
+    "rgbNccMin": 0.49869,
+    "kpMeanMax": 16.09,
+    "bestRefs": [
+     "emo-angry-atlas",
+     "emo-sadtail-atlas",
+     "front-speakclosedeye1",
+     "front-trans-standby"
+    ]
+   },
+   "speaking_closed_eye_1": {
+    "frames": [
+     0,
+     36,
+     72,
+     107,
+     143,
+     179
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.77244,
+    "edgeNccMedian": 0.83651,
+    "rgbNccMin": 0.94399,
+    "kpMeanMax": 7.336,
+    "bestRefs": [
+     "closed-atlas-tail"
+    ]
+   },
+   "speaking_closed_eye_2": {
+    "frames": [
+     0,
+     60,
+     120,
+     179,
+     239,
+     299
+    ],
+    "frameIntervalMs": 17,
+    "edgeNccMin": 0.67101,
+    "edgeNccMedian": 0.80272,
+    "rgbNccMin": 0.87999,
+    "kpMeanMax": 6.908,
+    "bestRefs": [
+     "closed-atlas-tail"
+    ]
+   },
+   "key_point_to_thinking": {
+    "frames": [
+     0,
+     24,
+     48,
+     71,
+     95,
+     119
+    ],
+    "frameIntervalMs": 8,
+    "edgeNccMin": 0.57346,
+    "edgeNccMedian": 0.87302,
+    "rgbNccMin": 0.86847,
+    "kpMeanMax": 9.08,
+    "bestRefs": [
+     "side-keypoint",
+     "side-thinking1"
+    ]
+   }
+  }
+ },
+ "sameClipComparisons": {
+  "what": "同一剪辑的帧 ↔ 该剪辑自己的参考帧。⚠ 这**不是\"上界\"**：转场剪辑（trans_standby / closed_eye_trans / speaking_trans）的首末帧姿态差异极大，所以这个分布里也会出现接近 0 的 edgeNcc（实测 min -0.039）⇒ 它只说明\"同一条剪辑内部也会跨姿态\"，不能当阈值依据 ✗",
+  "queries": 123,
+  "metrics": {
+   "edgeNcc": {
+    "n": 123,
+    "min": -0.039,
+    "p05": 0.33333,
+    "p10": 0.6970280000000001,
+    "p25": 0.79985,
+    "median": 0.85142,
+    "p75": 0.9621,
+    "p95": 1.0,
+    "max": 1.0
+   },
+   "rgbNcc": {
+    "n": 123,
+    "min": -0.03854,
+    "p05": 0.650713,
+    "p10": 0.951054,
+    "p25": 0.98116,
+    "median": 0.99115,
+    "p75": 0.99543,
+    "p95": 1.0,
+    "max": 1.0
+   }
+  }
+ },
+ "refsetInternal": {
+  "what": "定妆集内部互测（不同剪辑之间）",
+  "queries": 21,
+  "metrics": {
+   "edgeNcc": {
+    "n": 21,
+    "min": 0.4511,
+    "p05": 0.4511,
+    "p10": 0.7837,
+    "p25": 0.88077,
+    "median": 0.92115,
+    "p75": 0.94519,
+    "p95": 0.99149,
+    "max": 0.99149
+   },
+   "rgbNcc": {
+    "n": 21,
+    "min": 0.74115,
+    "p05": 0.74115,
+    "p10": 0.97301,
+    "p25": 0.97546,
+    "median": 0.9925,
+    "p75": 0.99687,
+    "p95": 0.99981,
+    "max": 0.99981
+   },
+   "kpMeanDistPx": {
+    "n": 21,
+    "min": 0.9454756183071706,
+    "p05": 0.9454756183071706,
+    "p10": 2.1200194584162038,
+    "p25": 3.3820453518393188,
+    "median": 4.558859079144446,
+    "p75": 5.472851118588485,
+    "p95": 8.68738551351501,
+    "max": 8.68738551351501
+   }
+  },
+  "pairs": [
+   {
+    "query": "front-idle-f000",
+    "bestRef": "emo-shy1",
+    "edgeNcc": 0.88077,
+    "rgbNcc": 0.98823,
+    "kpMeanDistPx": 4.289560660422445
+   },
+   {
+    "query": "front-idle-f059",
+    "bestRef": "emo-angry-atlas",
+    "edgeNcc": 0.7837,
+    "rgbNcc": 0.97546,
+    "kpMeanDistPx": 6.571555128815626
+   },
+   {
+    "query": "front-speaking-med",
+    "bestRef": "front-speaking-short",
+    "edgeNcc": 0.91036,
+    "rgbNcc": 0.99687,
+    "kpMeanDistPx": 3.3820453518393188
+   },
+   {
+    "query": "front-speaking-short",
+    "bestRef": "front-trans-standby",
+    "edgeNcc": 0.94519,
+    "rgbNcc": 0.9984,
+    "kpMeanDistPx": 2.598221603529849
+   },
+   {
+    "query": "front-smile-speaking",
+    "bestRef": "emo-angry",
+    "edgeNcc": 0.91957,
+    "rgbNcc": 0.99079,
+    "kpMeanDistPx": 5.031952496328792
+   },
+   {
+    "query": "front-trans-standby",
+    "bestRef": "front-speaking-short",
+    "edgeNcc": 0.94519,
+    "rgbNcc": 0.9984,
+    "kpMeanDistPx": 2.5982216035298484
+   },
+   {
+    "query": "front-speakclosedeye1",
+    "bestRef": "closed-atlas-tail",
+    "edgeNcc": 0.81826,
+    "rgbNcc": 0.97301,
+    "kpMeanDistPx": 5.513837887853842
+   },
+   {
+    "query": "side-idle-wind",
+    "bestRef": "side-idle-soft-wind",
+    "edgeNcc": 0.99149,
+    "rgbNcc": 0.99981,
+    "kpMeanDistPx": 0.9454756183071706
+   },
+   {
+    "query": "side-idle-soft-wind",
+    "bestRef": "side-idle-wind",
+    "edgeNcc": 0.99149,
+    "rgbNcc": 0.99981,
+    "kpMeanDistPx": 0.9454756183071706
+   },
+   {
+    "query": "side-butterfly",
+    "bestRef": "side-idle-soft-wind",
+    "edgeNcc": 0.97278,
+    "rgbNcc": 0.99949,
+    "kpMeanDistPx": 2.1200194584162038
+   },
+   {
+    "query": "side-thinking1",
+    "bestRef": "side-keypoint",
+    "edgeNcc": 0.4511,
+    "rgbNcc": 0.74115,
+    "kpMeanDistPx": 8.68738551351501
+   },
+   {
+    "query": "side-keypoint",
+    "bestRef": "side-thinking1",
+    "edgeNcc": 0.4511,
+    "rgbNcc": 0.74115,
+    "kpMeanDistPx": 8.68738551351501
+   },
+   {
+    "query": "emo-angry",
+    "bestRef": "closed-trans-tail",
+    "edgeNcc": 0.93802,
+    "rgbNcc": 0.99563,
+    "kpMeanDistPx": 4.823011296415491
+   },
+   {
+    "query": "emo-sad",
+    "bestRef": "closed-trans-tail",
+    "edgeNcc": 0.91517,
+    "rgbNcc": 0.9927,
+    "kpMeanDistPx": 5.472851118588485
+   },
+   {
+    "query": "emo-shy1",
+    "bestRef": "closed-trans-tail",
+    "edgeNcc": 0.95975,
+    "rgbNcc": 0.99679,
+    "kpMeanDistPx": 3.741016468181833
+   },
+   {
+    "query": "emo-surprise",
+    "bestRef": "emo-shy1",
+    "edgeNcc": 0.92115,
+    "rgbNcc": 0.98951,
+    "kpMeanDistPx": 4.558859079144446
+   },
+   {
+    "query": "emo-smile-atlas",
+    "bestRef": "emo-angry-atlas",
+    "edgeNcc": 0.90019,
+    "rgbNcc": 0.97356,
+    "kpMeanDistPx": 4.467309792518658
+   },
+   {
+    "query": "emo-angry-atlas",
+    "bestRef": "emo-sadtail-atlas",
+    "edgeNcc": 0.9257,
+    "rgbNcc": 0.9925,
+    "kpMeanDistPx": 5.100582247062349
+   },
+   {
+    "query": "emo-sadtail-atlas",
+    "bestRef": "emo-angry-atlas",
+    "edgeNcc": 0.9257,
+    "rgbNcc": 0.9925,
+    "kpMeanDistPx": 5.100582247062349
+   },
+   {
+    "query": "closed-trans-tail",
+    "bestRef": "emo-shy1",
+    "edgeNcc": 0.95975,
+    "rgbNcc": 0.99679,
+    "kpMeanDistPx": 3.741016468181833
+   },
+   {
+    "query": "closed-atlas-tail",
+    "bestRef": "front-speakclosedeye1",
+    "edgeNcc": 0.81826,
+    "rgbNcc": 0.97301,
+    "kpMeanDistPx": 5.513837887853842
+   }
+  ]
+ },
+ "withinFamily": {
+  "what": "只跟**同族**参考帧比（不同剪辑）—— 新素材落在已知姿态族时，这条才是可用的阈值；跨姿态用全局阈值会被姿态本身打穿 ✗",
+  "queries": 19,
+  "metrics": {
+   "edgeNcc": {
+    "n": 19,
+    "min": 0.4511,
+    "p05": 0.4511,
+    "p10": 0.634908,
+    "p25": 0.85044,
+    "median": 0.92115,
+    "p75": 0.935445,
+    "p95": 0.99149,
+    "max": 0.99149
+   },
+   "rgbNcc": {
+    "n": 19,
+    "min": 0.74115,
+    "p05": 0.74115,
+    "p10": 0.863822,
+    "p25": 0.979475,
+    "median": 0.9925,
+    "p75": 0.997635,
+    "p95": 0.99981,
+    "max": 0.99981
+   },
+   "kpMeanDistPx": {
+    "n": 19,
+    "min": 0.9454756183071706,
+    "p05": 0.9454756183071706,
+    "p10": 1.8851106903943973,
+    "p25": 2.9901334776845836,
+    "median": 4.467309792518658,
+    "p75": 5.100582247062349,
+    "p95": 8.68738551351501,
+    "max": 8.68738551351501
+   }
+  },
+  "perFamily": {
+   "front": {
+    "queries": 7,
+    "edgeNccMin": 0.6809,
+    "edgeNccP05": 0.6909,
+    "edgeNccMedian": 0.8504,
+    "rgbNccMin": 0.8945,
+    "kpMeanMax": 8.124,
+    "edgeNcc_fail": 0.6468,
+    "edgeNcc_fix": 0.6909,
+    "edgeNcc_watch": 0.7009,
+    "note": "同族（front）参考帧互测的最优匹配分布；新素材若属于该族，判定用这组线"
+   },
+   "side": {
+    "queries": 5,
+    "edgeNccMin": 0.4511,
+    "edgeNccP05": 0.4511,
+    "edgeNccMedian": 0.9728,
+    "rgbNccMin": 0.7411,
+    "kpMeanMax": 8.687,
+    "edgeNcc_fail": 0.4285,
+    "edgeNcc_fix": 0.4511,
+    "edgeNcc_watch": 0.4511,
+    "note": "同族（side）参考帧互测的最优匹配分布；新素材若属于该族，判定用这组线"
+   },
+   "emotion": {
+    "queries": 7,
+    "edgeNccMin": 0.9002,
+    "edgeNccP05": 0.9046,
+    "edgeNccMedian": 0.9255,
+    "rgbNccMin": 0.9736,
+    "kpMeanMax": 5.101,
+    "edgeNcc_fail": 0.8552,
+    "edgeNcc_fix": 0.9046,
+    "edgeNcc_watch": 0.9089,
+    "note": "同族（emotion）参考帧互测的最优匹配分布；新素材若属于该族，判定用这组线"
+   }
+  },
+  "pairs": [
+   {
+    "query": "front-idle-f000",
+    "family": "front",
+    "bestRef": "front-smile-speaking",
+    "edgeNcc": 0.85044,
+    "rgbNcc": 0.98539,
+    "kpMeanDistPx": 4.982287186993463
+   },
+   {
+    "query": "front-idle-f059",
+    "family": "front",
+    "bestRef": "front-smile-speaking",
+    "edgeNcc": 0.71422,
+    "rgbNcc": 0.96408,
+    "kpMeanDistPx": 7.979485460840231
+   },
+   {
+    "query": "front-speaking-med",
+    "family": "front",
+    "bestRef": "front-speaking-short",
+    "edgeNcc": 0.91036,
+    "rgbNcc": 0.99687,
+    "kpMeanDistPx": 3.3820453518393188
+   },
+   {
+    "query": "front-speaking-short",
+    "family": "front",
+    "bestRef": "front-trans-standby",
+    "edgeNcc": 0.94519,
+    "rgbNcc": 0.9984,
+    "kpMeanDistPx": 2.598221603529849
+   },
+   {
+    "query": "front-smile-speaking",
+    "family": "front",
+    "bestRef": "front-idle-f000",
+    "edgeNcc": 0.85044,
+    "rgbNcc": 0.98539,
+    "kpMeanDistPx": 4.982287186993463
+   },
+   {
+    "query": "front-trans-standby",
+    "family": "front",
+    "bestRef": "front-speaking-short",
+    "edgeNcc": 0.94519,
+    "rgbNcc": 0.9984,
+    "kpMeanDistPx": 2.5982216035298484
+   },
+   {
+    "query": "front-speakclosedeye1",
+    "family": "front",
+    "bestRef": "front-smile-speaking",
+    "edgeNcc": 0.68086,
+    "rgbNcc": 0.89449,
+    "kpMeanDistPx": 8.123862455145366
+   },
+   {
+    "query": "side-idle-wind",
+    "family": "side",
+    "bestRef": "side-idle-soft-wind",
+    "edgeNcc": 0.99149,
+    "rgbNcc": 0.99981,
+    "kpMeanDistPx": 0.9454756183071706
+   },
+   {
+    "query": "side-idle-soft-wind",
+    "family": "side",
+    "bestRef": "side-idle-wind",
+    "edgeNcc": 0.99149,
+    "rgbNcc": 0.99981,
+    "kpMeanDistPx": 0.9454756183071706
+   },
+   {
+    "query": "side-butterfly",
+    "family": "side",
+    "bestRef": "side-idle-soft-wind",
+    "edgeNcc": 0.97278,
+    "rgbNcc": 0.99949,
+    "kpMeanDistPx": 2.1200194584162038
+   },
+   {
+    "query": "side-thinking1",
+    "family": "side",
+    "bestRef": "side-keypoint",
+    "edgeNcc": 0.4511,
+    "rgbNcc": 0.74115,
+    "kpMeanDistPx": 8.68738551351501
+   },
+   {
+    "query": "side-keypoint",
+    "family": "side",
+    "bestRef": "side-thinking1",
+    "edgeNcc": 0.4511,
+    "rgbNcc": 0.74115,
+    "kpMeanDistPx": 8.68738551351501
+   },
+   {
+    "query": "emo-angry",
+    "family": "emotion",
+    "bestRef": "emo-shy1",
+    "edgeNcc": 0.92555,
+    "rgbNcc": 0.99584,
+    "kpMeanDistPx": 4.320497161886805
+   },
+   {
+    "query": "emo-sad",
+    "family": "emotion",
+    "bestRef": "emo-angry",
+    "edgeNcc": 0.91474,
+    "rgbNcc": 0.99228,
+    "kpMeanDistPx": 3.8860720289899415
+   },
+   {
+    "query": "emo-shy1",
+    "family": "emotion",
+    "bestRef": "emo-angry",
+    "edgeNcc": 0.92555,
+    "rgbNcc": 0.99584,
+    "kpMeanDistPx": 4.320497161886804
+   },
+   {
+    "query": "emo-surprise",
+    "family": "emotion",
+    "bestRef": "emo-shy1",
+    "edgeNcc": 0.92115,
+    "rgbNcc": 0.98951,
+    "kpMeanDistPx": 4.558859079144446
+   },
+   {
+    "query": "emo-smile-atlas",
+    "family": "emotion",
+    "bestRef": "emo-angry-atlas",
+    "edgeNcc": 0.90019,
+    "rgbNcc": 0.97356,
+    "kpMeanDistPx": 4.467309792518658
+   },
+   {
+    "query": "emo-angry-atlas",
+    "family": "emotion",
+    "bestRef": "emo-sadtail-atlas",
+    "edgeNcc": 0.9257,
+    "rgbNcc": 0.9925,
+    "kpMeanDistPx": 5.100582247062349
+   },
+   {
+    "query": "emo-sadtail-atlas",
+    "family": "emotion",
+    "bestRef": "emo-angry-atlas",
+    "edgeNcc": 0.9257,
+    "rgbNcc": 0.9925,
+    "kpMeanDistPx": 5.100582247062349
+   }
+  ]
+ },
+ "crossFamily": {
+  "what": "只跟**其他族**参考帧比（不同剪辑）—— 说明\"跨姿态比边缘\"这个动作本身有多难",
+  "queries": 21,
+  "metrics": {
+   "edgeNcc": {
+    "n": 21,
+    "min": 0.01855,
+    "p05": 0.01862,
+    "p10": 0.01929,
+    "p25": 0.7837,
+    "median": 0.85757,
+    "p75": 0.91517,
+    "p95": 0.95975,
+    "max": 0.95975
+   },
+   "rgbNcc": {
+    "n": 21,
+    "min": -0.04769,
+    "p05": -0.047,
+    "p10": -0.04652,
+    "p25": 0.9677,
+    "median": 0.98823,
+    "p75": 0.99126,
+    "p95": 0.99679,
+    "max": 0.99679
+   },
+   "kpMeanDistPx": {
+    "n": 21,
+    "min": 3.741016468181833,
+    "p05": 3.741016468181833,
+    "p10": 3.882088573375236,
+    "p25": 4.361269949635762,
+    "median": 5.476641058820893,
+    "p75": 6.673916217471513,
+    "p95": 23.86712514701983,
+    "max": 24.330685489377732
+   }
+  }
+ },
+ "negatives": {
+  "what": "明确标注的\"不像\"样本",
+  "sources": [
+   "scene:amadeus_ambient_high_blend.webp",
+   "scene:subtitle_frame_big.webp",
+   "synthetic:disk-noise",
+   "synthetic:disk-flat",
+   "synthetic:stripes-rect"
+  ],
+  "LIMITATION": "⚠ 本仓库**没有第二个角色的素材** ⇒ 负样本只有\"非角色图（场景/webp 垫板/几何 demo）与合成形状\"。所以本标定保证的是\"明显不像能被拦住\"，**不能**保证\"另一个动漫角色也被拦住\" [待核对]。要收紧这条，需要再找一份他人角色图当负样本。",
+  "count": 7,
+  "metrics": {
+   "edgeNcc": {
+    "n": 7,
+    "min": -0.0409,
+    "p05": -0.038766999999999996,
+    "p10": -0.036634,
+    "p25": -0.028069999999999998,
+    "median": 0.02358,
+    "p75": 0.23251499999999997,
+    "p95": 0.7017469999999997,
+    "max": 0.83111
+   },
+   "rgbNcc": {
+    "n": 7,
+    "min": -0.99993,
+    "p05": -0.806619,
+    "p10": -0.613308,
+    "p25": -0.31259499999999996,
+    "median": -0.10028,
+    "p75": -0.04348,
+    "p95": 6.299999999997453e-05,
+    "max": 0.01083
+   },
+   "alphaIoU": {
+    "n": 7,
+    "min": 0.00608,
+    "p05": 0.14487200000000003,
+    "p10": 0.283664,
+    "p25": 0.47587,
+    "median": 0.49531,
+    "p75": 0.7983750000000001,
+    "p95": 0.997651,
+    "max": 1.0
+   },
+   "kpMeanDistPx": {
+    "n": 7,
+    "min": 3.6912145923435395,
+    "p05": 6.138357138475186,
+    "p10": 8.585499684606834,
+    "p25": 14.170389457626502,
+    "median": 16.72964575366914,
+    "p75": 25.116850328489285,
+    "p95": 32.950169695242266,
+    "max": 34.78218842296507
+   }
+  },
+  "rows": [
+   {
+    "name": "scene:amadeus_ambient_high_blend.webp",
+    "bestRef": "front-idle-f059",
+    "edgeNcc": -0.02235,
+    "rgbNcc": -0.35556,
+    "alphaIoU": 0.00608,
+    "kpMeanDistPx": 28.675459330555725
+   },
+   {
+    "name": "scene:subtitle_frame_big.webp",
+    "bestRef": "front-idle-f059",
+    "edgeNcc": 0.02358,
+    "rgbNcc": -0.26963,
+    "alphaIoU": 0.46872,
+    "kpMeanDistPx": 34.78218842296507
+   },
+   {
+    "name": "synthetic:disk-noise",
+    "bestRef": "front-speakclosedeye1",
+    "edgeNcc": -0.03379,
+    "rgbNcc": -0.0619,
+    "alphaIoU": 0.49531,
+    "kpMeanDistPx": 21.55824132642285
+   },
+   {
+    "name": "synthetic:disk-flat",
+    "bestRef": "front-trans-standby",
+    "edgeNcc": -0.0409,
+    "rgbNcc": -0.10028,
+    "alphaIoU": 0.48302,
+    "kpMeanDistPx": 16.72964575366914
+   },
+   {
+    "name": "synthetic:stripes-rect",
+    "bestRef": "closed-atlas-tail",
+    "edgeNcc": 0.06513,
+    "rgbNcc": 0.01083,
+    "alphaIoU": 0.60458,
+    "kpMeanDistPx": 16.492422502470642
+   },
+   {
+    "name": "synthetic:idle-rgb-inverted",
+    "bestRef": "front-idle-f000",
+    "edgeNcc": 0.83111,
+    "rgbNcc": -0.99993,
+    "alphaIoU": 1.0,
+    "kpMeanDistPx": 3.6912145923435395
+   },
+   {
+    "name": "synthetic:idle-silhouette-flat",
+    "bestRef": "emo-angry",
+    "edgeNcc": 0.3999,
+    "rgbNcc": -0.02506,
+    "alphaIoU": 0.99217,
+    "kpMeanDistPx": 11.848356412782362
+   }
+  ]
+ },
+ "separation": {
+  "edgeNcc": {
+   "positiveMin": 0.17692,
+   "negativeMax": 0.83111,
+   "separated": false,
+   "margin": -0.65419
+  },
+  "rgbNcc": {
+   "positiveMin": 0.49869,
+   "negativeMax": 0.01083,
+   "separated": true,
+   "margin": 0.48786
+  }
+ },
+ "thresholds": {
+  "edgeNcc_fail": 0.1769,
+  "edgeNcc_fix": 0.2611,
+  "edgeNcc_watch": 0.2907,
+  "rgbNcc_fail": 0.2548,
+  "rgbNcc_fix": 0.6503,
+  "rgbNcc_watch": 0.6659,
+  "kpMean_fail": 19.5,
+  "kpMean_fix": 18.242,
+  "areaRel_fix": 0.15,
+  "headTop_fail": 3.0,
+  "headCenter_fail": 3.0,
+  "failLineMode": {
+   "edgeNcc": "positiveMin(not separated, conservative)",
+   "rgbNcc": "midpoint(separated)"
+  },
+  "rules": {
+   "fail": "edgeNcc < edgeNcc_fail，或 rgbNcc < rgbNcc_fail，或 kpMean > kpMean_fail，或 |headTop/headCenter 偏移| > 3 px",
+   "fix": "edgeNcc < edgeNcc_fix（正样本 p05），或 rgbNcc < rgbNcc_fix，或 |areaRatio-1| > 15%，或 kpMean > kpMean_fix（p95）",
+   "watch": "edgeNcc < edgeNcc_watch（正样本 p10），或 rgbNcc < rgbNcc_watch",
+   "pass": "其余"
+  },
+  "derivation": "fail 线 = \"像\"的最小值与\"不像\"的最大值的中点（分离成立时）/ 正样本最小值（不成立时）；fix/watch 线 = \"像\"分布的 p05 / p10；kpMean_fail = \"像\"的最大值、kpMean_fix = p95；头部锚点容差 3 px 直接取上游 SpriteForge docs/production.md §Character contract 的值。"
+ },
+ "familyThresholds": {
+  "front": {
+   "queries": 7,
+   "edgeNccMin": 0.6809,
+   "edgeNccP05": 0.6909,
+   "edgeNccMedian": 0.8504,
+   "rgbNccMin": 0.8945,
+   "kpMeanMax": 8.124,
+   "edgeNcc_fail": 0.6468,
+   "edgeNcc_fix": 0.6909,
+   "edgeNcc_watch": 0.7009,
+   "note": "同族（front）参考帧互测的最优匹配分布；新素材若属于该族，判定用这组线"
+  },
+  "side": {
+   "queries": 5,
+   "edgeNccMin": 0.4511,
+   "edgeNccP05": 0.4511,
+   "edgeNccMedian": 0.9728,
+   "rgbNccMin": 0.7411,
+   "kpMeanMax": 8.687,
+   "edgeNcc_fail": 0.4285,
+   "edgeNcc_fix": 0.4511,
+   "edgeNcc_watch": 0.4511,
+   "note": "同族（side）参考帧互测的最优匹配分布；新素材若属于该族，判定用这组线"
+  },
+  "emotion": {
+   "queries": 7,
+   "edgeNccMin": 0.9002,
+   "edgeNccP05": 0.9046,
+   "edgeNccMedian": 0.9255,
+   "rgbNccMin": 0.9736,
+   "kpMeanMax": 5.101,
+   "edgeNcc_fail": 0.8552,
+   "edgeNcc_fix": 0.9046,
+   "edgeNcc_watch": 0.9089,
+   "note": "同族（emotion）参考帧互测的最优匹配分布；新素材若属于该族，判定用这组线"
+  }
+ },
+ "generatedFor": "tools/asset-consistency.py check（判定一律读这里的阈值，不读代码常量）"
+}
