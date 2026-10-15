@@ -1,0 +1,1008 @@
+{
+ "clipCount": 38,
+ "clips": {
+  "angry_speaking": {
+   "alphaMae": 0.1717,
+   "bytes": {
+    "poster": 19252,
+    "webm": 154686
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "angry_speaking",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9971,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/angry_speaking.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.16,
+   "video": "kurisu/video/angry_speaking.webm"
+  },
+  "angry_trans": {
+   "alphaMae": 0.1734,
+   "bytes": {
+    "poster": 20240,
+    "webm": 34263
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "angry_trans",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1028
+   ],
+   "edgeNcc": 0.998,
+   "frameIntervalMs": 8,
+   "frames": 60,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/angry_trans.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.42,
+   "video": "kurisu/video/angry_trans.webm"
+  },
+  "closed_eye_trans": {
+   "alphaMae": 0.2472,
+   "bytes": {
+    "poster": 19766,
+    "webm": 266372
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "closed_eye_trans",
+   "codec": "vp9-alpha",
+   "coded": [
+    700,
+    1028
+   ],
+   "edgeNcc": 0.9945,
+   "frameIntervalMs": 8,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/closed_eye_trans.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 35.85,
+   "video": "kurisu/video/closed_eye_trans.webm"
+  },
+  "idle": {
+   "alphaMae": 0.1988,
+   "bytes": {
+    "poster": 19264,
+    "webm": 117887
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "idle",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1028
+   ],
+   "edgeNcc": 0.9961,
+   "frameIntervalMs": 21,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.2,
+   "video": "kurisu/video/idle.webm"
+  },
+  "idle1": {
+   "alphaMae": 0.1993,
+   "bytes": {
+    "poster": 19210,
+    "webm": 121207
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "idle1",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1028
+   ],
+   "edgeNcc": 0.996,
+   "frameIntervalMs": 21,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle1.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.25,
+   "video": "kurisu/video/idle1.webm"
+  },
+  "idle2": {
+   "alphaMae": 0.1928,
+   "bytes": {
+    "poster": 19284,
+    "webm": 473718
+   },
+   "canvas": [
+    764,
+    1026
+   ],
+   "clip": "idle2",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1026
+   ],
+   "edgeNcc": 0.9956,
+   "frameIntervalMs": 21,
+   "frames": 290,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle2.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.98,
+   "video": "kurisu/video/idle2.webm"
+  },
+  "idle_closed_eye": {
+   "alphaMae": 0.1849,
+   "bytes": {
+    "poster": 19186,
+    "webm": 867427
+   },
+   "canvas": [
+    960,
+    1028
+   ],
+   "clip": "idle_closed_eye",
+   "codec": "vp9-alpha",
+   "coded": [
+    904,
+    1028
+   ],
+   "edgeNcc": 0.9961,
+   "frameIntervalMs": 17,
+   "frames": 738,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle_closed_eye.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.93,
+   "video": "kurisu/video/idle_closed_eye.webm"
+  },
+  "idle_mic_wind": {
+   "alphaMae": 0.2033,
+   "bytes": {
+    "poster": 19254,
+    "webm": 285508
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "idle_mic_wind",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1028
+   ],
+   "edgeNcc": 0.9956,
+   "frameIntervalMs": 21,
+   "frames": 194,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle_mic_wind.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.76,
+   "video": "kurisu/video/idle_mic_wind.webm"
+  },
+  "idle_side_butterfly": {
+   "alphaMae": 0.2511,
+   "bytes": {
+    "poster": 19518,
+    "webm": 1204375
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "idle_side_butterfly",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1028
+   ],
+   "edgeNcc": 0.9949,
+   "frameIntervalMs": 17,
+   "frames": 600,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle_side_butterfly.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.35,
+   "video": "kurisu/video/idle_side_butterfly.webm"
+  },
+  "idle_side_soft_wind": {
+   "alphaMae": 0.2124,
+   "bytes": {
+    "poster": 19276,
+    "webm": 217071
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "idle_side_soft_wind",
+   "codec": "vp9-alpha",
+   "coded": [
+    684,
+    1028
+   ],
+   "edgeNcc": 0.9958,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle_side_soft_wind.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.14,
+   "video": "kurisu/video/idle_side_soft_wind.webm"
+  },
+  "idle_side_wind": {
+   "alphaMae": 0.2153,
+   "bytes": {
+    "poster": 19266,
+    "webm": 216443
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "idle_side_wind",
+   "codec": "vp9-alpha",
+   "coded": [
+    684,
+    1028
+   ],
+   "edgeNcc": 0.9958,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle_side_wind.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.12,
+   "video": "kurisu/video/idle_side_wind.webm"
+  },
+  "idle_str_wind": {
+   "alphaMae": 0.2257,
+   "bytes": {
+    "poster": 19118,
+    "webm": 370158
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "idle_str_wind",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1028
+   ],
+   "edgeNcc": 0.9954,
+   "frameIntervalMs": 21,
+   "frames": 194,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/idle_str_wind.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.51,
+   "video": "kurisu/video/idle_str_wind.webm"
+  },
+  "key_point_speaking": {
+   "alphaMae": 0.1971,
+   "bytes": {
+    "poster": 22022,
+    "webm": 137873
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "key_point_speaking",
+   "codec": "vp9-alpha",
+   "coded": [
+    716,
+    1028
+   ],
+   "edgeNcc": 0.997,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/key_point_speaking.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.06,
+   "video": "kurisu/video/key_point_speaking.webm"
+  },
+  "key_point_to_thinking": {
+   "alphaMae": 0.2075,
+   "bytes": {
+    "poster": 22972,
+    "webm": 156511
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "key_point_to_thinking",
+   "codec": "vp9-alpha",
+   "coded": [
+    564,
+    1028
+   ],
+   "edgeNcc": 0.9961,
+   "frameIntervalMs": 8,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/key_point_to_thinking.poster.webp",
+   "reverse": true,
+   "rgbPsnr": 36.88,
+   "video": "kurisu/video/key_point_to_thinking.webm"
+  },
+  "sad_speaking": {
+   "alphaMae": 0.1712,
+   "bytes": {
+    "poster": 19148,
+    "webm": 97992
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "sad_speaking",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9969,
+   "frameIntervalMs": 17,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/sad_speaking.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.92,
+   "video": "kurisu/video/sad_speaking.webm"
+  },
+  "sad_trans": {
+   "alphaMae": 0.1872,
+   "bytes": {
+    "poster": 19414,
+    "webm": 66709
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "sad_trans",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9966,
+   "frameIntervalMs": 8,
+   "frames": 60,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/sad_trans.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.86,
+   "video": "kurisu/video/sad_trans.webm"
+  },
+  "serious_to_thinking": {
+   "alphaMae": 0.1895,
+   "bytes": {
+    "poster": 18600,
+    "webm": 163110
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "serious_to_thinking",
+   "codec": "vp9-alpha",
+   "coded": [
+    564,
+    1028
+   ],
+   "edgeNcc": 0.996,
+   "frameIntervalMs": 8,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/serious_to_thinking.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.75,
+   "video": "kurisu/video/serious_to_thinking.webm"
+  },
+  "shy_speaking1": {
+   "alphaMae": 0.1712,
+   "bytes": {
+    "poster": 19554,
+    "webm": 115719
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "shy_speaking1",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9974,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/shy_speaking1.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.47,
+   "video": "kurisu/video/shy_speaking1.webm"
+  },
+  "shy_speaking2": {
+   "alphaMae": 0.1777,
+   "bytes": {
+    "poster": 19522,
+    "webm": 286706
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "shy_speaking2",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9973,
+   "frameIntervalMs": 17,
+   "frames": 300,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/shy_speaking2.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.21,
+   "video": "kurisu/video/shy_speaking2.webm"
+  },
+  "shy_trans": {
+   "alphaMae": 0.1752,
+   "bytes": {
+    "poster": 19470,
+    "webm": 44518
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "shy_trans",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9972,
+   "frameIntervalMs": 8,
+   "frames": 60,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/shy_trans.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.07,
+   "video": "kurisu/video/shy_trans.webm"
+  },
+  "smile_speaking": {
+   "alphaMae": 0.1764,
+   "bytes": {
+    "poster": 19088,
+    "webm": 142526
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "smile_speaking",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9972,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/smile_speaking.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.33,
+   "video": "kurisu/video/smile_speaking.webm"
+  },
+  "speaking_closed_eye_1": {
+   "alphaMae": 0.1671,
+   "bytes": {
+    "poster": 19092,
+    "webm": 136663
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_closed_eye_1",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.997,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/speaking_closed_eye_1.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.26,
+   "video": "kurisu/video/speaking_closed_eye_1.webm"
+  },
+  "speaking_closed_eye_2": {
+   "alphaMae": 0.1581,
+   "bytes": {
+    "poster": 18936,
+    "webm": 267603
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_closed_eye_2",
+   "codec": "vp9-alpha",
+   "coded": [
+    612,
+    1028
+   ],
+   "edgeNcc": 0.9972,
+   "frameIntervalMs": 17,
+   "frames": 300,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/speaking_closed_eye_2.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.2,
+   "video": "kurisu/video/speaking_closed_eye_2.webm"
+  },
+  "speaking_long": {
+   "alphaMae": 0.1678,
+   "bytes": {
+    "poster": 19382,
+    "webm": 304057
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_long",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9973,
+   "frameIntervalMs": 17,
+   "frames": 360,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/speaking_long.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.44,
+   "video": "kurisu/video/speaking_long.webm"
+  },
+  "speaking_loop1": {
+   "alphaMae": 0.1473,
+   "bytes": {
+    "poster": 18272,
+    "webm": 103452
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_loop1",
+   "codec": "vp9-alpha",
+   "coded": [
+    500,
+    1028
+   ],
+   "edgeNcc": 0.9974,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/speaking_loop1.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 38.57,
+   "video": "kurisu/video/speaking_loop1.webm"
+  },
+  "speaking_loop2": {
+   "alphaMae": 0.159,
+   "bytes": {
+    "poster": 18332,
+    "webm": 189095
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_loop2",
+   "codec": "vp9-alpha",
+   "coded": [
+    500,
+    1028
+   ],
+   "edgeNcc": 0.9971,
+   "frameIntervalMs": 17,
+   "frames": 240,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/speaking_loop2.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 38.35,
+   "video": "kurisu/video/speaking_loop2.webm"
+  },
+  "speaking_med": {
+   "alphaMae": 0.174,
+   "bytes": {
+    "poster": 19460,
+    "webm": 202418
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_med",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9971,
+   "frameIntervalMs": 17,
+   "frames": 240,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/speaking_med.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.22,
+   "video": "kurisu/video/speaking_med.webm"
+  },
+  "speaking_short": {
+   "alphaMae": 0.1683,
+   "bytes": {
+    "poster": 19194,
+    "webm": 76892
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_short",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9971,
+   "frameIntervalMs": 17,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/speaking_short.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.07,
+   "video": "kurisu/video/speaking_short.webm"
+  },
+  "speaking_trans": {
+   "alphaMae": 0.2153,
+   "bytes": {
+    "poster": 19496,
+    "webm": 199617
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "speaking_trans",
+   "codec": "vp9-alpha",
+   "coded": [
+    700,
+    1028
+   ],
+   "edgeNcc": 0.9956,
+   "frameIntervalMs": 8,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/speaking_trans.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.5,
+   "video": "kurisu/video/speaking_trans.webm"
+  },
+  "surprise_speaking": {
+   "alphaMae": 0.1687,
+   "bytes": {
+    "poster": 19382,
+    "webm": 113681
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "surprise_speaking",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9974,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/surprise_speaking.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.26,
+   "video": "kurisu/video/surprise_speaking.webm"
+  },
+  "surprise_trans": {
+   "alphaMae": 0.1679,
+   "bytes": {
+    "poster": 19390,
+    "webm": 37712
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "surprise_trans",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9974,
+   "frameIntervalMs": 8,
+   "frames": 60,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/surprise_trans.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.27,
+   "video": "kurisu/video/surprise_trans.webm"
+  },
+  "thinking_speaking1": {
+   "alphaMae": 0.1656,
+   "bytes": {
+    "poster": 19952,
+    "webm": 109398
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "thinking_speaking1",
+   "codec": "vp9-alpha",
+   "coded": [
+    564,
+    1028
+   ],
+   "edgeNcc": 0.9973,
+   "frameIntervalMs": 17,
+   "frames": 180,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/thinking_speaking1.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.55,
+   "video": "kurisu/video/thinking_speaking1.webm"
+  },
+  "thinking_speaking2": {
+   "alphaMae": 0.168,
+   "bytes": {
+    "poster": 19942,
+    "webm": 240072
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "thinking_speaking2",
+   "codec": "vp9-alpha",
+   "coded": [
+    564,
+    1028
+   ],
+   "edgeNcc": 0.9971,
+   "frameIntervalMs": 17,
+   "frames": 300,
+   "hasAlpha": true,
+   "loopMode": "loop",
+   "poster": "kurisu/video/thinking_speaking2.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.51,
+   "video": "kurisu/video/thinking_speaking2.webm"
+  },
+  "thinking_to_key_point": {
+   "alphaMae": 0.222,
+   "bytes": {
+    "poster": 19952,
+    "webm": 160214
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "thinking_to_key_point",
+   "codec": "vp9-alpha",
+   "coded": [
+    564,
+    1028
+   ],
+   "edgeNcc": 0.9957,
+   "frameIntervalMs": 8,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/thinking_to_key_point.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.65,
+   "video": "kurisu/video/thinking_to_key_point.webm"
+  },
+  "thinking_to_serious": {
+   "alphaMae": 0.1976,
+   "bytes": {
+    "poster": 19668,
+    "webm": 224043
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "thinking_to_serious",
+   "codec": "vp9-alpha",
+   "coded": [
+    564,
+    1028
+   ],
+   "edgeNcc": 0.9953,
+   "frameIntervalMs": 8,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/thinking_to_serious.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.55,
+   "video": "kurisu/video/thinking_to_serious.webm"
+  },
+  "thinking_trans": {
+   "alphaMae": 0.2085,
+   "bytes": {
+    "poster": 19486,
+    "webm": 221815
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "thinking_trans",
+   "codec": "vp9-alpha",
+   "coded": [
+    620,
+    1028
+   ],
+   "edgeNcc": 0.9953,
+   "frameIntervalMs": 8,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/thinking_trans.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.5,
+   "video": "kurisu/video/thinking_trans.webm"
+  },
+  "trans_smile": {
+   "alphaMae": 0.1952,
+   "bytes": {
+    "poster": 19896,
+    "webm": 112167
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "trans_smile",
+   "codec": "vp9-alpha",
+   "coded": [
+    764,
+    1028
+   ],
+   "edgeNcc": 0.9965,
+   "frameIntervalMs": 5,
+   "frames": 120,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/trans_smile.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 37.08,
+   "video": "kurisu/video/trans_smile.webm"
+  },
+  "trans_standby": {
+   "alphaMae": 0.232,
+   "bytes": {
+    "poster": 19360,
+    "webm": 334595
+   },
+   "canvas": [
+    764,
+    1028
+   ],
+   "clip": "trans_standby",
+   "codec": "vp9-alpha",
+   "coded": [
+    636,
+    1028
+   ],
+   "edgeNcc": 0.995,
+   "frameIntervalMs": 21,
+   "frames": 196,
+   "hasAlpha": true,
+   "loopMode": "once_then_hold",
+   "poster": "kurisu/video/trans_standby.poster.webp",
+   "reverse": false,
+   "rgbPsnr": 36.51,
+   "video": "kurisu/video/trans_standby.webm"
+  }
+ },
+ "format": "xiaokeqing.kurisu.video-manifest.v1",
+ "generatedBy": "_dev/build_video_manifest.py",
+ "note": "frameIntervalMs 来自 statemachine（播放语义）；容器 60fps 的 durationMs 不是帧间隔，渲染器按 frameIndex 逐帧画。解码失败/404 ⇒ 逐级降级 video→图集→poster。",
+ "preload": [
+  "idle",
+  "idle_mic_wind"
+ ],
+ "root": "idle",
+ "source": "video-assets/manifest-video.json（2026-10-15 自检 40/40 过）+ static/kurisu/statemachine.json",
+ "tier": "h268",
+ "totalBytes": {
+  "all": 9315889,
+  "poster": 741616,
+  "webm": 8574273
+ }
+}

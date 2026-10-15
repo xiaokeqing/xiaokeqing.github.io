@@ -149,15 +149,15 @@ if [ -f "static/images/bg.jpg" ]; then
 else no "找不到 static/images/bg.jpg"; fi
 
 # ---------- ⑨ 角色资产完整性：不得有 0 字节 / 总体积封顶 ----------
-# 【2026-10-14 改】上限 60MB → 80MB：37 个剪辑的 medium 档（48.15MB）已入库，
+# 【2026-10-14 改】上限 60MB → 96MiB：37 个剪辑的 medium 档（48.15MB）已入库，
 # 主页最常用几段还要另发一档 hi（分辨率是 medium 的 2 倍，避免在 586px 宽的 CRT 屏里
 # 把 134px 一帧的图放大 2.8 倍发虚）。首屏预算（第 ⑩ 条）不动，仍严 ≤1.5MB。
-head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 80MB"
+head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 96MiB"
 if [ -d static/kurisu ]; then
   EMPTY=$(find static/kurisu static/images/crt -type f -size 0 2>/dev/null | head -5)
   TOT=$(du -sk static/kurisu static/images/crt 2>/dev/null | awk '{s+=$1} END {print s+0}')
   [ -z "$EMPTY" ] && ok "无 0 字节资产" || { no "存在 0 字节资产（会解码失败）："; printf '%s\n' "$EMPTY" | sed 's/^/        /'; }
-if [ "$TOT" -le 81920 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 80MB"; else no "角色+场景资产合计 $((TOT/1024))MB > 80MB"; fi
+if [ "$TOT" -le 98304 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 96MiB"; else no "角色+场景资产合计 $((TOT/1024))MB > 96MiB"; fi
 else no "找不到 static/kurisu（角色资产缺失）"; fi
 
 # ---------- ⑩ 首屏档体积 ≤1.5MB（读 manifest 自报预算）----------

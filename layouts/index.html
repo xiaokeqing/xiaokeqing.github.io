@@ -18,7 +18,7 @@
    重现方式：python _dev/gen-demo-pages.py
    ============================================================================ */ -}}
 <!DOCTYPE html>
-<html lang="{{ site.Language.Lang | default `zh-CN` }}">
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
 <style>
@@ -151,10 +151,10 @@
 /* ================= 数据：全部来自 static/kurisu/manifest.json ================= */
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CLIPS = {
-  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24},
-  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24},
-  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24},
-  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24}
+  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24, vid:'opening'},
+  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24, vid:'idle'},
+  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24, vid:'speaking_long'},
+  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24, vid:'thinking_to_key_point'}
 };
 /* 角色落位（scene.character 源码公式）：scale=min(w*0.64/764,h*0.90/1028), x=0.52w, y=bottom-h*0.012, anchor=(0.5,1) */
 const CHAR_BOX = {w:764, h:1028, maxW:0.64, maxH:0.90, xRatio:0.52, footRatio:0.012};
@@ -181,9 +181,352 @@ function resize(){
   document.getElementById('fallback').style.display = (r.height < 260 && !matchMedia('(pointer: coarse)').matches) ? 'grid' : 'none';
 }
 
+
+/* ================================================================================
+   桐莉栖 · 视频渲染层（T7）—— 用 9.54MB 透明 WebM 替代 71MB PNG 图集
+   --------------------------------------------------------------------------------
+   它只做一件事：drawFrame() 想画角色时，先问它"这一帧你出得来吗"。
+     出得来 → 它接手（画 <video> 的第 frameIndex 帧；缺帧先画 poster；两者都没有才让图集继续顶）；
+     出不来 → 返回 false，页面照原样画图集(boot→hi)。
+   ⇒ pixel 档 = 本模块整体不启用 = **逐像素等于接线前**；video 档失败也自动退回图集。
+
+   硬纪律（每条都有实测/规格出处，别改）：
+     · <video> 不进 DOM、muted、playsinline —— 避免任何样式/层叠/声音影响 ✗
+     · 同时存活 ≤4 枚 video + LRU；同一个剪辑用 1 枚（逐帧 seek 用两枚交替会打乱帧序 ✗）
+      偏离说明：接线方案 §4.2 写的是"两枚 video 交替"以避免 seek 白屏 —— 但本实现走的是
+      **逐帧 seek 定位**（video 第 i 帧 == 图集第 i 帧），两枚交替没有意义（同剪辑两枚各自 seek，
+      拿到的帧还会互相打架）。防白屏改用"poster 先顶位 + 解好的帧搬进离屏 canvas"，
+      效果等价且帧序确定 —— 这条偏离记在 docs/状态-C-站点角色.md 里。
+     · 逐帧对齐：video 第 i 帧 == 图集第 i 帧，单帧时长取 statemachine 的 frameIntervalMs
+       （容器是 60fps 编的，**durationMs 不是帧间隔** ✗）—— 见 _shots/video-align.json
+     · 首次手势前不预载视频 ✗（只按需取"当前该上屏的那一枚"）；手势后预载 manifest.preload
+     · saveData / slow-2g / reduced-motion / 低端机 / 不支持 VP9 的 Safari ⇒ 不取视频（走图集）
+     · 解码失败/404 ⇒ 该剪辑**永久降级**（不再重试 ✗）；连续 2 个剪辑解不出 alpha ⇒ 整站回 pixel
+     · 零第三方请求：清单与素材都在本站 /kurisu/ 下
+   诊断口径：window.__xkVid = V（验收脚本读 V.mode / V.drawn / V.failed / V.probe / V.errors）
+   ================================================================================ */
+var XKV2_BLOCK = (function(){
+  var V = {
+    mode:null, reason:null, auto:null, cfg:null,
+    enabled:false, videoOK:false, disp:false, manifest:null, mfState:0, mfP:null,
+    preload:'', gesture:false, cur:null,
+    decoded:{}, failed:{}, errors:[], alive:0, clock:0, free:[],
+    drawn:0, fallbackDrawn:0, released:0, alphaFail:0, probe:null
+  };
+  window.__xkVid = V;
+
+  var Firefox = /Firefox\//.test(navigator.userAgent || '');
+  var Chrome  = /Chrome\//.test(navigator.userAgent || '');
+  var Safari  = !Chrome && /Safari\//.test(navigator.userAgent || '');
+
+  function uaOf(){
+    var u = navigator.userAgent || '';
+    if(/iPhone|iPad|iPod/i.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+    if(Firefox) return 'firefox';
+    if(Chrome) return 'chromium';
+    if(Safari) return 'safari';
+    return 'unknown';
+  }
+  function core(){                       /* 总开关：?xk-kurisu-mode= > localStorage > <html data-...> */
+    var m = null, s = location.search;
+    var q = s.match(/[?&]xk-kurisu-mode=(video|pixel|off)/i);
+    if(q) m = q[1].toLowerCase();
+    if(!m){ try{ var ls = localStorage.getItem('xk-kurisu-mode'); if(ls) m = String(ls).toLowerCase(); }catch(e){} }
+    if(!m){ var a = document.documentElement.getAttribute('data-xk-kurisu-mode'); if(a) m = String(a).toLowerCase(); }
+    if(m === 'auto' || m === '1' || m === 'true') m = 'video';
+    if(m !== 'video' && m !== 'pixel' && m !== 'off') m = 'video';
+    return m;
+  }
+  V.cfg = {
+    rm: !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches),
+    saveData: !!(navigator.connection && navigator.connection.saveData),
+    slowNet: !!(navigator.connection && /(^|-)2g$/.test(navigator.connection.effectiveType || '')),
+    lowMem: (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4),
+    small: !!(window.matchMedia && matchMedia('(max-width: 979px)').matches),
+    canPlay: !!(document.createElement('video').canPlayType('video/webm; codecs="vp9"')),
+    mseVP9: !!(typeof MediaSource !== 'undefined' && MediaSource.isTypeSupported && MediaSource.isTypeSupported('video/webm; codecs="vp9"')),
+    ua: uaOf()
+  };
+  var c = V.cfg;
+  V.auto = (c.rm || c.saveData || c.slowNet || c.lowMem || (!c.canPlay && !c.mseVP9));
+  V.mode = core();
+  if(V.mode === 'off'){
+    V.reason = '开关 off（角色层不加载）';
+  }else if(V.mode === 'pixel'){
+    V.reason = '开关 pixel（保持接线前的图集行为）';
+  }else if(V.auto){
+    V.mode = 'pixel';
+    V.reason = 'auto 降级：' + [c.rm ? 'reduced-motion' : '', c.saveData ? 'saveData' : '',
+      c.slowNet ? '2g' : '', c.lowMem ? 'deviceMemory<=4' : '',
+      ((!c.canPlay && !c.mseVP9) ? ('无 VP9-alpha（' + c.ua + '）') : '')].filter(Boolean).join(' + ');
+  }else{
+    V.mode = 'poster';                   /* 先 poster 顶位，清单到位后升到 video（不留空框 ✗） */
+    V.disp = true;
+    V.reason = 'auto 通过（' + c.ua + '，VP9 声明可用）';
+  }
+  V.videoOK = (V.mode === 'poster' || V.mode === 'video');
+  V.enabled = (V.mode !== 'off' && V.mode !== 'pixel');
+
+  function clean(u){ return '/' + String(u).replace(/^\/+/, ''); }
+  function posterUrl(n){ var m = V.manifest && V.manifest.clips && V.manifest.clips[n]; return m ? clean(m.poster) : ('/kurisu/video/' + n + '.poster.webp'); }
+  function videoUrl(n){ var m = V.manifest && V.manifest.clips && V.manifest.clips[n]; return m ? clean(m.video) : ('/kurisu/video/' + n + '.webm'); }
+  function clipOf(name, plan){
+    /* 用图集侧那段配置反推剪辑名（/kurisu/full/opening.hi.webp → opening），
+       这样"剪辑 ↔ 视频文件"永远与图集同源，不新增一处会漂的硬编码路径 ✓ */
+    var v = null;
+    if(plan && plan.vid) v = plan.vid;
+    else if(plan && plan.src){ var mm = String(plan.src).match(/([A-Za-z0-9_]+)\.hi\.webp/); v = mm ? mm[1] : null; }
+    if(v === 'speaking') v = 'speaking_long';          /* 原型 4 剪辑名 ↔ 状态机剪辑名 */
+    if(v === 'thinking') v = 'thinking_to_key_point';
+    return v;
+  }
+  function manifestLoad(){
+    if(V.mfState === 2) return Promise.resolve(V.manifest);
+    if(V.mfState === 1) return V.mfP;
+    V.mfState = 1;
+    V.mfP = fetch('/kurisu/video-manifest.json', {cache:'force-cache'}).then(function(r){
+      if(!r.ok) throw new Error('manifest HTTP ' + r.status);
+      return r.json();
+    }).then(function(j){
+      V.manifest = j; V.mfState = 2; V.preload = (j.preload || []).slice(0, 3).join(',');
+      if(V.mode === 'poster') V.mode = 'video';        /* 清单到位 ⇒ 升到 video */
+      return j;
+    }).catch(function(e){
+      V.mfState = 3; V.errors.push('manifest: ' + e);
+      V.mode = 'pixel'; V.disp = false; V.videoOK = false; V.enabled = false;
+      V.reason = '视频清单取不到（' + e.message + '）→ 回图集';
+      return null;
+    });
+    return V.mfP;
+  }
+  /* ---- 逐帧 seek：video 第 i 帧 == 图集第 i 帧 ---- */
+  function frameTime(c, i){
+    var n = c.frames || 1, d = c.duration || 0;
+    if(i < 0) i = 0;
+    if(i > n - 1) i = n - 1;
+    if(n <= 1 || !d) return 0;
+    return Math.min(Math.max(0, i * d / n + d / (2 * n)), Math.max(0, d - 0.004));  /* 帧中心，避开边界抖 */
+  }
+  function seek(c, i){
+    if(!c.ready) return;
+    if(c.lastReq === i) return;
+    c.lastReq = i;
+    c.seq++;
+    if(c.have === i || c.pending === i) return;        /* 已经是这一帧 / 正在等这一帧 */
+    var t = frameTime(c, i), cur = c.vd.currentTime || 0;
+    if(Math.abs(cur - t) < 0.0008){ c.pending = i; pump(c); return; }
+    c.pending = i;
+    try{ c.vd.currentTime = t; }
+    catch(e){ c.err.push('seek: ' + e.message); fallback(c); return; }
+    if(c.seekTimer) clearTimeout(c.seekTimer);
+    c.seekTimer = setTimeout(function(){ c.err.push('seek timeout@' + i); fallback(c); }, 1500);
+  }
+  function pump(c){
+    /* 把解好的那一帧搬进离屏 canvas（drawImage 每帧直接读 <video> 太贵 ⇒ 只搬一次） */
+    if(!c.dcv || !c.vd || !c.vd.videoWidth) return;
+    try{
+      c.dcx.drawImage(c.vd, 0, 0, c.dcv.width, c.dcv.height);
+      c.have = c.pending;
+      c.pending = -1;
+      if(c.seekTimer){ clearTimeout(c.seekTimer); c.seekTimer = 0; }
+      if(!V.probe && c.have >= 0) probeAlpha(c);
+    }catch(e){ c.err.push('draw: ' + e.message); fallback(c); }
+  }
+  function fallback(c){
+    c.bad = true;
+    V.failed[c.name] = (c.err[c.err.length - 1] || 'unknown');
+    release(c, true);
+  }
+  function release(c, hard){
+    if(!c.act) return;
+    c.act = false;
+    V.released++;
+    V.alive = Math.max(0, V.alive - 1);
+    try{ c.vd.pause(); }catch(e){}
+    if(hard){
+      try{ c.vd.removeAttribute('src'); c.vd.load(); }catch(e){}
+      if(c.bdcv){ c.bdcv.width = 1; c.bdcv.height = 1; }
+    }
+    V.free.push(c);
+  }
+  function lru(){
+    if(V.alive < 4) return;
+    var best = null, k;
+    for(k in V.decoded){
+      var c = V.decoded[k];
+      if(!c.act || k === V.cur) continue;              /* 正在播的不动 */
+      if(!best || c.used < best.used) best = c;
+    }
+    if(best) release(best, true);                      /* 腾不出就不腾，下一帧再判 */
+  }
+  function make(name){
+    var vd = document.createElement('video');          /* ★绝不 appendChild：离屏、不进 DOM */
+    vd.muted = true; vd.defaultMuted = true; vd.playsInline = true; vd.autoplay = false;
+    vd.setAttribute('muted', ''); vd.setAttribute('playsinline', '');
+    vd.preload = 'auto';
+    var c = { name:name, vd:vd, act:false, ready:false, bad:false, seq:0, lastReq:-1, have:-1,
+              pending:-1, used:0, frames:null, intervalMs:null, duration:0,
+              pst:null, pdone:false, bdcv:null, dcx:null, dcv:null, seekTimer:0, err:[] };
+    vd.addEventListener('loadedmetadata', function(){
+      c.ready = true;
+      c.duration = isFinite(vd.duration) ? vd.duration : 0;
+      if(!c.bdcv){                                     /* 离屏缓冲：只搬一次，画的时候只做一次 drawImage */
+        c.bdcv = document.createElement('canvas');
+        c.bdcv.width = vd.videoWidth || 268;
+        c.bdcv.height = vd.videoHeight || 360;
+        c.dcx = c.bdcv.getContext('2d');
+        c.dcv = c.bdcv;
+      }
+      c.lastReq = -1;
+      pump(c);
+    });
+    vd.addEventListener('seeked', function(){ pump(c); });
+    if(vd.requestVideoFrameCallback){
+      try{ vd.requestVideoFrameCallback(function(){ pump(c); }); }catch(e){}
+    }
+    vd.addEventListener('error', function(){
+      c.err.push('video error ' + (vd.error && vd.error.code));
+      fallback(c);
+    });
+    var im = new Image(); im.decoding = 'async';
+    im.addEventListener('load', function(){ c.pdone = true; });
+    im.addEventListener('error', function(){ c.err.push('poster 404'); });
+    im.src = posterUrl(name);
+    c.pst = im;
+    vd.src = videoUrl(name);
+    return c;
+  }
+  function ensure(name){
+    var c = V.decoded[name];
+    if(c) return c;
+    if(V.failed[name]) return null;                    /* 永久降级：不再重试 ✗ */
+    lru();
+    c = make(name);
+    V.decoded[name] = c;
+    c.act = true;
+    c.used = ++V.clock;
+    V.alive++;
+    if(c.pst && c.pst.complete && c.pst.naturalWidth) c.pdone = true;
+    return c;
+  }
+  function probeAlpha(c){
+    /* 品红底法：透明像素画上去会留底色 ⇒ 读回来越接近纯品红 = alpha 越真。
+       （同一方法素材自检时已用过，见总账 §2.3"浏览器实播…品红底 canvas"） */
+    try{
+      var t = document.createElement('canvas');
+      t.width = 8; t.height = 8;
+      var x = t.getContext('2d');
+      x.fillStyle = 'rgb(255,0,255)';
+      x.fillRect(0, 0, 8, 8);
+      x.drawImage(c.bdcv, 0, 0, c.bdcv.width, c.bdcv.height, 0, 0, 8, 8);
+      var d = x.getImageData(0, 0, 8, 8).data, n = 0, magenta = 0;
+      for(var i = 0; i < d.length; i += 4){
+        n++;
+        if(d[i] > 235 && d[i + 1] < 55 && d[i + 2] > 235) magenta++;
+      }
+      var ratio = magenta / n;
+      V.probe = { clip:c.name, magentaRatio:Math.round(ratio * 1000) / 1000, ok:ratio >= 0.06 };
+      if(!V.probe.ok){
+        V.alphaFail++;
+        c.err.push('alpha 采样不像透明（品红比 ' + V.probe.magentaRatio + '）');
+        if(V.alphaFail >= 2){                          /* 连续两次 ⇒ 整站回 pixel（规格 §8） */
+          V.mode = 'pixel'; V.disp = false; V.videoOK = false; V.enabled = false;
+          V.reason = '连续 ' + V.alphaFail + ' 个剪辑解不出 alpha ⇒ 全站回图集';
+          for(var k in V.decoded) release(V.decoded[k], true);
+        }else{ fallback(c); }
+      }
+    }catch(e){ V.probe = { clip:c.name, error:String(e), ok:false }; }
+  }
+  /* ---- 每帧入口：返回 true = 这一帧已经画好了，页面不要再画图集 ---- */
+  /* 原型专属剪辑（不在视频白名单里：opening 只有 hi 图集，sad/smile 有素材但不在状态机）。
+     写死在这里是为了**首次开门一个 404 都不发**，而不是每帧去试一次。 */
+  var NOVID = {opening:1, sad:1, smile:1};
+  function draw(name, fi, box){
+    /* ★首次手势前：清单与视频一个都不取（规格 §6"首屏不载视频"、§5"无手势时视频不预载"）。
+       所以这一段只返回 false，页面照原样画图集 —— 接线后首屏字节因此**零变化**。 */
+    if(!V.gesture) return false;
+    if(!V.enabled || !V.videoOK || !V.disp) return false;
+    var plan = box.plan, ctx = box.ctx, W = box.w, H = box.h;
+    var vname = clipOf(name, plan);
+    if(!vname || NOVID[vname]){ V.fallbackDrawn++; return false; }   /* 交给图集 */
+    if(V.failed[vname]){ V.fallbackDrawn++; return false; }
+    V.cur = vname;
+    var c = ensure(vname);
+    if(!c){ V.fallbackDrawn++; return false; }
+    c.used = ++V.clock;
+    var meta = (V.manifest && V.manifest.clips && V.manifest.clips[vname]) || null;
+    /* 清单还没到（手势刚发生、fetch 在路上）：这一帧仍走图集，别猜帧数 ✗ */
+    if(!meta){ V.fallbackDrawn++; return false; }
+    var n = c.frames || plan.frames || 1;
+    var i = ((Math.round(fi) % n) + n) % n;
+    /* ★倒放剪辑（key_point_to_thinking）：图集是倒放、视频是正放 ⇒ video[n-1-i] == atlas[i]。
+       实测依据 _shots/video-align.json：不反转时首末帧剪影质心差 ±1.9px、中间帧吻合；
+       反转后全帧吻合。缺了这步，入场/收尾会跳一下。 */
+    var vi = meta.reverse ? (n - 1 - i) : i;
+    if(c.ready && !c.bad) seek(c, vi);
+
+    var src = null, sw = 0, sh = 0;
+    if(c.ready && !c.bad && c.have >= 0){ src = c.bdcv; sw = c.bdcv.width; sh = c.bdcv.height; }
+    else if(c.pdone){ src = c.pst; sw = c.pst.naturalWidth; sh = c.pst.naturalHeight; V.fallbackDrawn++; }
+    else { V.fallbackDrawn++; return false; }           /* poster 也没到 → 图集继续顶（不留空框 ✗） */
+    ctx.clearRect(0, 0, W, H);
+    if(plan.fit === 'screen'){
+      ctx.drawImage(src, 0, 0, sw, sh, 0, 0, W, H);
+    }else{
+      /* 落位公式与图集那一支逐字相同（同一处口径，不新增几何） */
+      var s = Math.min(W * CHAR_BOX.maxW / CHAR_BOX.w, H * CHAR_BOX.maxH / CHAR_BOX.h);
+      var dh = CHAR_BOX.h * s, dw = dh * (sw / sh);
+      var x = W * CHAR_BOX.xRatio, y = H - Math.max(3, H * CHAR_BOX.footRatio);
+      ctx.drawImage(src, 0, 0, sw, sh, x - dw / 2, y - dh, dw, dh);
+    }
+    V.drawn++;
+    return true;
+  }
+  function unlock(){
+    /* 只在**首次手势**里被调（pointerdown / keydown）：解锁后才会取清单、才知道预载集。
+       绝不在 play() 里调它 —— 那会让"手势前不预载视频"这条规格作废（本轮真踩过：
+       gate 报告里首屏多出 2 个 poster + 1 个 404）。 */
+    if(V.gesture) return;
+    V.gesture = true;
+    if(!V.enabled || !V.videoOK) return;
+    manifestLoad().then(function(j){
+      if(!j || !j.preload) return;
+      j.preload.slice(0, 3).forEach(function(nm){
+        if(!V.decoded[nm] && !V.failed[nm] && !NOVID[nm]){
+          var cc = ensure(nm);
+          if(cc) cc.used = 0;                           /* 预载进来的排到 LRU 末尾，别挤掉在播的 */
+        }
+      });
+    });
+  }
+  ['pointerdown', 'keydown'].forEach(function(ev){
+    addEventListener(ev, function(){ unlock(); }, {once:true, passive:true});
+  });
+  document.addEventListener('visibilitychange', function(){
+    /* 页面隐藏：暂停视频；可见后由 seek 归位（时间累加器的清零在 walker/loop 侧） */
+    var k;
+    if(document.hidden){ for(k in V.decoded){ try{ V.decoded[k].vd.pause(); }catch(e){} } }
+  });
+  return { draw:draw, unlock:unlock, ensure:ensure, state:V, clipOf:clipOf,
+           manifest:manifestLoad,
+           stats:function(){
+             var bytes = 0, k, dc = 0;
+             for(k in V.decoded){
+               dc++;
+               if(V.manifest && V.manifest.clips && V.manifest.clips[k]) bytes += V.manifest.clips[k].bytes.webm;
+             }
+             return { mode:V.mode, reason:V.reason, alive:V.alive, decoded:dc,
+                      failed:Object.keys(V.failed).length, bytesFetchedHint:bytes, drawn:V.drawn,
+                      fallbackDrawn:V.fallbackDrawn, released:V.released, preload:V.preload,
+                      gesture:V.gesture, probe:V.probe, errors:V.errors.slice(-4) };
+           } };
+})();
+
 function drawFrame(){
   if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */
   if(TRANS){ xkDrawTrans(Math.min(1, (performance.now() - TRANS) / 900)); return; }   /* ★L1：推拉中以过渡渲染为准 */
+  /* ★T7：视频层先出帧；它说"这一帧我出了"就不再画图集（false = 照原样画图集） */
+  if(XKV2_BLOCK.draw(cur, fi, {plan:CLIPS[cur], ctx:ctx, w:canvas.width, h:canvas.height})) return;
   if(!cur) return;
   const _xk = xkClipIm(cur);
   const c = _xk.c, im = _xk.im;

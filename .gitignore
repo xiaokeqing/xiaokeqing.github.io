@@ -65,3 +65,10 @@ _dev/*
 !_dev/build_mouth_data.py
 
 !_dev/gen-demo-pages.py
+
+# T7 视频接线工装（窗口 C，2026-10-15 批准入库）
+!_dev/build_video_manifest.py
+!_dev/check-video-align.py
+!_dev/verify-video-wiring.mjs
+!_dev/t7-baseline-shot.mjs
+!_dev/_t7-pixeldiff.py
