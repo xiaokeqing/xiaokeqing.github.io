@@ -527,6 +527,11 @@ function drawFrame(){
   if(TRANS){ xkDrawTrans(Math.min(1, (performance.now() - TRANS) / 900)); return; }   /* ★L1：推拉中以过渡渲染为准 */
   /* ★T7：视频层先出帧；它说"这一帧我出了"就不再画图集（false = 照原样画图集） */
   if(XKV2_BLOCK.draw(cur, fi, {plan:CLIPS[cur], ctx:ctx, w:canvas.width, h:canvas.height})) return;
+  /* ★T8：状态机接管后，这一帧由它决定；它没画出来（图还没到）就照原样走下面的原型逻辑 */
+  if(XK_SM_JS.state.tookOver){
+    var _sm = XK_SM_JS.paintOps(XK_SM_JS.state.cur, XK_SM_JS.state.fi, canvas.width, canvas.height);
+    if(_sm.mode){ XK_SM_JS.applyOps(ctx, _sm.ops); return; }
+  }
   if(!cur) return;
   const _xk = xkClipIm(cur);
   const c = _xk.c, im = _xk.im;
@@ -637,8 +642,453 @@ function play(name){
   drawFrame();
 }
 
+
+/* ================================================================================
+   桐莉栖 · 状态机游走 + 宿主触发（T8 第一批）
+   --------------------------------------------------------------------------------
+   它接管"她在播哪一段"：按 statemachine.json 的概率边游走，并接受四类宿主事件
+   （语音/情绪/空闲/兜底）切进那些**prob=0 的入口节点**（那些入口天生就是给情绪驱动留的）。
+   取帧有两条路：视频优先（复用 T7 的 XKV2_BLOCK），拿不到就画 medium 图集；两条路都不改几何公式。
+
+   硬纪律：
+     · statemachine.json 取不到/解析失败/结构不对 ⇒ V.on=false，**回到原型 4 剪辑循环**（不白屏 ✗）
+     · 出边概率归一化后掷骰；prob=0 的边永不参与随机
+     · once_then_hold 播完**停末帧**，等下一次跳转（不自己回绕 ✗）
+     · 页面 hidden：暂停推进并**清零累加器**（切回不快进 ✗）
+     · 取帧只用 medium.pages（first_frame/last_frame）+ frame_size；**不看 opaque_bbox**（实测已坏）
+     · 单帧时长用 statemachine 的 frameIntervalMs，并保留 Math.max(16, ...) 夹取
+   诊断口径：window.__xkSM（on/cur/fi/why/reasons/tl/fp/seed/replay/hiddenSkipped/errs）
+   ================================================================================ */
+var XK_SM_JS = (function(){
+  /* ---- 四类宿主触发 → 入口剪辑（9 个 prob=0 入口的子集；运行时优先用 JSON 里的 host_triggered_entries）---- */
+  var T0 = {
+    voice:     ['speaking_trans','speaking_short','key_point_speaking'],
+    emotion:   {angry:['angry_trans'], sad:['sad_trans'], shy:['shy_trans'], blush:['shy_trans'],
+                surprised:['surprise_trans'], disappointed:['thinking_trans'], happy:['trans_smile'],
+                sided_thinking:['thinking_trans'], normal:['trans_standby']},
+    idle:      ['trans_standby','idle'],
+    cadence:   ['closed_eye_trans','trans_smile','idle_mic_wind']
+  };
+  /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段） */
+  var VOICE_EMO = {
+    greet_first:'happy', greet_back:'happy', tab_return:'happy',
+    nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
+    nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+    fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
+  };
+  var V = {
+    on:false, err:null, errs:[], nodes:null, edges:null, byClip:{}, out:{}, entries:null, root:'idle',
+    T:T0, RNG:null, seed:null, replay:null, replayIdx:0, tl:[], why:'—', reasonCounts:{}, fpSet:{}, fpList:[],
+    cur:null, fi:0, acc:0, hold:false, lastT:0, hiddenSkipped:0, frames:0, atlasMode:null,
+    lastHost:-1e9, lastAny:-1e9, lastIdleFired:-1e9, lastCadFired:-1e9, lastHostMs:-1e9, lastHostEvt:-1e9, hostCd:1800,
+    idleMs:12000, cadenceMs:25000, idleCd:8000,
+    atlas:{mf:null, mfErr:null, imgs:{}, pending:0, loaded:0, pages:0, budget:1.5},
+    autoMaxMs:2200, startedAt:0
+  };
+  window.__xkSM = V;
+  function assignObj(dest, src){
+    /* 把 API 方法挂到状态对象上（两套诊断口径共用同一个对象）。
+       ⚠ 这里直接覆盖、不做"跳过同名"的判断；正因如此**状态字段名绝不能与 API 方法名重叠**
+         （本轮连踩两次：状态里的 reasons:{} 顶掉 reasons()、状态里的 host:[...] 顶掉 host()）。
+         下面这段自检把冲突直接喊出来，免得再靠人眼盯。 */
+    var clash = [];
+    for(var k in src){ if(Object.prototype.hasOwnProperty.call(src, k)){ if(k in dest) clash.push(k); dest[k] = src[k]; } }
+    if(clash.length) V.errs.push('API/状态字段命名冲突：' + clash.join(','));
+    return dest;
+  }
+
+  /* ---------- 工具 ---------- */
+  function qp(k){ var m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; }
+  /* 固定步进模式（验收脚本专用）：用**虚拟时钟**代替 performance.now，
+     这样 idle/cadence 那些基于时间的判定也随固定步长走 ⇒ 整条 timeline 可复现。 */
+  var vclock = 0;
+  function now(){ return vclock ? vclock : performance.now(); }
+  function b64enc(s){ try{ return btoa(unescape(encodeURIComponent(s))); }catch(e){ return ''; } }
+  function b64dec(s){ try{ return decodeURIComponent(escape(atob(s))); }catch(e){ return null; } }
+
+  /* ---------- 种子化 RNG（?seed 可复现）---------- */
+  function mkRng(seed){
+    var a = (seed >>> 0) || 1;
+    return function(){ a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; };
+  }
+  /* ---------- 归一化后掷骰子（prob=0 的边永不参与）---------- */
+  function pick(list){
+    var i, sum = 0, pos = [];
+    for(i = 0; i < list.length; i++){ if(list[i].prob > 0){ pos.push(list[i]); sum += list[i].prob; } }
+    if(!pos.length || sum <= 0) return null;
+    var r = V.RNG() * sum, acc = 0;
+    for(i = 0; i < pos.length; i++){ acc += pos[i].prob; if(r <= acc) return pos[i]; }
+    return pos[pos.length - 1];
+  }
+
+  /* ---------- 读图（状态机自己那一份，medium 档）---------- */
+  function loadMf(){
+    if(V.atlas.mf) return Promise.resolve(V.atlas.mf);
+    if(V.atlas.mfP) return V.atlas.mfP;
+    V.atlas.mfP = fetch('/kurisu/manifest.json', {cache:'default'}).then(function(r){
+      if(!r.ok) throw new Error('manifest HTTP ' + r.status);
+      return r.json();
+    }).then(function(j){
+      var cm = (j && j.clipsMedium && j.clipsMedium.clips) || null;
+      if(!cm) throw new Error('manifest 里没有 clipsMedium.clips');
+      V.atlas.mf = cm;
+      return cm;
+    }).catch(function(e){ V.atlas.mfErr = String(e.message || e); return null; });
+    return V.atlas.mfP;
+  }
+  function pageOf(clip, f0){                 /* f0 = 0-based 帧号（已含 reverse 处理）*/
+    var c = V.atlas.mf && V.atlas.mf[clip];
+    if(!c) return null;
+    var f1 = f0 + 1, ps = c.atlas.medium.pages, i, p;
+    for(i = 0; i < ps.length; i++){
+      p = ps[i];
+      if(f1 >= p.first_frame && f1 <= p.last_frame) return {c:c, p:p, local:f1 - p.first_frame};
+    }
+    return null;
+  }
+  function img(url){
+    if(!V.atlas.imgs[url]){
+      var im = new Image();
+      im.decoding = 'async';
+      im.src = '/' + String(url).replace(/^\/+/, '');
+      V.atlas.imgs[url] = im;
+      V.atlas.pending++;
+      im.addEventListener('load', function(){ V.atlas.pending--; V.atlas.loaded++; }, {once:true});
+      im.addEventListener('error', function(){ V.atlas.pending--; V.atlas.errs.push('atlas 404 ' + url); }, {once:true});
+    }
+    return V.atlas.imgs[url];
+  }
+  function prefetch(clip){
+    var c = V.atlas.mf && V.atlas.mf[clip];
+    if(!c) return;
+    var ps = c.atlas.medium.pages, i;
+    for(i = 0; i < ps.length; i++){ if(i < V.atlas.budget) img(ps[i].url); }
+  }
+  /* 视频优先、拿不到画图集；两者都没就绪就**不画**（让原型那一帧继续留着，避免闪空）。
+     关键：clearRect 滞后到"图真的就绪"那一步 —— 否则会把原型这一帧清成空白（会闪）✗ */
+  function paintOps(clip, fi, cw, ch){
+    var r = {mode:null, ops:[]};
+    if(V.atlas.mf === undefined) return r;          /* 图集清单还没到：什么都不做 */
+    var c = V.atlas.mf && V.atlas.mf[clip];
+    if(!c) return r;
+    var n = c.frames || 1, i = ((Math.round(fi) % n) + n) % n;
+    var at = pageOf(clip, c.reverse ? (n - 1 - i) : i);
+    if(!at) return r;
+    var im = img(at.p.url);
+    if(!im.complete || !im.naturalWidth) return r;    /* 没就绪：不 clear、不画 */
+    var tw = at.p.tile_w, th = at.p.tile_h;
+    r.ops.push(['clear', [0, 0, cw, ch]]);
+    r.ops.push(['img', [im, (at.local % at.p.cols) * tw, Math.floor(at.local / at.p.cols) * th, tw, th,
+      Math.min(cw * CHAR_BOX.maxW / CHAR_BOX.w, ch * CHAR_BOX.maxH / CHAR_BOX.h),
+      cw * CHAR_BOX.xRatio, ch - Math.max(3, ch * CHAR_BOX.footRatio)]]);
+    r.mode = 'atlas';
+    return r;
+  }
+  function paint(ctx, cw, ch){
+    if(window.__xkVid && window.__xkVid.__drawSm){
+      if(window.__xkVid.__drawSm(V.cur, V.fi, {plan:{vid:V.cur}, ctx:ctx, w:cw, h:ch})) return 'video';
+    }
+    var r = paintOps(V.cur, V.fi, cw, ch);
+    if(!r.mode) return null;
+    applyOps(ctx, r.ops);
+    return r.mode;
+  }
+
+  /* ---------- 图 ---------- */
+  function setHost(edges, hostList){
+    V.edges = edges;
+    V.hostEntries = hostList && hostList.length ? hostList : null;
+    if(V.hostEntries) V.T.voice = V.hostEntries;
+  }
+  function loadGraph(){
+    V.errs.push('load start');
+    /* ⚠ 用 cache:'default'（不是 force-cache）：状态机是**会随发布变的行为数据**，
+       被强缓存住的话换一版 statemachine.json 页面还会跑老图（实测：多次导航后
+       连"注入 404"都命中缓存拿回旧 200 ✗）。 */
+    return fetch('/kurisu/statemachine.json', {cache:'default'}).then(function(r){
+      if(!r.ok) throw new Error('statemachine HTTP ' + r.status);
+      return r.json();
+    }).then(function(g){
+      if(!g || !g.root || !g.nodes || !g.nodes.length || !g.edges) throw new Error('结构不对（缺 root/nodes/edges）');
+      V.nodes = g.nodes;
+      V.root = g.root;
+      var i, n, e;
+      for(i = 0; i < g.nodes.length; i++){
+        n = g.nodes[i];
+        V.byClip[n.clip] = n;
+        V.out[n.clip] = [];
+      }
+      for(i = 0; i < g.edges.length; i++){
+        e = g.edges[i];
+        if(!V.out[e.from]) V.out[e.from] = [];
+        V.out[e.from].push(e);
+      }
+      setHost(g.edges, g.host_triggered_entries);
+      V.on = true;
+      return true;
+    }).catch(function(err){
+      V.err = String((err && err.message) || err);
+      V.on = false;
+      V.errs.push('回落原型循环：' + V.err);
+      return false;
+    });
+  }
+
+  /* ---------- 跳转 ---------- */
+  function log(from, to, why, t){
+    V.tl.push({t:Math.round(t - V.startedAt), from:from, to:to, why:why});
+    V.reasonCounts[why] = (V.reasonCounts[why] || 0) + 1;
+  }
+  function enter(clip, why){
+    if(!V.byClip[clip]) return false;
+    var t = now();
+    log(V.cur || '(start)', clip, why, t);
+    V.cur = clip; V.fi = 0; V.acc = 0; V.hold = false;
+    V.why = why;
+    V.lastAny = t;
+    if(why.indexOf('host:') === 0) V.lastHost = t;
+    if(why === 'host:idle') V.lastIdleFired = t;
+    prefetch(clip);
+    if(window.__xkSmVoice && V.voiceLineOf) { /* 宿主语音由页面侧调 host()，这里不重复播 */ }
+    return true;
+  }
+  function entryFor(kind, payload){
+    var cand = null;
+    if(kind === 'emotion'){
+      var em = String((payload && payload.emotion) || payload || '');
+      cand = (V.T.emotion && V.T.emotion[em]) || null;
+    }else if(kind === 'idle' || kind === 'cadence' || kind === 'voice'){
+      cand = V.T[kind] || null;
+    }
+    if(cand){
+      for(var i = 0; i < cand.length; i++){
+        var cl = cand[i];
+        if((V.hostEntries && V.hostEntries.indexOf(cl) >= 0) || V.byClip[cl]) return cl;
+      }
+    }
+    /* 兜底：把 current 的出边里、指向 host 入口的那条挑出来 */
+    var es = V.out[V.cur] || [];
+    for(var k = 0; k < es.length; k++){
+      if(es[k].prob === 0) return es[k].to;
+    }
+    return V.root;
+  }
+  function roll(){
+    var out = V.out[V.cur] || [];
+    var e = pick(out);
+    if(!e) return false;
+    return enter(e.to, 'auto:' + e.from + '>' + e.to);
+  }
+  function host(kind, payload){
+    if(!V.on) return false;
+    if(V.fixed && !payload) return false;             /* 固定步进模式：只认带 payload 的显式注入 */
+    var t = now();
+    if(t - V.lastHostMs < V.hostCd) return false;      /* 冷却：防抖 */
+    V.lastHostMs = t;
+    V.lastHostEvt = t;                                 /* 只有真正的宿主动作才刷新 cadence 的判据 */
+    var cl = entryFor(kind, payload);
+    if(!cl) return false;
+    if(V.cur === cl && (V.byClip[cl] && V.byClip[cl].loopMode === 'loop')) return false;  /* 已经在循环这一段 */
+    return enter(cl, 'host:' + kind);
+  }
+
+  /* ---------- 推进 ---------- */
+  /* ops 是"推迟落笔"的指令序列：图没就绪时**一条都不发**，页面那一帧就不动（避免闪空 ✗）。
+     与 T7 视频层共用同一套落位公式（CHAR_BOX），两条路画出来的几何完全一致。 */
+  function applyOps(c, ops){
+    var i, o, im, s, dh, dw, x, y;
+    for(i = 0; i < ops.length; i++){
+      o = ops[i];
+      if(o[0] === 'clear'){ c.clearRect(o[1][0], o[1][1], o[1][2], o[1][3]); continue; }
+      if(o[0] !== 'img') continue;
+      im = o[1][0];
+      s = o[1][5]; dh = CHAR_BOX.h * s; dw = dh * (o[1][3] / o[1][4]);
+      x = o[1][6]; y = o[1][7];
+      c.drawImage(im, o[1][1], o[1][2], o[1][3], o[1][4], x - dw / 2, y - dh, dw, dh);
+    }
+  }
+  function step(dt){
+    var n = V.byClip[V.cur];
+    if(!n) return;
+    var iv = Math.max(16, n.frameIntervalMs || 33);     /* 硬约束：夹取保留 */
+    if(V.hold) return;                                  /* once_then_hold 播完停末帧 */
+    V.acc += dt;
+    var adv = Math.floor(V.acc / iv);
+    if(adv > 0){
+      V.acc -= adv * iv;
+      V.fi += adv;
+      if(V.fi >= n.frames){
+        if(n.loopMode === 'once_then_hold'){ V.fi = n.frames - 1; V.hold = true; }
+        else { V.fi = V.fi % n.frames; }
+      }
+      V.frames++;
+      var hh = hash();
+      if(!V.fpSet[hh]){ V.fpSet[hh] = 1; V.fpList.push(hh); }
+    }
+  }
+  function hash(){
+    try{
+      var d = ctx.getImageData(0, 0, canvas.width, canvas.height).data, h = 0;
+      for(var i = 0; i < d.length; i += 601) h = (h * 31 + d[i] + (d[i + 1] << 3)) >>> 0;
+      return h;
+    }catch(e){ return 'err'; }
+  }
+  function due(){
+    var t = now();
+    /* idle / cadence 走**各自己的**冷却，不吃 hostCd（hostCd 是给 voice/emotion 的防抖）。
+       注意 cadence 的判据是"**没有宿主事件**"（lastHostEvt），不是"没有触发"——
+       否则 idle 每 8s 刷新一次就永远轮不到 cadence（它本来就是兜底，得能真的兜上）。 */
+    if(t - V.lastHostEvt >= V.cadenceMs && t - V.lastCadFired >= V.cadenceMs){
+      V.lastCadFired = t; V.lastHost = t; V.lastHostMs = t;
+      enter(entryFor('cadence'), 'host:cadence');
+      return;
+    }
+    if(t - V.lastHost >= V.idleMs && t - V.lastIdleFired >= V.idleCd){
+      V.lastIdleFired = t; V.lastHost = t; V.lastHostMs = t;
+      enter(entryFor('idle'), 'host:idle');
+    }
+  }
+  function autoDue(){
+    if(V.replay) return false;
+    if(!V.autoAt) return false;
+    return now() >= V.autoAt;
+  }
+  function arm(){
+    var n = V.byClip[V.cur];
+    var dur = (n ? n.frames * Math.max(16, n.frameIntervalMs) : 900);
+    V.autoAt = now() + Math.min(V.autoMaxMs, Math.max(600, dur));
+  }
+  /* 自动跳转的节奏钳制：一段最多播 autoMaxMs 就换下一段（默认 2.2s）——
+     素材里 idle_closed_eye 有 738 帧/12.5s、idle_side_butterfly 600 帧/10s，
+     不钳制的话 30 秒只能看到 2~3 段，"她在动"反而看不出来。这条是**表现口径**，
+     改 V.autoMaxMs 即回退到"整段播完再换"。 */
+  function tick(dtForced){
+    if(!V.on) return false;
+    if(V.fixed && dtForced == null) return false;        /* 固定步进模式：只认 stepFixed，真实 rAF 不推进 */
+    var t = now();
+    var dt = (dtForced != null) ? (V.fixedMs || 33) : (t - (V.lastT || t));
+    V.lastT = t;
+    if(document.hidden){ V.hiddenSkipped++; V.acc = 0; return true; }   /* 隐藏：不推进、清零累加器 */
+    if(dt > 200) dt = 200;                                               /* 硬约束：夹取保留 */
+    /* replay：按时间线回放，保证"同一段画面"可复现 */
+    if(V.replay){
+      var ev = V.replay[V.replayIdx];
+      if(ev && (t - V.startedAt) >= ev.t){ V.replayIdx++; enter(ev.to, ev.why + ':replay'); }
+    }
+    step(dt);
+    var mode = paint(ctx, canvas.width, canvas.height);
+    if(mode) V.atlasMode = mode;
+    if(mode) V.drew = (V.drew || 0) + 1;
+    /* ⚠ 固定步进模式下 due() 也必须由 stepFixed 驱动的 tick 来跑（否则真实 rAF 会把
+       idle/cadence 从墙钟里额外打出来，timeline 就对不齐了 —— 本轮踩过）*/
+    if(dtForced != null) due();
+    if(V.replay){
+      var ev2 = V.replay[V.replayIdx];
+      if(ev2 && (t - V.startedAt) >= ev2.t){ V.replayIdx++; enter(ev2.to, ev2.why + ':replay'); }
+    }else if(autoDue()){
+      if(roll()) arm(); else V.autoAt = now() + 800;
+    }
+    return true;
+  }
+  function start(){
+    if(!V.on || V.cur) return;
+    V.startedAt = now();
+    V.lastT = V.startedAt;
+    V.lastHost = V.startedAt;
+    V.lastHostEvt = V.startedAt;
+    var first = (V.replay && V.replay[0]) ? V.replay[0].to : V.root;
+    enter(first, V.replay ? (V.replay[0].why + ':replay') : 'auto:start');
+    arm();
+  }
+
+  /* ---------- 页面钩子 ---------- */
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){ V.acc = 0; V.hold = V.hold; }
+    else { V.lastT = 0; V.acc = 0; }
+  });
+  /* status 行：**真实文本变化**才播（20s 防抖；不按定时器 ✗） */
+  (function(){
+    var seen = null, last = -1e9;
+    setInterval(function(){
+      if(!V.on || V.fixed) return;                     /* 固定步进（验收）模式下，宿主事件只由脚本注入 */
+      var el = document.querySelector('.crt-status') || document.getElementById('crtStatus') || document.querySelector('[data-xk-kurisu-status]');
+      var txt = el ? String(el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+      if(!txt || txt === seen) return;
+      seen = txt;
+      var t = now();
+      if(t - last < 20000) return;                    /* 20s 防抖 */
+      last = t;
+      host('voice', {line:'status'});
+    }, 2500);
+  })();
+  /* 每 1.25s 重新取一次种子序列（?seed 稳定；无 seed 用时间） */
+  V.seed = qp('seed') != null ? (parseInt(qp('seed'), 10) >>> 0) : (Date.now() >>> 0);
+  V.RNG = mkRng(V.seed);
+  if(qp('xk-idle')) V.idleMs = Math.max(2000, parseInt(qp('xk-idle'), 10) || V.idleMs);
+  if(qp('xk-host')) V.hostCd = Math.max(300, parseInt(qp('xk-host'), 10) || V.hostCd);
+  if(qp('replay')){
+    try{ V.replay = JSON.parse(b64dec(qp('replay')) || 'null'); }catch(e){ V.replay = null; }
+    if(V.replay && V.replay.length){ V.seed = V.replay[0].seed || V.seed; V.RNG = mkRng(V.seed); }
+  }
+  function timeline(){ return V.tl.map(function(e){ return e.t + ':' + e.to + ':' + e.why; }).join('|'); }
+  var API = {
+    state:V,
+    boot:function(){
+      if(qp('xk-sm') === 'off'){ V.errs.push('xk-sm=off'); return Promise.resolve(false); }
+      var rm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+      if(rm){ V.errs.push('reduced-motion ⇒ 不启用状态机'); return Promise.resolve(false); }
+      return loadMf().then(function(){ return loadGraph(); }).then(function(ok){
+        if(!ok) return false;                       /* 回落：原型 4 剪辑循环继续跑（不白屏 ✗）*/
+        window.__xkSmTakeOver = function(){
+          if(V.tookOver) return;
+          V.tookOver = true;
+          try{ if(typeof XK_ACT !== 'undefined') XK_ACT = null; }catch(e){}
+          start();                                  /* ⚠ 调函数名，不要调 V.start（V 是状态对象，不是 API）*/
+        };
+        /* 主页要等开场落定（showHud 里调 takeOver）；五页没有 opening，加载完就直接接 */
+        if(!window.__xkSmIsHome) window.__xkSmTakeOver();
+        return true;
+      });
+    },
+    start:start, tick:tick, host:host, entryFor:entryFor, takeOver:function(){ if(window.__xkSmTakeOver) window.__xkSmTakeOver(); },
+    /* 验收用：把时钟整体换成"虚拟时钟"（anchor 起算），必须在 takeOver 之前调 */
+    useVirtualClock:function(anchor){ V.virtual = true; vclock = anchor || 1000; V.anchor = vclock; return vclock; },
+    /* 固定步进推进（**只给验收脚本用**：这台机器 headless 的 rAF 会被节流，
+       靠墙钟等不到确定性）。它按固定 dt 走一步，seed 相同 + 宿主事件序列相同 ⇒ timeline 逐字相同。 */
+    stepFixed:function(dt, n){
+      var k, d = dt || 33;
+      if(document.hidden){ V.hiddenSkipped++; V.acc = 0; return 0; }
+      V.fixed = true;                                   /* 固定步进模式：真实 rAF 不再推进 */
+      if(!vclock) vclock = 1000;
+      for(k = 0; k < (n || 1); k++){ vclock += d; tick(d); }
+      return n || 1;
+    },    paint:paint, paintOps:paintOps, applyOps:applyOps,
+    currentClip:function(){ return V.cur; },   /* ⚠ 不要叫 cur：状态里已有 cur（当前剪辑名），会互相顶 ✗ */
+    timeline:timeline,
+    replayB64:function(){
+      return b64enc(JSON.stringify(V.tl.map(function(e, i){ return {t:e.t, to:e.to, why:e.why, seed:i ? null : V.seed}; })));
+    },
+    reasons:function(){ return JSON.parse(JSON.stringify(V.reasonCounts || {})); },
+    stats:function(){
+      return { on:V.on, err:V.err, tookOver:!!V.tookOver, cur:V.cur, fi:V.fi, why:V.why, frames:V.frames, drew:V.drew || 0,
+               atlasMode:V.atlasMode, fingerprints:V.fpList.length, fingerprintList:V.fpList.slice(0, 24),
+               reasons:V.reasonCounts, timeline:V.tl.slice(-40), timelineN:V.tl.length, timelineRaw:V.tl, seed:V.seed,
+               nodes:V.nodes ? V.nodes.length : 0, edges:V.edges ? V.edges.length : 0,
+               entries:(V.hostEntries || []).length, hiddenSkipped:V.hiddenSkipped,
+               atlas:{pages:V.atlas.pages, loaded:V.atlas.loaded, pending:V.atlas.pending, err:V.atlas.mfErr},
+               replay:!!V.replay, idleMs:V.idleMs, cadenceMs:V.cadenceMs, hostCd:V.hostCd,
+               errors:V.errs.slice(-6) };
+    }
+  };
+  /* ★既有门禁（gate-firstscreen 第 251 行）读的是 `window.__xkSM.reasons()` ——
+     所以把 API 的方法也挂到 window.__xkSM 这个对象上，两套诊断口径同时可用（都指向同一份状态）。 */
+  return assignObj(V, API);
+})();
+
 function loop(t){
   if(!started) return;
+  /* ★T8：状态机接管后由它推进（含 hidden 清零/累加器夹取/指纹记账）*/
+  if(XK_SM_JS.state.tookOver){ XK_SM_JS.tick(); lastT = t; requestAnimationFrame(loop); return; }
   if(XK_ACT){ xkmTick(t); lastT = t; requestAnimationFrame(loop); return; }   /* ★表情模式接管画布 */
   if(cur){
     const _xk = xkClipIm(cur);
@@ -684,6 +1134,7 @@ function loop(t){
 let hudShown = false;
 function showHud(){
   if(hudShown) return; hudShown = true;
+  if(typeof XK_SM_JS !== 'undefined') XK_SM_JS.takeOver();   /* ★T8：开场落定后交给状态机 */
   document.getElementById('crtStatus').hidden = false;
   /* ★2026-10-15：语音正在说的时候字幕归语音那条，别被这句默认文案顶掉 */
   const _v = window.__xkVoice;
@@ -713,6 +1164,9 @@ if(RM){
 }else{
   play('opening');
 }
+window.__xkSmIsHome = true;
+function xkSmBoot(){ try{ XK_SM_JS.boot(); }catch(e){} }
+setTimeout(xkSmBoot, 600);   /* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/
 started = true; lastT = performance.now();
 requestAnimationFrame(loop);
 const veil = document.getElementById('bootveil');
@@ -977,6 +1431,12 @@ function xkmReveal(){
 }
 /* 语音联动（HOME_VOICE 的两处 handler 会调这两个）：手选表情时不抢画布 */
 function xkVoiceAnim(id){
+  /* ★T8：语音是四类宿主触发之一 —— 先按情绪切（更贴语义），再按语音规则进 talking 入口 */
+  if(window.__xkSM && window.__xkSM.on){
+    var _auto = (typeof XK_VOICE_EMO !== 'undefined' && XK_VOICE_EMO[id]) || null;
+    if(_auto) XK_SM_JS.host('emotion', {emotion:_auto});
+    XK_SM_JS.host('voice', {line:id}); return;
+  }
   if(XK_ACT) return;
   var auto = XK_VOICE_EMO[id];
   if(auto && auto !== 'normal' && !XKM.manual){ xkmSetEmotion(auto); return; }
@@ -989,6 +1449,13 @@ function xkVoiceEnd(){
   if(!XK_ACT && typeof play === 'function') play('idle');
 }
 xkmBuild();
+/* ★T8：点表情点 = 宿主触发 emotion（映射到 prob=0 的情绪入口剪辑）*/
+document.addEventListener('click', function(ev){
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-emo]') : null;
+  if(!b) return;
+  if(window.__xkSM && window.__xkSM.on && typeof XK_SM_JS !== 'undefined')
+    XK_SM_JS.host('emotion', {emotion:b.getAttribute('data-emo')});
+}, true);
 /* manifest 在首屏门禁 1.5s 窗口之后才取 —— 表情资产绝不进首屏字节 */
 if(!RM){ setTimeout(xkmLoad, 2000); }
 

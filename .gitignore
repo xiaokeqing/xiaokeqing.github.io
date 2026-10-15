@@ -72,3 +72,7 @@ _dev/*
 !_dev/verify-video-wiring.mjs
 !_dev/t7-baseline-shot.mjs
 !_dev/_t7-pixeldiff.py
+
+# T8 状态机工装（窗口 C，2026-10-15 批准入库）
+!_dev/verify-sm-walker.mjs
+!_dev/refresh_manifest_voice.py
