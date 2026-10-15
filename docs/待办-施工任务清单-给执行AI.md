@@ -938,3 +938,19 @@ T14 白名单来源：`_asset-review\\03-character-kurisu\\clip-transition-table
 注意：手工 notify.sh **不写** notify-audit.jsonl（那是应用侧账本 ✓）；不许为了造记录去调 watchdog 端点 ✗
 需要通知的节点（固定清单 ✓）：站点每批发布上线 · 声音库里程碑 · 动画功能上线 · 重大发现或回滚 ✓
 ```
+### SecAgent 清单带来的六处订正（2026-10-16 00:xx，窗口 X 只读实测）
+
+```
+① **模型事实已更新**：线上现为 provider=deepseek / deepseek-chat / fallback=DISABLED
+   容器起于 21:54 ✓（K 在 20:33 记的 dashscope/qwen-plus 已过期 ✗）⇒ **引用 K 必须带时点** ✓
+② tts 状态码：总账/提示词仍写 503 ✗ ⇒ 实测 400 TEXT_NOT_ALLOWED（待总账订正 ✓）
+③ **U1 口径已变**：F 文档里"倾向翻转 mask-ips"过期 ✗ ⇒ 站主已定"不翻转、前端只掩最后一段" ✓
+④ ★**我说错的一条** ✗：我在对话里说"蜜罐 10000 = ES 截断上限"——**文档里查不到出处** ✗
+   唯一依据是 X 的只读实测（honeypot total=10000、sampled=800，而 connections=267/logins=266）
+   ＋ 窗口 Q 引的后端测试注释"要取 track_total_hits 真值、不是 10000 上限"（注释在后端源码里 ✓）
+   ⇒ 正确口径：**"后端返回 10000，疑似截断上限，待后端确认"** ✗ 不许当已确认事实 ✓
+⑤ **只读端点条数三处不一致**：F=12 / L 的 T29 白名单=8（漏 webstats/stories/story）/双智能体规格=11 ✗
+   ⇒ 与 T29 有关 ✗ ⇒ 实现 T29 时必须**以实测枚举为准**（不许照抄任一文档 ✓）
+⑥ 额度口径：L 写"站主自用池 0/200"、K 记 `APP_QUOTA_DAILY_LIMIT=50` ⇒ "200"无出处 ⇒ [待核对] ✓
+另：`/api/health` 仍 200 无鉴权且含提交信息/mock 开关/documentVectors=318 ✓（U5 未修 ✓）
+```
