@@ -6,6 +6,11 @@
   ... --mode three | batch12 | all60        （--lines 默认 lines60.json，bank 表示只读线上 bank.json）
   可选 --no-post（只出 raw wav，不做 loudnorm/编码/包络）、--emotions on（用情绪参考包）、--device cuda|cpu
 
+T17 A/B（同一句 + 同一情绪，多档对比）：
+  python <repo>\scripts\voice\synth.py --mode one --ids greet_first --lang 日文 --emotions on ^
+      --model v3|v2pro  --out E:\DeepSeek1\work\_tts-trial\ab3\v3 --tag ab3-v3
+  --model 只改"用哪套 GPT/SoVITS 权重"，后处理/包络口径与老命令完全一致。
+
 产物（默认 out/）：
   raw/<id>.wav                原始推理输出
   master/<id>.wav(.norm/.faded)  裁静音 + -16 LUFS 归一 + fade
@@ -40,6 +45,17 @@ REF_AUDIO = os.path.join(ROOT, "assets", "audio", "reference", "kurisu_reference
 GPT = os.path.join(ROOT, "assets", "models", "gpt-sovits", "weights", "gpt", "v3", "xxx-e15.ckpt")
 SOVITS = os.path.join(ROOT, "assets", "models", "gpt-sovits", "weights", "sovits", "v3", "xxx_e2_s174_l32.pth")
 EMOTION_ROOT = os.path.join(ROOT, "assets", "audio", "reference", "emotions")
+
+# T17 声音换代 A/B：命名模型档。v3 = 线上在用的那套（默认，行为不变）；
+# v2Pro = 网盘 v2pro-experimental 附加包（gpt/v2Pro/kurisu_v2pro-e15.ckpt + sovits/v2Pro/kurisu_v2pro.pth）；
+# v2plus = 站长网盘那份"自训 v2ProPlus（1000→489 切片）"，本机未找到 → 用前会显式报缺文件，不许静默回退。
+MODELS = {
+    "v3": (GPT, SOVITS),
+    "v2pro": (os.path.join(ROOT, "assets", "models", "gpt-sovits", "weights", "gpt", "v2Pro", "kurisu_v2pro-e15.ckpt"),
+              os.path.join(ROOT, "assets", "models", "gpt-sovits", "weights", "sovits", "v2Pro", "kurisu_v2pro.pth")),
+    "v2plus": (os.path.join(ROOT, "assets", "models", "gpt-sovits", "weights", "gpt", "v2ProPlus", "kurisu_v2proplus-e100.ckpt"),
+               os.path.join(ROOT, "assets", "models", "gpt-sovits", "weights", "sovits", "v2ProPlus", "kurisu_v2proplus_e12.pth")),
+}
 
 sys.path.insert(0, ROOT)
 REF_TEXT = REF_TEXT_FALLBACK
@@ -165,10 +181,29 @@ def main():
     ap.add_argument("--tag", default="")
     ap.add_argument("--emotions", default="off", choices=["off", "on"])
     ap.add_argument("--emotion", default="")
+    ap.add_argument("--emotions-ids", default="",
+                    help="逗号分隔的 id 白名单：--emotions on 时只给这些句上情绪参考（其余走默认语气）")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--no-post", action="store_true")
     ap.add_argument("--sample-steps", type=int, default=GEN_PARAMS["sample_steps"])
+    ap.add_argument("--model", default="v3", choices=sorted(MODELS),
+                    help="模型档（T17 A/B）：v3=线上在用的；v2pro=网盘 v2pro-experimental 附加包；"
+                         "v2plus=站长网盘自训 v2ProPlus（本机未装会直接报错，不回退）")
+    ap.add_argument("--gpt", default="", help="覆盖 GPT 权重路径（与 --sovits 一起用）")
+    ap.add_argument("--sovits", default="", help="覆盖 SoVITS 权重路径")
+    ap.add_argument("--noise-seed", type=int, default=-1,
+                    help="传 >=0 时固定 torch 随机种子，让多档 A/B 用同一起始噪声（默认 -1=不固定）")
     args = ap.parse_args()
+    args.emotions_ids = [x for x in (args.emotions_ids or "").split(",") if x]
+
+    gpt_path, sovits_path = MODELS[args.model]
+    if args.gpt or args.sovits:
+        gpt_path = args.gpt or gpt_path
+        sovits_path = args.sovits or sovits_path
+    for _p, _d in ((gpt_path, "GPT 权重"), (sovits_path, "SoVITS 权重")):
+        if not os.path.exists(_p):
+            raise SystemExit("--model %s 的%s不存在：%s（本机没装该档，不许静默回退）"
+                             % (args.model, _d, _p))
 
     lines_all = load_lines(args.lines if args.lines != "bank" else "bank")
     todo = pick(lines_all, args.mode, args.ids)
@@ -181,6 +216,12 @@ def main():
     import numpy as np
     from local_tts_infer import TTSInferencer
 
+    if args.noise_seed >= 0:
+        torch.manual_seed(args.noise_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(args.noise_seed)
+        log("noise seed fixed: %d" % args.noise_seed)
+
     if args.device.startswith("cuda"):
         log("cuda available=%s device=%s" % (torch.cuda.is_available(), torch.cuda.get_device_name(0)
                                              if torch.cuda.is_available() else "-"))
@@ -190,7 +231,7 @@ def main():
 
     t0 = time.time()
     sampler = VramSampler()
-    inf = TTSInferencer(device=args.device, gpt_path=GPT, sovits_path=SOVITS)
+    inf = TTSInferencer(device=args.device, gpt_path=gpt_path, sovits_path=sovits_path)
     load_s = time.time() - t0
     log("model loaded in %.1fs (is_half=%s device=%s)" % (load_s, inf.is_half, inf.device))
     if args.device.startswith("cuda") and torch.cuda.is_available():
@@ -202,13 +243,18 @@ def main():
     for line in todo:
         lid = line["id"]
         if args.lang == "日文":
-            text = line.get("ja") or line.get("text") or ""
+            # ttsJa = 「送进 TTS 的朗读文本」覆盖字段（显示文本仍用 ja，字幕用 zh）。
+            # 用途：日文文本前端会读错某些汉字词（例：牧瀬紅莉栖 → マキセクレナイリースミカ），
+            # 这时把朗读文本写成假名（牧瀬クリス）绕开前端，**不改显示文本**。
+            text = line.get("ttsJa") or line.get("ja") or line.get("text") or ""
         else:
             text = line.get("zh") or line.get("text") or ""
         if not text:
             log("skip %s：没有 %s 文本" % (lid, args.lang))
             continue
         emo = args.emotion or (line.get("emotion", "") if args.emotions == "on" else "")
+        if emo and args.emotions_ids and lid not in args.emotions_ids:
+            emo = ""                       # 只给指定 id 上情绪（T17：语料里其余句保持默认语气）
         sem = None
         if emo and os.path.isdir(EMOTION_ROOT):
             try:
@@ -255,7 +301,8 @@ def main():
 
     summary = {
         "mode": args.mode, "ids": [r["id"] for r in results], "device": args.device,
-        "modelLoadSeconds": round(load_s, 2), "gpt": GPT, "sovits": SOVITS,
+        "modelLoadSeconds": round(load_s, 2), "model": args.model, "gpt": gpt_path, "sovits": sovits_path,
+        "noiseSeed": args.noise_seed,
         "refAudio": REF_AUDIO, "refText": REF_TEXT, "refLanguage": "日文", "targetLanguage": args.lang,
         "params": dict(GEN_PARAMS, sample_steps=args.sample_steps,
                        note="对齐 tts/pipeline.py get_sovits_params() 的非首句档；CLI 默认是 top_k20/top_p0.6/speed1.0"),

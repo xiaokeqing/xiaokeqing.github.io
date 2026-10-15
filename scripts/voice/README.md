@@ -63,7 +63,37 @@ python scripts\voice\build_bank.py --out E:\DeepSeek1\work\_tts-trial\out-ja --t
 
 # 3) 只验后处理链路（不需要 torch）：用现有 wav 跑裁静音/响度/编码/包络
 python scripts\voice\postprocess.py --selftest
+
+# 4) T17 声音换代 A/B：换模型档（--model v3|v2pro|v2plus），同一句 + 同一情绪对比
+#    每档一条命令；--model 只换权重，后处理/包络口径与上面完全一致。
+uv run --locked --no-sync python <repo>\scripts\voice\synth.py `
+    --mode one --ids greet_first --lang 日文 --emotions on --model v3 `
+    --noise-seed 20261015 --out E:\DeepSeek1\work\_tts-trial\ab3\v3 --tag ab3-v3
 ```
+
+## 4.1 模型档与 v2Pro / v2ProPlus（2026-10-15 T17 实测）
+
+| `--model` | GPT / SoVITS 权重 | 本机可用性 |
+|---|---|---|
+| `v3`（默认） | `weights/gpt/v3/xxx-e15.ckpt` + `weights/sovits/v3/xxx_e2_s174_l32.pth`（LoRA rank32） | ✅ 已在用；`--emotions on` 只对它有 |
+| `v2pro` | `weights/gpt/v2Pro/kurisu_v2pro-e15.ckpt` + `weights/sovits/v2Pro/kurisu_v2pro.pth` | ✅ 2026-10-15 从 `06-voice-kurisu-gpt-sovits-v2pro-experimental` 包装入 |
+| `v2plus` | `weights/gpt/v2ProPlus/*` + `weights/sovits/v2ProPlus/*` | ❌ 本机无权重（全盘搜索 0 命中）→ 用它会**直接报错**，不会静默回退 |
+
+装 v2Pro 附加包（zip 里 3 个文件，解到 Amadeus 根即可，**不动 v3 的任何文件**）：
+
+```powershell
+# sv/ 说话人编码器是 v2Pro/Plus 必需，脚本按固定路径读：assets/models/gpt-sovits/pretrained/sv/
+#   assets/models/gpt-sovits/pretrained/sv/pretrained_eres2netv2w24s4ep4.ckpt  (107,528,697 B)
+#   assets/models/gpt-sovits/weights/gpt/v2Pro/kurisu_v2pro-e15.ckpt           (155,312,205 B)
+#   assets/models/gpt-sovits/weights/sovits/v2Pro/kurisu_v2pro.pth             (134,945,653 B)
+```
+
+⚠️ **v2Pro / v2ProPlus 用不了情绪参考包** —— 上游 `local_tts_infer.py:1035` 直接抛
+`ValueError: Mixed semantic references require V3`（`_build_synthesis_cache` 里 `model_version != "v3"` 就拒）。
+所以用非 v3 档时必须 `--emotions off`；要"含蓄/害羞"的听感只能靠台词本身。
+
+⚠️ `synth.py --help` 在 GBK 控制台下遇到 `✗` 会 `UnicodeEncodeError` —— 帮助文本里别放非 GBK 字符（已踩）。
+
 
 产物布局：`out-ja\{raw,master,dist,envelope,meta}\`、`summary-*.json`、`bank*.json`、`verify.json`、`voice-budget.json`。
 
@@ -84,6 +114,13 @@ python scripts\voice\postprocess.py --selftest
 7. **产物不要落在仓库目录里**：本机实测 **ffmpeg 子进程对 F:\7AAA\AI\blog\\... 写入会 EACCES**
    （python/PowerShell 能写、ffmpeg 不能）→ 脚本默认把产物放到 %TEMP%\kurisu-voice-out（可用 KURISU_OUT 覆盖），
    postprocess.py --selftest 同理。仓库里只放脚本/JSON/README，音频产物放仓库外，确认后再拷进 static/kurisu/voice/。
+
+8. **Python 写 `F:\7AAA\AI\blog\static\**` 会 `PermissionError: [Errno 13]`**（2026-10-15 T17 实测）：
+   `shutil.copy2` / `open(path,'w')` 一律被拒；**同一条路径 PowerShell 的 `Copy-Item -Force` / `Set-Content` 能写** ✓
+   （ACL 上 `Authenticated Users` 有 Modify，所以不是普通权限问题）。
+   ⇒ **换版 / 同步 JSON 的正确姿势**：Python 只把新内容写到**仓库外**（例
+   `E:\DeepSeek1\work\_tts-trial\ab3\probe\bank.new.json`），再由 PowerShell `Copy-Item -Force` 落进仓库 ✓。
+   `synth.py` 本身不写仓库，不受影响。
 
 ## 6. 文件
 

@@ -7,7 +7,7 @@
  "hopMs": 10,
  "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
  "lineCount": 12,
- "totalBytes": 716960,
+ "totalBytes": 714845,
  "lines": {
   "greet_first": {
    "id": "greet_first",
@@ -19,24 +19,24 @@
    "source": "existing",
    "audio": "kurisu/voice/greet_first.m4a",
    "envelope": "kurisu/voice/greet_first.envelope.json",
-   "seconds": 9.533,
-   "audioBytes": 58873,
-   "envelopeValues": 954,
+   "seconds": 10.402,
+   "audioBytes": 63302,
+   "envelopeValues": 1041,
    "audioSources": {
     "m4a": "kurisu/voice/greet_first.m4a",
     "webm": "kurisu/voice/greet_first.webm"
    },
-   "durationMs": 9533,
+   "durationMs": 10402,
    "sha256": {
-    "m4a": "7b2f11962e3db34aecc2f5db842b377658c58b7e7e9eed24b9ee661ad04bb9c6",
-    "webm": "df0f7aa7234df490e74448aa52c56661aca59136586c65dd9d8a846b82001a8d"
+    "m4a": "fa302e669c526eb7792ce302ef0b893a75a57b88dfe59cb8aec43d6610fb31e8",
+    "webm": "a27d1de6f8545ad477937079cf194bf2721c9922a9c717dcf79aad6affefc610"
    },
    "bytes": {
-    "m4a": 58873,
-    "webm": 48766
+    "m4a": 63302,
+    "webm": 51584
    },
    "loudness": {
-    "lufs": -16.3,
+    "lufs": -16.37,
     "target": -16.0
    },
    "envelopeSource": "dist/greet_first.m4a"
@@ -51,24 +51,24 @@
    "source": "existing",
    "audio": "kurisu/voice/greet_back.m4a",
    "envelope": "kurisu/voice/greet_back.envelope.json",
-   "seconds": 4.729,
-   "audioBytes": 29548,
-   "envelopeValues": 473,
+   "seconds": 4.526,
+   "audioBytes": 27994,
+   "envelopeValues": 453,
    "audioSources": {
     "m4a": "kurisu/voice/greet_back.m4a",
     "webm": "kurisu/voice/greet_back.webm"
    },
-   "durationMs": 4729,
+   "durationMs": 4526,
    "sha256": {
-    "m4a": "74d01d8b21253344d8943076ac8c9ac264776c1533a9df469840c2d439ea34ff",
-    "webm": "5f4cc2f34dd72b59d799ca3dc1fce0fb9ec4e181fd49eab6677ff6f1dac837d7"
+    "m4a": "89293f04ab22cce7a76ce27a228891192e9e023d35c31af91781389b43bb4ded",
+    "webm": "1b5d0dfb176ed40b0c85fc380e117f4f5267491d8e3b2431930f55ba40798a8e"
    },
    "bytes": {
-    "m4a": 29548,
-    "webm": 26359
+    "m4a": 27994,
+    "webm": 24865
    },
    "loudness": {
-    "lufs": -16.14,
+    "lufs": -16.19,
     "target": -16.0
    },
    "envelopeSource": "dist/greet_back.m4a"
@@ -83,24 +83,24 @@
    "source": "existing",
    "audio": "kurisu/voice/nav_home.m4a",
    "envelope": "kurisu/voice/nav_home.envelope.json",
-   "seconds": 4.326,
-   "audioBytes": 27249,
-   "envelopeValues": 433,
+   "seconds": 4.812,
+   "audioBytes": 30164,
+   "envelopeValues": 482,
    "audioSources": {
     "m4a": "kurisu/voice/nav_home.m4a",
     "webm": "kurisu/voice/nav_home.webm"
    },
-   "durationMs": 4326,
+   "durationMs": 4812,
    "sha256": {
-    "m4a": "7af21669eba88842ed700c67952104035b0f4af1823bfaa6b204acd4c212406d",
-    "webm": "3dce22a5ed76dcd98fd45b7a1d10077f0cbbd4a6bec9f25ec62dfe3a7038a63e"
+    "m4a": "75491b37683d7d284e0c65b59dc514ef6e60e8fde8ee875f37e79392e6ab5cf5",
+    "webm": "383b2ca893ba00495f676d02e2278034a917bf80b19e31ec4a13f62f4d972b6e"
    },
    "bytes": {
-    "m4a": 27249,
-    "webm": 22420
+    "m4a": 30164,
+    "webm": 23867
    },
    "loudness": {
-    "lufs": -16.06,
+    "lufs": -16.12,
     "target": -16.0
    },
    "envelopeSource": "dist/nav_home.m4a"
@@ -115,24 +115,24 @@
    "source": "existing",
    "audio": "kurisu/voice/nav_monitor.m4a",
    "envelope": "kurisu/voice/nav_monitor.envelope.json",
-   "seconds": 5.282,
-   "audioBytes": 32865,
-   "envelopeValues": 529,
+   "seconds": 5.098,
+   "audioBytes": 31987,
+   "envelopeValues": 510,
    "audioSources": {
     "m4a": "kurisu/voice/nav_monitor.m4a",
     "webm": "kurisu/voice/nav_monitor.webm"
    },
-   "durationMs": 5282,
+   "durationMs": 5098,
    "sha256": {
-    "m4a": "f8c3086472c6b95d97a0dc7e3717d3dad7d860347f0c8d23fe34ff8508f10afb",
-    "webm": "897f0fe675b12229438b7beb94762c687638988e3c7071b50f23364eefd598ad"
+    "m4a": "7c7f2c988e47a51e994823be6c3aec0046bda4454468eb5c939a15db2e89b75a",
+    "webm": "9cfc86937099fae020206a4e762b924407c33a407d3e2a2356843da100524cee"
    },
    "bytes": {
-    "m4a": 32865,
-    "webm": 26534
+    "m4a": 31987,
+    "webm": 26549
    },
    "loudness": {
-    "lufs": -16.1,
+    "lufs": -16.18,
     "target": -16.0
    },
    "envelopeSource": "dist/nav_monitor.m4a"
@@ -147,24 +147,24 @@
    "source": "existing",
    "audio": "kurisu/voice/nav_notes.m4a",
    "envelope": "kurisu/voice/nav_notes.envelope.json",
-   "seconds": 3.872,
-   "audioBytes": 24515,
-   "envelopeValues": 388,
+   "seconds": 3.704,
+   "audioBytes": 23366,
+   "envelopeValues": 371,
    "audioSources": {
     "m4a": "kurisu/voice/nav_notes.m4a",
     "webm": "kurisu/voice/nav_notes.webm"
    },
-   "durationMs": 3872,
+   "durationMs": 3704,
    "sha256": {
-    "m4a": "777de9c76874a81a81a81815ad52af7603ab5783c275d962af2a362a03767203",
-    "webm": "6794b017b84be5e1c62e3ada4a6efc0f5ff614e426b5168ee1647b906d7adf4c"
+    "m4a": "c3c0bf472174813129f669f1826646a0fba62722aa4c63c7dfbaf70b61ccea50",
+    "webm": "692b9fe0305db5f10ccdb7246c61c44a5a09c95a9b9c0c37ef3ffa3f823987b7"
    },
    "bytes": {
-    "m4a": 24515,
-    "webm": 21038
+    "m4a": 23366,
+    "webm": 19600
    },
    "loudness": {
-    "lufs": -16.06,
+    "lufs": -16.24,
     "target": -16.0
    },
    "envelopeSource": "dist/nav_notes.m4a"
@@ -179,24 +179,24 @@
    "source": "existing",
    "audio": "kurisu/voice/nav_labs.m4a",
    "envelope": "kurisu/voice/nav_labs.envelope.json",
-   "seconds": 3.486,
-   "audioBytes": 22124,
-   "envelopeValues": 349,
+   "seconds": 3.382,
+   "audioBytes": 21595,
+   "envelopeValues": 339,
    "audioSources": {
     "m4a": "kurisu/voice/nav_labs.m4a",
     "webm": "kurisu/voice/nav_labs.webm"
    },
-   "durationMs": 3486,
+   "durationMs": 3382,
    "sha256": {
-    "m4a": "d9418cba540ce4ad3704b94e06cfe28bf212992bd864c2faaef91203204ad3ca",
-    "webm": "b23e9f7f4c1a4bc046c883a24860d2b3b132676ba32a9c57575993dec37de4b6"
+    "m4a": "cf5122442518a9655ffbe0831287140bf160bba1e65396a978a9a99a07141469",
+    "webm": "d3781e9610568ab88742dc9ca76b6d86a9acf0b028c87042bd06ec2c4d0ea406"
    },
    "bytes": {
-    "m4a": 22124,
-    "webm": 18141
+    "m4a": 21595,
+    "webm": 17872
    },
    "loudness": {
-    "lufs": -16.09,
+    "lufs": -16.06,
     "target": -16.0
    },
    "envelopeSource": "dist/nav_labs.m4a"
@@ -211,24 +211,24 @@
    "source": "existing",
    "audio": "kurisu/voice/nav_about.m4a",
    "envelope": "kurisu/voice/nav_about.envelope.json",
-   "seconds": 5.138,
-   "audioBytes": 32361,
-   "envelopeValues": 514,
+   "seconds": 5.331,
+   "audioBytes": 33340,
+   "envelopeValues": 534,
    "audioSources": {
     "m4a": "kurisu/voice/nav_about.m4a",
     "webm": "kurisu/voice/nav_about.webm"
    },
-   "durationMs": 5138,
+   "durationMs": 5331,
    "sha256": {
-    "m4a": "1abbcf99dd2dd30e44cbe3d082e530f1f2eb618943085944d496ef9bdd8e6d7b",
-    "webm": "c4c5e1dee5c65fdac7ba88046020166239aba742d682b3cebe78c59247600217"
+    "m4a": "3295e2020c6cd0ff1b93eb08ee115333896fcfa07f3fc1affff3e3ec3a2469a3",
+    "webm": "1f9ab702078f9af6baec5e021605e8316d836408a16732119da46635fe40bf78"
    },
    "bytes": {
-    "m4a": 32361,
-    "webm": 28208
+    "m4a": 33340,
+    "webm": 27498
    },
    "loudness": {
-    "lufs": -16.11,
+    "lufs": -16.3,
     "target": -16.0
    },
    "envelopeSource": "dist/nav_about.m4a"
@@ -243,24 +243,24 @@
    "source": "existing",
    "audio": "kurisu/voice/nav_ai.m4a",
    "envelope": "kurisu/voice/nav_ai.envelope.json",
-   "seconds": 5.471,
-   "audioBytes": 34237,
-   "envelopeValues": 548,
+   "seconds": 5.201,
+   "audioBytes": 32883,
+   "envelopeValues": 521,
    "audioSources": {
     "m4a": "kurisu/voice/nav_ai.m4a",
     "webm": "kurisu/voice/nav_ai.webm"
    },
-   "durationMs": 5471,
+   "durationMs": 5201,
    "sha256": {
-    "m4a": "564113bf9ba7421ac8aa628aecfe3b0258d83a38d73cfe9fc6320aabacf26eab",
-    "webm": "1c4c99319c2f4c8da4ac975e6bb99c409616c60c1777ec1ee889dc622fa4dbec"
+    "m4a": "7cdaccaacfe401205b862fbf4437dc0a789801060ebbbd28818b0753ae0cc6e9",
+    "webm": "c6a9ea4bf0a3607b4d01c10d326368013d28cdb02045c1a5cffa28d050b93ad9"
    },
    "bytes": {
-    "m4a": 34237,
-    "webm": 28201
+    "m4a": 32883,
+    "webm": 27744
    },
    "loudness": {
-    "lufs": -16.07,
+    "lufs": -16.02,
     "target": -16.0
    },
    "envelopeSource": "dist/nav_ai.m4a"
@@ -275,24 +275,24 @@
    "source": "existing",
    "audio": "kurisu/voice/fallback_no_data.m4a",
    "envelope": "kurisu/voice/fallback_no_data.envelope.json",
-   "seconds": 5.919,
-   "audioBytes": 36410,
-   "envelopeValues": 592,
+   "seconds": 6.086,
+   "audioBytes": 37323,
+   "envelopeValues": 609,
    "audioSources": {
     "m4a": "kurisu/voice/fallback_no_data.m4a",
     "webm": "kurisu/voice/fallback_no_data.webm"
    },
-   "durationMs": 5919,
+   "durationMs": 6086,
    "sha256": {
-    "m4a": "ec801b017be60fedadaf2e0d29277e2b4e23b48118bc7ead9a68260611b66ee9",
-    "webm": "905bce73b976f6f8d4254e219f10a7a4966ffa9a574980ff78c7c78e13be9550"
+    "m4a": "1be104648b841477afe169645bb8b5013fe805c98236cd5515fbdf625ac632b7",
+    "webm": "78799c27252ad95f31021992fc3f31ba374e2b4bff1140cb7a5aaa27c5decf83"
    },
    "bytes": {
-    "m4a": 36410,
-    "webm": 30272
+    "m4a": 37323,
+    "webm": 30526
    },
    "loudness": {
-    "lufs": -16.16,
+    "lufs": -16.29,
     "target": -16.0
    },
    "envelopeSource": "dist/fallback_no_data.m4a"
@@ -307,21 +307,21 @@
    "source": "existing",
    "audio": "kurisu/voice/fallback_offline.m4a",
    "envelope": "kurisu/voice/fallback_offline.envelope.json",
-   "seconds": 6.281,
-   "audioBytes": 38998,
-   "envelopeValues": 629,
+   "seconds": 6.091,
+   "audioBytes": 37913,
+   "envelopeValues": 610,
    "audioSources": {
     "m4a": "kurisu/voice/fallback_offline.m4a",
     "webm": "kurisu/voice/fallback_offline.webm"
    },
-   "durationMs": 6281,
+   "durationMs": 6091,
    "sha256": {
-    "m4a": "837a8b34485a94caf2971963ec111cfb170375671426a4d721dd5be51e21744a",
-    "webm": "2185f82653e324c2a522d3747884591ffc2b2a452e1c7018007dfae5ff57d760"
+    "m4a": "fe80d8dbe81d9817e70b066ea15f065fd504a20514e7ace3dfaf5d823bb6364c",
+    "webm": "3a949152d60bd3dbc30234c061e1b331e25c972a4803b434aa7868621cca6ef5"
    },
    "bytes": {
-    "m4a": 38998,
-    "webm": 31345
+    "m4a": 37913,
+    "webm": 30621
    },
    "loudness": {
     "lufs": -16.08,
@@ -339,24 +339,24 @@
    "source": "existing",
    "audio": "kurisu/voice/fallback_throttled.m4a",
    "envelope": "kurisu/voice/fallback_throttled.envelope.json",
-   "seconds": 3.92,
-   "audioBytes": 24854,
-   "envelopeValues": 392,
+   "seconds": 3.717,
+   "audioBytes": 23636,
+   "envelopeValues": 372,
    "audioSources": {
     "m4a": "kurisu/voice/fallback_throttled.m4a",
     "webm": "kurisu/voice/fallback_throttled.webm"
    },
-   "durationMs": 3920,
+   "durationMs": 3717,
    "sha256": {
-    "m4a": "3d272bad406f0074a87d29cd4e0692d70c132e6f6e80c291fa0777d8211b1d07",
-    "webm": "95cc605d523618394ddbcdd8313ead29d91c46316f80debc312eed556d315664"
+    "m4a": "d5ead12372810323fb6d834d0efa1bc491a34249e7d627355953793ad4881206",
+    "webm": "fea064d908a885ed4a33fc4584f9a324ef9195e2d34b7fc07cf86970ddd40115"
    },
    "bytes": {
-    "m4a": 24854,
-    "webm": 21839
+    "m4a": 23636,
+    "webm": 19604
    },
    "loudness": {
-    "lufs": -16.07,
+    "lufs": -16.04,
     "target": -16.0
    },
    "envelopeSource": "dist/fallback_throttled.m4a"
@@ -371,24 +371,24 @@
    "source": "existing",
    "audio": "kurisu/voice/tab_return.m4a",
    "envelope": "kurisu/voice/tab_return.envelope.json",
-   "seconds": 4.393,
-   "audioBytes": 27536,
-   "envelopeValues": 440,
+   "seconds": 4.484,
+   "audioBytes": 28192,
+   "envelopeValues": 449,
    "audioSources": {
     "m4a": "kurisu/voice/tab_return.m4a",
     "webm": "kurisu/voice/tab_return.webm"
    },
-   "durationMs": 4393,
+   "durationMs": 4484,
    "sha256": {
-    "m4a": "d08169d1c9c8a7931af7516f877e898f326d173777cafc6a3b35e794a765a040",
-    "webm": "672a770174867452b7259767f13b0d24050992b563b91837e4306a17b831d0aa"
+    "m4a": "96294852dea026a65a392aa224db976aadcc8e31de67bdac29a4a414993dd2d0",
+    "webm": "bdacbae781d4e613f81d278634db55b91296f412e95d4745101b411320f8337d"
    },
    "bytes": {
-    "m4a": 27536,
-    "webm": 24267
+    "m4a": 28192,
+    "webm": 22820
    },
    "loudness": {
-    "lufs": -16.28,
+    "lufs": -16.05,
     "target": -16.0
    },
    "envelopeSource": "dist/tab_return.m4a"

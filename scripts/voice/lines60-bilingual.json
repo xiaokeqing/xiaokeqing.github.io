@@ -87,7 +87,8 @@
    "scene": "无任何访问记录的历史首访",
    "text": "初次见面。我是牧濑红莉栖——名字别念错。",
    "ja": "はじめまして。牧瀬紅莉栖よ——名前、間違えないで。",
-   "zh": "初次见面。我是牧濑红莉栖——名字别念错。"
+   "zh": "初次见面。我是牧濑红莉栖——名字别念错。",
+   "ttsJa": "はじめまして。牧瀬クリスよ——名前、間違えないで。"
   },
   {
    "id": "greet_cold_open",
@@ -628,5 +629,6 @@
   "transcript": "そういえば,正式に自己紹介していませんでしたね……牧瀬紅莉栖です.改めてまして,よろしく",
   "transcriptSource": "config/catalog/voice/voice_reference_profile.json 的 default（catalog 默认值）",
   "seconds": 7.56
- }
+ },
+ "ttsFieldOverride": "ttsJa（可选：送进 TTS 的朗读文本，仅覆盖发音；ja 仍是显示原文，zh 仍是字幕）"
 }
