@@ -623,3 +623,21 @@ T26-b【根治，待核对】`_amadeus-src\\GPT_SoVITS\\text\\ja_userdic\\userdi
   + 页脚保留一行站点性质说明（可选）
 归属：T27 扩展（窗口 C，排在 T8 第一批之后）；知识库条目归 T30
 ```
+### T17 声音换代：规划侧拍板（2026-10-15，依据窗口 B 的 A/B 硬证据）
+
+```
+决定一：**保留 v3 重跑版 12 句**（不回滚）
+  理由：与旧版功能等价、且对齐到"可复现生成"（synth.py 支持 --model/--gpt/--sovits/--noise-seed ✓）
+        契约自检 12/12 自洽 ✓、bank sha256 与磁盘 24 文件全等 ✓、总字节 716,960 -> 714,845 B
+        回滚随时可用：E:\\DeepSeek1\\work\\_tts-trial\\ab3\\_prev-v3\\（37 文件 / 774,781 B）
+决定二：**不提供 v2ProPlus 权重，v3 定稿**（不换声音模型）
+  理由：v2Pro 已证明该家族**会念丢内容**（greet_first 59->37 字、fallback_offline 36->21 字，CER 0.39/0.42）
+        v2Pro 更快更省显存（RTF 0.316 vs 0.669）但对本用途是**语义级错误**，不可上
+        v2ProPlus 本机 0 权重（全盘 0 命中）且**情绪参考只有 v3 能用**（非 v3 直接 require V3）
+        => 换模型会同时丢掉"情绪路由"这条增强路，性价比为负
+决定三：人名读音修复采用 **ttsJa 覆盖字段**（朗读文本 牧瀬クリス / 显示原文与字幕一字未改 ✓）
+  ASR 端到端复核：旧 「巻きてくれないリスミカよ」 -> 新 「マキス、クリスよ」 ✓（J 的结论已落地）
+遗留（已转给窗口 C）：manifest.json 的 voice 段仍陈旧 -> 与 bank.json 对齐或改为指向 bank.json
+遗留（窗口 C 必须解决）：gate-firstscreen 报 `window.__xkSM.reasons is not a function`（来自 C 未提交的 layouts 改动）
+  => **门禁不齐 = 当前不具备发布条件**；线上仍是 site-20261015-210145（T7 版）
+```
