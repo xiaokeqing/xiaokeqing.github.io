@@ -25,13 +25,13 @@
   :root{
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    /* —— 来自 static/kurisu/manifest.json scene.*（底图 1672×941） —— */
     /* —— 左侧 dock 用到的变量：值逐字取自 xk-demo/shell-style.html 的 :root（warm 口径） —— */
     --line:rgba(255,246,235,.15);
     --line2:rgba(255,246,235,.28);
     --txt:#FAF7F0; --mut:#D2CBBD;
     --acc:#7FD4D8;
     --solid:rgba(48,45,41,.82);
-    /* —— 来自 static/kurisu/manifest.json scene.*（底图 1672×941） —— */
     --crt-x:32.8947%; --crt-y:20.7226%; --crt-w:35.0478%; --crt-h:47.0776%;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -180,6 +180,7 @@ function resize(){
 }
 
 function drawFrame(){
+  if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */
   if(!cur) return;
   const c = CLIPS[cur];
   const im = img(c.src);
@@ -200,6 +201,7 @@ function drawFrame(){
 }
 
 function play(name){
+  XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */
   const c = CLIPS[name];
   cur = name; fi = 0; acc = 0;
   img(c.src); drawFrame();
@@ -207,6 +209,7 @@ function play(name){
 
 function loop(t){
   if(!started) return;
+  if(XK_ACT){ xkmTick(t); lastT = t; requestAnimationFrame(loop); return; }   /* ★表情模式接管画布 */
   if(cur){
     const c = CLIPS[cur];
     const im = img(c.src);
@@ -231,7 +234,10 @@ let hudShown = false;
 function showHud(){
   if(hudShown) return; hudShown = true;
   document.getElementById('crtStatus').hidden = false;
-  typeSub('你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。');
+  /* ★2026-10-15：语音正在说的时候字幕归语音那条，别被这句默认文案顶掉 */
+  const _v = window.__xkVoice;
+  if(!(_v && _v.audio && !_v.audio.paused)) typeSub('你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。');
+  if(typeof xkmReveal === 'function') xkmReveal();   /* ★2026-10-15：表情条随 HUD 一起出现 */
 }
 let typeTimer = null;
 function typeSub(text){
@@ -263,6 +269,277 @@ const desk = document.querySelector('.desk');
 (desk.complete ? Promise.resolve() : new Promise(r=>desk.onload=r)).then(()=>{
   veil.style.opacity = 0; setTimeout(()=>veil.remove(), 450);
 });
+
+
+/* ================= 桐莉栖语音（L1 预渲染语音库 · 真实播放） =================
+   ★2026-10-15 接手批：这一段是**新接的**。原 demo 主页只会打字幕，从不播音频。
+   资产：static/kurisu/voice/bank.json（12 条 wav，逐条带 text / seconds / 包络）。
+   纪律：手势前不播（只记 pending）；取不到就只显示字幕，绝不假装在播；RM 不自动播。 */
+const XK_VOICE_BANK = '/kurisu/voice/bank.json';
+const XK_DEFAULT_SAY = '你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。';
+const XKV = { bank:null, unlocked:false, pending:null, lastId:null, audio:null, plays:0, errors:[] };
+window.__xkVoice = XKV;
+function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
+function xkvLoad(){
+  if(XKV.bank) return Promise.resolve(XKV.bank);
+  return fetch(XK_VOICE_BANK, {cache:'no-store'}).then(r=>{
+    if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
+  }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
+}
+function xkvUnlock(){
+  if(XKV.unlocked) return;
+  XKV.unlocked = true;
+  if(XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); }
+}
+function xkvPlay(id){
+  const line = xkvLine(id);
+  if(!line){ XKV.errors.push('no line: '+id); return; }
+  if(!XKV.unlocked){ XKV.pending = id; return; }        /* 手势前：只记 pending，不播 */
+  if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
+  try{
+    if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} }
+    const a = new Audio('/' + String(line.audio).replace(/^\/+/, ''));
+    a.preload = 'auto';
+    XKV.audio = a; XKV.lastId = id;
+    a.addEventListener('playing', ()=>{
+      XKV.plays++;
+      /* 语音 → 动画联动（★2026-10-15 新接）：她在说话时切到 speaking 剪辑。
+         图集没载完就先不切（drawFrame 对未载完的图直接 return，画布保留上一帧，不会闪白/卡死）。 */
+      if(typeof xkVoiceAnim === 'function'){ xkVoiceAnim(id); return; }
+      if(typeof play === 'function' && cur !== 'opening'){
+        const sim = img(CLIPS.speaking.src);
+        if(sim.complete && sim.naturalWidth){ play('speaking'); }
+        else { sim.addEventListener('load', ()=>{ if(!XKV.audio || !XKV.audio.paused) play('speaking'); }, {once:true}); }
+      }
+    });
+    a.addEventListener('error', ()=>{ XKV.errors.push('audio: '+id); });
+    a.addEventListener('ended', ()=>{
+      if(typeof xkVoiceEnd === 'function'){ xkVoiceEnd(); }
+      else if(typeof play === 'function'){ play('idle'); }
+      if(typeof typeSub === 'function') typeSub(XK_DEFAULT_SAY);
+    });
+    const pr = a.play();
+    if(pr && pr.catch){ pr.catch(err=>{ XKV.errors.push('play: '+(err && err.name)); }); }
+    if(typeof typeSub === 'function') typeSub(line.text);
+  }catch(e){ XKV.errors.push('audio ctor: '+e); }
+}
+function xkvGreet(){
+  xkvLoad().then(()=>{
+    let seen = false;
+    try{ seen = !!localStorage.getItem('xk-visited'); localStorage.setItem('xk-visited','1'); }catch(_){}
+    xkvPlay(seen ? 'greet_back' : 'greet_first');
+  });
+}
+addEventListener('pointerdown', xkvUnlock, {once:true});
+addEventListener('keydown', xkvUnlock, {once:true});
+/* 语音库在首屏窗口（门禁口径 1.5s）**之后**才取 —— 语音资产不进首屏字节 */
+setTimeout(xkvLoad, 1800);
+if(!RM){ setTimeout(xkvGreet, 2600); }
+let xkvHiddenAt = 0;
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ xkvHiddenAt = Date.now(); }
+  else if(xkvHiddenAt && (Date.now() - xkvHiddenAt) > 60000){ xkvHiddenAt = 0; xkvPlay('tab_return'); }
+});
+
+
+/* ================= 桐莉栖：全身表情 / 更多动画（L2 懒加载 · 零首屏影响） =================
+   ★2026-10-15 接手批：把 medium 档 38 段全身剪辑里的"表情段"接到这块画布上。
+   表情条的 8 个点与内容页外壳的 #emos 一一对应（同一套情绪命名，见 static/kurisu/manifest.json
+   的 emotions 与 avatar/ 素材）。语音说话时若没有手选表情，会按语音场景自动切表情。 */
+var XK_ACT = null;                     /* 非空 = 表情模式接管画布（loop / drawFrame 读它） */
+var XK_EMO_LIST = [
+  /* [情绪, 标签, 点色, 循环段, 进入过渡段] —— 过渡段就是状态机 host_triggered_entries 里的
+     angry_trans / sad_trans / shy_trans / surprise_trans / trans_smile / thinking_trans，
+     它们本来就是"进这个表情"的入场动画（0.48–0.96s，once_then_hold），播完自动接循环段
+     —— 所以表情切换是"演出来"的，不是硬切。 */
+  ['normal',          '普通', '#7cc4e8', 'idle',               ''],
+  ['happy',           '开心', '#f2c14e', 'smile_speaking',     'trans_smile'],
+  ['sided_thinking',  '思考', '#9a8cff', 'thinking_speaking1', 'thinking_trans'],
+  ['sided_surprised', '惊讶', '#e88fd0', 'surprise_speaking',  'surprise_trans'],
+  ['sad',             '难过', '#6b7f96', 'sad_speaking',       'sad_trans'],
+  ['blush',           '害羞', '#f0997b', 'shy_speaking1',      'shy_trans'],
+  ['angry',           '生气', '#e8654e', 'angry_speaking',     'angry_trans'],
+  ['disappointed',    '失望', '#8a94a6', '',                   'thinking_to_serious']
+];
+/* 语音 id → 表情（只影响"没手选表情时"的自动切换；表里没有的 id 走默认 speaking） */
+var XK_VOICE_EMO = {
+  greet_first:'happy', greet_back:'happy', tab_return:'happy',
+  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
+  nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+  fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
+};
+var XKM = { clips:null, loading:null, imgs:{}, emo:'normal', clip:null,
+            fi:0, acc:0, hold:0, last:0, done:false, next:null, manual:false, err:[] };
+window.__xkEmo = { emotion:'normal', clip:null, frames:0, ok:false, errors:XKM.err };
+
+function xkmImg(u){
+  if(!XKM.imgs[u]){ var im = new Image(); im.decoding = 'async'; im.src = u; XKM.imgs[u] = im; }
+  return XKM.imgs[u];
+}
+function xkmUrl(p){ return '/' + String(p.url).replace(/^\/+/, ''); }
+function xkmLoad(){
+  if(XKM.clips) return Promise.resolve(XKM.clips);
+  if(XKM.loading) return XKM.loading;
+  XKM.loading = fetch('/kurisu/manifest.json', {cache:'force-cache'}).then(function(r){
+    if(!r.ok) throw new Error('manifest HTTP ' + r.status);
+    return r.json();
+  }).then(function(j){
+    XKM.clips = (j && j.clipsMedium && j.clipsMedium.clips) || null;
+    window.__xkEmo.ok = !!XKM.clips;
+    return XKM.clips;
+  }).catch(function(e){ XKM.err.push('manifest: ' + e); window.__xkEmo.ok = false; return null; });
+  return XKM.loading;
+}
+function xkmFrameAt(clip, f){          /* f: 0-based（已含 reverse）；返回该帧落在哪一页 + 页内偏移 */
+  var pages = clip.atlas.medium.pages, i, p, local;
+  for(i = 0; i < pages.length; i++){
+    p = pages[i];
+    local = (f + 1) - p.first_frame;   /* manifest 的 first_frame 是 1-based */
+    if(local >= 0 && local < p.frames) return {p:p, local:local};
+  }
+  return null;
+}
+function xkmPaint(){
+  var clip = XKM.clip;
+  if(!clip || !XK_ACT) return;
+  var f = clip.reverse ? (clip.frames - 1 - XKM.fi) : XKM.fi;
+  var at = xkmFrameAt(clip, f);
+  if(!at) return;
+  var im = xkmImg(xkmUrl(at.p));
+  if(!im.complete || !im.naturalWidth) return;
+  var tw = at.p.tile_w, th = at.p.tile_h;
+  var sx = (at.local % at.p.cols) * tw, sy = Math.floor(at.local / at.p.cols) * th;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  var w = bounds.w * (canvas.width / bounds.w), h = bounds.h * (canvas.height / bounds.h);
+  var s = Math.min(w * CHAR_BOX.maxW / CHAR_BOX.w, h * CHAR_BOX.maxH / CHAR_BOX.h);
+  var dh = CHAR_BOX.h * s, dw = dh * (tw / th);   /* 宽按素材自身比例，避免不同 tile 被拉变形 */
+  var x = w * CHAR_BOX.xRatio, y = h - Math.max(3, h * CHAR_BOX.footRatio);
+  ctx.drawImage(im, sx, sy, tw, th, x - dw / 2, y - dh, dw, dh);
+}
+function xkmTick(t){
+  if(!XK_ACT || !XKM.clip) return;
+  if(!XKM.last){ XKM.last = t; return; }
+  var dt = t - XKM.last; XKM.last = t;
+  if(dt > 200) dt = 200;                 /* 切标签页回来别一次跳几百帧 */
+  if(XKM.done){                          /* once_then_hold 播完：停住 2.8s 再回普通 */
+    XKM.hold += dt;
+    if(XKM.hold > 2800){ XKM.done = false; xkmSetEmotion('normal'); }
+    return;
+  }
+  var clip = XKM.clip, iv = Math.max(4, clip.frameIntervalMs || 42);
+  XKM.acc += dt;
+  if(XKM.acc >= iv){
+    /* ★必须按 manifest 的 frameIntervalMs 算"这一跳该走几帧"：
+       medium 档过渡段是 5–8ms/帧（200fps 级别），一次 rAF 只走一帧的话
+       会慢到 ~5 倍（trans_smile 从 0.60s 变成 2.88s，肉眼就是"卡住不动"）。 */
+    var adv = Math.floor(XKM.acc / iv);
+    XKM.acc -= adv * iv;
+    XKM.fi += adv;
+    if(XKM.fi >= clip.frames){
+      if(clip.loopMode === 'loop'){ XKM.fi = XKM.fi % clip.frames; }
+      else if(XKM.next){ var nx = XKM.next; XKM.next = null; xkmPlayClip(nx, null); return; }  /* 入场过渡播完 → 接循环段 */
+      else { XKM.fi = clip.frames - 1; XKM.done = true; XKM.hold = 0; }
+    }
+  }
+  xkmPaint();
+}
+function xkmMark(name){
+  var bar = document.getElementById('xkEmoBar');
+  if(!bar) return;
+  var bs = bar.querySelectorAll('b'), i;
+  for(i = 0; i < bs.length; i++){
+    bs[i].className = (bs[i].getAttribute('data-emo') === name) ? 'on' : '';
+  }
+}
+function xkmPlayClip(name, next){        /* 真正上屏：取图集 → 接管画布；next = 这一段播完接哪一段 */
+  xkmLoad().then(function(clips){
+    if(!clips){ XKM.err.push('无 clipsMedium'); return; }
+    var clip = clips[name];
+    if(!clip){ XKM.err.push('缺剪辑: ' + name); return; }
+    var pages = clip.atlas.medium.pages, k;
+    for(k = 0; k < pages.length; k++){
+      var im = xkmImg(xkmUrl(pages[k]));
+      if(!im.complete){
+        im.addEventListener('load', function(){ if(XK_ACT) xkmPaint(); }, {once:true});
+      }
+    }
+    XKM.clip = clip; XKM.fi = 0; XKM.acc = 0; XKM.hold = 0; XKM.last = 0; XKM.done = false;
+    XKM.next = next || null;
+    XK_ACT = {name: name, emo: XKM.emo};
+    window.__xkEmo.clip = name; window.__xkEmo.frames = clip.frames;
+    xkmPaint();
+  });
+}
+function xkmSetEmotion(name){
+  var item = null, i;
+  for(i = 0; i < XK_EMO_LIST.length; i++){ if(XK_EMO_LIST[i][0] === name){ item = XK_EMO_LIST[i]; } }
+  if(!item) return false;
+  XKM.emo = name; window.__xkEmo.emotion = name; xkmMark(name);
+  /* ★2026-10-15：表情可能在开场还没播完时接管画布（语音自动切表情就会）——
+     这时 loop() 不再走 opening 那一支，showHud() 就永远不会被调 → 状态行 / 字幕 / 表情条
+     一个都不出现。所以这里补一次"开场被打断也要出 HUD"。 */
+  if(cur === 'opening' && typeof showHud === 'function') showHud();
+  if(name === 'normal'){                 /* "普通" = 交回 hi 档 idle */
+    XK_ACT = null; XKM.clip = null; XKM.fi = 0; XKM.done = false; XKM.last = 0; XKM.next = null;
+    window.__xkEmo.clip = null; window.__xkEmo.frames = 0;
+    if(typeof play === 'function' && !document.hidden) play('idle');
+    return true;
+  }
+  /* 先播入场过渡段（演出来），过渡播完自动接循环段；没有循环段就停在过渡末帧（如"失望"） */
+  if(item[4]){ xkmPlayClip(item[4], item[3] || null); }
+  else { xkmPlayClip(item[3], null); }
+  return true;
+}
+function xkmBuild(){
+  var crtEl = document.getElementById('crt');
+  if(!crtEl || document.getElementById('xkEmoBar')) return;
+  var st = document.createElement('style');
+  st.textContent =
+    '.xk-emo-bar{position:absolute;top:5%;left:5%;display:flex;gap:6px;z-index:6;' +
+    'opacity:0;transition:opacity .5s}' +
+    '.xk-emo-bar.on{opacity:1}' +
+    '.xk-emo-bar b{width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.45);' +
+    'cursor:pointer;opacity:.45;transition:opacity .2s,box-shadow .2s}' +
+    '.xk-emo-bar b:hover{opacity:.85}' +
+    '.xk-emo-bar b.on{opacity:1;box-shadow:0 0 0 2px rgba(57,208,216,.55)}';
+  document.head.appendChild(st);
+  var bar = document.createElement('div');
+  bar.className = 'xk-emo-bar'; bar.id = 'xkEmoBar';
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', '桐莉栖表情');
+  bar.innerHTML = XK_EMO_LIST.map(function(e){
+    return '<b data-emo="' + e[0] + '" style="background:' + e[2] + '" title="' + e[1] + '"></b>';
+  }).join('');
+  crtEl.appendChild(bar);
+  bar.addEventListener('click', function(ev){
+    var b = (ev.target && ev.target.closest) ? ev.target.closest('b[data-emo]') : null;
+    if(!b) return;
+    var nm = b.getAttribute('data-emo');
+    XKM.manual = (nm !== 'normal');
+    xkmSetEmotion(nm);
+  });
+  xkmMark(XKM.emo);
+}
+function xkmReveal(){
+  var bar = document.getElementById('xkEmoBar');
+  if(bar) bar.classList.add('on');
+}
+/* 语音联动（HOME_VOICE 的两处 handler 会调这两个）：手选表情时不抢画布 */
+function xkVoiceAnim(id){
+  if(XK_ACT) return;
+  var auto = XK_VOICE_EMO[id];
+  if(auto && auto !== 'normal' && !XKM.manual){ xkmSetEmotion(auto); return; }
+  if(typeof play !== 'function' || cur === 'opening') return;
+  var sim = img(CLIPS.speaking.src);
+  if(sim.complete && sim.naturalWidth){ play('speaking'); }
+  else { sim.addEventListener('load', function(){ if(!XKV.audio || !XKV.audio.paused) play('speaking'); }, {once:true}); }
+}
+function xkVoiceEnd(){
+  if(!XK_ACT && typeof play === 'function') play('idle');
+}
+xkmBuild();
+/* manifest 在首屏门禁 1.5s 窗口之后才取 —— 表情资产绝不进首屏字节 */
+if(!RM){ setTimeout(xkmLoad, 2000); }
 
 </script>
 {{ partial "xk-demo/api-bind.html" . }}

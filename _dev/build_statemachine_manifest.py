@@ -148,6 +148,21 @@ for e in sm['edges']:
 if edge_bad:
     problems.append('边引用了不存在的节点：%s' % edge_bad[:5])
 
+# ---- host_triggered_entries：改成从 prob=0 出边**派生**（单一事实来源）----
+# 【2026-10-15 接手批】原来这里是 sm.get('host_triggered_entries') —— 直接从源文件抄。
+#   实测源文件抄漏了一个：prob=0 的出边目标是 9 个，而声明只有 8 个（缺 thinking_trans）。
+#   后果不是"少一条注释"：kurisu-player.js 用这份名单做宿主触发入口，
+#   缺 thinking_trans ⇒ 那条边永远进不去，状态机在 idle_str_wind 之后会卡住。
+#   现在从 prob=0 边派生，并与源文件声明比对：不一致就报出来（不再静默漂移）。
+declared_hte = sm.get('host_triggered_entries') or []
+zero_targets = sorted({e['to'] for e in sm['edges'] if e.get('prob') == 0})
+if sorted(declared_hte) != zero_targets:
+    # **不阻断**：错的是源文件的声明（抄漏 thinking_trans），产物按 prob=0 派生 → 派生值才是对的。
+    # 只把不一致大声报出来，免得下次有人反过来以为产物写错了。
+    print('!! 警告：源文件 host_triggered_entries 与 prob=0 出边目标不一致（产物按派生值写）')
+    print('   声明 %d 个：%s' % (len(declared_hte), sorted(declared_hte)))
+    print('   实算 %d 个：%s' % (len(zero_targets), zero_targets))
+
 out = {
     'format': 'xiaokeqing.kurisu.statemachine.v1',
     'provenance': {
@@ -160,7 +175,7 @@ out = {
     'root': sm['root'],
     'node_count': len(nodes_out),
     'edge_count': len(sm['edges']),
-    'host_triggered_entries': sm.get('host_triggered_entries'),
+    'host_triggered_entries': zero_targets,   # ★派生自 prob=0 出边（见上方说明）
     'clips_not_in_graph': sm.get('clips_not_in_graph'),
     'loop_mode_counts': sm.get('loop_mode_counts'),
     'medium_total_bytes': tot_referenced,
@@ -244,7 +259,7 @@ if not DRY:
         st['edgeCount'] = len(sm['edges'])
         st['hiClips'] = [n['clip'] for n in nodes_out if n.get('hi')]
         st['hiTotalBytes'] = tot_hi
-        st['hostTriggeredEntries'] = sm.get('host_triggered_entries')
+        st['hostTriggeredEntries'] = zero_targets
     json.dump(mf, open(MANIFEST, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('clipsMedium 段（%d 段）→ %s' % (len(cm), MANIFEST))
 print('OK：%d 节点 / %d 边 / medium %d 文件 %.2f MB / hi %d 文件 %.2f MB → %s' %

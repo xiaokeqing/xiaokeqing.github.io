@@ -294,12 +294,16 @@ function runCounters(){
   });
 }
 const CELL = 132, COLS = 8;
-const EMOS = {
+const EMOS = {   /* ★2026-10-15 接手批：5 套 → 8 套（素材本来就有 8 套，见 static/kurisu/avatar/）；
+                    sad / blush 由 static 单帧换成会动的 idle / speaking 图 */
   normal:         {idle:'/kurisu/avatar/normal.idle.webp',         speaking:'/kurisu/avatar/normal.speaking.webp'},
   happy:          {idle:'/kurisu/avatar/happy.idle.webp',          speaking:'/kurisu/avatar/happy.speaking.webp'},
   sided_thinking: {idle:'/kurisu/avatar/sided_thinking.idle.webp', speaking:'/kurisu/avatar/sided_thinking.speaking.webp'},
-  sad:            {idle:'/kurisu/avatar/sad.static.webp',          speaking:'/kurisu/avatar/sad.static.webp'},
-  blush:          {idle:'/kurisu/avatar/blush.static.webp',        speaking:'/kurisu/avatar/blush.static.webp'}
+  sided_surprised:{idle:'/kurisu/avatar/sided_surprised.idle.webp',speaking:'/kurisu/avatar/sided_surprised.speaking.webp'},
+  sad:            {idle:'/kurisu/avatar/sad.idle.webp',            speaking:'/kurisu/avatar/sad.speaking.webp'},
+  blush:          {idle:'/kurisu/avatar/blush.idle.webp',          speaking:'/kurisu/avatar/blush.speaking.webp'},
+  angry:          {idle:'/kurisu/avatar/angry.idle.webp',          speaking:'/kurisu/avatar/angry.speaking.webp'},
+  disappointed:   {idle:'/kurisu/avatar/disappointed.idle.webp',   speaking:'/kurisu/avatar/disappointed.speaking.webp'}
 };
 function makePlayer(canvas){
   const ctx = canvas.getContext('2d');
@@ -431,24 +435,156 @@ function switchView(v){
 }
 document.querySelectorAll('#dock button').forEach(b=>b.onclick = ()=>switchView(b.dataset.v));
 
-/* ============ AI 问答演示 ============ */
+/* ============ AI 问答（真实链路：POST /api/public/ask） ============ */
+/* ★2026-10-15 接手批：原 demo 这里等 900ms 插一段写死的回答（0 网络请求）—— 改成真实调用。
+   纪律：state / stateLabel / citations / failureReason / quota 全部按后端返回值如实展示；
+        generated=false 就写服务端给的原因，绝不补"像答案"的文字；失败/超时/限流如实写，不给替代答案。
+        不做 SSE/WebSocket（公开面只有一次性 POST），最多等 20 秒，429 按 Retry-After 倒计时。 */
+const XK_ASK_API = ((document.querySelector('meta[name="wb-api"]')||{}).content||'').replace(/\/+$/,'');
+const XK_ASK_TIMEOUT = 20000, XK_ASK_MAX = 600;
+const XK_STATE_LABEL = {
+  'model':['模型研判'], 'rule-based':['规则解析（拒答）'],
+  'input-insufficient':['依据不足，不做定性'], 'no-retrieval':['未检索到依据，不给结论'],
+  'retrieval-failed':['检索不可用，未生成'], 'model-failed':['模型不可用，未生成'],
+  'injection-blocked':['命中提示注入护栏']
+};
+function xkAskEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function xkInline(s){
+  return s.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+          .replace(/`([^`]+)`/g,'<code>$1</code>')
+          .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+/* 极简 markdown：**先整段转义**再套标签 —— 后端正文里就算带 <script> 也只是文本 */
+function xkMd(src){
+  const t = xkAskEsc(src).trim();
+  return t.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean).map(p=>{
+    const lines = p.split(/\n/);
+    if(lines.every(l=>/^&gt;\s?/.test(l)))       /* 引用块（后端的编排说明大量用 >）
+                                                    ⚠️ 整段已先过 xkAskEsc → ">" 已变成 "&gt;"，必须按转义后的写法匹配 */
+      return '<blockquote style="border-left:2px solid var(--acc);padding-left:10px;margin:6px 0;color:var(--mut)">'+
+             lines.map(l=>xkInline(l.replace(/^&gt;\s?/,''))).join('<br>')+'</blockquote>';
+    if(lines.every(l=>/^[-*+]\s+/.test(l)))
+      return '<ul>'+lines.map(l=>'<li>'+xkInline(l.replace(/^[-*+]\s+/,''))+'</li>').join('')+'</ul>';
+    if(lines.every(l=>/^\d+[.)]\s+/.test(l)))
+      return '<ol>'+lines.map(l=>'<li>'+xkInline(l.replace(/^\d+[.)]\s+/,''))+'</li>').join('')+'</ol>';
+    const h = p.match(/^(#{1,4})\s+(.*)$/);
+    if(h) return '<p style="font-weight:600;margin:8px 0 2px">'+xkInline(h[2])+'</p>';
+    return '<p>'+lines.map(xkInline).join('<br>')+'</p>';
+  }).join('');
+}
+let xkAsking = false;
+function xkAskApi(question){
+  const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+  const timer = setTimeout(()=>{ if(ctrl) ctrl.abort(); }, XK_ASK_TIMEOUT);
+  return fetch(XK_ASK_API + '/api/public/ask', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    mode:'cors', credentials:'omit', cache:'no-store',
+    signal: ctrl ? ctrl.signal : undefined,
+    body: JSON.stringify({ question: String(question).slice(0, XK_ASK_MAX) })
+  }).then(res=>{ clearTimeout(timer);
+    return res.json().catch(()=>null).then(body=>({ status:res.status, ok:res.ok, body,
+      retryAfter:res.headers.get('Retry-After') }));
+  }).catch(err=>{ clearTimeout(timer);
+    if(err && err.name === 'AbortError'){ const e = new Error('timeout'); e.timeout = true; throw e; }
+    throw err; });
+}
+function xkPush(kind, html){
+  const log = document.getElementById('chatlog');
+  log.insertAdjacentHTML('beforeend', '<div class="msg '+(kind==='me'?'me':'ai')+'"></div>');
+  const el = log.lastElementChild;
+  el.innerHTML = html; el.scrollIntoView({block:'end'});
+  return el;
+}
+function xkBadge(text){ const b = document.querySelector('.chat-hd .badge'); if(b) b.innerHTML = '<span class="dot"></span>' + xkAskEsc(text); }
+function xkQuota(d){
+  const q = document.querySelector('.chat-hd .quota'); if(!q) return;
+  q.textContent = (d && d.quota && d.quota.pool)
+    ? '额度池 '+d.quota.pool+'：已用 '+(d.quota.used==null?'—':d.quota.used)+' / '+(d.quota.limit==null?'—':d.quota.limit)+' · 每 IP 6 次/分钟'
+    : '额度：未返回 · 每 IP 6 次/分钟';
+}
+function xkCites(d){
+  const cs = d.citations || []; if(!cs.length) return '';
+  return cs.map((c,i)=>{
+    const bits = [];
+    if(c.sourceTypeLabel) bits.push(c.sourceTypeLabel);
+    if(c.trustLevelLabel) bits.push(c.trustLevelLabel);
+    if(c.score!=null && !isNaN(Number(c.score))) bits.push('相关度 ' + (Math.round(Number(c.score)*100)/100));
+    return '<div class="cite">['+(i+1)+'] 《'+xkAskEsc(c.title||'（无标题）')+'》'+(bits.length?' · '+xkAskEsc(bits.join(' · ')):'')+
+      (c.snippet?'<br><span style="opacity:.85">'+xkAskEsc(c.snippet)+'</span>':'')+'</div>';
+  }).join('');
+}
+function xkRenderAnswer(el, d){
+  const st = d.state || '';
+  const label = d.stateLabel || (XK_STATE_LABEL[st] ? XK_STATE_LABEL[st][0] : (st || '未识别状态'));
+  let html = '<div class="who">AI 安全 · <span class="st">'+xkAskEsc(label)+'</span></div>';
+  if(d.injection && d.injection.blocked)
+    html += '<p>输入命中提示注入护栏（'+xkAskEsc(d.injection.hitCount||0)+' 条规则）；下面是把它当"不可信数据"处理后的结果。</p>';
+  if(d.failureReason) html += '<p><b>服务端说明：</b>'+xkAskEsc(d.failureReason)+'</p>';
+  if(d.answer) html += xkMd(d.answer);
+  else if(!d.failureReason) html += '<p>这次没有返回答案正文（state='+xkAskEsc(st||'—')+'）。</p>';
+  html += xkCites(d);
+  if(d.clientIpMasked || (d.quota && d.quota.pool))
+    html += '<div class="cite">来源 IP（后端已掩码）：'+xkAskEsc(d.clientIpMasked||'—')+(d.quota&&d.quota.pool?' · 额度池 '+xkAskEsc(d.quota.pool):'')+'</div>';
+  el.innerHTML = html;
+  const log = document.getElementById('chatlog'); if(log) log.scrollTop = log.scrollHeight;
+}
+function xkCountdown(el, msg, secs){
+  let left = Math.max(1, Number(secs)||0);
+  clearInterval(el.__cd);
+  function paint(){
+    if(!document.body.contains(el)){ clearInterval(el.__cd); return; }
+    const head = '<div class="who">AI 安全 · <span class="st">被限流</span></div>';
+    if(left<=0){ el.innerHTML = head+'<p>'+xkAskEsc(msg)+'<br>等待结束，可以重新提问了。</p>'; clearInterval(el.__cd); return; }
+    el.innerHTML = head+'<p>'+xkAskEsc(msg)+'<br>请稍后再试 <b>'+left+'</b> 秒。</p>';
+    left -= 1;
+  }
+  paint(); el.__cd = setInterval(paint, 1000);
+}
 function askDemo(){
-  const inp = document.getElementById('askInput'), log = document.getElementById('chatlog');
-  const q = inp.value.trim(); if(!q) return; inp.value = '';
-  log.insertAdjacentHTML('beforeend', '<div class="msg me"></div>');
-  log.lastElementChild.textContent = q;
-  log.lastElementChild.scrollIntoView({block:'end'});
+  const inp = document.getElementById('askInput');
+  const q = inp.value.trim(); if(!q) return;
+  if(xkAsking) return;                 /* 同一来源只允许 1 个在飞：前端也不重复发 */
+  xkAsking = true;
+  inp.value = '';
+  xkPush('me', '').textContent = q;
   emo = 'sided_thinking'; mode = 'idle'; render();
   stateEl.textContent = 'THINKING';
-  setTimeout(()=>{
-    const refuse = q.includes('昨天') || q.includes('谁打');
-    log.insertAdjacentHTML('beforeend', refuse
-      ? '<div class="msg ai"><div class="who">AI 安全 · <span class="st">规则解析（拒答）</span></div>这个问题需要内部事件数据，公开问答不取证 —— 可以去「监测中心」看脱敏后的真实统计。</div>'
-      : '<div class="msg ai"><div class="who">AI 安全 · <span class="st">模型研判</span></div>（演示回答）这是知识库检索 + 模型生成的答案正文，引用卡片会列出标题、片段、可信度与来源性质。<div class="cite">引用：《演示文档》· 可信度 0.88</div></div>');
-    log.lastElementChild.scrollIntoView({block:'end'});
-    emo = 'normal';
-    speak(refuse ? '拒答也是真实现：公开面不做事件取证。' : '回答生成了。引用与状态标注都在消息里，可展开核验。');
-  }, 900);
+  xkBadge('AI 安全 · 生成中…');
+  const pending = xkPush('ai', '<div class="who">AI 安全 · <span class="st">生成中…</span></div><p>正在走检索增强链路（最多 20 秒）…</p>');
+  const t0 = Date.now();
+  xkAskApi(q).then(r=>{
+    const body = r.body;
+    if(r.status === 429){
+      const wait = parseInt(r.retryAfter || (body&&body.retryAfter) || 0, 10) || 60;
+      xkCountdown(pending, (body&&body.message)||'请求被限流。', wait);
+      stateEl.textContent = 'RATE-LIMIT'; xkBadge('AI 安全 · 被限流'); emo = 'normal'; render(); return;
+    }
+    if(!r.ok || !body || body.data === undefined){
+      pending.innerHTML = '<div class="who">AI 安全 · <span class="st">请求失败</span></div><p>接口返回 HTTP '+xkAskEsc(r.status)+'，没有可用数据。'+
+        (body&&body.message?'后端说明：'+xkAskEsc(body.message):'')+' 这里不显示任何替代答案。</p>';
+      stateEl.textContent = 'FAILED'; xkBadge('AI 安全 · 请求失败'); emo = 'normal'; render(); return;
+    }
+    const d = body.data || {};
+    xkRenderAnswer(pending, d);
+    xkQuota(d);
+    const conf = XK_STATE_LABEL[d.state];
+    xkBadge('AI 安全 · ' + (conf ? conf[0] : (d.state || '已返回')));
+    stateEl.textContent = (d.state === 'model') ? 'ANSWERED' : (d.state || 'DONE');
+    emo = (d.state === 'model') ? 'normal' : 'sided_thinking';
+    render();
+    speak(d.generated === true ? '回答生成了。引用与状态标注都在消息里，可展开核验。'
+                              : '这次没有生成结论，原因如实写在消息里 —— 我不编答案。');
+    window.__xkAskLast = { status:r.status, state:d.state, ms:Date.now()-t0, cites:(d.citations||[]).length };
+  }).catch(err=>{
+    if(err && err.timeout){
+      pending.innerHTML = '<div class="who">AI 安全 · <span class="st">超时</span></div><p>等了 20 秒还没返回，这次请求已放弃。后端可能正在排队、或模型这一轮很慢 —— 这里不显示任何推测的答案，过一会儿可以重试。</p>';
+      stateEl.textContent = 'TIMEOUT'; xkBadge('AI 安全 · 超时');
+    }else{
+      pending.innerHTML = '<div class="who">AI 安全 · <span class="st">请求失败</span></div><p>提问失败（网络不可达或跨域被拒）。没有拿到答案，也没有替代结论。</p>';
+      stateEl.textContent = 'FAILED'; xkBadge('AI 安全 · 请求失败');
+    }
+    emo = 'normal'; render();
+  }).then(()=>{ xkAsking = false; });
 }
 document.getElementById('askBtn').onclick = askDemo;
 document.getElementById('askInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') askDemo(); });
@@ -477,6 +613,50 @@ document.getElementById('pgBtn').onclick = ()=>{
   const v = document.getElementById('pgInput').value.trim(); if(v) runPg(v); };
 document.querySelectorAll('.pgrun').forEach(b=>b.onclick = ()=>{
   document.getElementById('pgInput').value = b.dataset.pg; runPg(b.dataset.pg); });
+
+/* ================= 桐莉栖语音（L1 预渲染语音库）· 内容页 =================
+   ★2026-10-15 接手批：与原 demo 的差别 —— 原来只 speak() 打字幕，一个音频都不播。
+   资产：static/kurisu/voice/bank.json。手势前不播（只记 pending），取不到只显示字幕。 */
+const XKV = { bank:null, unlocked:false, pending:null, lastId:null, audio:null, plays:0, errors:[] };
+window.__xkVoice = XKV;
+function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
+function xkvLoad(){
+  if(XKV.bank) return Promise.resolve(XKV.bank);
+  return fetch('/kurisu/voice/bank.json', {cache:'no-store'}).then(r=>{
+    if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
+  }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
+}
+function xkvUnlock(){
+  if(XKV.unlocked) return;
+  XKV.unlocked = true;
+  if(XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); }
+}
+function xkvPageLine(){
+  const on = document.querySelector('.view.on'); const id = on ? on.id : '';
+  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-range':'nav_labs',
+            'v-about':'nav_about', 'v-ai':'nav_ai' })[id] || 'nav_home';
+}
+function xkvPlay(id){
+  const line = xkvLine(id);
+  if(!line){ XKV.errors.push('no line: '+id); return; }
+  if(!XKV.unlocked){ XKV.pending = id; return; }
+  if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
+  try{
+    if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} }
+    const a = new Audio('/' + String(line.audio).replace(/^\/+/, ''));
+    a.preload = 'auto';
+    XKV.audio = a; XKV.lastId = id;
+    a.addEventListener('playing', ()=>{ XKV.plays++; });
+    a.addEventListener('error', ()=>{ XKV.errors.push('audio: '+id); });
+    const pr = a.play();
+    if(pr && pr.catch){ pr.catch(err=>{ XKV.errors.push('play: '+(err && err.name)); }); }
+    if(typeof speak === 'function') speak(line.text);   /* 字幕与语音同一句；同时把面板切到 speaking */
+  }catch(e){ XKV.errors.push('audio ctor: '+e); }
+}
+addEventListener('pointerdown', xkvUnlock, {once:true});
+addEventListener('keydown', xkvUnlock, {once:true});
+setTimeout(()=>{ xkvLoad().then(()=>xkvPlay(xkvPageLine())); }, 1800);
+
 </script>
 <script id="scene-js">
 (()=>{
@@ -509,7 +689,9 @@ function resize(){
   canvas.width  = Math.round(r.width  * dpr);
   canvas.height = Math.round(r.height * dpr);
   /* 桌面实拍照常驻、CRT 完整可见的硬不变量：CRT 高度 <260px 触发降级 */
-  document.getElementById('fallback').style.display = r.height < 260 ? 'grid' : 'none';
+  const fb = document.getElementById('fallback');   /* ★第十二批：五个内容页没有 #fallback，
+      demo 这里直接 .style 会抛 TypeError 让整个 IIFE 中止 —— 加存在性判断，行为不变 */
+  if(fb) fb.style.display = r.height < 260 ? 'grid' : 'none';
 }
 
 function drawFrame(){
@@ -584,17 +766,17 @@ if(RM){
   cur = 'idle'; fi = 0;
   const im = img(CLIPS.idle.src);
   (im.complete ? Promise.resolve() : new Promise(r=>im.onload=r)).then(()=>{ drawFrame(); showHud(); });
-  document.getElementById('bootveil').style.opacity = 0;
-  setTimeout(()=>document.getElementById('bootveil').remove(), 450);
-}else{
+  const bv = document.getElementById('bootveil');   /* ★第十二批：同上，五个内容页没有 #bootveil */
+  if(bv){ bv.style.opacity = 0; setTimeout(()=>bv.remove(), 450); }
+}else if(document.getElementById('v-home').classList.contains('on')){
   play('opening');
 }
 started = true; lastT = performance.now();
 requestAnimationFrame(loop);
-const veil = document.getElementById('bootveil');
+const veil = document.getElementById('bootveil');   /* ★第十二批：同上，加存在性判断 */
 const desk = document.querySelector('.desk');
-(desk.complete ? Promise.resolve() : new Promise(r=>desk.onload=r)).then(()=>{
-  veil.style.opacity = 0; setTimeout(()=>veil.remove(), 450);
+(desk && !desk.complete ? new Promise(r=>desk.onload=r) : Promise.resolve()).then(()=>{
+  if(veil){ veil.style.opacity = 0; setTimeout(()=>veil.remove(), 450); }
 });
 
 /* 暴露给外壳切换 */
@@ -602,7 +784,7 @@ let introPlayed=false;
 window.__enterHome=function(){
   resize(); drawFrame();
   const played=sessionStorage.getItem('xk-demo-intro');
-  if(!RM && !played){ play('opening'); sessionStorage.setItem('xk-demo-intro','1'); }
+  if(!RM && !played && document.getElementById('v-home').classList.contains('on')){ play('opening'); sessionStorage.setItem('xk-demo-intro','1'); }
   else if(!cur){ play('idle'); }
 };
 })();

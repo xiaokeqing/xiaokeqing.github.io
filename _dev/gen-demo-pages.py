@@ -186,6 +186,87 @@ DOCK_A_CSS = u'''
 
 # 主页脚本里的路径也要改（CLIPS 表）
 home_script = rewrite_assets(home_script)
+
+# ---- ⑮ 主页语音：把桐莉栖的 L1 预渲染语音**真接上**（真播放，不是"打字幕假装会说话"）----
+# 【2026-10-15 接手批】资产早已就绪：static/kurisu/voice/ = bank.json + 12 条 wav + 逐条包络。
+#   但主页那段内联脚本只 typeSub() 打字幕，一个音频都不播 —— "她会说"这件事其实没实现。
+#   这里在主页脚本**末尾**接一个自足的语音模块（不引新文件、不动任何版式/标记）：
+#     · 手势前不播（浏览器 autoplay 限制）→ 只记 pending，首次 pointerdown/keydown 后补放最近一条；
+#     · 首访/回访分流（localStorage）→ greet_first / greet_back；切回标签页 >60s → tab_return；
+#     · 字幕与语音用**同一句**文案（line.text），语音取不到就只显示字幕，**绝不假装在播**；
+#     · reduced-motion 不自动播；语音库在首屏窗口（1.5s 门禁口径）**之后**才取 → 不占首屏字节；
+#     · 诊断挂 window.__xkVoice（plays / lastId / errors），便于验收与取证。
+HOME_VOICE = r'''
+
+/* ================= 桐莉栖语音（L1 预渲染语音库 · 真实播放） =================
+   ★2026-10-15 接手批：这一段是**新接的**。原 demo 主页只会打字幕，从不播音频。
+   资产：static/kurisu/voice/bank.json（12 条 wav，逐条带 text / seconds / 包络）。
+   纪律：手势前不播（只记 pending）；取不到就只显示字幕，绝不假装在播；RM 不自动播。 */
+const XK_VOICE_BANK = '/kurisu/voice/bank.json';
+const XK_DEFAULT_SAY = '你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。';
+const XKV = { bank:null, unlocked:false, pending:null, lastId:null, audio:null, plays:0, errors:[] };
+window.__xkVoice = XKV;
+function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
+function xkvLoad(){
+  if(XKV.bank) return Promise.resolve(XKV.bank);
+  return fetch(XK_VOICE_BANK, {cache:'no-store'}).then(r=>{
+    if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
+  }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
+}
+function xkvUnlock(){
+  if(XKV.unlocked) return;
+  XKV.unlocked = true;
+  if(XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); }
+}
+function xkvPlay(id){
+  const line = xkvLine(id);
+  if(!line){ XKV.errors.push('no line: '+id); return; }
+  if(!XKV.unlocked){ XKV.pending = id; return; }        /* 手势前：只记 pending，不播 */
+  if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
+  try{
+    if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} }
+    const a = new Audio('/' + String(line.audio).replace(/^\/+/, ''));
+    a.preload = 'auto';
+    XKV.audio = a; XKV.lastId = id;
+    a.addEventListener('playing', ()=>{
+      XKV.plays++;
+      /* 语音 → 动画联动（★2026-10-15 新接）：她在说话时切到 speaking 剪辑。
+         图集没载完就先不切（drawFrame 对未载完的图直接 return，画布保留上一帧，不会闪白/卡死）。 */
+      if(typeof play === 'function' && cur !== 'opening'){
+        const sim = img(CLIPS.speaking.src);
+        if(sim.complete && sim.naturalWidth){ play('speaking'); }
+        else { sim.addEventListener('load', ()=>{ if(!XKV.audio || !XKV.audio.paused) play('speaking'); }, {once:true}); }
+      }
+    });
+    a.addEventListener('error', ()=>{ XKV.errors.push('audio: '+id); });
+    a.addEventListener('ended', ()=>{
+      if(typeof play === 'function') play('idle');
+      if(typeof typeSub === 'function') typeSub(XK_DEFAULT_SAY);
+    });
+    const pr = a.play();
+    if(pr && pr.catch){ pr.catch(err=>{ XKV.errors.push('play: '+(err && err.name)); }); }
+    if(typeof typeSub === 'function') typeSub(line.text);
+  }catch(e){ XKV.errors.push('audio ctor: '+e); }
+}
+function xkvGreet(){
+  xkvLoad().then(()=>{
+    let seen = false;
+    try{ seen = !!localStorage.getItem('xk-visited'); localStorage.setItem('xk-visited','1'); }catch(_){}
+    xkvPlay(seen ? 'greet_back' : 'greet_first');
+  });
+}
+addEventListener('pointerdown', xkvUnlock, {once:true});
+addEventListener('keydown', xkvUnlock, {once:true});
+/* 语音库在首屏窗口（门禁口径 1.5s）**之后**才取 —— 语音资产不进首屏字节 */
+setTimeout(xkvLoad, 1800);
+if(!RM){ setTimeout(xkvGreet, 2600); }
+let xkvHiddenAt = 0;
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ xkvHiddenAt = Date.now(); }
+  else if(xkvHiddenAt && (Date.now() - xkvHiddenAt) > 60000){ xkvHiddenAt = 0; xkvPlay('tab_return'); }
+});
+'''
+home_script = home_script + HOME_VOICE
 home_body = rewrite_assets(home_body)
 # 导航统一（站主本批口径）：主页 demo 的**顶部胶囊 .navpill** → 内容页外壳那一份**左侧竖排 dock**。
 #   标记逐字照 xk-demo/shell-chrome.html 的 <nav class="dock">（项目/顺序/aria 全同；主页高亮"主页"）；
@@ -454,6 +535,20 @@ views_out = subn(views_out,
                  '<span class="k">—</span><span>取数中…</span><span class="chip">—</span>',
                  4, 'views: 故事线 4 行')
 
+# ---- ⑭ 聊天区：清掉 demo 写死的假问答（站主口径"演示数据一律清掉 / 绝不编答案"）----
+#   demo 的 chatlog 预置了一问一答（"那我们昨天被谁打了？" + 一段写死的"拒答"）——
+#   看着像真实交互，其实是死文本。删掉这两条，只留一句如实的开场说明。
+#   （开场那句的 state 标注也从"模型研判"改成"公开只读"：还没提问就标"模型研判"是假的。）
+views_out = subn(
+    views_out,
+    r'\n\s*<div class="msg me">那我们昨天被谁打了？</div>\s*\n\s*<div class="msg ai"><div class="who">AI 安全 · <span class="st">规则解析（拒答）</span></div>[^<]*</div>',
+    '\n', 1, 'views: 清掉聊天区写死的假问答')
+views_out = sub1(
+    views_out,
+    '<div class="who">AI 安全 · <span class="st">模型研判</span></div>你好，这里是公开只读的安全知识库问答。',
+    '<div class="who">AI 安全 · <span class="st">公开只读</span></div>你好，这里是公开只读的安全知识库问答。',
+    'views: 聊天区开场状态标注')
+
 # ---- ② HOLO 面板那句话：先清掉假数字（api-bind 会重写这句话，仍是"原元素"）----
 chrome = sub1(
     chrome,
@@ -632,6 +727,248 @@ sc = subn(sc, r'/\* 实时攻击流 \*/.*?\}, 1500\);', lambda m: S_FEED_NEW, 1,
 sc = subn(sc, r'/\* 24h 时序 sparkline.*?\ndrawSpark\(\);', lambda m: S_SPARK_NEW, 1, 'shell: 24h 时序整块')
 sc = subn(sc, r'/\* ATT&CK 矩阵（中文版） \*/.*?\n\}\);\n', lambda m: S_ATTK_NEW, 1, 'shell: 类型矩阵整块')
 sc = subn(sc, r'let counted = false;\nfunction runCounters\(\)\{.*?\n\}\n', lambda m: S_COUNTERS_NEW, 1, 'shell: 数字滚动')
+
+# ---- ⑬ AI 问答：把 demo 的"900ms 后插一段固定文本"换成**真实链路** POST /api/public/ask ----
+# 【2026-10-15 接手批】原 demo 的 askDemo() 是个纯前端假实现：等 900ms 插一段写死的回答 +
+#   假引用卡片，一个网络请求都不发（实测：/ai/ 页 0 个 /api/public/ask 请求）。
+#   后端 /api/public/ask 早已上线（线上实测 200、多 Agent 编排、带引用与状态标注、跨域显式白名单已通），
+#   所以这里按站点既有纪律把它接真：
+#     · 真实 POST；state / stateLabel / citations / failureReason / quota / clientIpMasked 全部如实展示；
+#     · generated=false 就写服务端给的原因，**不补一段"像答案"的文字**；
+#     · 接口失败/超时/限流 → 如实写"请求失败 / 超时 / 被限流"，绝不返回替代答案；
+#     · 不做 SSE/WebSocket（公开面只有一次性 POST），最多等 20 秒，429 按 Retry-After 倒计时。
+#   接口基址只从 <meta name="wb-api"> 读（与 api-bind.html 同一处口径，JS 不写死域名）。
+ASK_REAL = r'''/* ============ AI 问答（真实链路：POST /api/public/ask） ============ */
+/* ★2026-10-15 接手批：原 demo 这里等 900ms 插一段写死的回答（0 网络请求）—— 改成真实调用。
+   纪律：state / stateLabel / citations / failureReason / quota 全部按后端返回值如实展示；
+        generated=false 就写服务端给的原因，绝不补"像答案"的文字；失败/超时/限流如实写，不给替代答案。
+        不做 SSE/WebSocket（公开面只有一次性 POST），最多等 20 秒，429 按 Retry-After 倒计时。 */
+const XK_ASK_API = ((document.querySelector('meta[name="wb-api"]')||{}).content||'').replace(/\/+$/,'');
+const XK_ASK_TIMEOUT = 20000, XK_ASK_MAX = 600;
+const XK_STATE_LABEL = {
+  'model':['模型研判'], 'rule-based':['规则解析（拒答）'],
+  'input-insufficient':['依据不足，不做定性'], 'no-retrieval':['未检索到依据，不给结论'],
+  'retrieval-failed':['检索不可用，未生成'], 'model-failed':['模型不可用，未生成'],
+  'injection-blocked':['命中提示注入护栏']
+};
+function xkAskEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function xkInline(s){
+  return s.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+          .replace(/`([^`]+)`/g,'<code>$1</code>')
+          .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+/* 极简 markdown：**先整段转义**再套标签 —— 后端正文里就算带 <script> 也只是文本 */
+function xkMd(src){
+  const t = xkAskEsc(src).trim();
+  return t.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean).map(p=>{
+    const lines = p.split(/\n/);
+    if(lines.every(l=>/^&gt;\s?/.test(l)))       /* 引用块（后端的编排说明大量用 >）
+                                                    ⚠️ 整段已先过 xkAskEsc → ">" 已变成 "&gt;"，必须按转义后的写法匹配 */
+      return '<blockquote style="border-left:2px solid var(--acc);padding-left:10px;margin:6px 0;color:var(--mut)">'+
+             lines.map(l=>xkInline(l.replace(/^&gt;\s?/,''))).join('<br>')+'</blockquote>';
+    if(lines.every(l=>/^[-*+]\s+/.test(l)))
+      return '<ul>'+lines.map(l=>'<li>'+xkInline(l.replace(/^[-*+]\s+/,''))+'</li>').join('')+'</ul>';
+    if(lines.every(l=>/^\d+[.)]\s+/.test(l)))
+      return '<ol>'+lines.map(l=>'<li>'+xkInline(l.replace(/^\d+[.)]\s+/,''))+'</li>').join('')+'</ol>';
+    const h = p.match(/^(#{1,4})\s+(.*)$/);
+    if(h) return '<p style="font-weight:600;margin:8px 0 2px">'+xkInline(h[2])+'</p>';
+    return '<p>'+lines.map(xkInline).join('<br>')+'</p>';
+  }).join('');
+}
+let xkAsking = false;
+function xkAskApi(question){
+  const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+  const timer = setTimeout(()=>{ if(ctrl) ctrl.abort(); }, XK_ASK_TIMEOUT);
+  return fetch(XK_ASK_API + '/api/public/ask', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    mode:'cors', credentials:'omit', cache:'no-store',
+    signal: ctrl ? ctrl.signal : undefined,
+    body: JSON.stringify({ question: String(question).slice(0, XK_ASK_MAX) })
+  }).then(res=>{ clearTimeout(timer);
+    return res.json().catch(()=>null).then(body=>({ status:res.status, ok:res.ok, body,
+      retryAfter:res.headers.get('Retry-After') }));
+  }).catch(err=>{ clearTimeout(timer);
+    if(err && err.name === 'AbortError'){ const e = new Error('timeout'); e.timeout = true; throw e; }
+    throw err; });
+}
+function xkPush(kind, html){
+  const log = document.getElementById('chatlog');
+  log.insertAdjacentHTML('beforeend', '<div class="msg '+(kind==='me'?'me':'ai')+'"></div>');
+  const el = log.lastElementChild;
+  el.innerHTML = html; el.scrollIntoView({block:'end'});
+  return el;
+}
+function xkBadge(text){ const b = document.querySelector('.chat-hd .badge'); if(b) b.innerHTML = '<span class="dot"></span>' + xkAskEsc(text); }
+function xkQuota(d){
+  const q = document.querySelector('.chat-hd .quota'); if(!q) return;
+  q.textContent = (d && d.quota && d.quota.pool)
+    ? '额度池 '+d.quota.pool+'：已用 '+(d.quota.used==null?'—':d.quota.used)+' / '+(d.quota.limit==null?'—':d.quota.limit)+' · 每 IP 6 次/分钟'
+    : '额度：未返回 · 每 IP 6 次/分钟';
+}
+function xkCites(d){
+  const cs = d.citations || []; if(!cs.length) return '';
+  return cs.map((c,i)=>{
+    const bits = [];
+    if(c.sourceTypeLabel) bits.push(c.sourceTypeLabel);
+    if(c.trustLevelLabel) bits.push(c.trustLevelLabel);
+    if(c.score!=null && !isNaN(Number(c.score))) bits.push('相关度 ' + (Math.round(Number(c.score)*100)/100));
+    return '<div class="cite">['+(i+1)+'] 《'+xkAskEsc(c.title||'（无标题）')+'》'+(bits.length?' · '+xkAskEsc(bits.join(' · ')):'')+
+      (c.snippet?'<br><span style="opacity:.85">'+xkAskEsc(c.snippet)+'</span>':'')+'</div>';
+  }).join('');
+}
+function xkRenderAnswer(el, d){
+  const st = d.state || '';
+  const label = d.stateLabel || (XK_STATE_LABEL[st] ? XK_STATE_LABEL[st][0] : (st || '未识别状态'));
+  let html = '<div class="who">AI 安全 · <span class="st">'+xkAskEsc(label)+'</span></div>';
+  if(d.injection && d.injection.blocked)
+    html += '<p>输入命中提示注入护栏（'+xkAskEsc(d.injection.hitCount||0)+' 条规则）；下面是把它当"不可信数据"处理后的结果。</p>';
+  if(d.failureReason) html += '<p><b>服务端说明：</b>'+xkAskEsc(d.failureReason)+'</p>';
+  if(d.answer) html += xkMd(d.answer);
+  else if(!d.failureReason) html += '<p>这次没有返回答案正文（state='+xkAskEsc(st||'—')+'）。</p>';
+  html += xkCites(d);
+  if(d.clientIpMasked || (d.quota && d.quota.pool))
+    html += '<div class="cite">来源 IP（后端已掩码）：'+xkAskEsc(d.clientIpMasked||'—')+(d.quota&&d.quota.pool?' · 额度池 '+xkAskEsc(d.quota.pool):'')+'</div>';
+  el.innerHTML = html;
+  const log = document.getElementById('chatlog'); if(log) log.scrollTop = log.scrollHeight;
+}
+function xkCountdown(el, msg, secs){
+  let left = Math.max(1, Number(secs)||0);
+  clearInterval(el.__cd);
+  function paint(){
+    if(!document.body.contains(el)){ clearInterval(el.__cd); return; }
+    const head = '<div class="who">AI 安全 · <span class="st">被限流</span></div>';
+    if(left<=0){ el.innerHTML = head+'<p>'+xkAskEsc(msg)+'<br>等待结束，可以重新提问了。</p>'; clearInterval(el.__cd); return; }
+    el.innerHTML = head+'<p>'+xkAskEsc(msg)+'<br>请稍后再试 <b>'+left+'</b> 秒。</p>';
+    left -= 1;
+  }
+  paint(); el.__cd = setInterval(paint, 1000);
+}
+function askDemo(){
+  const inp = document.getElementById('askInput');
+  const q = inp.value.trim(); if(!q) return;
+  if(xkAsking) return;                 /* 同一来源只允许 1 个在飞：前端也不重复发 */
+  xkAsking = true;
+  inp.value = '';
+  xkPush('me', '').textContent = q;
+  emo = 'sided_thinking'; mode = 'idle'; render();
+  stateEl.textContent = 'THINKING';
+  xkBadge('AI 安全 · 生成中…');
+  const pending = xkPush('ai', '<div class="who">AI 安全 · <span class="st">生成中…</span></div><p>正在走检索增强链路（最多 20 秒）…</p>');
+  const t0 = Date.now();
+  xkAskApi(q).then(r=>{
+    const body = r.body;
+    if(r.status === 429){
+      const wait = parseInt(r.retryAfter || (body&&body.retryAfter) || 0, 10) || 60;
+      xkCountdown(pending, (body&&body.message)||'请求被限流。', wait);
+      stateEl.textContent = 'RATE-LIMIT'; xkBadge('AI 安全 · 被限流'); emo = 'normal'; render(); return;
+    }
+    if(!r.ok || !body || body.data === undefined){
+      pending.innerHTML = '<div class="who">AI 安全 · <span class="st">请求失败</span></div><p>接口返回 HTTP '+xkAskEsc(r.status)+'，没有可用数据。'+
+        (body&&body.message?'后端说明：'+xkAskEsc(body.message):'')+' 这里不显示任何替代答案。</p>';
+      stateEl.textContent = 'FAILED'; xkBadge('AI 安全 · 请求失败'); emo = 'normal'; render(); return;
+    }
+    const d = body.data || {};
+    xkRenderAnswer(pending, d);
+    xkQuota(d);
+    const conf = XK_STATE_LABEL[d.state];
+    xkBadge('AI 安全 · ' + (conf ? conf[0] : (d.state || '已返回')));
+    stateEl.textContent = (d.state === 'model') ? 'ANSWERED' : (d.state || 'DONE');
+    emo = (d.state === 'model') ? 'normal' : 'sided_thinking';
+    render();
+    speak(d.generated === true ? '回答生成了。引用与状态标注都在消息里，可展开核验。'
+                              : '这次没有生成结论，原因如实写在消息里 —— 我不编答案。');
+    window.__xkAskLast = { status:r.status, state:d.state, ms:Date.now()-t0, cites:(d.citations||[]).length };
+  }).catch(err=>{
+    if(err && err.timeout){
+      pending.innerHTML = '<div class="who">AI 安全 · <span class="st">超时</span></div><p>等了 20 秒还没返回，这次请求已放弃。后端可能正在排队、或模型这一轮很慢 —— 这里不显示任何推测的答案，过一会儿可以重试。</p>';
+      stateEl.textContent = 'TIMEOUT'; xkBadge('AI 安全 · 超时');
+    }else{
+      pending.innerHTML = '<div class="who">AI 安全 · <span class="st">请求失败</span></div><p>提问失败（网络不可达或跨域被拒）。没有拿到答案，也没有替代结论。</p>';
+      stateEl.textContent = 'FAILED'; xkBadge('AI 安全 · 请求失败');
+    }
+    emo = 'normal'; render();
+  }).then(()=>{ xkAsking = false; });
+}
+document.getElementById('askBtn').onclick = askDemo;
+document.getElementById('askInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') askDemo(); });'''
+sc = subn(sc, r'/\* =+ AI 问答演示 =+ \*/.*?askDemo\(\); \}\);', lambda m: ASK_REAL, 1, 'shell: AI 问答真实链路')
+
+# ---- ⑯ 内容页语音：把 L1 预渲染语音接上（与主页同一套资产，独立成模块）----
+# 【2026-10-15 接手批】五个内容页同样"只会打字幕、不播音频"。这里在**第一段**脚本（外壳逻辑）里
+#   接一个语音模块 —— 刻意不放进第二段（scene-js），因为那一段当前会在 resize() 抛 TypeError 中止。
+#   进页台词按当前 view 选：v-monitor→nav_monitor … v-range→nav_labs。
+#   纪律同主页：手势前只记 pending；取不到只显示字幕；语音与字幕同一句文案；诊断挂 window.__xkVoice。
+CONTENT_VOICE = r'''
+/* ================= 桐莉栖语音（L1 预渲染语音库）· 内容页 =================
+   ★2026-10-15 接手批：与原 demo 的差别 —— 原来只 speak() 打字幕，一个音频都不播。
+   资产：static/kurisu/voice/bank.json。手势前不播（只记 pending），取不到只显示字幕。 */
+const XKV = { bank:null, unlocked:false, pending:null, lastId:null, audio:null, plays:0, errors:[] };
+window.__xkVoice = XKV;
+function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
+function xkvLoad(){
+  if(XKV.bank) return Promise.resolve(XKV.bank);
+  return fetch('/kurisu/voice/bank.json', {cache:'no-store'}).then(r=>{
+    if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
+  }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
+}
+function xkvUnlock(){
+  if(XKV.unlocked) return;
+  XKV.unlocked = true;
+  if(XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); }
+}
+function xkvPageLine(){
+  const on = document.querySelector('.view.on'); const id = on ? on.id : '';
+  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-range':'nav_labs',
+            'v-about':'nav_about', 'v-ai':'nav_ai' })[id] || 'nav_home';
+}
+function xkvPlay(id){
+  const line = xkvLine(id);
+  if(!line){ XKV.errors.push('no line: '+id); return; }
+  if(!XKV.unlocked){ XKV.pending = id; return; }
+  if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
+  try{
+    if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} }
+    const a = new Audio('/' + String(line.audio).replace(/^\/+/, ''));
+    a.preload = 'auto';
+    XKV.audio = a; XKV.lastId = id;
+    a.addEventListener('playing', ()=>{ XKV.plays++; });
+    a.addEventListener('error', ()=>{ XKV.errors.push('audio: '+id); });
+    const pr = a.play();
+    if(pr && pr.catch){ pr.catch(err=>{ XKV.errors.push('play: '+(err && err.name)); }); }
+    if(typeof speak === 'function') speak(line.text);   /* 字幕与语音同一句；同时把面板切到 speaking */
+  }catch(e){ XKV.errors.push('audio ctor: '+e); }
+}
+addEventListener('pointerdown', xkvUnlock, {once:true});
+addEventListener('keydown', xkvUnlock, {once:true});
+setTimeout(()=>{ xkvLoad().then(()=>xkvPlay(xkvPageLine())); }, 1800);
+'''
+# ⚠️ shell_scripts[0] 是**带 <script>/</script> 标签**的整段（见 scripts 的 findall 抽取），
+#    所以必须插在闭合标签**之前** —— 直接 sc + X 会落到 <script> 外面变成正文（本轮踩过）。
+if not sc.rstrip().endswith('</script>'):
+    raise SystemExit('外壳第一段 <script> 的结构变了（结尾不是 </script>），内容页语音插入点失效')
+sc = sc.rstrip()[:-len('</script>')] + CONTENT_VOICE + '\n</script>'
+
+# ---- ⑰ 五页 TypeError：demo 的 scene-js 依赖不存在的 #fallback / #bootveil ----
+# 【2026-10-15 接手批 · 打开原AI留的补丁】第十二批把这三条"砍范围"了，理由写在 L464-470：
+#   一旦 IIFE 不再抛异常，五个内容页都会走到 play('opening') 去载 opening.hi（1004KB）→
+#   /ai/ 首屏 1637KB → 2641KB，直接顶破 1650KB 门禁 —— 所以它和首屏预算是**耦合**的。
+#   本批把"修异常"和"门控 opening"**一起**打开：异常没了，字节也不涨。
+#   （主页不走这一页的脚本，所以对主页零影响；内容页上 v-home 永远不是 .on。）
+s1 = shell_scripts[1]
+s1 = sub1(s1, S_FALLBACK_OLD, S_FALLBACK_NEW, 'scene-js: #fallback 存在性判断')
+s1 = sub1(s1, S_BOOT_OLD, S_BOOT_NEW, 'scene-js: #bootveil 存在性判断')
+s1 = sub1(s1, S_VEIL_OLD, S_VEIL_NEW, 'scene-js: veil 存在性判断')
+s1 = sub1(
+    s1,
+    "}else{\n  play('opening');\n}",
+    "}else if(document.getElementById('v-home').classList.contains('on')){\n  play('opening');\n}",
+    'scene-js: opening 只在主页可见时播')
+s1 = sub1(
+    s1,
+    "  if(!RM && !played){ play('opening'); sessionStorage.setItem('xk-demo-intro','1'); }",
+    "  if(!RM && !played && document.getElementById('v-home').classList.contains('on')){ play('opening'); sessionStorage.setItem('xk-demo-intro','1'); }",
+    'scene-js: __enterHome 的 opening 门控')
+shell_scripts[1] = s1
 # 图谱数据不再是写死的样例
 sc = sub1(
     sc,
@@ -672,7 +1009,293 @@ sc = sub1(
     "  monitor:'过去 24 小时拦截了 <span class=\"qk\">96 次</span> 暴力破解，蜜罐记录了 <span class=\"qk\">37 条</span> 交互。都在「监测中心」的大屏里。',",
     "  monitor:'公开只读端点的实时汇总都在这一屏；取不到就写读不到，不补数。',",
     'shell: SAYS.monitor 假数字')
+
+# ---- ⑯ 【2026-10-15 接手批】表情只挂了 5 套，素材其实有 8 套 ----
+#   站主口径："这个人物的所有动画、表情等等都弄好"。
+#   static/kurisu/avatar/ 里 8 套情绪（normal / happy / sided_thinking / sided_surprised /
+#   sad / blush / angry / disappointed）的 idle + speaking 两态**都在**，manifest.emotions
+#   也有逐套索引；但 demo 的 EMOS 表与 #emos 按钮只列了 5 个 → 剩下 3 套（惊讶 / 生气 / 失望）
+#   永远点不到；而且 sad / blush 当初因为 demo-assets 里只有 static 单帧，被写死成**不会动**的静帧。
+#   这里把表与按钮都补齐到 8 套，并把 sad / blush 换成真正会动的 idle / speaking 图。
+EMOS_OLD = (
+    "const EMOS = {\n"
+    "  normal:         {idle:'/kurisu/avatar/normal.idle.webp',         speaking:'/kurisu/avatar/normal.speaking.webp'},\n"
+    "  happy:          {idle:'/kurisu/avatar/happy.idle.webp',          speaking:'/kurisu/avatar/happy.speaking.webp'},\n"
+    "  sided_thinking: {idle:'/kurisu/avatar/sided_thinking.idle.webp', speaking:'/kurisu/avatar/sided_thinking.speaking.webp'},\n"
+    "  sad:            {idle:'/kurisu/avatar/sad.static.webp',          speaking:'/kurisu/avatar/sad.static.webp'},\n"
+    "  blush:          {idle:'/kurisu/avatar/blush.static.webp',        speaking:'/kurisu/avatar/blush.static.webp'}\n"
+    "};"
+)
+EMOS_NEW = (
+    "const EMOS = {   /* ★2026-10-15 接手批：5 套 → 8 套（素材本来就有 8 套，见 static/kurisu/avatar/）；\n"
+    "                    sad / blush 由 static 单帧换成会动的 idle / speaking 图 */\n"
+    "  normal:         {idle:'/kurisu/avatar/normal.idle.webp',         speaking:'/kurisu/avatar/normal.speaking.webp'},\n"
+    "  happy:          {idle:'/kurisu/avatar/happy.idle.webp',          speaking:'/kurisu/avatar/happy.speaking.webp'},\n"
+    "  sided_thinking: {idle:'/kurisu/avatar/sided_thinking.idle.webp', speaking:'/kurisu/avatar/sided_thinking.speaking.webp'},\n"
+    "  sided_surprised:{idle:'/kurisu/avatar/sided_surprised.idle.webp',speaking:'/kurisu/avatar/sided_surprised.speaking.webp'},\n"
+    "  sad:            {idle:'/kurisu/avatar/sad.idle.webp',            speaking:'/kurisu/avatar/sad.speaking.webp'},\n"
+    "  blush:          {idle:'/kurisu/avatar/blush.idle.webp',          speaking:'/kurisu/avatar/blush.speaking.webp'},\n"
+    "  angry:          {idle:'/kurisu/avatar/angry.idle.webp',          speaking:'/kurisu/avatar/angry.speaking.webp'},\n"
+    "  disappointed:   {idle:'/kurisu/avatar/disappointed.idle.webp',   speaking:'/kurisu/avatar/disappointed.speaking.webp'}\n"
+    "};"
+)
+sc = sub1(sc, EMOS_OLD, EMOS_NEW, 'shell: EMOS 5 套 → 8 套')
+chrome = sub1(
+    chrome,
+    '      <b data-emo="blush"          style="background:#f0997b" title="害羞"></b>\n',
+    ('      <b data-emo="blush"          style="background:#f0997b" title="害羞"></b>\n'
+     '      <b data-emo="sided_surprised" style="background:#e88fd0" title="惊讶"></b>\n'
+     '      <b data-emo="angry"          style="background:#e8654e" title="生气"></b>\n'
+     '      <b data-emo="disappointed"   style="background:#8a94a6" title="失望"></b>\n'),
+    'chrome: 表情按钮 5 个 → 8 个')
+
 shell_scripts[0] = sc
+
+# ---- ⑰ 【2026-10-15 接手批】主页：把 38 段全身剪辑里的"表情段"接上（懒加载 · 零首屏影响）----
+#   站主口径："这个人物的所有动画、表情等等都弄好"。
+#   主页原来只有 4 段 hi 档剪辑（opening / idle / speaking / thinking），表情一个都没有；
+#   而 static/kurisu/medium/ 里 38 段全身剪辑（smile_speaking / shy_speaking1 / angry_speaking /
+#   sad_speaking / surprise_speaking / thinking_speaking1 / sad_trans …）与 manifest.clipsMedium
+#   的**逐页**索引早已就绪。这里把主页同一块 #charCanvas 扩成"表情模式"：
+#     · manifest 与图集都在首屏门禁 1.5s 窗口**之后**才取 → 首屏字节零变化（门禁①不受影响）；
+#     · 多页图集（idle2 / speaking_long / thinking_speaking2 … 有 .p01/.p02）按页内偏移取帧；
+#     · reverse（key_point_to_thinking 复用 thinking_to_key_point 图集倒放）照 manifest 处理；
+#     · 落位沿用主页既有公式（CHAR_BOX），宽按素材自身比例算 —— 不与 hi 档打架；
+#     · 取不到就退回 hi 档（play('idle')），**不假装有动画**；诊断挂 window.__xkEmo。
+HOME_ANIM = r'''
+
+/* ================= 桐莉栖：全身表情 / 更多动画（L2 懒加载 · 零首屏影响） =================
+   ★2026-10-15 接手批：把 medium 档 38 段全身剪辑里的"表情段"接到这块画布上。
+   表情条的 8 个点与内容页外壳的 #emos 一一对应（同一套情绪命名，见 static/kurisu/manifest.json
+   的 emotions 与 avatar/ 素材）。语音说话时若没有手选表情，会按语音场景自动切表情。 */
+var XK_ACT = null;                     /* 非空 = 表情模式接管画布（loop / drawFrame 读它） */
+var XK_EMO_LIST = [
+  /* [情绪, 标签, 点色, 循环段, 进入过渡段] —— 过渡段就是状态机 host_triggered_entries 里的
+     angry_trans / sad_trans / shy_trans / surprise_trans / trans_smile / thinking_trans，
+     它们本来就是"进这个表情"的入场动画（0.48–0.96s，once_then_hold），播完自动接循环段
+     —— 所以表情切换是"演出来"的，不是硬切。 */
+  ['normal',          '普通', '#7cc4e8', 'idle',               ''],
+  ['happy',           '开心', '#f2c14e', 'smile_speaking',     'trans_smile'],
+  ['sided_thinking',  '思考', '#9a8cff', 'thinking_speaking1', 'thinking_trans'],
+  ['sided_surprised', '惊讶', '#e88fd0', 'surprise_speaking',  'surprise_trans'],
+  ['sad',             '难过', '#6b7f96', 'sad_speaking',       'sad_trans'],
+  ['blush',           '害羞', '#f0997b', 'shy_speaking1',      'shy_trans'],
+  ['angry',           '生气', '#e8654e', 'angry_speaking',     'angry_trans'],
+  ['disappointed',    '失望', '#8a94a6', '',                   'thinking_to_serious']
+];
+/* 语音 id → 表情（只影响"没手选表情时"的自动切换；表里没有的 id 走默认 speaking） */
+var XK_VOICE_EMO = {
+  greet_first:'happy', greet_back:'happy', tab_return:'happy',
+  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal',
+  nav_labs:'sided_thinking', nav_about:'normal', nav_ai:'sided_thinking',
+  fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
+};
+var XKM = { clips:null, loading:null, imgs:{}, emo:'normal', clip:null,
+            fi:0, acc:0, hold:0, last:0, done:false, next:null, manual:false, err:[] };
+window.__xkEmo = { emotion:'normal', clip:null, frames:0, ok:false, errors:XKM.err };
+
+function xkmImg(u){
+  if(!XKM.imgs[u]){ var im = new Image(); im.decoding = 'async'; im.src = u; XKM.imgs[u] = im; }
+  return XKM.imgs[u];
+}
+function xkmUrl(p){ return '/' + String(p.url).replace(/^\/+/, ''); }
+function xkmLoad(){
+  if(XKM.clips) return Promise.resolve(XKM.clips);
+  if(XKM.loading) return XKM.loading;
+  XKM.loading = fetch('/kurisu/manifest.json', {cache:'force-cache'}).then(function(r){
+    if(!r.ok) throw new Error('manifest HTTP ' + r.status);
+    return r.json();
+  }).then(function(j){
+    XKM.clips = (j && j.clipsMedium && j.clipsMedium.clips) || null;
+    window.__xkEmo.ok = !!XKM.clips;
+    return XKM.clips;
+  }).catch(function(e){ XKM.err.push('manifest: ' + e); window.__xkEmo.ok = false; return null; });
+  return XKM.loading;
+}
+function xkmFrameAt(clip, f){          /* f: 0-based（已含 reverse）；返回该帧落在哪一页 + 页内偏移 */
+  var pages = clip.atlas.medium.pages, i, p, local;
+  for(i = 0; i < pages.length; i++){
+    p = pages[i];
+    local = (f + 1) - p.first_frame;   /* manifest 的 first_frame 是 1-based */
+    if(local >= 0 && local < p.frames) return {p:p, local:local};
+  }
+  return null;
+}
+function xkmPaint(){
+  var clip = XKM.clip;
+  if(!clip || !XK_ACT) return;
+  var f = clip.reverse ? (clip.frames - 1 - XKM.fi) : XKM.fi;
+  var at = xkmFrameAt(clip, f);
+  if(!at) return;
+  var im = xkmImg(xkmUrl(at.p));
+  if(!im.complete || !im.naturalWidth) return;
+  var tw = at.p.tile_w, th = at.p.tile_h;
+  var sx = (at.local % at.p.cols) * tw, sy = Math.floor(at.local / at.p.cols) * th;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  var w = bounds.w * (canvas.width / bounds.w), h = bounds.h * (canvas.height / bounds.h);
+  var s = Math.min(w * CHAR_BOX.maxW / CHAR_BOX.w, h * CHAR_BOX.maxH / CHAR_BOX.h);
+  var dh = CHAR_BOX.h * s, dw = dh * (tw / th);   /* 宽按素材自身比例，避免不同 tile 被拉变形 */
+  var x = w * CHAR_BOX.xRatio, y = h - Math.max(3, h * CHAR_BOX.footRatio);
+  ctx.drawImage(im, sx, sy, tw, th, x - dw / 2, y - dh, dw, dh);
+}
+function xkmTick(t){
+  if(!XK_ACT || !XKM.clip) return;
+  if(!XKM.last){ XKM.last = t; return; }
+  var dt = t - XKM.last; XKM.last = t;
+  if(dt > 200) dt = 200;                 /* 切标签页回来别一次跳几百帧 */
+  if(XKM.done){                          /* once_then_hold 播完：停住 2.8s 再回普通 */
+    XKM.hold += dt;
+    if(XKM.hold > 2800){ XKM.done = false; xkmSetEmotion('normal'); }
+    return;
+  }
+  var clip = XKM.clip, iv = Math.max(4, clip.frameIntervalMs || 42);
+  XKM.acc += dt;
+  if(XKM.acc >= iv){
+    /* ★必须按 manifest 的 frameIntervalMs 算"这一跳该走几帧"：
+       medium 档过渡段是 5–8ms/帧（200fps 级别），一次 rAF 只走一帧的话
+       会慢到 ~5 倍（trans_smile 从 0.60s 变成 2.88s，肉眼就是"卡住不动"）。 */
+    var adv = Math.floor(XKM.acc / iv);
+    XKM.acc -= adv * iv;
+    XKM.fi += adv;
+    if(XKM.fi >= clip.frames){
+      if(clip.loopMode === 'loop'){ XKM.fi = XKM.fi % clip.frames; }
+      else if(XKM.next){ var nx = XKM.next; XKM.next = null; xkmPlayClip(nx, null); return; }  /* 入场过渡播完 → 接循环段 */
+      else { XKM.fi = clip.frames - 1; XKM.done = true; XKM.hold = 0; }
+    }
+  }
+  xkmPaint();
+}
+function xkmMark(name){
+  var bar = document.getElementById('xkEmoBar');
+  if(!bar) return;
+  var bs = bar.querySelectorAll('b'), i;
+  for(i = 0; i < bs.length; i++){
+    bs[i].className = (bs[i].getAttribute('data-emo') === name) ? 'on' : '';
+  }
+}
+function xkmPlayClip(name, next){        /* 真正上屏：取图集 → 接管画布；next = 这一段播完接哪一段 */
+  xkmLoad().then(function(clips){
+    if(!clips){ XKM.err.push('无 clipsMedium'); return; }
+    var clip = clips[name];
+    if(!clip){ XKM.err.push('缺剪辑: ' + name); return; }
+    var pages = clip.atlas.medium.pages, k;
+    for(k = 0; k < pages.length; k++){
+      var im = xkmImg(xkmUrl(pages[k]));
+      if(!im.complete){
+        im.addEventListener('load', function(){ if(XK_ACT) xkmPaint(); }, {once:true});
+      }
+    }
+    XKM.clip = clip; XKM.fi = 0; XKM.acc = 0; XKM.hold = 0; XKM.last = 0; XKM.done = false;
+    XKM.next = next || null;
+    XK_ACT = {name: name, emo: XKM.emo};
+    window.__xkEmo.clip = name; window.__xkEmo.frames = clip.frames;
+    xkmPaint();
+  });
+}
+function xkmSetEmotion(name){
+  var item = null, i;
+  for(i = 0; i < XK_EMO_LIST.length; i++){ if(XK_EMO_LIST[i][0] === name){ item = XK_EMO_LIST[i]; } }
+  if(!item) return false;
+  XKM.emo = name; window.__xkEmo.emotion = name; xkmMark(name);
+  /* ★2026-10-15：表情可能在开场还没播完时接管画布（语音自动切表情就会）——
+     这时 loop() 不再走 opening 那一支，showHud() 就永远不会被调 → 状态行 / 字幕 / 表情条
+     一个都不出现。所以这里补一次"开场被打断也要出 HUD"。 */
+  if(cur === 'opening' && typeof showHud === 'function') showHud();
+  if(name === 'normal'){                 /* "普通" = 交回 hi 档 idle */
+    XK_ACT = null; XKM.clip = null; XKM.fi = 0; XKM.done = false; XKM.last = 0; XKM.next = null;
+    window.__xkEmo.clip = null; window.__xkEmo.frames = 0;
+    if(typeof play === 'function' && !document.hidden) play('idle');
+    return true;
+  }
+  /* 先播入场过渡段（演出来），过渡播完自动接循环段；没有循环段就停在过渡末帧（如"失望"） */
+  if(item[4]){ xkmPlayClip(item[4], item[3] || null); }
+  else { xkmPlayClip(item[3], null); }
+  return true;
+}
+function xkmBuild(){
+  var crtEl = document.getElementById('crt');
+  if(!crtEl || document.getElementById('xkEmoBar')) return;
+  var st = document.createElement('style');
+  st.textContent =
+    '.xk-emo-bar{position:absolute;top:5%;left:5%;display:flex;gap:6px;z-index:6;' +
+    'opacity:0;transition:opacity .5s}' +
+    '.xk-emo-bar.on{opacity:1}' +
+    '.xk-emo-bar b{width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.45);' +
+    'cursor:pointer;opacity:.45;transition:opacity .2s,box-shadow .2s}' +
+    '.xk-emo-bar b:hover{opacity:.85}' +
+    '.xk-emo-bar b.on{opacity:1;box-shadow:0 0 0 2px rgba(57,208,216,.55)}';
+  document.head.appendChild(st);
+  var bar = document.createElement('div');
+  bar.className = 'xk-emo-bar'; bar.id = 'xkEmoBar';
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', '桐莉栖表情');
+  bar.innerHTML = XK_EMO_LIST.map(function(e){
+    return '<b data-emo="' + e[0] + '" style="background:' + e[2] + '" title="' + e[1] + '"></b>';
+  }).join('');
+  crtEl.appendChild(bar);
+  bar.addEventListener('click', function(ev){
+    var b = (ev.target && ev.target.closest) ? ev.target.closest('b[data-emo]') : null;
+    if(!b) return;
+    var nm = b.getAttribute('data-emo');
+    XKM.manual = (nm !== 'normal');
+    xkmSetEmotion(nm);
+  });
+  xkmMark(XKM.emo);
+}
+function xkmReveal(){
+  var bar = document.getElementById('xkEmoBar');
+  if(bar) bar.classList.add('on');
+}
+/* 语音联动（HOME_VOICE 的两处 handler 会调这两个）：手选表情时不抢画布 */
+function xkVoiceAnim(id){
+  if(XK_ACT) return;
+  var auto = XK_VOICE_EMO[id];
+  if(auto && auto !== 'normal' && !XKM.manual){ xkmSetEmotion(auto); return; }
+  if(typeof play !== 'function' || cur === 'opening') return;
+  var sim = img(CLIPS.speaking.src);
+  if(sim.complete && sim.naturalWidth){ play('speaking'); }
+  else { sim.addEventListener('load', function(){ if(!XKV.audio || !XKV.audio.paused) play('speaking'); }, {once:true}); }
+}
+function xkVoiceEnd(){
+  if(!XK_ACT && typeof play === 'function') play('idle');
+}
+xkmBuild();
+/* manifest 在首屏门禁 1.5s 窗口之后才取 —— 表情资产绝不进首屏字节 */
+if(!RM){ setTimeout(xkmLoad, 2000); }
+'''
+home_script = sub1(home_script,
+                   "function play(name){\n  const c = CLIPS[name];",
+                   "function play(name){\n  XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */\n  const c = CLIPS[name];",
+                   '主页 play(): 退出表情模式')
+home_script = sub1(home_script,
+                   "function drawFrame(){\n  if(!cur) return;",
+                   "function drawFrame(){\n  if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */\n  if(!cur) return;",
+                   '主页 drawFrame(): 表情模式分支')
+home_script = sub1(home_script,
+                   "function loop(t){\n  if(!started) return;\n  if(cur){",
+                   "function loop(t){\n  if(!started) return;\n  if(XK_ACT){ xkmTick(t); lastT = t; requestAnimationFrame(loop); return; }   /* ★表情模式接管画布 */\n  if(cur){",
+                   '主页 loop(): 表情模式分支')
+home_script = sub1(home_script,
+                   "  document.getElementById('crtStatus').hidden = false;\n"
+                   "  typeSub('你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。');",
+                   "  document.getElementById('crtStatus').hidden = false;\n"
+                   "  /* ★2026-10-15：语音正在说的时候字幕归语音那条，别被这句默认文案顶掉 */\n"
+                   "  const _v = window.__xkVoice;\n"
+                   "  if(!(_v && _v.audio && !_v.audio.paused)) typeSub('你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。');\n"
+                   "  if(typeof xkmReveal === 'function') xkmReveal();   /* ★2026-10-15：表情条随 HUD 一起出现 */",
+                   '主页 showHud(): 显示表情条 + 不与语音抢字幕')
+home_script = sub1(home_script,
+                   "      if(typeof play === 'function' && cur !== 'opening'){\n        const sim = img(CLIPS.speaking.src);",
+                   "      if(typeof xkVoiceAnim === 'function'){ xkVoiceAnim(id); return; }\n"
+                   "      if(typeof play === 'function' && cur !== 'opening'){\n        const sim = img(CLIPS.speaking.src);",
+                   '主页语音 playing: 交给表情层')
+home_script = sub1(home_script,
+                   "    a.addEventListener('ended', ()=>{\n      if(typeof play === 'function') play('idle');",
+                   "    a.addEventListener('ended', ()=>{\n"
+                   "      if(typeof xkVoiceEnd === 'function'){ xkVoiceEnd(); }\n"
+                   "      else if(typeof play === 'function'){ play('idle'); }",
+                   '主页语音 ended: 交给表情层')
+home_script = home_script + HOME_ANIM
 
 # --------------------------------------------------------------------- 落盘
 print('生成：')
