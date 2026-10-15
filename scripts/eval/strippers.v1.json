@@ -1,0 +1,128 @@
+{
+  "version": "v1",
+  "file_role": "复读率审计（repeat_audit.py）的「剥壳」模板串清单：算 D1/D2/D3 前先从回答正文里去掉这些**后端写死的**固定抬头与引用尾。",
+  "spec_from": "docs/后端问答能力升级方案-20261015.md §10.1（「先去掉回答里固定的抬头与引用尾」）",
+  "decided_by": "站主拍板 2026-10-16（窗口 AE 收尾）：§10.1 原写「口径与 scripts/eval/qa_score.py 一致」，但实测该文件里没有任何剥壳实现 ⇒ 以本清单为准。",
+  "policy": "**只追加不修改**：要改就出 strippers.v2.json（保留 v1 便于回溯）。每条必须四要素齐全：pattern / source / added / reason。",
+  "how_used": "按顺序：先按 tail 命中处截断（丢掉引用尾），再从开头反复剥 head（含空行），最后清掉尾部空行与分隔线。报告里同时给出「未剥壳」的 D1 作为上界对照。",
+  "match_scope": "逐行匹配（每行先 strip 再 re.search）",
+  "head": [
+    {
+      "pattern": "^##\\s*多智能体协同结果\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:1387",
+      "added": "2026-10-16",
+      "reason": "assembleFinalAnswer() 拼答案的第一行就是它，每条回答都有，属固定抬头"
+    },
+    {
+      "pattern": "^>\\s*调度员判定本次任务为.*$",
+      "source": "MultiAgentCoordinatorImpl.java:1388",
+      "added": "2026-10-16",
+      "reason": "紧随其后的调度说明，只有角色名变化，属固定抬头"
+    },
+    {
+      "pattern": "^##\\s*研判结论\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:710/727/733",
+      "added": "2026-10-16",
+      "reason": "ANALYST 正文段标题，是模板壳不是内容"
+    },
+    {
+      "pattern": "^##\\s*取证发现\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:1187",
+      "added": "2026-10-16",
+      "reason": "FORENSICS 正文段标题，同上"
+    },
+    {
+      "pattern": "^>\\s*证据采集方式：.*$",
+      "source": "MultiAgentCoordinatorImpl.java:1188",
+      "added": "2026-10-16",
+      "reason": "取证段的固定元信息行（规则选题说明），非模型内容"
+    },
+    {
+      "pattern": "^##\\s*处置结果（评测模式）\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:1355",
+      "added": "2026-10-16",
+      "reason": "评测身份 RESONDER 段标题（state=rule-based-eval-simulated）"
+    },
+    {
+      "pattern": "^>\\s*\\*\\*评测身份：.*$",
+      "source": "MultiAgentCoordinatorImpl.java:1356",
+      "added": "2026-10-16",
+      "reason": "评测身份固定声明行"
+    },
+    {
+      "pattern": "^##\\s*处置结果\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:1276",
+      "added": "2026-10-16",
+      "reason": "内部处置结果段标题（与评测模式那份同族）"
+    },
+    {
+      "pattern": "^##\\s*处置类请求：公开演示不执行\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:1221",
+      "added": "2026-10-16",
+      "reason": "公开面 RESPONDER 段标题"
+    },
+    {
+      "pattern": "^##\\s*知识库参考（未经 AI 加工）\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:714/730/737",
+      "added": "2026-10-16",
+      "reason": "命中知识库时的固定分区标题"
+    },
+    {
+      "pattern": "^##\\s*本次没有生成结论\\s*$",
+      "source": "PublicAskService.java:359",
+      "added": "2026-10-16",
+      "reason": "fail-closed 时的固定抬头（notGeneratedText）"
+    },
+    {
+      "pattern": "^###\\s*证据解读\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:1192",
+      "added": "2026-10-16",
+      "reason": "两段式回答的固定小节标题"
+    },
+    {
+      "pattern": "^>\\s*结论生成方式：.*$",
+      "source": "MultiAgentCoordinatorImpl.java:505/1194/1222/1357",
+      "added": "2026-10-16",
+      "reason": "每种 state 都拼这一行（模型真生成 / 规则解析 / 未生成），属元信息"
+    },
+    {
+      "pattern": "^>\\s*state=[\\w-]+\\s*$",
+      "source": "MultiAgentCoordinatorImpl.java:485/514/540/944/1358 ; PublicAskService.java:360",
+      "added": "2026-10-16",
+      "reason": "所有链路都会拼 state= 标记行；它对 TTS/复读无意义，且会让不同回答的开头趋同"
+    },
+    {
+      "pattern": "^原因：.*$",
+      "source": "PublicAskService.java:361",
+      "added": "2026-10-16",
+      "reason": "fail-closed 正文的固定原因句"
+    },
+    {
+      "pattern": "^⚠️\\s*注意：.*$",
+      "source": "MultiAgentCoordinatorImpl.java:1392",
+      "added": "2026-10-16",
+      "reason": "执行失败时追加的固定提示行"
+    },
+    {
+      "pattern": "^---\\s*$",
+      "source": "多段拼接产生（如 MultiAgentCoordinatorImpl.java:714 的 \\\"---\\\\n\\\\n## 知识库参考\\\"）",
+      "added": "2026-10-16",
+      "reason": "markdown 分隔线，纯结构记号；留在开头会让不同回答的前 8 字符相同"
+    }
+  ],
+  "tail": [
+    {
+      "pattern": "^###\\s*命中的公开知识库片段",
+      "source": "PublicKbService.java:189",
+      "added": "2026-10-16",
+      "reason": "引用尾起点：从这里到结束都是检索片段直出区（不是助手说的话），必须整段去掉"
+    },
+    {
+      "pattern": "^>\\s*说明：以上为模型基于",
+      "source": "MultiAgentCoordinatorImpl.java:976/979",
+      "added": "2026-10-16",
+      "reason": "模板说明尾（公开面/内部面两条措辞），属固定尾巴"
+    }
+  ],
+  "known_limit": "本清单是**字面量模板**口径（只认后端写死的串）。`--shell-mode structural` 给更狠的结构口径当参照；两者都印在报告里，差值就是「模板抬头」的贡献。"
+}
