@@ -193,7 +193,27 @@ def main():
     ap.add_argument("--sovits", default="", help="覆盖 SoVITS 权重路径")
     ap.add_argument("--noise-seed", type=int, default=-1,
                     help="传 >=0 时固定 torch 随机种子，让多档 A/B 用同一起始噪声（默认 -1=不固定）")
+    ap.add_argument("--ref-audio", default="",
+                    help="覆盖参考音频（T17 后新增：换参考 A/B 用；默认用 config.settings 的真值 ✓）")
+    ap.add_argument("--ref-text", default="",
+                    help="覆盖参考文本（必须与 --ref-audio 配套；否则音色/语调会跑偏 ✗）")
+    ap.add_argument("--groups", default="",
+                    help="只合成这些 trigger 组（逗号分隔，例 status,faq）；空=不筛")
+    ap.add_argument("--resume", action="store_true",
+                    help="断点续跑：out/meta/<id>.json 已存在则跳过（不重合成、不覆盖既有产物）")
     args = ap.parse_args()
+    if args.ref_audio or args.ref_text:
+        # ⚠️ REF_AUDIO/REF_TEXT 是**模块级**变量（上面按 config.settings 定过），
+        #    这里必须 global 才改得动 —— 否则只建了局部变量，推理仍用旧参考（踩过 ✓）
+        global REF_AUDIO, REF_TEXT
+        if args.ref_audio:
+            REF_AUDIO = os.path.abspath(args.ref_audio)
+            if not os.path.exists(REF_AUDIO):
+                raise SystemExit("--ref-audio 不存在：%s" % REF_AUDIO)
+        if args.ref_text:
+            REF_TEXT = args.ref_text
+        if args.ref_audio and not args.ref_text:
+            raise SystemExit("给了 --ref-audio 就必须给 --ref-text（两者必须配套，否则音色会跑偏 ✗）")
     args.emotions_ids = [x for x in (args.emotions_ids or "").split(",") if x]
 
     gpt_path, sovits_path = MODELS[args.model]
@@ -207,8 +227,26 @@ def main():
 
     lines_all = load_lines(args.lines if args.lines != "bank" else "bank")
     todo = pick(lines_all, args.mode, args.ids)
+    if args.groups:
+        want_groups = {x for x in args.groups.split(",") if x}
+        todo = [l for l in todo if l.get("trigger", "") in want_groups]
     if not todo:
-        raise SystemExit("没有可合成的台词（检查 --mode/--ids/--lines）")
+        raise SystemExit("没有可合成的台词（检查 --mode/--ids/--groups/--lines）")
+    # 断点续跑：已存在 meta/<id>.json 的句子直接跳过（不重合成、不覆盖既有产物）
+    skipped_resume = []
+    if args.resume:
+        kept = []
+        for line in todo:
+            mp = os.path.join(args.out, "meta", line["id"] + ".json")
+            if os.path.exists(mp):
+                skipped_resume.append(line["id"])
+            else:
+                kept.append(line)
+        todo = kept
+        log("--resume：跳过已完成 %d 句，待合成 %d 句" % (len(skipped_resume), len(todo)))
+        if not todo:
+            log("--resume：没有待合成的句子，直接退出（产物未改动）")
+            return
     os.makedirs(os.path.join(args.out, "raw"), exist_ok=True)
 
     log("importing torch + GPT-SoVITS …")
@@ -301,6 +339,7 @@ def main():
 
     summary = {
         "mode": args.mode, "ids": [r["id"] for r in results], "device": args.device,
+        "resumeSkipped": skipped_resume, "groupsFilter": args.groups,
         "modelLoadSeconds": round(load_s, 2), "model": args.model, "gpt": gpt_path, "sovits": sovits_path,
         "noiseSeed": args.noise_seed,
         "refAudio": REF_AUDIO, "refText": REF_TEXT, "refLanguage": "日文", "targetLanguage": args.lang,
