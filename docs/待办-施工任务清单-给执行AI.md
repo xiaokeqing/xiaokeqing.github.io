@@ -737,3 +737,27 @@ T31 要求（归站点窗口 C，排在 T8 第一批之后）：
   6. 验收：真浏览器录屏/截图(前 2 秒逐帧 4~6 张) + console 0 报错 + 三道门禁全绿 + 首屏字节不超标
   7. 若导航栏入场与现有 dock CSS 冲突，允许改 dock 的入场 class，但不得改导航项与顺序 ✗
 ```
+### SecAgent 换成 DeepSeek 完成（2026-10-15 21:54）+ T25 补丁新增注意点
+
+```
+结果：provider 已从 dashscope 切到 **deepseek（deepseek-chat，available=true）** ✓
+  自检行：LLM-PROVIDER-SELFCHECK provider=deepseek fallback=DISABLED timeouts=connect=3000ms read=12000ms call=15000ms
+  embedding 仍走 DashScope `text-embedding-v4`（available=true）✓ DASHSCOPE_API_KEY 保留 ✓
+  容器 secagent Up (healthy) ✓ /api/health http=200 fingerprintMismatch=false ✓ timer 已恢复 ✓
+功能验证（评测池 /api/chat，用 2 次，公开池未动）：
+  第1问 http=200，结构化 JSON 正常（code/data/message；data=answer/errorMessage/steps/success）
+        回答含 `state=input-insufficient`（**fail-closed 行为保留** ✓）+ 1 个 RAG 证据块 ✓
+        署名 `generatedBy=deepseek / deepseek-chat` ✓
+  第2问 http=200，`state=model`；给出「SSH暴力破解 / LOW」研判 ✓ 证据块 2 个 ✓
+  向量检索未受影响（服务端日志）：DashScope Embedding 初始化 ✓ 向量维度 1024 ✓
+        混合检索 mode=dense+sparse+rerank 返回=3 ✓ 命中文件与回答引用一致 ⇒ **引用可溯源** ✓
+回滚（一行，srv1 执行）：sed -i 改回 dashscope + srv1-redeploy.sh --force ✓
+  备份：/root/secagent-env.bak-20261015-214754（原始 .env）等 ✓
+★ T25 补丁新增注意点（重要 ✗）：T25 目前只加了 `spring.ai.dashscope.chat.options` 的超时覆盖；
+  现在 provider=deepseek ⇒ **必须同时确认/覆盖 DeepSeek 侧对应的构造超时键** ✗
+  （自检显示 read=12000ms 是"deps 层"值 ⇒ 若不覆盖，20s 预算仍会被 12s 先掐断 ✓ 与 M 报告里那条同一类坑 ✓）
+已记录的小事：
+  1. 验证脚本曾把 Key 明文打进过一次会话输出 ✗（未入仓库/文档 ✓）⇒ **建议轮换该 Key**（站主已知情，可缓 ✓）
+  2. 现网容器 image 引用是 tag `secagent:local` 而非 digest ✗（改造前即存在）⇒ 记为 U11，建议后续收敛 ✓
+  3. /api/health 仍无鉴权返回 200（U5 未修 ✓）
+```
