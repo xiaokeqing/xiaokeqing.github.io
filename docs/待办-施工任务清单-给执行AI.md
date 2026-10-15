@@ -954,3 +954,30 @@ T14 白名单来源：`_asset-review\\03-character-kurisu\\clip-transition-table
 ⑥ 额度口径：L 写"站主自用池 0/200"、K 记 `APP_QUOTA_DAILY_LIMIT=50` ⇒ "200"无出处 ⇒ [待核对] ✓
 另：`/api/health` 仍 200 无鉴权且含提交信息/mock 开关/documentVectors=318 ✓（U5 未修 ✓）
 ```
+### T14 / U6 拍板（2026-10-16，窗口 W 交付后）
+
+```
+① ★**先修一个静默失效**（W 实测 ✗ 不报错但演错表情）：
+   `_dev/gen-demo-pages.py:2037-2039` 的 `T0.emotion` 用 `surprised`，而 manifest 里只有 `sided_surprised`
+   ⇒ `host('emotion',{emotion:'sided_surprised'})` 走兜底取的当前节点第一条 prob=0 出边 = `trans_smile`
+   ⇒ 必须加**适配表**：`sided_surprised→surprised`（其余 7 类别名同理核一遍 ✓）并加断言：
+   "宿主情绪名必须存在于 manifest.emotions" ✗ 否则构建期报错（不许静默兜底 ✓）
+② **U6 定论**：现网 prompt = **Java 字符串常量**（`MultiAgentCoordinatorImpl.java:600-610`，529 字符 ✗）
+   ⇒ **必须重建镜像**才能改（改 .env/compose 无效 ✓ 与 rag.model 同一个坑 ✗）
+   ⇒ `docs/persona.md` 目前**零代码引用**（只是文档 ✓）；注入的是**摘要版 1947 字符/3565 B** ✓
+   全文 17.4KB 只作 T30 知识库源 ✓（不挤上下文 ✓ 单次总量 ≈6.5K 字符 ≈4~6K token ✓）
+③ **两处冲突裁决**（W 提出 ✗ 我定）：
+   a) persona §9 要"台词+字幕+情绪 三段输出" 与 公开面"只输出一个 JSON" 打架 ⇒ **以 JSON 为准** ✓
+      persona 摘要里删掉"三段输出"要求 ✓（前端本来就是从 JSON 消费 ✓）
+   b) persona §9 情绪 7 标签（含 calm/shy）与 T14 8 类不一致 ⇒ **统一到 T14 的 8 类** ✓
+      （angry/blush/disappointed/happy/normal/sad/sided_surprised/sided_thinking ✓ 以 manifest 为准 ✓）
+④ **合并发布**：T14 + T25(A 组+§12) + U6 **同一次重建** ✓（U6 与 T14 改同一段常量 ⇒ 必须同批写一次 ✗）
+   顺序：checkout da9d1db → merge t25 分支 → 新分支落 T14+U6 → `mvn -o -B test` 全绿(基线 588/0/4)
+        → 合 main → push → srv1 `systemctl start secagent-redeploy.service`（禁手工 up ✗）
+   核 4 样：`decision=whitelist{…}` 非 MISSING ✓ `persona=loaded(bytes=3565,md5=…)` 非 NOT_LOADED ✓
+           OUTBOUND/LLM 自检 ✓ /api/health ✓
+   回滚三档：镜像级 `srv1-rollback.sh`（推荐✓）/ 语义级 `APP_PERSONA_ENABLED=false` / 前端级不消费未知 schema ✓
+⑤ 成本：零额外模型调用 ✓ 只多 ~80~120 输出 token/次 ⇒ 公开池顶格 ≈0.015 元/日 `[待核对]` ✓
+⑥ 验收：V1 白名单内率=1.0 ✓ V2 同题 10 次 emotionTo≥2 且 top1≤0.6 ✓ V3 复读率不升 ✓ V4 不退化+幻觉=0 ✓
+   ★ 公开池今日 30/30 已耗尽 ✗ ⇒ 端到端只能等次日；今天可跑单元 8 例 + 40 题回归 ✓
+```
