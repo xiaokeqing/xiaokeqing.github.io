@@ -235,6 +235,8 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 | 10-15 | 规划侧 | 接手批工作入库（host_triggered_entries 派生 9 个 / /ai/ 真调 API / 语音 L1 播放 / 表情 5→8 套 / #fallback 保护） | 提交 `9e8094e` | 站点代码 |
 | 10-15 | 规划侧 | 接手方评审复核：F1~F4 全中；纠正其 E4-①（assert 实为 16 项）；确认 CORS 允许主域 | `docs/总账…` §3 | 口径 |
 | 10-15 | 规划侧 | 定 IP 展示规则（最后一段→x，只掩显示、分组用原值；访客/内网 IP 绝不上页面）；R1 存量三处据此免改；同步 T20~T22 与 Kimi 设计任务书 | 提交 `38fe210` + 本节 ⑨ | 站点展示口径 |
+| 10-15 | C｜站点与角色 | **T7 视频接线**：生成器注入内联视频渲染层 + 40 组透明 webm/poster 入库 + manifest 全等校验；冻帧对拍非角色区 0 像素差、两种故障注入都真拦住、首屏字节差 0；抓到并修 `key_point_to_thinking` 视频正放/图集倒放（manifest `reverse`）；资产门禁 80→96 MiB；工装入 .gitignore 白名单 | 提交 fc79d0c ｜ 发布 `site-20261015-210145` ｜ `_shots/t7-evidence.md` | 六页渲染层；线上已切换 |
+| 10-15 | E｜文档设计 | **T16《AI 项目说明书》**（33.1KB）：定位 + 四层架构 + 技术栈分归属 + 指标表（只放实测）+ 难点 + 成本 + 复现 + 边界 + 一页简历版 | `docs/AI项目说明书-安全数字人-20261015.md` | 对外材料 |
 | 10-15 | D｜素材产线 | T18 段一/段二 + T23 可行性：交付 `tools/asset-align.py`（对齐+图集+透明WebM+逐帧QA，0.70 s/帧）、`tools/asset-consistency.py`（rgbNcc+edgeNcc+关键点，阈值用 210 帧互测标定）、`tools/asset-refset.py`（定妆集 21 张 + 38 剪辑锚点表）；**锚点与上游 SpriteForge 逐位一致**；SpriteForge 最小示例**纯 CPU 跑通**（生成是远端付费服务，无需 GPU）；出报价单与 SOP 一页 ✓ | 提交 7538904 ｜ docs/素材产线能力-T18-20261015.md（603 行） | 素材产线能力；未接线未发布 |
 | 10-15 | H｜运维 | T11①②③④：srv2 证书到期三级告警 timer（未动证书/nginx）｜srv1 每 5 分钟站点可用性外部探测（走真实 CF 访客路径，失败注入用 .invalid 验证告警 HTTP 200）｜补齐配置类备份（/etc/nginx + systemd 单元 + letsencrypt + scripts，98 文件/124K）并恢复演练 PASS（98/98 sha256）｜备案材料清单 | 提交 1f418ae ｜ docs/运维-T11-*.md ×3 | 服务器新增 3 个 timer；**DNS/nginx/证书/容器零变更** ✓ |
 | 10-15 | A｜评测 | T13 评测包：素材包 Qwen3-ASR-0.6B 落地并出 60 句日语 ASR 回译 **CER 均值 0.0683**（中位 0.0336、26/60 完全一致，达标 ≤10%）；问答质量集 40 条（19 条 fail-closed）入库，首轮有效采集 4 条：**拒答 4/4、幻觉 0、状态自洽 4/4**；MOS/ABX 流程+脚本可重跑（**无真实评委 ⇒ 结果表为空模板** ✗）；脚本与题库入 `scripts/eval/` | 提交 033c75b ｜ `docs/评测报告-语音与问答-20261015.md` | 新增 `scripts/eval/**` 与两份 docs |
@@ -291,7 +293,7 @@ ssh secagent-srv1 "curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' ht
 ### 🟡 进行中（窗口 / 当前进度）
 | 任务 | 窗口 | 进度 |
 |---|---|---|
-| **T7 视频接线** | **C** | 已建 `_dev/build_video_manifest.py` + `static/kurisu/video-manifest.json` + `static/kurisu/video/` ✓；正在做**对齐与 alpha 实测**（`_dev/check-video-align.py`、`_shotss/video-align.json`）✓ |
+| ~~T7 视频接线~~ → **✅ 已完成并上线（窗口 C）** | 已收工 | 生成器注入内联视频渲染层（`mode=video\|pixel\|off`）；逐帧 seek 保帧序、离屏 video 不上 DOM、≤4 枚+LRU、poster 先画、`video→图集→poster` 降级、手势后才预载 ✓；40 组 webm+poster 入库（9,543,169 B，未重编码）+ manifest 逐剪辑与 statemachine 全等校验 ✓；**冻帧对拍非角色区 0 像素差**（五档）、故障注入两种都真拦住且 **console 0 报错** ✓、首屏字节**差 0** ✓；顺手修 bug：`key_point_to_thinking` 视频正放/图集倒放 ⇒ manifest `reverse` 字段 ✓；**已发布 `site-20261015-210145`** ✓ |
 | ~~T13 评测包~~ → **🟡 ①②③ 已交付** | **A（已收工）** | ①**ASR 回译 CER ✅ 出数 0.0683**（中位 0.0336、26/60 完全一致、46/60 ≤10% ⇒ 达标 ≤10%）②题库 40 条（19 条应拒答）✅，但**得分表只跑到 4/40**（公开额度池 30 次/日打满 ✗，明日 `--max 25` 续跑才能出要点命中率）③MOS/ABX 流程与脚本 ✅、**结果待人工盲听** ✗ |
 | **T17 声音换代 A/B** | **B** | 读文档阶段 |
 | **F 后端功能与展示规划**（盘点 + A/B/C 判定） | **F** | 读文档阶段 |
