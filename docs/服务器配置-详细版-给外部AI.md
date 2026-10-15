@@ -90,12 +90,13 @@ wazuh.dashboard · wazuh.indexer · wazuh.manager
 
 ### 3.5 目录与发布布局
 ```
-/opt/secagent/static/             ← 静态根（当前内容 = 站点产物）
+/opt/secagent/site → releases/site-<时间戳>   ← **主站真身**（符号链接；server_name = xiaokeqing.cn/www/direct）`[已实测]`
 /opt/secagent/releases/site-<时间戳>/   ← 每次发布一个完整目录；**原子符号链接切换**，保留上一版
-/opt/secagent/site  → 指向当前 release（符号链接）`[已实测]`
+/opt/secagent/static/             ← `static.xiaokeqing.cn` 的**占位根**（248 B），**与主站无关** ✗ 别拿它当"主站备份"用
 /opt/secagent/scripts/srv2-site-receive.sh   ← 接收/校验/切换/自检脚本（由发布脚本同步上去）
-当前线上版本：`/opt/secagent/releases/site-20261014-235208` `[已实测]`
+当前线上版本：`/opt/secagent/releases/site-20261015-112007` `[已实测 2026-10-15]`
 ```
+**nginx 与 systemd 的关系**：`systemctl is-active nginx` 返回 **inactive 是设计如此** —— nginx 不是独立服务，它是 `secagent-static.service` 的主进程、以 `xksite` 身份跑 ✗ 别误判为故障（健康检查看 `secagent-static`，实测 active ✓）。3.4 的 `ReadOnlyPaths` 同时列 static/releases 是防御性的，与"主站真身是 /opt/secagent/site"不矛盾。
 
 ### 3.6 流量账（站点部分）
 ```
@@ -116,6 +117,17 @@ ufw：放行 80/443 ✓ ｜ 腾讯云**安全组入站**：TCP 80/443 ✓（22 �
 隔离回归 `[已实测]`：蜜罐网段对外 TCP 全 DROP（9 端口 SYN=0、对照 SYN=3）｜ 7 容器 Up
 [风险] 443 与蜜罐同机；`[待核对]` 是否对 22 做了来源限制、是否有 fail2ban/SSH 速率限制
 ```
+
+**⚠️ 硬前提：未备案 ⇒ 境内 80/443 被阻断（2026-10-15 实测铁证）**
+```
+curl -H 'Host: xiaokeqing.cn' http://43.143.114.79/
+  → 302 Location: https://dnspod.qcloud.com/static/webblock.html?d=xiaokeqing.cn
+  （443 直接 reset，浏览器显示"连接被重置"）
+```
+⇒ **所有"连接被重置/超时"的真因就是这条**（曾经的"本地 SNI 过滤"判断是误判 ✗ 已纠正）。
+⇒ **现行对外路径 = Cloudflare 隧道**（apex/www 的 DNS 已从 A 记录改为 Tunnel `secagent-static`，`direct.*` 保留 A 记录 DNS-only）。
+⇒ **备案是唯一能回到直连速度的路**（站主机器实测直连 271~338 KB/s vs CF 免费链路 0~10.7 KB/s）；备案办下来后把 apex/www 切回 A 43.143.114.79（灰云）。
+⇒ 顺带记录：srv1（阿里云）出站到 api.fish.audio 被 SNI 重置（同类阻断），TTS 代理的 Fish 上游暂不可达，见总账。
 
 ---
 

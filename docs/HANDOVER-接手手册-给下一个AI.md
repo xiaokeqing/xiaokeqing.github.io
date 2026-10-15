@@ -273,6 +273,78 @@ HEAD            = ec3b841（六页修复 + 导航统一 + 语音管线 均已入
   字幕垫板 = 原图 382,384 B（未降质 ✓）
 
 【语音·已完成未接线】8 句样本 0.51MB（E:\DeepSeek1\work\_tts-trial\sample8\dist\*.m4a|webm）
+
+---
+
+## 12b. 接管批追加（2026-10-15 白天）
+
+```
+HEAD（本批）   = 229e0d7 / 4c6140c / 6b35e89 / d8e03e6（T1 修复已发布；L1+CRT；T5.4+T5.5；T5.6+T12）
+线上版本目录     = /opt/secagent/releases/site-20261015-112007（含 T1 手机动画修复）
+三道门禁         = assert 15/15 ✓（条件分支，别处可能显 16）｜ 首屏 6/6 ✓ ｜ 路由 6/6 ✓
+
+【T1 手机动画不放 · 已修已上线】根因：iPhone 横屏 CRT 高 224px < 原型写死的 260px 阈值 →
+  整屏 fallback 盖住动画。判据改为 (高度<260 && 非触屏)，触屏一律播动画；冻帧对拍像素差 0。
+【T4 日语语音 · 已核实】12 句/7 分组/717KB，手势前 plays=0、手势后 plays=1、字幕逐字对齐（CDP 实测）。
+【开场镜头语言】CRT 通电（亮线→展开→闪烁→稳定）+ opening→idle 镜头推拉（commit 4c6140c）。
+【T5.4/T5.5】主页 CRT 状态行假数字改占位（api-bind 填真值）；/posts/ 卡片改 Hugo range 真文章链接。
+【T5.6+T12】boot→hi 两段式：主页首屏 1569→840KB（−47%）、内容页 267→185KB；
+  背景/配色面板连同背景图已删（body 静态 data-skin="warm" data-phone="v1"）。
+  xkClipIm：hi 只 peek 缓存不触发下载；boot 档期间 opening 循环 24 帧等 hi 接力。
+【T5.2】首屏门禁控制台错误改为有错即 exit 1（白名单空启动、只收实测无害条目）。
+【T5.3】/about/ 填入四张真实内容卡（站点性质/数据来源/她/纪律），不再空白。
+【Fish Audio L2】key/开关/短语表已在 srv1 配好（self-check key=SET phrases=3），
+  但上游 api.fish.audio 被 SNI 重置 ⇒ UPSTREAM_IO。三条出路待拍板：CF Worker 中转 /
+  DashScope TTS 进代理 / 暂缓（预渲染 bank 的 12 句不受影响）。
+
+```
+HEAD            = ec3b841（六页修复 + 导航统一 + 语音管线 均已入库并发布）
+线上版本目录     = /opt/secagent/releases/site-20261014-235208（srv2 原子切换）
+三道门禁         = assert 16/16 ✓ ｜ 首屏 6/6 PASS（预算 1650KB）✓ ｜ 路由 6/6 ✓
+
+【已上线】六页 = 设计原型整份 + **导航统一成左侧 dock**
+  （XK-LAB ｜ 主页·监测中心·AI问答·笔记·靶场·关于；主页原来那个顶部胶囊与死 CSS 已删干净 ✓）
+  四处原型缺陷已修：删掉 DEMO 横幅 ✓ ｜ 演示数字换真实接口（作战室 1,284 与 45.155 已清 0 ✓，
+  取不到写"读不到" ✓）｜ 攻击流叠行 ✓ ｜ CRT 顶部暗块 ✓
+  字幕垫板 = 原图 382,384 B（未降质 ✓）
+
+【语音·已完成未接线】8 句样本 0.51MB（E:\DeepSeek1\work\_tts-trial\sample8\dist\*.m4a|webm）
+
+---
+
+## 12b. 接管批追加（2026-10-15 白天，本批负责人：执行 AI）
+
+```
+HEAD（本批）   = 6b35e89 / d8e03e6（T5.4+T5.5 / T5.6+T12；T1 修复 229e0d7 已发布上线）
+线上版本目录     = /opt/secagent/releases/site-20261015-112007（含 T1 手机动画修复）
+三道门禁         = assert 15/15 ✓（条件分支，别处可能显 16）｜ 首屏 6/6 ✓ ｜ 路由 6/6 ✓
+
+【T1 手机动画不放 · 已修已上线】根因：iPhone 横屏 CRT 高 224px < 原型写死的 260px 阈值 →
+  整屏 fallback 盖住动画。判据改为 (高度<260 && 非触屏)，触屏一律播动画；冻帧对拍像素差 0。
+【T4 日语语音 · 已核实】12 句/7 分组/717KB，手势前 plays=0、手势后 plays=1、字幕逐字对齐（CDP 实测）。
+【开场镜头语言】CRT 通电（亮线→展开→闪烁→稳定）+ opening→idle 镜头推拉（commit 4c6140c）。
+【T5.4/T5.5】主页 CRT 状态行假数字改占位（api-bind 填真值）；/posts/ 卡片改 Hugo range 真文章链接。
+【T5.6+T12】boot→hi 两段式：主页首屏 1569→840KB（−47%）、内容页 267→185KB；
+  背景/配色面板连同背景图已删（body 静态 data-skin="warm" data-phone="v1"）。
+  xkClipIm：hi 只 peek 缓存不触发下载；boot 档期间 opening 循环 24 帧等 hi 接力。
+【T5.2】首屏门禁控制台错误改为有错即 exit 1（白名单空启动、只收实测无害条目）。
+【T5.3】/about/ 填入四张真实内容卡（站点性质/数据来源/她/纪律），不再空白。
+【Fish Audio L2】key/开关/短语表已在 srv1 配好（self-check key=SET phrases=3），
+  但上游 api.fish.audio 被 SNI 重置 ⇒ UPSTREAM_IO。三条出路待拍板：CF Worker 中转 /
+  DashScope TTS 进代理 / 暂缓（预渲染 bank 的 12 句不受影响）。
+
+```
+HEAD            = ec3b841（六页修复 + 导航统一 + 语音管线 均已入库并发布）
+线上版本目录     = /opt/secagent/releases/site-20261014-235208（srv2 原子切换）
+三道门禁         = assert 16/16 ✓ ｜ 首屏 6/6 PASS（预算 1650KB）✓ ｜ 路由 6/6 ✓
+
+【已上线】六页 = 设计原型整份 + **导航统一成左侧 dock**
+  （XK-LAB ｜ 主页·监测中心·AI问答·笔记·靶场·关于；主页原来那个顶部胶囊与死 CSS 已删干净 ✓）
+  四处原型缺陷已修：删掉 DEMO 横幅 ✓ ｜ 演示数字换真实接口（作战室 1,284 与 45.155 已清 0 ✓，
+  取不到写"读不到" ✓）｜ 攻击流叠行 ✓ ｜ CRT 顶部暗块 ✓
+  字幕垫板 = 原图 382,384 B（未降质 ✓）
+
+【语音·已完成未接线】8 句样本 0.51MB（E:\DeepSeek1\work\_tts-trial\sample8\dist\*.m4a|webm）
   全量 60 句 3.13MiB（out-ja\dist\，超 3MiB 预算 4.5% ✗）→ 决定：**先用 8~12 句**；要全量按 m4a 40k / webm 32k 收口 ≈2.6MiB
   管线已入库：scripts/voice/（8 文件 +1746 行：README/合成/后处理/build_bank/双语表/shim）
   实测：RTF≈0.98 ｜ 平均 4.66s/句 ｜ 显存峰值 2070MiB（6GB 余 1.8GB ✓）｜ 响度 -16.35~-15.95（极差 0.40）｜

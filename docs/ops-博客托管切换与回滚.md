@@ -36,7 +36,7 @@
 | 沙箱与限额 | `ReadOnlyPaths=/opt/secagent/{static,releases}`、`CPUQuota=25%`、`MemoryMax=128M`、`TasksMax=64`、`AmbientCapabilities=CAP_NET_BIND_SERVICE` | — |
 | 隧道 ingress | `/etc/cloudflared/static-config.yml` | `34f8f7e510f6ce23…` |
 | 站点根（符号链接） | `/opt/secagent/site` → `/opt/secagent/releases/site-*` | 当前 `site-20261014-215320` |
-| 素材根 | `/opt/secagent/static` | 0555 root:root |
+| 素材根 | `/opt/secagent/static` | 0555 root:root。**注意：它是 `static.xiaokeqing.cn` 的占位根（248 B），不是主站产物** ✗ 主站真身是 `/opt/secagent/site` → releases 软链 |
 | 证书（nginx 读） | `/etc/ssl/secagent/site-fullchain.pem`、`site-privkey.pem`（root:www-data 0640） | LE，SAN=`direct,static` |
 | 证书（certbot 管） | `/etc/letsencrypt/live/xk-site/` + `certbot.timer` | 到期 2027-01-12，自动续期 |
 | 续期钩子 | `/etc/letsencrypt/renewal-hooks/deploy/xk-site-sync.sh` | 续期后自动同步 + reload |
