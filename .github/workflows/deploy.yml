@@ -1,6 +1,18 @@
 # ============================================================
-# 博客自动构建 + 断言 + 发布（push main → gh-pages）
+# 博客自动构建 + 断言 + 发布 gh-pages（★ 2026-10-16 起发布内容 = 跳转页，不是整站）
 # ------------------------------------------------------------
+# 【这一版改了什么，为什么】
+#   本文件原先 publish_dir: ./public —— 也就是把整套博客前端发布到 gh-pages，
+#   于是 https://xiaokeqing.github.io/ 就是一份站点的镜像（历史上还带着
+#   「DEMO v5 · 数字均为演示数据」的旧原型，点进去会把演示数字当成真实数据）。
+#   现在：构建 + 断言【一步不减】（真实站点坏了一样拦得住），但发布出去的只有
+#   redirect-site/ —— 一个 meta refresh + canonical 指向 https://xiaokeqing.cn/ 的跳转页。
+#   github.io 这条入口从此不承载任何真实内容，也就不会再有"旧原型/演示数据"外泄。
+#   连带一个副作用（已实测，属改善）：redirect-site 里【不放 CNAME】，于是 GitHub Pages
+#   不再把 xiaokeqing.github.io 301 到自定义域（那一跳是 http:// 而非 https://，
+#   平白多一跳明文）。现在 github.io 直接 HTTPS 服务这个跳转页，再由 meta refresh 走 https 到主站。
+#   自检见下面「发布内容自检」步骤：发布目录里出现 DEMO v5、出现 CNAME、文件数超标，都会拦住发布。
+#
 # 为什么现在才补这个文件：
 #   hugo.toml 和 .gitignore 里都写着「push 自动构建」，但仓库里
 #   一直没有 .github/workflows —— 于是每轮改版的产物只能靠本机
@@ -21,16 +33,21 @@
 #   后面的发布步骤根本不跑 → gh-pages 保持上次的产物。
 #   宁可站点停在旧版本，也不发布一个坏的版本。
 #
-# ⚠️ 接入时的已知状态（2026-10-13 本机实测，必须知道）：
-#   断言 ⑥ 目前会【红】：站点的「关于」页把已经下线的 /api/public/latest
-#   当作"未上线端点"在探测（static/js/app.js 的 ABOUT_ENDPOINTS 里有它，
-#   layouts/partials/spa-view-about.html 里也写了它），而这个片段被
-#   包含进【每一个】页面。也就是说在它被删掉之前，这个 workflow 会
-#   正确地拦住发布 —— 这是断言在起作用，不是 CI 坏了。
-#   恢复发布只需删掉两处引用：
-#     · static/js/app.js:        ['/api/public/latest', '…'],  这一行
-#     · layouts/partials/spa-view-about.html:  ② 可选端点 <code>/api/public/latest</code> …
-#   （删掉后本机实测 7/7 全过，见交付说明。）
+# 分支部署仍然不变（2026-10-16 复核）：
+#   源码在 main、gh-pages 是发布分支 —— 就是 GitHub Pages 当前的设置。
+#   publish_dir 从 ./public 换成 ./redirect-site，发布分支没换、Settings 没动、没改 secret。
+#   注意：换掉 ./public 是【解绑自定义域】的副作用来源（public 里那份 CNAME 不再发出去）。
+#   这是刻意的：github.io 的 301 目标是 http:// 而非 https://，不如让它直接服务 https 跳转页。
+#
+# 失败即不发布（这是本文件的核心性质）：
+#   两道断言（scripts/assert-build.sh 盯真实站点产物；「发布内容自检」盯 gh-pages 内容）
+#   都在发布步骤【之前】执行，任一失败 → 该步退出码非 0 → 发布步骤根本不跑 →
+#   gh-pages 保持上次的产物。宁可线上停在旧版本，也不发布一个坏版本。
+#
+# 【2026-10-16 更正一条过期的注释】：本文件早先写着"断言 ⑥ 会红，必须先删
+#   /api/public/latest 两处引用"。该断言后来已改成【白名单制】（端点只要在
+#   scripts/assert-build.sh 的 ALLOWED 里即可），/api/public/latest 早已在白名单内，
+#   这条老注释不再成立，已删除，免得下一个人照着"修"一个不存在的问题。
 # ============================================================
 name: Deploy Blog
 
@@ -89,14 +106,57 @@ jobs:
           touch public/.nojekyll
 
       # 这一步失败 = 后面不发布。清单与理由见 scripts/assert-build.sh
+      # 注意：这里断言的是【真实站点产物 public/】，而发布的是下面的 redirect-site/。
+      # 两者故意不同：构建/门禁继续盯真实站点（坏了要红），但坏站点永远不上 gh-pages。
       - name: 断言产物（失败即不发布）
         run: bash scripts/assert-build.sh public
 
-      - name: 发布到 gh-pages
+      # 这一步失败同样 = 不发布。断言对象是【真正要发出去的东西】：
+      # 它必须是且只是一个能跳转的最小页 —— 出现 DEMO v5 / 出现 CNAME / 文件数
+      # 超出 5 个（说明整站又被拷回来了）都会在这里红掉。
+      - name: 发布内容自检（gh-pages 只许是跳转页，失败即不发布）
+        run: |
+          set -uo pipefail
+          DIR=redirect-site
+          PASS=0; FAIL=0
+          ok() { PASS=$((PASS+1)); echo "  [PASS] $*"; }
+          no() { FAIL=$((FAIL+1)); echo "  [FAIL] $*"; }
+
+          echo "== ① 发布内容文件数 = 5（index/404/README/robots/.nojekyll）=="
+          NF=$(find "$DIR" -type f | wc -l | tr -d ' ')
+          [ "$NF" = "5" ] && ok "文件数 $NF" || no "文件数 $NF ≠ 5 —— 整站又被发布了？"
+
+          echo "== ② 不得存在 CNAME（否则 github.io 会被 301 到自定义域，且是 http://）=="
+          [ -e "$DIR/CNAME" ] && no "存在 $DIR/CNAME" || ok "无 CNAME"
+
+          echo "== ③ index.html / 404.html 均含 meta refresh 与 canonical → https://xiaokeqing.cn/ =="
+          for f in index.html 404.html; do
+            if [ -s "$DIR/$f" ] \
+              && grep -q 'http-equiv="refresh"' "$DIR/$f" \
+              && grep -q 'url=https://xiaokeqing.cn/' "$DIR/$f" \
+              && grep -q '<link rel="canonical" href="https://xiaokeqing.cn/">' "$DIR/$f"; then
+              ok "$f 跳转 + canonical 正确"
+            else
+              no "$f 缺 meta refresh / canonical 指向 https://xiaokeqing.cn/"
+            fi
+          done
+
+          echo "== ④ 对外服务的页面里 DEMO v5 命中必须为 0（README.md 是给接手人看的历史说明，不算发布面）=="
+          H=$(grep -rIl 'DEMO v5' "$DIR" --include='*.html' --include='*.txt' --include='*.xml' --include='*.json' || true)
+          [ -z "$H" ] && ok "发布面 DEMO v5 命中 0" || { no "命中 DEMO v5："; echo "$H" | sed 's/^/        /'; }
+
+          echo "== ⑤ 跳转页不得引第三方资源（src=/link href= 指向站外）=="
+          E=$(grep -rnE '(src|href)="https?://' "$DIR" --include='*.html' | grep -v 'xiaokeqing' || true)
+          [ -z "$E" ] && ok "无第三方资源引用" || { no "发现第三方资源引用："; echo "$E" | sed 's/^/        /'; }
+
+          echo "通过 $PASS 项，失败 $FAIL 项"
+          [ "$FAIL" -eq 0 ]
+
+      - name: 发布到 gh-pages（只发跳转页，不发整站）
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./redirect-site
           publish_branch: gh-pages
           # 与本机 deploy.ps1 的 `git push -f` 行为对齐：gh-pages 保持
           # 单提交，别让构建产物把分支历史撑成几百个提交
