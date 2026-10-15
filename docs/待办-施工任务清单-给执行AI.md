@@ -877,3 +877,23 @@ T14 白名单来源：`_asset-review\\03-character-kurisu\\clip-transition-table
       E-mote 本机试跑与机制抽取 **改记为 T35** （与 T32 出片工装 / T33 眼部补丁 / T34 静音口型并列）。
 引用纪律：今后引用任何结论/口径，**必须带提交号或文档名+章节** ；正文与订正冲突时以较新提交为准。
 ```
+### 防复读批次：规划侧拍板（2026-10-15，窗口 T 的改动包）
+
+```
+① **persona 采样取值定稿：temperature 0.8 / top_p 0.8** ✓（区间 0.7~0.9 ✓ 走 env 可覆盖 ✓）
+② **planner 与决策链路保持 0.0 / 低 topP 不动** ✗（要确定性 JSON，改动只在人格回答那一处）
+③ **同批只做必要项，不扩大 Java 改动面** ✓：
+   · 必做：DeepSeek 请求体补 `top_p`（窗口 T 实测：**线上请求体根本没有 top_p** ✗ 我们只有半个旋钮）
+   · 必做：人格与 planner 的温度**拆开**（现在共用一个 ✗ G1）
+   · **暂不做**：G4 的 ChatService/ChatController/RagService 那几处内部面参数化 ✗（与本次目标无关，缩小重建风险）
+④ **台词选择防复读必须与"接线"同批上** ✗ —— 窗口 T 实测：现状是**写死单条 id** ✗
+   （index.html:1410 greet 二选一 / :1421 + kurisu-player.js:2318 永远 tab_return / shell-script.html:571 每页一条）
+   且 status/event/fallback 组"有句子但没有触发点" ✗ ⇒ 规则：**语义筛子集 -> 排除最近 N=4 -> 按 1/(1+近 20 次出现) 加权随机** ✓
+   ⇒ 该规则**归站点写入者**（UI 批/接线同批）✓ 由规划侧转达 ✓
+⑤ **验收加"复读率"** ✓（窗口 T 已写进升级方案 §10）：
+   openerRepeatRate@3 ≤ 0.25 且相对基线降 ≥50% ✓ verbatimRepeatRate ≤ 0.10 ✓ catchphraseTop1Share ≤ 0.15（上游基线 8/17=0.47 ✓）
+   红线：要点命中率 / 拒答正确率**不得下降** ✗ 幻觉率保持 0 ✓
+   硬前置：T13 的 40 题**没有多轮题** ✗ ⇒ 先补 3~5 条多轮题（已登记为小任务 ✓）
+⑥ 已核实的线上事实（窗口 T 只读）：provider=deepseek ✓ fallback=DISABLED ✓
+   **compose/.env 里没有任何 app.llm.* 覆盖** ✗ ⇒ T25（含本次 persona 采样）**尚未部署** ✓ 需站主/运维执行 ✓
+```
