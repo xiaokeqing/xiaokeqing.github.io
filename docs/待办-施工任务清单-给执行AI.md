@@ -310,3 +310,73 @@ E4 文档漂移：`docs/交接-六页整份搬demo-20261014.md:114` 仍写旧断
 **✅ 2026-10-15 执行AI批**：T1/T5.1~T5.6/T12/T2 全部完成并已发布上线（HEAD 8f33aa6 → site-20261015-181533，home 首屏 840KB）；交接见 `交接-执行AI批-20261015.md`。
 
 **⚠️ 已提交未发布**（历史记录）：接手批只在仓库（HEAD `0112ce2`），线上仍是 `site-20261014-235208` ✗ —— 不发布的原因：一发布就会播**旧 SAPI 占位音** ✗；建议先做 T4 换日语素材，再一起 `scripts/publish-site-to-srv2.ps1` ✓
+---
+
+## 16. 执行批完成情况（2026-10-15，源：`docs/交接-执行AI批-20261015.md`）
+
+**基线**：HEAD `8f33aa6`（已 push）｜线上 srv2 `/opt/secagent/releases/site-20261015-181533`（上一版 `site-20261015-112007` 保留 ⇒ 秒级回滚）｜工作区干净
+
+**门禁**：assert-build **15/15**（注意：计数含条件分支，我这边跑出 16 项 —— 两者都算绿 ✓）｜firstscreen **6/6**（home **840KB** / 预算 1650KB）｜ssr-contract 6/6 ｜ **控制台错误已改成 exit 1**（T5.2）
+
+### 16.1 状态板覆盖（§15 的更新，直接以本节为准）
+
+| 任务 | 状态 | 关键证据 |
+|---|---|---|
+| T1 手机动画 | ✅ 已上线 | iPhone 横屏 CRT 高 224px < 原型死阈值 260px ⇒ 整屏 fallback 盖住动画；判据改为 `r.height<260 && !matchMedia("(pointer:coarse)").matches` ⇒ 触屏一律播动画；冻帧对拍像素差 0 |
+| T2 文档 7 处 | ✅ | statemachine 契约（nodes 数组/无 geometry/from_id-to_id）· 13 个 once_then_hold · 10/38 · opening 占首屏 65% · PR-3 不能整体替换 · `/opt/secagent/site` 才是主站真身 · 备案硬前提 |
+| T3 会对话 | ✅（早前） | /ai/ 真调 `POST /api/public/ask` |
+| T4 语音 L1 | ✅ 已上线（核实） | 12 句 / 7 分组 / 717KB；CDP 实测手势前 plays=0、手势后 plays=1、字幕逐字对齐 |
+| T5.1 TypeError | ✅（早前） | #fallback/#bootveil 存在性判断 + opening 门控 |
+| T5.2 门禁硬断言 | ✅ | console error/未捕获异常即 FAIL + exit 1；**故障注入实测拦获** |
+| T5.3 /about/ | ✅ | 87 字节残 div → 四张真实内容卡，正文 0→591 字 |
+| T5.4 假数字 | ✅ | 1,284/96/37 改 `—` 占位，api-bind 填真值 |
+| T5.5 /posts/ 链接 | ✅ | 死笔记 → Hugo range 渲染 8 篇真文章链接（shell-views 的 dict 需带 `"page" .`）|
+| T5.6 boot→hi | ✅ | 四个剪辑各加 boot 档（前 24 帧、281–532KB）⇒ 主页 **1569→840KB（−47%）**、内容页 267→185KB、/ai/ 1637→1555KB；最终画质不变（14s 时 demoClip=idle、画布 52,032 像素与旧版一致）|
+| T6 生成器 | ✅（早前） | prob=0 边派生 ⇒ host_triggered_entries 9 个 |
+| T12 删背景选择器 | ✅ | 面板+压暗+配色/手机切换+背景图全删；body 静态 `data-skin="warm" data-phone="v1"` |
+| L1 镜头语言 | ✅ 新增 | CRT 通电（亮线→竖向展开→抖动→过冲白光→稳定）+ opening→idle 推拉 0.9s（末段交叉融化）；仅主页，RM 用户走静态 idle |
+| T7 视频接线 | ❌ 未做 | 2–3h |
+| T8 状态机+口型 | ❌ 未做 | 3–5h，最难 |
+| T9 资产瘦身 | ❌ 未做 | **必须先接线再删 medium/hi** ✗ |
+| T10 遗留文件/双轨 | ❌ 未做 | |
+| T11 服务器/备案 | ❌ 未做 | 备案=回直连唯一路 |
+
+### 16.2 必须知道的 6 条机制（细节见 `docs/交接-执行AI批-20261015.md` §3）
+
+```
+① 双轨 + 生成器：六页由 _dev/gen-demo-pages.py 从 docs/demo-*.html 重新生成 —— 改 layouts/* 必须同步生成器并重跑；
+   生成器锚点必须匹配 **demo 原文**（不是产物文本）；补丁有先后依赖（L1/CRT 补丁要在 T5.6 引用的代码之后）
+② 动画链：CLIPS 四剪辑逐帧；xkClipIm(name) 先 **peek** hi 缓存（绝不能 img() 创建 —— 创建即发请求 ✗）、
+   未就绪兜底 boot 档、hi 到位按同一帧号无缝接力；boot 期间 opening 走 fi % 24 循环等 hi；门禁 home 检查点已改 9s
+③ 语音链：bank.json 12 句日语 + 中字幕；手势门控（首次 pointerdown/keydown 解锁）；XKV 状态可观测
+④ 发布链：push ≠ 上线 ✗。`scripts/publish-site-to-srv2.ps1 -FromRef HEAD`；
+   **scp 报 `pipe: Unknown error` 是 Windows OpenSSH 老毛病** ⇒ 手动通道：`scp -O` 传 tar → install 接收脚本 →
+   `sudo -n bash /opt/secagent/scripts/srv2-site-receive.sh <tar>`（原子切换 + 失败自动回滚）
+⑤ 门禁方法论：改完必跑三件套；对"拦截型"逻辑必须做**故障注入**验证真能拦 ✓
+⑥ 回滚：把 /opt/secagent/site 软链指回上一个 release 目录即可；发布脚本保留最近 4 版
+```
+
+### 16.3 本批踩过并拦住的 5 个真 bug（教训，别重犯）
+
+| # | 现象 | 根因 | 教训 |
+|---|---|---|---|
+| 1 | L1 生成代码缺 xkDrawTrans | 生成器编辑手滑把旧补丁顶掉 | 每次生成后 grep 函数存在性 |
+| 2 | 生成器补丁"对不上 0 次" | 锚点写成产物里才有的行 | 锚点永远匹配 demo 原文 |
+| 3 | 开场卡 boot 档永不落幕 | xkClipIm 先兜底 boot 再 peek hi | peek/兜底顺序；门禁 demoClip 抓到 |
+| 4 | 门禁一遇错误就崩 | `pass=false` 赋给 const pass | 故障注入逼出来；pass 计算里 fold |
+| 5 | 门禁启动即崩 | Node 侧误用 window | evalJs 里的表达式才在浏览器跑 |
+
+### 16.4 现存未决（**要站长拍板/动手**）
+
+```
+① [已由我 5 分钟完成] 状态板更新 ⇒ 见本节 16.1 ✓
+② [待拍板] TTS"念回答"(L2) 三选一 —— srv1 上 key/开关/短语表**已配好**（self-check `key=SET phrases=3`），
+   但 **api.fish.audio 在境内被 SNI 重置**（TCP 可建、TLS 漏 SNI 即 RST）⇒ UPSTREAM_IO：
+     A. CF Worker 中转（需站长在 CF 面板操作；现有 API token 已失效 ✗）
+     B. DashScope TTS 进代理（境内实测 0.22s，但要改 Java 代码 + 重建）
+     C. 暂缓（预渲染 12 句不受影响 ✓）  回滚 A/C = 删 .env 三行 + compose 五行
+③ 下一层：T7 视频 → T8 状态机+口型 → T9 瘦身（先接线 ✗）→ T11 备案运维
+④ 远期王牌：**SpriteForge**（Code-Amadeus/Amadeus-SpriteForge 官方资产生成工具，可产新表情动作）
+   ｜ **Kurisu GPT-SoVITS v2ProPlus 模型**（可给 12 句 bank 提质，本地合成、不受 fish.audio 阻断影响 ✓）
+④ ★安全：**Fish Audio key 曾在聊天里出现** ⇒ 请到 fish.audio 控制台**轮换**，换新后同步 srv1 `.env` 的 `APP_TTS_API_KEY` ✓
+```
