@@ -415,3 +415,37 @@ E4 文档漂移：`docs/交接-六页整份搬demo-20261014.md:114` 仍写旧断
 > 验收看"能力"：SOP 跑通一次、脚本可重跑、一致性阈值是**互测标定**出来的、附每动作成本表 ✓
 > 详见 `docs/角色能力深化与双智能体协作方案-20261015.md` §六（含能力分级表：新动作/半身换装 ✅ 可达；
 > 全身与发型 🟡 困难；整段行走 ❌ 不建议）✓
+---
+
+## 19. 后端展示落地任务（T20~T22）+ 问题单（源：窗口 F，2026-10-15）
+
+> F 的完整规划见 `docs/后端功能与博客展示规划-20261015.md`（49.8KB）；状态见 `docs/状态-F-后端功能展示.md` ✓
+
+| 编号 | 任务 | 归谁 | 工时 | 要点 |
+|---|---|---|---|---|
+| **T20** | **处置成果「封禁榜」上屏** | C 落地 + G 出 UI | 2~3h | 放 `/alerts/`「数据统计」pane 的 grid32（现有故事线卡旁）；数据 `GET /api/public/audit`：`summary{blockTotal,blockActive,blockedByGuard,executedActions}` + `blocks[]{ip,durationMinutes,source,actor,createdAt,unblocked,unblockMode,auditId}`；**IP 必须打码**（`A.B.***.***`）；空态区分"读不到（HTTP xxx）"与"本窗口没有封禁记录"✓；复用 `.mod/.row/.chip` 不新增 CSS ✓；**验收含"渲染后 DOM 里 IPv4 正则 0 命中"** ✓ |
+| **T21** | **攻击故事线上屏** | C + G | 5~6h | `/alerts/` 现有故事线卡原地升级；候选池 `/stories` + **点击才懒加载** `GET /api/public/story?src=` 画时间线（`events[]` 升序、每段 ≤40、`truncated` 如实标注 ✓）；必须区分"该来源这段没数据"与"尚未接入（coverage.status=NOT_WIRED）"✗；脱敏要覆盖 `srcIp` **与 `events[].summary` 内嵌 IP** ✗；**验收含"点击前 0 个 /story 请求"** ✓ |
+| **T22** | **知识库栏目** | C + G | 2~3h | 放 `/ai/`（该页现在 0 轮询、最干净 ✓）；`GET /api/public/kb?q=`（独立 20 次/分钟上限、有 embedding 成本 ✗）⇒ 固定话题按钮 + Enter 才发 + 会话内缓存 + **不轮询** ✓；显著写明后端白名单口径（`allowed-roots=security-docs,data/kb-approved`、`allowed-source-types=community`）；结果最多 3 条；空态写"公开知识库没有命中「X」的内容（不是取不到，是确实没有）"✓；**验收含"静置 60s 0 请求"** ✓ |
+
+### 问题单（按优先级，需要拍板或修 ✗）
+```
+U1【红线冲突·最重要】后端**早就有全局 IP 掩码开关**（`app.public.mask-ips`，唯一读取点 PublicIpPolicy.java），
+   但**生产默认 = false ⇒ 展示真实 IP** ✗；实测所有响应 ipDisclosure.masked=false、stories[].srcIp 是完整公网 IP。
+   ① 后端翻开关（≈1 个环境变量，所有端点含存量页面一次性合规 ✓ 但属后端线操作 + 要重启应用）
+   ② 不翻、只在前端脱敏（存量页面继续打完整 IP ✗ ）——**我的建议是 ①**，需站主一句话 ✓
+R1【存量违规】老页面已经在渲染完整攻击者 IP ✗：`layouts/partials/xk-demo/api-bind.html` L223（路径图节点）·
+   L276（/stories tag）· L335（攻击流终端行）⇒ 必须与 T20/T21 同批改，或明确豁免 ✓
+U5【信息泄漏】`/api/health` **无鉴权且 200** ✗，泄漏 embeddedGitCommit/提交信息/mock 开关/documentVectors ⇒ 建议收口 ✓
+R3【文案与实现不符】靶场页卡头写 `POST /api/playground/check`，实现却是 `PG_DEMO` 本地假结果 ✗ ⇒ 要么接真接口、要么改文案 ✓
+U4【后端线提醒】`/opt/secagent/src` 源码树**落后于运行 jar** ✗（没有 stories/story/webstats 实现）⇒ 后端线若"改源码重编"会丢掉这三个端点 ✓
+订正：`POST /api/public/tts` 实测 **400 TEXT_NOT_ALLOWED**（不是 503 ✗，说明已启用但只接受白名单短语 ✓）⇒ 总账待订正
+订正：srv2 现行 release = **site-20261015-181533**（总账 §2.6 里旧值 site-20261014-235208 应更新 ✓）
+```
+
+### F 从 GitHub Discussion #27 得到的结论（对我们直接可用=没有 ✗，方法论三条可用 ✓）
+```
+① "用户意图会在交互中途漂移 ⇒ 必须重新路由" 正对应我们"公开面只解释概念/内部面才有事件数据"的分层 ✓
+② "短期 branch 只把可验证证据交回主线" 对应"处置留痕 auditId/actions 才算证据，模型自述不算"✓（与 T20 展示 auditId 同源）
+③ "边界必须靠对照实验定义" 正对应 R3 这类"文案承诺了接口、实现却是本地演示"的坑 ✓
+旁证：maintainer 自述"做 Kurisu 角色与执行解耦" ⇒ **角色层不承担执行**是被上游认可的架构 ✓（与我们的铁律同源 ✓）
+```
