@@ -167,6 +167,8 @@ const cache = {};
 function img(src){ if(!cache[src]){ const im=new Image(); im.src=src; cache[src]=im; } return cache[src]; }
 
 let cur = null, acc = 0, fi = 0, lastT = 0, started = false;
+let TRANS = 0;   /* ★L1：opening→idle 镜头推拿起始时间戳（0=不在过渡） */
+let PWR = 0;   /* ★CRT 通电：opening 首帧就绪时刻（0=不通电/已结束） */
 let bounds = {w:0, h:0};
 
 function resize(){
@@ -181,6 +183,7 @@ function resize(){
 
 function drawFrame(){
   if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */
+  if(TRANS){ xkDrawTrans(Math.min(1, (performance.now() - TRANS) / 900)); return; }   /* ★L1：推拉中以过渡渲染为准 */
   if(!cur) return;
   const c = CLIPS[cur];
   const im = img(c.src);
@@ -188,6 +191,13 @@ function drawFrame(){
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const sx = (fi % c.cols) * c.cw, sy = Math.floor(fi / c.cols) * c.ch;
   if(c.fit === 'screen'){
+    /* ★CRT 通电：opening 开头先亮线展开再出画面（约 0.55s） */
+    if(PWR && cur === 'opening'){
+      const pk = Math.min(1, (performance.now() - PWR) / 550);
+      xkPowerOn(pk);
+      if(pk >= 1) PWR = 0;
+      return;
+    }
     /* fit=crt_screen：整帧铺满屏幕（开场特写） */
     ctx.drawImage(im, sx, sy, c.cw, c.ch, 0, 0, canvas.width, canvas.height);
   }else{
@@ -200,6 +210,60 @@ function drawFrame(){
   }
 }
 
+/* ★CRT 通电（约 0.55s）：老显示器开机四拍——亮线 → 竖向展开（画面压进亮线里）→
+   抖动闪烁 → 稳定（含一帧过冲白光）。替代黑场直出，正好露出她的脸。
+   RM 用户不走 opening 所以永远看不到；删本函数 + PWR 引用即回退。 */
+function xkPowerOn(k){
+  const cOpen = CLIPS.opening;
+  const im = img(cOpen.src);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if(!im.complete || !im.naturalWidth) return;
+  const sx = (fi % cOpen.cols) * cOpen.cw, sy = Math.floor(fi / cOpen.cols) * cOpen.ch;
+  const grow = k < 0.7 ? 1 - Math.pow(1 - k / 0.7, 3) : 1;   /* 展开段 easeOutCubic */
+  const bandH = Math.max(2, H * grow);
+  const bandY = (H - bandH) / 2;
+  if(k > 0.12 && k < 0.8 && Math.random() < 0.22) return;   /* 起振不稳：随机黑帧 */
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, bandY, W, bandH); ctx.clip();
+  if(k < 0.85) ctx.translate((Math.random() * 5 - 2.5) * (1 - k / 0.85), 0);   /* 水平抖动，越稳越少 */
+  ctx.drawImage(im, sx, sy, cOpen.cw, cOpen.ch, 0, 0, W, H);
+  if(k > 0.7 && k < 0.86){   /* 稳定瞬间的过冲白光 */
+    ctx.fillStyle = 'rgba(235,250,255,' + (0.32 * (0.86 - k) / 0.16).toFixed(3) + ')';
+    ctx.fillRect(0, bandY, W, bandH);
+  }
+  ctx.restore();
+  if(bandH < H){   /* 亮线：展开中的两条扫描边 */
+    const a = (0.35 + 0.4 * Math.random()).toFixed(3);
+    ctx.fillStyle = 'rgba(170,240,255,' + a + ')';
+    ctx.fillRect(0, bandY - 1, W, 2);
+    ctx.fillRect(0, bandY + bandH - 1, W, 2);
+  }
+}
+/* ★L1 镜头推拉（约 0.9s）：opening 末帧从全屏特写后退+下摇到 CRT 区域，
+   末 28% 与 idle 第 0 帧交叉融化 —— 替代原版播完硬切（镜头跳变）。
+   零新素材；TRANS=0 且本函数不被引用即回到硬切行为。 */
+function xkDrawTrans(k){
+  const cOpen = CLIPS.opening, cIdle = CLIPS.idle;
+  const imO = img(cOpen.src), imI = img(cIdle.src);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const lastF = cOpen.frames - 1;
+  const sx = (lastF % cOpen.cols) * cOpen.cw, sy = Math.floor(lastF / cOpen.cols) * cOpen.ch;
+  const e = Math.min(1, k / 0.7), ease = 1 - Math.pow(1 - e, 3);   /* 推拉段 0→70%，easeOutCubic */
+  const ow = W * (1 - 0.58 * ease), oh = H * (1 - 0.58 * ease);
+  const ox = (W - ow) / 2, oy = H * 0.04 + (H * 0.5 - H * 0.04) * ease;   /* 下摇到 CRT 中部 */
+  ctx.drawImage(imO, sx, sy, cOpen.cw, cOpen.ch, ox, oy, ow, oh);
+  const f = k < 0.72 ? 0 : (k - 0.72) / 0.28;   /* 交叉融化段 */
+  if(f > 0 && imI.complete && imI.naturalWidth){
+    ctx.globalAlpha = Math.min(1, f);
+    const s = Math.min(W * CHAR_BOX.maxW / CHAR_BOX.w, H * CHAR_BOX.maxH / CHAR_BOX.h);
+    const dw = CHAR_BOX.w * s, dh = CHAR_BOX.h * s;
+    const x = W * CHAR_BOX.xRatio, y = H - Math.max(3, H * CHAR_BOX.footRatio);
+    ctx.drawImage(imI, 0, 0, cIdle.cw, cIdle.ch, x - dw / 2, y - dh, dw, dh);
+    ctx.globalAlpha = 1;
+  }
+}
 function play(name){
   XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */
   const c = CLIPS[name];
@@ -216,9 +280,24 @@ function loop(t){
     if((im.complete && im.naturalWidth) && !RM){
       acc += t - lastT;
       if(acc >= c.interval){
-        acc = 0; fi++;
+        acc = 0;
+        if(TRANS){   /* ★L1：推拉中——按墙上时间推进，不占帧步进 */
+          const k = Math.min(1, (t - TRANS) / 900);
+          if(k >= 1){ TRANS = 0; play('idle'); showHud(); }
+          else { xkDrawTrans(k); lastT = t; requestAnimationFrame(loop); return; }
+        }
+        if(cur === 'opening' && !PWR && fi === 0) PWR = t;   /* ★CRT 通电：opening 首帧就绪那一刻起振（图片晚到也能吃上） */
+        fi++;
         if(fi >= c.frames){
-          if(cur === 'opening'){ play('idle'); showHud(); }   /* 硬切（原版机制） */
+          if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */
+            fi = c.frames - 1;
+            const idleIm = img(CLIPS.idle.src);
+            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }
+            else {
+              idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
+              idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});
+            }
+          }
           else fi = fi % c.frames;
         }
         drawFrame();

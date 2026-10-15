@@ -1306,6 +1306,139 @@ home_script = sub1(home_script,
                    '主页 fallback: 触屏不降级')
 home_script = home_script + HOME_ANIM
 
+# ---- L1 镜头推拉：opening→idle 不再硬切（2026-10-15）----
+# 只改主页：opening 全屏特写只有主页会播（五页 v-home 从不 .on，scene-js 里 opening 永不触发），五页不接。
+# 观感：开场特写缓慢后退+下摇到 CRT 区域，末 28% 与 idle 第 0 帧交叉融化（约 0.9s）。
+# 零新素材；TRANS=0 且四处补丁全删即回到原版硬切（回滚路径 = 删本段）。
+home_script = sub1(home_script,
+                   "let cur = null, acc = 0, fi = 0, lastT = 0, started = false;",
+                   "let cur = null, acc = 0, fi = 0, lastT = 0, started = false;\n"
+                   "let TRANS = 0;   /* ★L1：opening→idle 镜头推拿起始时间戳（0=不在过渡） */\n"
+                   "let PWR = 0;   /* ★CRT 通电：opening 首帧就绪时刻（0=不通电/已结束） */",
+                   'L1: TRANS 状态位')
+
+home_script = sub1(home_script,
+                   "  if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */\n"
+                   "  if(!cur) return;",
+                   "  if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */\n"
+                   "  if(TRANS){ xkDrawTrans(Math.min(1, (performance.now() - TRANS) / 900)); return; }   /* ★L1：推拉中以过渡渲染为准 */\n"
+                   "  if(!cur) return;",
+                   'L1: drawFrame TRANS 分支')
+
+home_script = sub1(home_script,
+                   "  if(c.fit === 'screen'){\n"
+                   "    /* fit=crt_screen：整帧铺满屏幕（开场特写） */\n"
+                   "    ctx.drawImage(im, sx, sy, c.cw, c.ch, 0, 0, canvas.width, canvas.height);",
+                   "  if(c.fit === 'screen'){\n"
+                   "    /* ★CRT 通电：opening 开头先亮线展开再出画面（约 0.55s） */\n"
+                   "    if(PWR && cur === 'opening'){\n"
+                   "      const pk = Math.min(1, (performance.now() - PWR) / 550);\n"
+                   "      xkPowerOn(pk);\n"
+                   "      if(pk >= 1) PWR = 0;\n"
+                   "      return;\n"
+                   "    }\n"
+                   "    /* fit=crt_screen：整帧铺满屏幕（开场特写） */\n"
+                   "    ctx.drawImage(im, sx, sy, c.cw, c.ch, 0, 0, canvas.width, canvas.height);",
+                   'CRT: drawFrame 通电分支')
+
+home_script = sub1(home_script,
+                   "function play(name){\n"
+                   "  XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */",
+                   "/* ★CRT 通电（约 0.55s）：老显示器开机四拍——亮线 → 竖向展开（画面压进亮线里）→\n"
+                   "   抖动闪烁 → 稳定（含一帧过冲白光）。替代黑场直出，正好露出她的脸。\n"
+                   "   RM 用户不走 opening 所以永远看不到；删本函数 + PWR 引用即回退。 */\n"
+                   "function xkPowerOn(k){\n"
+                   "  const cOpen = CLIPS.opening;\n"
+                   "  const im = img(cOpen.src);\n"
+                   "  const W = canvas.width, H = canvas.height;\n"
+                   "  ctx.clearRect(0, 0, W, H);\n"
+                   "  if(!im.complete || !im.naturalWidth) return;\n"
+                   "  const sx = (fi % cOpen.cols) * cOpen.cw, sy = Math.floor(fi / cOpen.cols) * cOpen.ch;\n"
+                   "  const grow = k < 0.7 ? 1 - Math.pow(1 - k / 0.7, 3) : 1;   /* 展开段 easeOutCubic */\n"
+                   "  const bandH = Math.max(2, H * grow);\n"
+                   "  const bandY = (H - bandH) / 2;\n"
+                   "  if(k > 0.12 && k < 0.8 && Math.random() < 0.22) return;   /* 起振不稳：随机黑帧 */\n"
+                   "  ctx.save();\n"
+                   "  ctx.beginPath(); ctx.rect(0, bandY, W, bandH); ctx.clip();\n"
+                   "  if(k < 0.85) ctx.translate((Math.random() * 5 - 2.5) * (1 - k / 0.85), 0);   /* 水平抖动，越稳越少 */\n"
+                   "  ctx.drawImage(im, sx, sy, cOpen.cw, cOpen.ch, 0, 0, W, H);\n"
+                   "  if(k > 0.7 && k < 0.86){   /* 稳定瞬间的过冲白光 */\n"
+                   "    ctx.fillStyle = 'rgba(235,250,255,' + (0.32 * (0.86 - k) / 0.16).toFixed(3) + ')';\n"
+                   "    ctx.fillRect(0, bandY, W, bandH);\n"
+                   "  }\n"
+                   "  ctx.restore();\n"
+                   "  if(bandH < H){   /* 亮线：展开中的两条扫描边 */\n"
+                   "    const a = (0.35 + 0.4 * Math.random()).toFixed(3);\n"
+                   "    ctx.fillStyle = 'rgba(170,240,255,' + a + ')';\n"
+                   "    ctx.fillRect(0, bandY - 1, W, 2);\n"
+                   "    ctx.fillRect(0, bandY + bandH - 1, W, 2);\n"
+                   "  }\n"
+                   "}\n"
+                   "function play(name){\n"
+                   "  XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */",
+                   'L1: xkDrawTrans 函数')
+
+home_script = sub1(home_script,
+                   "function play(name){\n"
+                   "  XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */",
+                   "/* ★L1 镜头推拉（约 0.9s）：opening 末帧从全屏特写后退+下摇到 CRT 区域，\n"
+                   "   末 28% 与 idle 第 0 帧交叉融化 —— 替代原版播完硬切（镜头跳变）。\n"
+                   "   零新素材；TRANS=0 且本函数不被引用即回到硬切行为。 */\n"
+                   "function xkDrawTrans(k){\n"
+                   "  const cOpen = CLIPS.opening, cIdle = CLIPS.idle;\n"
+                   "  const imO = img(cOpen.src), imI = img(cIdle.src);\n"
+                   "  const W = canvas.width, H = canvas.height;\n"
+                   "  ctx.clearRect(0, 0, W, H);\n"
+                   "  const lastF = cOpen.frames - 1;\n"
+                   "  const sx = (lastF % cOpen.cols) * cOpen.cw, sy = Math.floor(lastF / cOpen.cols) * cOpen.ch;\n"
+                   "  const e = Math.min(1, k / 0.7), ease = 1 - Math.pow(1 - e, 3);   /* 推拉段 0→70%，easeOutCubic */\n"
+                   "  const ow = W * (1 - 0.58 * ease), oh = H * (1 - 0.58 * ease);\n"
+                   "  const ox = (W - ow) / 2, oy = H * 0.04 + (H * 0.5 - H * 0.04) * ease;   /* 下摇到 CRT 中部 */\n"
+                   "  ctx.drawImage(imO, sx, sy, cOpen.cw, cOpen.ch, ox, oy, ow, oh);\n"
+                   "  const f = k < 0.72 ? 0 : (k - 0.72) / 0.28;   /* 交叉融化段 */\n"
+                   "  if(f > 0 && imI.complete && imI.naturalWidth){\n"
+                   "    ctx.globalAlpha = Math.min(1, f);\n"
+                   "    const s = Math.min(W * CHAR_BOX.maxW / CHAR_BOX.w, H * CHAR_BOX.maxH / CHAR_BOX.h);\n"
+                   "    const dw = CHAR_BOX.w * s, dh = CHAR_BOX.h * s;\n"
+                   "    const x = W * CHAR_BOX.xRatio, y = H - Math.max(3, H * CHAR_BOX.footRatio);\n"
+                   "    ctx.drawImage(imI, 0, 0, cIdle.cw, cIdle.ch, x - dw / 2, y - dh, dw, dh);\n"
+                   "    ctx.globalAlpha = 1;\n"
+                   "  }\n"
+                   "}\n"
+                   "function play(name){\n"
+                   "  XK_ACT = null;   /* ★2026-10-15：任何 hi 档播放都退出表情模式 */",
+                   'L1: xkDrawTrans 函数（补回）')
+
+home_script = sub1(home_script,
+                   "        acc = 0; fi++;\n"
+                   "        if(fi >= c.frames){\n"
+                   "          if(cur === 'opening'){ play('idle'); showHud(); }   /* 硬切（原版机制） */\n"
+                   "          else fi = fi % c.frames;\n"
+                   "        }\n"
+                   "        drawFrame();",
+                   "        acc = 0;\n"
+                   "        if(TRANS){   /* ★L1：推拉中——按墙上时间推进，不占帧步进 */\n"
+                   "          const k = Math.min(1, (t - TRANS) / 900);\n"
+                   "          if(k >= 1){ TRANS = 0; play('idle'); showHud(); }\n"
+                   "          else { xkDrawTrans(k); lastT = t; requestAnimationFrame(loop); return; }\n"
+                   "        }\n"
+                   "        if(cur === 'opening' && !PWR && fi === 0) PWR = t;   /* ★CRT 通电：opening 首帧就绪那一刻起振（图片晚到也能吃上） */\n"
+                   "        fi++;\n"
+                   "        if(fi >= c.frames){\n"
+                   "          if(cur === 'opening'){   /* ★L1：播完不硬切——等 idle 图就绪后进场推拉 */\n"
+                   "            fi = c.frames - 1;\n"
+                   "            const idleIm = img(CLIPS.idle.src);\n"
+                   "            if(idleIm.complete && idleIm.naturalWidth){ TRANS = t; }\n"
+                   "            else {\n"
+                   "              idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});\n"
+                   "              idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});\n"
+                   "            }\n"
+                   "          }\n"
+                   "          else fi = fi % c.frames;\n"
+                   "        }\n"
+                   "        drawFrame();",
+                   'L1: loop 拦截硬切')
+
 # --------------------------------------------------------------------- 落盘
 print('生成：')
 
