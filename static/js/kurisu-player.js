@@ -114,6 +114,43 @@
   }
   function mqOn(m, fallback) { return m ? !!m.matches : !!fallback; }
 
+  /* ---------------------------------------------- 第二批动画的 URL 开关（T33/T34）
+     口径：**不动 layouts/**（UI 批正在改）**，所有开关走查询串 + window.__xkConfig 覆盖：
+       ?xk-mouth-idle=0|1            静音随机口型（默认 1）
+       ?xk-blink=0|1                 眨眼（默认 1）
+       ?xk-gaze=0|1                  视线跟随（默认 1）
+       ?xk-blink-interval=500,3000   眨眼间隔 ms（默认 0.5~3s）
+       ?xk-blink-phase=106,53,106    闭/持/开 ms（默认 E-mote「標準」档）
+     reduced-motion 下：眨眼整段关闭 ✗、视线跟随只留 1/4 增益 ✓。 */
+  var ANIM_FLAGS = (function () {
+    var out = { mouthIdle: true, blink: true, gaze: true };
+    try {
+      var qs = (global.location && global.location.search) || '';
+      var mm = /[?&]xk-mouth-idle=([01])/.exec(qs);
+      var bb = /[?&]xk-blink=([01])/.exec(qs);
+      var gg = /[?&]xk-gaze=([01])/.exec(qs);
+      if (mm) { out.mouthIdle = mm[1] === '1'; }
+      if (bb) { out.blink = bb[1] === '1'; }
+      if (gg) { out.gaze = gg[1] === '1'; }
+      var cfg = global.__xkConfig;
+      if (cfg && typeof cfg === 'object') {
+        if (cfg.mouthIdle != null) { out.mouthIdle = !!cfg.mouthIdle; }
+        if (cfg.blink != null) { out.blink = !!cfg.blink; }
+        if (cfg.gaze != null) { out.gaze = !!cfg.gaze; }
+      }
+    } catch (e) { /* 读不到就用默认 */ }
+    return out;
+  })();
+  function animNum(name, dflt) {
+    try {
+      var m = new RegExp('[?&]' + name + '=([0-9,.]+)').exec((global.location && global.location.search) || '');
+      if (!m) { return dflt; }
+      var v = m[1].split(',').map(function (s) { return parseFloat(s); });
+      var ok = v.length && v.every(function (x) { return isFinite(x) && x >= 0; });
+      return ok ? v : dflt;
+    } catch (e) { return dflt; }
+  }
+
   /* ---------------------------------------------------- 状态机共用小工具 */
   /** 可复现的伪随机（LCG）：自动游走要"每次跑都给出同一条节点序列"才好取证。
    *  原版用的是真随机，这里的差别只在"可复现"，不影响加权掷骰子的分布。 */
@@ -477,6 +514,8 @@
   };
 
   Player.prototype.wireEmotions = function () {
+    this.wireGaze();          // T33-b：视线跟随的指针监听（挂在同一个装配点，不新开生命周期）
+
     var self = this;
     qa('[data-xk-emo]', this.emoEl).forEach(function (el) {
       el.addEventListener('click', function () {
@@ -647,6 +686,11 @@
     var mouthClip = cur.clipName || cur.clip;
     var srcIdx = local * (MOUTH_STRIDE[cur.clip] || 1);
     this.drawMouth(r, srcIdx, mouthClip);
+    /* T33-a/T33-b：眼皮补丁层 —— ★ 只叠加到输出 ✓，不写进 current/节点/边的任何字段 ✗。
+       锚点按"该剪辑自己的源帧序号"给（与嘴部同一条 srcIdx 口径）。
+       懒载：第一次画到支持它的剪辑时才请求一张 4KB 的小图（失败 = 永远不叠，不影响既有行为）。 */
+    if (this.eyePatch && BLINK.alpha > 0) { this.drawBlink(r, mouthClip); }
+    if (!this.eyePatch && !this._eyeLoading && this.current) { this.loadEye('idle1'); }
   };
 
   /* 开场序列：单独一条时间轴（不占 this.current，所以底下 idle 可以同时跑着）。
@@ -674,6 +718,9 @@
     if (!this.t0) { this.t0 = now; }
     this.elapsed = now - this.t0;
     voiceMouthTick();                      // 用真实音频播放时钟推进 mouthValue（全局一份）
+    mouthIdleTick(now);                    // T34 静音随机口型（同一个 rAF）
+    blinkTick(now);                       // T33-a 眨眼（只改叠加系数，不写继承状态）
+    gazeApply();                           // T33-b 视线平滑（120ms 线性趋近）
     if (this.introState) { this.introState.elapsed = now - this.introState.t0; }
     this.draw();
     this.drawIntro();
@@ -1432,6 +1479,210 @@
     });
   }
 
+  /* ------------------------------------------ T34 · 静音随机口型（输出叠加层）
+     站主口径：idle 系列在**无语音**时叠小幅随机口型 —— 幅度 ≤0.25、间隔 0.4~1.5s 随机、
+     `?xk-mouth-idle=0` 可关。三条规则：① 说话中不叠 ✗；② 闭嘴层只在 openness ≤0.08 时叠 ✓
+     （沿用现有阈值）；③ 本层是**输出叠加**，不写进任何被继承的状态 ✗（没有任何节点/边字段读它）。
+     随机用独立 LCG —— 不复用状态机的种子流，免得打乱既有取证序列。 */
+  var MOUTH_IDLE = {
+    on: true, speaking: false, value: 0, peak: 0, nextAt: 0, blinks: 0,
+    rng: 20261015, minMs: 400, maxMs: 1500, maxOpen: 0.25, source: 'none'
+  };
+  function miRand() {
+    MOUTH_IDLE.rng = (MOUTH_IDLE.rng * 1103515245 + 12345) & 0x7fffffff;
+    return MOUTH_IDLE.rng / 0x7fffffff;
+  }
+  MOUTH_IDLE.on = !!ANIM_FLAGS.mouthIdle;
+  /** 每帧调用：与 voiceMouthTick 共用同一个 rAF，不新开循环 */
+  function mouthIdleTick(nowMs) {
+    if (!MOUTH_IDLE.on) { MOUTH_IDLE.value = 0; MOUTH_IDLE.source = 'off'; return 0; }
+    if (VOICE.speaking) {                       // ① 说话中不叠 ✗
+      MOUTH_IDLE.speaking = true;
+      MOUTH_IDLE.value = 0;
+      MOUTH_IDLE.source = 'voice';
+      return 0;
+    }
+    if (MOUTH_IDLE.speaking) {                  // 刚停：重置节拍，避免立刻弹一张嘴
+      MOUTH_IDLE.speaking = false;
+      MOUTH_IDLE.value = 0;
+      MOUTH_IDLE.peak = 0;
+      MOUTH_IDLE.nextAt = nowMs + 260;
+      MOUTH_IDLE.source = 'idle';
+      return 0;
+    }
+    if (!MOUTH_IDLE.nextAt) { MOUTH_IDLE.nextAt = nowMs + 400 + miRand() * 1100; }
+    if (nowMs >= MOUTH_IDLE.nextAt) {
+      MOUTH_IDLE.blinks++;
+      MOUTH_IDLE.peak = 0.12 + miRand() * 0.13;                // ≈0.12~0.25 ≤ 0.25 ✓
+      MOUTH_IDLE.value = MOUTH_IDLE.peak;
+      if (MOUTH_IDLE.value <= 0.08) { MOUTH_IDLE.value = 0; }   // ② 阈值以下不叠 ✓
+      MOUTH_IDLE.nextAt = nowMs + MOUTH_IDLE.minMs + miRand() * (MOUTH_IDLE.maxMs - MOUTH_IDLE.minMs);
+    }
+    MOUTH_IDLE.source = 'idle';
+    return MOUTH_IDLE.value;
+  }
+  /** 闭嘴层实际用的值：说话中用语音包络、静音用随机口型 */
+  function mouthEffective() {
+    if (VOICE.speaking) { return VOICE.mouthValue; }
+    return MOUTH_IDLE.on ? MOUTH_IDLE.value : 0;
+  }
+
+  /* ---------------------------------------- T33-a · 眨眼（眼皮补丁层，只叠加输出）
+     ★ 硬纪律（`docs/素材与资料复查-20261015.md` §借 E-mote 笔记 规则 6）：
+       眨眼/口型**只叠加到输出、不写进继承状态** ✗ —— 否则基线被顶到"闭眼档"，
+       眼睛会递归自锁。本实现里眨眼唯一的跨帧状态是 BLINK.alpha（每帧现算、可归零），
+       它**不参与**剪辑/节点/边的任何选择，也**没有任何字段被继承** ✓。
+     参数 = E-mote blinkParameter「標準」档：闭 106ms / 保持 53ms / 开 106ms，
+       间隔 0.5~3s 随机；?xk-blink-phase / ?xk-blink-interval 可调（六档预设见 eye json）。
+     素材：static/kurisu/eye/<label>.json + eyes.closed.webp（与 mouth 补丁同构）。 */
+  var BLINK = {
+    on: true, state: 'idle', phase: 0, alpha: 0, nextAt: 0, count: 0,
+    closeMs: 106, holdMs: 53, openMs: 106, minMs: 500, maxMs: 3000,
+    clamps: 0
+  };
+  BLINK.on = !!ANIM_FLAGS.blink;
+  (function () {
+    var ph = animNum('xk-blink-phase', [106, 53, 106]);
+    if (ph.length === 3) { BLINK.closeMs = ph[0]; BLINK.holdMs = ph[1]; BLINK.openMs = ph[2]; }
+    var iv = animNum('xk-blink-interval', [500, 3000]);
+    if (iv.length === 2) { BLINK.minMs = iv[0]; BLINK.maxMs = iv[1]; }
+    try {
+      var c = global.__xkConfig || {};
+      if (c.blinkPhaseMs && c.blinkPhaseMs.length === 3) {
+        BLINK.closeMs = c.blinkPhaseMs[0]; BLINK.holdMs = c.blinkPhaseMs[1]; BLINK.openMs = c.blinkPhaseMs[2];
+      }
+      if (c.blinkIntervalMs && c.blinkIntervalMs.length === 2) {
+        BLINK.minMs = c.blinkIntervalMs[0]; BLINK.maxMs = c.blinkIntervalMs[1];
+      }
+    } catch (e) { /* 忽略 */ }
+  })();
+  function blinkInterval() { return BLINK.minMs + smRand() * Math.max(0, BLINK.maxMs - BLINK.minMs); }
+  function blinkTick(nowMs) {
+    if (!BLINK.on || (BLINK.closeMs + BLINK.holdMs + BLINK.openMs) <= 0) {
+      BLINK.alpha = 0; BLINK.state = BLINK.on ? 'none' : 'off'; return 0;
+    }
+    if (!BLINK.nextAt) { BLINK.nextAt = nowMs + 800 + smRand() * 900; return 0; }
+    if (BLINK.state === 'idle') {
+      BLINK.alpha = 0;
+      if (nowMs >= BLINK.nextAt) { BLINK.state = 'closing'; BLINK.phase = nowMs; }
+      /* ★ 下一次眨眼**只在"开"结束后**才重摇间隔（不等就摇会在睁到一半时又闭，观感抽搐） */
+      return 0;
+    }
+    var e = nowMs - BLINK.phase;
+    if (BLINK.state === 'closing') {
+      BLINK.alpha = BLINK.closeMs > 0 ? Math.min(1, e / BLINK.closeMs) : 1;
+      if (e >= BLINK.closeMs) { BLINK.state = 'hold'; BLINK.phase = nowMs; BLINK.alpha = 1; }
+      return BLINK.alpha;
+    }
+    if (BLINK.state === 'hold') {
+      BLINK.alpha = 1;
+      if (e >= BLINK.holdMs) { BLINK.state = 'opening'; BLINK.phase = nowMs; }
+      return 1;
+    }
+    BLINK.alpha = BLINK.openMs > 0 ? Math.max(0, 1 - e / BLINK.openMs) : 0;
+    if (e >= BLINK.openMs) {
+      BLINK.state = 'idle'; BLINK.alpha = 0; BLINK.count++;
+      BLINK.nextAt = nowMs + blinkInterval();
+    }
+    return BLINK.alpha;
+  }
+  /** 该剪辑戴不戴眼皮补丁（同机位同脸位白名单；侧脸族/闭眼族/默认 idle 不在内） */
+  /* --------------------------------- T33-b · 视线跟随（鼠标 / 触摸）
+     照抄 E-mote `demo/app.mjs` L111-125 的手感，只换"基准点"的来源：
+       eyeX/eyeY = [(pointer / canvasRect) − 眼睛在画布上的归一化位置] × gain200 → clamp ±100
+       再用 120ms 线性平滑（= 原版 setVariableDiff 的"独立差分通道"，与状态机完全解耦 ✓）
+     基准点**不写死**：优先 manifest.scene.character.eyeAnchor；没有就按
+       compose.charHRatio / footYRatio + 实测眼带纵向比例 0.35 现算 ⇒ 换视图/换取景不用改代码。
+     实测依据：idle1 源坐标眼带 y=(102.6+250.9)/2=176.8，脚踩点 1028×0.96 ⇒ 0.35 档位吻合 ✓ */
+  var GAZE = { on: true, x: 0, y: 0, tx: 0, ty: 0, gain: 200, clamp: 100, smoothMs: 120,
+               level: 0, at: 0 };
+  GAZE.on = !!ANIM_FLAGS.gaze;
+  (function () {
+    try {
+      var c = global.__xkConfig || {};
+      if (c.gazeGain != null) { GAZE.gain = c.gazeGain; }
+      if (c.gazeClamp != null) { GAZE.clamp = c.gazeClamp; }
+      if (c.gazeSmoothMs != null) { GAZE.smoothMs = c.gazeSmoothMs; }
+    } catch (e) { /* 忽略 */ }
+  })();
+  function gazeReduced() {
+    try { return mqOn(mq('(prefers-reduced-motion: reduce)'), false); } catch (e) { return false; }
+  }
+  /** 眼睛在画布上的归一化位置（不写死坐标；能从 manifest 取就从 manifest 取） */
+  Player.prototype.eyePoint = function () {
+    var cw = this.canvas ? this.canvas.width : 0;
+    var ch = this.canvas ? this.canvas.height : 0;
+    if (!cw || !ch) { return { x: 0.5, y: 0.35 }; }
+    var e = (this.manifest && this.manifest.scene && this.manifest.scene.character
+             && this.manifest.scene.character.eyeAnchor) || null;
+    if (e && typeof e.x === 'number' && typeof e.y === 'number') { return { x: e.x, y: e.y }; }
+    var r = this.charRect(cw, ch, this.aspect || 1);
+    var comp = ((this.manifest || {}).scene || {}).compose || {};
+    var hr = (typeof comp.charHRatio === 'number') ? comp.charHRatio : 0.66;
+    var fy = (typeof comp.footYRatio === 'number') ? comp.footYRatio : 0.96;
+    var eyeYRatio = 0.35;      // 实测：眼带中心 ≈ 脚踩点上方 0.35×角色高（见上方推导）
+    return { x: (r.x + r.w / 2) / cw, y: (r.y + r.h * (fy - hr * eyeYRatio)) / ch };
+  };
+  Player.prototype.gazeSetFromPointer = function (clientX, clientY) {
+    if (!GAZE.on || !this.canvas) { return null; }
+    var rect = this.canvas.getBoundingClientRect ? this.canvas.getBoundingClientRect() : null;
+    if (!rect || !rect.width || !rect.height) { return null; }
+    var eye = this.eyePoint();
+    var gain = GAZE.gain * (gazeReduced() ? 0.25 : 1);
+    var cl = GAZE.clamp;
+    GAZE.tx = Math.max(-cl, Math.min(cl, ((clientX - rect.left) / rect.width - eye.x) * gain));
+    GAZE.ty = Math.max(-cl, Math.min(cl, ((clientY - rect.top) / rect.height - eye.y) * gain));
+    GAZE.at = Date.now();
+    return { x: GAZE.tx, y: GAZE.ty, eye: eye };
+  };
+  /** 每帧线性趋近（16.7ms/rAF ⇒ 120ms 到位，与 E-mote 的 120ms 平滑同量级） */
+  function gazeApply() {
+    if (!GAZE.on) { GAZE.x = 0; GAZE.y = 0; GAZE.level = 0; return 0; }
+    var k = Math.min(1, 16.7 / Math.max(1, GAZE.smoothMs));
+    GAZE.x += (GAZE.tx - GAZE.x) * k;
+    GAZE.y += (GAZE.ty - GAZE.y) * k;
+    GAZE.level = Math.min(1, Math.abs(GAZE.x) / Math.max(1, GAZE.clamp));
+    return GAZE.level;
+  }
+  Player.prototype.wireGaze = function () {
+    var self = this;
+    if (!GAZE.on || !this.mount || this._gazeWired) { return; }
+    this._gazeWired = true;
+    this._onPointerMove = function (ev) { if (ev) { self.gazeSetFromPointer(ev.clientX, ev.clientY); } };
+    this._onPointerLeave = function () { GAZE.tx = 0; GAZE.ty = 0; };
+    this.mount.addEventListener('pointermove', this._onPointerMove, false);
+    this.mount.addEventListener('pointerdown', this._onPointerMove, false);
+    this.mount.addEventListener('pointerleave', this._onPointerLeave, false);
+  };
+  /* 视线 → 状态机的"转向偏置"：|x| > 60% 量程时，把**同一个侧脸族内部**的边连续加权
+     （**不改 prob 的存储值**、不改字段语义 ✓；只是同一个数在掷骰子时乘一个 1.0~3.0 的系数）。
+     只在用户真的把指针伸到边上时生效；没有指针事件时 level=0 ⇒ 系数恒 1
+     ⇒ 行为与接线前**逐位一致** ✓ */
+  var GAZE_STEER = {
+    idle_side_wind: ['idle_side_soft_wind', 'idle_side_butterfly'],
+    idle_side_soft_wind: ['idle_side_wind', 'idle_side_butterfly'],
+    idle_side_butterfly: ['idle_side_wind', 'idle_side_soft_wind']
+  };
+  function gazeSteerMultiplier(from, to) {
+    if (!GAZE.on || GAZE.level <= 0.6) { return 1; }
+    var list = GAZE_STEER[from];
+    if (!list || list.indexOf(to) < 0) { return 1; }
+    return 1 + 2 * ((GAZE.level - 0.6) / 0.4);
+  }
+
+  function blinkAllowedOn(clipName, d) {
+    if (!d) { return true; }
+    var n = clipName || '';
+    var allow = d.compatibleClips || null;
+    if (allow && allow.length) { return allow.indexOf(n) >= 0; }
+    var skip = d.skipPrefixes || [];
+    for (var i = 0; i < skip.length; i++) { if (n.indexOf(skip[i]) === 0) { return false; } }
+    return true;
+  }
+  Player.prototype.blinkAllowed = function (clipName) {
+    return blinkAllowedOn(clipName, this.eyeData);
+  };
+
   /** 用真实音频的播放时钟推进 mouthValue（包络是离线算好的 10ms 栅格，客户端零算力） */
   function voiceMouthTick() {
     if (!VOICE.speaking || !VOICE.audio) { return VOICE.mouthValue; }
@@ -1442,8 +1693,12 @@
       if (i < 0) { i = 0; }
       var v = env.values[i];
       if (typeof v !== 'number') { v = 0; }
+      /* T8-b 契约（写死在这里，避免再漂）：mouthValue = clamp(envelope.values[floor((t−t0)/10ms)] × 3.75, 0, 1)
+         首窗保底 0.12；包络值是 0~1 的 RMS，3.75 是把"正常说话"铺满 0~1 的实测增益。
+         floor(t/10ms) 就是对 hopMs 栅格取整 —— 逐帧锚点定位，**不写死任何坐标** ✓ */
+      var contracted = Math.min(1, Math.max(0, v * 3.75));
       VOICE.mouthValue = (VOICE.speaking && VOICE.mouthValue === 0 && i === 0)
-        ? Math.max(0.12, v) : Math.min(1, Math.max(0, v));
+        ? Math.max(0.12, contracted) : contracted;
     }
     if (VOICE.audio.ended || VOICE.audio.paused) { VOICE.speaking = false; VOICE.mouthValue = 0; }
     return VOICE.mouthValue;
@@ -1520,7 +1775,7 @@
     if (!pos.length) { return null; }
     var r = smRand() * sum;
     for (i = 0; i < pos.length; i++) {
-      r -= pos[i].prob;
+      r -= pos[i].prob * gazeSteerMultiplier(clip, pos[i].to);
       if (r <= 0) { return pos[i]; }
     }
     return pos[pos.length - 1];
@@ -1857,6 +2112,59 @@
     return MOUTH_LABELS.indexOf(n) >= 0 ? n : null;
   };
 
+  /** 载入眼皮补丁（与 loadMouth 同构；只请求一次）
+   *  优先用内联 geometry（manifest.eye / window.__xkConfig.eye）⇒ 零额外请求；
+   *  没有内联就退到 kurisu/eye/<label>.json。载不到 = 永远不叠眼皮，不影响任何既有行为 ✓ */
+  Player.prototype.loadEye = function (label) {
+    var self = this;
+    var inline = null;
+    try {
+      inline = ((this.manifest || {}).eye) || ((global.__xkConfig || {}).eye) || null;
+    } catch (e0) { inline = null; }
+    if (this.eyeData || this._eyeLoading) { return this._eyeLoading || Promise.resolve(this.eyeData); }
+    var getData = (inline && inline.box)
+      ? Promise.resolve(inline)
+      : fetch(joinUrl(this.basePath, 'kurisu/eye/' + (label || 'idle1') + '.json'),
+              { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) { throw new Error('eye json HTTP ' + r.status); } return r.json(); });
+    this._eyeLoading = getData
+      .then(function (d) {
+        return loadImage(joinUrl(self.basePath, d.patch)).then(function (img) {
+          self.eyeData = d;
+          self.eyePatch = { data: d, img: img };
+          return d;
+        });
+      }, function (err) {
+        self._eyeLoading = null;                    // 允许下次重试
+        self.eyeError = String((err && err.message) || err);
+        return null;
+      });
+    return this._eyeLoading;
+  };
+
+  /** 把眼皮补丁贴到眼睛上（alpha = BLINK.alpha）
+   *  与嘴部补丁同构：补丁按 tile 原生像素存，画布矩形按 r 等比缩放（medium/hi 两档都成立）。 */
+  Player.prototype.drawBlink = function (r, clipName) {
+    var p = this.eyePatch;
+    if (!p || !r || !(BLINK.alpha > 0)) { return false; }
+    if (!this.blinkAllowed(clipName)) { BLINK.clamps++; return false; }
+    var d = p.data;
+    var box = d.box || [320, 130];
+    var anchor = d.sourceAnchor || [71, 31];
+    var unitK = (typeof d.k === 'number' && d.k > 0) ? d.k : 1;    // tile 世界 → 源帧世界的比例
+    var up = d.upsample || 1;
+    var sx = r.w / 764, sy = r.h / 1028;
+    var cxs = anchor[0] * unitK, cys = anchor[1] * unitK;
+    var bw = box[0] / up * unitK, bh = box[1] / up * unitK;
+    var gx = (ANIM_FLAGS.gaze ? GAZE.x * 0.02 : 0);               // T33-b 的眼部微位移（源帧像素）
+    var ctx = this.ctx;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, BLINK.alpha));
+    ctx.drawImage(p.img, r.x + (cxs - bw / 2 + gx) * sx, r.y + (cys - bh / 2) * sy, bw * sx, bh * sy);
+    ctx.restore();
+    return true;
+  };
+
   Player.prototype.loadMouth = function (label) {
     var self = this;
     if (!label) { return Promise.resolve(null); }
@@ -1889,9 +2197,11 @@
     var label = this.mouthLabelFor(clipName);
     var m = label && this.mouth && this.mouth[label];
     var speaking = VOICE.speaking;
-    var mv = VOICE.mouthValue;
-    var shouldClose = speaking && mv <= 0.08;
+    var mv = mouthEffective();          // 说话中 = 语音包络；静音 = T34 随机口型（说话中不叠 ✗）
+    var shouldClose = mv <= 0.08;       // 阈值沿用 0.08 ✓（闭嘴层只在这条线以下才叠）
     this.mouthDiag = { label: label, speaking: speaking, mouthValue: mv, shown: false,
+                       mouthSource: speaking ? 'voice' : (MOUTH_IDLE.on ? 'idle' : 'off'),
+                       blinkAlpha: BLINK.alpha, blinkState: BLINK.state,
                        variant: VOICE.variant, frame: frameIdx };
     if (!shouldClose || !m) { return; }
     var d = m.data;
@@ -2332,6 +2642,8 @@
     scan();
   }
 
+  function round2(v) { return Math.round(v * 100) / 100; }
+
   /* --------------------------------------------------------------- 导出 */
   var KurisuPlayer = {
     version: VERSION,
@@ -2368,6 +2680,57 @@
     smStop: function () {
       var p = KurisuPlayer.stage();
       if (p) { p.smStop(); }
+    },
+    /* T33/T34 的取证入口（纯只读快照，不改变任何行为） */
+    animDiag: function () {
+      var p = KurisuPlayer.stage();
+      return {
+        flags: { mouthIdle: ANIM_FLAGS.mouthIdle, blink: ANIM_FLAGS.blink, gaze: ANIM_FLAGS.gaze },
+        mouthIdle: { on: MOUTH_IDLE.on, value: round2(MOUTH_IDLE.value), peak: MOUTH_IDLE.peak,
+                     blinks: MOUTH_IDLE.blinks, source: MOUTH_IDLE.source, maxOpen: MOUTH_IDLE.maxOpen,
+                     minMs: MOUTH_IDLE.minMs, maxMs: MOUTH_IDLE.maxMs },
+        blink: { on: BLINK.on, state: BLINK.state, alpha: round2(BLINK.alpha), count: BLINK.count,
+                 closeMs: BLINK.closeMs, holdMs: BLINK.holdMs, openMs: BLINK.openMs,
+                 minMs: BLINK.minMs, maxMs: BLINK.maxMs, clamps: BLINK.clamps,
+                 loaded: !!(p && p.eyeData), error: (p && p.eyeError) || null,
+                 label: (p && p.eyeData && p.eyeData.label) || null },
+        gaze: { on: GAZE.on, x: round2(GAZE.x), y: round2(GAZE.y), tx: round2(GAZE.tx), ty: round2(GAZE.ty),
+                gain: GAZE.gain, clamp: GAZE.clamp, smoothMs: GAZE.smoothMs, level: round2(GAZE.level),
+                eyePoint: p ? p.eyePoint() : null },
+        mouthDiag: (p && p.mouthDiag) || null,
+        mouthEffective: round2(mouthEffective())
+      };
+    },
+    /* 眼皮补丁的叠加对拍（返回数字，不靠人眼看） */
+    eyeRender: function (opts) {
+      var p = KurisuPlayer.stage();
+      if (!p) { return Promise.resolve(false); }
+      opts = opts || {};
+      var frame = (typeof opts.frame === 'number') ? opts.frame : 0;
+      return p.loadEye('idle1').then(function (d) {
+        if (!d) { return false; }
+        var node = p.graphByClip && p.graphByClip[d.sourceClip || 'idle1'];
+        if (!node) { return false; }
+        return p.ensureMediumClip(node).then(function (atlas) {
+          p.smSetCurrent(node, atlas);
+          p.stopLoop();
+          p.current.fixedFrame = frame;
+          BLINK.alpha = (typeof opts.alpha === 'number') ? opts.alpha : 1;
+          p.draw();
+          var r = p.charRect(p.canvas.width, p.canvas.height, p.current.fw / p.current.fh);
+          var k = (typeof d.k === 'number' && d.k > 0) ? d.k : 1;
+          var up = d.upsample || 1;
+          var bw = d.box[0] / up * k, bh = d.box[1] / up * k;
+          var out = { label: d.sourceClip || 'idle1', frame: frame, alpha: BLINK.alpha,
+                      shown: p.drawBlink(r, p.current.clipName || p.current.clip),
+                      box: d.box, sourceAnchor: d.sourceAnchor,
+                      drawn: { x: r.x + (d.sourceAnchor[0] * k - bw / 2) * (r.w / 764),
+                               y: r.y + (d.sourceAnchor[1] * k - bh / 2) * (r.h / 1028),
+                               w: bw * (r.w / 764), h: bh * (r.h / 1028) } };
+          if (opts.reset !== false) { BLINK.alpha = 0; p.current.fixedFrame = null; p.draw(); }
+          return out;
+        });
+      });
     },
     /* 语音/口型（P0-③④）的取证入口 */
     voiceDiag: voiceDiag,

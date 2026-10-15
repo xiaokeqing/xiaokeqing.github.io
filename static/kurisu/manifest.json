@@ -2730,7 +2730,7 @@
   "atlasDir": "kurisu/medium/",
   "auto": true,
   "builtBy": "_dev/build_statemachine_manifest.py",
-  "edgeCount": 88,
+  "edgeCount": 92,
   "hiAtlasDir": "kurisu/hi/",
   "hiClips": [
    "idle",

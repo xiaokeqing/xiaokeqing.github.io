@@ -18,6 +18,11 @@ import json
 import os
 import sys
 
+try:                                  # 控制台是 GBK 时，非 GBK 字符（⇒ 等）会让本脚本在**写盘前**就崩，
+    sys.stdout.reconfigure(encoding='utf-8')   # 于是看起来"跑过了"其实一个字都没写。强制 UTF-8 输出。
+except Exception:
+    pass
+
 REPO = r'F:\7AAA\AI\blog'
 SRC_META = r'E:\DeepSeek1\work\_kurisu-full\web\meta'
 SM_IN = os.path.join(REPO, 'docs', 'amadeus-research', 'data', 'statemachine.json')
@@ -29,6 +34,36 @@ TABLE = os.path.join(REPO, '_dev', 'medium-volume-table.md')
 DRY = '--dry' in sys.argv
 
 sm = json.load(open(SM_IN, encoding='utf-8'))
+
+# ---- 第二批"活起来"的 4 条边（T33-b 视线跟随用；2026-10-15 批次2）---------------
+# 事实：`idle → 侧脸族` 原本**没有直边**（只能 idle→idle_closed_eye→idle 打转），
+# 实测 2000 步只覆盖 9/37 个节点。这里给三条 idle 变体各加 1 条通往侧脸族的正概率边
+# （prob = 0.1 / 0.15 / 0.15），再加 1 条侧脸族回 idle 的边（prob = 0.3）—— 正好 4 条，
+# 且**全部是概率边**（prob ≠ 0 ⇒ 自动游走可走 ✓），不是宿主触发入口。
+# 站主要"一个正脸一个侧脸"：正脸 idle 家族 6 个节点 ⇄ 侧脸族 3 个节点。
+GAZE_EDGES = [
+    {'from': 'idle', 'to': 'idle_side_wind', 'from_id': '_8ms718k', 'to_id': '_cpu0zpb', 'prob': 0.1},
+    {'from': 'idle1', 'to': 'idle_side_soft_wind', 'from_id': '_5qqy7vp', 'to_id': '_vo874gi', 'prob': 0.15},
+    {'from': 'idle2', 'to': 'idle_side_soft_wind', 'from_id': '_6fknbp9', 'to_id': '_vo874gi', 'prob': 0.15},
+    {'from': 'idle_side_wind', 'to': 'idle', 'from_id': '_cpu0zpb', 'to_id': '_8ms718k', 'prob': 0.3},
+]
+# ★修正（窗口 Q，2026-10-15）：原守卫拿**边端点名**（'idle'）去比**节点 id**（'_8ms718k'）——
+#   两者永不相同（上游节点没有 name，节点名在 `clip` 字段上），于是这 4 条边必然被拒、
+#   一条都加不上 ⇒ 重跑生成器会把补丁 05 的 4 条边改回 88 条，正是要防的漂移。
+#   改成比 `clip`（与边端点同一套命名），并且**非法端点直接失败**，不再静默跳过。
+_node_names = set(n['clip'] for n in sm['nodes'])
+_have = set((e['from'], e['to']) for e in sm['edges'])
+_added = 0
+for _e in GAZE_EDGES:
+    if (_e['from'], _e['to']) in _have:
+        continue
+    if _e['from'] not in _node_names or _e['to'] not in _node_names:
+        raise SystemExit('视线边引用了不存在的节点名：%s' % _e)
+    sm['edges'].append(_e)
+    _added += 1
+print('视线跟随的 4 条边：新增 %d 条 / 共 %d 条 ⇒ 边总数 %d'
+      % (_added, len(GAZE_EDGES), len(sm['edges'])))
+
 gen = json.load(open(GEN_META, encoding='utf-8'))['clips']
 
 problems = []

@@ -8,7 +8,7 @@
  },
  "root": "idle",
  "node_count": 38,
- "edge_count": 88,
+ "edge_count": 92,
  "host_triggered_entries": [
   "angry_trans",
   "closed_eye_trans",
@@ -3092,6 +3092,34 @@
    "from_id": "_key_point_to_thinking",
    "to_id": "_20x9amw",
    "prob": 1
+  },
+  {
+   "from": "idle",
+   "to": "idle_side_wind",
+   "from_id": "_8ms718k",
+   "to_id": "_cpu0zpb",
+   "prob": 0.1
+  },
+  {
+   "from": "idle1",
+   "to": "idle_side_soft_wind",
+   "from_id": "_5qqy7vp",
+   "to_id": "_vo874gi",
+   "prob": 0.15
+  },
+  {
+   "from": "idle2",
+   "to": "idle_side_soft_wind",
+   "from_id": "_6fknbp9",
+   "to_id": "_vo874gi",
+   "prob": 0.15
+  },
+  {
+   "from": "idle_side_wind",
+   "to": "idle",
+   "from_id": "_cpu0zpb",
+   "to_id": "_8ms718k",
+   "prob": 0.3
   }
  ]
 }
