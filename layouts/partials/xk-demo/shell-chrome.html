@@ -2,6 +2,9 @@
       唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。
       ★T27（2026-10-15 站主）：/labs/ 与 /about/ 两页已删 ⇒ dock 六项 → 四项（主页 / 监测中心 / AI 问答 / 笔记）。 */ -}}
 {{- $v := .v -}}
+<!-- ★底图两层（恢复自 docs/demo-内容页外壳.html:427 + :45-47）：内容页的暖玻璃面板需要照片底 -->
+<div class="bg" aria-hidden="true"></div>
+<div class="bgshade" aria-hidden="true"></div>
 
 <!-- 左侧竖排导航 -->
 <nav class="dock" id="dock" aria-label="站点导航（演示）">

@@ -4736,6 +4736,30 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
 ''' % (home_style, home_body, home_script))
 
 shell_style = shell_style + LAYOUT_PATCH
+# ★2026-10-16 恢复（站主报"背景哪去了 / 颜色也全变了"的根因）：
+#   demo 外壳的**底图两层**（`docs/demo-内容页外壳.html:45/:46-47/:417`）在生产版里被整层剥掉，
+#   只剩 `body{background:#0A0D11}`。而面板是**半透明暖玻璃**（`--panel: rgba(54,51,46,.24)`），
+#   贴照片底才是"暖烟灰玻璃"观感，贴纯色就整页发暗 ⇒ 用户同时感到"背景没了 + 颜色全变了"。
+#   调色板本身没变（逐项对比 demo vs 生产 `:root` = 16/16 一致）。
+#   默认底图取 demo 的默认值 `room_empty`（源: `setBg(localStorage.getItem('xk-demo-bg4') || 'room_empty')`），
+#   图已入库：`static/kurisu/scene/bg/room_empty.webp`（上游 scenarios/BG_empty.png 转换而来）。
+BG_CSS = (
+    u'\n  /* ★底图两层（逐字照 docs/demo-内容页外壳.html:45-47/:417）—— 内容页的暖玻璃面板需要照片底 */\n'
+    u'  .bg{position:fixed;inset:0;z-index:-2;background:#0A0D11 center/cover no-repeat;'
+    u'background-image:url(/kurisu/scene/bg/room_empty.webp);transform:scale(1.1)}\n'
+    u'  .bgshade{position:fixed;inset:0;z-index:-1;'
+    u'background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}\n'
+    u'  body.is-home .bg,body.is-home .bgshade{display:none}\n'
+)
+shell_style = shell_style + BG_CSS
+#   底图两层的 DOM：写在 chrome 最前面（demo 里就是 body 后第一件事）
+BG_DOM = (
+    u'<!-- ★底图两层（恢复自 docs/demo-内容页外壳.html:427 + :45-47）：内容页的暖玻璃面板需要照片底 -->\n'
+    u'<div class="bg" aria-hidden="true"></div>\n'
+    u'<div class="bgshade" aria-hidden="true"></div>\n'
+)
+if u'.bgshade' not in chrome:
+    chrome = BG_DOM + chrome
 
 # 3) 外壳共享片段
 write(os.path.join(PART, 'shell-style.html'),

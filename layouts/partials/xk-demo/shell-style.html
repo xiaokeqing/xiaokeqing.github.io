@@ -474,6 +474,11 @@
     .chat{height:auto;max-height:calc(100vh - 150px);min-height:320px}
   }
 
+  /* ★底图两层（逐字照 docs/demo-内容页外壳.html:45-47/:417）—— 内容页的暖玻璃面板需要照片底 */
+  .bg{position:fixed;inset:0;z-index:-2;background:#0A0D11 center/cover no-repeat;background-image:url(/kurisu/scene/bg/room_empty.webp);transform:scale(1.1)}
+  .bgshade{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}
+  body.is-home .bg,body.is-home .bgshade{display:none}
+
   /* ★ 生产站差异（唯一一处 CSS 新增，值逐字照抄上面的 .dock button 三条）：
      demo 的导航是 <button data-v=…>（它自己的 JS 切 view），生产页换成 <a href="真路由">，
      所以要给 .dock a 一组同样的外观值。demo 自己的元素渲染结果零变化。 */
