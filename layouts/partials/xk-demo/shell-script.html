@@ -58,7 +58,15 @@ function renderFeed(){
   const items = window.XK_FEED;
   if(!items){
     termFeed.innerHTML = '';
-    feedRow({ts:'--:--:--', cls:'dns', tag:'[读不到]', text:'/api/public/alerts 本次取不到（不可达或被拦）—— 不补样例值'});
+    /* ★2026-10-16（站主截图里那句原文）：**不再断言"不可达或被拦"** —— 那是未经证实的因果。
+       前端现在已经能区分"被限流 / 失败但有旧值 / 真的读不到"，所以兜底文案按优先级取：
+         ① `window.XK_FEED_NOTE`（字符串）⇒ 站点线在限流/降级场景写入的机读结论，**原样使用**；
+         ② 否则用**中性且不诬告**的措辞：只说"本次未取到"，不猜原因。
+       口径不变：不补样例值、不编造（零造假红线）。 */
+    const note = (typeof window.XK_FEED_NOTE === 'string' && window.XK_FEED_NOTE)
+      ? window.XK_FEED_NOTE
+      : '/api/public/alerts 本次未取到 —— 不补样例值';
+    feedRow({ts:'--:--:--', cls:'dns', tag:'[读不到]', text: note});
     feedTrim();
     return;
   }

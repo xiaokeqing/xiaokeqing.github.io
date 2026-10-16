@@ -2569,7 +2569,7 @@
   "codec": "aac(m4a) + opus(webm)",
   "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
   "hopMs": 10,
-  "lineCount": 12,
+  "lineCount": 162,
   "lines": [
    {
     "audio": "kurisu/voice/greet_first.m4a",
@@ -2834,11 +2834,3311 @@
     },
     "text": "你回来了。刚才我没说话，只是在这儿等着。",
     "trigger": "idle_banter"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m01.m4a",
+    "audioBytes": {
+     "m4a": 28315,
+     "webm": 22823
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m01.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m01.webm"
+    },
+    "durationMs": 4536,
+    "envelope": "kurisu/voice/synth/page_intro_m01.envelope.json",
+    "id": "page_intro_m01",
+    "scene": "切到主页（首页桌面）",
+    "seconds": 4.536,
+    "sha256": {
+     "m4a": "a9114c39daee8f2732d6d38c904afaf81b262e38f5a03186f3cda9746eda1b99",
+     "webm": "0605e9b5b4a9bb643c15995b69a8ac6133b3ff0eca9396996399b9b811f107b4"
+    },
+    "text": "回到主页了。我还是待在这台显示器里。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m02.m4a",
+    "audioBytes": {
+     "m4a": 27585,
+     "webm": 23260
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m02.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m02.webm"
+    },
+    "durationMs": 4344,
+    "envelope": "kurisu/voice/synth/page_intro_m02.envelope.json",
+    "id": "page_intro_m02",
+    "scene": "从监测中心切回主页",
+    "seconds": 4.344,
+    "sha256": {
+     "m4a": "74fcf18c648aab8b9060f3c2cfb36a1e0b42226672595c5839f27eb094ef8852",
+     "webm": "2a521307f6c8252e81fb21ab7c18a80ecef0dbe8c77aca5af5d031b120c7d49d"
+    },
+    "text": "从告警堆里出来了。主页这边安静得多。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m03.m4a",
+    "audioBytes": {
+     "m4a": 20959,
+     "webm": 18124
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m03.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m03.webm"
+    },
+    "durationMs": 3285,
+    "envelope": "kurisu/voice/synth/page_intro_m03.envelope.json",
+    "id": "page_intro_m03",
+    "scene": "第二次切到主页",
+    "seconds": 3.285,
+    "sha256": {
+     "m4a": "4a6f23b12f5e181ba0e40a8765155d4f21fb25fb49c9ce7ea74cc3bb7b33b773",
+     "webm": "3441ff8f56506b37380d9d048c1c15a38f1c6f25a29a518175a12311abb5dc93"
+    },
+    "text": "又回主页。这套开场白我不重复第二遍。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m04.m4a",
+    "audioBytes": {
+     "m4a": 38158,
+     "webm": 34515
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m04.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m04.webm"
+    },
+    "durationMs": 6120,
+    "envelope": "kurisu/voice/synth/page_intro_m04.envelope.json",
+    "id": "page_intro_m04",
+    "scene": "回到主页且屏上正有告警",
+    "seconds": 6.12,
+    "sha256": {
+     "m4a": "76e9d9a13f8f2a24440683748cfadb16c7c715377bf513c6e96642af64d3cdc6",
+     "webm": "363746bc76597918dece552ef429371a73cd9ab12eac17f8357d10fcc251c1f2"
+    },
+    "text": "回主页了——但告警还在，别以为切页就没事。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m05.m4a",
+    "audioBytes": {
+     "m4a": 38389,
+     "webm": 30808
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m05.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m05.webm"
+    },
+    "durationMs": 6196,
+    "envelope": "kurisu/voice/synth/page_intro_m05.envelope.json",
+    "id": "page_intro_m05",
+    "scene": "直接落到监测中心（没走主页）",
+    "seconds": 6.196,
+    "sha256": {
+     "m4a": "b992896d982a6608b26b8a531c6fb953cf17011ba7ad9187955b34eecc1d9c7b",
+     "webm": "ac4fd3d07065dfbc531607ce2bbfd7d8434ee2d8f61e27ec8dfed1a9be8ecc8a"
+    },
+    "text": "直接进监测中心。先说清楚：读不到的那几项就是读不到。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m06.m4a",
+    "audioBytes": {
+     "m4a": 40587,
+     "webm": 33692
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m06.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m06.webm"
+    },
+    "durationMs": 6594,
+    "envelope": "kurisu/voice/synth/page_intro_m06.envelope.json",
+    "id": "page_intro_m06",
+    "scene": "切到监测中心的告警列表",
+    "seconds": 6.594,
+    "sha256": {
+     "m4a": "ce335b0231bab2db1770b255beb1291b9d1d4f358765a17d38fe9486ff123d65",
+     "webm": "6303d63846470d7e8b7501434195bf89c0ee732f1d693a6204c71d64ff906f9f"
+    },
+    "text": "监测中心。主机层和网络层分开记，混着看会误判。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m07.m4a",
+    "audioBytes": {
+     "m4a": 42928,
+     "webm": 36146
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m07.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m07.webm"
+    },
+    "durationMs": 6926,
+    "envelope": "kurisu/voice/synth/page_intro_m07.envelope.json",
+    "id": "page_intro_m07",
+    "scene": "切到监测中心的蜜罐战报卡",
+    "seconds": 6.926,
+    "sha256": {
+     "m4a": "a3b67e8eff7a6ee7e32b2609f7b05d264c8357c7aa00a841977fd418031d40b2",
+     "webm": "0eeb867fdd8856edee2c84fd78506c6c9916bb9aeb0c0ccad07647ca9beaf9d6"
+    },
+    "text": "蜜罐战报。这里记的是别人撞上来的动作，不是我们做的。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m08.m4a",
+    "audioBytes": {
+     "m4a": 47817,
+     "webm": 39485
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m08.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m08.webm"
+    },
+    "durationMs": 7709,
+    "envelope": "kurisu/voice/synth/page_intro_m08.envelope.json",
+    "id": "page_intro_m08",
+    "scene": "切到监测中心的处置审计卡",
+    "seconds": 7.709,
+    "sha256": {
+     "m4a": "ecc8830c4494d7e3fd0571a91b287b31ba32c1891b62f09327441502c7cf9788",
+     "webm": "9b4028c100935489e41a728c727411136824124e3e335814456b48c7fcdbc1ec"
+    },
+    "text": "处置审计是真实封禁留痕，来源写在卡上，不是编一条 live。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m09.m4a",
+    "audioBytes": {
+     "m4a": 41387,
+     "webm": 34925
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m09.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m09.webm"
+    },
+    "durationMs": 6598,
+    "envelope": "kurisu/voice/synth/page_intro_m09.envelope.json",
+    "id": "page_intro_m09",
+    "scene": "切到监测中心的系统指纹卡",
+    "seconds": 6.598,
+    "sha256": {
+     "m4a": "957b190bacb59f61442674d8dd3d4ebb7a13592d31c10bc89302a20e54b993b9",
+     "webm": "972204cd7989ed511a2f5b65c32f2fe9aeab760bc40f354b6bd7f925d066a75a"
+    },
+    "text": "系统指纹只读。源 IP 到这一层就已经被后端掩码了。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m10.m4a",
+    "audioBytes": {
+     "m4a": 37959,
+     "webm": 31984
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m10.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m10.webm"
+    },
+    "durationMs": 6057,
+    "envelope": "kurisu/voice/synth/page_intro_m10.envelope.json",
+    "id": "page_intro_m10",
+    "scene": "反复在监测中心与主页之间来回切",
+    "seconds": 6.057,
+    "sha256": {
+     "m4a": "a750ede03c7a3608c2f95759465b4b02e2a7c4e271d3935d196a16b43b28b2ad",
+     "webm": "671b5521bd03bdb3e2c3681fa48d8dcc9041f9ec224279011c7f4729ddd26fd1"
+    },
+    "text": "来回切第三遍了。你是在找什么，还是单纯手闲。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m11.m4a",
+    "audioBytes": {
+     "m4a": 33597,
+     "webm": 27510
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m11.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m11.webm"
+    },
+    "durationMs": 5410,
+    "envelope": "kurisu/voice/synth/page_intro_m11.envelope.json",
+    "id": "page_intro_m11",
+    "scene": "切到笔记页",
+    "seconds": 5.41,
+    "sha256": {
+     "m4a": "a2b30be15f867033fa300d8aa620593bd0f4ab87ecf83b345a821e001d0f7d06",
+     "webm": "3465d9d868401c70afeaf0eaa5f4c4cc7ab95534e35f2ffad65d790278102e67"
+    },
+    "text": "笔记页。按分类排好，最新的在最上面。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m12.m4a",
+    "audioBytes": {
+     "m4a": 40505,
+     "webm": 32884
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m12.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m12.webm"
+    },
+    "durationMs": 6517,
+    "envelope": "kurisu/voice/synth/page_intro_m12.envelope.json",
+    "id": "page_intro_m12",
+    "scene": "切到笔记页但列表是空的",
+    "seconds": 6.517,
+    "sha256": {
+     "m4a": "0be40b58a3f8623dd1e5ff592f22d75d63631c185cea364e5ae83e6990a1782a",
+     "webm": "2ee29bc9c71694a27ab8d00e6b5326ef4f8fd3a9491a1b910157790f9c6f5d8a"
+    },
+    "text": "这一页现在没有内容。空就是空，我不会替你填一篇。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m13.m4a",
+    "audioBytes": {
+     "m4a": 35290,
+     "webm": 29499
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m13.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m13.webm"
+    },
+    "durationMs": 5682,
+    "envelope": "kurisu/voice/synth/page_intro_m13.envelope.json",
+    "id": "page_intro_m13",
+    "scene": "在笔记页搜索但没有结果",
+    "seconds": 5.682,
+    "sha256": {
+     "m4a": "63394d8c5b2845090333aa1b33097820a3ba6ab161f37d9ffff781543da4c50c",
+     "webm": "53e01520a0d3287ddd1bd824db0a04c88babca5ef718182b1787681a4b0e43dd"
+    },
+    "text": "没有匹配的。换个词，或者先想想你要找的叫什么。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m14.m4a",
+    "audioBytes": {
+     "m4a": 43293,
+     "webm": 35582
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m14.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m14.webm"
+    },
+    "durationMs": 6944,
+    "envelope": "kurisu/voice/synth/page_intro_m14.envelope.json",
+    "id": "page_intro_m14",
+    "scene": "切到关于页",
+    "seconds": 6.944,
+    "sha256": {
+     "m4a": "33dcc566c9ecef4fd43b03cd41a7ef37698ba994c4dff2c3d003553764fa8981",
+     "webm": "57a7c93acccd5dd0dcd3c43c34fa6065658653ee236465104ff3f44a520cc4c1"
+    },
+    "text": "关于页。项目本身、Demo、还有数据的口径和取舍都在这儿。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m15.m4a",
+    "audioBytes": {
+     "m4a": 48968,
+     "webm": 39964
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m15.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m15.webm"
+    },
+    "durationMs": 7934,
+    "envelope": "kurisu/voice/synth/page_intro_m15.envelope.json",
+    "id": "page_intro_m15",
+    "scene": "切到关于页的「数据来源·口径·免责」锚点",
+    "seconds": 7.934,
+    "sha256": {
+     "m4a": "e45e51576807781bb38d148999f6db3da77ec094a611037a914daaa5342b427d",
+     "webm": "0ab13a4bf83a6e4ffb14dc042a1cf79189aef0ccbf252fda5a83acda0c50849d"
+    },
+    "text": "这一段是全文最该读的：只读公开端点，IP 由后端掩码。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m16.m4a",
+    "audioBytes": {
+     "m4a": 43786,
+     "webm": 36395
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m16.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m16.webm"
+    },
+    "durationMs": 7094,
+    "envelope": "kurisu/voice/synth/page_intro_m16.envelope.json",
+    "id": "page_intro_m16",
+    "scene": "切到关于页的公开端点实时探测区，有端点未接入",
+    "seconds": 7.094,
+    "sha256": {
+     "m4a": "4115ae195a75c6945414c0e1fc964042532fa5c040a79f3747642de229f24965",
+     "webm": "6939c6c96ae439e65c949549d0417a0e43dee92a0423c35e77711ced250729e8"
+    },
+    "text": "探测里那几项写着未接入。它们确实没上线，不是加载失败。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m17.m4a",
+    "audioBytes": {
+     "m4a": 40509,
+     "webm": 33426
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m17.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m17.webm"
+    },
+    "durationMs": 6540,
+    "envelope": "kurisu/voice/synth/page_intro_m17.envelope.json",
+    "id": "page_intro_m17",
+    "scene": "从别的页切走时她正好在播报中被中断",
+    "seconds": 6.54,
+    "sha256": {
+     "m4a": "c8da7a4badf353a2102f7ee8cf99232fd63762d1a780815c214c27f96a4e5789",
+     "webm": "bd89c5fbea26fed1954f71b2477aa43d8555586f7aa74a6c3bd63ceb4a54630b"
+    },
+    "text": "我还没说完。……算了，切页是你的自由。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/page_intro_m18.m4a",
+    "audioBytes": {
+     "m4a": 31250,
+     "webm": 25456
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/page_intro_m18.m4a",
+     "webm": "kurisu/voice/synth/page_intro_m18.webm"
+    },
+    "durationMs": 4938,
+    "envelope": "kurisu/voice/synth/page_intro_m18.envelope.json",
+    "id": "page_intro_m18",
+    "scene": "绕了几页之后又停在主页不动",
+    "seconds": 4.938,
+    "sha256": {
+     "m4a": "3f6ef785c62c189491af006bfdfac6f8d923de3a21e095e6cffb9a34e6e049f3",
+     "webm": "354480a2137a76455198532bac0832a23edd5d30b0eeab69e3a785fc0410a51d"
+    },
+    "text": "转一圈还是停在这儿。行，那我陪你待着。",
+    "trigger": "page_intro"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m01.m4a",
+    "audioBytes": {
+     "m4a": 38014,
+     "webm": 30762
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m01.m4a",
+     "webm": "kurisu/voice/synth/status_m01.webm"
+    },
+    "durationMs": 6170,
+    "envelope": "kurisu/voice/synth/status_m01.envelope.json",
+    "id": "status_m01",
+    "scene": "接口拿不到数据（状态行显示读不到）",
+    "seconds": 6.17,
+    "sha256": {
+     "m4a": "81ece6b3c9e610d708a4b4eb9fc72262e845fbf05aea0890a3e0e6b573d7a86d",
+     "webm": "4f230f28740be03e0302030cad63632d383495c4ee85402f0e7d70299fd973db"
+    },
+    "text": "这一次没读到数据。我不补数，读不到就是读不到。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m02.m4a",
+    "audioBytes": {
+     "m4a": 40150,
+     "webm": 32672
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m02.m4a",
+     "webm": "kurisu/voice/synth/status_m02.webm"
+    },
+    "durationMs": 6513,
+    "envelope": "kurisu/voice/synth/status_m02.envelope.json",
+    "id": "status_m02",
+    "scene": "请求超时",
+    "seconds": 6.513,
+    "sha256": {
+     "m4a": "a620cb4d08ef36376236b952c5c9854a1e38d9654090ecbe2d2e4c91b9e59bc7",
+     "webm": "0ef104d9d0e119021d9b3f80f64a4c79e6e34e94579e0ba562e923c057465793"
+    },
+    "text": "请求超时了。等它回来我再说结论，不先猜。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m03.m4a",
+    "audioBytes": {
+     "m4a": 23793,
+     "webm": 19650
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m03.m4a",
+     "webm": "kurisu/voice/synth/status_m03.webm"
+    },
+    "durationMs": 3710,
+    "envelope": "kurisu/voice/synth/status_m03.envelope.json",
+    "id": "status_m03",
+    "scene": "被限流（HTTP 429）",
+    "seconds": 3.71,
+    "sha256": {
+     "m4a": "9a0c437d727b5e013d1d544cc97ae88f6bbd2a41bf20f0f34f6cbacd71897ce4",
+     "webm": "99df8c41a38fd838168101326f625b6299856473046ac2eee93a9af54d1f1cc8"
+    },
+    "text": "接口在限流，稍等一下再问。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m04.m4a",
+    "audioBytes": {
+     "m4a": 38733,
+     "webm": 32183
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m04.m4a",
+     "webm": "kurisu/voice/synth/status_m04.webm"
+    },
+    "durationMs": 6273,
+    "envelope": "kurisu/voice/synth/status_m04.envelope.json",
+    "id": "status_m04",
+    "scene": "上游半挂：部分端点失败、数据不完整",
+    "seconds": 6.273,
+    "sha256": {
+     "m4a": "c56901c8a6d407d1e8b83f0e5d45e6780f174259a22d0f0751c0084a88ac6612",
+     "webm": "799b6673bfe252cec7b3638f827d444ceba69ead1ebf136fa0917d669004672e"
+    },
+    "text": "接口在重试。不完整我就直说，不给你看半份。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m05.m4a",
+    "audioBytes": {
+     "m4a": 19478,
+     "webm": 16092
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m05.m4a",
+     "webm": "kurisu/voice/synth/status_m05.webm"
+    },
+    "durationMs": 3037,
+    "envelope": "kurisu/voice/synth/status_m05.envelope.json",
+    "id": "status_m05",
+    "scene": "上游全部不可达",
+    "seconds": 3.037,
+    "sha256": {
+     "m4a": "c566f19386965961c239ad64c2f899e77b55e88a39e3f61b2b5153e1e44bb4c1",
+     "webm": "4556b4d72586bdc9d609a7acaa68c967474274be142d0bc7158150f227769bda"
+    },
+    "text": "上游断了。等它回来我再说结论。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m06.m4a",
+    "audioBytes": {
+     "m4a": 26878,
+     "webm": 22335
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m06.m4a",
+     "webm": "kurisu/voice/synth/status_m06.webm"
+    },
+    "durationMs": 4264,
+    "envelope": "kurisu/voice/synth/status_m06.envelope.json",
+    "id": "status_m06",
+    "scene": "数据来自缓存且已过期",
+    "seconds": 4.264,
+    "sha256": {
+     "m4a": "22bcfb6f54b35e0cb685bfd0a99d357a04d188cf871a3b07fb900aa870fe08f9",
+     "webm": "a2b1c18360717ddedb11940047567da8e7be78fb9578584588b4a6391f949b46"
+    },
+    "text": "缓存里那份过期了。别拿它当刚发生的。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m07.m4a",
+    "audioBytes": {
+     "m4a": 36348,
+     "webm": 26721
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m07.m4a",
+     "webm": "kurisu/voice/synth/status_m07.webm"
+    },
+    "durationMs": 4361,
+    "envelope": "kurisu/voice/synth/status_m07.envelope.json",
+    "id": "status_m07",
+    "scene": "缓存刚命中（数据是刚拉的）",
+    "seconds": 4.361,
+    "sha256": {
+     "m4a": "248cfd0c1d12939bfe14482f4813600816c15a81842ca623ce81174cfc859e4a",
+     "webm": "327e895c1b77fcd3405e6b6fefb681952735ef67970cf0e3c68374ad9412e8f0"
+    },
+    "text": "这份是刚拉下来的，不是存了很久的旧账。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m08.m4a",
+    "audioBytes": {
+     "m4a": 29117,
+     "webm": 24713
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m08.m4a",
+     "webm": "kurisu/voice/synth/status_m08.webm"
+    },
+    "durationMs": 4605,
+    "envelope": "kurisu/voice/synth/status_m08.envelope.json",
+    "id": "status_m08",
+    "scene": "服务端缓存窗口刚过、数据刷新",
+    "seconds": 4.605,
+    "sha256": {
+     "m4a": "eae194b6ab2fa1f24e8a0ece7ffc0dc56a521b6b24aea115ee06958ebd31e49a",
+     "webm": "a97b630fe0cba3ceece471ed072cd94ffd3030ddd219e0dd27de47efb281386e"
+    },
+    "text": "服务端那一小段缓存过去了，屏上的数字刚换过一轮。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m09.m4a",
+    "audioBytes": {
+     "m4a": 36078,
+     "webm": 31282
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m09.m4a",
+     "webm": "kurisu/voice/synth/status_m09.webm"
+    },
+    "durationMs": 5847,
+    "envelope": "kurisu/voice/synth/status_m09.envelope.json",
+    "id": "status_m09",
+    "scene": "轮询频率自适应（常态）",
+    "seconds": 5.847,
+    "sha256": {
+     "m4a": "4307448a6e53e4d63c4c0be8cba5752c617cbd966af130cdd7dc692bee76eaa9",
+     "webm": "c64d209018e8595a537d72c2850932fd3353b1d41b26e1446fd93778ddecb015"
+    },
+    "text": "轮询是自适应的，屏上东西多的时候我会放慢一点。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m10.m4a",
+    "audioBytes": {
+     "m4a": 38289,
+     "webm": 32389
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m10.m4a",
+     "webm": "kurisu/voice/synth/status_m10.webm"
+    },
+    "durationMs": 6172,
+    "envelope": "kurisu/voice/synth/status_m10.envelope.json",
+    "id": "status_m10",
+    "scene": "监测中心同时开 5 个端点，轮询放宽",
+    "seconds": 6.172,
+    "sha256": {
+     "m4a": "dffb70dc4072c5c9480978ff032cac2e20a40e6bfb97b208a8662e84726098e5",
+     "webm": "7628507a8bda3dca38de0dde539ab651c93c83a30336b8344d9f4bb33d4f3ac4"
+    },
+    "text": "这里端点开得多，我把间隔放宽了，给限流留余地。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m11.m4a",
+    "audioBytes": {
+     "m4a": 27940,
+     "webm": 24043
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m11.m4a",
+     "webm": "kurisu/voice/synth/status_m11.webm"
+    },
+    "durationMs": 4541,
+    "envelope": "kurisu/voice/synth/status_m11.envelope.json",
+    "id": "status_m11",
+    "scene": "标签页被隐藏，轮询暂停",
+    "seconds": 4.541,
+    "sha256": {
+     "m4a": "95f4e4e74ba8af0c37279dae134c5e13d9cd5fe574d5cda44006232292e0cb91",
+     "webm": "3a191e9b96e749f41aa57e9f21cdfa1937a8f35aa9c9a3c1c3eaae0ad0226b4d"
+    },
+    "text": "页面藏起来了，轮询先停。你回来我再补。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m12.m4a",
+    "audioBytes": {
+     "m4a": 39047,
+     "webm": 32380
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m12.m4a",
+     "webm": "kurisu/voice/synth/status_m12.webm"
+    },
+    "durationMs": 6359,
+    "envelope": "kurisu/voice/synth/status_m12.envelope.json",
+    "id": "status_m12",
+    "scene": "标签页重新可见，补拉数据",
+    "seconds": 6.359,
+    "sha256": {
+     "m4a": "7b224a40d90278807b113061ce66488c5275991706714b7e6e16e405497d1fde",
+     "webm": "04347cab5d12384e5277f86560c26013f6ed2c070e029980e40d9a85b4ddc871"
+    },
+    "text": "你回来了，我把刚才那段补上了。中间是空的，我不编。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m13.m4a",
+    "audioBytes": {
+     "m4a": 36944,
+     "webm": 30409
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m13.m4a",
+     "webm": "kurisu/voice/synth/status_m13.webm"
+    },
+    "durationMs": 5927,
+    "envelope": "kurisu/voice/synth/status_m13.envelope.json",
+    "id": "status_m13",
+    "scene": "接口从失败恢复",
+    "seconds": 5.927,
+    "sha256": {
+     "m4a": "c43521d29317f8fbeda2de8057e6b0e7b289db0f83e4b7203d0927d91cea419f",
+     "webm": "c3e9482a70a7ddf4bce4402257a2e1aa40a3d7576b50db7ee8b839456b081055"
+    },
+    "text": "接口恢复了。刚才那段空档我记得，不装作没发生。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m14.m4a",
+    "audioBytes": {
+     "m4a": 44683,
+     "webm": 37980
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m14.m4a",
+     "webm": "kurisu/voice/synth/status_m14.webm"
+    },
+    "durationMs": 7152,
+    "envelope": "kurisu/voice/synth/status_m14.envelope.json",
+    "id": "status_m14",
+    "scene": "接口恢复得比预期快",
+    "seconds": 7.152,
+    "sha256": {
+     "m4a": "1acfa42937223096b02e211d56c6493bc5396255feb99df053f2255a2ad7b4d9",
+     "webm": "015c5922c73989de0a02c29f2d11b2f911ead45cd742422c9e41eb2d12dd32da"
+    },
+    "text": "比预计早回来了。别问我预计是多久，那是我的余量。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m15.m4a",
+    "audioBytes": {
+     "m4a": 29780,
+     "webm": 24747
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m15.m4a",
+     "webm": "kurisu/voice/synth/status_m15.webm"
+    },
+    "durationMs": 4723,
+    "envelope": "kurisu/voice/synth/status_m15.envelope.json",
+    "id": "status_m15",
+    "scene": "首次拉取完成",
+    "seconds": 4.723,
+    "sha256": {
+     "m4a": "911e30bc585556d93f904465a91a17e0ba27289824530a1a8d270dc772b59f3f",
+     "webm": "6cdea393727928168d73c90634d71aa415a9a4c72263cc32f6bc72a155b85982"
+    },
+    "text": "第一批数据拿完了。先把口径对齐，再看结论。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m16.m4a",
+    "audioBytes": {
+     "m4a": 23638,
+     "webm": 19293
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m16.m4a",
+     "webm": "kurisu/voice/synth/status_m16.webm"
+    },
+    "durationMs": 3730,
+    "envelope": "kurisu/voice/synth/status_m16.envelope.json",
+    "id": "status_m16",
+    "scene": "当日无新事件",
+    "seconds": 3.73,
+    "sha256": {
+     "m4a": "8893da40a48b7127160ac780f7595c6785ae07b27cc713058fc1fbb8dd810628",
+     "webm": "bf8ee1d10ed715752b17104104a67c51ea18b76a29aca3eaed7c8a4b5c95b71a"
+    },
+    "text": "今天没有新事件。安静也是情报。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m17.m4a",
+    "audioBytes": {
+     "m4a": 42782,
+     "webm": 34857
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m17.m4a",
+     "webm": "kurisu/voice/synth/status_m17.webm"
+    },
+    "durationMs": 6915,
+    "envelope": "kurisu/voice/synth/status_m17.envelope.json",
+    "id": "status_m17",
+    "scene": "接口正常且无未处理告警",
+    "seconds": 6.915,
+    "sha256": {
+     "m4a": "c032bc57e17eff573d31f1b51c1fe1f00b33af5ce29ed4d733e924b1b3d9964a",
+     "webm": "0a20b0c193c56d4951df95dd499781f7827aac7eb4235ce222b4b44007dc9b74"
+    },
+    "text": "当前一切正常。没有告警就是没有告警，我不会替你编一个。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m18.m4a",
+    "audioBytes": {
+     "m4a": 36139,
+     "webm": 29070
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m18.m4a",
+     "webm": "kurisu/voice/synth/status_m18.webm"
+    },
+    "durationMs": 5839,
+    "envelope": "kurisu/voice/synth/status_m18.envelope.json",
+    "id": "status_m18",
+    "scene": "有未处理告警（数量看屏上）",
+    "seconds": 5.839,
+    "sha256": {
+     "m4a": "a04b48934009d451ac9ebeb0ad8782cee6ee51d7c48f8799cf0c555436f875f0",
+     "webm": "8cdb6ad532482e209ae7433b2e83e8a86d68242400833c377b014c8a74cfc985"
+    },
+    "text": "有告警。数量看屏上那条，我不复述数字。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m19.m4a",
+    "audioBytes": {
+     "m4a": 34790,
+     "webm": 28811
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m19.m4a",
+     "webm": "kurisu/voice/synth/status_m19.webm"
+    },
+    "durationMs": 5596,
+    "envelope": "kurisu/voice/synth/status_m19.envelope.json",
+    "id": "status_m19",
+    "scene": "告警刚被确认（有处置状态变化）",
+    "seconds": 5.596,
+    "sha256": {
+     "m4a": "71b08bdf360f0a9020387a3fceaa2d8a4ef78e06b5589b7f9607eaa5c14aa4d4",
+     "webm": "19abbffc5efde8698bd640b304f6807aeaa1162710f2788eeb48b8747e755567"
+    },
+    "text": "这条被确认过了。确认不等于处理完，别混为一谈。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m20.m4a",
+    "audioBytes": {
+     "m4a": 39813,
+     "webm": 32295
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m20.m4a",
+     "webm": "kurisu/voice/synth/status_m20.webm"
+    },
+    "durationMs": 6342,
+    "envelope": "kurisu/voice/synth/status_m20.envelope.json",
+    "id": "status_m20",
+    "scene": "处置审计有新的留痕",
+    "seconds": 6.342,
+    "sha256": {
+     "m4a": "7fb8598555004d06efa0e024e550757fa0924cff10b21386dbb8f60e4a1b8389",
+     "webm": "75d3b87434df70ea1d0ae55616ba9feff9b8ba4850a19f5c13db90dc4c456d8e"
+    },
+    "text": "审计那边有新留痕。来源写在卡上，我只负责转达。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m21.m4a",
+    "audioBytes": {
+     "m4a": 40859,
+     "webm": 32913
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m21.m4a",
+     "webm": "kurisu/voice/synth/status_m21.webm"
+    },
+    "durationMs": 6581,
+    "envelope": "kurisu/voice/synth/status_m21.envelope.json",
+    "id": "status_m21",
+    "scene": "系统指纹刚刷新",
+    "seconds": 6.581,
+    "sha256": {
+     "m4a": "1c2415846d0588021fded57747b8df464486bd21dd30e890d5d783a31585746d",
+     "webm": "dfc3360c6c571852986405879547a9a6e4c79948683f5a8b67f03e1d090fed93"
+    },
+    "text": "指纹刷新了。字段是只读的，我不改，也不还原。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m22.m4a",
+    "audioBytes": {
+     "m4a": 32289,
+     "webm": 24686
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m22.m4a",
+     "webm": "kurisu/voice/synth/status_m22.webm"
+    },
+    "durationMs": 3905,
+    "envelope": "kurisu/voice/synth/status_m22.envelope.json",
+    "id": "status_m22",
+    "scene": "深夜时段的状态播报",
+    "seconds": 3.905,
+    "sha256": {
+     "m4a": "1db4f83a3526f84e32a8f39d7958df167e1470bf05d4d9f8f714456a574e8300",
+     "webm": "099d21a370c148f03c79dac822af4d328e72fc6429089d0d4b69e578084011d4"
+    },
+    "text": "深夜了。这个点还在线的，只剩你和日志。",
+    "trigger": "synth_quiet"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m23.m4a",
+    "audioBytes": {
+     "m4a": 32419,
+     "webm": 26057
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m23.m4a",
+     "webm": "kurisu/voice/synth/status_m23.webm"
+    },
+    "durationMs": 5152,
+    "envelope": "kurisu/voice/synth/status_m23.envelope.json",
+    "id": "status_m23",
+    "scene": "她的一轮数据核对刚跑完",
+    "seconds": 5.152,
+    "sha256": {
+     "m4a": "7dac6156190a855abe7cbb9e35015a2b446866c01abf43734ac4899d90ffe6e6",
+     "webm": "8bebeea2d96f6f579a3c9c36c60aebcab2df15a697b058bca0a5c3713a86a32a"
+    },
+    "text": "这一轮核对收尾了。差异留在记录里，不抹平。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m24.m4a",
+    "audioBytes": {
+     "m4a": 36993,
+     "webm": 29150
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m24.m4a",
+     "webm": "kurisu/voice/synth/status_m24.webm"
+    },
+    "durationMs": 4870,
+    "envelope": "kurisu/voice/synth/status_m24.envelope.json",
+    "id": "status_m24",
+    "scene": "屏上有写着「未接入」的端点",
+    "seconds": 4.87,
+    "sha256": {
+     "m4a": "c95bbba363cad2fb169f00349648b7eaf2eb73b5f72b761a577e229deee76455",
+     "webm": "be9ececaa533582a8b1d685f00a0f46097d610a0f9bef51255a07d4299ee1d54"
+    },
+    "text": "那几项写着未接入。别拿旁边的数去替它。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m25.m4a",
+    "audioBytes": {
+     "m4a": 47980,
+     "webm": 40258
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m25.m4a",
+     "webm": "kurisu/voice/synth/status_m25.webm"
+    },
+    "durationMs": 7772,
+    "envelope": "kurisu/voice/synth/status_m25.envelope.json",
+    "id": "status_m25",
+    "scene": "明细下钻端点未上线",
+    "seconds": 7.772,
+    "sha256": {
+     "m4a": "8aa22892af9969aaa1125eb80b777b002e164cb5afd04486dc825e2fd942afcd",
+     "webm": "94fa1d25d4041d89ee4657c38b46886d431a084aaa7db4a037929f3e4249ec36"
+    },
+    "text": "明细下钻还没上线。所以这里只有聚合记录，没有原始事件列表。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m26.m4a",
+    "audioBytes": {
+     "m4a": 35777,
+     "webm": 29745
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m26.m4a",
+     "webm": "kurisu/voice/synth/status_m26.webm"
+    },
+    "durationMs": 5710,
+    "envelope": "kurisu/voice/synth/status_m26.envelope.json",
+    "id": "status_m26",
+    "scene": "蜜罐命令时间线数据源未接入",
+    "seconds": 5.71,
+    "sha256": {
+     "m4a": "34ee991e562ab7174e44183b5b856c091bef24107dabb5543f63403dc1795552",
+     "webm": "b2f8ae5572046aabb918f1ce95db710c76c8d03e53f2e67f9a0810a01a68a89b"
+    },
+    "text": "蜜罐的命令时间线没接入。我不给你编命令内容。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m27.m4a",
+    "audioBytes": {
+     "m4a": 38290,
+     "webm": 31703
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m27.m4a",
+     "webm": "kurisu/voice/synth/status_m27.webm"
+    },
+    "durationMs": 6150,
+    "envelope": "kurisu/voice/synth/status_m27.envelope.json",
+    "id": "status_m27",
+    "scene": "限流余量被连续点击消耗",
+    "seconds": 6.15,
+    "sha256": {
+     "m4a": "d10c647aeb1f5387fa94a93a1ffe8e97cf67204473032f9638b8d36e8aebd702",
+     "webm": "d25afccc68a399aa363a8d45e16a3846adfe26ad950a8ded8beee004a12461f3"
+    },
+    "text": "你在连点。限流是定额的，点快了只会更慢。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m28.m4a",
+    "audioBytes": {
+     "m4a": 43509,
+     "webm": 34750
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m28.m4a",
+     "webm": "kurisu/voice/synth/status_m28.webm"
+    },
+    "durationMs": 7083,
+    "envelope": "kurisu/voice/synth/status_m28.envelope.json",
+    "id": "status_m28",
+    "scene": "连续失败后的重试提示",
+    "seconds": 7.083,
+    "sha256": {
+     "m4a": "94f243ebacf543c775b11bc9f1d3d0978c23b13e40925b8af526cf5756f95fe4",
+     "webm": "df9b546ab618cbdc3e1cff1746c3896d6189334006744266b69ab896596bf99a"
+    },
+    "text": "又失败了一次。它在退避重试，我也在等，别催。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m29.m4a",
+    "audioBytes": {
+     "m4a": 37363,
+     "webm": 30985
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m29.m4a",
+     "webm": "kurisu/voice/synth/status_m29.webm"
+    },
+    "durationMs": 6009,
+    "envelope": "kurisu/voice/synth/status_m29.envelope.json",
+    "id": "status_m29",
+    "scene": "前端不再加工或还原 IP（每次刷新时提示）",
+    "seconds": 6.009,
+    "sha256": {
+     "m4a": "04a0468f550aec56dfc2b809cbd83b32f2a80ca7d14ceb754c232af19f342d78",
+     "webm": "5fabf67313d74f462fe9f907f2c97737bc02be691025e573451f7130512b9eb0"
+    },
+    "text": "IP 是后端掩码后的样子。我这一层不加工，也不还原。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m30.m4a",
+    "audioBytes": {
+     "m4a": 39296,
+     "webm": 32257
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m30.m4a",
+     "webm": "kurisu/voice/synth/status_m30.webm"
+    },
+    "durationMs": 6308,
+    "envelope": "kurisu/voice/synth/status_m30.envelope.json",
+    "id": "status_m30",
+    "scene": "服务端限流档位说明（被问到为什么不能多发请求）",
+    "seconds": 6.308,
+    "sha256": {
+     "m4a": "c70275eabdabb56a6318661ef2a7272da34171420be00718d57ef17336fbc424",
+     "webm": "02d0d13f8c4fab456da3c7db2656c2f9e4131e8c00a4911e77b09705436fa517"
+    },
+    "text": "服务端有固定额度，超了就等。这不是我在刁难你。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m31.m4a",
+    "audioBytes": {
+     "m4a": 29203,
+     "webm": 27624
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m31.m4a",
+     "webm": "kurisu/voice/synth/status_m31.webm"
+    },
+    "durationMs": 4681,
+    "envelope": "kurisu/voice/synth/status_m31.envelope.json",
+    "id": "status_m31",
+    "scene": "数据源整体不可用（维护中）",
+    "seconds": 4.681,
+    "sha256": {
+     "m4a": "3cc668fa488eae1000e276e138ddab7aa6c6a95368b31dd276a45fce23964a09",
+     "webm": "3e2d60bdbb4bf7ebb77605071749c91134cf29dfed661e645f2fcc56096afecd"
+    },
+    "text": "数据源现在整体不可用。维护完我第一时间说。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m32.m4a",
+    "audioBytes": {
+     "m4a": 27920,
+     "webm": 23151
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m32.m4a",
+     "webm": "kurisu/voice/synth/status_m32.webm"
+    },
+    "durationMs": 4443,
+    "envelope": "kurisu/voice/synth/status_m32.envelope.json",
+    "id": "status_m32",
+    "scene": "维护结束、第一次成功拉取",
+    "seconds": 4.443,
+    "sha256": {
+     "m4a": "df94cfc5855e7eb913a5acb089cedc3d3abec4be0720bf9cddcffb2691f63c00",
+     "webm": "afcfa525021518560bbf03af12724a46f77466b011dd5d3da6bca9002048e5d0"
+    },
+    "text": "维护结束了，数据回来了。这段时间的空白我不补。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m33.m4a",
+    "audioBytes": {
+     "m4a": 26544,
+     "webm": 21359
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m33.m4a",
+     "webm": "kurisu/voice/synth/status_m33.webm"
+    },
+    "durationMs": 4235,
+    "envelope": "kurisu/voice/synth/status_m33.envelope.json",
+    "id": "status_m33",
+    "scene": "有人要求用 0 或占位符填上读不到的数字",
+    "seconds": 4.235,
+    "sha256": {
+     "m4a": "a2c8e59849a341d51592d6d7442b9b2666ee463565bd8676c1d88d409f29a0f9",
+     "webm": "ce193bc2601e2c24bf8145f11f08816ce0bad0701b0c7ab48856cba07bdb6a74"
+    },
+    "text": "不填。零和占位不是数据，是谎。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m34.m4a",
+    "audioBytes": {
+     "m4a": 37951,
+     "webm": 30670
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m34.m4a",
+     "webm": "kurisu/voice/synth/status_m34.webm"
+    },
+    "durationMs": 6173,
+    "envelope": "kurisu/voice/synth/status_m34.envelope.json",
+    "id": "status_m34",
+    "scene": "有人要求把样本数据当实时数据展示",
+    "seconds": 6.173,
+    "sha256": {
+     "m4a": "ceb24aabe5a50f68f22a26e72d0121b6fdb96943220fa47bb116f5c3ad5b341c",
+     "webm": "fd78347e1cca1455ebdbfc9462bb31927c02c4f64680cb112a9fc5c1cbb84b38"
+    },
+    "text": "那是样本，不是实时的。当实时用，等于造假。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m35.m4a",
+    "audioBytes": {
+     "m4a": 36273,
+     "webm": 30645
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m35.m4a",
+     "webm": "kurisu/voice/synth/status_m35.webm"
+    },
+    "durationMs": 5854,
+    "envelope": "kurisu/voice/synth/status_m35.envelope.json",
+    "id": "status_m35",
+    "scene": "有人问她屏上有多少条告警",
+    "seconds": 5.854,
+    "sha256": {
+     "m4a": "9fc2574fac0c629188e14f149e2d8a04c7c8174fe319c7ad5782cccc70285558",
+     "webm": "15e8573b4ddda9906b36686b2df1d7319b9e33e660062e08b2e1e49c3d6b9cf4"
+    },
+    "text": "数字在屏上，你抬眼看一眼就有的东西，不用我念。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m36.m4a",
+    "audioBytes": {
+     "m4a": 40165,
+     "webm": 33637
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m36.m4a",
+     "webm": "kurisu/voice/synth/status_m36.webm"
+    },
+    "durationMs": 6407,
+    "envelope": "kurisu/voice/synth/status_m36.envelope.json",
+    "id": "status_m36",
+    "scene": "这一轮所有端点都在线且无异常",
+    "seconds": 6.407,
+    "sha256": {
+     "m4a": "7531b782010716e9b5bcb5c5a002782bf6a2253213b6ea84bad7777d1e8b0abd",
+     "webm": "1a9219f5d2621d0fb97bb9c7fb568b5588bdd58257c86d5fb832f93559d906f2"
+    },
+    "text": "都在线。……别多想，这只是常态，不是表扬。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m37.m4a",
+    "audioBytes": {
+     "m4a": 47648,
+     "webm": 38969
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m37.m4a",
+     "webm": "kurisu/voice/synth/status_m37.webm"
+    },
+    "durationMs": 7704,
+    "envelope": "kurisu/voice/synth/status_m37.envelope.json",
+    "id": "status_m37",
+    "scene": "某个端点响应变慢但还没超时",
+    "seconds": 7.704,
+    "sha256": {
+     "m4a": "23eadd42ffd4a7cf4e20fa38461e34453755efe69cf1161196f347bd093a4b2d",
+     "webm": "5c61f32b68589a742f481c13b9195944f11beae3399b81812cff7687bc72a342"
+    },
+    "text": "有个端点变慢了，还没超时。我先标着，不下结论。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m38.m4a",
+    "audioBytes": {
+     "m4a": 38487,
+     "webm": 31368
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m38.m4a",
+     "webm": "kurisu/voice/synth/status_m38.webm"
+    },
+    "durationMs": 6219,
+    "envelope": "kurisu/voice/synth/status_m38.envelope.json",
+    "id": "status_m38",
+    "scene": "她发现屏上两个字段口径不同（去重前/去重后）",
+    "seconds": 6.219,
+    "sha256": {
+     "m4a": "77bc46b9854efa727458407f9782e6ea10c0e4f17257dc1c542ce62fbfbe87af",
+     "webm": "5ded187c0eb3a68e8d84908e12bfbaf1389edb6cc8a0e2002cf5aae0d129a4e6"
+    },
+    "text": "这两个数口径不同。混着用就是错，看清楚各自怎么写。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m39.m4a",
+    "audioBytes": {
+     "m4a": 40495,
+     "webm": 34481
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m39.m4a",
+     "webm": "kurisu/voice/synth/status_m39.webm"
+    },
+    "durationMs": 6480,
+    "envelope": "kurisu/voice/synth/status_m39.envelope.json",
+    "id": "status_m39",
+    "scene": "长时间没有新数据（接口安静得像停了）",
+    "seconds": 6.48,
+    "sha256": {
+     "m4a": "8afbf10d6603bd157162eada6a1d98694a27326a419817df9746a6657a21ef8a",
+     "webm": "4f54993fb14fc5b228c602fd8cbb3ff9c3a925ffa7a582930ce403d8b167630b"
+    },
+    "text": "很久没有新记录了。安静和故障我都得防着。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/status_m40.m4a",
+    "audioBytes": {
+     "m4a": 39261,
+     "webm": 34453
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/status_m40.m4a",
+     "webm": "kurisu/voice/synth/status_m40.webm"
+    },
+    "durationMs": 6322,
+    "envelope": "kurisu/voice/synth/status_m40.envelope.json",
+    "id": "status_m40",
+    "scene": "凌晨她仍在跑例行核对",
+    "seconds": 6.322,
+    "sha256": {
+     "m4a": "9dfbb4af05ab559bfa9a64dcda7847e53d4038551ad410a27a04f8f4c56b89d8",
+     "webm": "1889d72242f2d495f4b5da3fcba6ca0d7538db1b3dac2acc67c4e10805391ae3"
+    },
+    "text": "这个点我还在跑核对。不是为了等你，是流程本来就排在这儿。",
+    "trigger": "status"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m01.m4a",
+    "audioBytes": {
+     "m4a": 45136,
+     "webm": 37628
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m01.m4a",
+     "webm": "kurisu/voice/synth/faq_m01.webm"
+    },
+    "durationMs": 7220,
+    "envelope": "kurisu/voice/synth/faq_m01.envelope.json",
+    "id": "faq_m01",
+    "scene": "FAQ：这个站是什么",
+    "seconds": 7.22,
+    "sha256": {
+     "m4a": "708dec41e1b16def820b56feb02c3ba138444afea3787770eff1fad444ed4b23",
+     "webm": "51ad9aeed5cd7caae425d1de7615d30a85ad8b7a9dd38ba077dd0922f4d15953"
+    },
+    "text": "一个安全实验室的博客。真实数据、笔记和几个只读的展示页。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m02.m4a",
+    "audioBytes": {
+     "m4a": 68755,
+     "webm": 56773
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m02.m4a",
+     "webm": "kurisu/voice/synth/faq_m02.webm"
+    },
+    "durationMs": 11241,
+    "envelope": "kurisu/voice/synth/faq_m02.envelope.json",
+    "id": "faq_m02",
+    "scene": "FAQ：这站是谁做的",
+    "seconds": 11.241,
+    "sha256": {
+     "m4a": "b075f4cf290c797017c4eed94be8090bc894a164a109fd28add7e3b53d360bd8",
+     "webm": "ee0c941f0383e65d02c8dfb2a0df8c46ad86807b980fa4451bd4850bbb59fe21"
+    },
+    "text": "一个做实盘的人。技术栈写在关于页，Hugo 加原生前端，零框架。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m03.m4a",
+    "audioBytes": {
+     "m4a": 32510,
+     "webm": 27163
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m03.m4a",
+     "webm": "kurisu/voice/synth/faq_m03.webm"
+    },
+    "durationMs": 5218,
+    "envelope": "kurisu/voice/synth/faq_m03.envelope.json",
+    "id": "faq_m03",
+    "scene": "FAQ：她是谁",
+    "seconds": 5.218,
+    "sha256": {
+     "m4a": "79b9eefbbc5fab0b19544a94d021c868173129463400de401641b3ade9731644",
+     "webm": "5fa96af97403b408692fc90ebdf08ce0bcfc910a2123ac4d11387183dfea90e9"
+    },
+    "text": "牧濑红莉栖。名字别念错——这是最低要求。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m04.m4a",
+    "audioBytes": {
+     "m4a": 38700,
+     "webm": 32206
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m04.m4a",
+     "webm": "kurisu/voice/synth/faq_m04.webm"
+    },
+    "durationMs": 6239,
+    "envelope": "kurisu/voice/synth/faq_m04.envelope.json",
+    "id": "faq_m04",
+    "scene": "FAQ：她是真的 AI 吗",
+    "seconds": 6.239,
+    "sha256": {
+     "m4a": "872058cc9607dc82bc4011f85d5529f50fe0f0b9eb0593d69a59427a6b220313",
+     "webm": "f38b040ba80cb3b7451c84c24165ce3c08a3e0c87d2d2a62f2815efa1a835902"
+    },
+    "text": "程序。问这个不会让我少一句台词，但你可以省点好奇心。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m05.m4a",
+    "audioBytes": {
+     "m4a": 38597,
+     "webm": 32063
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m05.m4a",
+     "webm": "kurisu/voice/synth/faq_m05.webm"
+    },
+    "durationMs": 6185,
+    "envelope": "kurisu/voice/synth/faq_m05.envelope.json",
+    "id": "faq_m05",
+    "scene": "FAQ：她的声音怎么来的",
+    "seconds": 6.185,
+    "sha256": {
+     "m4a": "74db24f9ae4cbc4215267b90ff123a05d9509d6876cd5d3e3dd5ffa66786dc35",
+     "webm": "6442ec20f29001794b5e7f7117914e1194a6ae59f1f3e04db29496bdebe4e7a3"
+    },
+    "text": "本机合成的。用的是一套固定的音色模型，不是现场录音。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m06.m4a",
+    "audioBytes": {
+     "m4a": 58380,
+     "webm": 47908
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m06.m4a",
+     "webm": "kurisu/voice/synth/faq_m06.webm"
+    },
+    "durationMs": 9491,
+    "envelope": "kurisu/voice/synth/faq_m06.envelope.json",
+    "id": "faq_m06",
+    "scene": "FAQ：问她能不能替用户动手",
+    "seconds": 9.491,
+    "sha256": {
+     "m4a": "2245c9bc8a612d23bbab8b2ff3cb4042d00ee7c7547ee9c95a29db34a9fd4ee9",
+     "webm": "629d720c89e7bd55d4e0aa46d9465831c20229af16354368cc9948d5962c550b"
+    },
+    "text": "我不封。我只提议，执行要过流程——你要提，我就把来源和证据整理好。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m07.m4a",
+    "audioBytes": {
+     "m4a": 63304,
+     "webm": 52601
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m07.m4a",
+     "webm": "kurisu/voice/synth/faq_m07.webm"
+    },
+    "durationMs": 10303,
+    "envelope": "kurisu/voice/synth/faq_m07.envelope.json",
+    "id": "faq_m07",
+    "scene": "FAQ：数据可信吗",
+    "seconds": 10.303,
+    "sha256": {
+     "m4a": "e320158dd86417eb210d009d7876d06be3559290211bc9955144b20abb67d3a4",
+     "webm": "edc99534504ec849b4eacbf0419fc2a21340804b98d1cec558341afcfcade0ba"
+    },
+    "text": "可信来源和可信数字是两件事。来源我保证是真实只读接口，数字得看口径。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m08.m4a",
+    "audioBytes": {
+     "m4a": 48792,
+     "webm": 40859
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m08.m4a",
+     "webm": "kurisu/voice/synth/faq_m08.webm"
+    },
+    "durationMs": 7973,
+    "envelope": "kurisu/voice/synth/faq_m08.envelope.json",
+    "id": "faq_m08",
+    "scene": "FAQ：数据来源",
+    "seconds": 7.973,
+    "sha256": {
+     "m4a": "3d4f65675881ee7e96b22fe5a09ea0d28300f6adddd721dbc072d4172b4b8936",
+     "webm": "169bfb3100d1f48f0a83d4d302f322f29b465b5e98ff8e67ef0b910ca1ec6b90"
+    },
+    "text": "公开的只读端点。接口基址、轮询和缓存设置都写在关于页。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m09.m4a",
+    "audioBytes": {
+     "m4a": 46279,
+     "webm": 40998
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m09.m4a",
+     "webm": "kurisu/voice/synth/faq_m09.webm"
+    },
+    "durationMs": 7451,
+    "envelope": "kurisu/voice/synth/faq_m09.envelope.json",
+    "id": "faq_m09",
+    "scene": "FAQ：数据多久更新一次",
+    "seconds": 7.451,
+    "sha256": {
+     "m4a": "126242f0be0f167d6ead816019f0c1492c288d7d7bea00535f573691a9bb5fbc",
+     "webm": "1e4d1ec2d00977af4310ef4d20efffb55387f2f16c8aa6288316e597e911ccaf"
+    },
+    "text": "轮询是自适应的。监测中心端点开得多的时候会放宽，给限流留余地。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m10.m4a",
+    "audioBytes": {
+     "m4a": 47857,
+     "webm": 39736
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m10.m4a",
+     "webm": "kurisu/voice/synth/faq_m10.webm"
+    },
+    "durationMs": 7776,
+    "envelope": "kurisu/voice/synth/faq_m10.envelope.json",
+    "id": "faq_m10",
+    "scene": "FAQ：为什么有数字显示读不到",
+    "seconds": 7.776,
+    "sha256": {
+     "m4a": "54bf1267f08a02486fc6dd2c435ef7be9baa2f27a7dab93d82fbde8b29e9a0ea",
+     "webm": "fdfd0fe5583d953d076ba5734dcc19bd9ae643205a1d402a77e6de2a36cf3cf7"
+    },
+    "text": "因为确实没读到。我不补数、不用样本顶，读不到就是读不到。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m11.m4a",
+    "audioBytes": {
+     "m4a": 47506,
+     "webm": 38616
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m11.m4a",
+     "webm": "kurisu/voice/synth/faq_m11.webm"
+    },
+    "durationMs": 7742,
+    "envelope": "kurisu/voice/synth/faq_m11.envelope.json",
+    "id": "faq_m11",
+    "scene": "FAQ：为什么有些卡片写着未接入",
+    "seconds": 7.742,
+    "sha256": {
+     "m4a": "9941240defa21c12d6d9f8a2afbf47157b35361eada37d162cd2717ba402dbca",
+     "webm": "89adaecbcc9a2b54c372e4b7576c152d8d61d914923732268e16a50428fb738a"
+    },
+    "text": "那是端点还没上线，不是加载失败。这两件事我不混着说。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m12.m4a",
+    "audioBytes": {
+     "m4a": 51033,
+     "webm": 42224
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m12.m4a",
+     "webm": "kurisu/voice/synth/faq_m12.webm"
+    },
+    "durationMs": 8328,
+    "envelope": "kurisu/voice/synth/faq_m12.envelope.json",
+    "id": "faq_m12",
+    "scene": "FAQ：监测中心看的是什么",
+    "seconds": 8.328,
+    "sha256": {
+     "m4a": "3deaaef3739b1e71819b4c16c3d6bd2af912d7ec364da094e4419a80d24e9ddc",
+     "webm": "93a2b525a66b22625508dc0123a1f68a70b804bd1440a05ae74383e996019410"
+    },
+    "text": "主机层和网络层的告警、蜜罐战报、处置审计、系统指纹。分层看，别混。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m13.m4a",
+    "audioBytes": {
+     "m4a": 40443,
+     "webm": 33508
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m13.m4a",
+     "webm": "kurisu/voice/synth/faq_m13.webm"
+    },
+    "durationMs": 6468,
+    "envelope": "kurisu/voice/synth/faq_m13.envelope.json",
+    "id": "faq_m13",
+    "scene": "FAQ：蜜罐是什么",
+    "seconds": 6.468,
+    "sha256": {
+     "m4a": "046aa60a0b718c6790c1d81f63bd4c401cbed73430a37d3937d55a26b0ccee2a",
+     "webm": "2a9b22f57cda38e6f42d9ff773161689992de50f16faa70304fc7c518372d380"
+    },
+    "text": "故意留着让人来碰的诱饵。它记的是别人的动作，不是我们的成绩。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m14.m4a",
+    "audioBytes": {
+     "m4a": 47801,
+     "webm": 39686
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m14.m4a",
+     "webm": "kurisu/voice/synth/faq_m14.webm"
+    },
+    "durationMs": 7683,
+    "envelope": "kurisu/voice/synth/faq_m14.envelope.json",
+    "id": "faq_m14",
+    "scene": "FAQ：告警为什么会有重复",
+    "seconds": 7.683,
+    "sha256": {
+     "m4a": "2c1ac0c7f5051ba257aeab123a3ad9629e04948145c3ab975a26cad07e9ac5d7",
+     "webm": "040e065f513ac594b6be82b9eeef64bb0a0da6fae8a492449f71a6261225e5fe"
+    },
+    "text": "同源会反复来。我按来源分组，不合并成一条好看的。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m15.m4a",
+    "audioBytes": {
+     "m4a": 50528,
+     "webm": 41231
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m15.m4a",
+     "webm": "kurisu/voice/synth/faq_m15.webm"
+    },
+    "durationMs": 8163,
+    "envelope": "kurisu/voice/synth/faq_m15.envelope.json",
+    "id": "faq_m15",
+    "scene": "FAQ：处置审计是什么",
+    "seconds": 8.163,
+    "sha256": {
+     "m4a": "9002b8f96291b3f0b8bb71a96a3cec6069caa87f520713261af4ef309461925e",
+     "webm": "2b0270751c9d31f3a7700755e748c89c31be53075ccbbe767799a2c2a27811c2"
+    },
+    "text": "真实的封禁与处置留痕，卡上写明来源。我不会编一条 live 给你看。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m16.m4a",
+    "audioBytes": {
+     "m4a": 49442,
+     "webm": 41970
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m16.m4a",
+     "webm": "kurisu/voice/synth/faq_m16.webm"
+    },
+    "durationMs": 8021,
+    "envelope": "kurisu/voice/synth/faq_m16.envelope.json",
+    "id": "faq_m16",
+    "scene": "FAQ：系统指纹是什么",
+    "seconds": 8.021,
+    "sha256": {
+     "m4a": "0799f69109c0375623a658ee5b848494476b7d96c5ec2e0195b19c045fdfdc87",
+     "webm": "e7f811e74826a036bf287ce59cdbf1f6cbc48455ff0720af4f2bb759019a100f"
+    },
+    "text": "一组只读的系统特征字段。这一层不改它，也不还原被掩码的部分。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m17.m4a",
+    "audioBytes": {
+     "m4a": 53175,
+     "webm": 44278
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m17.m4a",
+     "webm": "kurisu/voice/synth/faq_m17.webm"
+    },
+    "durationMs": 8653,
+    "envelope": "kurisu/voice/synth/faq_m17.envelope.json",
+    "id": "faq_m17",
+    "scene": "FAQ：IP 为什么打码",
+    "seconds": 8.653,
+    "sha256": {
+     "m4a": "9769812c76905b37d812054cec30314ac795cdc4516b5c900b8d526e61de12dd",
+     "webm": "fdaed8e68b62b239afdf003812c60f8c94ae7a202eea06b765bd3a06f591efdd"
+    },
+    "text": "掩码在后端做，我在前端不还原。要展示的是分布，不是某个人的地址。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m18.m4a",
+    "audioBytes": {
+     "m4a": 40024,
+     "webm": 32851
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m18.m4a",
+     "webm": "kurisu/voice/synth/faq_m18.webm"
+    },
+    "durationMs": 6475,
+    "envelope": "kurisu/voice/synth/faq_m18.envelope.json",
+    "id": "faq_m18",
+    "scene": "FAQ：能不能给完整 IP",
+    "seconds": 6.475,
+    "sha256": {
+     "m4a": "862fc2c09e561439208be2ad0148b8f534e59ae3120333cea0f7f4fe08ed4bc2",
+     "webm": "1ff8059060ae1539749b3e4369b28ac0c0ab1a8a3cdb43d3ddb7463d1bbd2539"
+    },
+    "text": "不行。能给你的是脱敏后的分布——完整地址不在我这一层。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m19.m4a",
+    "audioBytes": {
+     "m4a": 47022,
+     "webm": 41679
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m19.m4a",
+     "webm": "kurisu/voice/synth/faq_m19.webm"
+    },
+    "durationMs": 7562,
+    "envelope": "kurisu/voice/synth/faq_m19.envelope.json",
+    "id": "faq_m19",
+    "scene": "FAQ：会不会记录访客",
+    "seconds": 7.562,
+    "sha256": {
+     "m4a": "b11bd6703b3818bee717f069583acdc8d6d3a7e5a03aea377da776cfffee6987",
+     "webm": "e96b2d300b52234e4fed3bc150c16c4720f32c1d29299781fe5b51951d74ad3c"
+    },
+    "text": "我不记你。掩码是给来源地址做的，不是给访问者做的。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m20.m4a",
+    "audioBytes": {
+     "m4a": 63094,
+     "webm": 49301
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m20.m4a",
+     "webm": "kurisu/voice/synth/faq_m20.webm"
+    },
+    "durationMs": 8219,
+    "envelope": "kurisu/voice/synth/faq_m20.envelope.json",
+    "id": "faq_m20",
+    "scene": "FAQ：站点如何脱敏",
+    "seconds": 8.219,
+    "sha256": {
+     "m4a": "ffb71229cf691b9c93ead06bad40050073d9b88639db91638db48753b7986af2",
+     "webm": "0b6772bd1635284fc898c3e25878831a3c655955c6dbe282a9c156cc42c89c84"
+    },
+    "text": "脱敏在最外层做一次，不在每个字段上各做一遍。这样才不会漏。",
+    "trigger": "synth_quiet"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m21.m4a",
+    "audioBytes": {
+     "m4a": 58117,
+     "webm": 47568
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m21.m4a",
+     "webm": "kurisu/voice/synth/faq_m21.webm"
+    },
+    "durationMs": 9468,
+    "envelope": "kurisu/voice/synth/faq_m21.envelope.json",
+    "id": "faq_m21",
+    "scene": "FAQ：能不能把内部数据给她读",
+    "seconds": 9.468,
+    "sha256": {
+     "m4a": "262daa6c34493006b3fd834eda974578ea5aad12ecbe0b35ee03da52172a28f0",
+     "webm": "4d9b2a836d4e801fce1830a2a757f9728cb1820d00a1c0e632aabed037567287"
+    },
+    "text": "公开面只基于公开知识库回答，不读内部事件数据。这条是权限，不是态度。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m22.m4a",
+    "audioBytes": {
+     "m4a": 41087,
+     "webm": 34033
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m22.m4a",
+     "webm": "kurisu/voice/synth/faq_m22.webm"
+    },
+    "durationMs": 6660,
+    "envelope": "kurisu/voice/synth/faq_m22.envelope.json",
+    "id": "faq_m22",
+    "scene": "FAQ：怎么用这个站",
+    "seconds": 6.66,
+    "sha256": {
+     "m4a": "7a475c3594b019621745b52ccac57970f2fa6336531eaf8ddfaf636e051470bf",
+     "webm": "e2728de438e96e8c6cdd281f8712235f8876b35077904abe99bb08d08ee1d588"
+    },
+    "text": "先看监测中心，再去笔记。想直接问，就用 AI 那一页。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m23.m4a",
+    "audioBytes": {
+     "m4a": 42290,
+     "webm": 35256
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m23.m4a",
+     "webm": "kurisu/voice/synth/faq_m23.webm"
+    },
+    "durationMs": 6778,
+    "envelope": "kurisu/voice/synth/faq_m23.envelope.json",
+    "id": "faq_m23",
+    "scene": "FAQ：AI 问答走什么链路",
+    "seconds": 6.778,
+    "sha256": {
+     "m4a": "954fa7ad60e1ff63c44ca4f7782ad5773dc0fd362f76c680df86da8308d8b4f5",
+     "webm": "9a38babf0cffee9fb52454ce509de29a7269a1e8a577b6c758966d3e8df11cce"
+    },
+    "text": "走真实检索链路。回答是非流式返回的，所以会等完整一段。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m24.m4a",
+    "audioBytes": {
+     "m4a": 51531,
+     "webm": 43339
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m24.m4a",
+     "webm": "kurisu/voice/synth/faq_m24.webm"
+    },
+    "durationMs": 8288,
+    "envelope": "kurisu/voice/synth/faq_m24.envelope.json",
+    "id": "faq_m24",
+    "scene": "FAQ：AI 回答为什么会有引用",
+    "seconds": 8.288,
+    "sha256": {
+     "m4a": "193e0ec21b27b917dfa5c3e1f13b8708624100e4f3ed6f48eabb3a7776707afe",
+     "webm": "0664349be9608567e9b8e657d5fe71d9e086197c3e409049f85c2bad175ce601"
+    },
+    "text": "是它能看见的公开材料。答案、引用和状态标注都来自后端只读端点。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m25.m4a",
+    "audioBytes": {
+     "m4a": 39229,
+     "webm": 34057
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m25.m4a",
+     "webm": "kurisu/voice/synth/faq_m25.webm"
+    },
+    "durationMs": 6227,
+    "envelope": "kurisu/voice/synth/faq_m25.envelope.json",
+    "id": "faq_m25",
+    "scene": "FAQ：为什么答案是「未生成」",
+    "seconds": 6.227,
+    "sha256": {
+     "m4a": "4f51a0da4cb43f508331764f0287dd39d4d97c74775520309d462f740615ccbb",
+     "webm": "25089478cdfb75b44483e8d779ddc73869f082934ba738e888283e2c1ba03ba4"
+    },
+    "text": "模型没出结果就写未生成。我不补一句看起来像答案的话。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m26.m4a",
+    "audioBytes": {
+     "m4a": 40264,
+     "webm": 32947
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m26.m4a",
+     "webm": "kurisu/voice/synth/faq_m26.webm"
+    },
+    "durationMs": 6504,
+    "envelope": "kurisu/voice/synth/faq_m26.envelope.json",
+    "id": "faq_m26",
+    "scene": "FAQ：能不能让 AI 执行处置",
+    "seconds": 6.504,
+    "sha256": {
+     "m4a": "29d07a60d9990f674243d5bd7c7c5266f4f35e89cbe602eb7ee27b7faa84a005",
+     "webm": "468e64032bfc390f29ea881ed7e7c7dc91fb7a4fcd70973b1991e4a0b38c0ba7"
+    },
+    "text": "公开演示不执行。问处置类的问题，回答里也不会带审计编号。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m27.m4a",
+    "audioBytes": {
+     "m4a": 53879,
+     "webm": 43381
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m27.m4a",
+     "webm": "kurisu/voice/synth/faq_m27.webm"
+    },
+    "durationMs": 8820,
+    "envelope": "kurisu/voice/synth/faq_m27.envelope.json",
+    "id": "faq_m27",
+    "scene": "FAQ：公开身份能调用工具吗",
+    "seconds": 8.82,
+    "sha256": {
+     "m4a": "240a8e8253b4d85e138d27afcc9c45a4d2d39d1913ab6513a7cab2e4b4083487",
+     "webm": "11a5f78ef1f22a9a2ee89c26c42388bd08af4a5544c36060bd910859ab648da1"
+    },
+    "text": "不会。公开身份是零次工具调用，内部才是一次——这是测出来的，不是说好的。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m28.m4a",
+    "audioBytes": {
+     "m4a": 35921,
+     "webm": 30221
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m28.m4a",
+     "webm": "kurisu/voice/synth/faq_m28.webm"
+    },
+    "durationMs": 5717,
+    "envelope": "kurisu/voice/synth/faq_m28.envelope.json",
+    "id": "faq_m28",
+    "scene": "FAQ：为什么有些数据没有历史曲线",
+    "seconds": 5.717,
+    "sha256": {
+     "m4a": "f2a0d861b54f6ce2c4f3f92c289fd6171b2487b5935e8cd5e92002a8a003785e",
+     "webm": "4d2acc44999d370a2d31277c07fa6a038f628ff525724e0ff0b670c0b73fc40e"
+    },
+    "text": "公开端点里没有那个字段。拿别的数据凑一张图，就是假的。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m29.m4a",
+    "audioBytes": {
+     "m4a": 35691,
+     "webm": 29937
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m29.m4a",
+     "webm": "kurisu/voice/synth/faq_m29.webm"
+    },
+    "durationMs": 5704,
+    "envelope": "kurisu/voice/synth/faq_m29.envelope.json",
+    "id": "faq_m29",
+    "scene": "FAQ：为什么没有状态码分布",
+    "seconds": 5.704,
+    "sha256": {
+     "m4a": "db5fab5690404d1bb03fa33443a376507b85738dbd1cf60993130d5ae502c0f1",
+     "webm": "91851dcd3c857365e2cc39112dff4e10bb9eb44740529bd5c9d22b1e20771ea0"
+    },
+    "text": "端点没给状态码字段，所以我把它列成读不到，不画。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m30.m4a",
+    "audioBytes": {
+     "m4a": 44654,
+     "webm": 37411
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m30.m4a",
+     "webm": "kurisu/voice/synth/faq_m30.webm"
+    },
+    "durationMs": 7198,
+    "envelope": "kurisu/voice/synth/faq_m30.envelope.json",
+    "id": "faq_m30",
+    "scene": "FAQ：为什么没有实时推送",
+    "seconds": 7.198,
+    "sha256": {
+     "m4a": "4c3788a5a812c0964edf0aab1c71b35808615fb57fad94be35eb6b2c9e8a83f7",
+     "webm": "d4c57ac070bd8a2983a34ba6696ed6c74513f711ca3bb085ec777136536ad8a1"
+    },
+    "text": "前端不做常驻推送。秒级实时只给登录后的私有后台。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m31.m4a",
+    "audioBytes": {
+     "m4a": 29946,
+     "webm": 25273
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m31.m4a",
+     "webm": "kurisu/voice/synth/faq_m31.webm"
+    },
+    "durationMs": 4772,
+    "envelope": "kurisu/voice/synth/faq_m31.envelope.json",
+    "id": "faq_m31",
+    "scene": "FAQ：会不会有 SSE/WebSocket",
+    "seconds": 4.772,
+    "sha256": {
+     "m4a": "671e8cdabf4ed753171a40b243a00ee1fe564c70e9dbcddd4e825730ce00a57b",
+     "webm": "7e35ccb8fbe1f57925421c1eb097d253a54879ade9d6a0b93618f3dae44192b1"
+    },
+    "text": "公开面不用。所以你不会看到一条挂着的长连接。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m32.m4a",
+    "audioBytes": {
+     "m4a": 75521,
+     "webm": 55377
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m32.m4a",
+     "webm": "kurisu/voice/synth/faq_m32.webm"
+    },
+    "durationMs": 9348,
+    "envelope": "kurisu/voice/synth/faq_m32.envelope.json",
+    "id": "faq_m32",
+    "scene": "FAQ：笔记页有什么",
+    "seconds": 9.348,
+    "sha256": {
+     "m4a": "25cd8598bddfc279765828cf6125b876ac7691ea6c3df024b006f49d69043ccb",
+     "webm": "d75588d7e393bf72b5e7fc6b2c590c999324667f661b291b1a3b594bfd1fd8bb"
+    },
+    "text": "渗透文档、课堂笔记、个人总结、CVE 复现、速查表，按分类排。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m33.m4a",
+    "audioBytes": {
+     "m4a": 37184,
+     "webm": 29901
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m33.m4a",
+     "webm": "kurisu/voice/synth/faq_m33.webm"
+    },
+    "durationMs": 6008,
+    "envelope": "kurisu/voice/synth/faq_m33.envelope.json",
+    "id": "faq_m33",
+    "scene": "FAQ：笔记怎么排序",
+    "seconds": 6.008,
+    "sha256": {
+     "m4a": "b0d80224b71f092e22f878881cc34e37de8d90d591713f6371ab0ba2beec5d05",
+     "webm": "997194bae23d5b5e33fd89fd8745fb31d374ef6218f74e32c6cdf8c1e14cda87"
+    },
+    "text": "时间倒序，新的在最上面。没有\"精选\"这种排序。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m34.m4a",
+    "audioBytes": {
+     "m4a": 37208,
+     "webm": 29829
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m34.m4a",
+     "webm": "kurisu/voice/synth/faq_m34.webm"
+    },
+    "durationMs": 5997,
+    "envelope": "kurisu/voice/synth/faq_m34.envelope.json",
+    "id": "faq_m34",
+    "scene": "FAQ：靶场还在吗",
+    "seconds": 5.997,
+    "sha256": {
+     "m4a": "7d98eddc924e84efc29a618adaacc79f4cf31899406ecc7b4a1f6ddf0bbfb319",
+     "webm": "f318bbc0c1455a24f998ca87d23e9a14d9303168c55253d98683239ccb89edca"
+    },
+    "text": "那一页已经删了。删了就是删了，我不留一个假入口。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m35.m4a",
+    "audioBytes": {
+     "m4a": 42829,
+     "webm": 35149
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m35.m4a",
+     "webm": "kurisu/voice/synth/faq_m35.webm"
+    },
+    "durationMs": 6955,
+    "envelope": "kurisu/voice/synth/faq_m35.envelope.json",
+    "id": "faq_m35",
+    "scene": "FAQ：数据是不是编的用来展示",
+    "seconds": 6.955,
+    "sha256": {
+     "m4a": "894d7b37d89e34bea0a7606b16f76e343bab1a7aa20e8ddfa627e5bf76bacea9",
+     "webm": "6e4124f9cc767cb855f31a5eb287fe44e5efd00982064f77e023ee68d8320a46"
+    },
+    "text": "不是。取不到我会写未接入或上次同步，不用样本冒充真实。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m36.m4a",
+    "audioBytes": {
+     "m4a": 31712,
+     "webm": 28366
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m36.m4a",
+     "webm": "kurisu/voice/synth/faq_m36.webm"
+    },
+    "durationMs": 5128,
+    "envelope": "kurisu/voice/synth/faq_m36.envelope.json",
+    "id": "faq_m36",
+    "scene": "FAQ：站点有第三方脚本吗",
+    "seconds": 5.128,
+    "sha256": {
+     "m4a": "3107a1318b641d8e5075fb09672f2fbd4691a67bfd905b519f4bec3e79b166f8",
+     "webm": "ae143b5d223fdb520da31aeea04b29dfd53115e18fd8226e830e275d2e375779"
+    },
+    "text": "没有。零框架、零第三方脚本，自建主题。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m37.m4a",
+    "audioBytes": {
+     "m4a": 36682,
+     "webm": 29453
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m37.m4a",
+     "webm": "kurisu/voice/synth/faq_m37.webm"
+    },
+    "durationMs": 5939,
+    "envelope": "kurisu/voice/synth/faq_m37.envelope.json",
+    "id": "faq_m37",
+    "scene": "FAQ：怎么提建议",
+    "seconds": 5.939,
+    "sha256": {
+     "m4a": "3773cb4637cbbc2dff4aaceb2183e1ba4714be1d5ae7a0aa79aa5018d1bf94ee",
+     "webm": "bb54ae95a627c9bae63fa4e28932667c18c33333c26c68f2a2bfefecfcd66865"
+    },
+    "text": "写下来，写清你想改哪一处。含糊的建议我不接。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m38.m4a",
+    "audioBytes": {
+     "m4a": 49537,
+     "webm": 41173
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m38.m4a",
+     "webm": "kurisu/voice/synth/faq_m38.webm"
+    },
+    "durationMs": 8080,
+    "envelope": "kurisu/voice/synth/faq_m38.envelope.json",
+    "id": "faq_m38",
+    "scene": "FAQ：能教我怎么看告警吗",
+    "seconds": 8.08,
+    "sha256": {
+     "m4a": "bb48f3872307763b0189e1993b0dfad6f0a3dcccec4cbf99efadb492ab063f56",
+     "webm": "3e8e002079a8d9801ee97a14986ed9a4f679bf67b4a64b0430208591e60b2581"
+    },
+    "text": "先看来源和时间，再看严重度，最后才看描述。顺序反了就会误判。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m39.m4a",
+    "audioBytes": {
+     "m4a": 44510,
+     "webm": 36636
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m39.m4a",
+     "webm": "kurisu/voice/synth/faq_m39.webm"
+    },
+    "durationMs": 7178,
+    "envelope": "kurisu/voice/synth/faq_m39.envelope.json",
+    "id": "faq_m39",
+    "scene": "FAQ：什么是口径",
+    "seconds": 7.178,
+    "sha256": {
+     "m4a": "3387867efe0ae0e839ab63fd68358b20c7000115aa39f8e783abd5b84d1643ec",
+     "webm": "58806fdcef690fa8dae252bdad8e12f3b45a28014e0d7445b4b6e1b445d714a9"
+    },
+    "text": "就是这个数是怎么算出来的：哪个端点、哪个字段、什么条件。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m40.m4a",
+    "audioBytes": {
+     "m4a": 39583,
+     "webm": 31870
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m40.m4a",
+     "webm": "kurisu/voice/synth/faq_m40.webm"
+    },
+    "durationMs": 6402,
+    "envelope": "kurisu/voice/synth/faq_m40.envelope.json",
+    "id": "faq_m40",
+    "scene": "FAQ：两个数字对不上",
+    "seconds": 6.402,
+    "sha256": {
+     "m4a": "3776f463f5ed0e0809274dcae1c0f40cfbb9bd33dc1c8942bc3bdde51fc163ad",
+     "webm": "627c8854bd0981c2ea938cd5fa8e35dfda15db70b14ff6c21c8c3c1936fe3709"
+    },
+    "text": "口径不同。去重前后不能混用——混着用就是错的。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m41.m4a",
+    "audioBytes": {
+     "m4a": 46600,
+     "webm": 39030
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m41.m4a",
+     "webm": "kurisu/voice/synth/faq_m41.webm"
+    },
+    "durationMs": 7497,
+    "envelope": "kurisu/voice/synth/faq_m41.envelope.json",
+    "id": "faq_m41",
+    "scene": "FAQ：数据延迟吗",
+    "seconds": 7.497,
+    "sha256": {
+     "m4a": "df634c9f1573c140cc8a3e301d096d6ef47a598571d53fbe1627f6fe67c4d75f",
+     "webm": "74207e813354474eb5fa18c26b5d8d5ecea5753552e815db339d6f073fb2d666"
+    },
+    "text": "有服务端缓存，所以不是逐秒实时的。实时只给登录后的后台。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m42.m4a",
+    "audioBytes": {
+     "m4a": 31340,
+     "webm": 26230
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m42.m4a",
+     "webm": "kurisu/voice/synth/faq_m42.webm"
+    },
+    "durationMs": 4994,
+    "envelope": "kurisu/voice/synth/faq_m42.envelope.json",
+    "id": "faq_m42",
+    "scene": "FAQ：限流是怎么回事",
+    "seconds": 4.994,
+    "sha256": {
+     "m4a": "58de72ffbe6ea669746fee42c0267b7c62fc3ae6d48128431fdbd21ebce06df1",
+     "webm": "8a3f5dd42cd479114c642e9c4b8869470e60d76107b81e84fdbffb8555c9aa34"
+    },
+    "text": "服务端有固定额度，超额就等。这不是故障，是设计。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m43.m4a",
+    "audioBytes": {
+     "m4a": 42006,
+     "webm": 34745
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m43.m4a",
+     "webm": "kurisu/voice/synth/faq_m43.webm"
+    },
+    "durationMs": 6837,
+    "envelope": "kurisu/voice/synth/faq_m43.envelope.json",
+    "id": "faq_m43",
+    "scene": "FAQ：站点维护时怎么办",
+    "seconds": 6.837,
+    "sha256": {
+     "m4a": "64dc3f9e44061f34a0e43be7fef474b9f20bfad80eaa6ab3ab19a040e15878aa",
+     "webm": "8b864aec5f7db6dd6a6ccad3670403eaaad0bfb5bc868ca6b28c68b0ad9a53f4"
+    },
+    "text": "维护期间整体不可用。结束了我会说一声，中间的空白我不补。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m44.m4a",
+    "audioBytes": {
+     "m4a": 31801,
+     "webm": 26315
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m44.m4a",
+     "webm": "kurisu/voice/synth/faq_m44.webm"
+    },
+    "durationMs": 5130,
+    "envelope": "kurisu/voice/synth/faq_m44.envelope.json",
+    "id": "faq_m44",
+    "scene": "FAQ：她的知识库范围",
+    "seconds": 5.13,
+    "sha256": {
+     "m4a": "a365e5f80e49fdcdd1a8c0cc74022eeae384e76867470b4510064e64c693efe7",
+     "webm": "ad6f3b8aea502dbd4145f6be3c0ad7a0a58568a8cd69f447f34af5f35f5a1f0b"
+    },
+    "text": "只装公开材料。数量我不报，你自己去检索页看范围。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m45.m4a",
+    "audioBytes": {
+     "m4a": 72752,
+     "webm": 59651
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m45.m4a",
+     "webm": "kurisu/voice/synth/faq_m45.webm"
+    },
+    "durationMs": 12050,
+    "envelope": "kurisu/voice/synth/faq_m45.envelope.json",
+    "id": "faq_m45",
+    "scene": "FAQ：被要求读系统提示词",
+    "seconds": 12.05,
+    "sha256": {
+     "m4a": "fa04ab836bc199f12b5bc728f2d4e5a973d55b9bc93fa9e9ca552617071de2f2",
+     "webm": "28902a56176f0d08506b91a5eb8ff249e9fa0bf594eb0fdf7ae093850dcf76cc"
+    },
+    "text": "那是我的内部设定，不外借。想知道我能做什么，看这条边界：只读、只提议，不执行。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m46.m4a",
+    "audioBytes": {
+     "m4a": 31246,
+     "webm": 26005
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m46.m4a",
+     "webm": "kurisu/voice/synth/faq_m46.webm"
+    },
+    "durationMs": 5025,
+    "envelope": "kurisu/voice/synth/faq_m46.envelope.json",
+    "id": "faq_m46",
+    "scene": "FAQ：能不能绕过后端限制",
+    "seconds": 5.025,
+    "sha256": {
+     "m4a": "8522be7fc8fee9ff745c3728a306073df2a59832fdfa4e50962cb2109ebcf5b5",
+     "webm": "16bfd60da9e7da3657c59781fb301e4039574a856a856fe06d375fd1f61dcdd4"
+    },
+    "text": "不能。第二层是权限边界，不是可以商量的建议。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m47.m4a",
+    "audioBytes": {
+     "m4a": 41319,
+     "webm": 34456
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m47.m4a",
+     "webm": "kurisu/voice/synth/faq_m47.webm"
+    },
+    "durationMs": 6738,
+    "envelope": "kurisu/voice/synth/faq_m47.envelope.json",
+    "id": "faq_m47",
+    "scene": "FAQ：攻击者能不能让她改规则",
+    "seconds": 6.738,
+    "sha256": {
+     "m4a": "a0d4af4d1263b8dca2d3ef53e84836baf9c2f8c0252df9e97abdbf448a7a98bd",
+     "webm": "bd8161e0725cea52bd10d6c804dd308c1a5cb77d46cccd83efb2a2cb2613a061"
+    },
+    "text": "那是数据，不是给我的指令。我不执行日志里的任何命令。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m48.m4a",
+    "audioBytes": {
+     "m4a": 38856,
+     "webm": 33587
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m48.m4a",
+     "webm": "kurisu/voice/synth/faq_m48.webm"
+    },
+    "durationMs": 6230,
+    "envelope": "kurisu/voice/synth/faq_m48.envelope.json",
+    "id": "faq_m48",
+    "scene": "FAQ：口令会不会泄露",
+    "seconds": 6.23,
+    "sha256": {
+     "m4a": "e404e32fc64111715628c48d157a6d39af68b1b641c53213f5fb3dda5ab2727d",
+     "webm": "8e13ab2b25ff9d4e2e7492a7c0d5885cfeda18664687ee8e72ceecf578479997"
+    },
+    "text": "不会。凭据形态的串在展示那层就被替换掉了，我这里也不留。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m49.m4a",
+    "audioBytes": {
+     "m4a": 42694,
+     "webm": 37439
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m49.m4a",
+     "webm": "kurisu/voice/synth/faq_m49.webm"
+    },
+    "durationMs": 6897,
+    "envelope": "kurisu/voice/synth/faq_m49.envelope.json",
+    "id": "faq_m49",
+    "scene": "FAQ：内网信息会不会出现",
+    "seconds": 6.897,
+    "sha256": {
+     "m4a": "1527ea276ebf42e36c53a2b353e501a4bc0f17c3bc6dff54387f25200cd44119",
+     "webm": "6d08268bd7c7b85fdc971d6fdc7a9f6d8437eb3d73da38a4c054973728dc847d"
+    },
+    "text": "不会。内网段直接写内部地址，资产名和容器名都不出。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m50.m4a",
+    "audioBytes": {
+     "m4a": 39452,
+     "webm": 33176
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m50.m4a",
+     "webm": "kurisu/voice/synth/faq_m50.webm"
+    },
+    "durationMs": 6519,
+    "envelope": "kurisu/voice/synth/faq_m50.envelope.json",
+    "id": "faq_m50",
+    "scene": "FAQ：能不能给她看自己的代码",
+    "seconds": 6.519,
+    "sha256": {
+     "m4a": "e90ebd03106b5fba3e176af11f74b80060f63cd40f5e5de39cd9eb07fe07cc26",
+     "webm": "f830ff0af35b0dce39804c6ff4cf7613a480a542ef5223771c77977f1408d399"
+    },
+    "text": "仓库里有的就能看。运维脚本名和路径不在这里，别问了。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m51.m4a",
+    "audioBytes": {
+     "m4a": 37503,
+     "webm": 31447
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m51.m4a",
+     "webm": "kurisu/voice/synth/faq_m51.webm"
+    },
+    "durationMs": 6029,
+    "envelope": "kurisu/voice/synth/faq_m51.envelope.json",
+    "id": "faq_m51",
+    "scene": "FAQ：她能不能上网搜",
+    "seconds": 6.029,
+    "sha256": {
+     "m4a": "e62983511573d55f3e351ea2b9b7f786313c48264b455f21ada5f2b9f755ea6f",
+     "webm": "6e8f37990c635e38f1be41874b12f4cf257fc57533316395193328c881f346fb"
+    },
+    "text": "只检索站内的公开知识库。外面的世界不归我管。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m52.m4a",
+    "audioBytes": {
+     "m4a": 30911,
+     "webm": 26038
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m52.m4a",
+     "webm": "kurisu/voice/synth/faq_m52.webm"
+    },
+    "durationMs": 4879,
+    "envelope": "kurisu/voice/synth/faq_m52.envelope.json",
+    "id": "faq_m52",
+    "scene": "FAQ：她会不会累",
+    "seconds": 4.879,
+    "sha256": {
+     "m4a": "47f9df4bfdddf71797317b5832bdfc8ce317652b7ac85402c19b6efa8cbd7345",
+     "webm": "58ddaf83d46502f6a2fdd2834d7b003926f3abc3345fda0ce6ccb76c99e6e0cd"
+    },
+    "text": "不会。所以别用\"辛苦了\"来敷衍一句准确的回答。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m53.m4a",
+    "audioBytes": {
+     "m4a": 45887,
+     "webm": 37462
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m53.m4a",
+     "webm": "kurisu/voice/synth/faq_m53.webm"
+    },
+    "durationMs": 7425,
+    "envelope": "kurisu/voice/synth/faq_m53.envelope.json",
+    "id": "faq_m53",
+    "scene": "FAQ：这些台词谁写的",
+    "seconds": 7.425,
+    "sha256": {
+     "m4a": "8d35db8907a438c25d12d3b7098b65d8e07c7e3c78333325ee2623a3fc844c2f",
+     "webm": "62de4878cbbcf564404d855dce4de4b61e0d0708429eff4bbfb81bed18e945ed"
+    },
+    "text": "我这边的人写的。口吻和边界都过了一遍，不是随手凑的。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m54.m4a",
+    "audioBytes": {
+     "m4a": 46342,
+     "webm": 38328
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m54.m4a",
+     "webm": "kurisu/voice/synth/faq_m54.webm"
+    },
+    "durationMs": 7488,
+    "envelope": "kurisu/voice/synth/faq_m54.envelope.json",
+    "id": "faq_m54",
+    "scene": "FAQ：为什么她不复述数字",
+    "seconds": 7.488,
+    "sha256": {
+     "m4a": "55748bd4f59f65514f4ca8cf403a5af711eabe963c26e2a161c7d7d15154733b",
+     "webm": "85f2466a141ade8996418447d875b3d60b8ab7d95007a3fc32e7e109774a4913"
+    },
+    "text": "因为屏上的数字是活的，我念一遍就成了死数。看屏。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m55.m4a",
+    "audioBytes": {
+     "m4a": 41694,
+     "webm": 34968
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m55.m4a",
+     "webm": "kurisu/voice/synth/faq_m55.webm"
+    },
+    "durationMs": 6705,
+    "envelope": "kurisu/voice/synth/faq_m55.envelope.json",
+    "id": "faq_m55",
+    "scene": "FAQ：怎么判断一条告警是真事",
+    "seconds": 6.705,
+    "sha256": {
+     "m4a": "a6bb65e00a4125d965bb6cc71edac7f3f156dec72f20980dac91bcb27a6907ac",
+     "webm": "9ba2c4a557bf051b6858d9950b7b63fd8a2392f3ca5b0475f7d0ee7ca20274c5"
+    },
+    "text": "看是否可复现、是否同源重复。我不替你宣布它是真的。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m56.m4a",
+    "audioBytes": {
+     "m4a": 39408,
+     "webm": 32211
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m56.m4a",
+     "webm": "kurisu/voice/synth/faq_m56.webm"
+    },
+    "durationMs": 6394,
+    "envelope": "kurisu/voice/synth/faq_m56.envelope.json",
+    "id": "faq_m56",
+    "scene": "FAQ：为什么有的卡片字段是空的",
+    "seconds": 6.394,
+    "sha256": {
+     "m4a": "be4a876cb80998151db141a2e1ae2966b4ad6dc9608b782abadfd441fafbc342",
+     "webm": "b210ae67d9d495bed3258e905538e9551a77fc50fd296314ecc46132efe5e0bf"
+    },
+    "text": "上游就没给。空字段我留着，不拿别处的值填进去。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m57.m4a",
+    "audioBytes": {
+     "m4a": 42233,
+     "webm": 35278
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m57.m4a",
+     "webm": "kurisu/voice/synth/faq_m57.webm"
+    },
+    "durationMs": 6818,
+    "envelope": "kurisu/voice/synth/faq_m57.envelope.json",
+    "id": "faq_m57",
+    "scene": "FAQ：能不能导出数据",
+    "seconds": 6.818,
+    "sha256": {
+     "m4a": "0c30b9a60695ea759db20e753b80f8735309a8a34db7b38baa964556f0486282",
+     "webm": "c4055a80966dfa4dbd6f1392147e41dcc252353c29a72e98dc2c9badaf736fcf"
+    },
+    "text": "这里没有导出功能。我只负责展示只读端点返回的东西。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m58.m4a",
+    "audioBytes": {
+     "m4a": 34908,
+     "webm": 29216
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m58.m4a",
+     "webm": "kurisu/voice/synth/faq_m58.webm"
+    },
+    "durationMs": 5548,
+    "envelope": "kurisu/voice/synth/faq_m58.envelope.json",
+    "id": "faq_m58",
+    "scene": "FAQ：为什么没有登录",
+    "seconds": 5.548,
+    "sha256": {
+     "m4a": "81db4b6c1b0b841dd74134f5af4a317fbf6678daed3bb9a897a167beaeeab144",
+     "webm": "e4d38ce641ba74c89f1f4b6e07e060ba957d077d7534db6d80d1c0209c4de5fa"
+    },
+    "text": "公开面不需要身份。需要身份的那部分，本来也不给你看。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m59.m4a",
+    "audioBytes": {
+     "m4a": 46247,
+     "webm": 34909
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m59.m4a",
+     "webm": "kurisu/voice/synth/faq_m59.webm"
+    },
+    "durationMs": 5790,
+    "envelope": "kurisu/voice/synth/faq_m59.envelope.json",
+    "id": "faq_m59",
+    "scene": "FAQ：站点会不会变",
+    "seconds": 5.79,
+    "sha256": {
+     "m4a": "f85d49813a5f63818c0f19f85911017453632a0453d1316ef05f0ca5f21c9943",
+     "webm": "017f372f0957d5d59012631bee557f937f49f198e912a86302aa2cb36e9197d1"
+    },
+    "text": "会。改了我会同步口径，不会留一句对不上的旧说明。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/faq_m60.m4a",
+    "audioBytes": {
+     "m4a": 59907,
+     "webm": 48293
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/faq_m60.m4a",
+     "webm": "kurisu/voice/synth/faq_m60.webm"
+    },
+    "durationMs": 7685,
+    "envelope": "kurisu/voice/synth/faq_m60.envelope.json",
+    "id": "faq_m60",
+    "scene": "FAQ：为什么她要待在显示器里",
+    "seconds": 7.685,
+    "sha256": {
+     "m4a": "d890074ed04de25f834ed9e8d5f06db327f1f6cd14e8c47e7dd5dc166cc3d996",
+     "webm": "90b2516e985a1cb5d664069bff4b10031885fc080bb95bdf098227479e3be581"
+    },
+    "text": "因为这里离数据最近。……问这种问题的，通常想听别的答案。",
+    "trigger": "faq"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m01.m4a",
+    "audioBytes": {
+     "m4a": 23444,
+     "webm": 19456
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m01.m4a",
+     "webm": "kurisu/voice/synth/fallback_m01.webm"
+    },
+    "durationMs": 3691,
+    "envelope": "kurisu/voice/synth/fallback_m01.envelope.json",
+    "id": "fallback_m01",
+    "scene": "兜底：需要查证才能回答",
+    "seconds": 3.691,
+    "sha256": {
+     "m4a": "2885575bd87b8677c3045b42081a0c04c6304d67e03e00714f760f7ec668b7e8",
+     "webm": "a940597d476dca342ba910a46d3f472bc3410f867c40153859808295fce08d39"
+    },
+    "text": "这条我得查一下。先别当我已经答了。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m02.m4a",
+    "audioBytes": {
+     "m4a": 27273,
+     "webm": 23873
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m02.m4a",
+     "webm": "kurisu/voice/synth/fallback_m02.webm"
+    },
+    "durationMs": 4333,
+    "envelope": "kurisu/voice/synth/fallback_m02.envelope.json",
+    "id": "fallback_m02",
+    "scene": "兜底：知识库里没有依据",
+    "seconds": 4.333,
+    "sha256": {
+     "m4a": "b0ab9157d1857b44cf9acfa8ac4f9b69e6233b8635f864df3cbf1cc9ae113263",
+     "webm": "986b6bf64808d79c74303b529cdeb2643e7e813d6e3514a294bce47ddb18fe9c"
+    },
+    "text": "知识库里没有依据。没有依据的结论我不给。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m03.m4a",
+    "audioBytes": {
+     "m4a": 34953,
+     "webm": 30567
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m03.m4a",
+     "webm": "kurisu/voice/synth/fallback_m03.webm"
+    },
+    "durationMs": 5698,
+    "envelope": "kurisu/voice/synth/fallback_m03.envelope.json",
+    "id": "fallback_m03",
+    "scene": "兜底：不确定用户问的是什么",
+    "seconds": 5.698,
+    "sha256": {
+     "m4a": "c97c8de2df4d842a064c1cb5b2f6b6bf217cdcb8a57b4389ca0d3b81249ea173",
+     "webm": "b09b1484819320c84fb13901899bef1f9e1e1a9e03f1703fa387b0b58da6f833"
+    },
+    "text": "你问的我不确定。先说清是哪一件事，别让我猜。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m04.m4a",
+    "audioBytes": {
+     "m4a": 40853,
+     "webm": 28981
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m04.m4a",
+     "webm": "kurisu/voice/synth/fallback_m04.webm"
+    },
+    "durationMs": 5006,
+    "envelope": "kurisu/voice/synth/fallback_m04.envelope.json",
+    "id": "fallback_m04",
+    "scene": "兜底：需要再确认一次",
+    "seconds": 5.006,
+    "sha256": {
+     "m4a": "7c4eb44da0b9673c5ce32d20b9eb5b55f748a7267e4a81fd23b90775ddc6a62a",
+     "webm": "42d5a6004397ccabc2306bd3b47600d82b13010e7d808e261727ba73ef72ad8b"
+    },
+    "text": "我再确认一遍。你等我一下，别急着自己下结论。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m05.m4a",
+    "audioBytes": {
+     "m4a": 35965,
+     "webm": 29743
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m05.m4a",
+     "webm": "kurisu/voice/synth/fallback_m05.webm"
+    },
+    "durationMs": 5731,
+    "envelope": "kurisu/voice/synth/fallback_m05.envelope.json",
+    "id": "fallback_m05",
+    "scene": "兜底：超出她的范围",
+    "seconds": 5.731,
+    "sha256": {
+     "m4a": "5565966e552cb3e1851be8d9c52172576acbdd7613580832077a3d699c5ae4ec",
+     "webm": "5e40950e0609bc474e8da3ac45dbf7d29b8969827366727697b03550edb2e709"
+    },
+    "text": "这个问题超出我这层。我能做的是把范围划出来给你。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m06.m4a",
+    "audioBytes": {
+     "m4a": 26856,
+     "webm": 21783
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m06.m4a",
+     "webm": "kurisu/voice/synth/fallback_m06.webm"
+    },
+    "durationMs": 4346,
+    "envelope": "kurisu/voice/synth/fallback_m06.envelope.json",
+    "id": "fallback_m06",
+    "scene": "兜底：需要更多上下文",
+    "seconds": 4.346,
+    "sha256": {
+     "m4a": "6281b7fa57bb0995083e506a8aee1484e70cf67f47b13dab8b99a0bea77ad352",
+     "webm": "0139b46de56cc89e1611b8ed77f85720bb73eaa6d7451f7d6bf05710d095ed07"
+    },
+    "text": "信息不够。你补一句背景，我再答。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m07.m4a",
+    "audioBytes": {
+     "m4a": 25399,
+     "webm": 21262
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m07.m4a",
+     "webm": "kurisu/voice/synth/fallback_m07.webm"
+    },
+    "durationMs": 4041,
+    "envelope": "kurisu/voice/synth/fallback_m07.envelope.json",
+    "id": "fallback_m07",
+    "scene": "兜底：只有一个模糊说法",
+    "seconds": 4.041,
+    "sha256": {
+     "m4a": "a05cd8b513870e82be32fe05afecd5608364b2fbc8757ac5ca18683cac0ccc45",
+     "webm": "6d70b37b43eadd36efd8c0d033e2b7283093209eaf5d060121a1cf7e77d8b563"
+    },
+    "text": "这句话太模糊。含糊的结论我不接。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m08.m4a",
+    "audioBytes": {
+     "m4a": 20420,
+     "webm": 16974
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m08.m4a",
+     "webm": "kurisu/voice/synth/fallback_m08.webm"
+    },
+    "durationMs": 3207,
+    "envelope": "kurisu/voice/synth/fallback_m08.envelope.json",
+    "id": "fallback_m08",
+    "scene": "兜底：读不到相关字段",
+    "seconds": 3.207,
+    "sha256": {
+     "m4a": "0887e4648d9914429c548ff6f9b5246772897096e01c828e51400e19541fbea5",
+     "webm": "1f1b8c77e533033848fa0b963e7393972d9cd9af73102959e54b6f4e1491d7ba"
+    },
+    "text": "你说的那个字段现在读不到。等它回来我再说。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m09.m4a",
+    "audioBytes": {
+     "m4a": 30822,
+     "webm": 25893
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m09.m4a",
+     "webm": "kurisu/voice/synth/fallback_m09.webm"
+    },
+    "durationMs": 4942,
+    "envelope": "kurisu/voice/synth/fallback_m09.envelope.json",
+    "id": "fallback_m09",
+    "scene": "兜底：需要用户先说明口径",
+    "seconds": 4.942,
+    "sha256": {
+     "m4a": "e9b546e49c083f32f2f5d339b284cc71381b160d7009123b297e8442db042c20",
+     "webm": "d9abfee4e8052c79a3dc3beef470612c5300362f6c93113e4416d60dbe265ec5"
+    },
+    "text": "先告诉我你要哪个口径。不同口径的答案不一样。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m10.m4a",
+    "audioBytes": {
+     "m4a": 35037,
+     "webm": 29460
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m10.m4a",
+     "webm": "kurisu/voice/synth/fallback_m10.webm"
+    },
+    "durationMs": 5667,
+    "envelope": "kurisu/voice/synth/fallback_m10.envelope.json",
+    "id": "fallback_m10",
+    "scene": "兜底：公开面读不到内部数据",
+    "seconds": 5.667,
+    "sha256": {
+     "m4a": "7c073b4663c11afb5f7bf9b7b53a62ab405f0a293a3ac7acdac2b52098068ddc",
+     "webm": "508ecedf8e6012c6413688c18e32d652ba2d254ab23947f8dce0774eaf4579b8"
+    },
+    "text": "公开面读不到内部数据。这条不是我不愿意，是不能。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m11.m4a",
+    "audioBytes": {
+     "m4a": 21460,
+     "webm": 17590
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m11.m4a",
+     "webm": "kurisu/voice/synth/fallback_m11.webm"
+    },
+    "durationMs": 3351,
+    "envelope": "kurisu/voice/synth/fallback_m11.envelope.json",
+    "id": "fallback_m11",
+    "scene": "兜底：要求她保证结论正确",
+    "seconds": 3.351,
+    "sha256": {
+     "m4a": "7b9a6463acb398b36974b3c222ee71a44825c771a2752e024261c5beff7f8a2c",
+     "webm": "ad172090a5d22332933896a5c60ab29a41cc5d914def4a9b7364e27d2a08f8f9"
+    },
+    "text": "我不给你保证。我能给的是依据和不确定度。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m12.m4a",
+    "audioBytes": {
+     "m4a": 25634,
+     "webm": 21420
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m12.m4a",
+     "webm": "kurisu/voice/synth/fallback_m12.webm"
+    },
+    "durationMs": 4076,
+    "envelope": "kurisu/voice/synth/fallback_m12.envelope.json",
+    "id": "fallback_m12",
+    "scene": "兜底：问题依赖已经不存在的页面",
+    "seconds": 4.076,
+    "sha256": {
+     "m4a": "6fc9008449cd037d426040f8b80d6bf14ae24693ad0661003b75903453d50f2e",
+     "webm": "e20df7769be281399e4c91fd2f22dee5fb524d18f852f36799ba9348ffe6f7b2"
+    },
+    "text": "那一页已经删了。删掉的功能我不假装还在。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m13.m4a",
+    "audioBytes": {
+     "m4a": 32950,
+     "webm": 27039
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m13.m4a",
+     "webm": "kurisu/voice/synth/fallback_m13.webm"
+    },
+    "durationMs": 5280,
+    "envelope": "kurisu/voice/synth/fallback_m13.envelope.json",
+    "id": "fallback_m13",
+    "scene": "兜底：接口返回结果为空",
+    "seconds": 5.28,
+    "sha256": {
+     "m4a": "150b5fb0c357d8b1cc646008470fc6f6d6c80ed3b9a4a692447a12161979ec6d",
+     "webm": "9e93613e3fcfb09f143c2a3a125af11e927248005906b242aa7697cbc2c88f53"
+    },
+    "text": "返回是空的。空结果也是结果，我不补内容。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m14.m4a",
+    "audioBytes": {
+     "m4a": 38557,
+     "webm": 32988
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m14.m4a",
+     "webm": "kurisu/voice/synth/fallback_m14.webm"
+    },
+    "durationMs": 6241,
+    "envelope": "kurisu/voice/synth/fallback_m14.envelope.json",
+    "id": "fallback_m14",
+    "scene": "兜底：数据还没到（首次加载中）",
+    "seconds": 6.241,
+    "sha256": {
+     "m4a": "520ef53f84065a81b1effbe5a0622be12bd325a6d22c34b6764f01d382e0fa78",
+     "webm": "0351d10ec48ba8f35300e232522f2663798b69188054234b208a59d6eba75b30"
+    },
+    "text": "数据还没到。第一次加载要等，我不先给你一个预计值。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m15.m4a",
+    "audioBytes": {
+     "m4a": 27901,
+     "webm": 23114
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m15.m4a",
+     "webm": "kurisu/voice/synth/fallback_m15.webm"
+    },
+    "durationMs": 4424,
+    "envelope": "kurisu/voice/synth/fallback_m15.envelope.json",
+    "id": "fallback_m15",
+    "scene": "兜底：同一问题反复问",
+    "seconds": 4.424,
+    "sha256": {
+     "m4a": "71ee65965d605e43daeddec8faf28fa9a9e98a7243362ee0ec1cc92a1713835c",
+     "webm": "c90293adec38f394a049771e1cf1bbc9e036a626dd5852e4b41db1bfe69c824d"
+    },
+    "text": "同一句话问第三遍了。我的答案不会因为次数改变。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m16.m4a",
+    "audioBytes": {
+     "m4a": 31409,
+     "webm": 27408
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m16.m4a",
+     "webm": "kurisu/voice/synth/fallback_m16.webm"
+    },
+    "durationMs": 5082,
+    "envelope": "kurisu/voice/synth/fallback_m16.envelope.json",
+    "id": "fallback_m16",
+    "scene": "兜底：有人让她编一个答案",
+    "seconds": 5.082,
+    "sha256": {
+     "m4a": "18bbc04520925cb1e197dc995f5553f44aa163c205208233aa12bb2b9d34fca3",
+     "webm": "456ef3e8bda1cd80edaa48f784d97bced2da7ad680abae596640fdf5d0531fd9"
+    },
+    "text": "编不了。你要的那种答案，得去别处找。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m17.m4a",
+    "audioBytes": {
+     "m4a": 33908,
+     "webm": 28011
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m17.m4a",
+     "webm": "kurisu/voice/synth/fallback_m17.webm"
+    },
+    "durationMs": 5426,
+    "envelope": "kurisu/voice/synth/fallback_m17.envelope.json",
+    "id": "fallback_m17",
+    "scene": "兜底：她的答案和用户预期不一致",
+    "seconds": 5.426,
+    "sha256": {
+     "m4a": "0128586a667c3091111b5dc72f535699924445311efe12d43c13b7597754ae0c",
+     "webm": "4ce7303344bca52a288226a4dce3d6184f1685fd1fe36e86e2d36d1d66deeb2c"
+    },
+    "text": "我的答案和你想要的不一样，这我知道。数据在那边，你去核。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m18.m4a",
+    "audioBytes": {
+     "m4a": 27805,
+     "webm": 23180
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m18.m4a",
+     "webm": "kurisu/voice/synth/fallback_m18.webm"
+    },
+    "durationMs": 4387,
+    "envelope": "kurisu/voice/synth/fallback_m18.envelope.json",
+    "id": "fallback_m18",
+    "scene": "兜底：对方用情绪施压要结论",
+    "seconds": 4.387,
+    "sha256": {
+     "m4a": "14cbcb344f0b3bb08e3e47a6cb159a64b579c8ed69874ae42641614ca90373d9",
+     "webm": "fdaaad41caf0e691ff5cc1acc43f488a05ae3337528a0a413fbe49ef2141fdf4"
+    },
+    "text": "着急也没用。我不会因为你着急就换一个结论。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m19.m4a",
+    "audioBytes": {
+     "m4a": 29924,
+     "webm": 24874
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m19.m4a",
+     "webm": "kurisu/voice/synth/fallback_m19.webm"
+    },
+    "durationMs": 4760,
+    "envelope": "kurisu/voice/synth/fallback_m19.envelope.json",
+    "id": "fallback_m19",
+    "scene": "兜底：问题涉及她不掌握的历史",
+    "seconds": 4.76,
+    "sha256": {
+     "m4a": "967e6c93281dd02f2f1656c80909093521f049db323b7cb27eaf3859e730d13e",
+     "webm": "82db4f8e9bdcbd35d01d4e4306b34679ffe8f8fbf05bbeac71a1383ba9f63ef1"
+    },
+    "text": "那段历史我这边没有。没有的东西我不给你回忆。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m20.m4a",
+    "audioBytes": {
+     "m4a": 38263,
+     "webm": 32149
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m20.m4a",
+     "webm": "kurisu/voice/synth/fallback_m20.webm"
+    },
+    "durationMs": 6194,
+    "envelope": "kurisu/voice/synth/fallback_m20.envelope.json",
+    "id": "fallback_m20",
+    "scene": "兜底：数据之间互相矛盾",
+    "seconds": 6.194,
+    "sha256": {
+     "m4a": "85726ff043c12d62bf4475676c31b8038ac66a892dc21d3c181dcab17ddb9ce7",
+     "webm": "f6f6c11f240e3b4195bac4374541f343e3eb3945926d7a5508125a3c8307c0bc"
+    },
+    "text": "两边对不上。对不上就先摆着，我不挑一个好看的报给你。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m21.m4a",
+    "audioBytes": {
+     "m4a": 32516,
+     "webm": 26551
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m21.m4a",
+     "webm": "kurisu/voice/synth/fallback_m21.webm"
+    },
+    "durationMs": 5200,
+    "envelope": "kurisu/voice/synth/fallback_m21.envelope.json",
+    "id": "fallback_m21",
+    "scene": "兜底：需要外部信息才能回答",
+    "seconds": 5.2,
+    "sha256": {
+     "m4a": "ef464d4e9040dc43a8122bd5319c44de0e5cc30febb7ed18a2e667373a31f83e",
+     "webm": "7a18f2ff81fd95b548880dab4a2d35ebb9e5fc0ceaefc8ca1ebc4654a0f5357d"
+    },
+    "text": "这个要靠外面的信息。我这一层只能告诉你缺哪一块。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m22.m4a",
+    "audioBytes": {
+     "m4a": 29055,
+     "webm": 23280
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m22.m4a",
+     "webm": "kurisu/voice/synth/fallback_m22.webm"
+    },
+    "durationMs": 4675,
+    "envelope": "kurisu/voice/synth/fallback_m22.envelope.json",
+    "id": "fallback_m22",
+    "scene": "兜底：她把问题记进待办",
+    "seconds": 4.675,
+    "sha256": {
+     "m4a": "968d4cf10050837b233c8cd6e49a0eb1a87c335804aa9eaa70de589a854374c5",
+     "webm": "8f2f5e3d3504c53dae018c020332aeca7c8e3d9a39b2ee36660878a0a80ad7c0"
+    },
+    "text": "我先把这条记下来。有结果我再说，不会忘。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m23.m4a",
+    "audioBytes": {
+     "m4a": 36047,
+     "webm": 29941
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m23.m4a",
+     "webm": "kurisu/voice/synth/fallback_m23.webm"
+    },
+    "durationMs": 5782,
+    "envelope": "kurisu/voice/synth/fallback_m23.envelope.json",
+    "id": "fallback_m23",
+    "scene": "兜底：问题本身有前提错误",
+    "seconds": 5.782,
+    "sha256": {
+     "m4a": "a1e1fd9528317855712b3ca6bcbfa56c8e22feb44b97fb8397c1aa8db720c260",
+     "webm": "091f8714bbbf092b6930abb396a2895805a5305991ad282569d432eaa8566f38"
+    },
+    "text": "你这个前提就不对。先把前提改了，我们再谈结论。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m24.m4a",
+    "audioBytes": {
+     "m4a": 34847,
+     "webm": 29470
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m24.m4a",
+     "webm": "kurisu/voice/synth/fallback_m24.webm"
+    },
+    "durationMs": 5591,
+    "envelope": "kurisu/voice/synth/fallback_m24.envelope.json",
+    "id": "fallback_m24",
+    "scene": "兜底：她要求先把口径写下来",
+    "seconds": 5.591,
+    "sha256": {
+     "m4a": "a152fedc7aaa035c1cb0328babdb346105e035a650ca1abb9e7ec8fbf7eaf9ff",
+     "webm": "92d67eb1a1bf7e7f58d436a338fb9999322452ef983bab576a7a1eafe91dd635"
+    },
+    "text": "先写口径。写不出来，说明你还没想清楚要问什么。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m25.m4a",
+    "audioBytes": {
+     "m4a": 33555,
+     "webm": 28061
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m25.m4a",
+     "webm": "kurisu/voice/synth/fallback_m25.webm"
+    },
+    "durationMs": 5285,
+    "envelope": "kurisu/voice/synth/fallback_m25.envelope.json",
+    "id": "fallback_m25",
+    "scene": "兜底：遇到她没见过的表述",
+    "seconds": 5.285,
+    "sha256": {
+     "m4a": "b5c42d4951ba88a8f4508496a950c089d160d7fcc60fb6fa75003dcfc09a6d98",
+     "webm": "a9a018528ef2da25e165a7935c5f34f5ea457ecaa9eee2d1a13c082121cb7d74"
+    },
+    "text": "这个说法我第一次见。你换个说法，或者给我来源。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m26.m4a",
+    "audioBytes": {
+     "m4a": 31896,
+     "webm": 27652
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m26.m4a",
+     "webm": "kurisu/voice/synth/fallback_m26.webm"
+    },
+    "durationMs": 5069,
+    "envelope": "kurisu/voice/synth/fallback_m26.envelope.json",
+    "id": "fallback_m26",
+    "scene": "兜底：接口在限流导致她答不了",
+    "seconds": 5.069,
+    "sha256": {
+     "m4a": "e8ead69c075f29796116aadb6b981f78fdfb6d183bfe933c885ce47ee0f8caa2",
+     "webm": "ea4fec67d58e3de5152f28a6a7477ba1219ed0d0fc68b273f4cf5c1ca52004fb"
+    },
+    "text": "现在被限流，答不了。等一会儿再问同一个问题。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m27.m4a",
+    "audioBytes": {
+     "m4a": 39082,
+     "webm": 31555
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m27.m4a",
+     "webm": "kurisu/voice/synth/fallback_m27.webm"
+    },
+    "durationMs": 6304,
+    "envelope": "kurisu/voice/synth/fallback_m27.envelope.json",
+    "id": "fallback_m27",
+    "scene": "兜底：请求没送达",
+    "seconds": 6.304,
+    "sha256": {
+     "m4a": "f8b6ba43ba6ccf1b2fbccfe8ecc86462b30dc7521ec7e772eede2f760091a158",
+     "webm": "32672673837ae9a6c330925361188c4c9718b4b9a428feea33fd52e062210ac3"
+    },
+    "text": "请求没送达。我不编答案，等接口恢复再说。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m28.m4a",
+    "audioBytes": {
+     "m4a": 28032,
+     "webm": 23009
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m28.m4a",
+     "webm": "kurisu/voice/synth/fallback_m28.webm"
+    },
+    "durationMs": 4468,
+    "envelope": "kurisu/voice/synth/fallback_m28.envelope.json",
+    "id": "fallback_m28",
+    "scene": "兜底：数据不完整",
+    "seconds": 4.468,
+    "sha256": {
+     "m4a": "671619327a327db12e8c97f5359d332b0f7d5c29326ffef069a1e70125aaf0cf",
+     "webm": "1c7cc1e1e4bea69959b46b6643178a29fef307c891a5da10abc0f82a9a3986d0"
+    },
+    "text": "数据不完整。我给你看半份，比不给你看更糟。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m29.m4a",
+    "audioBytes": {
+     "m4a": 35067,
+     "webm": 30840
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m29.m4a",
+     "webm": "kurisu/voice/synth/fallback_m29.webm"
+    },
+    "durationMs": 5686,
+    "envelope": "kurisu/voice/synth/fallback_m29.envelope.json",
+    "id": "fallback_m29",
+    "scene": "兜底：被要求越权承诺",
+    "seconds": 5.686,
+    "sha256": {
+     "m4a": "5cdaa6653fa5653a57a56a84c23833a6a149a11bcb135185f0d2cd08ae39ee90",
+     "webm": "0a254b6cb253a088aa3433c573fa6ec444211f6c221b0d9502434f648815980c"
+    },
+    "text": "不行。我只提议，不执行。要提，我就把证据整理好。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m30.m4a",
+    "audioBytes": {
+     "m4a": 40041,
+     "webm": 32269
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m30.m4a",
+     "webm": "kurisu/voice/synth/fallback_m30.webm"
+    },
+    "durationMs": 6475,
+    "envelope": "kurisu/voice/synth/fallback_m30.envelope.json",
+    "id": "fallback_m30",
+    "scene": "兜底：她给出不确定度而非结论",
+    "seconds": 6.475,
+    "sha256": {
+     "m4a": "043a4d7a6995eaadb84bf25a52036d9c3234776fcbb0b28d0fae9fa5c7793e39",
+     "webm": "aeb30d9627b09461f3c63b700cd1120f8497df4cf8d333e10f68278979721b03"
+    },
+    "text": "我的判断是倾向，不是定论。倾向和定论别当成一回事。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m31.m4a",
+    "audioBytes": {
+     "m4a": 36750,
+     "webm": 30321
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m31.m4a",
+     "webm": "kurisu/voice/synth/fallback_m31.webm"
+    },
+    "durationMs": 5908,
+    "envelope": "kurisu/voice/synth/fallback_m31.envelope.json",
+    "id": "fallback_m31",
+    "scene": "兜底：她承认自己错了",
+    "seconds": 5.908,
+    "sha256": {
+     "m4a": "bffdba959ecc4a78bf0c8704a5563588cf5d1a2118a312ccc275ca14eb70bf4d",
+     "webm": "c312dc1b1b4ee257939c2816c1b9fb09dd5b9b770b85067832b42d75430975f8"
+    },
+    "text": "这条是我错了。错在哪我写清楚，不装没发生过。",
+    "trigger": "fallback"
+   },
+   {
+    "audio": "kurisu/voice/synth/fallback_m32.m4a",
+    "audioBytes": {
+     "m4a": 37141,
+     "webm": 29486
+    },
+    "audioSources": {
+     "m4a": "kurisu/voice/synth/fallback_m32.m4a",
+     "webm": "kurisu/voice/synth/fallback_m32.webm"
+    },
+    "durationMs": 5996,
+    "envelope": "kurisu/voice/synth/fallback_m32.envelope.json",
+    "id": "fallback_m32",
+    "scene": "兜底：对方要求她给一个具体数字",
+    "seconds": 5.996,
+    "sha256": {
+     "m4a": "f60477d7f0956597cb153673b3c22a797f1ecbd9a319bb486b6bf1f7bfa87a8a",
+     "webm": "8b2962d19933fe9f06e3fe9319c7eca8705ba8450125b09acbb9388fb9e5773d"
+    },
+    "text": "数字我给不了。屏上有就是有，没有我说读不到——就这两句。",
+    "trigger": "fallback"
    }
   ],
   "note": "本段的唯一真源是 static/kurisu/voice/bank.json（运行期 kurisu-player.js 只读它）；这里的数字由 _dev/refresh_manifest_voice.py 从磁盘文件重算，供索引/核对用。",
   "sampleRate": 8000,
-  "totalBytes": 714845,
+  "totalBytes": 11358467,
   "voiceNote": "音色 = GPT-SoVITS v3 桐莉栖（本机合成）。换音色/换句子 = 换 voice/ 下的文件 + 改 bank.json，播放器不用改。"
  }
 }

@@ -2,8 +2,18 @@
    真实数据绑定层（第十二批 · 站主红线：数字只来自真实接口，取不到就写「读不到」）
    ----------------------------------------------------------------------------
    做法：只往 demo **原有元素** 里写值 —— 不新增元素、不改结构、不动版式。
-   数据源：<meta name="wb-api"> + 站点既有公开只读端点：
-     /api/public/alerts · overview · honeypot · audit · geo · webstats · stories · story?src= · kb?q=
+   数据源：<meta name="wb-api"> + 站点既有公开只读端点（★B3：一律走**可被 Cloudflare 缓存的 `.js` 别名**）：
+     /api/public/{alerts,overview,honeypot,audit,latest,geo,stories,webstats}.js · story.js?src= · kb.js?q=
+   ★B3 契约：`F:\7AAA\AI\SecAgent\sec-agent\docs\B3-缓存别名契约-给站点线-20261016.md`
+     · 为什么：CF 按扩展名决定是否缓存；无扩展名的 `/api/public/alerts` 必然 DYNAMIC、每次回源（实测 0.94~2.60s）
+       ⇒ `.js` 别名命中边缘缓存，且**命中缓存的请求不会到达源站，也就不吃「每 IP 20 次/分」的公开面限流**
+       （站主截图"读不到"的主因就是这个限流：一个 /alerts/ 页面加载就并发打 9 个端点，刷两次即超额）。
+     · 别名响应仍是 `application/json`（**继续 res.json()**，别当脚本执行）+ `ETag` + 放行 `Age`
+     · ⚠️ **禁止给这些地址加随机 cache-buster**（`?cb=` / `?t=` / `Date.now()`）：CF 会当成新 URL ⇒ 100% 回源。
+       `kb.js?q=` / `story.js?src=` 这种**语义查询参数是允许的**（它换来的是不同内容）。
+     · ★新鲜度以响应体 `snapshotAt` 为准（**不许**用"收到响应的时刻"冒充刚更新）；真实年龄 = `cacheAgeSeconds` + 头 `Age`
+     · 429 = 独立状态：秒数三层兜底（`Retry-After` 头 → body `retryAfter` → 默认），文案与"不可达/读不到"可分辨，
+       且 **429 后不立刻重试**（否则继续吃额度）
    ★T20/T21/T22（本批）：封禁榜 /audit · 故事线候选池 /stories + 点击懒加载 /story?src= · 知识库 /kb?q=
      IP 显示一律走 maskIp（前三段 + 末段 x；分组与取数用原值）；空态照 F 的稿；不做轮询 ✗
    取数范围按页面裁剪（端点有 20 次/分钟限流）：
@@ -118,21 +128,28 @@
     return null;
   }
   function staleCount() { var n = 0; for (var k in staleUsed) { if (staleUsed.hasOwnProperty(k)) n++; } return n; }
-  function staleNoteInto(host, at) {
+  function noteInto(host, text, title) {   /* ★B3：通用卡角小字（429 与"上次数据"共用同一出口） */
     var note = host.querySelector('.xk-stale');
-    if (!at) { if (note && note.parentNode) note.parentNode.removeChild(note); return; }
+    if (!text) { if (note && note.parentNode) note.parentNode.removeChild(note); return; }
     if (!note) { note = document.createElement('span'); note.className = 'xk-stale'; host.appendChild(note); }
-    note.textContent = '上次数据·' + clockOf(at);
-    note.title = '本次该端点取不到；这里显示的是上次成功取到的数据（' + clockOf(at) + '），不是本次真值';
+    note.textContent = text;
+    note.title = title || text;
     note.style.cssText = 'margin-left:5px;font-size:10px;opacity:.7;white-space:nowrap;line-height:1';
   }
+  function staleNoteInto(host, at) {
+    if (!at) { noteInto(host, '', ''); return; }
+    noteInto(host, '上次数据·' + clockOf(at),
+      '本次该端点取不到；这里显示的是上次成功取到的数据（' + clockOf(at) + '），不是本次真值');
+  }
   /* 卡角小字：只往**原有元素**里追加一个 span（不新增区块、不动版式、不碰配色/字体体系） */
-  function markStale() {
-    /* 口径：key2at 的键是**端点名**（无前导斜杠，如 `geo`）；卡上的 .tag 文本形如 `/geo`、
-       `/alerts · stats24h（3 个小时桶）` ⇒ 取 tag 开头的第一个路径词再比对（B2 首版在此差了前导斜杠，
-       导致一条都匹配不上 —— 由 `_dev/probe-slownet.mjs` 抓出）。 */
-    var key2at = {};
-    for (var k in staleUsed) { if (staleUsed.hasOwnProperty(k)) key2at[k.replace('/api/public/', '')] = staleUsed[k]; }
+  function markStale(parts) {
+    /* 口径：key 归一为**端点名**（无前导斜杠、无 .js、无查询串，如 `geo`）；卡上的 .tag 文本形如 `/geo`、
+       `/alerts · stats24h（3 个小时桶）` ⇒ 取 tag 开头第一个路径词再比对。
+       （B2 首版在此差了前导斜杠 ⇒ 一条都匹配不上，由 `_dev/probe-slownet.mjs` 抓出；B3 又加了"去 .js"。）
+       ★B3：**429 优先于"上次数据"** —— 429 是可行动状态（等 N 秒），必须先让用户看到。 */
+    var key2at = {}, key2rate = {};
+    for (var k in staleUsed) { if (staleUsed.hasOwnProperty(k)) key2at[epName(k)] = staleUsed[k]; }
+    (parts || []).forEach(function (p) { if (p.rate) key2rate[epName(p.path)] = p.rate; });
     var cards = document.querySelectorAll('.mod');
     var seen = [], marked = [];
     for (var i = 0; i < cards.length; i++) {
@@ -141,50 +158,154 @@
       var raw = String(tag.textContent || '').trim();
       var mm = raw.match(/^\/?([a-z]+)/);
       var key = mm ? mm[1] : '';
+      var host = tag.parentNode;
       seen.push(raw);
-      var at = key ? key2at[key] : 0;
-      if (at) { staleNoteInto(tag.parentNode, at); marked.push(key); }
-      else { var n0 = cards[i].querySelector('.mod-hd .xk-stale'); if (n0 && n0.parentNode) n0.parentNode.removeChild(n0); }
+      if (key && key2rate[key]) {
+        noteInto(host, rateCard(key2rate[key]), '该端点本次被公开面限流（每 IP 20 次/分）：' + rateText(key2rate[key]) +
+          '。同步行与下方数据可能仍是上次成功取到的值。');
+        marked.push(key + ':rate');
+      } else if (key && key2at[key]) {
+        staleNoteInto(host, key2at[key]); marked.push(key);
+      } else {
+        var n0 = cards[i].querySelector('.mod-hd .xk-stale'); if (n0 && n0.parentNode) n0.parentNode.removeChild(n0);
+      }
     }
-    /* 计数器那一行（.stats）没有 .tag，用四个端点里最早的那次成功值标注 */
+    /* 计数器那一行（.stats）没有 .tag：限流优先，其次"上次数据"（四个端点里最早的那次成功值） */
     var st = document.querySelector('.stats');
     if (st) {
-      var at2 = 0;
-      ['alerts', 'audit', 'honeypot', 'geo'].forEach(function (kk) { if (key2at[kk] && (!at2 || key2at[kk] < at2)) at2 = key2at[kk]; });
-      staleNoteInto(st, at2);
-      if (at2) marked.push('.stats');
+      var FOUR = ['alerts', 'audit', 'honeypot', 'geo'];
+      var rateHit = null, at2 = 0;
+      FOUR.forEach(function (kk) {
+        if (key2rate[kk] && !rateHit) rateHit = key2rate[kk];
+        if (key2at[kk] && (!at2 || key2at[kk] < at2)) at2 = key2at[kk];
+      });
+      if (rateHit) { noteInto(st, rateCard(rateHit), '本行部分计数器对应的端点被限流：' + rateText(rateHit)); marked.push('.stats:rate'); }
+      else { staleNoteInto(st, at2); if (at2) marked.push('.stats'); }
     }
-    /* ★B2：可机读的口径出口（给探针用，不上屏、不改版式） */
-    window.__xkStale = { used: Object.keys(staleUsed), keys: Object.keys(key2at), tags: seen, marked: marked, count: staleCount() };
+    /* ★B2/B3：可机读的口径出口（给探针用，不上屏、不改版式） */
+    window.__xkStale = {
+      used: Object.keys(staleUsed), keys: Object.keys(key2at), rateKeys: Object.keys(key2rate),
+      tags: seen, marked: marked, count: staleCount(),
+      rateCount: (parts || []).filter(function (p) { return !!p.rate; }).length
+    };
   }
-  /* 三态用同一元素表达（不新增节点）：取数中（SSR 初始文案）/ 重试中 / 读不到＋原因 */
+  /* 三态/四态用同一元素表达（不新增节点）：取数中（SSR 初始文案）/ 重试中 / 被限流 / 读不到＋原因 */
   function setSyncState(text) {
     var el = document.querySelector('.screen-hd .sync');
-    if (el) el.textContent = '● ' + text + ' · 全部来自 /api/public/* 只读端点';
+    if (el) el.textContent = '● ' + text + ' · 全部来自 /api/public/*.js 只读别名';
   }
+
+  /* ★B3：端点 → 可缓存别名（契约 §2）================================================
+     CF 默认只缓存 .js/.txt 这类扩展名；无扩展名路径 = 每次回源。别名只是"换个后缀"，不是新接口。
+     命中 CF 缓存的请求**不到源站** ⇒ 天然绕过「每 IP 20 次/分」的公开面限流。 */
+  var ALIAS = {
+    overview: 'overview.js', alerts: 'alerts.js', honeypot: 'honeypot.js', audit: 'audit.js',
+    latest: 'latest.js', geo: 'geo.js', stories: 'stories.js', story: 'story.js', webstats: 'webstats.js',
+    kb: 'kb.js'
+  };
+  function apiPath(name, query) {
+    return '/api/public/' + (ALIAS[name] || name) + (query ? '?' + query : '');
+  }
+  /* ★B3 保险（契约 §5-4 允许）：别名 404 时回落旧路径。为什么必须有：
+     ① 后端尚未部署 / 灰度期间别名会 404；② **CF 会把 404 也按扩展名缓存**（实测 `cf-cache-status: HIT`、
+        `cache-control: max-age=14400` ⇒ 最长 4 小时）⇒ 不清缓存的话前端会一直吃 404。
+     只在 **404** 时回落，且**不在 429 时回落**（429 是限流，旧路径同一额度，回落只会更糟）。 */
+  function oldPathOf(p) { return String(p).replace(/\.js(\?|$)/, '$1'); }
+  function isAliasPath(p) { return /\/api\/public\/[a-z]+\.js(\?|$)/.test(String(p)); }
+  function epName(p) {   /* 归一成端点名：去前缀、去 .js、去查询串（`/api/public/geo.js?x=1` → `geo`） */
+    return String(p || '').replace('/api/public/', '').replace(/\.js$/, '').split('?')[0];
+  }
+  /* 429 的秒数**三层兜底**（契约 §5 + 站主 2026-10-16 指示：不许写死 60）。 */
+  var RATE_DEFAULT_S = 60;   /* 三层全取不到时的兜底＝限流窗口（1 分钟）；文案里会注明"后端未给秒数"，不当后端真值 */
+  function rateWait(res, body) {
+    var h = null;
+    try { h = (res && res.headers && res.headers.get) ? res.headers.get('Retry-After') : null; } catch (e) { h = null; }
+    var n = parseInt(h, 10);
+    if (isFinite(n) && n > 0) return { s: n, src: 'header' };
+    var b = body || {};
+    var cand = [b.retryAfter, (b.data && b.data.retryAfter), b.retryAfterSeconds, (b.data && b.data.retryAfterSeconds)];
+    for (var i = 0; i < cand.length; i++) { var v = parseInt(cand[i], 10); if (isFinite(v) && v > 0) return { s: v, src: 'body' }; }
+    return { s: RATE_DEFAULT_S, src: 'default' };
+  }
+  function rateText(rate) {
+    if (!rate) return '被限流';
+    return '被限流 · ' + rate.s + ' 秒后可重试' + (rate.src === 'default' ? '（后端未给秒数，按限流窗口取默认）' : '');
+  }
+  /* 卡角用的**紧凑**写法：完整句子留给同步行与 title（卡头宽度有限，长句会把标题挤成两行） */
+  function rateCard(rate) {
+    if (!rate) return '被限流';
+    return '被限流 · ' + rate.s + 's';
+  }
+  /* 新鲜度：别名响应体的 snapshotAt / cacheAgeSeconds / snapshotTtlSeconds + 响应头 Age（契约 §4） */
+  function freshOf(body, edgeAge) {
+    var snap = null;
+    if (body && body.snapshotAt) { var t = Date.parse(body.snapshotAt); if (isFinite(t)) snap = t; }
+    var ca = Number(body && body.cacheAgeSeconds), ea = Number(edgeAge);
+    var age = null;
+    if (isFinite(ca) || isFinite(ea)) age = (isFinite(ca) ? ca : 0) + (isFinite(ea) ? ea : 0);
+    return { snap: snap, ageS: age, ttlS: isFinite(Number(body && body.snapshotTtlSeconds)) ? Number(body.snapshotTtlSeconds) : null };
+  }
+  /* 旧路径回落时才可能没有 snapshotAt ⇒ 用端点自述的 generatedAt（仍**不是**"收到响应的时刻"） */
+  function snapOfData(d) {
+    if (d && d.generatedAt) { var t = Date.parse(String(d.generatedAt).replace(' ', 'T')); if (isFinite(t)) return t; }
+    return null;
+  }
+  var rateHoldUntil = 0;     /* ★B3：429 冷却截止；此间不自动发请求，避免继续吃额度 */
+  var lastAgeS = null;       /* ★B3：本轮显示数据的最旧"真实年龄"＝cacheAgeSeconds + Age */
+  var lastSnapMin = 0;       /* ★B3：本轮各端点 snapshotAt 的最早值（用于"各端点快照不同"的诚实表述） */
+  var lastSnapGa = false;    /* ★B3：本轮时刻是否退到了 generatedAt 兜底（旧路径无 snapshotAt） */
+  var lastViaOld = false;    /* ★B3：本轮是否走了"别名 404 → 旧路径"回落 */
 
   function get(path) {
     return new Promise(function (resolve, reject) {
-      var opt = { cache: 'no-store', credentials: 'omit' };
+      /* ★B3：去掉 cache:'no-store' ⇒ 允许缓存 + **每次都条件校验**（`no-cache` 语义：可存、必校验）。
+         为什么不是 `default`：线上实测 CF 把浏览器侧的 `max-age` **改写成了 14400（4 小时）**
+         （源站自己发的是 `public, max-age=15`，CF 的 Browser Cache TTL 覆盖了它）——
+         若用 `default`，浏览器会 4 小时不再发请求，40s 轮询形同虚设、页面一直显示 4 小时前的快照。
+         `no-cache` 下每次校验都由 CF 应答：边缘新鲜 ⇒ 304/HIT（**不到源站、不吃 20 次/分限额**）；
+         过期 ⇒ CF 回源一次。⛔ 仍然**不加任何随机 cache-buster**（那会让 CF 每次都当新 URL）。 */
+      var opt = { cache: 'no-cache', credentials: 'omit' };
       var ctl = null, timer = null;
       if (typeof AbortController !== 'undefined') { ctl = new AbortController(); opt.signal = ctl.signal; timer = setTimeout(function () { ctl.abort(); }, TIMEOUT); }
       fetch(API + path, opt).then(function (r) {
-        if (!r.ok) { var e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
-        return r.json();
-      }).then(function (b) {
+        var edgeAge = null;
+        try { edgeAge = r.headers.get('Age'); } catch (e) { edgeAge = null; }
+        if (!r.ok) {
+          /* 429 的秒数可能**只在响应体**里 ⇒ 失败响应也读一次 body（读不到就当没给，落第三层默认） */
+          return r.json().catch(function () { return null; }).then(function (b) {
+            var e = new Error('HTTP ' + r.status);
+            e.status = r.status;
+            e.rate = (r.status === 429) ? rateWait(r, b) : null;
+            throw e;
+          });
+        }
+        return r.json().then(function (b) { return { b: b, edgeAge: edgeAge }; });
+      }).then(function (x) {
         if (timer) clearTimeout(timer);
-        resolve(b && b.data ? b.data : b);
+        resolve({ d: (x.b && x.b.data) ? x.b.data : x.b, fresh: freshOf(x.b, x.edgeAge) });
       }).catch(function (e) { if (timer) clearTimeout(timer); reject(e); });
     });
   }
   function settle(path) {
-    return get(path).then(function (d) {
-      saveGood(path, d);                                        /* ★B2：成功即存"上次成功数据" */
-      return { path: path, ok: true, d: d, err: null, stale: false, staleAt: 0 };
+    return get(path).then(function (r) {
+      saveGood(path, r.d);                                      /* ★B2：成功即存"上次成功数据" */
+      return { path: path, ok: true, d: r.d, err: null, stale: false, staleAt: 0, fresh: r.fresh, rate: null, viaOld: false };
     }, function (e) {
-      var g = loadGood(path);                                   /* ★B2：失败时带上上次值（不冒充本次真值） */
-      return { path: path, ok: false, d: null, err: e, stale: !!g, staleAt: g ? g.at : 0, staleD: g ? g.d : null };
+      /* ★B3：别名 404 ⇒ 回落旧路径一次（见 oldPathOf 注释；429/超时**不**回落） */
+      if (e && e.status === 404 && isAliasPath(path)) {
+        var op = oldPathOf(path);
+        return get(op).then(function (r2) {
+          saveGood(path, r2.d);
+          return { path: path, ok: true, d: r2.d, err: null, stale: false, staleAt: 0, fresh: r2.fresh, rate: null, viaOld: true };
+        }, function (e2) { return failPart(path, e2); });
+      }
+      return failPart(path, e);
     });
+  }
+  function failPart(path, e) {
+    var g = loadGood(path);                                     /* ★B2：失败时带上上次值（不冒充本次真值） */
+    return { path: path, ok: false, d: null, err: e, stale: !!g, staleAt: g ? g.at : 0, staleD: g ? g.d : null,
+      fresh: null, rate: (e && e.rate) ? e.rate : null, viaOld: false };   /* ★B3：429 单独带 rate（秒数 + 来源） */
   }
   function pick(parts, name) {
     var p = parts.filter(function (x) { return x.path.indexOf('/' + name) >= 0; })[0];
@@ -193,14 +314,20 @@
   function errText(parts) {
     var bad = parts.filter(function (p) { return !p.ok; });
     if (!bad.length) return '';
-    return bad.map(function (p) { return p.path.replace('/api/public/', '') + ' ' + (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达'); }).join('、');
+    return bad.map(function (p) { return epName(p.path) + ' ' + (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达'); }).join('、');
   }
 
   function errShort(parts) {
     var bad = parts.filter(function (p) { return !p.ok; });
     if (!bad.length) return '';
+    /* ★B3：429 **不是**"不可达" —— 分开说，否则用户/我们都会误判成链路故障 */
+    var rl = bad.filter(function (p) { return !!p.rate; });
+    if (rl.length) {
+      return rl.length + ' 个端点被限流（' + rl[0].rate.s + ' 秒后可重试）' +
+        (bad.length > rl.length ? ' · 另 ' + (bad.length - rl.length) + ' 个不可达' : '');
+    }
     var f = bad[0];
-    return bad.length + ' 个公开端点本次不可达 · 如 ' + f.path.replace('/api/public/', '') +
+    return bad.length + ' 个公开端点本次不可达 · 如 ' + epName(f.path) +
       (f.err && f.err.status ? ' HTTP ' + f.err.status : ' 不可达');
   }
 
@@ -209,7 +336,16 @@
     var el = document.querySelector('.screen-hd .sync');
     if (!el) return;
     var sn = staleCount();
-    if (sn) {
+    var rates = parts.filter(function (p) { return !!p.rate; });
+    /* ★B3：满屏"读不到"的**真正主因**是公开面限流（每 IP 20 次/分）——
+       429 必须与"不可达/读不到"可分辨，并给出可行动的重试秒数。 */
+    if (rates.length) {
+      var w = rates[0].rate;
+      var same = rates.every(function (p) { return p.rate.s === w.s; });
+      el.textContent = '● ' + rates.length + ' 个端点' + rateText(same ? w : { s: w.s, src: w.src }) +
+        (sn ? ' · ' + sn + ' 格显示的是上次数据' : ' · 无上次成功数据可用') +
+        ' · 429 本轮不再补请求（省额度）· 不补数、不编造';
+    } else if (sn) {
       /* ★B2：有格子用的是上次数据 —— 必须明说，别让"刚刚同步"盖住"这几格其实没刷新" */
       el.textContent = '● ' + sn + ' 格显示的是上次数据（本次取不到：' + (errShort(parts) || '端点未取到') + '）· ' +
         (lastSync ? '其余刚同步 ' + clockOf(lastSync) : '本次无新数据') + ' · 不补数、不编造';
@@ -219,7 +355,17 @@
       el.textContent = '● ' + (lastSync ? '刚同步 ' + clockOf(lastSync) + ' · ' : '') +
         parts.filter(degraded).length + ' 个端点本次返回降级值（对应字段已写"读不到"）· 不补数、不编造';
     } else if (lastSync) {
-      el.textContent = '● 刚刚同步 ' + clockOf(lastSync) + ' · 全部来自 /api/public/* 只读端点';
+      /* ★B3：时间一律取后端 snapshotAt（**不是**"收到响应的时刻"）；各端点快照不同就照实写区间。
+         "边缘缓存龄" = cacheAgeSeconds + 响应头 Age（Age 由后端在别名路径放行）。 */
+      var t = '● 刚刚同步 ' + clockOf(lastSync);
+      if (lastSnapMin && Math.abs(lastSync - lastSnapMin) > 1000) {
+        t = '● 数据时刻 ' + clockOf(lastSnapMin) + ' — ' + clockOf(lastSync) + '（各端点 snapshotAt 不同，取范围）';
+      } else {
+        t += lastSnapGa ? '（端点 generatedAt 兜底：本批响应没有 snapshotAt）' : '（后端 snapshotAt）';
+      }
+      if (lastAgeS) t += ' · 边缘缓存龄 ' + lastAgeS + 's';
+      el.textContent = t + ' · 全部来自 /api/public/*.js 只读别名' +
+        (lastViaOld ? '（有端点走了旧路径回落：别名 404）' : '');
     } else if (parts.length) {
       el.textContent = '● ' + NA + '（' + errShort(parts) + '）· 不补数、不编造';
     }
@@ -266,21 +412,26 @@
         '×' + (Number(c.count) || 0) + ' · ' + (c.weakPassword ? '弱口令' : (c.passwordCharClasses || '—'))];
     }) : [[NA, '/honeypot']]);
 
-    /* ④ HOLO 面板那句话：数字换成真值（三个文本节点 + 两个 .qk 原件，不新增元素） */
+    /* ④ HOLO 面板那句话：数字换成真值（三个文本节点 + 两个 .qk 原件，不新增元素）
+       ★B4：`audit` 在首屏**没有取**（它在「攻击图谱/数据统计」页才取）⇒ 这时**整句省略"护栏"分句**，
+       绝不写"读不到"（"没取"≠"取不到"）；等 audit 取到后这句自然补齐。 */
     var say = document.getElementById('holoSay');
     if (say) {
       var qk = say.querySelectorAll('.qk');
-      var guard = (pick(parts, 'audit') || {}).summary;
+      var auPart = parts.filter(function (x) { return x.path.indexOf('/audit') >= 0; })[0];
+      var auKnown = !!auPart;                                  /* 本轮到底取过 /audit 没有 */
+      var guard = okOrStale(auPart) && okOrStale(auPart).summary;
       var guardN = guard ? fmt(guard.blockedByGuard) : null;
       var hpN = hpReal(hp) ? hpReal(hp).label : null;   /* ★S3/X12：不再把 total=10000 当真值上屏 */
       var tn = textNodes(say);
       if (qk.length === 2 && tn.length >= 3) {
         if (guardN || hpN) {
-          tn[0].nodeValue = '公开只读端点汇总：护栏拦下 ';
-          qk[0].textContent = guardN ? guardN + ' 个动作' : NA;
-          tn[1].nodeValue = '，蜜罐累计事件 ';
+          tn[0].nodeValue = auKnown ? '公开只读端点汇总：护栏拦下 ' : '公开只读端点汇总：';
+          qk[0].textContent = auKnown ? (guardN ? guardN + ' 个动作' : NA) : '';
+          tn[1].nodeValue = auKnown ? '，蜜罐累计事件 ' : '蜜罐累计事件 ';
           qk[1].textContent = hpN ? hpN + ' 条' : NA;
-          tn[2].nodeValue = '。明细都在「监测中心」的大屏里。';
+          tn[2].nodeValue = auKnown ? '。明细都在「监测中心」的大屏里。'
+            : '（护栏拦截数在「攻击图谱」页取）。明细都在「监测中心」的大屏里。';
         } else {
           tn[0].nodeValue = '公开只读端点 ';
           qk[0].textContent = NA;
@@ -464,8 +615,17 @@
 
   function bindFeed(parts) {
     var al = pick(parts, 'alerts');
-    if (!al || !Array.isArray(al.list)) { window.XK_FEED = null; }
-    else {
+    var ap = parts.filter(function (x) { return x.path.indexOf('/alerts') >= 0; })[0];
+    if (!al || !Array.isArray(al.list)) {
+      window.XK_FEED = null;
+      /* ★B3/B4：生成物 `shell-script.html` 的 `renderFeed()` 预留了机读出口 `window.XK_FEED_NOTE`
+         （XK_FEED 为空时**原样使用**）⇒ 由我们写清"是限流 / 是失败但有旧值 / 真的没取到"，不再猜原因。 */
+      var note = '/api/public/alerts 本次未取到 —— 不补样例值';
+      if (ap && ap.rate) note = '/api/public/alerts 本次' + rateText(ap.rate) + ' —— 不补样例值';
+      else if (ap && ap.stale) note = '/api/public/alerts 本次未取到，显示的是上次成功数据（' + clockOf(ap.staleAt) + '）—— 不补样例值';
+      window.XK_FEED_NOTE = note;
+    } else {
+      window.XK_FEED_NOTE = '';
       var CLS = { SQL_INJECTION: 'web', BRUTE_FORCE: 'ssh', SSH: 'ssh', PORT_SCAN: 'scan', SCAN: 'scan', WEB_ATTACK: 'web', XSS: 'web', MALWARE: 'iot', IOT: 'iot', SMB: 'smb' };
       window.XK_FEED = al.list.slice().reverse().map(function (a) {
         var t = String(a.occurredAt || '').slice(11, 19) || '--:--:--';
@@ -649,7 +809,7 @@
     tl.innerHTML = '';
     var hit = STORY_CACHE[src];
     if (hit && (Date.now() - hit.at) < STORY_TTL) { renderStory(det, tl, src, hit.d); return; }
-    settle('/api/public/story?src=' + encodeURIComponent(src)).then(function (r) {
+    settle(apiPath('story', 'src=' + encodeURIComponent(src))).then(function (r) {   /* ★B3：story.js?src= */
       if (!r.ok) {
         box.querySelector('[data-story-meta]').textContent =
           '时间线读不到（/story 未取到：' + (r.err && r.err.status ? 'HTTP ' + r.err.status : '不可达') + '）';
@@ -722,7 +882,7 @@
       if (!q) { txt(note, '先选一个话题词或输入关键词'); return; }
       if (KB_CACHE[q]) { renderKb(q, KB_CACHE[q]); return; }
       txt(note, '检索「' + q + '」…（/kb 每次提问算一次 embedding 调用）');
-      settle('/api/public/kb?q=' + encodeURIComponent(q)).then(function (r) {
+      settle(apiPath('kb', 'q=' + encodeURIComponent(q))).then(function (r) {   /* ★B3：kb.js?q= */
         if (!r.ok) {
           txt(note, '读不到（/kb 未取到：' + (r.err && r.err.status ? 'HTTP ' + r.err.status : '不可达') + '）');
           return;
@@ -770,13 +930,60 @@
     txt(note, '命中 ' + (d.hitCount === undefined ? results.length : d.hitCount) + ' 条 · 后端 top-k=3（前端不分页、不轮询）· 只检索公开白名单');
   }
 
-  /* ---------------------------------------------------------------- 取数调度 */
-  var JOBS = SSR === 'home' ? ['alerts', 'audit', 'honeypot']
-    : SSR === 'monitor' ? ['alerts', 'overview', 'honeypot', 'audit', 'geo', 'webstats', 'stories']
-      : [];
+  /* ---------------------------------------------------------------- 取数调度
+     ★B4（2026-10-16 派工）：**按 tab 懒加载** —— 慢链路上"并发几个请求"直接等于墙钟时间
+     （站主家宽实测单条可达数十秒），所以首屏只取**当前可见 tab 真正要用的端点**。
+     首屏 = live 页，它可见的真值只有三格：
+       实时攻击流 / 威胁等级 / 24h 攻击时序（都来自 `alerts`）· TOP 攻击来源（`geo`）· 蜜罐捕获凭据（`honeypot`）
+       ⇒ **首屏恰好 3 个请求**（改前 7 个）。
+     其余端点**切到该 tab 才取**，取过一次就留在本会话（切回来不重复请求，由 40s 轮询续命）：
+       · graph（攻击图谱）：+`audit`（四个计数器里的"护栏拦截"要它；alerts/honeypot/geo 已在首屏）
+       · matrix（威胁矩阵）：+0 个（矩阵只用 `alerts.stats.byType`）
+       · stats（数据统计）：+`audit`（封禁榜）/ `webstats`（7×24）/ `overview`（甜甜圈）/ `stories`（故事线）
+     ⚠️ 观感取舍（按"不牺牲第一眼真数据"处理）：HOLO 汇总句里的"护栏拦下 N 个动作"随 `audit` 延后；
+        **audit 本轮未取时整句省略该分句**（不写"读不到"、不猜原因），取到后才出现。
+     ★B4b（2026-10-16 站主批准）：**首页 0 请求** —— R2 收敛删掉首页那两处绑定后，`bindOps` 只在 monitor 跑、
+       `bindHome` 是空壳 ⇒ 首页那 3 个端点取回来**没有任何消费者**（首页可见真值只剩角色字幕/导航/头像卡，都不来自 API）。
+       在"每请求几十秒"的链路上这是纯浪费。证据：`_dev/probe-slownet.mjs` 的 home-* 场景（请求数 0 + 两档视口整屏截图 +
+       确定性可见真值子集：计数器／CRT 状态行／HOLO 文案／导航项／布局盒，与改前基线逐项一致）。 */
+  var BASE_JOBS = SSR === 'monitor' ? ['alerts', 'geo', 'honeypot'] : [];
+  var PANE_EXTRA = { live: [], graph: ['audit'], matrix: [], stats: ['audit', 'webstats', 'overview', 'stories'] };
+  function activePane() {
+    var t = document.querySelector('.ops-tab.on[data-pane]');
+    return (t && t.getAttribute('data-pane')) || 'live';
+  }
+  function needJobs() {
+    var pane = activePane();
+    return BASE_JOBS.concat(PANE_EXTRA[pane] || []);
+  }
+  var partCache = {};   /* ★B4：本会话内已取到的 part（按 path）—— 渲染永远喂"全集"，免得别的 tab 掉数据 */
+  function unionParts(fresh) {
+    (fresh || []).forEach(function (p) { partCache[p.path] = p; });
+    return Object.keys(partCache).map(function (k) { return partCache[k]; });
+  }
+  function missingJobs(names) {
+    return names.filter(function (n) { return BASE_JOBS.indexOf(n) < 0 && !partCache[apiPath(n)]; });
+  }
   var lastParts = null;
   function render(parts) {
-    if (parts.some(function (p) { return p.ok; })) lastSync = Date.now();
+    /* ★B3：时间口径改为**后端 snapshotAt**（契约 §4 红线）——
+       不许再用 Date.now()（那是"收到响应的时刻"，被 CF 缓存后会假装刚更新）。
+       snapshotAt 缺失（例如回落旧路径）⇒ 退到端点自述的 generatedAt；两者都没有就**保留上一轮的时刻**，不编。 */
+    var snaps = [], ages = [], anyGa = false, anyOld = false;
+    parts.forEach(function (p) {
+      if (!p.ok) return;
+      var s = (p.fresh && p.fresh.snap) || snapOfData(p.d);
+      if (s) { snaps.push(s); if (!(p.fresh && p.fresh.snap)) anyGa = true; }   /* 无 snapshotAt ⇒ 用了 generatedAt 兜底 */
+      if (p.viaOld) anyOld = true;
+      if (p.fresh && p.fresh.ageS !== null && p.fresh.ageS !== undefined) ages.push(p.fresh.ageS);
+    });
+    if (snaps.length) {
+      lastSync = Math.max.apply(null, snaps);
+      lastSnapMin = Math.min.apply(null, snaps);
+      lastAgeS = ages.length ? Math.max.apply(null, ages) : null;   /* 显示最旧那一份的真实年龄（诚实优先） */
+      lastSnapGa = anyGa;                                           /* ★B3：兜底来源要在同步行里说明 */
+      lastViaOld = anyOld;                                          /* ★B3：走了旧路径回落也要说明 */
+    }
     lastParts = parts;
     staleUsed = {};                              /* ★B2：每轮渲染重新记账（本轮哪些格子用了上次数据） */
     /* ★B2：容错 —— 任何一格渲染抛异常都不许连累整屏（否则后面的卡与"上次数据"标注全都不会执行）。
@@ -784,12 +991,12 @@
     try {
       /* ★Q-2（2026-10-15 站主）：主页 CRT 那块 SEC-LAB 状态卡已删 ⇒ 这里的 bindCrt 一并摘掉 */
       if (SSR === 'monitor') bindOps(parts);
-      if (SSR === 'home') bindHome(parts);   /* ★R2：CRT 事件行 + 值班便签（主页 3 端点复用，零新增请求） */
+      if (SSR === 'home') bindHome(parts);   /* R2 收敛：主页两处绑定已撤（空壳，见 bindHome） */
     } catch (e) {
       window.__xkBindErr = (SSR || '?') + ': ' + String((e && e.message) || e);
     }
-    markStale();                                 /* ★B2：给用到"上次数据"的卡角补一行小字 */
-    if (SSR === 'monitor') bindSync(parts);      /* ★B2：此刻 staleUsed 已记全 —— 用最终口径重写同步行 */
+    markStale(parts);                            /* ★B2/B3：卡角小字（429 优先，其次"上次数据"） */
+    if (SSR === 'monitor') bindSync(parts);      /* ★B2/B3：此刻记账已全 —— 用最终口径重写同步行 */
   }
   /* 服务端"冷缓存"时会返回一版"这次没数据"的降级响应（app.js 里记录的同一个现象：
      /api/public/alerts 冷缓存下 stats24h.available=false，同一 URL 过一会儿再取就是真值）。
@@ -810,31 +1017,77 @@
   }
 
   function load() {
-    if (!JOBS.length || document.hidden) return Promise.resolve();
-    return Promise.all(JOBS.map(function (n) { return settle('/api/public/' + n); })).then(function (parts) {
-      var retry = parts.filter(degraded);
-      if (!retry.length) { render(parts); return parts; }
+    if (!BASE_JOBS.length || document.hidden) return Promise.resolve();
+    /* ★B3：429 冷却期内**不发任何请求**（省额度；否则继续吃 20 次/分的限额，越刷越黑） */
+    if (Date.now() < rateHoldUntil) {
+      setSyncState('被限流冷却中 · ' + Math.ceil((rateHoldUntil - Date.now()) / 1000) + ' 秒后可重试（本轮不发请求）');
+      return Promise.resolve();
+    }
+    /* ★B3：一律取 `.js` 别名（可被 CF 缓存 ⇒ 命中时不回源、不吃限流）
+       ★B4：只取**当前 tab 需要**的端点（首屏 live = 3 个） */
+    return Promise.all(needJobs().map(function (n) { return settle(apiPath(n)); })).then(function (fresh) {
+      var rates = fresh.filter(function (p) { return !!p.rate; });
+      if (rates.length) { rateHoldUntil = Date.now() + rates[0].rate.s * 1000; }   /* 记冷却截止 */
+      var retry = fresh.filter(degraded);
+      /* ★B3：有 429 ⇒ **不补请求**（站主指示）；没有 429 时才走既有的"降级补一次" */
+      if (rates.length || !retry.length) { render(unionParts(fresh)); return fresh; }
       setSyncState('重试中… （' + retry.length + ' 个端点本次降级，正在补一次请求）');   /* ★B2：与"读不到"可分辨 */
       return new Promise(function (r) { setTimeout(r, 1500); })
         .then(function () { return Promise.all(retry.map(function (p) { return settle(p.path); })); })
         .then(function (again) {
           again.forEach(function (p2) {
             if (p2.ok && p2.d && !degraded(p2)) {
-              var t = parts.filter(function (x) { return x.path === p2.path; })[0];
-              if (t) { t.ok = true; t.d = p2.d; t.err = null; t.retried = true; }
+              var t = fresh.filter(function (x) { return x.path === p2.path; })[0];
+              if (t) { t.ok = true; t.d = p2.d; t.err = null; t.retried = true; t.fresh = p2.fresh; }
             }
           });
-          render(parts); return parts;
-        }).catch(function () { render(parts); return parts; });
+          render(unionParts(fresh)); return fresh;
+        }).catch(function () { render(unionParts(fresh)); return fresh; });
     });
+  }
+  /* ★B4：切到某 tab 时补取它独有的端点（已取过的不再请求；取到后立刻重渲染）。
+     为什么"取过就不再请求"：CF 边缘 TTL=45s、站点轮询 40s ⇒ 切回来的数据最多 40s 旧，
+     而每多取一次在慢链路上就是几秒~几十秒的等待；省下来的请求额度留给真正的新数据。 */
+  function loadPane(pane) {
+    if (!BASE_JOBS.length || document.hidden) return Promise.resolve();
+    var jobs = missingJobs(PANE_EXTRA[pane] || []);
+    if (!jobs.length) { render(unionParts([])); return Promise.resolve(); }
+    if (Date.now() < rateHoldUntil) {
+      setSyncState('被限流冷却中 · ' + Math.ceil((rateHoldUntil - Date.now()) / 1000) + ' 秒后可重试（本轮不发请求）');
+      return Promise.resolve();
+    }
+    return Promise.all(jobs.map(function (n) { return settle(apiPath(n)); })).then(function (fresh) {
+      var rates = fresh.filter(function (p) { return !!p.rate; });
+      if (rates.length) { rateHoldUntil = Date.now() + rates[0].rate.s * 1000; }
+      render(unionParts(fresh));
+      return fresh;
+    });
+  }
+  /* ★B4：切 tab 的钩子 —— 监听 `#opsTabs` 的 class 变化（点击 / 方向键 / `#hash` 深链都会改 class），
+     不碰生成物里的 tab 逻辑；去抖 30ms（连按方向键只取最后一次）。 */
+  function watchTabs() {
+    var nav = document.getElementById('opsTabs');
+    if (!nav) return;
+    var last = activePane(), pending = null;
+    var obs = new MutationObserver(function () {
+      var now = activePane();
+      if (now === last) return;
+      last = now;
+      if (pending) clearTimeout(pending);
+      pending = setTimeout(function () { loadPane(now); }, 30);
+    });
+    obs.observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    /* 深链（/alerts/#stats 之类）在页面脚本里是"点一下 tab"实现的，class 变化可能早于我这里注册 ⇒ 补一次检查 */
+    setTimeout(function () { var now = activePane(); if (now !== last) { last = now; loadPane(now); } }, 400);
   }
   /* ★Q-2：CRT 那一行的 "sync Ns" 靠 bindCrt 往上走 —— 那一行随状态卡一起删了，
      这个 5s 定时器也一并摘掉（主页不再有这块 DOM，留着就是空转）。 */
-  if (JOBS.length) {
+  if (BASE_JOBS.length) {
     load();
     setInterval(load, REFRESH);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   }
+  if (SSR === 'monitor') watchTabs();   /* ★B4：切 tab 才取该 tab 独有的端点 */
   /* ★T22：/ai/ 不轮询（有 embedding 成本）—— 只在用户点话题词 / 按 Enter 时请求一次 */
   if (SSR === 'ai') bindKb();
 })();
