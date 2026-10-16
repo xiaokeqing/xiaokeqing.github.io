@@ -1991,8 +1991,24 @@
   };
 
   /** 用真实音频的播放时钟推进 mouthValue（包络是离线算好的 10ms 栅格，客户端零算力） */
+  /* 口型取证出口的开关：**惰性判定一次，默认关**（与 window.__xkSm 同口径：只读、取证才开）。
+     打开方式（二选一）：URL 加 `?xk-voice-diag=1`，或页面里先设 `window.__xkVoiceOn = true`。
+     为什么要它：口型的"逻辑对齐"是构造性的（见下方契约），但**渲染出来的口型**只能
+     用"音频时刻 ↔ 口型值 ↔ 当前句 id"三件套去端到端测（渲染栅格 / 动画帧对齐）。
+     不打开时本函数不做任何额外工作（零开销）。 */
+  var forensicVoice = null;
+  function forensicVoiceOn() {
+    if (forensicVoice === null) {
+      forensicVoice = !!(global.__xkVoiceOn ||
+        (global.location && /[?&]xk-voice-diag=1/.test(global.location.search || '')));
+    }
+    return forensicVoice;
+  }
   function voiceMouthTick() {
-    if (!VOICE.speaking || !VOICE.audio) { return VOICE.mouthValue; }
+    if (!VOICE.speaking || !VOICE.audio) {
+      if (forensicVoiceOn()) { publishVoiceDiag(0, 0); }
+      return VOICE.mouthValue;
+    }
     var env = VOICE.envelope;
     if (env && env.values && env.values.length) {
       var hop = env.hopMs || 10;
@@ -2008,7 +2024,23 @@
         ? Math.max(0.12, contracted) : contracted;
     }
     if (VOICE.audio.ended || VOICE.audio.paused) { VOICE.speaking = false; VOICE.mouthValue = 0; }
+    if (forensicVoiceOn()) {
+      publishVoiceDiag((VOICE.audio && VOICE.audio.currentTime) || 0, VOICE.mouthValue);
+    }
     return VOICE.mouthValue;
+  }
+
+  /* 复用同一个对象，避免逐帧新建造成 GC 抖动；字段含义：
+     t = 音频播放时刻(秒) ｜ mouth = 本次算出的口型值 ｜ clip = 正在播的句 id ｜ hopMs = 包络栅格 ｜
+     speaking = 是否在说话 ｜ at = 发布时刻(ms)，供探针对齐 rAF 时间戳 */
+  function publishVoiceDiag(t, mouth) {
+    var d = global.__xkVoice || (global.__xkVoice = { t: 0, mouth: 0, clip: null, hopMs: null, speaking: false, at: 0 });
+    d.t = t;
+    d.mouth = mouth;
+    d.clip = (VOICE.line && (VOICE.line.id || VOICE.line.label)) || null;
+    d.hopMs = (VOICE.envelope && VOICE.envelope.hopMs) || null;
+    d.speaking = !!VOICE.speaking;
+    d.at = (global.performance && global.performance.now) ? global.performance.now() : Date.now();
   }
 
   /* ============================================================ 状态机
