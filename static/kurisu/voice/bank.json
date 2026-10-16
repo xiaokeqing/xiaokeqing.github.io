@@ -5204,14 +5204,14 @@
    "source": "synth",
    "audio": "kurisu/voice/synth/greet_welcome.m4a",
    "envelope": "kurisu/voice/synth/greet_welcome.envelope.json",
-   "seconds": 10.522,
+   "seconds": 10.032,
    "audioBytes": 61900,
    "envelopeValues": 1004,
    "audioSources": {
     "m4a": "kurisu/voice/synth/greet_welcome.m4a",
     "webm": "kurisu/voice/synth/greet_welcome.webm"
    },
-   "durationMs": 10522,
+   "durationMs": 10032,
    "sha256": {
     "m4a": "3c9be7437c9500806601b413e59491355da01a230309662880446d4ce9824cbf",
     "webm": "50e0d38164966eed2fab8de0b74f9455937e8d54ea3cf98e0e3cb620265d4564"
@@ -5236,14 +5236,14 @@
    "source": "synth",
    "audio": "kurisu/voice/synth/greet_welcome_back.m4a",
    "envelope": "kurisu/voice/synth/greet_welcome_back.envelope.json",
-   "seconds": 5.491,
+   "seconds": 4.962,
    "audioBytes": 30920,
    "envelopeValues": 497,
    "audioSources": {
     "m4a": "kurisu/voice/synth/greet_welcome_back.m4a",
     "webm": "kurisu/voice/synth/greet_welcome_back.webm"
    },
-   "durationMs": 5491,
+   "durationMs": 4962,
    "sha256": {
     "m4a": "efeaa364697e56ea55ddcd357cafe631f78ed36a72d73438c9105d7df452d0b9",
     "webm": "d3450c9ce96701ffd1893feb2cfeeeb5db1d5ddff2902ca9ae99e0a4648ea576"
