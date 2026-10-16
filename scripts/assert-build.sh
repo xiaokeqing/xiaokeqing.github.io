@@ -152,6 +152,13 @@ else no "找不到 static/images/bg.jpg"; fi
 # 【2026-10-14 改】上限 60MB → 96MiB：37 个剪辑的 medium 档（48.15MB）已入库，
 # 主页最常用几段还要另发一档 hi（分辨率是 medium 的 2 倍，避免在 586px 宽的 CRT 屏里
 # 把 134px 一帧的图放大 2.8 倍发虚）。首屏预算（第 ⑩ 条）不动，仍严 ≤1.5MB。
+#   ★2026-10-16 口径标注（接手窗口）：**两个数不是一个数，别再混用** ——
+#     · 本文件第 ⑩ 条 =「**资产自报口径**」：只读 static/kurisu/manifest.json 的自我申报，
+#       判据 `≤ 1572864 B = 1536KB`（就是本条下方那句 `-le 1572864`，**判定逻辑一字未改**）；
+#     · _dev/gate-firstscreen.mjs =「**整页真实加载口径**」：真浏览器 CDP 采集 + 硬拦截，
+#       其默认 `BUDGET = 1689600 B = 1650KB`（该文件的用法行/注释此前写的 1572864、1600KB
+#       都是陈旧值，已按实际值更正）。
+#     · 文档里凡写"首屏预算 1536 / 1600 / 1650KB"，**必须指明是哪一个口径**。
 # 【2026-10-16 改】96MiB → **160MiB**（站主口径）：原声库可发布集 46.2MB
 # （dist 968 个 m4a/webm + envelope 484 个 + 3 个 bank 文件，见 docs/台词库扩容与合成交付-20261015.md）
 # 要随发布一起上，96MiB 会被顶爆。同时**给每一路分片各自的上限**，防以后某一路失控靠总量兜着：
@@ -186,7 +193,7 @@ else no "找不到 static/kurisu（角色资产缺失）"; fi
 # ⚠️ 这一条**只读 manifest 的自我申报**（budgets.firstScreenBytes = 角色 boot/poster/头像静帧），
 #    它**不测页面真实加载**。真实首屏（含 CSS/JS/bg/desk/图集）由 `_dev/gate-firstscreen.mjs`
 #    用真浏览器 CDP 采集并**硬拦截**（超预算即退出码非 0）。两条口径不要混为一谈。
-head1 "⑩ 首屏角色资源（manifest 自报，非真实加载）≤ 1.5MB"
+head1 "⑩ 首屏角色资源（资产自报口径：只读 manifest 自报，非真实加载）判据 ≤ 1536KB"
 if [ -f static/kurisu/manifest.json ]; then
   # 【稳健写法】优先读 manifest 自报；字段名变了/没有就按"首屏档文件"名规则实算（boot/poster/static + 头像 idle）
   PYBIN=$(command -v python3 || command -v python || echo python); FS=$($PYBIN -c "
@@ -206,9 +213,9 @@ except Exception:
   if [ "$FS" = "-1" ] || [ -z "$FS" ]; then
     # 兜底实算：首屏档 = *.boot.webp + *.poster.webp + avatar/*.static.webp + avatar/normal.idle.webp
     FS=$( { find static/kurisu -type f \( -name 'idle.boot.webp' -o -name 'idle.intro.webp' -o -name 'idle.poster.webp' -o -name 'normal.static.webp' -o -name 'normal.idle.webp' \) -printf '%s\n' 2>/dev/null | awk '{s+=$1} END {print s+0}'; } )
-    ok "manifest 未自报，按文件规则实算首屏 $((FS/1024))KB（预算 1536KB）"
+    ok "manifest 未自报，按文件规则实算首屏 $((FS/1024))KB（资产自报口径预算 1536KB）"
   fi
-  if [ "${FS:-0}" -le 1572864 ]; then ok "首屏 $((FS/1024))KB ≤ 1536KB"; else no "首屏 $((FS/1024))KB 超预算 1536KB"; fi
+  if [ "${FS:-0}" -le 1572864 ]; then ok "首屏 $((FS/1024))KB ≤ 1536KB（资产自报口径）"; else no "首屏 $((FS/1024))KB 超预算 1536KB（资产自报口径）"; fi
 else no "找不到 static/kurisu/manifest.json"; fi
 
 # ---------- ⑪ 播放器必须保留降级与暂停逻辑（防以后被简化掉）----------

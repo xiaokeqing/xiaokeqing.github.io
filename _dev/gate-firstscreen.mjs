@@ -1,5 +1,5 @@
 /* 逐页产物验收 + **首屏字节硬门禁**（_dev/ 本地工具，零第三方依赖）
-   node _dev/gate-firstscreen.mjs [--budget=1572864] [--static] [--prefix=pages] [--cold]
+   node _dev/gate-firstscreen.mjs [--budget=1689600] [--static] [--prefix=pages] [--cold]
    node _dev/gate-firstscreen.mjs --cold --pages=ai      # 只量冷缓存 /ai/（专测，见下）
 
    ★★ 口径警告（2026-10-16 起，别拿错数字当结论）★★
@@ -13,7 +13,7 @@
    做什么：
      ① 起本地 http 服务（只读 public/，不碰产物、不用 hugo server，避免 livereload 污染断言）
      ② CDP 连 Edge headless 1280×900，逐页导航：收 Network 响应 + 控制台报错
-     ③ **门禁**：导航后 1.5s 内请求到的**全部资产**（图片/字体/样式/脚本）字节 ≤ budget（默认 1,638,400 B = 1600KB）
+     ③ **门禁**：导航后 1.5s 内请求到的**全部资产**（图片/字体/样式/脚本）字节 ≤ budget（**默认 1,689,600 B = 1650KB**，即代码里 BUDGET 的实际默认值；`--budget=` 可覆盖）
         任一页超标 → 打印超标文件清单 + **退出码 1**（这就是"真门禁"，不是报告）
      ④ 产物自查：正文长度 / 关键标记 / 站外资源引用 / 本地引用是否落到真实文件
      ⑤ **四页初始屏断言（2026-10-14 第四批口径 + 2026-10-15 T27 六页→四页）**：每页初始 `.on` 必须落在它自己那一屏
@@ -43,9 +43,14 @@ const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
 const PORT = 8797, CDP = 9344, VW = 1280, VH = 900;
 const argOf = (k) => { const a = process.argv.find((x) => x.startsWith('--' + k + '=')); return a ? a.split('=')[1] : null; };
 const BUDGET = Number(argOf('budget') || 1689600);
-/* ↑ 预算 1536KB → 1600KB（站主 2026-10-14 第四批裁定①）：
-   1536KB 是上一轮**自己定的**数，不是用户要求；用户要的是"和 demo 一模一样"。
-   主页实测 1569KB，构成全是 demo 自己的素材（opening.hi 1004 + 垫板原图 373 + desk/lab/ambient 179 + favicon 13）。
+/* ↑ **本行是「整页真实加载口径」的唯一生效值：1,689,600 B = 1650KB**。
+   ★2026-10-16 口径标注（接手窗口）：本注释此前写"→ 1600KB"、本文件用法行此前写 `--budget=1572864`，
+   两处都与代码默认值**不符**，已按实际值更正；**常量本身一字未改**。
+   历史：1536KB 是上一轮自己定的数（站主 2026-10-14 第四批裁定①改宽），主页实测 1569KB，
+   构成全是 demo 自己的素材（opening.hi 1004 + 垫板原图 373 + desk/lab/ambient 179 + favicon 13）。
+   ★ 与 `scripts/assert-build.sh` 第 ⑩ 条**不是同一个数**：那条是「资产自报口径」
+     （只读 manifest.json 自报，判据 1,572,864 B = 1536KB）。任何文档写"预算 1536/1600/1650KB"
+     都必须指明是哪一个口径。
    ★ 只改这个常量，**不动任何素材**。 */
 const PREFIX = argOf('prefix') || 'pages';
 const STATIC_ONLY = process.argv.includes('--static');

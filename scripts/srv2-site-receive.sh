@@ -174,8 +174,15 @@ ok "index.html=$INDEX_SZ B；文件数 $(find "$STAGING" -type f | wc -l)"
 #   钉到 LC_ALL=C（find/sort/xargs 全带）后 = 路径字节序 + 逐文件 sha256 + 对整段文本再 sha256，
 #   跨平台可复现（发送侧 scripts/publish-site-to-srv2.ps1 的 Get-TreeHash 与这里逐字节同口径）。
 #   行为不变：仍然只比"整树内容是否完全一致"，只是哈希取值本身变了（不对外，无兼容问题）。
+#   ★2026-10-16（接手窗口）：**排除顶层 `./index.json`**。
+#   为什么必须排除：发送侧 scripts/publish-site-to-srv2.ps1 早已把它列进 `$TreeNondet`
+#   （"每次构建都会变"⇒ 逐文件比对时忽略，因为 layouts/index.json 模板里带 generatedAt），
+#   但接收侧这里原来**把它算进整树哈希** ⇒ 两次构建的整树哈希**永不可能相等** ⇒
+#   `RESULT=no-change` 分支**实际不可达**、每次发布都白切换一次（发送侧那句
+#   "接收侧会跳过切换"因此是**误导**）。两边口径一致后，"无变化"才真正可达。
+#   只排除**顶层** `./index.json`（Hugo 的分节/分页产物也可能叫 index.json，那些必须照算）。
 tree_hash() { # $1 = 产物根目录
-  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f ! -path './index.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
 }
 # 供发送侧核对用：把两个哈希打成机器可读行（纯追加，不影响上面的人类可读日志）
 emit_hashes() { # $1 = 线上树哈希  $2 = 待发布树哈希

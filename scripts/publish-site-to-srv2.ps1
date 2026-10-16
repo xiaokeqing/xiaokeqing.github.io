@@ -1,6 +1,14 @@
 ﻿<#
   publish-site-to-srv2.ps1 —— 把博客整站的 Hugo 构建产物发布到 srv2（经 SSH），原子切换。
 
+  ★★ 编码铁律（2026-10-16 实测踩过）★★
+    本文件**必须存成 UTF-8 with BOM**（首字节 EF BB BF）。PowerShell 5.1 读**无 BOM** 的
+    中文 .ps1 会按 GBK 解码 ⇒ 中文注释/字符串变成乱码字节，可能把引号/花括号配对打破 ⇒
+    直接 **ParserError**，脚本再也跑不起来。**任何工具化编辑（edit 工具、脚本重写）之后**，
+    必须复查首字节是不是 EF BB BF，并跑一次语法自检：
+      $e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile(
+        'F:\7AAA\AI\blog\scripts\publish-site-to-srv2.ps1', [ref]$null, [ref]$e); $e.Count
+
   为什么需要它：
     站点现在托管在 srv2（宿主 nginx，回环 127.0.0.1:18080，对外只经 Cloudflare 命名隧道），
     不再是 GitHub Pages。发布要「先传完、校验完，再一次性露面」，避免半成品对外。
@@ -69,9 +77,16 @@ function Invoke-Checked {
     # 注意：PS 5.1 在 $ErrorActionPreference='Stop' 下，原生命令往 stderr 写一行
     # （例如 `git worktree add` 的 "Preparing worktree..."）就会抛 NativeCommandError，
     # 让整个脚本看似失败、进程退出码变 1。这里临时放宽，只看退出码。
+    # ★2026-10-16（接手窗口）：只加 `2>&1` **不够** —— 实测 `-DryRun` 的 stderr 仍有 **80 行**
+    #   （首行 `git.exe : Preparing worktree (detached HEAD …)`，报错位置就指在这一行），
+    #   即原生命令的 stderr 被 PS 包成 ErrorRecord 后**仍然落到调用方的 stderr**；
+    #   调用方一旦用 `... 2>&1 | Select-Object ...` 就会把它变成自己的 NativeCommandError
+    #   ⇒ 上层报"退出码 1"，而**本脚本自身退出码是 0**（实测 CHILD_EXIT=0）。
+    #   ⇒ 这里**显式逐行写到 Host（stdout）**，成功路径从此不往 stderr 写任何东西。
+    #   下一行的退出码判定（$LASTEXITCODE）**一字未改**。
     $eap = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
-    try { & $Exe @CmdArgs } finally { $ErrorActionPreference = $eap }
+    try { & $Exe @CmdArgs 2>&1 | ForEach-Object { Write-Host "      $_" } } finally { $ErrorActionPreference = $eap }
     if ($LASTEXITCODE -ne 0) { Die "$What 失败（$Exe 退出码 $LASTEXITCODE）" }
 }
 
@@ -316,7 +331,10 @@ if ($CheckUrl) {
 }
 
 if (-not $KeepRemoteTarball) {
-    & ssh -o BatchMode=yes $SshHost "rm -f $RemoteTar" | Out-Null
+    # ★2026-10-16：这条是尾部**未包裹**的 ssh 原生命令。EAP=Stop 下它一旦往 stderr 写字就会抛
+    # NativeCommandError，从而在 `exit 0` **之前**中止（表现就是"假失败退出码 1"）。
+    # `2>&1` 并流后仍只丢弃输出，**不改任何判定**。
+    & ssh -o BatchMode=yes $SshHost "rm -f $RemoteTar" 2>&1 | Out-Null
 }
 
 Write-Host "`n========================================" -ForegroundColor Green
@@ -328,9 +346,33 @@ Write-Host '========================================' -ForegroundColor Green
 
 if ($WorktreeAdded) {
     Write-Host "`n[清理] 移除临时 worktree：$WorkDir" -ForegroundColor Cyan
-    & git -C $BlogDir worktree remove --force $WorkDir
-    & git -C $BlogDir worktree prune
+    # ★2026-10-16：这两条同属"**未包裹**的原生命令"（清理段不属于发布主流程）。
+    #   · `git worktree remove --force` 对**已经被删掉**的目录会返回 128（实测），且可能往
+    #     stderr 写一行 ⇒ EAP=Stop 下抛 NativeCommandError，脚本在 `exit 0` 之前中止；
+    #   · 与 Invoke-Checked 同法：临时放宽 EAP + 吞掉 stderr，**不作任何结果判定**（清理失败
+    #     不影响发布结论，真正的发布判定在这之前已经完成）。
+    $eapClean = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & git -C $BlogDir worktree remove --force $WorkDir 2>$null
+        & git -C $BlogDir worktree prune 2>$null
+    } finally { $ErrorActionPreference = $eapClean }
     Ok '已清理临时 worktree'
 }
 
+# ★2026-10-16「假失败退出码 1」的完整口径（接手窗口实测，写在这里备查）：
+#   · 本脚本**成功路径自身返回 0**：`-DryRun`（干净调用、未合并 stderr）= 0；把尾部
+#     `ssh rm -f` + 两条 git 清理**单独**在 EAP=Stop 下跑 + `exit 0` = 0；原生命令写 stderr
+#     之后 `exit 0` = 0（前台与后台任务都试过，都是 0）。
+#   · 所以之前两次"发布真的成功、却报退出码 1"**不是本脚本的退出码**；最可能来自**调用方式**：
+#     `powershell -File ... 2>&1 | Select-Object ...` 会把子进程 stderr 变成**调用方**的
+#     NativeCommandError，被上层记成 1。**这条我没能独立复现，属"最可能解释"**，不是已证结论。
+#   · 本轮已把成功路径的子进程 stderr 全部并流（三处：Invoke-Checked、尾部 `ssh rm -f`、
+#     worktree 清理段）⇒ 上面那种调用写法也**不会再看到本脚本产生的 stderr**。
+#   · **建议调用方式**：`powershell -File ... *> 日志`（注意：**别**在 `-File` 后面直接写
+#     `*>`，那会被当成脚本参数并报 RedirectionNotSupported —— 要用变量捕获再落盘，或在
+#     外层 shell 里重定向），或 `| Out-Host`；不要用 `2>&1 | Select-Object`。
+#   · **已知遗留（本轮未改，属行为变更，需单独派工）**：`-DryRun` 在 `4/6` 之后直接 `exit 0`，
+#     **不会**执行上面的 worktree 清理 ⇒ 每次 `-DryRun` 都留下一个临时 worktree 注册与一个
+#     %TEMP% 大包（实测：本次留下 xk-site-publish-20261016-210142）。
 exit 0
