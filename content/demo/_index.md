@@ -172,6 +172,6 @@ comments: false
 ---
 
 <div class="demo-back">
-    想看它是怎么做出来的 → <a href="/projects/">项目介绍</a><br>
+    想看它是怎么做出来的 → <a href="/posts/">实现记录（笔记）</a><br>
     想提问或查文档 → <a href="/ai/">AI 问答</a>
 </div>

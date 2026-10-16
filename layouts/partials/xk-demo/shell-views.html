@@ -94,7 +94,7 @@
         <div class="ops-tab" data-pane="matrix">
           <div class="mod"><div class="mod-hd"><span class="led"></span>告警类型矩阵 · 每格是服务端给的类型标签<span class="tag">/alerts · stats.byType</span></div>
             <div class="mod-bd"><div class="attk" id="attkGrid"></div>
-              <div class="attk-lg"><span><i class="lg warn"></i>hot · 有命中</span><span><i class="lg red"></i>fire · 命中 ≥ 峰值的 60%</span><span>hover / 键盘聚焦格子：看占比与最近一条真实告警</span></div>
+              <div class="attk-lg" id="attkLg"><span><i class="lg warn"></i>hot · 有命中</span><span><i class="lg red"></i>fire · 命中 ≥ 峰值的 60%</span><span class="tt-cur" id="attkLgMsg" aria-live="polite">hover / 键盘聚焦格子：这一行显示占比与最近一条真实告警</span></div>
               <p class="attk-note">每格的数字是本站 <code class="k">/api/public/alerts</code> 的 <code class="k">stats.byType</code> 真实计数（类型标签由服务端给，前端不编 ATT&amp;CK 映射）；命中越多颜色越热。取不到就把整块标成读不到，不补样例值。</p></div>
           </div>
         </div>

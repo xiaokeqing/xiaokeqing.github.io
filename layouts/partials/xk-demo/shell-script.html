@@ -143,12 +143,10 @@ function drawSpark(){
   axes();
   if(RM || sparkDone){ area(); line(1); marks(1); return; }
   sparkDone = true;
-  const t0 = performance.now(), dur = 1100;
-  (function step(t){
-    const k = Math.min(1,(t-t0)/dur);
-    x.clearRect(0,0,w,h); axes(); area(); line(k); marks(k);
-    if(k<1) requestAnimationFrame(step);
-  })(t0);
+  /* ★R2 收敛（2026-10-16 主窗口裁决）：去掉 1100ms 渐显 —— 直接画完成态。
+     理由：渐显让 24h 图晚 1.1 秒才成型，属"只是更花"；站主核心诉求是"数据出得来、别慢"。
+     画法与非动画分支（RM / 已画过）逐字一致：area(); line(1); marks(1); 行为零差异。 */
+  area(); line(1); marks(1);
 }
 window.__xkSpark = drawSpark;
 drawSpark();
@@ -248,17 +246,31 @@ function renderTypes(){
   }
   const total = rows.reduce((s,r)=>s + (Number(r.count)||0), 0) || 1;
   const max = Math.max.apply(null, rows.map(r=>Number(r.count)||0)) || 1;
+  /* ★R2 收敛（2026-10-16 站主批）：不再给每格挂浮层，改为把摘要写进图例那一行（#attkLgMsg）。
+     数据来源不变（window.XK_TYPES + window.XK_FEED），仍然零新增请求；浮层撤掉后遮挡与窄屏溢出一起消失。 */
+  const lgMsg = document.getElementById('attkLgMsg');
+  const LG_DEFAULT = lgMsg ? lgMsg.textContent : '';
+  function showTip(cell, share, hit, last){
+    if(!lgMsg) return;
+    const b = cell.querySelector('b');
+    lgMsg.textContent = (b ? b.textContent : '') + ' · 占本窗口 ' + share + '%（' +
+      hit.toLocaleString('en-US') + ' 次）' + (last ? ' · 最近：' + last : '');
+  }
+  function clearTip(){ if(lgMsg){ lgMsg.textContent = LG_DEFAULT; } }
   rows.forEach((r,i)=>{
     const hit = Number(r.count) || 0;
     const cell = document.createElement('div');
     cell.className = 'cell' + (hit/max >= .6 ? ' fire' : hit>0 ? ' hot' : '');
-    cell.tabIndex = 0;                                  /* ★R2：键盘聚焦也能看摘要 */
+    cell.tabIndex = 0;                                  /* 键盘聚焦也能看摘要（写进图例行） */
     const share = Math.round(hit / total * 100);
     const last = attkTip(r.label || r.key);
     cell.innerHTML = `<b>${xkEsc(r.label || r.key || '—')}</b><span class="taid">${xkEsc(r.key || '')}</span>` +
-      `<div class="num">${hit.toLocaleString('en-US')}</div>` +
-      `<div class="tip" role="tooltip">占本窗口 <span class="tt-share">${share}%</span>（${hit.toLocaleString('en-US')} 次）` +
-      (last ? `<br>最近：${xkEsc(last)}` : '') + `</div>`;   /* ★R2：hover 摘要，数据零新增请求 */
+      `<div class="num">${hit.toLocaleString('en-US')}</div>`;
+    const fire = function(){ showTip(cell, share, hit, last); };
+    cell.addEventListener('mouseenter', fire);
+    cell.addEventListener('focus', fire);
+    cell.addEventListener('mouseleave', clearTip);
+    cell.addEventListener('blur', clearTip);
     attkGrid.appendChild(cell);
   });
 }
@@ -274,13 +286,10 @@ function runCounters(){
     el.classList && el.classList.remove('sk');          /* ★R2：写实值的同时摘掉骨架条 */
     const raw = el.dataset.count, T = Number(raw);
     if(raw === '' || raw === undefined || !isFinite(T)){ el.textContent = '读不到'; return; }
-    if(RM){ el.textContent = T.toLocaleString('en-US'); return; }
-    const t0 = performance.now(), dur = 900;
-    (function step(t){
-      const k = Math.min(1,(t-t0)/dur);
-      el.textContent = Math.round(T*(1-Math.pow(1-k,3))).toLocaleString('en-US');
-      if(k<1) requestAnimationFrame(step);
-    })(t0);
+    /* ★R2 收敛（2026-10-16 站主批）：去掉 count-up 数字滚动 —— 真值直接写。
+       判据：更清楚=好，只是更花=删；数字从 0 滚上去不增加任何信息量。
+       注意：RM（减少动效）之外的普通路径与 RM 现在同一条；"读不到"分支在上面原样保留。 */
+    el.textContent = T.toLocaleString('en-US');
   });
 }
 const CELL = 132, COLS = 8;
@@ -643,7 +652,12 @@ const XK_STATE_LABEL = {
   'model':['模型研判'], 'rule-based':['规则解析（拒答）'],
   'input-insufficient':['依据不足，不做定性'], 'no-retrieval':['未检索到依据，不给结论'],
   'retrieval-failed':['检索不可用，未生成'], 'model-failed':['模型不可用，未生成'],
-  'injection-blocked':['命中提示注入护栏']
+  'injection-blocked':['命中提示注入护栏'],
+  /* ★2026-10-16 状态语义分层（与 XK_STATE_CLS 一一对应，档位必须同源）：
+     no-live-data = 这个数没有实时数据源（例如公开面本来就不取实时值）⇒ 写"没有实时数据源"；
+     no-kb-basis  = 知识库里确实没有这条依据（检索成功但命中 0）⇒ 写"知识库无依据"；
+     二者都**不等于**"取不到"（端点失败才写"读不到"）。 */
+  'no-live-data':['没有实时数据源'], 'no-kb-basis':['知识库无依据']
 };
 function xkAskEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function xkInline(s){
@@ -716,7 +730,10 @@ function xkCites(d){
 /* ★R2：状态徽标分档（颜色映射在 CSS，复用 ok/warn/bad 既有状态色，不新增色值） */
 const XK_STATE_CLS = {
   'model':'st-ok', 'rule-based':'st-warn', 'input-insufficient':'st-warn', 'no-retrieval':'st-warn',
-  'retrieval-failed':'st-bad', 'model-failed':'st-bad', 'injection-blocked':'st-bad'
+  'retrieval-failed':'st-bad', 'model-failed':'st-bad', 'injection-blocked':'st-bad',
+  /* ★2026-10-16 状态语义分层：把"没有实时数据源"与"有数据但这题没依据"从"取不到"里分出来，
+     否则页面上会出现"0 / 读不到 / 无数据"三种说法混用。同一状态在任何页面都必须同一档。 */
+  'no-live-data':'st-warn', 'no-kb-basis':'st-warn'
 };
 function xkRenderAnswer(el, d){
   const st = d.state || '';

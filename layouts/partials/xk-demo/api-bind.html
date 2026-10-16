@@ -23,7 +23,11 @@
   var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
   var mainEl = document.querySelector('main[data-xk-ssr]');
   var SSR = mainEl ? mainEl.getAttribute('data-xk-ssr') : '';
-  var TIMEOUT = 12000;   /* 单请求上限（站点既有实现是裸 fetch；这里加一道保险，别让挂在界面上的数字无限等） */
+  /* ★B2（2026-10-16 站点线）：单请求上限 12000 → **25000**。
+     依据（2026-10-16 20:00 实测）：后端本机暖态 2.9~5.3ms，但**经 Cloudflare 单端点 0.94~2.60s**、
+     建连 TCP 209ms + TLS 439ms ≈ 650ms、命中 LHR 边缘且抖动大（同一端点连打 6 次 0.96~3.68s）
+     ⇒ 12s 会导致"慢一下就整块读不到"。口径与文档一致："20~25s 超时 + 重试 + 保留上次成功数据"。 */
+  var TIMEOUT = 25000;
   var REFRESH = 40000;
   var lastSync = 0;
 
@@ -88,6 +92,77 @@
     return s < 60 ? s + 's' : Math.round(s / 60) + 'min';
   }
 
+  /* ★B2（2026-10-16 站点线）：**上次成功数据**兜底 + 三态可分辨 ----------------------------
+     红线：**旧数据绝不冒充本次真值** —— 仅当"本次确实取不到且确有上次成功值"时才用旧值渲染，
+     并且必须在卡角标一行小字「上次数据 · 时间」、在同步行明说"几格是上次数据"。
+     一次都没成功过 ⇒ 不兜底，照旧写「读不到 + 原因」。 */
+  var LG_PREFIX = 'xk-lastgood-v1:';   /* 键名带版本，将来改结构时旧键自然失效 */
+  var staleUsed = {};                  /* path → 上次成功时间戳（本轮渲染里真正被用到的） */
+  function loadGood(path) {
+    try {
+      var raw = sessionStorage.getItem(LG_PREFIX + path);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (!o || !o.at || !o.d) return null;
+      return o;
+    } catch (e) { return null; }
+  }
+  function saveGood(path, d) {
+    try { sessionStorage.setItem(LG_PREFIX + path, JSON.stringify({ at: Date.now(), d: d })); } catch (e) { }
+  }
+  /* 只读：本次值优先 → 上次值兜底（并记账）→ 都没有就 null（调用方照旧写"读不到"） */
+  function okOrStale(p) {
+    if (!p) return null;
+    if (p.ok) return p.d;
+    if (p.stale && p.staleD) { staleUsed[p.path] = p.staleAt; return p.staleD; }
+    return null;
+  }
+  function staleCount() { var n = 0; for (var k in staleUsed) { if (staleUsed.hasOwnProperty(k)) n++; } return n; }
+  function staleNoteInto(host, at) {
+    var note = host.querySelector('.xk-stale');
+    if (!at) { if (note && note.parentNode) note.parentNode.removeChild(note); return; }
+    if (!note) { note = document.createElement('span'); note.className = 'xk-stale'; host.appendChild(note); }
+    note.textContent = '上次数据·' + clockOf(at);
+    note.title = '本次该端点取不到；这里显示的是上次成功取到的数据（' + clockOf(at) + '），不是本次真值';
+    note.style.cssText = 'margin-left:5px;font-size:10px;opacity:.7;white-space:nowrap;line-height:1';
+  }
+  /* 卡角小字：只往**原有元素**里追加一个 span（不新增区块、不动版式、不碰配色/字体体系） */
+  function markStale() {
+    /* 口径：key2at 的键是**端点名**（无前导斜杠，如 `geo`）；卡上的 .tag 文本形如 `/geo`、
+       `/alerts · stats24h（3 个小时桶）` ⇒ 取 tag 开头的第一个路径词再比对（B2 首版在此差了前导斜杠，
+       导致一条都匹配不上 —— 由 `_dev/probe-slownet.mjs` 抓出）。 */
+    var key2at = {};
+    for (var k in staleUsed) { if (staleUsed.hasOwnProperty(k)) key2at[k.replace('/api/public/', '')] = staleUsed[k]; }
+    var cards = document.querySelectorAll('.mod');
+    var seen = [], marked = [];
+    for (var i = 0; i < cards.length; i++) {
+      var tag = cards[i].querySelector('.mod-hd .tag');
+      if (!tag) continue;
+      var raw = String(tag.textContent || '').trim();
+      var mm = raw.match(/^\/?([a-z]+)/);
+      var key = mm ? mm[1] : '';
+      seen.push(raw);
+      var at = key ? key2at[key] : 0;
+      if (at) { staleNoteInto(tag.parentNode, at); marked.push(key); }
+      else { var n0 = cards[i].querySelector('.mod-hd .xk-stale'); if (n0 && n0.parentNode) n0.parentNode.removeChild(n0); }
+    }
+    /* 计数器那一行（.stats）没有 .tag，用四个端点里最早的那次成功值标注 */
+    var st = document.querySelector('.stats');
+    if (st) {
+      var at2 = 0;
+      ['alerts', 'audit', 'honeypot', 'geo'].forEach(function (kk) { if (key2at[kk] && (!at2 || key2at[kk] < at2)) at2 = key2at[kk]; });
+      staleNoteInto(st, at2);
+      if (at2) marked.push('.stats');
+    }
+    /* ★B2：可机读的口径出口（给探针用，不上屏、不改版式） */
+    window.__xkStale = { used: Object.keys(staleUsed), keys: Object.keys(key2at), tags: seen, marked: marked, count: staleCount() };
+  }
+  /* 三态用同一元素表达（不新增节点）：取数中（SSR 初始文案）/ 重试中 / 读不到＋原因 */
+  function setSyncState(text) {
+    var el = document.querySelector('.screen-hd .sync');
+    if (el) el.textContent = '● ' + text + ' · 全部来自 /api/public/* 只读端点';
+  }
+
   function get(path) {
     return new Promise(function (resolve, reject) {
       var opt = { cache: 'no-store', credentials: 'omit' };
@@ -103,12 +178,17 @@
     });
   }
   function settle(path) {
-    return get(path).then(function (d) { return { path: path, ok: true, d: d, err: null }; },
-      function (e) { return { path: path, ok: false, d: null, err: e }; });
+    return get(path).then(function (d) {
+      saveGood(path, d);                                        /* ★B2：成功即存"上次成功数据" */
+      return { path: path, ok: true, d: d, err: null, stale: false, staleAt: 0 };
+    }, function (e) {
+      var g = loadGood(path);                                   /* ★B2：失败时带上上次值（不冒充本次真值） */
+      return { path: path, ok: false, d: null, err: e, stale: !!g, staleAt: g ? g.at : 0, staleD: g ? g.d : null };
+    });
   }
   function pick(parts, name) {
     var p = parts.filter(function (x) { return x.path.indexOf('/' + name) >= 0; })[0];
-    return p && p.ok ? p.d : null;
+    return okOrStale(p);                       /* ★B2：本次值优先 → 上次值兜底（并记账） */
   }
   function errText(parts) {
     var bad = parts.filter(function (p) { return !p.ok; });
@@ -128,7 +208,17 @@
   function bindSync(parts) {
     var el = document.querySelector('.screen-hd .sync');
     if (!el) return;
-    if (lastSync) {
+    var sn = staleCount();
+    if (sn) {
+      /* ★B2：有格子用的是上次数据 —— 必须明说，别让"刚刚同步"盖住"这几格其实没刷新" */
+      el.textContent = '● ' + sn + ' 格显示的是上次数据（本次取不到：' + (errShort(parts) || '端点未取到') + '）· ' +
+        (lastSync ? '其余刚同步 ' + clockOf(lastSync) : '本次无新数据') + ' · 不补数、不编造';
+    } else if (parts.length && parts.filter(degraded).length) {
+      /* ★B2：HTTP 200 但服务端给了"这次没数据"的降级响应 —— 也说清，别只写"刚刚同步"
+         （各字段照旧按 available=false 写"读不到"，这里只补一句状态说明） */
+      el.textContent = '● ' + (lastSync ? '刚同步 ' + clockOf(lastSync) + ' · ' : '') +
+        parts.filter(degraded).length + ' 个端点本次返回降级值（对应字段已写"读不到"）· 不补数、不编造';
+    } else if (lastSync) {
       el.textContent = '● 刚刚同步 ' + clockOf(lastSync) + ' · 全部来自 /api/public/* 只读端点';
     } else if (parts.length) {
       el.textContent = '● ' + NA + '（' + errShort(parts) + '）· 不补数、不编造';
@@ -389,39 +479,19 @@
     if (window.__xkRenderFeed) window.__xkRenderFeed();
   }
 
-  /* ---------------------------------------------------------------- ★R2 主页：CRT 事件行 + 值班便签
-     数据全部来自主页既有 3 端点（alerts/audit/honeypot），不新增请求、不新增轮询。 */
-  function bindHome(parts) {
-    var al = pick(parts, 'alerts'), au = pick(parts, 'audit');
-    var s24 = al && al.stats24h;
-    /* CRT 字幕下行：一条真实摘要（优先最近一条告警；没有就给累计口径；全挂就如实写读不到） */
-    var feed = document.getElementById('crtFeed');
-    if (feed) {
-      var list = al && Array.isArray(al.list) ? al.list : [];
-      if (list.length) {
-        var a = list[0];
-        feed.textContent = '最近一条 · ' + String(a.typeLabel || a.sourceLabel || '告警') + ' · ' +
-          maskIp(a.srcIp) + ' ×' + (Number(a.count) || 1) + '（/api/public/alerts 实值）';
-      } else if (au && au.summary) {
-        feed.textContent = '护栏累计拦下 ' + (fmt(au.summary.blockedByGuard) || NA) + ' 个动作 · 本窗口告警流为空';
-      } else {
-        feed.textContent = '接口这次读不到（' + (errShort(parts) || '不可达') + '）· 不补数、不编造';
-      }
-      feed.hidden = false;
-    }
-    /* 值班便签（CSS 只在 ≥1400px 渲染，窄屏这整块不占位） */
-    var dn = document.getElementById('deskNote');
-    if (dn) {
-      var total24 = (s24 && s24.available !== false) ? fmt(s24.total) : null;
-      txt(dn.querySelector('[data-dn="alerts"]'), total24 === null ? NA : total24);
-      var types = al && al.stats && Array.isArray(al.stats.byType) ? al.stats.byType.slice() : [];
-      types.sort(function (x, y) { return (Number(y.count) || 0) - (Number(x.count) || 0); });
-      txt(dn.querySelector('[data-dn="top"]'), types.length
-        ? 'TOP 类型：' + String(types[0].label || types[0].key || '—') + ' · ' + (fmt(types[0].count) || '—') + ' 次'
-        : 'TOP 类型：' + NA);
-      txt(dn.querySelector('[data-dn="sync"]'), lastSync ? 'sync ' + clockOf(lastSync) + ' · 40s 一轮只读轮询' : 'sync ' + NA);
-    }
-  }
+  /* ---------------------------------------------------------------- ★R2 收敛收口：主页这两处写入绑定已撤掉
+     撤掉的是主页「CRT 真实事件行」与「宽屏值班便签」两处**写入绑定**（元素 id 见生成器线 R2 收敛段注释；
+     旧实现见 git HEAD 的 L482-517）。
+     ★事实口径（别当成死代码）：这两处**不是静态占位** —— 值班便签的 alerts / TOP 类型 / sync 三个值
+       原本就在这里由主页既有 3 端点（alerts/audit/honeypot）真实写入，删掉后主页少三处真值展示。
+     撤掉的理由是**信息重复与注意力竞争**：事件明细本来就在 `/alerts/` 的实时流里、统计在作战室大屏上，
+       主页再滚一遍只是抢注意力（R2 判据：更清楚=好，只是更花=删）。
+     元素与 CSS 已由生成器线从主页移除（见 `_dev/gen-demo-pages.py` R2 收敛段注释）。
+     注：旧代码对这两个元素本来就有空值保护，所以元素删掉并不会抛错；
+       本次是**按设计决定撤绑定**，不是修崩溃。
+     保留空壳是为了不动调用点；空函数无副作用。若将来要把事件行放回主页，请连同元素与 CSS 一起恢复，
+       并保留 B2 口径：来自"上次成功数据"的值必须在页面上标注。 */
+  function bindHome(parts) { /* 主页已无对应元素（R2 收敛撤掉事件行与值班便签） */ }
 
   function bindOps(parts) {
     bindSync(parts);
@@ -448,7 +518,7 @@
     var box = document.querySelector('[data-xk-block="bans"]');
     if (!box) return;
     var p = parts.filter(function (x) { return x.path.indexOf('/audit') >= 0; })[0];
-    var au = (p && p.ok) ? p.d : null;
+    var au = okOrStale(p);                                 /* ★B2：本次值优先 → 上次值兜底 */
     var sum = au && au.summary ? au.summary : null;
     var KEYS = [['total', 'blockTotal'], ['active', 'blockActive'], ['guard', 'blockedByGuard'], ['actions', 'executedActions']];
     KEYS.forEach(function (kv) {
@@ -708,9 +778,18 @@
   function render(parts) {
     if (parts.some(function (p) { return p.ok; })) lastSync = Date.now();
     lastParts = parts;
-    /* ★Q-2（2026-10-15 站主）：主页 CRT 那块 SEC-LAB 状态卡已删 ⇒ 这里的 bindCrt 一并摘掉 */
-    if (SSR === 'monitor') bindOps(parts);
-    if (SSR === 'home') bindHome(parts);   /* ★R2：CRT 事件行 + 值班便签（主页 3 端点复用，零新增请求） */
+    staleUsed = {};                              /* ★B2：每轮渲染重新记账（本轮哪些格子用了上次数据） */
+    /* ★B2：容错 —— 任何一格渲染抛异常都不许连累整屏（否则后面的卡与"上次数据"标注全都不会执行）。
+       错误留在 window.__xkBindErr 里可现读；同步行在最后按"最终记账"再写一次。 */
+    try {
+      /* ★Q-2（2026-10-15 站主）：主页 CRT 那块 SEC-LAB 状态卡已删 ⇒ 这里的 bindCrt 一并摘掉 */
+      if (SSR === 'monitor') bindOps(parts);
+      if (SSR === 'home') bindHome(parts);   /* ★R2：CRT 事件行 + 值班便签（主页 3 端点复用，零新增请求） */
+    } catch (e) {
+      window.__xkBindErr = (SSR || '?') + ': ' + String((e && e.message) || e);
+    }
+    markStale();                                 /* ★B2：给用到"上次数据"的卡角补一行小字 */
+    if (SSR === 'monitor') bindSync(parts);      /* ★B2：此刻 staleUsed 已记全 —— 用最终口径重写同步行 */
   }
   /* 服务端"冷缓存"时会返回一版"这次没数据"的降级响应（app.js 里记录的同一个现象：
      /api/public/alerts 冷缓存下 stats24h.available=false，同一 URL 过一会儿再取就是真值）。
@@ -735,6 +814,7 @@
     return Promise.all(JOBS.map(function (n) { return settle('/api/public/' + n); })).then(function (parts) {
       var retry = parts.filter(degraded);
       if (!retry.length) { render(parts); return parts; }
+      setSyncState('重试中… （' + retry.length + ' 个端点本次降级，正在补一次请求）');   /* ★B2：与"读不到"可分辨 */
       return new Promise(function (r) { setTimeout(r, 1500); })
         .then(function () { return Promise.all(retry.map(function (p) { return settle(p.path); })); })
         .then(function (again) {

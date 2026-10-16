@@ -415,16 +415,12 @@
   .feed-pause.on{color:var(--warn);border-color:var(--warn)}
   .term-hd .term-live{margin-left:8px}
   @media (max-width:980px){.term-hd .term-path{display:none}}
-  /* 威胁矩阵：hover/聚焦摘要 + 图例（.mod 的 overflow:hidden 会切掉浮尖 ⇒ 只给矩阵这块放开） */
-  .ops-tab[data-pane="matrix"] .mod{overflow:visible}
+  /* ★R2 收敛（2026-10-16 站主批）：威胁矩阵的 hover 摘要**收敛成图例那一行**，不再用浮层。
+     理由：浮层会盖住相邻格子、窄屏还会溢出，而且它需要".mod 放开 overflow"这种 hack；
+     摘要写进同一行后信息一分不减、遮挡归零、hack 一起撤掉。 */
   .attk .cell{position:relative;cursor:default}
-  .attk .cell .tip{display:none;position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
-    z-index:6;width:max-content;max-width:240px;white-space:normal;text-align:left;line-height:1.5;
-    background:var(--solid);border:1px solid var(--line2);border-radius:9px;padding:7px 10px;
-    font:11.5px var(--sans);color:var(--txt);box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none}
-  .attk .cell:hover .tip,.attk .cell:focus-visible .tip{display:block}
-  .attk .cell .tt-share{color:var(--acc);font-family:var(--mono)}
   .attk-lg{display:flex;gap:14px;flex-wrap:wrap;font:11px var(--mono);color:var(--mut);margin-top:10px}
+  .attk-lg .tt-cur{color:var(--acc)}
   /* 告警来源分布：donut SVG 分段（hover 高亮 + <title> 可访问）；真值由 api-bind 写段
      （r=48 / sw=14 落在 118 viewBox 内；::after 旧镂空盖会挡分段 hover ⇒ SVG 化后摘掉） */
   .donut.donut-svg::after{display:none}

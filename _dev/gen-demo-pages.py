@@ -829,12 +829,10 @@ function drawSpark(){
   axes();
   if(RM || sparkDone){ area(); line(1); marks(1); return; }
   sparkDone = true;
-  const t0 = performance.now(), dur = 1100;
-  (function step(t){
-    const k = Math.min(1,(t-t0)/dur);
-    x.clearRect(0,0,w,h); axes(); area(); line(k); marks(k);
-    if(k<1) requestAnimationFrame(step);
-  })(t0);
+  /* ★R2 收敛（2026-10-16 主窗口裁决）：去掉 1100ms 渐显 —— 直接画完成态。
+     理由：渐显让 24h 图晚 1.1 秒才成型，属"只是更花"；站主核心诉求是"数据出得来、别慢"。
+     画法与非动画分支（RM / 已画过）逐字一致：area(); line(1); marks(1); 行为零差异。 */
+  area(); line(1); marks(1);
 }
 window.__xkSpark = drawSpark;
 drawSpark();
@@ -863,17 +861,31 @@ function renderTypes(){
   }
   const total = rows.reduce((s,r)=>s + (Number(r.count)||0), 0) || 1;
   const max = Math.max.apply(null, rows.map(r=>Number(r.count)||0)) || 1;
+  /* ★R2 收敛（2026-10-16 站主批）：不再给每格挂浮层，改为把摘要写进图例那一行（#attkLgMsg）。
+     数据来源不变（window.XK_TYPES + window.XK_FEED），仍然零新增请求；浮层撤掉后遮挡与窄屏溢出一起消失。 */
+  const lgMsg = document.getElementById('attkLgMsg');
+  const LG_DEFAULT = lgMsg ? lgMsg.textContent : '';
+  function showTip(cell, share, hit, last){
+    if(!lgMsg) return;
+    const b = cell.querySelector('b');
+    lgMsg.textContent = (b ? b.textContent : '') + ' · 占本窗口 ' + share + '%（' +
+      hit.toLocaleString('en-US') + ' 次）' + (last ? ' · 最近：' + last : '');
+  }
+  function clearTip(){ if(lgMsg){ lgMsg.textContent = LG_DEFAULT; } }
   rows.forEach((r,i)=>{
     const hit = Number(r.count) || 0;
     const cell = document.createElement('div');
     cell.className = 'cell' + (hit/max >= .6 ? ' fire' : hit>0 ? ' hot' : '');
-    cell.tabIndex = 0;                                  /* ★R2：键盘聚焦也能看摘要 */
+    cell.tabIndex = 0;                                  /* 键盘聚焦也能看摘要（写进图例行） */
     const share = Math.round(hit / total * 100);
     const last = attkTip(r.label || r.key);
     cell.innerHTML = `<b>${xkEsc(r.label || r.key || '—')}</b><span class="taid">${xkEsc(r.key || '')}</span>` +
-      `<div class="num">${hit.toLocaleString('en-US')}</div>` +
-      `<div class="tip" role="tooltip">占本窗口 <span class="tt-share">${share}%</span>（${hit.toLocaleString('en-US')} 次）` +
-      (last ? `<br>最近：${xkEsc(last)}` : '') + `</div>`;   /* ★R2：hover 摘要，数据零新增请求 */
+      `<div class="num">${hit.toLocaleString('en-US')}</div>`;
+    const fire = function(){ showTip(cell, share, hit, last); };
+    cell.addEventListener('mouseenter', fire);
+    cell.addEventListener('focus', fire);
+    cell.addEventListener('mouseleave', clearTip);
+    cell.addEventListener('blur', clearTip);
     attkGrid.appendChild(cell);
   });
 }
@@ -889,13 +901,10 @@ function runCounters(){
     el.classList && el.classList.remove('sk');          /* ★R2：写实值的同时摘掉骨架条 */
     const raw = el.dataset.count, T = Number(raw);
     if(raw === '' || raw === undefined || !isFinite(T)){ el.textContent = '读不到'; return; }
-    if(RM){ el.textContent = T.toLocaleString('en-US'); return; }
-    const t0 = performance.now(), dur = 900;
-    (function step(t){
-      const k = Math.min(1,(t-t0)/dur);
-      el.textContent = Math.round(T*(1-Math.pow(1-k,3))).toLocaleString('en-US');
-      if(k<1) requestAnimationFrame(step);
-    })(t0);
+    /* ★R2 收敛（2026-10-16 站主批）：去掉 count-up 数字滚动 —— 真值直接写。
+       判据：更清楚=好，只是更花=删；数字从 0 滚上去不增加任何信息量。
+       注意：RM（减少动效）之外的普通路径与 RM 现在同一条；"读不到"分支在上面原样保留。 */
+    el.textContent = T.toLocaleString('en-US');
   });
 }
 '''
@@ -929,7 +938,12 @@ const XK_STATE_LABEL = {
   'model':['模型研判'], 'rule-based':['规则解析（拒答）'],
   'input-insufficient':['依据不足，不做定性'], 'no-retrieval':['未检索到依据，不给结论'],
   'retrieval-failed':['检索不可用，未生成'], 'model-failed':['模型不可用，未生成'],
-  'injection-blocked':['命中提示注入护栏']
+  'injection-blocked':['命中提示注入护栏'],
+  /* ★2026-10-16 状态语义分层（与 XK_STATE_CLS 一一对应，档位必须同源）：
+     no-live-data = 这个数没有实时数据源（例如公开面本来就不取实时值）⇒ 写"没有实时数据源"；
+     no-kb-basis  = 知识库里确实没有这条依据（检索成功但命中 0）⇒ 写"知识库无依据"；
+     二者都**不等于**"取不到"（端点失败才写"读不到"）。 */
+  'no-live-data':['没有实时数据源'], 'no-kb-basis':['知识库无依据']
 };
 function xkAskEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function xkInline(s){
@@ -1002,7 +1016,10 @@ function xkCites(d){
 /* ★R2：状态徽标分档（颜色映射在 CSS，复用 ok/warn/bad 既有状态色，不新增色值） */
 const XK_STATE_CLS = {
   'model':'st-ok', 'rule-based':'st-warn', 'input-insufficient':'st-warn', 'no-retrieval':'st-warn',
-  'retrieval-failed':'st-bad', 'model-failed':'st-bad', 'injection-blocked':'st-bad'
+  'retrieval-failed':'st-bad', 'model-failed':'st-bad', 'injection-blocked':'st-bad',
+  /* ★2026-10-16 状态语义分层：把"没有实时数据源"与"有数据但这题没依据"从"取不到"里分出来，
+     否则页面上会出现"0 / 读不到 / 无数据"三种说法混用。同一状态在任何页面都必须同一档。 */
+  'no-live-data':'st-warn', 'no-kb-basis':'st-warn'
 };
 function xkRenderAnswer(el, d){
   const st = d.state || '';
@@ -2384,7 +2401,7 @@ var XKV2_BLOCK = (function(){
 # T8 第一批：状态机 + 宿主触发（2026-10-15 窗口 C）
 # -------------------------------------------------------------------------------------
 # 口径（站主 2026-10-15 已批）：
-#   · 读 static/kurisu/statemachine.json（38 节点/88 边，root=idle）：出边概率**归一化后**掷骰子；
+#   · 读 static/kurisu/statemachine.json（38 节点/92 边，root=idle）：出边概率**归一化后**掷骰子；
 #     13 个 once_then_hold 播完停末帧；prob=0 的 9 条 = 宿主触发入口，永不被随机取。
 #   · 宿主触发四类：voice / emotion / idle（可见且连续 12s 无宿主事件）/ cadence（>25s 无宿主事件兜底）。
 #     每次切换记 reason = `auto:<edge>` 或 `host:<kind>`，验收按 reason 统计。
@@ -4168,16 +4185,12 @@ R2_CSS = u'''
   .feed-pause.on{color:var(--warn);border-color:var(--warn)}
   .term-hd .term-live{margin-left:8px}
   @media (max-width:980px){.term-hd .term-path{display:none}}
-  /* 威胁矩阵：hover/聚焦摘要 + 图例（.mod 的 overflow:hidden 会切掉浮尖 ⇒ 只给矩阵这块放开） */
-  .ops-tab[data-pane="matrix"] .mod{overflow:visible}
+  /* ★R2 收敛（2026-10-16 站主批）：威胁矩阵的 hover 摘要**收敛成图例那一行**，不再用浮层。
+     理由：浮层会盖住相邻格子、窄屏还会溢出，而且它需要".mod 放开 overflow"这种 hack；
+     摘要写进同一行后信息一分不减、遮挡归零、hack 一起撤掉。 */
   .attk .cell{position:relative;cursor:default}
-  .attk .cell .tip{display:none;position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
-    z-index:6;width:max-content;max-width:240px;white-space:normal;text-align:left;line-height:1.5;
-    background:var(--solid);border:1px solid var(--line2);border-radius:9px;padding:7px 10px;
-    font:11.5px var(--sans);color:var(--txt);box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none}
-  .attk .cell:hover .tip,.attk .cell:focus-visible .tip{display:block}
-  .attk .cell .tt-share{color:var(--acc);font-family:var(--mono)}
   .attk-lg{display:flex;gap:14px;flex-wrap:wrap;font:11px var(--mono);color:var(--mut);margin-top:10px}
+  .attk-lg .tt-cur{color:var(--acc)}
   /* 告警来源分布：donut SVG 分段（hover 高亮 + <title> 可访问）；真值由 api-bind 写段
      （r=48 / sw=14 落在 118 viewBox 内；::after 旧镂空盖会挡分段 hover ⇒ SVG 化后摘掉） */
   .donut.donut-svg::after{display:none}
@@ -4209,6 +4222,14 @@ R2_CSS = u'''
   .cat-row a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1)}
 '''
 
+# ★R2 收敛（2026-10-16 站主批）删掉的两块，及配套动作。写在这里而不是塞进 CSS 文本：
+#   实测写进 R2_HOME_CSS 会被渲染进每个页面（layouts/index.html），既占字节又让"已删元素"的名字留在产物里。
+#   · `.crt-feed`（主页 CRT 字幕下方一行真实事件滚播）：订阅式装饰行，不比字幕多给信息；事件明细在 /alerts/ 实时流里。
+#     配套：home_body 里那行 `<div class="crt-feed" id="crtFeed">` patch 已撤；
+#     ★站点线必须删 `api-bind.html:487-504` 的写入块（元素不存在 ⇒ getElementById 返回 null ⇒ 写值抛错 ⇒ console 非 0）。
+#   · `.desk-note`（≥1400px 宽屏值班便签，含整段 @media）：实测**不是**静态占位 —— 数据由
+#     `api-bind.html:506-515` 写进 `[data-dn=alerts|top|sync]`；撤掉的理由是"与 /alerts/ 大屏重复 + 抢注意力"。
+#     配套：home_body 里那段 `<aside class="desk-note" id="deskNote">` patch 已撤；★站点线必须同步删 `505-516`。
 R2_HOME_CSS = u'''
   /* ---- ★批次 R2（2026-10-16）：主页 CRT 真实事件行 + 宽屏值班便签 ----
      色值全部照抄本页 :root 的 warm 口径（var 直接引用），不新增配色。 */
@@ -4217,26 +4238,9 @@ R2_HOME_CSS = u'''
     background-size:200% 100%;animation:skp 1.4s ease-in-out infinite}
   @keyframes skp{0%{background-position:180% 0}100%{background-position:-20% 0}}
   @media (prefers-reduced-motion:reduce){.sk{animation:none}}
-  .dock a:focus-visible,.desk-note .dn-go:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-  .crt-feed{position:absolute;left:16%;right:16%;bottom:.9%;z-index:5;text-align:center;
-    font:10.5px var(--mono);color:rgba(232,244,255,.72);text-shadow:0 1px 2px rgba(0,0,0,.8);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
-  .desk-note{display:none}
-  @media (min-width:1400px){
-    .desk-note{display:block;position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:40;width:230px;
-      background:var(--solid);border:1px solid var(--line2);border-radius:14px;
-      padding:12px 14px;backdrop-filter:blur(4px);box-shadow:0 12px 40px rgba(0,0,0,.45);
-      color:var(--txt);font-size:13px;line-height:1.6}
-    .desk-note .dn-hd{display:flex;align-items:center;gap:6px;font:600 11px var(--mono);color:var(--acc);
-      letter-spacing:.1em;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:8px}
-    .desk-note .dn-hd i{width:7px;height:7px;border-radius:50%;background:#3ECF8E;box-shadow:0 0 6px #3ECF8E}
-    .desk-note .dn-num{font:600 24px var(--mono);color:var(--acc)}
-    .desk-note .dn-num.sk{min-width:2.4em;border-radius:8px}
-    .desk-note .dn-row{color:var(--mut);font-size:12px;margin-top:4px}
-    .desk-note .dn-go{display:inline-block;margin-top:9px;font:12px var(--mono);color:var(--acc);text-decoration:none;
-      border:1px solid var(--line2);padding:4px 12px;border-radius:99px}
-    .desk-note .dn-go:hover{border-color:var(--acc)}
-  }
+  .dock a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  /* ★R2 收敛（2026-10-16 站主批）：主页那两条装饰规则（事件滚播行 / ≥1400px 值班便签）已整块删除；
+     删因、配套动作与"站点线要同步删的 api-bind 绑定点"都写在**生成器侧注释**里，不进产物。 */
 '''
 
 R2_JS = u'''
@@ -4338,10 +4342,60 @@ views_out = sub1(views_out,
 views_out = sub1(views_out,
                  '<div class="mod-bd"><div class="attk" id="attkGrid"></div>',
                  '<div class="mod-bd"><div class="attk" id="attkGrid"></div>\n'
-                 '              <div class="attk-lg"><span><i class="lg warn"></i>hot · 有命中</span>'
+                 '              <div class="attk-lg" id="attkLg"><span><i class="lg warn"></i>hot · 有命中</span>'
                  '<span><i class="lg red"></i>fire · 命中 ≥ 峰值的 60%</span>'
-                 '<span>hover / 键盘聚焦格子：看占比与最近一条真实告警</span></div>',
+                 '<span class="tt-cur" id="attkLgMsg" aria-live="polite">hover / 键盘聚焦格子：这一行显示占比与最近一条真实告警</span></div>',
                  'R2: 威胁矩阵图例')
+# ---- C2（2026-10-16 站主批）：B 类可核验面板「迁出实验台」——
+#   落位：监测中心「数据统计」tab 下部三卡（接口健康 / 部署可追溯 / 处置运维）。
+#   本补丁**只出结构**：未绑定时显示"取数中…"；绑定失败由 api-bind 写"读不到 + 原因"；**绝不写假值**。
+#   绑定由站点线在 api-bind.html 里做（bindVerifiable(parts) + markStale()），见
+#   docs/施工说明-C2三块面板迁出实验台-20261016.md。
+#   样式只复用源外壳既有类（实测在 docs/demo-内容页外壳.html 里都有定义）：
+#     .mod .mod-hd .led .tag .mod-bd .stats .stat .n .l .row .k .chip .attk-note
+#   刻意不用 .na / .kv / .tb —— grep 全库 = 0，用了就是"发明样式"（违反零新增配色/字体纪律）。
+#   接口健康那张**不给 .tag**：markStale() 会把 .tag 首个路径词当端点名去匹配 staleUsed，
+#   而这张卡是"多端点汇总"，给一个假端点名会打错"上次数据"角标 ⇒ 干脆不给 tag，口径写进脚注。
+VH_CARDS = (
+    '          <div class="mod" id="vhHealth"><div class="mod-hd"><span class="led"></span>接口健康 · 公开只读端点</div>\n'
+    '            <div class="mod-bd">\n'
+    '              <div data-vh-health>\n'
+    '                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n'
+    '              </div>\n'
+    '              <p class="attk-note" data-vh-health-note>口径：只探 /api/public/* 的公开只读 GET 端点（不用 /api/health —— 它带构建指纹与内部信息）；取不到写"读不到 + 原因"，不补样例值。</p>\n'
+    '            </div>\n'
+    '          </div>\n'
+    '          <div class="mod" id="vhDeploy"><div class="mod-hd"><span class="led"></span>部署可追溯 · 数据快照与来源<span class="tag">/overview</span></div>\n'
+    '            <div class="mod-bd">\n'
+    '              <div class="stats">\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="snapshot">—</div><div class="l">数据快照时间</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="ttl">—</div><div class="l">缓存窗口</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="mode">—</div><div class="l">数据源 wazuhMode</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="nodes">—</div><div class="l">在线节点 online/total</div></div>\n'
+    '              </div>\n'
+    '              <p class="attk-note" data-vh-deploy-note>只展示数据快照与来源；节点的 detail 字段刻意不渲染（实测其中带构建提交号）。取不到写"读不到 + 原因"。</p>\n'
+    '            </div>\n'
+    '          </div>\n'
+    '          <div class="mod" id="vhOps"><div class="mod-hd"><span class="led"></span>处置运维 · 封禁与护栏<span class="tag">/audit</span></div>\n'
+    '            <div class="mod-bd">\n'
+    '              <div class="stats">\n'
+    '                <div class="stat"><div class="n sk" data-vh-ops="blockTotal">—</div><div class="l">累计封禁</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-ops="blockActive">—</div><div class="l">当前生效</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-ops="blockedByGuard">—</div><div class="l">护栏拦下</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-ops="executedActions">—</div><div class="l">已执行动作</div></div>\n'
+    '              </div>\n'
+    '              <div data-vh-ops-list>\n'
+    '                <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>\n'
+    '              </div>\n'
+    '              <p class="attk-note" data-vh-ops-note>IP 按后端 ipDisclosure 口径脱敏；本窗口没有封禁记录时写"没有记录（不是取不到）"，不补 0。</p>\n'
+    '            </div>\n'
+    '          </div>\n'
+)
+# ★2026-10-16 19:50 主窗口 P0 批暂停指令：④ 结构补丁**本批撤销** —— 未绑定的卡会在公开面永远显示
+#   "取数中…"，违反"公开面不许有永远空白的卡"红线。VH_CARDS 定义**保留**，放行后把下面这行取消注释即可恢复：
+# views_out = sub1(views_out, BAN_ANCHOR, VH_CARDS + BAN_ANCHOR, 'C2: 三块可核验面板结构（迁出 /test/）')
+VH_CARDS_BATCH_OFF = True   # 本批不注入；放行后连同上面那行一起恢复（并加 markStale 绑定）
+
 views_out = sub1(views_out,
                  '<div class="donut"><span class="donut-c">—</span></div>',
                  '<div class="donut donut-svg"><svg id="donutSvg" viewBox="0 0 118 118" role="img" '
@@ -4366,25 +4420,14 @@ views_out = sub1(views_out,
                  '{{ range .page.Pages }}<div class="note"{{ with .Params.categories }} data-cat="{{ delimit . "," }}"{{ end }}><span class="dt">',
                  'R2: 笔记条带 data-cat')
 
-# ---- R2 标记补丁（主页 home_body）：CRT 真实事件行 + 宽屏值班便签 ----
-home_body = sub1(home_body,
-                 '<div class="crt-sub" id="crtSub" hidden><span id="subText"></span><span class="cursor"></span></div>',
-                 '<div class="crt-sub" id="crtSub" hidden><span id="subText"></span><span class="cursor"></span></div>\n'
-                 '    <div class="crt-feed" id="crtFeed" hidden></div>   '
-                 '/* ★R2：字幕下方一行真实事件（api-bind 从主页既有 3 端点写，不新增请求） */',
-                 'R2: 主页 CRT 事件行')
-home_body = sub1(home_body,
-                 '<div class="bootveil" id="bootveil"></div>',
-                 '<aside class="desk-note" id="deskNote" aria-label="值班便签（真实接口数据，≥1400px 才显示）">\n'
-                 '  <div class="dn-hd"><i></i>值班便签 · DUTY NOTE</div>\n'
-                 '  <div class="dn-num sk" data-dn="alerts">—</div>\n'
-                 '  <div class="dn-row">24h 告警（/alerts · stats24h）</div>\n'
-                 '  <div class="dn-row" data-dn="top">TOP 类型：—</div>\n'
-                 '  <div class="dn-row" data-dn="sync">sync —</div>\n'
-                 '  <a class="dn-go" href="/alerts/">进作战室 →</a>\n'
-                 '</aside>\n'
-                 '<div class="bootveil" id="bootveil"></div>',
-                 'R2: 主页值班便签')
+# ---- R2 收敛（2026-10-16 站主批）：**主页两处标记补丁已撤销，不再插入** ----
+#   · CRT 真实事件行 `<div class="crt-feed" id="crtFeed">`：装饰性滚播；事件明细本来就在 /alerts/ 的实时流里，
+#     它只抢注意力。对应 CSS 已从 R2_HOME_CSS 删除；api-bind.html 里写 #crtFeed 的绑定由站点线合并删除。
+#   · 宽屏值班便签 `<aside class="desk-note" id="deskNote">`：数据由 api-bind.html:506-515 写入（非静态占位），
+#     但它显示的三个数与 /alerts/ 大屏重复，属于"重复+抢注意力"。对应 CSS 已删。
+#   ⚠️ 因此**站点线必须同步删掉 api-bind.html 里这两处绑定**（`#crtFeed` 在 :488 附近、`#deskNote` 在 :506-515），
+#      否则元素不存在 → 写值抛错 → console 不再是 0（这是本批的硬验收）。
+#   判据（站主原话）：更清楚 = 好，只是更花 = 删。这里删的是两件装饰，不动任何真实数据元素。
 
 # ---- R2 汇入（样式 + 脚本）----
 shell_style = shell_style + R2_CSS
@@ -4392,7 +4435,8 @@ home_style = home_style + R2_HOME_CSS
 if not shell_scripts[0].rstrip().endswith('</script>'):
     raise SystemExit('R2: 外壳第一段 <script> 结构变了，交互层插入点失效')
 shell_scripts[0] = shell_scripts[0].rstrip()[:-len('</script>')] + R2_JS + '\n</script>'
-print('批次 R2：骨架/焦点/term暂停/矩阵摘要/donut SVG/tab hash/引用卡组/示例chips/主页便签/笔记分类 已汇入')
+print('批次 R2：骨架/焦点/term暂停/donut SVG/tab hash/引用卡组/示例chips/笔记分类 已汇入；'
+      '矩阵摘要已收敛进图例行；主页 CRT 事件行与值班便签已按站主批撤销')
 
 # --------------------------------------------------------------------- 落盘
 print('生成：')

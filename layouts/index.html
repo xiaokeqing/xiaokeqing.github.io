@@ -151,26 +151,9 @@
     background-size:200% 100%;animation:skp 1.4s ease-in-out infinite}
   @keyframes skp{0%{background-position:180% 0}100%{background-position:-20% 0}}
   @media (prefers-reduced-motion:reduce){.sk{animation:none}}
-  .dock a:focus-visible,.desk-note .dn-go:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-  .crt-feed{position:absolute;left:16%;right:16%;bottom:.9%;z-index:5;text-align:center;
-    font:10.5px var(--mono);color:rgba(232,244,255,.72);text-shadow:0 1px 2px rgba(0,0,0,.8);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
-  .desk-note{display:none}
-  @media (min-width:1400px){
-    .desk-note{display:block;position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:40;width:230px;
-      background:var(--solid);border:1px solid var(--line2);border-radius:14px;
-      padding:12px 14px;backdrop-filter:blur(4px);box-shadow:0 12px 40px rgba(0,0,0,.45);
-      color:var(--txt);font-size:13px;line-height:1.6}
-    .desk-note .dn-hd{display:flex;align-items:center;gap:6px;font:600 11px var(--mono);color:var(--acc);
-      letter-spacing:.1em;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:8px}
-    .desk-note .dn-hd i{width:7px;height:7px;border-radius:50%;background:#3ECF8E;box-shadow:0 0 6px #3ECF8E}
-    .desk-note .dn-num{font:600 24px var(--mono);color:var(--acc)}
-    .desk-note .dn-num.sk{min-width:2.4em;border-radius:8px}
-    .desk-note .dn-row{color:var(--mut);font-size:12px;margin-top:4px}
-    .desk-note .dn-go{display:inline-block;margin-top:9px;font:12px var(--mono);color:var(--acc);text-decoration:none;
-      border:1px solid var(--line2);padding:4px 12px;border-radius:99px}
-    .desk-note .dn-go:hover{border-color:var(--acc)}
-  }
+  .dock a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  /* ★R2 收敛（2026-10-16 站主批）：主页那两条装饰规则（事件滚播行 / ≥1400px 值班便签）已整块删除；
+     删因、配套动作与"站点线要同步删的 api-bind 绑定点"都写在**生成器侧注释**里，不进产物。 */
 
   /* ★R3 布局补丁（2026-10-16 外部审查）—— 以下全部只在 ≤980px 生效 */
   @media (max-width:980px){
@@ -216,7 +199,6 @@
     </div>
     <div class="crtboot noise" id="crtBoot" aria-hidden="true"></div>
     <div class="crt-sub" id="crtSub" hidden><span id="subText"></span><span class="cursor"></span></div>
-    <div class="crt-feed" id="crtFeed" hidden></div>   /* ★R2：字幕下方一行真实事件（api-bind 从主页既有 3 端点写，不新增请求） */
   </div>
 </div>
 
@@ -229,14 +211,6 @@
   <a href="/test/">测试</a>
 </nav>
 
-<aside class="desk-note" id="deskNote" aria-label="值班便签（真实接口数据，≥1400px 才显示）">
-  <div class="dn-hd"><i></i>值班便签 · DUTY NOTE</div>
-  <div class="dn-num sk" data-dn="alerts">—</div>
-  <div class="dn-row">24h 告警（/alerts · stats24h）</div>
-  <div class="dn-row" data-dn="top">TOP 类型：—</div>
-  <div class="dn-row" data-dn="sync">sync —</div>
-  <a class="dn-go" href="/alerts/">进作战室 →</a>
-</aside>
 <div class="bootveil" id="bootveil"></div>
 <div class="fallback" id="fallback">CRT 高度不足 260px，该视口下降级为移动端 CHIP 模式<br>（见 demo-内容页外壳.html）</div>
 
