@@ -2684,6 +2684,12 @@ var XK_SM_JS = (function(){
     if(why.indexOf('host:') === 0) V.lastHost = t;
     if(why === 'host:idle') V.lastIdleFired = t;
     prefetch(clip);
+    /* ★2026-10-16：**近期访问历史**（供 roll() 做"不回去"惩罚）。
+       起因：修掉自环后线上暴露出"两点乒乓"（`speaking_closed_eye_1 ↔ _2` 各 10 次），仍是卡住。
+       只留最近 4 步；`__xkSM.stats().recent` 可查。 */
+    V.recent = V.recent || [];
+    V.recent.push(clip);
+    while(V.recent.length > 4) V.recent.shift();
     if(window.__xkSmVoice && V.voiceLineOf) { /* 宿主语音由页面侧调 host()，这里不重复播 */ }
     return true;
   }
@@ -2732,7 +2738,15 @@ var XK_SM_JS = (function(){
     for(var k = 0; k < out.length; k++){
       if(out[k].prob > 0){ (out[k].to === V.cur ? self : pos).push(out[k]); }
     }
-    var e = pick(pos.length ? pos : self);
+    var pool = pos.length ? pos : self;
+    /* ★2026-10-16 二次修：**近期访问惩罚** —— 修掉自环后线上暴露出"两点乒乓"
+       （`speaking_closed_eye_1 ↔ _2` 各 10 次）。优先选"最近 4 步没到过"的边；全都到过才退回全集
+       （这时前面的"反自环/反卡死"仍然生效）。 */
+    var recent = V.recent || [];
+    var cands = [];
+    for(var q = 0; q < pool.length; q++){ if(recent.indexOf(pool[q].to) < 0) cands.push(pool[q]); }
+    if(!cands.length) cands = pool;
+    var e = pick(cands.length ? cands : (pos.length ? pos : self));
     if(!e) e = pick(out);
     if(!e) return false;
     if(e.to === V.cur){
@@ -2945,7 +2959,7 @@ var XK_SM_JS = (function(){
                entries:(V.hostEntries || []).length, hiddenSkipped:V.hiddenSkipped,
                atlas:{pages:V.atlas.pages, loaded:V.atlas.loaded, pending:V.atlas.pending, err:V.atlas.mfErr},
                replay:!!V.replay, idleMs:V.idleMs, cadenceMs:V.cadenceMs, hostCd:V.hostCd,
-               errors:V.errs.slice(-6) };
+               recent:(V.recent || []).slice(), errors:V.errs.slice(-6) };
     }
   };
   /* ★既有门禁（gate-firstscreen 第 251 行）读的是 `window.__xkSM.reasons()` ——
