@@ -15,7 +15,7 @@
 
 ```
 · 模块 XK_SM_JS（内联，生成器注入主页脚本与五页 scene-js）：
-  读 /kurisu/statemachine.json（38 节点/88 边，root=idle），懒加载（setTimeout 600ms，首屏零影响）
+  读 /kurisu/statemachine.json（38 节点/92 边，root=idle），懒加载（setTimeout 600ms，首屏零影响）
 · 游走：出边概率**归一化后**掷骰子；prob=0 的边永不参与随机；13 个 once_then_hold 播完**停末帧**
 · 取帧：优先 T7 视频层（同一帧号 == 同一帧），拿不到画 medium 图集；两条路共用 CHAR_BOX 落位公式；
   **不用 opaque_bbox**（U8 已实测是坏的），只用 medium.pages 的 first_frame/last_frame + frame_size

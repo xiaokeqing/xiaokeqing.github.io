@@ -1,0 +1,144 @@
+{
+  "format": "xiaokeqing.facts.v1",
+  "snapshotAtUtc": "2026-10-16T11:46:12Z",
+  "snapshotEpoch": 1792151172,
+  "generator": "_dev/snapshot-facts.py",
+  "note": "只读快照。所有数字均来自现场只读命令；带 source 字段者可直接复跑核对。",
+  "git": {
+    "head": "64b894d",
+    "dirtyEntries": 48
+  },
+  "srv2": {
+    "release": "site-20261016-194546",
+    "releasesKept": [
+      "site-20261016-194546",
+      "site-20261016-132449",
+      "site-20261016-125206",
+      "site-20261016-123135"
+    ],
+    "pages": {
+      "/": {
+        "code": 200,
+        "bytes": 102425
+      },
+      "/alerts/": {
+        "code": 200,
+        "bytes": 151303
+      },
+      "/posts/": {
+        "code": 200,
+        "bytes": 153065
+      },
+      "/ai/": {
+        "code": 200,
+        "bytes": 150770
+      },
+      "/labs/": {
+        "code": 200,
+        "bytes": 243
+      },
+      "/about/": {
+        "code": 200,
+        "bytes": 231
+      }
+    },
+    "certEndDate": "notAfter=Jan 12 13:08:05 2027 GMT"
+  },
+  "srv1": {
+    "publicGetEndpoints": {
+      "kb": {
+        "code": 200,
+        "bytes": 580
+      },
+      "overview": {
+        "code": 200,
+        "bytes": 1322
+      },
+      "alerts": {
+        "code": 200,
+        "bytes": 29959
+      },
+      "latest": {
+        "code": 200,
+        "bytes": 1403
+      },
+      "honeypot": {
+        "code": 200,
+        "bytes": 8561
+      },
+      "audit": {
+        "code": 200,
+        "bytes": 9931
+      },
+      "geo": {
+        "code": 200,
+        "bytes": 3410
+      },
+      "webstats": {
+        "code": 200,
+        "bytes": 5185
+      },
+      "stories": {
+        "code": 200,
+        "bytes": 5275
+      }
+    },
+    "publicGetCount": 9,
+    "adminProbe": {
+      "/api/admin": 401,
+      "/api/internal": 401,
+      "/api/v1": 401
+    },
+    "health": {
+      "buildSha": "0fa477a98d4619285f6b286177183190c4fbc29a",
+      "embeddedGitCommitTime": "2026-10-16T04:46:49+0000",
+      "embeddedGitDirty": false,
+      "alertsMockEnabled": true,
+      "fingerprintMismatch": false
+    }
+  },
+  "assets": {
+    "kurisuBytes": 91818871,
+    "kurisuFiles": 274,
+    "tiers": {
+      "medium": {
+        "bytes": 50492702,
+        "files": 49
+      },
+      "hi": {
+        "bytes": 20568710,
+        "files": 8
+      },
+      "full": {
+        "bytes": 7457148,
+        "files": 12
+      },
+      "avatar": {
+        "bytes": 1612146,
+        "files": 24
+      },
+      "scene": {
+        "bytes": 1105672,
+        "files": 11
+      },
+      "mouth": {
+        "bytes": 110708,
+        "files": 48
+      },
+      "eye": {
+        "bytes": 5656,
+        "files": 2
+      },
+      "video": {
+        "bytes": 9543169,
+        "files": 80
+      },
+      "voice": {
+        "bytes": 772735,
+        "files": 37
+      }
+    }
+  },
+  "gates": {},
+  "errors": []
+}

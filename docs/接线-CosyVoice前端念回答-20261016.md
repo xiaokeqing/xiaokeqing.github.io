@@ -498,7 +498,7 @@ ffmpeg -v error -y -i in.wav -ac 1 -ar 24000 -c:a aac -b:a 32k -movflags +fastst
    （**这一步属于"须先报站主"的动作** ✗ 且与站点线互斥写 nginx ⇒ 同文件单写纪律）
 6. 自检：curl 回环 127.0.0.1:18190 一次"你好"（走真实 key）→ 校验 m4a 可解、usage 落盘
 7. 外网自检：curl https://xiaokeqing.cn/api/voice/speak（**注意 CF 链路**）→ 200 + m4a
-8. 回归：主页/六页仍 200；`/api/voice/*` 非 GET/POST 405；限流生效（连打 20 次看 429）
+8. 回归：主页/五页仍 200；`/api/voice/*` 非 GET/POST 405；限流生效（连打 20 次看 429）
 9. 回滚预案：停单元 + 删 nginx location + reload（同现有 killswitch 纪律）
 ```
 

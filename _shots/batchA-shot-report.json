@@ -1,0 +1,431 @@
+{
+ "prefix": "batchA",
+ "shots": [
+  {
+   "page": "home",
+   "viewport": "desktop",
+   "file": "batchA-home-1280x900.png",
+   "bytes": 919865,
+   "probe": {
+    "path": "/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 57,
+    "cardTop": 33,
+    "dockTop": 88,
+    "errs": []
+   }
+  },
+  {
+   "page": "alerts",
+   "viewport": "desktop",
+   "file": "batchA-alerts-1280x900.png",
+   "bytes": 109315,
+   "probe": {
+    "path": "/alerts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 57,
+    "cardTop": 33,
+    "dockTop": 88,
+    "errs": []
+   }
+  },
+  {
+   "page": "posts",
+   "viewport": "desktop",
+   "file": "batchA-posts-1280x900.png",
+   "bytes": 167447,
+   "probe": {
+    "path": "/posts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 57,
+    "cardTop": 33,
+    "dockTop": 88,
+    "errs": []
+   }
+  },
+  {
+   "page": "ai",
+   "viewport": "desktop",
+   "file": "batchA-ai-1280x900.png",
+   "bytes": 234127,
+   "probe": {
+    "path": "/ai/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 57,
+    "cardTop": 33,
+    "dockTop": 88,
+    "errs": []
+   }
+  },
+  {
+   "page": "test",
+   "viewport": "desktop",
+   "file": "batchA-test-1280x900.png",
+   "bytes": 366610,
+   "probe": {
+    "path": "/test/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 57,
+    "cardTop": 33,
+    "dockTop": 88,
+    "errs": []
+   }
+  },
+  {
+   "page": "home",
+   "viewport": "phone375",
+   "file": "batchA-home-375x812.png",
+   "bytes": 274971,
+   "probe": {
+    "path": "/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 743,
+    "errs": []
+   }
+  },
+  {
+   "page": "alerts",
+   "viewport": "phone375",
+   "file": "batchA-alerts-375x812.png",
+   "bytes": 65736,
+   "probe": {
+    "path": "/alerts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 743,
+    "errs": []
+   }
+  },
+  {
+   "page": "posts",
+   "viewport": "phone375",
+   "file": "batchA-posts-375x812.png",
+   "bytes": 112417,
+   "probe": {
+    "path": "/posts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 743,
+    "errs": []
+   }
+  },
+  {
+   "page": "ai",
+   "viewport": "phone375",
+   "file": "batchA-ai-375x812.png",
+   "bytes": 133476,
+   "probe": {
+    "path": "/ai/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 743,
+    "errs": []
+   }
+  },
+  {
+   "page": "test",
+   "viewport": "phone375",
+   "file": "batchA-test-375x812.png",
+   "bytes": 156247,
+   "probe": {
+    "path": "/test/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 743,
+    "errs": []
+   }
+  },
+  {
+   "page": "home",
+   "viewport": "phone390",
+   "file": "batchA-home-390x844.png",
+   "bytes": 293710,
+   "probe": {
+    "path": "/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 775,
+    "errs": []
+   }
+  },
+  {
+   "page": "alerts",
+   "viewport": "phone390",
+   "file": "batchA-alerts-390x844.png",
+   "bytes": 66000,
+   "probe": {
+    "path": "/alerts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 775,
+    "errs": []
+   }
+  },
+  {
+   "page": "posts",
+   "viewport": "phone390",
+   "file": "batchA-posts-390x844.png",
+   "bytes": 120150,
+   "probe": {
+    "path": "/posts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 775,
+    "errs": []
+   }
+  },
+  {
+   "page": "ai",
+   "viewport": "phone390",
+   "file": "batchA-ai-390x844.png",
+   "bytes": 142580,
+   "probe": {
+    "path": "/ai/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 775,
+    "errs": []
+   }
+  },
+  {
+   "page": "test",
+   "viewport": "phone390",
+   "file": "batchA-test-390x844.png",
+   "bytes": 164060,
+   "probe": {
+    "path": "/test/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 775,
+    "errs": []
+   }
+  },
+  {
+   "page": "home",
+   "viewport": "phone414",
+   "file": "batchA-home-414x896.png",
+   "bytes": 329817,
+   "probe": {
+    "path": "/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 827,
+    "errs": []
+   }
+  },
+  {
+   "page": "alerts",
+   "viewport": "phone414",
+   "file": "batchA-alerts-414x896.png",
+   "bytes": 73390,
+   "probe": {
+    "path": "/alerts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 827,
+    "errs": []
+   }
+  },
+  {
+   "page": "posts",
+   "viewport": "phone414",
+   "file": "batchA-posts-414x896.png",
+   "bytes": 123570,
+   "probe": {
+    "path": "/posts/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 827,
+    "errs": []
+   }
+  },
+  {
+   "page": "ai",
+   "viewport": "phone414",
+   "file": "batchA-ai-414x896.png",
+   "bytes": 153908,
+   "probe": {
+    "path": "/ai/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 827,
+    "errs": []
+   }
+  },
+  {
+   "page": "test",
+   "viewport": "phone414",
+   "file": "batchA-test-414x896.png",
+   "bytes": 173996,
+   "probe": {
+    "path": "/test/",
+    "sound": false,
+    "emo": "normal",
+    "admin": false,
+    "sndText": "🔇",
+    "sndTitle": "声音：已关闭（点一下打开）",
+    "loginHidden": true,
+    "loginText": "👤",
+    "cardLeft": 65,
+    "cardTop": 32,
+    "dockTop": 827,
+    "errs": []
+   }
+  },
+  {
+   "page": "home",
+   "viewport": "visitor",
+   "file": "batchA-home-visitor.png",
+   "bytes": 920673
+  },
+  {
+   "page": "home",
+   "viewport": "admin",
+   "file": "batchA-home-admin.png",
+   "bytes": 916233,
+   "probe": {
+    "loginHidden": false,
+    "loginText": "👤",
+    "admin": true,
+    "revealWhy": "url-query"
+   }
+  },
+  {
+   "page": "home",
+   "viewport": "panel",
+   "file": "batchA-home-panel.png",
+   "bytes": 931599,
+   "panelOpen": true
+  }
+ ],
+ "checks": []
+}

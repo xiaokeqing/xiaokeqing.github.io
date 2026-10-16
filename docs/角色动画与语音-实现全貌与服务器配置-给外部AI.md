@@ -240,7 +240,7 @@ CF 隧道      ：0~10.7 KB/s（**即使 cf-cache-status: HIT、Age 168 也只�
 · `scripts/assert-build.sh`：零 0 字节资产、`static/kurisu + static/images/crt ≤ 80 MiB`、
   首屏角色资源 ≤1.5MB、`bg.jpg` SHA256 不变、公开端点白名单、零第三方资源引用…
 · `_dev/gate-firstscreen.mjs`：**真浏览器 CDP**，逐页首屏 ≤1,536KB（超预算 exit 1，有反例验证过）
-· `_dev/check-ssr-contract.py`：六页 `data-xk-ssr` 与 `#xk-views` 契约
+· `_dev/check-ssr-contract.py`：五页 `data-xk-ssr` 与 `#xk-views` 契约
 · 站点红线：零第三方请求（资源加载位站外 = 0）｜零造假（数字只来自真实接口，取不到写"读不到"）｜
   CSS 一律加容器前缀（曾因整份搬入 `.view{display:none}` **白屏一次**）｜推前必看本地产物 + 截图
 · 资产纪律：单一事实来源（`docs/amadeus-research/data/statemachine.json` → 生成器 → 产物）、

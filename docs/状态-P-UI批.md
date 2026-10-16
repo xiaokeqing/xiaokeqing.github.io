@@ -17,7 +17,7 @@
 ## 附：本轮实测到的两条与口径不符（建议规划侧收进台账）
 
 ```
-① `look_at_CRT`（带真眨眼）**不在** `static/kurisu/statemachine.json`（38 节点/88 边）里 ✗
+① `look_at_CRT`（带真眨眼）**不在** `static/kurisu/statemachine.json`（38 节点/92 边）里 ✗
    —— 它在 `static/kurisu/manifest.json:489` 叫 `look_at_CRT_loop`（180 帧 @30fps，第 38–43 帧是真眨眼）；
    站点的 `opening` 剪辑 = 它的**前 84 帧**（manifest.json:500 的 note 原文）。
    ⇒ 派单里"`look_at_CRT`（带一次真眨眼）"这句要改成"`opening` 的前 84 帧即含那次真眨眼"；

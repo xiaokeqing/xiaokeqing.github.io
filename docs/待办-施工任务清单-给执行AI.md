@@ -240,7 +240,7 @@ T5.6（D1）★ boot→hi 两段式：原型脚本直接加载 hi ✗，仓库�
 ## 8. T8（P2）状态机 + 口型接线（最难）
 
 ```
-状态机：38 节点/88 边；root=idle；出边概率**归一化后**掷骰子；`prob=0` 的 9 条=宿主触发入口（见 T6）；
+状态机：38 节点/92 边；root=idle；出边概率**归一化后**掷骰子；`prob=0` 的 9 条=宿主触发入口（见 T6）；
       13 个 once_then_hold 播完停末帧；支持 ?seed=<n> 与 ?replay=<base64>；每次切换记 reason（auto:<edge> / host:<kind>）
 宿主触发事件表：greeting（首访/回访分流）/ page_intro（每页一条，同页 10 分钟去重）/ status（**真实文本变化时**，20s 防抖）/
       event（新告警/故事线，按事件 id 去重，可打断 status）/ idle_banter（无操作 >90s）/ fallback（接口取不到）/

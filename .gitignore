@@ -89,6 +89,20 @@ _dev/*
 !_dev/shot-batch-a.mjs
 !_dev/firstscreen-order.mjs
 !_dev/_probe-idcard.mjs
+# ★2026-10-16（接手窗口）：_shots/ 整目录在 L55 被忽略 ⇒ 目录内的例外**天生不生效**
+#   （git 规则：被忽略目录里的文件不能单独 re-include，必须先放开目录、再目录/* 逐条放行）
+#   实测：这三份"已批准入库"的机器可读报告此前一直命中 L55，从来没被 add 过。
+!_shots/
+_shots/*
 !_shots/batchA-shot-report.json
+
 !_shots/batchA2-shot-report.json
-!_shots/firstscreen-order-home.json!_dev/shot-batch-b-askbar.mjs
+!_shots/firstscreen-order-home.json
+!_dev/shot-batch-b-askbar.mjs
+
+# 接手窗口批（2026-10-16，站主批准「有用就放」）：能复跑契约的取证探针
+#   3a 登录令牌 21 条断言 / 慢网三态与保留上次数据 / 糊的量化依据 / 导航与布局断言
+!_dev/probe-3a-login.mjs
+!_dev/probe-slownet.mjs
+!_dev/probe-blur-factor.mjs
+!_dev/shot-batch-d-nav.mjs

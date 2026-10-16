@@ -1,0 +1,408 @@
+{
+ "page": {
+  "path": "/",
+  "nav": {
+   "domInteractive": 125,
+   "domContentLoaded": 125,
+   "loadEvent": 187,
+   "fcp": 188
+  },
+  "dockIn": {
+   "at": "845",
+   "why": "flicker-end"
+  },
+  "firstPaint": {
+   "t0": 266,
+   "order": [
+    {
+     "name": "glow",
+     "at": 2
+    },
+    {
+     "name": "backplate",
+     "at": 14
+    },
+    {
+     "name": "plate",
+     "at": 31
+    }
+   ]
+  },
+  "bootPhase": 5,
+  "prefetch": [
+   {
+    "url": "/kurisu/manifest.json",
+    "at": 2058
+   },
+   {
+    "url": "/kurisu/video-manifest.json",
+    "at": 2059
+   },
+   {
+    "url": "/kurisu/voice/bank.json",
+    "at": 2059
+   }
+  ],
+  "prefetchNote": null,
+  "sound": false,
+  "emo": "normal",
+  "loginHidden": true,
+  "resources": [
+   {
+    "url": "/images/crt/desk.webp",
+    "start": 27,
+    "end": 37,
+    "bytes": 77608,
+    "initiator": "link"
+   },
+   {
+    "url": "/kurisu/scene/amadeus_ambient_high_blend.webp",
+    "start": 28,
+    "end": 36,
+    "bytes": 45352,
+    "initiator": "img"
+   },
+   {
+    "url": "/images/crt/lab.webp",
+    "start": 28,
+    "end": 37,
+    "bytes": 59950,
+    "initiator": "img"
+   },
+   {
+    "url": "/kurisu/scene/subtitle_frame_big.webp",
+    "start": 28,
+    "end": 47,
+    "bytes": 382384,
+    "initiator": "img"
+   },
+   {
+    "url": "/kurisu/full/opening.boot.webp",
+    "start": 115,
+    "end": 121,
+    "bytes": 281664,
+    "initiator": "img"
+   },
+   {
+    "url": "https://demo.xiaokeqing.cn/api/public/audit",
+    "start": 124,
+    "end": 4258,
+    "bytes": 0,
+    "initiator": "fetch"
+   },
+   {
+    "url": "/favicon-128.png",
+    "start": 201,
+    "end": 205,
+    "bytes": 13278,
+    "initiator": "other"
+   },
+   {
+    "url": "/kurisu/avatar/normal.idle.webp",
+    "start": 238,
+    "end": 242,
+    "bytes": 86696,
+    "initiator": "img"
+   },
+   {
+    "url": "/kurisu/manifest.json",
+    "start": 718,
+    "end": 722,
+    "bytes": 68341,
+    "initiator": "fetch"
+   },
+   {
+    "url": "/kurisu/statemachine.json",
+    "start": 725,
+    "end": 739,
+    "bytes": 61274,
+    "initiator": "fetch"
+   },
+   {
+    "url": "/kurisu/full/opening.hi.webp",
+    "start": 1888,
+    "end": 1897,
+    "bytes": 1027750,
+    "initiator": "img"
+   },
+   {
+    "url": "/kurisu/voice/bank.json",
+    "start": 1919,
+    "end": 1922,
+    "bytes": 12028,
+    "initiator": "fetch"
+   },
+   {
+    "url": "/kurisu/manifest.json",
+    "start": 2059,
+    "end": 4269,
+    "bytes": 68341,
+    "initiator": "link"
+   },
+   {
+    "url": "/kurisu/video-manifest.json",
+    "start": 2059,
+    "end": 4265,
+    "bytes": 20610,
+    "initiator": "link"
+   },
+   {
+    "url": "/kurisu/voice/bank.json",
+    "start": 2059,
+    "end": 4272,
+    "bytes": 12028,
+    "initiator": "link"
+   },
+   {
+    "url": "/kurisu/manifest.json",
+    "start": 2127,
+    "end": 2129,
+    "bytes": 68341,
+    "initiator": "fetch"
+   },
+   {
+    "url": "/kurisu/full/idle.boot.webp",
+    "start": 6010,
+    "end": 6015,
+    "bytes": 531854,
+    "initiator": "img"
+   },
+   {
+    "url": "/kurisu/medium/idle.atlas.webp",
+    "start": 6934,
+    "end": 6947,
+    "bytes": 777400,
+    "initiator": "img"
+   },
+   {
+    "url": "/kurisu/full/idle.hi.webp",
+    "start": 8636,
+    "end": 8650,
+    "bytes": 1316104,
+    "initiator": "img"
+   }
+  ]
+ },
+ "url": "/",
+ "windowMs": 9000,
+ "capturedAt": "2026-10-16T04:15:20.481Z",
+ "network": [
+  {
+   "url": "/",
+   "kind": "Document",
+   "start": 0,
+   "end": 15,
+   "bytes": 79428,
+   "status": 200,
+   "by": "other",
+   "enc": 171
+  },
+  {
+   "url": "/images/crt/desk.webp",
+   "kind": "Image",
+   "start": 24,
+   "end": 34,
+   "bytes": 77787,
+   "status": 200,
+   "by": "parser",
+   "enc": 157
+  },
+  {
+   "url": "/kurisu/scene/amadeus_ambient_high_blend.webp",
+   "kind": "Image",
+   "start": 25,
+   "end": 33,
+   "bytes": 45522,
+   "status": 200,
+   "by": "parser",
+   "enc": 157
+  },
+  {
+   "url": "/images/crt/lab.webp",
+   "kind": "Image",
+   "start": 25,
+   "end": 33,
+   "bytes": 60120,
+   "status": 200,
+   "by": "parser",
+   "enc": 157
+  },
+  {
+   "url": "/kurisu/scene/subtitle_frame_big.webp",
+   "kind": "Image",
+   "start": 25,
+   "end": 45,
+   "bytes": 382599,
+   "status": 200,
+   "by": "parser",
+   "enc": 157
+  },
+  {
+   "url": "/kurisu/full/opening.boot.webp",
+   "kind": "Image",
+   "start": 111,
+   "end": 118,
+   "bytes": 281870,
+   "status": 200,
+   "by": "parser",
+   "enc": 157
+  },
+  {
+   "url": "https://demo.xiaokeqing.cn/api/public/alerts",
+   "kind": "Fetch",
+   "start": 121,
+   "end": null,
+   "bytes": null,
+   "status": null,
+   "by": "script"
+  },
+  {
+   "url": "https://demo.xiaokeqing.cn/api/public/audit",
+   "kind": "Fetch",
+   "start": 121,
+   "end": null,
+   "bytes": null,
+   "status": null,
+   "by": "script"
+  },
+  {
+   "url": "https://demo.xiaokeqing.cn/api/public/honeypot",
+   "kind": "Fetch",
+   "start": 122,
+   "end": null,
+   "bytes": null,
+   "status": null,
+   "by": "script"
+  },
+  {
+   "url": "/favicon-128.png",
+   "kind": "Other",
+   "start": 198,
+   "end": 202,
+   "bytes": 13447,
+   "status": 200,
+   "by": "other",
+   "enc": 156
+  },
+  {
+   "url": "/kurisu/avatar/normal.idle.webp",
+   "kind": "Image",
+   "start": 235,
+   "end": 239,
+   "bytes": 86875,
+   "status": 200,
+   "by": "other",
+   "enc": 157
+  },
+  {
+   "url": "/kurisu/manifest.json",
+   "kind": "Fetch",
+   "start": 715,
+   "end": 719,
+   "bytes": 68525,
+   "status": 200,
+   "by": "script",
+   "enc": 163
+  },
+  {
+   "url": "/kurisu/statemachine.json",
+   "kind": "Fetch",
+   "start": 722,
+   "end": 736,
+   "bytes": 61450,
+   "status": 200,
+   "by": "script",
+   "enc": 163
+  },
+  {
+   "url": "/kurisu/full/opening.hi.webp",
+   "kind": "Image",
+   "start": 1885,
+   "end": 1894,
+   "bytes": 1028055,
+   "status": 200,
+   "by": "other",
+   "enc": 157
+  },
+  {
+   "url": "/kurisu/voice/bank.json",
+   "kind": "Fetch",
+   "start": 1916,
+   "end": 1919,
+   "bytes": 12204,
+   "status": 200,
+   "by": "script",
+   "enc": 163
+  },
+  {
+   "url": "/kurisu/manifest.json",
+   "kind": "Other",
+   "start": 2056,
+   "end": 2126,
+   "bytes": 0,
+   "status": 200,
+   "by": "script",
+   "enc": 0
+  },
+  {
+   "url": "/kurisu/video-manifest.json",
+   "kind": "Other",
+   "start": 2056,
+   "end": 4262,
+   "bytes": 20786,
+   "status": 200,
+   "by": "script",
+   "enc": 163
+  },
+  {
+   "url": "/kurisu/voice/bank.json",
+   "kind": "Other",
+   "start": 2056,
+   "end": 4269,
+   "bytes": 12204,
+   "status": 200,
+   "by": "script",
+   "enc": 163
+  },
+  {
+   "url": "/kurisu/manifest.json",
+   "kind": "Fetch",
+   "start": 2124,
+   "end": 4266,
+   "bytes": 68525,
+   "status": 200,
+   "by": "script",
+   "enc": 163
+  },
+  {
+   "url": "/kurisu/full/idle.boot.webp",
+   "kind": "Image",
+   "start": 6007,
+   "end": 6012,
+   "bytes": 532096,
+   "status": 200,
+   "by": "other",
+   "enc": 157
+  },
+  {
+   "url": "/kurisu/medium/idle.atlas.webp",
+   "kind": "Image",
+   "start": 6931,
+   "end": 6944,
+   "bytes": 777669,
+   "status": 200,
+   "by": "other",
+   "enc": 157
+  },
+  {
+   "url": "/kurisu/full/idle.hi.webp",
+   "kind": "Image",
+   "start": 8633,
+   "end": 8647,
+   "bytes": 1316454,
+   "status": 200,
+   "by": "other",
+   "enc": 157
+  }
+ ]
+}
