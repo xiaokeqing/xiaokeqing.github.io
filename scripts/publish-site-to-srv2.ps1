@@ -59,8 +59,17 @@ $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 $BlogDir = Split-Path -Parent $PSScriptRoot
 $Stamp   = Get-Date -Format 'yyyyMMdd-HHmmss'
-$WorkDir = Join-Path $env:TEMP "xk-site-publish-$Stamp"
-$TmpTar  = Join-Path $env:TEMP "xk-site-$Stamp.tar.gz"
+# ★2026-10-16 修（今晚两次发布失败的真根因）：**临时目录默认挪到有空间的盘**。
+#   事故：C 盘只剩 2.4GB，而一次发布要"干净 worktree(152MB) + tar.gz(144MB)"，
+#   失败时又不清理 ⇒ 越失败越挤、越挤越失败（两次报"tar 包里没有 index.html"）。
+#   口径：优先用 E:\DeepSeek1\work\_pubtmp（实测 67GB 空闲）；没有 E: 才退回 %TEMP%。
+#   可用 -TempBase 显式覆盖；该目录不进 git（已由 .gitignore 覆盖 _pubtmp）。
+$TempBase = if ($PSBoundParameters.ContainsKey('TempBase') -and $TempBase) { $TempBase }
+            elseif (Test-Path 'E:\') { 'E:\DeepSeek1\work\_pubtmp' }
+            else { $env:TEMP }
+if (-not (Test-Path -LiteralPath $TempBase)) { New-Item -ItemType Directory -Force -Path $TempBase | Out-Null }
+$WorkDir = Join-Path $TempBase "xk-site-publish-$Stamp"
+$TmpTar  = Join-Path $TempBase "xk-site-$Stamp.tar.gz"
 $RemoteTar = "/tmp/xk-site-$Stamp.tar.gz"
 $ReceiveLocal = Join-Path $PSScriptRoot 'srv2-site-receive.sh'
 $ReceiveRemote = '/opt/secagent/scripts/srv2-site-receive.sh'
