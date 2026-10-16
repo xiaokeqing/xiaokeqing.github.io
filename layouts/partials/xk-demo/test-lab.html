@@ -67,9 +67,13 @@
 <section class="view on lab" id="v-test">
   <div class="lab-hero">
     <h2>测试模块页 · 在试功能一处看全</h2>
-    <p>这一页不是展示页，是**实验台**：每一块都能**单独开关**（开关状态存在浏览器 <code>localStorage['xk-lab-off']</code>）。
+    <p>这一页不是展示页，是<b>实验台</b>：每一块都能<b>单独开关</b>（开关状态存在浏览器 <code>localStorage['xk-lab-off']</code>）。
        口径：只用真实只读端点 <code>/api/public/*</code> 的 GET（白名单见 <code>scripts/assert-build.sh</code> 第⑥条）；
        取不到就写"读不到"，没接线的写 <code>NOT_WIRED</code> 并说明接上时的落点 —— <b>不补数、不编字段</b>。
+       <br><b>关于 NOT_WIRED 的豁免（2026-10-16 登记）</b>：项目口径是"<b>公开业务页不许出现 NOT_WIRED</b>"
+       （<code>/</code> · <code>/alerts/</code> · <code>/posts/</code> · <code>/ai/</code>）；
+       <b>本页是唯一的例外</b>——它本身就是实验台，未接线项在这里<b>如实标注并写明接上时的落点</b>，比藏起来更诚实。
+       该豁免登记在 <code>docs/评审-接手总文档与任务规划-20261016.md</code>（§三 与 §二十三）。
        慢端点（alerts 4.9~15s · audit 11~30s · geo 首调 15s · webstats 30s）统一按 22s 超时 + 失败重试 2 次（退避 1s/3s）取，
        失败时保留上一次成功数据，文案写"接口慢/正在重试"。</p>
   </div>
