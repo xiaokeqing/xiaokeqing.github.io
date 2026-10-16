@@ -279,14 +279,27 @@
   <section class="lab-blk" data-lab="askbar">
     <div class="lab-hd">
       <h3>⑨ 底部对话输入栏（第 1 期）</h3>
-      <span class="lab-badge nw" data-lab-status>NOT_WIRED</span>
+      <span class="lab-badge ok" data-lab-status>已接线</span>
       <label class="lab-sw"><input type="checkbox" data-lab-sw checked><span>显示这一块</span></label>
     </div>
     <p class="lab-desc">一行说明：接 <code>POST /api/public/ask</code>（白名单端点），动作/表情**只按回答里的真字段 <code>state/stateLabel</code>** 驱动；拿不到就 <code>normal</code> + 只字幕。</p>
     <div class="lab-body">
-      <div class="lab-kv">硬性口径：<code>🔊</code> 开关**默认关**；失败/超时写"接口慢/读不到"；只出字幕，不报错刷屏；额度提示照后端原话。</div>
+      <div class="lab-kv">
+        落地（2026-10-16 批次 ②）：栏体在<strong>主页</strong>（<code>layouts/index.html</code> 的 <code>body.is-home</code>），
+        标记与驱动都在 <code>layouts/partials/xk-demo/idcard.html</code>（生成器 <code>_dev/gen-demo-pages.py</code> 的 IDCARD_PARTIAL）。
+        <br>① 访客/未登录：DOM 里那一条永远带 <code>hidden</code>（截图取证 <code>_shots/batchB-home-visitor.png</code>，
+        机器可读 <code>_shots/batchB-shot-report.json</code> 的 <code>askBarHidden/askBarRequests</code>）；
+        ② 开隐蔽入口（<code>?admin=1</code> / <code>#admin</code> / 1.5 秒内连点头像 5 次）才可见；
+        ③ 提交 = Enter 或「提问」按钮 → <code>__xkAdmin.fetch(meta[name=wb-api] + '/api/public/ask')</code>，
+        body 只有 <code>{question}</code>（≤600 字符）、有令牌时自动带 <code>X-User-Token</code>；超时 <code>XK_ASK_TIMEOUT=20000</code>，
+        429 读 <code>Retry-After</code> 倒计时、<code>quota.remaining</code> 如实显示；
+        <br>④ 硬性口径未变：<code>🔊</code> 默认关 ⇒ <b>只出字幕</b>；失败/超时/额度**照后端原话**、不补"像答案"的文字、不刷屏报错；不做 SSE/WebSocket。
+        <br>本页**不**放活的输入栏：测试页是公开只读页，挂一条真能 POST 的栏会违反"发布面不发起写请求"这条纪律（栏只存在于主页）。
+      </div>
     </div>
-    <p class="lab-iss"><b>已知问题</b>：未接线（下一批；代码里先留好 <code>data.decision</code> 的精确消费点）。</p>
+    <p class="lab-iss"><b>已知问题</b>：后端线 <code>docs/后端令牌登录与自用池设计-20261016.md</code> 的 <code>/api/user/*</code> 尚未上线
+      ⇒ 令牌探针与「已登录 · 自用模式」文案属下一半（③b）；现在只有"无令牌不渲染 + 粘贴框 + 探针失败降级"，
+      <b>不假装已登录</b>。栏体只在登录面出现这一点是硬口径，不做"访客也能提问"的开关。</p>
   </section>
 </section>
 

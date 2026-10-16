@@ -2926,8 +2926,20 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
        下 = 登录按钮（👤）—— 访客**不可见**（站主追加：这是他自己的功能），只留隐蔽入口。
    隐蔽入口（两个都做了，任选其一）：
      a) URL 参数 `?admin=1` 或 hash `#admin`；b) 1.5 秒内连点头像 5 次。
-     触发后本会话一直显示（sessionStorage['xk-admin-ui']=1）；已登录（Access Cookie 在）也一直显示。
-   纪律：**绝不硬编码任何令牌** ✗ —— 登录态只按 Cloudflare Access 的 Cookie 存在性判定，不读取、不存储。
+     触发后本会话一直显示（sessionStorage['xk-admin-ui']=1）；有自用令牌（localStorage['xk-user-token']）也一直显示。
+   纪律：**绝不硬编码任何令牌** ✗ —— 令牌只由站主手动粘进本机 localStorage（键 `xk-user-token`），
+        前端不读取它的内容做判断、不写进任何 .js/.html/模板/构建产物，只把它放进请求头 X-User-Token。
+    ★批次 ②（2026-10-16）· 主页底部对话输入栏第 1 期（同一份偏件里租一处，理由：站主要求"与头像卡同层"）：
+     · 标记只落在主页（body.is-home；SSR 默认 hidden），DOM 里**永远有一份**但未开隐蔽入口时不可见 ✗；
+     · 显示条件 = `window.__xkAdmin.allowed()`（开过隐蔽入口 或 有令牌）；**未登录一个请求都不发** ✗；
+     · 提交走 `__xkAdmin.fetch(API + '/api/public/ask')`，body 只 `{question}`（≤600 字符，与后端 maxQuestionChars 同口径）；
+     · 表情/动作**只按响应里的 state / stateLabel**（复用 shell-script.html 的 XK_STATE_LABEL）；拿不到就 normal + 只字幕；
+     · 失败/超时/额度照后端原话（XK_ASK_TIMEOUT=20000 · 429 读 Retry-After · quota.remaining）；**只出字幕**；
+     · 不做 SSE/WebSocket（公开面只有一次性 POST）。
+    ★批次 ③a（2026-10-16）· 登录按钮改走后端令牌模型（前半）—— 本偏件里同时落地 `__xkAdmin` 的令牌形态：
+     · 登录态判据从"Cloudflare Access Cookie 存在性"换成 localStorage['xk-user-token']（旧写法恒 false，可安全过渡）；
+     · 探针 `GET /api/user/status`、退出=本地删键、失败/降级文案**照后端线附录 B**；
+     · 后端重建上线前**不许出现任何"已登录"字样**（探针会失败 ⇒ 按附录 B 降级，不假装已登录）✗。
    素材：8 类情绪 = static/kurisu/avatar/<emo>.idle.webp（132px 单元 · 8 列，与 HOLO 面板同一套）；
          8 个常用动作 = static/kurisu/manifest.json clipsMedium 里**真实存在**的剪辑名（只在主页全身画布上演）。
    固定台词：LINE_ZH 是入口 → 中文口语台词（音轨文件与 lineId 不变；表见 docs/台词表-入口与固定台词-20261016.md），
@@ -2993,6 +3005,34 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     .xk-idcap{top:104px}
     .xk-idpanel{left:6px;top:104px}
   }
+  /* ★批次 ②：主页底部对话输入栏（第 1 期）
+     只新增这一组值；沿用既有变量（--solid/--line2/--txt/--mut/--acc/--mono/--sans），不引入新配色。
+     SSR 一律带 [hidden]（服务端不判断登录态）⇒ 由脚本在 `__xkAdmin.allowed()` 为真时摘掉；[hidden] 规则必须留住。 */
+  .xk-askbar{position:fixed;bottom:14px;z-index:59;display:flex;align-items:center;gap:8px;
+    width:min(640px,calc(100vw - 132px));margin-left:calc(-0.5 * min(640px,calc(100vw - 132px)));
+    min-height:44px;padding:7px 8px 7px 12px;background:var(--solid,rgba(48,45,41,.9));
+    border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:999px;
+    box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+  .xk-askbar[hidden]{display:none}
+  .xk-askbar input{flex:1;min-width:0;background:rgba(0,0,0,.22);border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:999px;color:var(--txt,#FAF7F0);font:13px/1.5 var(--sans,sans-serif);padding:8px 13px;outline:none}
+  .xk-askbar input::placeholder{color:var(--mut,#D2CBBD)}
+  .xk-askbar input:focus-visible{border-color:var(--acc,#7FD4D8)}
+  .xk-askbar-count{flex:none;font:11px var(--mono,monospace);color:var(--mut,#D2CBBD)}
+  .xk-askbar button{flex:none;background:var(--acc,#7FD4D8);border:0;color:#04282b;font-weight:600;
+    font:600 13px/1 var(--sans,sans-serif);padding:0 16px;height:34px;border-radius:999px;cursor:pointer}
+  .xk-askbar button:hover{filter:brightness(1.08)}
+  .xk-askbar button:focus-visible,.xk-askbar input:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
+  /* ⚠ 这条 @media 必须在上面那组 .xk-askbar 规则**之后**（实测踩过：写在前面会被基础规则压掉 ——
+     窄屏表现为栏左边缘 -111px、字号仍 13px、与 .dock 重叠）。
+     窄屏：输入栏贴底铺满（dock 在左下、她在中下，两者此时不重叠）⇒ margin-left 复位。 */
+  @media (max-width:980px){
+    /* ≤980px：.dock 是**底部横排**（实测 375 宽时 top 743 / bottom 802）⇒ 输入栏要让到它**上面** */
+    .xk-askbar{left:10px;right:10px;bottom:70px;margin-left:0;padding:6px 6px 6px 10px;gap:6px}
+    .xk-askbar input{font-size:16px}       /* ≥16px：iOS 聚焦不放大整页 */
+    .xk-askbar-count{display:none}         /* 手机上计数让位给输入框（长度仍按 600 截） */
+    .xk-askbar button{padding:0 12px}
+  }
 </style>
 <aside class="xk-idcard" id="xkIdCard" aria-label="桐莉栖 · 头像卡">
   <button class="xk-idcard-av" id="xkIdAv" type="button"
@@ -3008,6 +3048,17 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
 </aside>
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
 <div class="xk-idpanel" id="xkIdPanel" role="dialog" aria-label="桐莉栖 · 情绪与动作面板"></div>
+{{- /* ★批次 ②：主页底部对话输入栏（第 1 期）
+     · 落点：主页 `<main id="content" data-xk-ssr="home">` **之外**、与头像卡同层（站主口径）；
+     · 只在主页渲染：`body.is-home`（主页 body 上带这个类；五个内容页都没有）；
+     · SSR 一律带 `hidden` ⇒ 未登录/访客 DOM 里没有可见节点；脚本在 `__xkAdmin.allowed()` 为真时摘掉（含 5 次连点入口）；
+     · 输入框只吃 Enter（不做"边打字边请求"）、按钮与 Enter 同一条路径；上限 600 字符（与后端 maxQuestionChars 同口径）。 */ -}}
+<div class="xk-askbar" id="xkAskBar" hidden role="search" aria-label="向桐莉栖提问（自用入口）">
+  <input class="xk-askbar-input" id="xkAskInput" type="text" autocomplete="off" spellcheck="false"
+    placeholder="问一个安全概念或防御做法…（Enter 发送）" aria-label="问题（最多 600 字符）">
+  <span class="xk-askbar-count" id="xkAskCount" aria-hidden="true">0/600</span>
+  <button type="button" id="xkAskSend">提问</button>
+</div>
 <script>
 /* 桐莉栖 · 头像卡（左上角）· 批次 A-①
    1) 声音开关：默认关；状态存 localStorage['xk-sound-on']；所有播放器统一读 window.__xkSound.on
@@ -3163,6 +3214,10 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     login.hidden = false;
     D.admin = true; D.revealWhy = why;
     ss('xk-admin-ui', '1');
+    /* ★批次 ②：隐蔽入口若在**本页加载之后**才被打开（5 次连点头像 / #admin），
+       主页那条底部输入栏要跟着一起出现 ⇒ 让输入栏模块自己再判一次闸门
+       （未登录时它返回 false：栏不出来、一个请求也不发）。 */
+    try { if (window.__xkAskBar && window.__xkAskBar.poke) { window.__xkAskBar.poke(); } } catch (e) { }
   }
   function applyLogin() {
     D.loggedIn = accessCookie();
@@ -3182,6 +3237,240 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     else if (sg('xk-admin-ui') === '1') { revealLogin('session'); }
   })();
   applyLogin();
+
+  /* 自用令牌（★批次 ③a 的前半：判据 = localStorage['xk-user-token'] 存在；
+     旧的 `accessCookie()`（判 CF_Authorization Cookie）恒 false —— 换掉它不影响任何访客行为）。
+     红线：令牌原文只放进请求头 X-User-Token，**不**写进任何产物、不做任何本地"解出身份"的推断。 */
+  var TOKEN_KEY = 'xk-user-token';
+  function userToken() { var t = lg(TOKEN_KEY); return (t && t.length) ? t : ''; }
+  function withToken(h) {
+    var o = h || {};
+    var t = userToken();
+    if (!t) { return o; }
+    var out = {};
+    for (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) { out[k] = o[k]; } }
+    out['X-User-Token'] = t;
+    return out;
+  }
+  /* 登录后才有权限的东西：统一从这里走，未登录**不发请求**（站主追加②最后一条） */
+  var admin = {
+    userToken: userToken,
+    allowed: function () { return !!(D.admin || D.loggedIn); },
+    /* ⚠ 这里**不能**写 `this.allowed()`：调用方会把 fetch 拆出来当变量用
+       （批次 ② 的输入栏就是 `var adminFetch = __xkAdmin.fetch`）⇒ this === undefined ⇒ TypeError（实测）。
+       一律引用闭包里的 admin 对象。 */
+    fetch: function (u, o) {
+      if (!admin.allowed()) { return Promise.reject(new Error('ADMIN_ONLY')); }
+      var opt = o || {};
+      opt.headers = withToken(opt.headers);
+      return fetch(u, opt);
+    },
+    get: function (u) { return admin.fetch(u, { cache: 'no-store', credentials: 'omit' }); }
+  };
+  window.__xkAdmin = admin;
+
+  /* ================= ★批次 ②：主页底部对话输入栏第 1 期 =================
+     口径（照施工单，逐条）：
+      1. 只在主页：SSR 标记在 body.is-home 上（其它四页没有）；这里再用路径判据兜一层；
+      2. 显示条件 = __xkAdmin.allowed()；**未登录一个请求都不发**（整段在闸门后面）；
+      3. 提交（Enter / 按钮同一条）→ POST {apiBase}/api/public/ask，body 只 {question}（≤600 字符）；
+      4. 表情/动作只按响应里的 state / stateLabel（没有就 normal + 只字幕，绝不猜）；
+      5. 🔊 默认关 ⇒ 只出字幕；开着才尝试统一播放器（闸门在 kurisu-player 的 playLine 那一处）；
+      6. 失败/超时/额度照后端原话（HTTP 码 / Retry-After 倒计时 / quota.remaining），不补"像答案"的文字；
+      7. 不做 SSE / WebSocket。
+     ⚠ 与 /ai/ 那个聊天框（#chatlog/#askInput，在 v-ai 那一屏里）**不是同一个东西**：本栏只挂主页，
+        id 全部用 xkAsk* 前缀，靠这一点避免和 shell-script 的 xkPush/xkRenderAnswer 撞名。
+     诊断：window.__xkAsk = {inited, allowed, state, status, ms, retryAfter, quota, errors, lastQuestionLen} */
+  (function askBarSetup() {
+    var bar = document.getElementById('xkAskBar');
+    if (!bar) { return; }
+    var D2 = window.__xkAsk = { inited: false, allowed: false, state: '', status: 0, ms: 0, retryAfter: 0,
+      quota: null, errors: [], lastQuestionLen: 0 };
+    var onHome = false;
+    try { onHome = document.body.classList.contains('is-home'); } catch (e) { }
+    if (!onHome) {
+      onHome = (location.pathname === '/' || /^\/index\.html?$/.test(location.pathname));
+    }
+    if (!onHome) { return; }                       /* 内容页：连驱动都不装（标记也在 CSS/条件里不显示） */
+    /* ⚠ 两段式（实测踩过）：本 IIFE 跑在 `window.__xkAdmin` 赋值**之前**（它在偏件后面的"空闲预取"那一段）。
+       所以：① 先按当前已存在的对象取一次并**建好** `adminApi`（fetch 允许被拆出来调用，内部不依赖 this）；
+              ② 闸门判定放在下面，`poke()` 每次重取一次（隐蔽入口在本页加载后才打开时要用新对象）。 */
+    var adminApi = (function () {
+      var a = window.__xkAdmin;
+      if (!a || typeof a.allowed !== 'function' || typeof a.fetch !== 'function') { return null; }
+      return { allowed: a.allowed, fetch: a.fetch };
+    })();
+    var inp = document.getElementById('xkAskInput'), snd = document.getElementById('xkAskSend');
+    var cnt = document.getElementById('xkAskCount');
+    var wired = false;
+    var META = document.querySelector('meta[name="wb-api"]');
+    var API = ((META && META.getAttribute('content')) || '').replace(/\/+$/, '');
+    var ASK_TIMEOUT = 20000, ASK_MAX = 600;
+    /* 后端线附录 B 的降级文案（逐字）；"已登录"三个字在 ③b（后端重建上线）之前**一律不出现**。 */
+    var TXT = {
+      notoken: '自用入口：请粘贴自用令牌（令牌只保存在本机浏览器）',
+      invalid: '令牌无效或已轮换 —— 请向站主要一份新的自用令牌',
+      disabled: '自用入口当前未启用（服务端未配置令牌）',
+      throttled: '尝试过于频繁，请 N 秒后再试',
+      soft: '今日自用调用已达软上限 500 次，仍可继续使用（仅提醒，不限额）',
+      offline: '请求没能送达 —— 我不编答案；过一会儿再试。',
+      timeout: '等了 20 秒还没返回 —— 这次请求已放弃（不补推测答案）。',
+      nofield: '这次后端没有给出 state / stateLabel —— 只出字幕，不猜她的表情。'
+    };
+    var ASK_EMO = { 'model': 'normal', 'rule-based': 'sided_thinking', 'input-insufficient': 'sided_thinking',
+      'no-retrieval': 'sided_thinking', 'retrieval-failed': 'sided_thinking', 'model-failed': 'sided_thinking',
+      'injection-blocked': 'sided_surprised' };
+    /* ★唯一的闸门 —— 注意这里**不能 return**：挂钩 `window.__xkAskBar` 必须在任何情况下都存在，
+       否则"本页加载之后才开隐蔽入口（5 次连点头像 / #admin）"这条路没有落点（浏览器实测踩过）。
+       未登录 ⇒ 下面什么也不做：不摘 hidden、不绑监听、不发请求；由末尾的 poke() 统一执行判定。 */
+    var shouldRun = !!(inp && snd && adminApi && adminApi.allowed());
+    function labelOf(d) {
+      if (d && d.stateLabel) { return String(d.stateLabel); }
+      var st = (d && d.state) || '';
+      var L = window.XK_STATE_LABEL;              /* 复用 shell-script 的那张表；没有就原样报 state */
+      if (L && L[st] && L[st][0]) { return L[st][0]; }
+      return st || '未识别状态';
+    }
+    function askSay(prefix, text) {
+      clearInterval(D2._tick); D2._tick = 0;      /* 新字幕一来就停掉旧倒计时，避免两条消息互相盖（实测踩过） */
+      say(prefix ? (prefix + ' —— ' + text) : text);
+    }
+    function shortAnswer(a) {
+      var s = String(a == null ? '' : a).replace(/\s+/g, ' ').trim();
+      if (!s) { return ''; }
+      return s.length > 120 ? (s.slice(0, 120) + '…') : s;
+    }
+    function rem(d) {
+      return (d && d.quota && d.quota.remaining != null) ? (' 剩余 ' + d.quota.remaining + ' 次') : '';
+    }
+    function render(d) {
+      var st = (d && d.state) || '';
+      D2.state = st;
+      D2.quota = (d && d.quota) || null;
+      /* ★只按 state 驱动表情；状态→表现的真值表在服务端，这里只做"这一格该不该动"的映射 */
+      var emo = ASK_EMO[st] || 'normal';
+      setEmo(emo);
+      var line = '', why = labelOf(d), tail = rem(d);
+      if (!d || !st) { line = TXT.nofield; }
+      else if (d.generated === true && st === 'model') { line = '答完了（' + why + '）' + tail + '：' + shortAnswer(d.answer); }
+      else if (d.injection && d.injection.blocked) { line = '输入命中提示注入护栏（' + why + '）—— 我只把它当不可信数据，没执行它。'; }
+      else if (st === 'rule-based') { line = '这条我不作答（' + why + '）—— 我不会为了"有回答"而编。'; }
+      else if (st === 'input-insufficient' || st === 'no-retrieval') { line = '依据不足，我不给结论（' + why + '）。'; }
+      else {
+        line = '这次没生成结论（' + why + '）';
+        if (d.failureReason) { line += ' —— 后端原话：' + shortAnswer(d.failureReason); }
+        line += '。';
+      }
+      /* ⚠ 顺序有讲究（实测踩过）：speak() 内部也会写字幕条 = 她的"台词"，
+         所以必须**先 speak() 再 askSay()** —— 否则刚拿到的后端答案会被台词盖掉。 */
+      speak(d.generated === true ? 'greet_back' : 'fallback_no_data', '', false);
+      askSay('她的回答', line);
+    }
+    function fail(status, body, retryAfter) {
+      D2.status = status;
+      D2.retryAfter = parseInt(retryAfter || 0, 10) || 0;   /* 响应头是字符串（"7"）⇒ 诊断字段存整数 */
+      var msg = (body && (body.message || (body.error && body.error.message))) || '';
+      /* ① 429：后端原话 + Retry-After 倒计时（不自己编"稍后再试"的秒数） */
+      if (status === 429) {
+        var secs = parseInt(retryAfter || (body && body.retryAfter) || 0, 10) || 0;
+        var extra = (body && body.data && body.data.quota && body.data.quota.remaining != null)
+          ? ('（剩余 ' + body.data.quota.remaining + ' 次）') : '';
+        setEmo('normal');
+        if (secs > 0) { ticker(secs, msg || '请求被限流。', extra); }
+        else { askSay('提问', '请求被限流' + extra + (msg ? (' —— ' + msg) : '') + '。'); }
+        speak('fallback_throttled', '', false);
+        return;
+      }
+      setEmo('normal');
+      if (status === 401) {
+        var reason = (body && (body.reason || (body.error && body.error.reason))) || '';
+        askSay('提问', (reason === 'USER_LOGIN_DISABLED') ? TXT.disabled : TXT.invalid);
+      } else {
+        askSay('提问', '接口返回 HTTP ' + status + (msg ? (' —— ' + msg) : '') + '（不显示任何替代答案）。');
+      }
+      speak('fallback_no_data', '', false);
+    }
+    function ticker(secs, msg, extra) {
+      var left = Math.max(1, Number(secs) || 0);
+      clearInterval(D2._tick);
+      function tick() {
+        if (left <= 0) {
+          clearInterval(D2._tick);
+          askSay('提问', (msg || '请求被限流') + (extra || '') + ' —— 等待结束，可以重新提问了。');
+          return;
+        }
+        askSay('提问', (msg || '请求被限流') + (extra || '') + ' —— 请稍后再试 ' + left + ' 秒。');
+        left -= 1;
+      }
+      tick();
+      D2._tick = setInterval(tick, 1000);
+    }
+    function ask() {
+      var q = String(inp.value || '').trim();
+      if (!q || D2.busy) { return; }
+      if (q.length > ASK_MAX) { q = q.slice(0, ASK_MAX); }   /* 与后端 maxQuestionChars 同口径 */
+      D2.lastQuestionLen = q.length;
+      D2.busy = true; snd.disabled = true;
+      inp.value = ''; if (cnt) { cnt.textContent = '0/' + ASK_MAX; }
+      setEmo('sided_thinking');
+      askSay('提问', '正在走公开检索链路…（最多等 20 秒，不做流式）');
+      var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, ASK_TIMEOUT);
+      var t0 = Date.now();
+      adminApi.fetch(API + '/api/public/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors', credentials: 'omit', cache: 'no-store',
+        signal: ctrl ? ctrl.signal : undefined,
+        body: JSON.stringify({ question: q })
+      }).then(function (res) {
+        clearTimeout(timer);
+        var status = res.status, ra = res.headers.get('Retry-After');
+        return res.json().catch(function () { return null; }).then(function (body) {
+          D2.ms = Date.now() - t0; D2.status = status;
+          if (!res.ok) { fail(status, body, ra); return; }
+          var d = (body && body.data !== undefined) ? body.data : null;
+          if (!d) { fail(status, body, ra); return; }
+          render(d);
+        });
+      })['catch'](function (err) {
+        clearTimeout(timer);
+        D2.ms = Date.now() - t0;
+        setEmo('normal');
+        if (err && err.name === 'AbortError') { askSay('提问', TXT.timeout); }
+        else { D2.errors.push('ask: ' + (err && err.message ? err.message : err)); askSay('提问', TXT.offline); }
+        speak('fallback_offline', '', false);
+      }).then(function () { D2.busy = false; snd.disabled = false; });
+    }
+    function wire() {
+      if (wired) { return; }                        /* 幂等：poke 可能被反复调用 */
+      wired = true;
+      snd.addEventListener('click', ask);
+      inp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); ask(); }
+      });
+      inp.addEventListener('input', function () {
+        if (cnt) { cnt.textContent = inp.value.length + '/' + ASK_MAX; }
+      });
+    }
+    /* 挂钩**先于**闸门挂上：给 revealLogin()（5 次连点头像 / #admin）一个落点。
+       本函数只做"判定 + 摘 hidden + 绑监听"，未登录时一律返回 false、什么都不动。 */
+    function poke() {
+      var a = window.__xkAdmin;                     /* 每次重取：__xkAdmin 在本偏件后面才赋值（实测踩过） */
+      if (a && typeof a.allowed === 'function' && typeof a.fetch === 'function') {
+        adminApi = { allowed: a.allowed, fetch: a.fetch };
+      }
+      var ok = !!(adminApi && adminApi.allowed() && inp && snd); D2.allowed = ok;
+      if (!ok) { return false; }
+      bar.hidden = false; D2.inited = true; wire();
+      return true;
+    }
+    window.__xkAskBar = {
+      ask: ask, el: bar, api: API, TXT: TXT, poke: poke,
+      allowed: function () { return !!D2.allowed; }
+    };
+    poke();
+  })();
 
   /* ---------- 面板：8 情绪 + 8 常用动作 ---------- */
   function labelOf(n) { for (var i = 0; i < EMOS8.length; i++) { if (EMOS8[i][0] === n) { return EMOS8[i][1]; } } return n; }
@@ -3323,14 +3612,9 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       document.head.appendChild(l);
     } catch (e) { D.errors.push('prefetch: ' + e); }
   }
-  /* 登录后才有权限的东西：统一从这里走，未登录**不发请求**（站主追加②最后一条） */
-  window.__xkAdmin = {
-    allowed: function () { return !!(D.admin || D.loggedIn); },
-    fetch: function (u, o) {
-      if (!this.allowed()) { return Promise.reject(new Error('ADMIN_ONLY')); }
-      return fetch(u, o);
-    }
-  };
+  /* ★`window.__xkAdmin`（含 X-User-Token 走头）**已上移到 applyLogin() 之后**定义 ——
+     因为 askBarSetup() 就在那一段里读它（批次 ② 实测：放在这里会让闸门永远读不到 ⇒ 输入栏不出现）。
+     本处保留一行指路注释，避免下一个接手的人再挪回来。 */
   setTimeout(function () {
     if (D.prefetchOff) { D.prefetchNote = '跳过空闲预取（' + D.prefetchOff + '：只取首屏 + 当前栏目）'; return; }
     idle(function () {
@@ -3357,8 +3641,10 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
 '''
 _n_brace_o = IDCARD_PARTIAL.count('{{')
 _n_brace_c = IDCARD_PARTIAL.count('-}}')
-if _n_brace_o != 1 or _n_brace_c != 1:
-    raise SystemExit('batchA: idcard partial 里 {{ / -}} 不止注释那一处（%d / %d）—— JS/CSS 里混进了模板定界符'
+# ★批次 ②（2026-10-16）：偏件里现在有 **两处** Hugo 注释 —— ①头部说明 ②底部输入栏标记（在 <main> 之外）
+#   除这两处之外，JS/CSS 里混进 "{{" / "-}}" 依然要挡住（那会被 Hugo 当模板执行，产物会坏）
+if _n_brace_o != 2 or _n_brace_c != 2:
+    raise SystemExit('batchB: idcard partial 里 {{ / -}} 不止两处注释（%d / %d）—— JS/CSS 里混进了模板定界符'
                      % (_n_brace_o, _n_brace_c))
 
 # --------------------------------------------------------------------- 落盘
@@ -3400,7 +3686,7 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
 <style>%s
 </style>
 </head>
-<body class="xk-has-idcard">
+<body class="xk-has-idcard is-home">
 {{- /* ↓↓↓ 以下到 </main> 为止 = docs/demo-主页.html 的 body 逐字（仅素材路径与导航 href 如上） */}}
 <main id="content" data-xk-ssr="home">
 %s
