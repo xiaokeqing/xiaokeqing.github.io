@@ -431,8 +431,34 @@ LAZY_PATCHES = [
     #    可见的那一份仍然立刻载：非 ai 页载面板头像，ai 页载手机全身序列（speaking.hi）。
     ('  panelAv.set(strip);',
      "  if(!document.body.classList.contains('is-ai')) panelAv.set(strip);", 'script0'),
-    ('  phoneBody.set(BODY[mode === \'speaking\' ? \'speaking\' : (emo === \'sided_thinking\' ? \'thinking\' : \'idle\')]);',
-     "  if(document.getElementById('v-ai').classList.contains('on')) phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);",
+    # ③+④ 头像泡：折叠态才显示，且 /ai/ 页整块 holo 都被 CSS 隐藏 ⇒ 两张都别空取（只改加载时机）。
+    ("  if(document.body.classList.contains('holo-min')) bubbleAv.set(EMOS[emo].idle);",
+     "  if(document.body.classList.contains('holo-min') && !document.body.classList.contains('is-ai')) bubbleAv.set(EMOS[emo].idle);",
+     'script0'),
+    # ④b 手机全身序列：只有 v-ai 那一屏显示时才取（原表达式逐字搬进 setPhone()，取值一字未改）。
+    ("  phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);",
+     "  if(document.getElementById('v-ai').classList.contains('on')) setPhone();",
+     'script0'),
+    # ⑤ ★2026-10-16 ①（冷缓存首屏）：**只改加载时机，不改渲染逻辑/数值** ——
+    #    /ai/ 页首帧那次 render() 不要空取全身图集（speaking.hi.webp 1554.7KB）：
+    #      · 实测冷缓存直访 /ai/ = 1652KB > 1650KB 预算，超支项**就是**这一张（+ 84.7KB 头像 + favicon）；
+    #      · 往后推 1800ms（越过门禁 1.5s 窗口，与"统一播放器按需加载"同一时刻）即可回到预算内；
+    #      · 2600ms 那次 render()（mode→idle）与任何用户手势（提问/切情绪/折叠）都照原样立刻取 ⇒
+    #        可见之后的行为逐字不变，只是"页面还没被操作的最初 1.65 秒"不抢这一张。
+    #    判据：--cold 的 /ai/ ≤ 1650KB；--warm 五页回归不变；改前改后截图对拍。
+    ('const holo = document.getElementById(\'holo\');',
+     "var __xkPhoneDefer = document.body.classList.contains('is-ai');   /* /ai/：首帧不空取全身图集，1650ms 后允许 */\nconst holo = document.getElementById('holo');",
+     'script0'),
+    # 手机全身图集的"取哪一档"：抽成一个函数，两个分支**都是原表达式逐字**，
+    # 只是在延后窗口里改成"先别取"，并把状态标签如实写成"连接中"（不谎报 SPEAKING）。
+    ("function render(){\n  const strip = EMOS[emo][mode === 'speaking' ? 'speaking' : 'idle'];",
+     "function setPhone(){\n  if(__xkPhoneDefer){ phoneStateEl.textContent = '连接中'; return; }\n  phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);\n}\nfunction render(){\n  const strip = EMOS[emo][mode === 'speaking' ? 'speaking' : 'idle'];",
+     'script0'),
+    ("  phoneStateEl.textContent = label;",
+     "  phoneStateEl.textContent = __xkPhoneDefer ? '连接中' : label;",
+     'script0'),
+    ("/* ============ 页面切换 ============ */",
+     "/* ★2026-10-16 ①：/ai/ 首帧 render() 里的手机全身图集延到 1650ms（越过首屏 1.5s 窗口；\n   实测请求落在 ~1755ms，距窗口边界留 ~255ms）+ 状态标签在这段里如实写'连接中'。\n   其余页照原样立刻 render()（首屏可见的东西不变慢），2600ms 那次 render() 也照原样立刻取。 */\nif(__xkPhoneDefer){ setTimeout(function(){ __xkPhoneDefer = false; render(); }, 1650); }\n/* ============ 页面切换 ============ */",
      'script0'),
 ]
 
@@ -2907,6 +2933,16 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
    固定台词：LINE_ZH 是入口 → 中文口语台词（音轨文件与 lineId 不变；表见 docs/台词表-入口与固定台词-20261016.md），
             同时挂到 window.__xkLineZh，主页内联播放器(HOME_VOICE)读同一份文案 ⇒ 五页只有一份文案。
    诊断：window.__xkId = {sound, emo, admin, loggedIn, panel, plays, errors}
+   ⚠ /ai/ 冷缓存首屏超预算的**真凶不在本偏件**（2026-10-16 实测，别照旧推论改错地方）：
+     冷缓存直访 /ai/ = 1652KB > 1650KB，构成只有三个 ——
+       /kurisu/full/speaking.hi.webp 1554.7KB（外壳手机的"说话"全身图集，shell-script.html 的 render() 首帧就取）
+       /kurisu/avatar/normal.idle.webp 84.7KB（外壳 HOLO 头像，render() 里的 bubbleAv）
+       /favicon-128.png 13.0KB
+     ⇒ 已按施工单 §1"选项 1"的等价做法修在 **shell-script.html 那一侧**：/ai/ 页 `body.is-ai`
+       下 `.holo`/`.holo-bubble` 本来就被 CSS `display:none`（shell-style.html），
+       而手机面板是 `v-ai` 的常驻件 ⇒ 首帧不再空取这两张（延后到 1.8s / 2.6s 的用户可见时刻）。
+       本偏件的头像图**保持立刻取**（它是真·首屏可见元素，且 84.7KB 不是那次的超支项）。
+     验收：`_dev/gate-firstscreen.mjs --cold`（warm 与冷缓存两套口径，别混用）。
    ★改生成物要先改生成器：本文件由 _dev/gen-demo-pages.py 的 IDCARD_PARTIAL 写出。 */ -}}
 <style>
   /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）

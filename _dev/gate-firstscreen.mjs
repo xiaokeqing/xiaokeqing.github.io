@@ -1,5 +1,14 @@
 /* 逐页产物验收 + **首屏字节硬门禁**（_dev/ 本地工具，零第三方依赖）
-   node _dev/gate-firstscreen.mjs [--budget=1572864] [--static] [--prefix=pages]
+   node _dev/gate-firstscreen.mjs [--budget=1572864] [--static] [--prefix=pages] [--cold]
+   node _dev/gate-firstscreen.mjs --cold --pages=ai      # 只量冷缓存 /ai/（专测，见下）
+
+   ★★ 口径警告（2026-10-16 起，别拿错数字当结论）★★
+   默认跑法是 **home→monitor→notes→ai→test 顺序、同一个浏览器实例 = warm 顺序跑**：
+   前几页（尤其 home 的 avatar 以外的资源）会把共用资源带进浏览器缓存，后面的页因此偏小。
+   实测后果：`/ai/` 的 warm 数字是 1639KB，但它自己的头像图（86KB）在 warm 跑里已被前四页
+   带进缓存 ⇒ **冷缓存直接首访 /ai/ 的真实数字必须用 `--cold` 另测**（新 user-data-dir +
+   清 localStorage + 每页一个全新浏览器实例 ⇒ 每个页面都是"首个页面"）。
+   ⇒ warm 数字只用于"五页回归"，**冷缓存结论只认 `--cold` 的输出**。
 
    做什么：
      ① 起本地 http 服务（只读 public/，不碰产物、不用 hugo server，避免 livereload 污染断言）
@@ -40,6 +49,10 @@ const BUDGET = Number(argOf('budget') || 1689600);
    ★ 只改这个常量，**不动任何素材**。 */
 const PREFIX = argOf('prefix') || 'pages';
 const STATIC_ONLY = process.argv.includes('--static');
+/* --cold：每页一个**全新浏览器实例**（新 user-data-dir）+ 清空 storage ⇒ 每个页面都是冷缓存首访。
+   只用于冷缓存单独取证（尤其 /ai/）；五页回归仍用默认的 warm 顺序跑。 */
+const COLD = process.argv.includes('--cold');
+const COLD_ONLY = (argOf('pages') || '').split(',').map((s) => s.trim()).filter(Boolean);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.xml': 'application/xml', '.txt': 'text/plain; charset=utf-8', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.opus': 'audio/ogg' };
 const ASSET_RE = /\.(webp|png|jpe?g|gif|svg|ico|css|js|woff2?|wav|opus|m4a)$/i;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -119,6 +132,32 @@ function staticEstimate() {
     rows.push({ page: p.name, bytes: total, pass: total <= BUDGET, files: [...refs] });
   }
   return rows;
+}
+
+/* --cold 用：起一个全新 Edge 实例（新 user-data-dir = 空磁盘缓存），返回其页面 target 的 ws 地址。
+   独立端口/独立 profile，绝不与 warm 那个实例共用缓存。 */
+const COLD_CDP = 9345;
+let coldEdge = null, coldUserDir = null;
+async function openEdge() {
+  coldUserDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xk-gate-cold-'));
+  coldEdge = spawn(EDGE, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--mute-audio', `--remote-debugging-port=${COLD_CDP}`, `--user-data-dir=${coldUserDir}`, `--window-size=${VW},${VH}`, 'about:blank'], { stdio: 'ignore' });
+  let t = null;
+  for (let i = 0; i < 75 && !t; i++) {
+    await sleep(400);
+    try { const l = await (await fetch(`http://127.0.0.1:${COLD_CDP}/json/list`)).json(); t = l.find((x) => x.type === 'page' && x.webSocketDebuggerUrl); } catch { }
+  }
+  if (!t) throw new Error('冷缓存实例连不上 Edge 调试端口 ' + COLD_CDP);
+  coldEdge.on('exit', () => {
+    try { if (coldUserDir) fs.rmSync(coldUserDir, { recursive: true, force: true }); } catch { }
+    coldUserDir = null; coldEdge = null;
+  });
+  return t.webSocketDebuggerUrl;
+}
+/* 关掉当前冷缓存实例（profile 目录在 exit 事件里删） */
+async function closeEdge() {
+  if (coldEdge) { try { coldEdge.kill(); } catch { } }
+  for (let i = 0; i < 40 && coldEdge; i++) await sleep(100);
+  coldEdge = null;
 }
 
 let nextId = 0;
@@ -219,6 +258,67 @@ function consoleBlocking(msgs) {
 }
 
 let gateFail = 0;
+
+/* ======================= --cold：冷缓存专测（2026-10-16 ①） =======================
+   为什么另跑：默认那个循环是 **warm 顺序**（前四页把共用资源带进缓存）⇒ 拿它的 /ai/ 数字
+   当"冷缓存首访"结论是错的（施工单 §1 明确要求"必须专门造冷缓存"）。
+   造冷：每个页面单独起一个 Edge 实例（新 user-data-dir = 空磁盘缓存）+ Network.clearBrowserCache
+        + Storage.clearDataForOrigin（清 localStorage）+ 直接导航该页 ⇒ 该页就是"首个页面"。
+   计量口径与 warm 完全一致：导航后 1.5s 内请求到的资产（产物文件实算字节）+ 控制台错误。
+   用法：node _dev/gate-firstscreen.mjs --cold [--pages=ai] [--prefix=pages-cold] */
+if (COLD) {
+  const coldPages = COLD_ONLY.length ? PAGES.filter((p) => COLD_ONLY.includes(p.name)) : PAGES;
+  const prefix = argOf('prefix') || 'pages-cold';
+  const report = { mode: 'cdp-cold', note: '每页全新浏览器实例 + 清 storage ⇒ 冷缓存首访', budget: BUDGET, pages: [] };
+  let coldFail = 0;
+  console.log('== 冷缓存首屏字节门禁（预算 %d B = %s KB）· 每页独立全新实例 1280×900 ==', BUDGET, (BUDGET / 1024).toFixed(0));
+  for (const p of coldPages) {
+    const wsUrl = await openEdge();
+    const ws = new WebSocket(wsUrl);
+    await new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); });
+    const resp = [], msgs = [];
+    ws.addEventListener('message', (ev) => {
+      let m; try { m = JSON.parse(ev.data); } catch { return; }
+      if (m.method === 'Network.responseReceived') { const r = m.params.response; resp.push({ status: r.status, url: r.url, type: m.params.type }); }
+      if (m.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(m.params.type)) msgs.push(m.params.type + ': ' + (m.params.args || []).map((a) => a.value || a.description || '').join(' '));
+      if (m.method === 'Runtime.exceptionThrown') msgs.push('EXCEPTION: ' + (m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text));
+    });
+    await rpc(ws, 'Page.enable'); await rpc(ws, 'Runtime.enable'); await rpc(ws, 'Network.enable');
+    await rpc(ws, 'Emulation.setDeviceMetricsOverride', { width: VW, height: VH, deviceScaleFactor: 1, mobile: false });
+    await rpc(ws, 'Page.navigate', { url: 'about:blank' });
+    await sleep(300);
+    await rpc(ws, 'Network.clearBrowserCache');
+    await rpc(ws, 'Storage.clearDataForOrigin', { origin: `http://127.0.0.1:${PORT}`, storageTypes: 'all' });
+    console.log(`\n-- [${p.name}] 冷缓存首访 http://127.0.0.1:${PORT}/${p.url} --`);
+    resp.length = 0;
+    await rpc(ws, 'Page.navigate', { url: `http://127.0.0.1:${PORT}/${p.url}` });
+    await sleep(1500);
+    const files = [...new Set(resp.filter((r) => ASSET_RE.test(r.url.split('?')[0]))
+      .map((r) => r.url.replace(`http://127.0.0.1:${PORT}`, '')))];
+    const total = files.reduce((s, u) => s + byteOf(u), 0);
+    const rows = files.map((u) => ({ u, b: byteOf(u) })).filter((x) => x.b > 0).sort((a, b) => b.b - a.b);
+    const consoleBad = consoleBlocking(msgs);
+    const pass = total <= BUDGET && consoleBad.length === 0;
+    if (!pass) coldFail++;
+    console.log('  [%s] %s 冷缓存首屏 %s KB / 预算 %s KB  (1.5s 窗口内资产 %d 个, %d 字节)',
+      pass ? 'PASS' : 'FAIL', p.name.padEnd(8), (total / 1024).toFixed(0).padStart(5), (BUDGET / 1024).toFixed(0), files.length, total);
+    for (const x of rows) console.log('        %s KB  %s', (x.b / 1024).toFixed(1).padStart(7), x.u);
+    console.log('        console=%d（阻断性 %d）· nonOk=%d', msgs.length, consoleBad.length,
+      resp.filter((r) => r.status >= 400 || r.status === 0).length);
+    if (consoleBad.length) console.log('        阻断性控制台:', consoleBad.slice(0, 4));
+    report.pages.push({ page: p.name, url: p.url, coldFirstScreenBytes: total, coldPass: pass,
+      files: rows, fileCount: files.length, console: msgs, consoleBlocking: consoleBad });
+    ws.close();
+    await closeEdge();
+  }
+  fs.writeFileSync(path.join(OUT, prefix + '-report.json'), JSON.stringify(report, null, 1), 'utf8');
+  console.log('\n== 冷缓存结论 ==');
+  console.log('  %s（%d 页超标 / %d 页）· 报告 → %s', coldFail ? 'FAIL' : 'PASS', coldFail, coldPages.length,
+    path.join(OUT, prefix + '-report.json'));
+  process.exitCode = coldFail ? 1 : 0;
+  process.exit(process.exitCode);   /* Edge 子进程/WS 句柄可能吊住事件循环 ⇒ 显式收尾 */
+  return;
+}
 
   console.log('== 首屏字节门禁（预算 %d B = %s KB）· 真浏览器 1280×900 ==', BUDGET, (BUDGET / 1024).toFixed(0));
   for (const p of PAGES) {

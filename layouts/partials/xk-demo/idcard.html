@@ -13,6 +13,16 @@
    固定台词：LINE_ZH 是入口 → 中文口语台词（音轨文件与 lineId 不变；表见 docs/台词表-入口与固定台词-20261016.md），
             同时挂到 window.__xkLineZh，主页内联播放器(HOME_VOICE)读同一份文案 ⇒ 五页只有一份文案。
    诊断：window.__xkId = {sound, emo, admin, loggedIn, panel, plays, errors}
+   ⚠ /ai/ 冷缓存首屏超预算的**真凶不在本偏件**（2026-10-16 实测，别照旧推论改错地方）：
+     冷缓存直访 /ai/ = 1652KB > 1650KB，构成只有三个 ——
+       /kurisu/full/speaking.hi.webp 1554.7KB（外壳手机的"说话"全身图集，shell-script.html 的 render() 首帧就取）
+       /kurisu/avatar/normal.idle.webp 84.7KB（外壳 HOLO 头像，render() 里的 bubbleAv）
+       /favicon-128.png 13.0KB
+     ⇒ 已按施工单 §1"选项 1"的等价做法修在 **shell-script.html 那一侧**：/ai/ 页 `body.is-ai`
+       下 `.holo`/`.holo-bubble` 本来就被 CSS `display:none`（shell-style.html），
+       而手机面板是 `v-ai` 的常驻件 ⇒ 首帧不再空取这两张（延后到 1.8s / 2.6s 的用户可见时刻）。
+       本偏件的头像图**保持立刻取**（它是真·首屏可见元素，且 84.7KB 不是那次的超支项）。
+     验收：`_dev/gate-firstscreen.mjs --cold`（warm 与冷缓存两套口径，别混用）。
    ★改生成物要先改生成器：本文件由 _dev/gen-demo-pages.py 的 IDCARD_PARTIAL 写出。 */ -}}
 <style>
   /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）

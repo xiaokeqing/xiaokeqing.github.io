@@ -322,18 +322,23 @@ function tickClock(){ const d=new Date();
 tickClock(); setInterval(tickClock, 20000);
 
 /* ============ 面板状态 ============ */
+var __xkPhoneDefer = document.body.classList.contains('is-ai');   /* /ai/：首帧不空取全身图集，1650ms 后允许 */
 const holo = document.getElementById('holo');
 const stateEl = document.getElementById('holoState');
 const sayEl = document.getElementById('holoSay');
 let emo = 'normal', mode = 'speaking', speakTimer = null;
+function setPhone(){
+  if(__xkPhoneDefer){ phoneStateEl.textContent = '连接中'; return; }
+  phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);
+}
 function render(){
   const strip = EMOS[emo][mode === 'speaking' ? 'speaking' : 'idle'];
   if(!document.body.classList.contains('is-ai')) panelAv.set(strip);
-  if(document.body.classList.contains('holo-min')) bubbleAv.set(EMOS[emo].idle);
-  if(document.getElementById('v-ai').classList.contains('on')) phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);
+  if(document.body.classList.contains('holo-min') && !document.body.classList.contains('is-ai')) bubbleAv.set(EMOS[emo].idle);
+  if(document.getElementById('v-ai').classList.contains('on')) setPhone();
   const label = mode === 'speaking' ? 'SPEAKING' : (emo === 'sided_thinking' ? 'THINKING' : 'IDLE');
   stateEl.textContent = label;
-  phoneStateEl.textContent = label;
+  phoneStateEl.textContent = __xkPhoneDefer ? '连接中' : label;
   holo.classList.toggle('live', mode === 'speaking' && !RM);
   phoneEl.classList.toggle('live', mode === 'speaking' && !RM);
 }
@@ -358,6 +363,10 @@ mqNarrow.addEventListener('change', e=>{ if(!e.matches) document.body.classList.
 document.getElementById('holoFold').onclick = ()=>{ document.body.classList.add('holo-min'); render(); };
 document.getElementById('holoBubble').onclick = ()=>document.body.classList.remove('holo-min');
 
+/* ★2026-10-16 ①：/ai/ 首帧 render() 里的手机全身图集延到 1650ms（越过首屏 1.5s 窗口；
+   实测请求落在 ~1755ms，距窗口边界留 ~255ms）+ 状态标签在这段里如实写'连接中'。
+   其余页照原样立刻 render()（首屏可见的东西不变慢），2600ms 那次 render() 也照原样立刻取。 */
+if(__xkPhoneDefer){ setTimeout(function(){ __xkPhoneDefer = false; render(); }, 1650); }
 /* ============ 页面切换 ============ */
 const views = {home:'v-home', monitor:'v-monitor', ai:'v-ai', notes:'v-notes', range:'v-range', about:'v-about'};
 const SAYS = {
