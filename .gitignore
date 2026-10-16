@@ -109,3 +109,4 @@ _shots/*
 !_dev/probe-slownet.mjs
 !_dev/probe-blur-factor.mjs
 !_dev/shot-batch-d-nav.mjs
+!_dev/clean-probe-temp.ps1
