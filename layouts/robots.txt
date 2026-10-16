@@ -1,8 +1,16 @@
 User-agent: *
 Allow: /
 
+# ★2026-10-16 站主口径：/test/ 不要了（"一点用没有"）
+#   处置：① 顶部导航里的「测试」项去掉（归生成器线，P6）
+#         ② 本文件 Disallow 它 ⇒ 不被搜索引擎收录
+#         ③ **页面本身保留**（直链可访问）—— 它是内部实验台（在试功能一处看全），
+#            且门禁的"五页清单"（_dev/check-ssr-contract.py）仍把它算作第 5 页；
+#            若站主日后要"连页面一起删"，需同时改门禁五页清单与 dock 模板。
+Disallow: /test/
+
 # robots.txt（站主第十轮 ⑤）：静态站，没有后台、没有登录、没有用户投稿，整站都可抓。
-# 这里没有引任何第三方 robots/SEO 服务，也没有 Disallow 掉真实内容。
+# 这里没有引任何第三方 robots/SEO 服务；除 /test/（内部实验台）外没有 Disallow 掉真实内容。
 # /index.json 是 SPA 搜索用的机器可读索引，不是隐私内容，所以只标注、不 Disallow。
-# 全站页面（首页 / 笔记 / 分类 / 标签 / 关于）都在下面的 sitemap 里。
+# 全站页面（首页 / 笔记 / 分类 / 标签 / 关于）都在下面的 sitemap 里（/test/ 本来就不在 sitemap 里，已核实）。
 Sitemap: {{ "sitemap.xml" | absURL }}
