@@ -35,6 +35,24 @@
   function fmt(v) {
     return (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v).toLocaleString('en-US');
   }
+  /* ★S3 / X12（2026-10-16）：`/api/public/honeypot` 的 `total` 是**统计上限**，不是真值。
+     线上实测：`total=10000`（恒为上限）而同一响应里 `connections=281 / logins=254 / sampled=800`
+     ⇒ 把 10000 当真值上屏是**唯一一条会被当场质疑诚信**的问题（外部审查 R2 §375 第 1 条 / R1 X12）。
+     口径：① 优先用同响应里的**真实计数** `connections`（其次 `logins`）；
+           ② 只有 `total` 且已达上限 ⇒ 写「≥10,000（统计上限）」，不写 "10,000"；
+           ③ 取不到就照旧写"读不到"。 */
+  var HP_CAP = 10000;
+  function hpReal(hp) {
+    if (!hp || hp.available === false) return null;
+    var c = Number(hp.connections);
+    if (isFinite(c) && c > 0) return { n: c, label: fmt(c), capped: false, src: 'connections' };
+    var l = Number(hp.logins);
+    if (isFinite(l) && l > 0) return { n: l, label: fmt(l), capped: false, src: 'logins' };
+    var t = Number(hp.total);
+    if (!isFinite(t) || t <= 0) return null;
+    if (t >= HP_CAP) return { n: null, label: '≥' + fmt(HP_CAP) + '（统计上限）', capped: true, src: 'total-capped' };
+    return { n: t, label: fmt(t), capped: false, src: 'total' };
+  }
   /* ★IP 显示口径（站主 2026-10-15 拍板）：**保留前三段、最后一段换 x**（45.83.91.55 → 45.83.91.x）。
      纪律：① 只作用于"显示"，分组/去重/取数一律用原值 ✗不许拿掩码值当 key；
             ② 后端已写死"内网/内部/未知"的取值原样显示，不再加工；
@@ -164,7 +182,7 @@
       var qk = say.querySelectorAll('.qk');
       var guard = (pick(parts, 'audit') || {}).summary;
       var guardN = guard ? fmt(guard.blockedByGuard) : null;
-      var hpN = hp ? fmt(hp.total) : null;
+      var hpN = hpReal(hp) ? hpReal(hp).label : null;   /* ★S3/X12：不再把 total=10000 当真值上屏 */
       var tn = textNodes(say);
       if (qk.length === 2 && tn.length >= 3) {
         if (guardN || hpN) {
@@ -203,17 +221,25 @@
     var al = pick(parts, 'alerts'), au = pick(parts, 'audit'), hp = pick(parts, 'honeypot'), geo = pick(parts, 'geo');
     var s24 = al && al.stats24h;
     /* 服务端在"冷缓存/降级"时会返回 available=false 并给零值 —— 零值不是真值，写成读不到 */
+    /* ★S3/X12：蜜罐那一格用**真实计数**（connections → logins → 只有 total 且达上限就写「≥…（统计上限）」），
+       不把统计上限 10000 当真值；`data-count` 只在有真数字时才给（上限那一档留空，避免数字滚动动画从假数字起步 ✗）。 */
+    var hpr = hpReal(hp);
     var vals = [
       (s24 && s24.available !== false) ? fmt(s24.total) : null,
       (au && au.summary) ? fmt(au.summary.blockedByGuard) : null,
-      (hp && hp.available !== false) ? fmt(hp.total) : null,
+      hpr ? hpr.label : null,
       (geo && geo.available !== false && geo.coverage) ? fmt(geo.coverage.sourceBuckets) : null
+    ];
+    var nums = [
+      vals[0], vals[1],
+      (hpr && hpr.n !== null) ? hpr.label : null,
+      vals[3]
     ];
     var els = document.querySelectorAll('.stats [data-count]');
     for (var i = 0; i < els.length; i++) {
       var v = vals[i];
       if (v === null) { els[i].setAttribute('data-count', ''); txt(els[i], NA); }
-      else { els[i].setAttribute('data-count', String(vals[i]).replace(/,/g, '')); txt(els[i], v); }
+      else { els[i].setAttribute('data-count', nums[i] === null ? '' : String(nums[i]).replace(/,/g, '')); txt(els[i], v); }
     }
   }
 

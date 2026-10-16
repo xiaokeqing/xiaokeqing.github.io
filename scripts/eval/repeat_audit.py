@@ -62,6 +62,17 @@ import sys
 import time
 from pathlib import Path
 
+# ★GBK 修复（2026-10-16）：Windows 上 `python scripts/eval/repeat_audit.py --selftest` 会在
+#   `print()` 那一步炸 `UnicodeEncodeError: 'gbk' codec can't encode character '\u21d2'`
+#   —— 控制台/管道的默认编码是 cp936（GBK），而本脚本的说明与断言名里用了 ⇒ ★ ✓ ✗ → 这类字符。
+#   这是**显示层**的编码问题，跟指标算得对不对无关；不修的话 `--selftest` 会以非 0 退出，
+#   在 CI / 批处理里会被误读成"断言失败"。这里把两个流显式改成 UTF-8（拿不到就安静跳过）。
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 HERE = Path(__file__).resolve().parent
 TOOL = "repeat_audit.py"
 VERSION = "1.0"
