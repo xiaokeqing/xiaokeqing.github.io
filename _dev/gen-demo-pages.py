@@ -212,9 +212,18 @@ HOME_VOICE = r'''
    资产：static/kurisu/voice/bank.json（12 条日语 m4a，逐条带 text / seconds / 包络）。
    纪律：手势前不播（只记 pending）；取不到就只显示字幕，绝不假装在播；RM 不自动播。 */
 const XK_VOICE_BANK = '/kurisu/voice/bank.json';
-const XK_DEFAULT_SAY = '你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。';
+const XK_DEFAULT_SAY = '你好，我是桐莉栖。这一屏的数字都是真的——看不清就走近一点。';
 const XKV = { bank:null, unlocked:false, pending:null, lastId:null, audio:null, plays:0, errors:[] };
 window.__xkVoice = XKV;
+/* ★批次A（2026-10-16 站主）：声音开关默认关 ⇒ 没开声就只记 pending + 只出字幕，开了再补播。
+   开关本体在左上角头像卡（layouts/partials/xk-demo/idcard.html），状态存 localStorage['xk-sound-on']。 */
+function xkSoundOn(){ try{ return !!(window.__xkSound && window.__xkSound.on); }catch(e){ return false; } }
+/* 固定台词表（口语版）由头像卡那份 partial 提供（同一份文案，五页共用）：
+   window.__xkLineZh = {lineId: '中文台词'}；没有就退回 bank.json 里的 text。 */
+function xkvText(id, fallback){
+  var m = window.__xkLineZh || {};
+  return m[id] || fallback || '';
+}
 function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
 function xkvLoad(){
   if(XKV.bank) return Promise.resolve(XKV.bank);
@@ -230,7 +239,8 @@ function xkvUnlock(){
 function xkvPlay(id){
   const line = xkvLine(id);
   if(!line){ XKV.errors.push('no line: '+id); return; }
-  if(!XKV.unlocked){ XKV.pending = id; return; }        /* 手势前：只记 pending，不播 */
+  if(!xkSoundOn()){ XKV.pending = id; if(typeof typeSub === 'function') typeSub(xkvText(id, line.text)); return; }   /* ★批次A：声音关着 ⇒ 只出字幕 */
+  if(!XKV.unlocked){ XKV.pending = id; if(typeof typeSub === 'function') typeSub(xkvText(id, line.text)); return; }        /* 手势前：只记 pending，不播 */
   if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
   try{
     if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} }
@@ -254,16 +264,24 @@ function xkvPlay(id){
     });
     const pr = a.play();
     if(pr && pr.catch){ pr.catch(err=>{ XKV.errors.push('play: '+(err && err.name)); }); }
-    if(typeof typeSub === 'function') typeSub(line.text);
+    if(typeof typeSub === 'function') typeSub(xkvText(id, line.text));
   }catch(e){ XKV.errors.push('audio ctor: '+e); }
 }
+/* ★批次A（站主追加①）：主页进入**固定一句问候** —— 首访 greet_first / 回访 greet_back；
+   不随机、不参与"防复读"轮换（台账口径见 docs/台词表-入口与固定台词-20261016.md）。 */
 function xkvGreet(){
   xkvLoad().then(()=>{
     let seen = false;
     try{ seen = !!localStorage.getItem('xk-visited'); localStorage.setItem('xk-visited','1'); }catch(_){}
-    xkvPlay(seen ? 'greet_back' : 'greet_first');
+    const id = seen ? 'greet_back' : 'greet_first';
+    XKV.entryId = id;
+    xkvPlay(id);
   });
 }
+/* ★批次A：声音开关打开的那一刻，把刚才因为"声音关着"压下来的那一句补播（同一句，不换文案）。 */
+addEventListener('xk-sound', function(ev){
+  if(ev && ev.detail && ev.detail.on && XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); }
+});
 addEventListener('pointerdown', xkvUnlock, {once:true});
 addEventListener('keydown', xkvUnlock, {once:true});
 /* 语音库在首屏窗口（门禁口径 1.5s）**之后**才取 —— 语音资产不进首屏字节 */
@@ -1200,8 +1218,27 @@ sc = sub1(
 sc = sub1(
     sc,
     "  monitor:'过去 24 小时拦截了 <span class=\"qk\">96 次</span> 暴力破解，蜜罐记录了 <span class=\"qk\">37 条</span> 交互。都在「监测中心」的大屏里。',",
-    "  monitor:'公开只读端点的实时汇总都在这一屏；取不到就写读不到，不补数。',",
+    "  monitor:'这一屏是我们监测到的情况，数字都是真的；取不到我就写读不到。',",
     'shell: SAYS.monitor 假数字')
+
+# ---- ⑱★批次 A（2026-10-16 站主追加①）：入口台词固定 + 口语化 ----
+#   站主原话："进入主页是对话固定好一句打招呼的，你那个对话不知道在说啥"。
+#   ⇒ ① 主页进入固定一句问候（首访 greet_first / 回访 greet_back，**不随机、不参与防复读轮换**）；
+#      ② 每个栏目进入固定一句介绍（nav_home / nav_monitor / nav_ai / nav_notes，同一栏目 10 分钟内不重复念）；
+#      ③ 文案一律改成"像人说话"，不写术语味（"公开只读端点的实时汇总" 这类一律不留在可见文案里）。
+#   落点：demo 的 SAYS（内容页切屏时的字幕）、HOME_VOICE 的问候分流、台词表（见 IDCARD_PARTIAL 的 LINE_ZH）
+#         与 kurisu-player.js 的选句器（nav_* 用 preferId 硬命定 ⇒ 固定不随机）。
+#   台词表（入口 → 中日文对照）落纸：docs/台词表-入口与固定台词-20261016.md
+SAYS_REWORD = [
+    ("  home:'',\n",
+     "  home:'回到主页了。我一直待在这台显示器里。',\n", 'SAYS.home'),
+    ("  ai:'有什么安全问题直接问我。答不了就说答不了。',\n",
+     "  ai:'有问题就问我，我照真检索到的东西答；答不了我就说答不了。',\n", 'SAYS.ai'),
+    ("  notes:'这几篇都是真实实验记录，「Cowrie 观察」那篇最热闹。',\n",
+     "  notes:'笔记都在这儿，新的排在最前面。',\n", 'SAYS.notes'),
+]
+for _old, _new, _what in SAYS_REWORD:
+    sc = sub1(sc, _old, _new, 'batchA 台词口语化: ' + _what)
 
 # ---- ⑯ 【2026-10-15 接手批】表情只挂了 5 套，素材其实有 8 套 ----
 #   站主口径："这个人物的所有动画、表情等等都弄好"。
@@ -2660,8 +2697,28 @@ home_script, _n = re.subn(
     r"\nfunction xkBootPreload\(\)\{\n.*?\n\}\n",
     "\nfunction xkBootPreload(){\n"
     "  /* ★批次1（2026-10-15 站主）：三张背景层已经在标记里（与 T7 一致）⇒ 这里不再 createElement 插入，\n"
-    "     只标记\"预载阶段已到\"；开场靠 CSS 的 data-xk-boot 可见性门控逐层显示。*/\n"
-    "  document.documentElement.setAttribute('data-xk-boot-ready', '1');\n"
+    "     只标记\"预载阶段已到\"；开场靠 CSS 的 data-xk-boot 可见性门控逐层显示。\n"
+    "     ★P0-④（2026-10-16 站主追加②）：**按出现顺序串行优先 + 每张 decode() 完再生效** ——\n"
+    "       壁纸(desk) 已在 phase 0 显示（head 里 preload + fetchpriority=high，唯一抢带宽的一张）；\n"
+    "       这里按 光晕(glow) → 背板(backplate) → 字幕框(plate) 逐张 decode()，解完才置位 data-xk-boot-ready；\n"
+    "       她的首帧(opening) 由 xkBootWaitFace() 等到 complete 才开始闪断 ⇒ 四张的先后是**事件驱动**的，不是猜时间。\n"
+    "       顺序与耗时写进 window.__xkFirstPaint.order（验收脚本 _dev/firstscreen-order.mjs 读它）。*/\n"
+    "  var FP = window.__xkFirstPaint = window.__xkFirstPaint || { t0: Math.round(performance.now()), order: [] };\n"
+    "  function xkDec(el, name, next){\n"
+    "    if(!el){ next(); return; }\n"
+    "    var done = function(){ FP.order.push({ name: name, at: Math.round(performance.now() - FP.t0) }); next(); };\n"
+    "    var go = function(){ if(el.decode){ el.decode().then(done, done); } else { done(); } };\n"
+    "    if(el.complete && el.naturalWidth){ go(); return; }\n"
+    "    el.addEventListener('load', go, {once:true});\n"
+    "    el.addEventListener('error', done, {once:true});\n"
+    "  }\n"
+    "  xkDec(document.querySelector('.glow'), 'glow', function(){\n"
+    "    xkDec(document.querySelector('.backplate'), 'backplate', function(){\n"
+    "      xkDec(document.querySelector('.plate'), 'plate', function(){\n"
+    "        document.documentElement.setAttribute('data-xk-boot-ready', '1');\n"
+    "      });\n"
+    "    });\n"
+    "  });\n"
     "}\n",
     home_script, count=1, flags=re.S)
 if _n != 1:
@@ -2757,11 +2814,490 @@ _q2_left2 = [k for k in ('class="emos"', "id=\"emos\"", '#emos', '.holo-ft .emos
 if _q2_left2:
     raise SystemExit('Q-2: 内容页残留 %s' % ','.join(_q2_left2))
 
+# =====================================================================
+# ★外部审查 R3（2026-10-16）· 布局优化补丁（LAYOUT_PATCH）
+#   原则：**每一条规则都写在 @media (max-width:980px) / (max-width:520px) 之内**，
+#         桌面端（>980px）一个像素都不动 ⇒ 不影响既有首屏字节门禁与像素比对。
+#   依据（R1 现场只读实测）：
+#     ① 触控：只有 .dock 被抬到 44px；.ops-tabs button≈32px、.holo-fold=22px 仍不达标
+#     ② 溢出：.attk 七列在 375px 视口下 ⇒ 每格约 53px（内含 19px 大数字）
+#     ③ 遮挡：.holo 展开态 top:52px，与 .main padding-top:76px 仍重叠约 195px
+#     ④ 留白：.main padding-right:310px 在 holo 收起后整条右侧空白
+#     ⑤ 断点：外壳只有 980px 一档（extended 另有 1199/520）⇒ 320~980px 共用一套
+# ---------------------------------------------------------------------
+LAYOUT_PATCH = u'''
+  /* ★R3 布局补丁（2026-10-16 外部审查）—— 以下全部只在 ≤980px 生效 */
+  @media (max-width:980px){
+    /* ① 交互件命中区补齐到 44px（只动命中区，配色/字号/边框色一个字节不改） */
+    .ops-tabs button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+    .holo-fold{width:34px;height:34px;flex:none}
+    .anchor-row a{min-height:38px;display:inline-flex;align-items:center}
+    .chat-ft button{min-height:44px}
+    .chat-ft input{min-height:44px}
+    /* ② holo 收起（.holo-min）后主区不再白留 310px */
+    body.holo-min .main{padding-right:12px}
+    /* ③ 攻击矩阵七格 → 窄屏四格，避免每格被压到 50px 以下 */
+    .attk{grid-template-columns:repeat(4,1fr)}
+    .attk .cell{min-height:64px}
+    /* ④ 展开态 holo 限高并给正文让位 */
+    .holo{max-height:calc(100dvh - 210px);max-height:calc(100vh - 210px)}
+  }
+  @media (max-width:520px){
+    /* ⑤ 极窄屏：统计卡单列；聊天区改动态高度，避开 667px 矮屏溢出 */
+    .stats{grid-template-columns:1fr}
+    .attk{grid-template-columns:repeat(3,1fr)}
+    .chat{height:auto;max-height:calc(100vh - 150px);min-height:320px}
+  }
+'''
+
+# =====================================================================
+# ★批次 A-①（2026-10-16 站主 UI 指令）：左上角头像卡片 + 声音开关 + 登录（访客不可见）
+#   站主原话：① 把她的头像放到**左上角**（圆角方形卡片头像，形状照原右上角那块卡片头，**不是小圆点**）；
+#             ② 头像**右边**两个小按钮**竖排**（尺寸小、不抢导航）：
+#                上 = 声音开关（🔊）**默认关闭**、点开才出声、状态存 localStorage、显示当前状态；
+#                下 = 登录按钮（👤）—— ★追加：**访客不要显示**（这是他自己的功能），只留隐蔽入口；
+#             ③ 其他新功能一律先放导航栏的「测试」栏目（= 现有 /test/ 实验台）。
+#   实现：一整份 partial `layouts/partials/xk-demo/idcard.html`（自带 <style> + <script>，五页共用一份）；
+#         五个宿主页各 include 一次；`<body class="xk-has-idcard">` 让既有 .dock 下移给它让位
+#         （窄屏 dock 在底部，不受影响）。
+#   纪律：不许硬编码任何令牌 ✗ —— 登录态只按 Cloudflare Access 的 Cookie **存在性**判定，
+#         不读取、不存储、不打日志（见 docs/登录入口与自用模式-20261016.md）。
+# =====================================================================
+DOCK_ANCHOR_CONTENT = '<a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>\n'
+DOCK_ANCHOR_HOME = '<a href="/posts/">笔记</a>\n'
+DOCK_TEST_CONTENT = '<a href="/test/" class="{{ if eq $v "test" }}on{{ end }}">测试</a>\n'
+DOCK_TEST_HOME = '<a href="/test/">测试</a>\n'
+chrome = sub1(chrome, DOCK_ANCHOR_CONTENT, DOCK_ANCHOR_CONTENT + '  ' + DOCK_TEST_CONTENT,
+              'batchA: 外壳 dock 新增「测试」项')
+home_body = sub1(home_body, DOCK_ANCHOR_HOME, DOCK_ANCHOR_HOME + '  ' + DOCK_TEST_HOME,
+                 'batchA: 主页 dock 新增「测试」项')
+# ★P0-④（站主 2026-10-16 追加②）：首屏**只给壁纸抢带宽** —— 它是"要展示的第一张"。
+#   其余三张（背板 / 她首帧 / 字幕框）不抢，按出现顺序由 xkBootPreload() 逐张 decode() 完再生效。
+home_body = sub1(home_body,
+                 '<img class="desk" src="/images/crt/desk.webp"',
+                 '<img class="desk" fetchpriority="high" src="/images/crt/desk.webp"',
+                 'P0-④: 壁纸 fetchpriority=high')
+
+IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· 左上角：她的头像卡片 + 两个小按钮
+   ---------------------------------------------------------------------------
+   站主口径（原话）：① 把她的头像放到左上角（圆角方形卡片头像，形状照原右上角那块卡片头，
+     不是小圆点）；② 头像右边两个小按钮竖排、尺寸小不抢导航：
+       上 = 声音开关（🔊）默认关闭 · 点开才出声 · 状态存 localStorage['xk-sound-on'] · 显示当前状态；
+       下 = 登录按钮（👤）—— 访客**不可见**（站主追加：这是他自己的功能），只留隐蔽入口。
+   隐蔽入口（两个都做了，任选其一）：
+     a) URL 参数 `?admin=1` 或 hash `#admin`；b) 1.5 秒内连点头像 5 次。
+     触发后本会话一直显示（sessionStorage['xk-admin-ui']=1）；已登录（Access Cookie 在）也一直显示。
+   纪律：**绝不硬编码任何令牌** ✗ —— 登录态只按 Cloudflare Access 的 Cookie 存在性判定，不读取、不存储。
+   素材：8 类情绪 = static/kurisu/avatar/<emo>.idle.webp（132px 单元 · 8 列，与 HOLO 面板同一套）；
+         8 个常用动作 = static/kurisu/manifest.json clipsMedium 里**真实存在**的剪辑名（只在主页全身画布上演）。
+   固定台词：LINE_ZH 是入口 → 中文口语台词（音轨文件与 lineId 不变；表见 docs/台词表-入口与固定台词-20261016.md），
+            同时挂到 window.__xkLineZh，主页内联播放器(HOME_VOICE)读同一份文案 ⇒ 五页只有一份文案。
+   诊断：window.__xkId = {sound, emo, admin, loggedIn, panel, plays, errors}
+   ★改生成物要先改生成器：本文件由 _dev/gen-demo-pages.py 的 IDCARD_PARTIAL 写出。 */ -}}
+<style>
+  /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）
+     值只新增这一组，不改任何既有配色/字体/背景（站主点名的"头像卡片"这一处新增） */
+  .xk-idcard{position:fixed;left:0;top:14px;z-index:61;display:flex;align-items:center;gap:5px;
+    padding:6px 4px;background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-left:none;border-radius:0 14px 14px 0;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+  .xk-idcard-av{width:48px;height:48px;flex:none;padding:0;cursor:pointer;display:block;
+    border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:10px;overflow:hidden;
+    background:#E8ECEF;line-height:0}
+  .xk-idcard-av canvas{width:48px;height:48px;display:block}
+  .xk-idcard-col{display:flex;flex-direction:column;gap:4px}
+  .xk-idcard-btn{width:24px;height:24px;padding:0;cursor:pointer;font-size:12px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:8px;
+    background:rgba(0,0,0,.22);color:var(--txt,#FAF7F0)}
+  /* ★必须留着这一条：上面的 display:flex 会盖掉浏览器对 [hidden] 的 display:none ⇒ 登录按钮会对访客露出来 */
+  .xk-idcard-btn[hidden]{display:none}
+  .xk-idcard-btn:hover{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8)}
+  .xk-idcard-btn[aria-pressed="true"]{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8);
+    background:rgba(57,208,216,.12)}
+  .xk-idcard-btn:focus-visible,.xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
+  /* 给她让位：既有左侧 dock 下移（仅 >980px；窄屏 dock 在底部，规则在下面那条媒体查询里复位） */
+  body.xk-has-idcard .dock{top:88px}
+  .xk-idcap{position:fixed;left:6px;top:88px;z-index:62;max-width:250px;
+    font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0);
+    background:var(--solid,rgba(48,45,41,.94));border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:10px;padding:6px 9px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .xk-idcap.on{opacity:1}
+  .xk-idpanel{position:fixed;left:96px;top:88px;z-index:63;width:252px;display:none;
+    background:var(--solid,rgba(48,45,41,.96));border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:12px;padding:10px 11px;box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(4px);
+    font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0)}
+  .xk-idpanel.open{display:block}
+  .xk-idpanel h4{font:600 12px/1.4 var(--sans,sans-serif);margin-bottom:6px}
+  .xk-idpanel .xk-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .xk-idpanel .xk-chip{font:11px/1.4 var(--sans,sans-serif);padding:3px 8px;border-radius:99px;cursor:pointer;
+    border:1px solid var(--line2,rgba(255,246,235,.28));background:rgba(0,0,0,.2);color:var(--mut,#D2CBBD)}
+  .xk-idpanel .xk-chip:hover,.xk-idpanel .xk-chip.on{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8)}
+  .xk-idpanel .xk-note{font:10.5px/1.5 var(--mono,monospace);color:var(--mut,#D2CBBD);margin-top:2px}
+  .xk-idpanel .xk-close{position:absolute;right:7px;top:5px;background:none;border:0;cursor:pointer;
+    color:var(--mut,#D2CBBD);font-size:13px;line-height:1;padding:2px}
+  @media (max-width:980px){
+    body.xk-has-idcard .dock{top:auto}
+    .xk-idcard-av{width:56px;height:56px}
+    .xk-idcard-av canvas{width:56px;height:56px}
+    .xk-idcard-btn{width:34px;height:34px;font-size:15px}
+    .xk-idcap{top:104px}
+    .xk-idpanel{left:6px;top:104px}
+  }
+</style>
+<aside class="xk-idcard" id="xkIdCard" aria-label="桐莉栖 · 头像卡">
+  <button class="xk-idcard-av" id="xkIdAv" type="button"
+    title="点一下：换个情绪说一句 · 长按半秒：打开情绪与动作面板"
+    aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">
+    <canvas id="xkIdAvCanvas" width="132" height="132" aria-hidden="true"></canvas>
+  </button>
+  <span class="xk-idcard-col">
+    <button class="xk-idcard-btn" id="xkSndBtn" type="button" aria-pressed="false"
+      title="声音：默认关闭（点一下打开）">🔇</button>
+    <button class="xk-idcard-btn" id="xkLoginBtn" type="button" title="登录（自用模式）" hidden>👤</button>
+  </span>
+</aside>
+<div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
+<div class="xk-idpanel" id="xkIdPanel" role="dialog" aria-label="桐莉栖 · 情绪与动作面板"></div>
+<script>
+/* 桐莉栖 · 头像卡（左上角）· 批次 A-①
+   1) 声音开关：默认关；状态存 localStorage['xk-sound-on']；所有播放器统一读 window.__xkSound.on
+   2) 登录：访客不渲染；隐蔽入口 ?admin=1 / #admin / 1.5s 内连点头像 5 次；绝不硬编码令牌
+   3) 点头像 = 切下一个情绪 + 说一句；长按 >=500ms = 开面板（8 情绪 + 8 常用动作） */
+(function () {
+  'use strict';
+  if (window.__xkId) { return; }
+  var D = { sound: false, emo: 'normal', admin: false, loggedIn: false, panel: false, plays: 0, errors: [] };
+  window.__xkId = D;
+  function lg(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function ls(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+  function sg(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  function ss(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { } }
+
+  var EMOS8 = [
+    ['normal', '普通', '/kurisu/avatar/normal.idle.webp'],
+    ['happy', '开心', '/kurisu/avatar/happy.idle.webp'],
+    ['sided_thinking', '思考', '/kurisu/avatar/sided_thinking.idle.webp'],
+    ['sided_surprised', '惊讶', '/kurisu/avatar/sided_surprised.idle.webp'],
+    ['sad', '难过', '/kurisu/avatar/sad.idle.webp'],
+    ['blush', '害羞', '/kurisu/avatar/blush.idle.webp'],
+    ['angry', '生气', '/kurisu/avatar/angry.idle.webp'],
+    ['disappointed', '失望', '/kurisu/avatar/disappointed.idle.webp']
+  ];
+  /* 8 个常用动作 = static/kurisu/manifest.json 的 clipsMedium 里**真实存在**的剪辑名（不编名字 ✓） */
+  var ACTS8 = [
+    ['trans_standby', '待机待命'], ['trans_smile', '微笑'], ['thinking_trans', '思考入戏'],
+    ['surprise_trans', '惊讶一下'], ['shy_trans', '害羞低头'], ['angry_trans', '生气'],
+    ['sad_trans', '失落'], ['idle_closed_eye', '闭眼歇会儿']
+  ];
+  /* 固定台词表（口语版 · 入口 → 中文）。音轨文件与 lineId 一字不改；日语音轨仍是上一版录音，
+     下一批重录时按这张表逐句重生成（见 docs/台词表-入口与固定台词-20261016.md）。 */
+  var LINE_ZH = {
+    greet_first: '你好，我是桐莉栖。这一屏的数字都是真的，看不清就凑近一点。',
+    greet_back: '又见到你了。数据还是真的，我没换过口径。',
+    nav_home: '回到主页了。我一直待在这台显示器里。',
+    nav_monitor: '这一屏是我们监测到的情况，数字都是真的；取不到我就写读不到。',
+    nav_ai: '有问题就问我，我照真检索到的东西答；答不了我就说答不了。',
+    nav_notes: '笔记都在这儿，新的排在最前面。',
+    fallback_no_data: '这次没读到数据。我不补数，读不到就是读不到。',
+    fallback_offline: '请求没送达。我不编答案，等接口恢复再说。',
+    fallback_throttled: '接口在限流，等一下再问。',
+    tab_return: '你回来了。刚才我没说话，只是在这儿等着。'
+  };
+  window.__xkLineZh = LINE_ZH;
+  var GROUP_OF = { greet_first: 'greeting', greet_back: 'greeting', tab_return: 'idle_banter',
+    nav_home: 'page_intro', nav_monitor: 'page_intro', nav_ai: 'page_intro', nav_notes: 'page_intro',
+    fallback_no_data: 'fallback', fallback_offline: 'fallback', fallback_throttled: 'fallback' };
+  var EMO_LINE = { normal: 'nav_home', happy: 'greet_back', sided_thinking: 'nav_ai',
+    sided_surprised: 'nav_monitor', sad: 'fallback_no_data', blush: 'greet_first',
+    angry: 'fallback_throttled', disappointed: 'fallback_no_data' };
+
+  var av = document.getElementById('xkIdAv'), cv = document.getElementById('xkIdAvCanvas');
+  var cap = document.getElementById('xkIdCap'), panel = document.getElementById('xkIdPanel');
+  var snd = document.getElementById('xkSndBtn'), login = document.getElementById('xkLoginBtn');
+  if (!av || !cv || !cap || !panel || !snd || !login) { return; }
+
+  /* ---------- 头像小播放器（132px 单元 · 8 列；只取用到的那个情绪的 idle 图） ----------
+     ⚠ 帧数只取 **3**：manifest.json 里 emotions.*.idle 全是 {columns:8, frames:3, atlasW:1056}
+     —— 图集是 8 列宽，但只有前 3 格有画面，后 5 格是空位；按"列数×行数"算会画到空位（实测：头像整块变白）。
+     清单到位后（空闲预取那张）再用真值覆盖一次，防止以后素材改成 8 帧。 */
+  var ctx = cv.getContext('2d'), CELL = 132, COLS = 8, framesOf = {}, imgs = {}, url = {}, last = 0, fi = 0;
+  EMOS8.forEach(function (e) { url[e[0]] = e[2]; framesOf[e[0]] = 3; });
+  function im(u) { if (!imgs[u]) { var i = new Image(); i.decoding = 'async'; i.src = u; imgs[u] = i; } return imgs[u]; }
+  function paint() {
+    var u = url[D.emo] || url.normal, g = im(u);
+    if (!g.complete || !g.naturalWidth) { return; }
+    var n = framesOf[D.emo] || 3;
+    if (g.naturalWidth === CELL) { n = 1; }
+    var k = n > 1 ? (fi % n) : 0;
+    ctx.clearRect(0, 0, CELL, CELL);
+    ctx.drawImage(g, (k % COLS) * CELL, Math.floor(k / COLS) * CELL, CELL, CELL, 0, 0, CELL, CELL);
+  }
+  (function tick(t) {
+    requestAnimationFrame(tick);
+    if (!last) { last = t; }
+    if (t - last > 150) { last = t; fi++; paint(); }
+  })(0);
+  /* 头像图**立刻**开始取（首屏可见元素），并且不依赖 rAF 也一定能画上：
+     实测 headless 下 rAF 有被节流的情况（截图里头像整块是底板色 #E8ECEF 的白方块）
+     ⇒ 补一组"载入即画 + 几个时间点的兜底重画"。 */
+  (function () {
+    var g = im(url[D.emo]);
+    if (g && g.addEventListener) { g.addEventListener('load', paint, { once: true }); }
+    paint();
+    [250, 700, 1500, 3000].forEach(function (ms) { setTimeout(paint, ms); });
+  })();
+  function setEmo(name) {
+    if (!url[name]) { return false; }
+    D.emo = name; fi = 0;
+    var g = im(url[name]);
+    if (g.complete && g.naturalWidth) { paint(); } else { g.addEventListener('load', paint, { once: true }); }
+    markPanel();
+    /* 主页：全身画布也一起切（那份状态机在主页内联脚本里；其它页没有 ⇒ 只动头像） */
+    if (typeof window.xkmSetEmotion === 'function') { try { window.xkmSetEmotion(name); } catch (e) { D.errors.push('xkm: ' + e); } }
+    return true;
+  }
+
+  /* ---------- 字幕条（只报真话：没出声就说没出声） ---------- */
+  var capTimer = 0;
+  function say(text) {
+    cap.textContent = text;
+    cap.classList.add('on');
+    clearTimeout(capTimer);
+    capTimer = setTimeout(function () { cap.classList.remove('on'); }, 7000);
+  }
+  /* 念一句：声音关着 ⇒ 只出字幕；开着 ⇒ 交给真正的语音层（统一播放器优先，其次是主页内联那份） */
+  function speak(id, prefix, force) {
+    var zh = LINE_ZH[id] || '';
+    var head = prefix ? (prefix + ' —— ') : '';
+    if (!D.sound && !force) { say(head + zh + '（声音默认关：点左上角 🔊 才出声）'); return false; }
+    var grp = GROUP_OF[id], ok = false;
+    try {
+      if (grp && window.KurisuPlayer && typeof window.KurisuPlayer.speakGroup === 'function') {
+        var pr = window.KurisuPlayer.speakGroup('/', grp, { preferId: id });
+        ok = true;
+        if (pr && pr.then) {
+          pr.then(function (r) {
+            if (r && r.ok) { D.plays++; }
+            else { D.errors.push('speak: ' + ((r && r.reason) || '?')); }
+          });
+        }
+      } else if (typeof window.xkvPlay === 'function') { window.xkvPlay(id); ok = true; }
+    } catch (e) { D.errors.push('speak: ' + e); }
+    /* 没有任何语音层时只出字幕（**如实**记进 D.errors，不假装念过；音频在下一批接上） */
+    if (!ok) { D.errors.push('no-voice-layer: ' + id); }
+    say(head + zh);
+    return ok;
+  }
+
+  /* ---------- 声音开关（默认关；访客可见） ---------- */
+  function setSound(v, why) {
+    D.sound = !!v;
+    ls('xk-sound-on', D.sound ? '1' : '0');
+    window.__xkSound = { on: D.sound, set: setSound, toggle: toggleSound };
+    snd.textContent = D.sound ? '🔊' : '🔇';
+    snd.setAttribute('aria-pressed', D.sound ? 'true' : 'false');
+    snd.setAttribute('title', D.sound ? '声音：已打开（点一下关掉）' : '声音：已关闭（点一下打开）');
+    try { window.dispatchEvent(new CustomEvent('xk-sound', { detail: { on: D.sound, why: why || 'btn' } })); } catch (e) { }
+  }
+  function toggleSound() { setSound(!D.sound, 'btn'); }
+  snd.addEventListener('click', toggleSound);
+  setSound(lg('xk-sound-on') === '1', 'restore');
+
+  /* ---------- 登录（站主自用；访客不渲染这个按钮） ---------- */
+  function accessCookie() { try { return document.cookie.indexOf('CF_Authorization=') >= 0; } catch (e) { return false; } }
+  function revealLogin(why) {
+    if (!login.hidden) { return; }
+    login.hidden = false;
+    D.admin = true; D.revealWhy = why;
+    ss('xk-admin-ui', '1');
+  }
+  function applyLogin() {
+    D.loggedIn = accessCookie();
+    if (D.loggedIn) { revealLogin('access-cookie'); }
+    login.setAttribute('aria-pressed', D.loggedIn ? 'true' : 'false');
+    login.textContent = D.loggedIn ? '🔓' : '👤';
+    login.title = D.loggedIn ? '已登录 · 自用模式' : '登录（自用模式；通道待接入）';
+  }
+  login.addEventListener('click', function () {
+    if (D.loggedIn) { say('已登录 · 自用模式（本会话本地状态；凭据不经前端）'); return; }
+    say('登录通道待接入（需开 Cloudflare Access）—— 开了之后这里才会真的登录。');
+  });
+  (function () {
+    var q = /(^|[?&])admin=1(&|$)/.test(location.search);
+    var h = /#admin(\.|$|\/|\?)/.test(location.hash) || location.hash === '#admin';
+    if (q || h) { revealLogin(q ? 'url-query' : 'url-hash'); }
+    else if (sg('xk-admin-ui') === '1') { revealLogin('session'); }
+  })();
+  applyLogin();
+
+  /* ---------- 面板：8 情绪 + 8 常用动作 ---------- */
+  function labelOf(n) { for (var i = 0; i < EMOS8.length; i++) { if (EMOS8[i][0] === n) { return EMOS8[i][1]; } } return n; }
+  function labelOfAct(n) { for (var i = 0; i < ACTS8.length; i++) { if (ACTS8[i][0] === n) { return ACTS8[i][1]; } } return n; }
+  function markPanel() {
+    Array.prototype.forEach.call(panel.querySelectorAll('[data-emo]'), function (b) {
+      b.className = (b.getAttribute('data-emo') === D.emo) ? 'xk-chip on' : 'xk-chip';
+    });
+  }
+  (function buildPanel() {
+    var h = ['<h4>情绪（点一下，她演出来）</h4><div class="xk-row">'];
+    EMOS8.forEach(function (e) { h.push('<button type="button" class="xk-chip" data-emo="' + e[0] + '">' + e[1] + '</button>'); });
+    h.push('</div><h4>常用动作</h4><div class="xk-row">');
+    ACTS8.forEach(function (a) { h.push('<button type="button" class="xk-chip" data-act="' + a[0] + '">' + a[1] + '</button>'); });
+    h.push('</div><p class="xk-note">动作名取自 manifest.json 里真实存在的剪辑；全身画布只在主页有，别的页只出字幕，不假装在演。</p>');
+    h.push('<p class="xk-note">换情绪/动作只改表演；台词只播真实录音，取不到就只出字幕。</p>');
+    h.push('<button type="button" class="xk-close" id="xkIdClose" aria-label="关闭面板">✕</button>');
+    panel.innerHTML = h.join('');
+    panel.addEventListener('click', function (ev) {
+      var t = ev.target;
+      if (!t || !t.getAttribute) { return; }
+      if (t.id === 'xkIdClose') { closePanel(); return; }
+      var emo = t.getAttribute('data-emo');
+      if (emo) { setEmo(emo); speak(EMO_LINE[emo] || 'nav_home', '情绪：' + labelOf(emo)); return; }
+      var act = t.getAttribute('data-act');
+      if (act) {
+        var can = (typeof window.xkmPlayClip === 'function');
+        if (can) { try { window.xkmPlayClip(act, null); window.XK_ACT = null; } catch (e) { D.errors.push('act: ' + e); } }
+        say('动作：' + labelOfAct(act) + (can ? '' : '（全身画布只在主页可见，这一页只出字幕）'));
+      }
+    });
+  })();
+  function openPanel() { panel.classList.add('open'); D.panel = true; cap.classList.remove('on'); markPanel(); }
+  function closePanel() { panel.classList.remove('open'); D.panel = false; }
+
+  /* ---------- 点头像：切下一个情绪 + 念一句；长按 >=500ms：开面板 ---------- */
+  var pressTimer = 0, longDone = false, taps = [];
+  function tapCount() {
+    var t = Date.now();
+    taps.push(t);
+    taps = taps.filter(function (x) { return t - x <= 1500; });
+    if (taps.length >= 5) { taps = []; revealLogin('avatar-5tap'); say('自用入口已打开：登录按钮在头像右边。'); }
+  }
+  function nextEmo() {
+    var i = 0, k;
+    for (k = 0; k < EMOS8.length; k++) { if (EMOS8[k][0] === D.emo) { i = k; } }
+    var e = EMOS8[(i + 1) % EMOS8.length];
+    setEmo(e[0]);
+    speak(EMO_LINE[e[0]] || 'nav_home', '情绪：' + e[1]);
+  }
+  av.addEventListener('pointerdown', function () {
+    longDone = false;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(function () { longDone = true; openPanel(); }, 500);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
+    av.addEventListener(ev, function () { clearTimeout(pressTimer); });
+  });
+  av.addEventListener('click', function () {
+    if (longDone) { longDone = false; return; }     /* 长按已经开过面板 ⇒ 这一次不算"切情绪" */
+    tapCount();
+    nextEmo();
+  });
+  av.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); tapCount(); nextEmo(); }
+  });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && D.panel) { closePanel(); } });
+
+  /* ---------- 进入栏目 ⇒ 固定一句介绍（同栏目 10 分钟内不重复念） ---------- */
+  var ENTRY_LINE = { home: 'nav_home', monitor: 'nav_monitor', notes: 'nav_notes', ai: 'nav_ai' };
+  (function entry() {
+    var p = location.pathname, name = '';
+    if (/^\/ai\b/.test(p)) { name = 'ai'; }
+    else if (/^\/alerts\b/.test(p)) { name = 'monitor'; }
+    else if (/^\/posts\b/.test(p)) { name = 'notes'; }
+    else if (p === '/' || /^\/index\.html$/.test(p)) { name = 'home'; }
+    var id = ENTRY_LINE[name];
+    if (!id) { return; }                       /* /test/ 等页没有固定介绍句 ⇒ 什么都不播 ✓ */
+    var KEY = 'xk-nav-voice-at', last = 0, lastSec = '';
+    try { var raw = sg(KEY); if (raw) { var o = JSON.parse(raw); last = o.at || 0; lastSec = o.section || ''; } } catch (e) { }
+    if (lastSec === name && (Date.now() - last) < 10 * 60 * 1000) { return; }
+    ss(KEY, JSON.stringify({ section: name, at: Date.now() }));
+    var tries = 0;
+    (function wait() {
+      var hasVoice = (window.KurisuPlayer && typeof window.KurisuPlayer.speakGroup === 'function') || typeof window.xkvPlay === 'function';
+      if (!hasVoice && ++tries < 40) { setTimeout(wait, 100); return; }
+      speak(id, '', true);                     /* 入口句是"固定一句"：即使声音关着也先把字幕显示出来（force） */
+    })();
+  })();
+
+  /* ---------- P0-④（站主 2026-10-16 追加②）：首屏优先 + 其余空闲预取 ----------
+     站主原话："一打开网页，首先把整体的图片加载出来，按时间顺序，要展示的先显示；
+     但是显示的同时把其他地方加载一下，这样不就快多了吗"。
+     口径：
+       · 首屏四个关键图各自由主页脚本按"出现顺序"decode() 完再生效（壁纸→背板→她首帧→字幕框）；
+         壁纸另外在 <head> 里 preload + fetchpriority=high（只这一张抢带宽）。
+       · 其余（角色清单 manifest.json / 视频清单 video-manifest.json / 语音 bank.json / 面板数据）
+         一律**空闲预取**：最早 2000ms 之后才开始，且只登记 <link rel=prefetch>，绝不阻塞首屏
+         （首屏门禁的口径是"导航后 1.5s 内请求到的资产" ⇒ 预取必须晚于这个窗口）。
+       · 移动端 / saveData / deviceMemory<=4 ⇒ **只取首屏 + 当前栏目**，其余点了才取（省流量）。
+       · 登录后才该加载的东西一律走 __xkAdmin.fetch（未登录直接拒，**不发请求**）。
+     验收：首屏关键资源加载顺序表 + 首屏可交互时间 + 预取请求清单 = _shots/firstscreen-order.json */
+  D.pref = {}; D.prefetch = [];
+  D.prefetchOff = (function () {
+    try { var c = navigator.connection; if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ''))) { return 'saveData/2g'; } } catch (e) { }
+    try { if (navigator.deviceMemory && navigator.deviceMemory <= 4) { return 'deviceMemory<=4'; } } catch (e) { }
+    try { if (matchMedia('(max-width:980px)').matches) { return 'narrow'; } } catch (e) { }
+    return '';
+  })();
+  function idle(fn, ms) {
+    if (typeof window.requestIdleCallback === 'function') { window.requestIdleCallback(fn, { timeout: ms }); }
+    else { setTimeout(fn, ms); }
+  }
+  function prefetch(u) {
+    if (D.pref[u]) { return; }
+    D.pref[u] = 1; D.prefetch.push({ url: u, at: Math.round(performance.now()) });
+    try {
+      var l = document.createElement('link');
+      l.rel = 'prefetch'; l.href = u; l.as = 'fetch'; l.crossOrigin = 'anonymous';
+      document.head.appendChild(l);
+    } catch (e) { D.errors.push('prefetch: ' + e); }
+  }
+  /* 登录后才有权限的东西：统一从这里走，未登录**不发请求**（站主追加②最后一条） */
+  window.__xkAdmin = {
+    allowed: function () { return !!(D.admin || D.loggedIn); },
+    fetch: function (u, o) {
+      if (!this.allowed()) { return Promise.reject(new Error('ADMIN_ONLY')); }
+      return fetch(u, o);
+    }
+  };
+  setTimeout(function () {
+    if (D.prefetchOff) { D.prefetchNote = '跳过空闲预取（' + D.prefetchOff + '：只取首屏 + 当前栏目）'; return; }
+    idle(function () {
+      ['/kurisu/manifest.json', '/kurisu/video-manifest.json', '/kurisu/voice/bank.json'].forEach(prefetch);
+    }, 1500);
+  }, 2000);
+  /* 清单到位后用**真值**覆盖头像帧数（只读；清单本来就在上面的空闲预取清单里 ⇒ 走缓存，不额外发请求） */
+  setTimeout(function () {
+    fetch('/kurisu/manifest.json', { cache: 'force-cache' }).then(function (r) { return r.json(); }).then(function (j) {
+      var em = (j && j.emotions) || {};
+      EMOS8.forEach(function (e) {
+        var f = em[e[0]] && em[e[0]].idle && em[e[0]].idle.frames;
+        if (f) { framesOf[e[0]] = f; }
+      });
+      paint();
+    }).catch(function () { });
+  }, 3200);
+
+  /* 首访/回访的问候由主页内联播放器负责（greet_first / greet_back，固定不随机）——
+     这里只把"入口句"这一步记进诊断，便于验收核对。 */
+  D.entry = { path: location.pathname, at: Date.now() };
+})();
+</script>
+'''
+_n_brace_o = IDCARD_PARTIAL.count('{{')
+_n_brace_c = IDCARD_PARTIAL.count('-}}')
+if _n_brace_o != 1 or _n_brace_c != 1:
+    raise SystemExit('batchA: idcard partial 里 {{ / -}} 不止注释那一处（%d / %d）—— JS/CSS 里混进了模板定界符'
+                     % (_n_brace_o, _n_brace_c))
+
 # --------------------------------------------------------------------- 落盘
 print('生成：')
+home_style = home_style + LAYOUT_PATCH
 
 # 1) 共享头
 write(os.path.join(PART, 'head-meta.html'), HEAD_META)
+
+# 1b) ★批次 A-①：左上角头像卡（五页共用一份；自带 <style> + <script>）
+write(os.path.join(PART, 'idcard.html'), IDCARD_PARTIAL)
 
 # 2) 主页（整份）
 write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ============================================================================
@@ -2787,15 +3323,18 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video" data-xk-boot="0">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
+  {{- /* ★P0-④：首屏第一张（壁纸）preload + high —— 只这一张抢带宽，其余按顺序 decode */}}
+  <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
 <style>%s
 </style>
 </head>
-<body>
+<body class="xk-has-idcard">
 {{- /* ↓↓↓ 以下到 </main> 为止 = docs/demo-主页.html 的 body 逐字（仅素材路径与导航 href 如上） */}}
 <main id="content" data-xk-ssr="home">
 %s
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
 <script>
 %s
 </script>
@@ -2803,6 +3342,8 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
 </body>
 </html>
 ''' % (home_style, home_body, home_script))
+
+shell_style = shell_style + LAYOUT_PATCH
 
 # 3) 外壳共享片段
 write(os.path.join(PART, 'shell-style.html'),
@@ -2833,7 +3374,7 @@ PAGES = [
 # ★T27：about 页已删 ⇒ 不再需要单落一份 single.html（原 about/single.html 由删除补丁一并清掉）。
 ALSO_SINGLE = set()
 for section, view, cname in PAGES:
-    body_class = u'{{ if eq $v "home" }} class="is-home"{{ else if eq $v "ai" }} class="is-ai"{{ end }}'
+    body_class = u' class="xk-has-idcard{{ if eq $v "ai" }} is-ai{{ end }}"'
     tpl = u'''{{- /* ============================================================================
    /%s/ = `docs/demo-内容页外壳.html` 的 `v-%s`（%s）那一屏**整份搬**（第四批口径）。
    ----------------------------------------------------------------------------
@@ -2857,6 +3398,7 @@ for section, view, cname in PAGES:
 {{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
 {{ partial "xk-demo/shell-script.html" . }}
 {{ partial "xk-demo/api-bind.html" . }}
 </body>

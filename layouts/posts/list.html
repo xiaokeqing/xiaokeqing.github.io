@@ -15,12 +15,13 @@
 {{ partial "xk-demo/head-meta.html" . }}
 {{ partial "xk-demo/shell-style.html" . }}
 </head>
-<body data-skin="warm" data-phone="v1"{{ if eq $v "home" }} class="is-home"{{ else if eq $v "ai" }} class="is-ai"{{ end }}>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard{{ if eq $v "ai" }} is-ai{{ end }}">
 {{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
 <main class="main" id="content" data-xk-ssr="notes">
 {{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
 {{ partial "xk-demo/shell-script.html" . }}
 {{ partial "xk-demo/api-bind.html" . }}
 </body>

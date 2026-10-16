@@ -19,13 +19,14 @@
 {{ partial "xk-demo/head-meta.html" . }}
 {{ partial "xk-demo/shell-style.html" . }}
 </head>
-<body data-skin="warm" data-phone="v1">
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
 {{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
 <main class="main" id="content" data-xk-ssr="test">
 {{ partial "xk-demo/shell-views.html" (dict "v" $v "page" .) }}
 {{ partial "xk-demo/test-lab.html" (dict "v" $v "page" .) }}
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
 {{ partial "xk-demo/shell-script.html" . }}
 </body>
 </html>

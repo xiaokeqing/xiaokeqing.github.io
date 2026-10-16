@@ -21,6 +21,8 @@
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video" data-xk-boot="0">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
+  {{- /* ★P0-④：首屏第一张（壁纸）preload + high —— 只这一张抢带宽，其余按顺序 decode */}}
+  <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
 <style>
   :root{
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -138,15 +140,38 @@
     .glow,.crt-sub .cursor{animation:none}
   }
 
+  /* ★R3 布局补丁（2026-10-16 外部审查）—— 以下全部只在 ≤980px 生效 */
+  @media (max-width:980px){
+    /* ① 交互件命中区补齐到 44px（只动命中区，配色/字号/边框色一个字节不改） */
+    .ops-tabs button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+    .holo-fold{width:34px;height:34px;flex:none}
+    .anchor-row a{min-height:38px;display:inline-flex;align-items:center}
+    .chat-ft button{min-height:44px}
+    .chat-ft input{min-height:44px}
+    /* ② holo 收起（.holo-min）后主区不再白留 310px */
+    body.holo-min .main{padding-right:12px}
+    /* ③ 攻击矩阵七格 → 窄屏四格，避免每格被压到 50px 以下 */
+    .attk{grid-template-columns:repeat(4,1fr)}
+    .attk .cell{min-height:64px}
+    /* ④ 展开态 holo 限高并给正文让位 */
+    .holo{max-height:calc(100dvh - 210px);max-height:calc(100vh - 210px)}
+  }
+  @media (max-width:520px){
+    /* ⑤ 极窄屏：统计卡单列；聊天区改动态高度，避开 667px 矮屏溢出 */
+    .stats{grid-template-columns:1fr}
+    .attk{grid-template-columns:repeat(3,1fr)}
+    .chat{height:auto;max-height:calc(100vh - 150px);min-height:320px}
+  }
+
 </style>
 </head>
-<body>
+<body class="xk-has-idcard">
 {{- /* ↓↓↓ 以下到 </main> 为止 = docs/demo-主页.html 的 body 逐字（仅素材路径与导航 href 如上） */}}
 <main id="content" data-xk-ssr="home">
 
 
 <div class="stage" id="stage">
-  <img class="desk" src="/images/crt/desk.webp" alt="" aria-hidden="true">
+  <img class="desk" fetchpriority="high" src="/images/crt/desk.webp" alt="" aria-hidden="true">
   <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true">
 
   <div class="crt" id="crt">
@@ -168,6 +193,7 @@
   <a href="/alerts/">监测中心</a>
   <a href="/ai/">AI 问答</a>
   <a href="/posts/">笔记</a>
+  <a href="/test/">测试</a>
 </nav>
 
 <div class="bootveil" id="bootveil"></div>
@@ -176,6 +202,7 @@
 <h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">小刻晴 · 一个人的安全实验室</h1>
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
 <script>
 
 /* ================= 数据：全部来自 static/kurisu/manifest.json ================= */
@@ -214,8 +241,28 @@ function xkBootBlink(hide){
 }
 function xkBootPreload(){
   /* ★批次1（2026-10-15 站主）：三张背景层已经在标记里（与 T7 一致）⇒ 这里不再 createElement 插入，
-     只标记"预载阶段已到"；开场靠 CSS 的 data-xk-boot 可见性门控逐层显示。*/
-  document.documentElement.setAttribute('data-xk-boot-ready', '1');
+     只标记"预载阶段已到"；开场靠 CSS 的 data-xk-boot 可见性门控逐层显示。
+     ★P0-④（2026-10-16 站主追加②）：**按出现顺序串行优先 + 每张 decode() 完再生效** ——
+       壁纸(desk) 已在 phase 0 显示（head 里 preload + fetchpriority=high，唯一抢带宽的一张）；
+       这里按 光晕(glow) → 背板(backplate) → 字幕框(plate) 逐张 decode()，解完才置位 data-xk-boot-ready；
+       她的首帧(opening) 由 xkBootWaitFace() 等到 complete 才开始闪断 ⇒ 四张的先后是**事件驱动**的，不是猜时间。
+       顺序与耗时写进 window.__xkFirstPaint.order（验收脚本 _dev/firstscreen-order.mjs 读它）。*/
+  var FP = window.__xkFirstPaint = window.__xkFirstPaint || { t0: Math.round(performance.now()), order: [] };
+  function xkDec(el, name, next){
+    if(!el){ next(); return; }
+    var done = function(){ FP.order.push({ name: name, at: Math.round(performance.now() - FP.t0) }); next(); };
+    var go = function(){ if(el.decode){ el.decode().then(done, done); } else { done(); } };
+    if(el.complete && el.naturalWidth){ go(); return; }
+    el.addEventListener('load', go, {once:true});
+    el.addEventListener('error', done, {once:true});
+  }
+  xkDec(document.querySelector('.glow'), 'glow', function(){
+    xkDec(document.querySelector('.backplate'), 'backplate', function(){
+      xkDec(document.querySelector('.plate'), 'plate', function(){
+        document.documentElement.setAttribute('data-xk-boot-ready', '1');
+      });
+    });
+  });
 }
 function xkBootBlackFlicker(){
   const boot = document.getElementById('crtBoot');
@@ -1363,9 +1410,18 @@ const desk = document.querySelector('.desk');
    资产：static/kurisu/voice/bank.json（12 条日语 m4a，逐条带 text / seconds / 包络）。
    纪律：手势前不播（只记 pending）；取不到就只显示字幕，绝不假装在播；RM 不自动播。 */
 const XK_VOICE_BANK = '/kurisu/voice/bank.json';
-const XK_DEFAULT_SAY = '你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。';
+const XK_DEFAULT_SAY = '你好，我是桐莉栖。这一屏的数字都是真的——看不清就走近一点。';
 const XKV = { bank:null, unlocked:false, pending:null, lastId:null, audio:null, plays:0, errors:[] };
 window.__xkVoice = XKV;
+/* ★批次A（2026-10-16 站主）：声音开关默认关 ⇒ 没开声就只记 pending + 只出字幕，开了再补播。
+   开关本体在左上角头像卡（layouts/partials/xk-demo/idcard.html），状态存 localStorage['xk-sound-on']。 */
+function xkSoundOn(){ try{ return !!(window.__xkSound && window.__xkSound.on); }catch(e){ return false; } }
+/* 固定台词表（口语版）由头像卡那份 partial 提供（同一份文案，五页共用）：
+   window.__xkLineZh = {lineId: '中文台词'}；没有就退回 bank.json 里的 text。 */
+function xkvText(id, fallback){
+  var m = window.__xkLineZh || {};
+  return m[id] || fallback || '';
+}
 function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
 function xkvLoad(){
   if(XKV.bank) return Promise.resolve(XKV.bank);
@@ -1381,7 +1437,8 @@ function xkvUnlock(){
 function xkvPlay(id){
   const line = xkvLine(id);
   if(!line){ XKV.errors.push('no line: '+id); return; }
-  if(!XKV.unlocked){ XKV.pending = id; return; }        /* 手势前：只记 pending，不播 */
+  if(!xkSoundOn()){ XKV.pending = id; if(typeof typeSub === 'function') typeSub(xkvText(id, line.text)); return; }   /* ★批次A：声音关着 ⇒ 只出字幕 */
+  if(!XKV.unlocked){ XKV.pending = id; if(typeof typeSub === 'function') typeSub(xkvText(id, line.text)); return; }        /* 手势前：只记 pending，不播 */
   if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
   try{
     if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} }
@@ -1407,16 +1464,24 @@ function xkvPlay(id){
     });
     const pr = a.play();
     if(pr && pr.catch){ pr.catch(err=>{ XKV.errors.push('play: '+(err && err.name)); }); }
-    if(typeof typeSub === 'function') typeSub(line.text);
+    if(typeof typeSub === 'function') typeSub(xkvText(id, line.text));
   }catch(e){ XKV.errors.push('audio ctor: '+e); }
 }
+/* ★批次A（站主追加①）：主页进入**固定一句问候** —— 首访 greet_first / 回访 greet_back；
+   不随机、不参与"防复读"轮换（台账口径见 docs/台词表-入口与固定台词-20261016.md）。 */
 function xkvGreet(){
   xkvLoad().then(()=>{
     let seen = false;
     try{ seen = !!localStorage.getItem('xk-visited'); localStorage.setItem('xk-visited','1'); }catch(_){}
-    xkvPlay(seen ? 'greet_back' : 'greet_first');
+    const id = seen ? 'greet_back' : 'greet_first';
+    XKV.entryId = id;
+    xkvPlay(id);
   });
 }
+/* ★批次A：声音开关打开的那一刻，把刚才因为"声音关着"压下来的那一句补播（同一句，不换文案）。 */
+addEventListener('xk-sound', function(ev){
+  if(ev && ev.detail && ev.detail.on && XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); }
+});
 addEventListener('pointerdown', xkvUnlock, {once:true});
 addEventListener('keydown', xkvUnlock, {once:true});
 /* 语音库在首屏窗口（门禁口径 1.5s）**之后**才取 —— 语音资产不进首屏字节 */

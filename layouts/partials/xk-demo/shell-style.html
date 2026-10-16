@@ -387,6 +387,29 @@
   body.is-ai .holo,body.is-ai .holo-bubble{display:none}
 
 
+  /* ★R3 布局补丁（2026-10-16 外部审查）—— 以下全部只在 ≤980px 生效 */
+  @media (max-width:980px){
+    /* ① 交互件命中区补齐到 44px（只动命中区，配色/字号/边框色一个字节不改） */
+    .ops-tabs button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+    .holo-fold{width:34px;height:34px;flex:none}
+    .anchor-row a{min-height:38px;display:inline-flex;align-items:center}
+    .chat-ft button{min-height:44px}
+    .chat-ft input{min-height:44px}
+    /* ② holo 收起（.holo-min）后主区不再白留 310px */
+    body.holo-min .main{padding-right:12px}
+    /* ③ 攻击矩阵七格 → 窄屏四格，避免每格被压到 50px 以下 */
+    .attk{grid-template-columns:repeat(4,1fr)}
+    .attk .cell{min-height:64px}
+    /* ④ 展开态 holo 限高并给正文让位 */
+    .holo{max-height:calc(100dvh - 210px);max-height:calc(100vh - 210px)}
+  }
+  @media (max-width:520px){
+    /* ⑤ 极窄屏：统计卡单列；聊天区改动态高度，避开 667px 矮屏溢出 */
+    .stats{grid-template-columns:1fr}
+    .attk{grid-template-columns:repeat(3,1fr)}
+    .chat{height:auto;max-height:calc(100vh - 150px);min-height:320px}
+  }
+
   /* ★ 生产站差异（唯一一处 CSS 新增，值逐字照抄上面的 .dock button 三条）：
      demo 的导航是 <button data-v=…>（它自己的 JS 切 view），生产页换成 <a href="真路由">，
      所以要给 .dock a 一组同样的外观值。demo 自己的元素渲染结果零变化。 */
