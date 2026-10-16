@@ -1171,12 +1171,90 @@
   }
   /* ★Q-2：CRT 那一行的 "sync Ns" 靠 bindCrt 往上走 —— 那一行随状态卡一起删了，
      这个 5s 定时器也一并摘掉（主页不再有这块 DOM，留着就是空转）。 */
+  /* ★2026-10-16（站主："把该给访客看的重要数据做成可视化"，像 AI 问答页/监测中心那样）·
+     **接口健康** —— 把"接口到底快不快"画成延迟条，进监测中心（替代原先只躺在 /test/ 里的文字面板）。
+     真数据、零造假：
+       · 每行宽度/数字 = **本页真实发生的** `/api/public/{alerts,geo,honeypot}` 请求的 resource timing duration
+       · `/api/health` 行 = 真去 fetch 一次拿到的真实响应（status）
+     取不到就写"读不到"；渐进：每 800ms 重画一次，最多 12s（与 B5 的"逐步到位"口径一致）。 */
+  function bindApiHealth() {
+    var list = document.querySelector('[data-ih-list]');
+    if (!list) { return; }
+    var note = document.querySelector('[data-ih-note]');
+    var NAMES = ['alerts', 'overview', 'geo', 'honeypot', 'audit', 'webstats'];
+    var healthMs = null, healthTxt = null, healthT0 = null;
+    function measure() {
+      var out = {}, res = performance.getEntriesByType('resource');
+      for (var i = 0; i < res.length; i++) {
+        var m = /\/api\/public\/([a-z]+)(\.js)?(\?|$)/.exec(res[i].name);
+        if (m && NAMES.indexOf(m[1]) >= 0) {
+          var d = Math.round(res[i].duration);
+          if (out[m[1]] == null || d > out[m[1]]) { out[m[1]] = d; }
+        }
+      }
+      return out;
+    }
+    function row(k, v) {
+      var cell = list.querySelector('[data-ih-v="' + k + '"]');
+      if (!cell) { return; }
+      var bar = cell.parentNode ? cell.parentNode.querySelector('.bar i') : null;
+      if (v == null) { cell.textContent = '读不到'; if (bar) { bar.style.width = '0%'; } return; }
+      cell.textContent = (v === 0 ? '0 ms（命中缓存）' : v + ' ms');
+      if (bar) { bar.style.width = Math.max(3, Math.round(v / Math.max(maxMs, 1) * 100)) + '%'; }
+    }
+    var maxMs = 1, settled = false;
+    function paint() {
+      var ms = measure(), vals = [];
+      for (var i = 0; i < NAMES.length; i++) { if (ms[NAMES[i]] != null) { vals.push(ms[NAMES[i]]); } }
+      maxMs = vals.length ? Math.max.apply(null, vals) : 1;
+      for (var j = 0; j < NAMES.length; j++) {
+        var v = ms[NAMES[j]] != null ? ms[NAMES[j]] : null;
+        if (v == null && settled) { markUnread(NAMES[j]); } else { row(NAMES[j], v); }
+      }
+      if (note) {
+        var s = vals.slice().sort(function (a, b) { return a - b; });
+        var p50 = s.length ? s[Math.floor((s.length - 1) / 2)] : null;
+        var parts = ['本次实测 ' + vals.length + '/' + NAMES.length + ' 个内容端点'];
+        if (p50 != null) { parts.push('中位 ' + p50 + ' ms'); }
+        if (s.length) { parts.push('最慢 ' + s[s.length - 1] + ' ms'); }
+        if (healthTxt) { parts.push('后端 /api/health ' + healthTxt); }
+        parts.push('数字来自本页真实请求的 resource timing');
+        parts.push('标"本次未发起"的是按 tab 懒加载的端点（切到对应面板才会请求）');
+        note.textContent = parts.join(' · ');
+      }
+    }
+    /* 收尾态：还没测到 = 这次没发起（该端点按页裁剪/懒加载），与"取不到"如实区分 */
+    function markUnread(k) {
+      var cell = list.querySelector('[data-ih-v="' + k + '"]');
+      if (!cell) { return; }
+      cell.textContent = '本次未发起';
+      var bar = cell.parentNode ? cell.parentNode.querySelector('.bar i') : null;
+      if (bar) { bar.style.width = '0%'; }
+    }
+    /* 后端健康只作为**注记**的最佳努力：`/api/health` 的 CORS 只放行 https://xiaokeqing.cn
+       ⇒ 从别的来源（本地预览、其他域名）读不到是正常的，不要因此显示"永久读不到"的行。 */
+    try {
+      healthT0 = performance.now();
+      fetch(API + '/api/health', { cache: 'default' }).then(function (r) { return r.json(); }).then(function (j) {
+        healthMs = healthT0 != null ? Math.round(performance.now() - healthT0) : null;
+        healthTxt = (j && (j.status || (j.ok ? 'ok' : null))) || 'ok';
+        paint();
+      }).catch(function () { healthTxt = null; paint(); });
+    } catch (e) { healthTxt = null; }
+    var n = 0;
+    var timer = setInterval(function () {
+      n++; if (n >= 15) { settled = true; } paint();
+      if (n >= 15) { clearInterval(timer); }
+    }, 800);
+    paint();
+  }
   if (BASE_JOBS.length) {
     load();
     setInterval(load, REFRESH);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   }
   if (SSR === 'monitor') watchTabs();   /* ★B4：切 tab 才取该 tab 独有的端点 */
+  if (SSR === 'monitor') bindApiHealth();   /* ★C2-P1：接口健康可视化（真数据延迟条） */
   /* ★B5：数据到达前的头 3 秒里，反复把生成物抢先写的"读不到"兜回中性态（alerts 一到即停） */
   if (SSR === 'monitor') {
     neutralPendingHeads();
