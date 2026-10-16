@@ -62,9 +62,24 @@
     .lab-cards{grid-template-columns:1fr}
     .lab-hd h3{font-size:13.5px}
   }
+  /* ★P8-B（站主 2026-10-16）：/test/ 是**内部实验台** ⇒ 访客看不到 9 个实验块，只看到"你没有权限"。
+     判定用既有**只读**接口 window.__xkAdmin.allowed()（idcard.html 提供；不新增请求、不暴露入口）。 */
+  html.xk-lab-denied .lab-hero,html.xk-lab-denied .lab-blk{display:none !important}
+  .lab-denied{border:1px solid var(--line2);border-radius:14px;background:var(--panel);padding:18px 20px;margin-bottom:14px}
+  .lab-denied h2{font:600 16px var(--sans);margin-bottom:8px;color:var(--txt)}
+  .lab-denied p{font:13px/1.75 var(--sans);color:var(--mut);margin-bottom:8px}
+  .lab-denied a{color:var(--acc);text-decoration:none}
+  .lab-denied a:hover{text-decoration:underline}
 </style>
 
 <section class="view on lab" id="v-test">
+  <!-- ★P8-B：访客（未登录且未开隐蔽入口）只看到这一块；9 个实验块由 html.xk-lab-denied 隐藏 -->
+  <section class="lab-denied" id="labDenied" hidden>
+    <h2>你没有权限（内部实验台）</h2>
+    <p>这里是站主的自用工具台，不对外开放。公开可看的数据在
+       <a href="/alerts/">监测中心</a> 与 <a href="/ai/">AI 问答</a>。</p>
+    <p style="font-size:12px;opacity:.8">本页不在导航中，也已被 robots 排除。</p>
+  </section>
   <div class="lab-hero">
     <h2>测试模块页 · 在试功能一处看全</h2>
     <p>这一页不是展示页，是<b>实验台</b>：每一块都能<b>单独开关</b>（开关状态存在浏览器 <code>localStorage['xk-lab-off']</code>）。
@@ -652,5 +667,26 @@
   /* 诊断挂载点：便于取证（只读，不影响页面） */
   window.__xkLab = { api: API, lastGood: lastGood, healthPaths: HEALTH_PATHS,
                      help: 'window.__xkLab.lastGood 里是各端点最近一次成功响应；healthPaths 是"接口健康"探的那批只读端点' };
+})();
+/* ★P8-B（站主 2026-10-16）：/test/ 访客无权限 —— **只读**判定，不新增请求、不暴露入口。
+   判定源：window.__xkAdmin.allowed()（idcard.html 定义：!!(D.admin || D.loggedIn)）。
+   idcard 在页面尾部初始化 ⇒ 最多等 3s；之后每 250ms 复查（≤6s）；登录/开隐蔽入口后自动解锁，无需刷新。 */
+(function () {
+  var html = document.documentElement;
+  var panel = document.getElementById('labDenied');
+  var waited = 0;
+  function allowed() { try { return !!(window.__xkAdmin && window.__xkAdmin.allowed()); } catch (e) { return false; } }
+  function unlock() { html.classList.remove('xk-lab-denied'); if (panel) { panel.hidden = true; } }
+  function lock() { html.classList.add('xk-lab-denied'); if (panel) { panel.hidden = false; } }
+  function first() {
+    if (allowed()) { unlock(); return; }
+    if (waited++ < 12) { setTimeout(first, 250); return; }
+    lock();
+  }
+  first();
+  var n = 0, iv = setInterval(function () {
+    if (allowed()) { unlock(); clearInterval(iv); return; }
+    if (++n > 24) { clearInterval(iv); }
+  }, 250);
 })();
 </script>
