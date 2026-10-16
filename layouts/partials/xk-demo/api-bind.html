@@ -1211,9 +1211,14 @@
         var v = ms[NAMES[j]] != null ? ms[NAMES[j]] : null;
         if (v == null && settled) { markUnread(NAMES[j]); } else { row(NAMES[j], v); }
       }
+      var s = vals.slice().sort(function (a, b) { return a - b; });
+      var p50 = s.length ? s[Math.floor((s.length - 1) / 2)] : null;
+      /* ★P1（站主口径：4 张 KPI 卡）—— 与延迟条**同一份 measure() 结果**，不新增任何请求 */
+      kpi('health', healthTxt ? healthTxt : (settled ? '读不到' : '取数中…'));
+      kpi('count', vals.length + '/' + NAMES.length);
+      kpi('p50', p50 != null ? p50 + ' ms' : '—');
+      kpi('max', s.length ? s[s.length - 1] + ' ms' : '—');
       if (note) {
-        var s = vals.slice().sort(function (a, b) { return a - b; });
-        var p50 = s.length ? s[Math.floor((s.length - 1) / 2)] : null;
         var parts = ['本次实测 ' + vals.length + '/' + NAMES.length + ' 个内容端点'];
         if (p50 != null) { parts.push('中位 ' + p50 + ' ms'); }
         if (s.length) { parts.push('最慢 ' + s[s.length - 1] + ' ms'); }
@@ -1222,6 +1227,13 @@
         parts.push('标"本次未发起"的是按 tab 懒加载的端点（切到对应面板才会请求）');
         note.textContent = parts.join(' · ');
       }
+    }
+    /* KPI 卡写入（写实值时摘掉 .sk 骨架） */
+    function kpi(k, txt) {
+      var el = document.querySelector('[data-ih-k="' + k + '"]');
+      if (!el) { return; }
+      el.textContent = txt;
+      if (txt && txt !== '取数中…') { el.classList.remove('sk'); }
     }
     /* 收尾态：还没测到 = 这次没发起（该端点按页裁剪/懒加载），与"取不到"如实区分 */
     function markUnread(k) {

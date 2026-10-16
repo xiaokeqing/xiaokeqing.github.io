@@ -3314,10 +3314,14 @@ DOCK_ANCHOR_CONTENT = '<a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }
 DOCK_ANCHOR_HOME = '<a href="/posts/">笔记</a>\n'
 DOCK_TEST_CONTENT = '<a href="/test/" class="{{ if eq $v "test" }}on{{ end }}">测试</a>\n'
 DOCK_TEST_HOME = '<a href="/test/">测试</a>\n'
-chrome = sub1(chrome, DOCK_ANCHOR_CONTENT, DOCK_ANCHOR_CONTENT + '  ' + DOCK_TEST_CONTENT,
-              'batchA: 外壳 dock 新增「测试」项')
-home_body = sub1(home_body, DOCK_ANCHOR_HOME, DOCK_ANCHOR_HOME + '  ' + DOCK_TEST_HOME,
-                 'batchA: 主页 dock 新增「测试」项')
+# ★P6（站主 2026-10-16 裁定"`/test/` 不要了"）：**从顶部导航摘掉「测试」项**（两处 dock 都摘）。
+#   注意：**只摘导航，不删页面** —— `_dev/check-ssr-contract.py` 的五页清单仍把 `/test/` 当第 5 页，
+#   连页面一起删要先改门禁与 dock 模板（等站主再说）。robots.txt 的 `Disallow: /test/` 由主窗口加。
+#   恢复方式：把下面两行 `chrome/home_body = sub1(...)` 取消注释即可。
+# chrome = sub1(chrome, DOCK_ANCHOR_CONTENT, DOCK_ANCHOR_CONTENT + '  ' + DOCK_TEST_CONTENT,
+#               'batchA: 外壳 dock 新增「测试」项')
+# home_body = sub1(home_body, DOCK_ANCHOR_HOME, DOCK_ANCHOR_HOME + '  ' + DOCK_TEST_HOME,
+#                  'batchA: 主页 dock 新增「测试」项')
 # ★P0-④（站主 2026-10-16 追加②）：首屏**只给壁纸抢带宽** —— 它是"要展示的第一张"。
 #   其余三张（背板 / 她首帧 / 字幕框）不抢，按出现顺序由 xkBootPreload() 逐张 decode() 完再生效。
 home_body = sub1(home_body,
@@ -4664,9 +4668,16 @@ views_out = sub1(views_out,
 #   零新增 CSS —— 复用既有 .mod / ul.mod-bd.geo / .bar / .attk-note，版式与相邻模块一致。
 API_HEALTH_MOD = (
     '          <div class="mod" data-xk-block="apihealth">'
-    '<div class="mod-hd"><span class="led"></span>接口健康 · 本机实测延迟'
-    '<span class="tag">本页真实请求 · resource timing</span></div>\n'
-    '            <ul class="mod-bd geo" data-ih-list>\n'
+    '<div class="mod-hd"><span class="led"></span>数据统计 · 接口健康'
+    '<span class="tag">/api/health + 本页真实请求</span></div>\n'
+    '            <div class="mod-bd">\n'
+    '              <div class="stats">\n'
+    '                <div class="stat"><div class="n sk" data-ih-k="health">—</div><div class="l">后端 /api/health</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-ih-k="count">—</div><div class="l">本次实测端点</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-ih-k="p50">—</div><div class="l">中位延迟 P50</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-ih-k="max">—</div><div class="l">最慢端点</div></div>\n'
+    '              </div>\n'
+    '              <ul class="geo" data-ih-list style="margin-top:12px">\n'
     '              <li><span class="cc">alerts</span><span class="bar"><i style="width:0%"></i></span>'
     '<span data-ih-v="alerts">取数中…</span></li>\n'
     '              <li><span class="cc">overview</span><span class="bar"><i style="width:0%"></i></span>'
@@ -4679,8 +4690,9 @@ API_HEALTH_MOD = (
     '<span data-ih-v="audit">取数中…</span></li>\n'
     '              <li><span class="cc">webstats</span><span class="bar"><i style="width:0%"></i></span>'
     '<span data-ih-v="webstats">取数中…</span></li>\n'
-    '            </ul>\n'
-    '            <p class="attk-note" data-ih-note>取数中…</p>\n'
+    '              </ul>\n'
+    '              <p class="attk-note" data-ih-note>取数中…</p>\n'
+    '            </div>\n'
     '          </div>\n'
 )
 views_out = sub1(views_out,

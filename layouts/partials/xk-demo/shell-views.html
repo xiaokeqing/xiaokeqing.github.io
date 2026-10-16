@@ -168,16 +168,24 @@
               </ul>
             </div>
           </div>
-          <div class="mod" data-xk-block="apihealth"><div class="mod-hd"><span class="led"></span>接口健康 · 本机实测延迟<span class="tag">本页真实请求 · resource timing</span></div>
-            <ul class="mod-bd geo" data-ih-list>
+          <div class="mod" data-xk-block="apihealth"><div class="mod-hd"><span class="led"></span>数据统计 · 接口健康<span class="tag">/api/health + 本页真实请求</span></div>
+            <div class="mod-bd">
+              <div class="stats">
+                <div class="stat"><div class="n sk" data-ih-k="health">—</div><div class="l">后端 /api/health</div></div>
+                <div class="stat"><div class="n sk" data-ih-k="count">—</div><div class="l">本次实测端点</div></div>
+                <div class="stat"><div class="n sk" data-ih-k="p50">—</div><div class="l">中位延迟 P50</div></div>
+                <div class="stat"><div class="n sk" data-ih-k="max">—</div><div class="l">最慢端点</div></div>
+              </div>
+              <ul class="geo" data-ih-list style="margin-top:12px">
               <li><span class="cc">alerts</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="alerts">取数中…</span></li>
               <li><span class="cc">overview</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="overview">取数中…</span></li>
               <li><span class="cc">geo</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="geo">取数中…</span></li>
               <li><span class="cc">honeypot</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="honeypot">取数中…</span></li>
               <li><span class="cc">audit</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="audit">取数中…</span></li>
               <li><span class="cc">webstats</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="webstats">取数中…</span></li>
-            </ul>
-            <p class="attk-note" data-ih-note>取数中…</p>
+              </ul>
+              <p class="attk-note" data-ih-note>取数中…</p>
+            </div>
           </div>
         </div>
 
