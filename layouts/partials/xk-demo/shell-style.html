@@ -485,6 +485,18 @@
   .bgshade{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}
   body.is-home .bg,body.is-home .bgshade,body.is-home .bglite{display:none}
 
+/* ★P0（站主 2026-10-16）：内容页右列 = 手机（替掉 .holo）；主页无手机 */
+#holo{display:none !important}                 /* 只隐藏，不删：holoFold/holoBubble 的 JS 仍在跑 */
+.phone{position:fixed;right:14px;top:14px;z-index:55}   /* 与 .holo 同位置（.holo 是 fixed right:14 top:14，宽 284） */
+body.is-home .phone{display:none}
+.phone-name{font:12px var(--mono);color:var(--acc);letter-spacing:.04em;padding:2px 4px 8px;display:flex;gap:8px;align-items:baseline}
+.phone-name .phone-sub{color:var(--mut);font-size:10.5px}
+.phone-btns{display:flex;gap:6px;padding:8px 2px 2px}
+.phone-btns button{flex:1;min-height:34px;background:none;border:1px solid var(--line2);color:var(--txt);border-radius:9px;font:15px var(--sans);cursor:pointer}
+.phone-btns button:hover{color:var(--acc);border-color:var(--acc)}
+.phone-btns button.off{opacity:.45}
+@media (max-width:980px){.phone{display:none}}
+
   /* ★ 生产站差异（唯一一处 CSS 新增，值逐字照抄上面的 .dock button 三条）：
      demo 的导航是 <button data-v=…>（它自己的 JS 切 view），生产页换成 <a href="真路由">，
      所以要给 .dock a 一组同样的外观值。demo 自己的元素渲染结果零变化。 */

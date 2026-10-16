@@ -449,7 +449,7 @@ LAZY_PATCHES = [
      'script0'),
     # ④b 手机全身序列：只有 v-ai 那一屏显示时才取（原表达式逐字搬进 setPhone()，取值一字未改）。
     ("  phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);",
-     "  if(document.getElementById('v-ai').classList.contains('on')) setPhone();",
+     "  if(!document.body.classList.contains('is-home')) setPhone();",
      'script0'),
     # ⑤ ★2026-10-16 ①（冷缓存首屏）：**只改加载时机，不改渲染逻辑/数值** ——
     #    /ai/ 页首帧那次 render() 不要空取全身图集（speaking.hi.webp 1554.7KB）：
@@ -1437,7 +1437,7 @@ XK_TIER_JS = (
     "    if(performance.now() - XK_TIER.t0 < gate) return;\n"
     "    try { if(typeof __xkPhoneDefer !== 'undefined' && __xkPhoneDefer) return; } catch(e){}\n"
     "    var vAi = document.getElementById('v-ai');\n"
-    "    if(vAi && !vAi.classList.contains('on')) return;\n"
+    "    if(document.body.classList.contains('is-home')) return;\n"
     "    var role = XK_TIER.bodyRole; if(!role) return;\n"
     "    var fastNow = XK_TIER.blank || XK_TIER.fail.indexOf(role) >= 0;\n"
     "    if(XK_TIER.bodyTier[role] === 'poster') return;   /* 已到底档，不再折腾 */\n"
@@ -2462,7 +2462,7 @@ var XK_SM_JS = (function(){
     try{
       document.documentElement.className += ' xk-no-kurisu';
       var st = document.createElement('style');
-      st.textContent = 'html.xk-no-kurisu #charCanvas,html.xk-no-kurisu #avCanvas,html.xk-no-kurisu #bubbleCanvas,html.xk-no-kurisu #xkIdAvCanvas,html.xk-no-kurisu #phoneCanvas{display:none !important}';
+      st.textContent = 'html.xk-no-kurisu #charCanvas,html.xk-no-kurisu #avCanvas,html.xk-no-kurisu #bubbleCanvas,html.xk-no-kurisu #xkIdAvCanvas,html.xk-no-kurisu #phoneCanvas,html.xk-no-kurisu #phone{display:none !important}';
       (document.head || document.documentElement).appendChild(st);
     }catch(e){}
   }
@@ -4822,6 +4822,86 @@ BG_DOM = (
 )
 if u'.bgshade' not in chrome:
     chrome = BG_DOM + chrome
+
+# ==================== ★P0（站主 2026-10-16）：内容页右列整体换成「手机」 ====================
+# 站主原话（配箭头截图）："剩下的页面右边全变成手机，放一个助手"。
+# 保守做法（不新起第二套 UI）：
+#   ① 原本埋在 `v-ai` 视图里的 <aside class="phone"> 整块**移出视图**，插进页面级 chrome（与 .holo 同级同位置）
+#   ② `.holo` 不再显示（**保留 DOM 与 JS**，避免 holoFold/holoBubble 报错）⇒ 右列不再两张脸
+#   ③ 主页隐藏手机（body.is-home；与主窗口 .bg 那条同口径）
+#   ④ 宽度：`.phone` 自身 292px ≤ 320（三栏 300/1fr/320 红线不回归）；**窄屏 ≤980px 整块隐藏**（保守，
+#      理由：手机框在手机上会压住正文；既有 `.holo` 在窄屏是"收成头像泡"，手机不做泡泡版，直接隐藏）
+#   ⑤ 手机屏幕里的助手 132×132 → **264×336**（屏幕宽 292-2×12=268，放得下），素材仍用现有 /kurisu/full/*
+#   ⑥ 按钮（站主要过）：名字 + 🔊/🔇 + 💬 说一句 + 🙂 换动作 + ⚙️ 动画开关，全部放在手机框内底部
+PHONE_MOD = (
+    u'<!-- ★P0（站主 2026-10-16）：手机 = 页面级右列常驻件（替掉 .holo） -->\n'
+    u'<aside class="phone live" id="phone" aria-label="手机里的桐莉栖">\n'
+    u'  <div class="phone-scr">\n'
+    u'    <div class="phone-name" id="phoneName">桐莉栖<span class="phone-sub">KURISU · HOLO-LINK</span></div>\n'
+    u'    <canvas id="phoneCanvas" width="264" height="336" aria-hidden="true"></canvas>\n'
+    u'    <div class="phone-status"><span id="phoneClock">—</span><span>HOLO-LINK · 5G ▮</span></div>\n'
+    u'    <div class="phone-line" id="phoneLine">问点什么吧，我在这边听着。</div>\n'
+    u'    <div class="phone-live">\n'
+    u'      <div class="bars2"><i></i><i></i><i></i><i></i><i></i></div>\n'
+    u'      <span id="phoneState">IDLE</span>\n'
+    u'    </div>\n'
+    u'    <div class="phone-btns">\n'
+    u'      <button id="phSnd" type="button" aria-label="声音开关" title="声音开关（与头像卡同源）">🔊</button>\n'
+    u'      <button id="phSay" type="button" aria-label="让她说一句" title="让她说一句">💬</button>\n'
+    u'      <button id="phMood" type="button" aria-label="换个动作" title="换个动作">🙂</button>\n'
+    u'      <button id="phAnim" type="button" aria-label="动画开关" title="动画开关">⚙️</button>\n'
+    u'    </div>\n'
+    u'  </div>\n'
+    u'</aside>\n'
+)
+PHONE_CSS = (
+    u'\n/* ★P0（站主 2026-10-16）：内容页右列 = 手机（替掉 .holo）；主页无手机 */\n'
+    u'#holo{display:none !important}                 /* 只隐藏，不删：holoFold/holoBubble 的 JS 仍在跑 */\n'
+    u'.phone{position:fixed;right:14px;top:14px;z-index:55}   /* 与 .holo 同位置（.holo 是 fixed right:14 top:14，宽 284） */\n'
+    u'body.is-home .phone{display:none}\n'
+    u'.phone-name{font:12px var(--mono);color:var(--acc);letter-spacing:.04em;padding:2px 4px 8px;display:flex;gap:8px;align-items:baseline}\n'
+    u'.phone-name .phone-sub{color:var(--mut);font-size:10.5px}\n'
+    u'.phone-btns{display:flex;gap:6px;padding:8px 2px 2px}\n'
+    u'.phone-btns button{flex:1;min-height:34px;background:none;border:1px solid var(--line2);color:var(--txt);border-radius:9px;font:15px var(--sans);cursor:pointer}\n'
+    u'.phone-btns button:hover{color:var(--acc);border-color:var(--acc)}\n'
+    u'.phone-btns button.off{opacity:.45}\n'
+    u'@media (max-width:980px){.phone{display:none}}\n'
+)
+views_out = re.sub(r'\n\s*<!-- 手机里的她.*?</aside>', '', views_out, flags=re.S)          # ① 移出 v-ai，避免重复 id
+shell_style = shell_style + PHONE_CSS                                                       # ④⑤⑥ 定位/宽度/按钮样式
+chrome = sub1(chrome, u'<div class="holo-bubble"', PHONE_MOD + u'<div class="holo-bubble"', 'P0: 手机进页面级右列')
+
+# ⑦ 手机功能按钮（名字已写进 PHONE_MOD；这里接行为）—— **全部复用既有 speak()/setPhone()/render()/emo**，
+#   不新起一套状态机。保守点写清楚：
+#     · 🔊/🔇 = 代理点击头像卡的 `#xkSndBtn`（同源状态，避免两处各记一份），并每 1.5s 同步图标
+#     · 💬     = 走既有 `speak(text)`（手机台词位 + STATE=SPEAKING）；**原声**需语音播放器在场，
+#                故再尝试 `window.__xkSay`（存在才调），不存在只出文本（如实，不假装出声）
+#     · 🙂     = 在 idle ↔ thinking 之间轮换（手机只有 full/{idle,thinking,speaking} 三档素材；
+#                真情绪需把 avatar 素材接进手机，见回报）
+#     · ⚙️     = `window.__xkPhoneAnim=false` 冻结渲染循环（下方 tick 认这个开关），再点恢复
+_PHONE_UI_JS = u'''
+/* ★P0（站主 2026-10-16）：手机里的助手 —— 功能按钮 */
+(function(){
+  var $=function(i){ return document.getElementById(i); };
+  var snd=$('phSnd'), say=$('phSay'), mood=$('phMood'), anim=$('phAnim');
+  var MOODS=['normal','sided_thinking'], mi=0;
+  function soundOn(){ return !(window.__xkSound && window.__xkSound.on === false); }
+  function syncSnd(){ if(!snd) return; snd.textContent = soundOn() ? '\U0001F50A' : '\U0001F507'; snd.className = soundOn() ? '' : 'off'; }
+  if(snd){ snd.onclick=function(){ var b=document.getElementById('xkSndBtn'); if(b){ b.click(); } setTimeout(syncSnd,60); }; syncSnd(); setInterval(syncSnd,1500); }
+  if(say){ say.onclick=function(){
+    var txt='嗯——我在。你想问什么？';
+    try { if(typeof window.__xkSay === 'function') { window.__xkSay(); } } catch(e){}
+    try { speak(txt); } catch(e){}
+  }; }
+  if(mood){ mood.onclick=function(){ mi=(mi+1)%MOODS.length; try { emo=MOODS[mi]; setPhone(); render(); } catch(e){} }; }
+  if(anim){ anim.onclick=function(){ window.__xkPhoneAnim = (window.__xkPhoneAnim === false); anim.className = (window.__xkPhoneAnim === false) ? 'off' : ''; }; }
+})();
+'''
+shell_scripts[0] = sub1(shell_scripts[0], u'tickClock(); setInterval(tickClock, 20000);',
+                        u'tickClock(); setInterval(tickClock, 20000);' + _PHONE_UI_JS, 'P0: 手机按钮接线')
+shell_scripts[0] = sub1(shell_scripts[0], u'if(cur && frames > 1 && !RM && t - last > iv)',
+                        u'if(cur && frames > 1 && !RM && window.__xkPhoneAnim !== false && t - last > iv)',
+                        'P0: 手机动画开关（渲染循环认它）')
 
 # 3) 外壳共享片段
 write(os.path.join(PART, 'shell-style.html'),

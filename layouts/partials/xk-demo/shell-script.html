@@ -517,7 +517,7 @@ XK_TIER.watchPhone = function(){
     if(performance.now() - XK_TIER.t0 < gate) return;
     try { if(typeof __xkPhoneDefer !== 'undefined' && __xkPhoneDefer) return; } catch(e){}
     var vAi = document.getElementById('v-ai');
-    if(vAi && !vAi.classList.contains('on')) return;
+    if(document.body.classList.contains('is-home')) return;
     var role = XK_TIER.bodyRole; if(!role) return;
     var fastNow = XK_TIER.blank || XK_TIER.fail.indexOf(role) >= 0;
     if(XK_TIER.bodyTier[role] === 'poster') return;   /* 已到底档，不再折腾 */
@@ -562,7 +562,7 @@ function makeBodyPlayer(canvas){
     ctx.drawImage(im, (i % COLS) * CW, Math.floor(i / COLS) * CH, CW, CH, 0, 0, CW, CH);
   }
   function tick(t){
-    if(cur && frames > 1 && !RM && t - last > iv){ fi = (fi + 1) % frames; draw(fi); last = t; }
+    if(cur && frames > 1 && !RM && window.__xkPhoneAnim !== false && t - last > iv){ fi = (fi + 1) % frames; draw(fi); last = t; }
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -577,6 +577,23 @@ const phoneStateEl = document.getElementById('phoneState');
 function tickClock(){ const d=new Date();
   document.getElementById('phoneClock').textContent = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 tickClock(); setInterval(tickClock, 20000);
+/* ★P0（站主 2026-10-16）：手机里的助手 —— 功能按钮 */
+(function(){
+  var $=function(i){ return document.getElementById(i); };
+  var snd=$('phSnd'), say=$('phSay'), mood=$('phMood'), anim=$('phAnim');
+  var MOODS=['normal','sided_thinking'], mi=0;
+  function soundOn(){ return !(window.__xkSound && window.__xkSound.on === false); }
+  function syncSnd(){ if(!snd) return; snd.textContent = soundOn() ? '🔊' : '🔇'; snd.className = soundOn() ? '' : 'off'; }
+  if(snd){ snd.onclick=function(){ var b=document.getElementById('xkSndBtn'); if(b){ b.click(); } setTimeout(syncSnd,60); }; syncSnd(); setInterval(syncSnd,1500); }
+  if(say){ say.onclick=function(){
+    var txt='嗯——我在。你想问什么？';
+    try { if(typeof window.__xkSay === 'function') { window.__xkSay(); } } catch(e){}
+    try { speak(txt); } catch(e){}
+  }; }
+  if(mood){ mood.onclick=function(){ mi=(mi+1)%MOODS.length; try { emo=MOODS[mi]; setPhone(); render(); } catch(e){} }; }
+  if(anim){ anim.onclick=function(){ window.__xkPhoneAnim = (window.__xkPhoneAnim === false); anim.className = (window.__xkPhoneAnim === false) ? 'off' : ''; }; }
+})();
+
 
 /* ============ 面板状态 ============ */
 var __xkPhoneDefer = document.body.classList.contains('is-ai');   /* /ai/：首帧不空取全身图集，1650ms 后允许 */
@@ -600,7 +617,7 @@ function render(){
   const strip = EMOS[emo][mode === 'speaking' ? 'speaking' : 'idle'];
   if(!document.body.classList.contains('is-ai')) panelAv.set(strip);
   if(document.body.classList.contains('holo-min') && !document.body.classList.contains('is-ai')) bubbleAv.set(EMOS[emo].idle);
-  if(document.getElementById('v-ai').classList.contains('on')) setPhone();
+  if(!document.body.classList.contains('is-home')) setPhone();
   const label = mode === 'speaking' ? 'SPEAKING' : (emo === 'sided_thinking' ? 'THINKING' : 'IDLE');
   stateEl.textContent = label;
   phoneStateEl.textContent = __xkPhoneDefer ? '连接中' : label;
@@ -1539,7 +1556,7 @@ XK_TIER.watchPhone = function(){
     if(performance.now() - XK_TIER.t0 < gate) return;
     try { if(typeof __xkPhoneDefer !== 'undefined' && __xkPhoneDefer) return; } catch(e){}
     var vAi = document.getElementById('v-ai');
-    if(vAi && !vAi.classList.contains('on')) return;
+    if(document.body.classList.contains('is-home')) return;
     var role = XK_TIER.bodyRole; if(!role) return;
     var fastNow = XK_TIER.blank || XK_TIER.fail.indexOf(role) >= 0;
     if(XK_TIER.bodyTier[role] === 'poster') return;   /* 已到底档，不再折腾 */
@@ -1631,7 +1648,7 @@ var XK_SM_JS = (function(){
     try{
       document.documentElement.className += ' xk-no-kurisu';
       var st = document.createElement('style');
-      st.textContent = 'html.xk-no-kurisu #charCanvas,html.xk-no-kurisu #avCanvas,html.xk-no-kurisu #bubbleCanvas,html.xk-no-kurisu #xkIdAvCanvas,html.xk-no-kurisu #phoneCanvas{display:none !important}';
+      st.textContent = 'html.xk-no-kurisu #charCanvas,html.xk-no-kurisu #avCanvas,html.xk-no-kurisu #bubbleCanvas,html.xk-no-kurisu #xkIdAvCanvas,html.xk-no-kurisu #phoneCanvas,html.xk-no-kurisu #phone{display:none !important}';
       (document.head || document.documentElement).appendChild(st);
     }catch(e){}
   }
