@@ -4746,6 +4746,83 @@ print('批次 R2：骨架/焦点/term暂停/donut SVG/tab hash/引用卡组/示�
 print('生成：')
 home_style = home_style + LAYOUT_PATCH
 
+# ---- ★场景机（站主 2026-10-16：主页"电视里她的随机动作"）----
+#   A 模式 = 空实验室（裁掉图里 CRT 外框后）当底 + Sprite 状态机的她（动态）
+#   B 模式 = 6 张场景静帧之一（喝咖啡/趴桌睡/电脑前/看CRT/站着想事/白板前）——图里她已在做那件事 ⇒ 把她淡出
+#   素材：_ak/scene-crop 量出屏幕矩形 (153,260,1247,913)=1094×653，裁后转 webp 存
+#         static/kurisu/scene/bg/screen_{empty,coffee,computer,crt,sleep,thinking,whiteboard}.webp
+#   层级：.crt-clip>* 全部绝对定位满铺 ⇒ 场景层插在 .backplate 之后、#charCanvas 之前（她压在上面）
+SCENE_CSS = u'''
+  /* ★场景机：电视里她的"节目"在 A(空实验室+动态的她) 与 B(场景静帧) 之间随机轮换 */
+  .xk-scene{object-fit:cover;opacity:0;transition:opacity .6s ease;pointer-events:none}
+  .xk-scene.on{opacity:1}
+  .charcanvas{transition:opacity .35s ease}
+  .crt-clip.xk-scene-b .charcanvas{opacity:0}
+  @media (prefers-reduced-motion:reduce){.xk-scene,.charcanvas{transition:none}}
+  html.xk-no-kurisu .xk-scene{display:none}
+'''
+SCENE_ANCHOR = '      <img class="backplate" src="/images/crt/lab.webp" alt="" aria-hidden="true">'
+SCENE_MARKUP = ('\n      <img class="xk-scene" id="xkSceneA" alt="" aria-hidden="true">'
+                '\n      <img class="xk-scene" id="xkSceneB" alt="" aria-hidden="true">')
+SCENE_JS = u'''
+/* ================= ★场景机（站主：主页电视里她的随机动作）=================
+   她"住在电视里"：节目在两种画面间随机轮换 ——
+     A 模式：空实验室 + Sprite 状态机的她（动态）；
+     B 模式：6 张场景静帧之一（图里她已经在做那件事 ⇒ 把她淡出，避免两个她）。
+   dwell 默认 45~60s 随机、交叉淡入 600ms；旋钮 ?xk-scene=<ms> 加速、?xk-scene=off 关闭；
+   ?xk-sm=off / ?xk-no-kurisu=1 / prefers-reduced-motion / document.hidden 下不演（只留 A 或留 backplate）。
+   诊断口径：window.__xkScene = {on, mode, cur, dwellMs, switches[{at,to,why}], pB, setMode()} */
+(function(){
+  var q = location.search || '';
+  if(/[?&]xk-scene=off/.test(q) || /[?&]xk-sm=off/.test(q) || window.__xkNoKurisu === true) return;
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var A = document.getElementById('xkSceneA'), B = document.getElementById('xkSceneB');
+  var clip = document.getElementById('crtClip');
+  if(!A || !B || !clip) return;
+  var m = q.match(/[?&]xk-scene=(\d+)/);
+  var dwell = m ? Math.max(1500, parseInt(m[1], 10)) : 45000 + Math.round(Math.random() * 15000);
+  var BASE = '/kurisu/scene/bg/screen_';
+  var ACT = ['coffee','computer','crt','sleep','thinking','whiteboard'];
+  var V = {on:true, mode:'A', cur:'empty', dwellMs:dwell, switches:[], pB:0.4};
+  window.__xkScene = V;
+  var front = A, back = B, timer = null;
+  function show(img, name){ img.src = BASE + name + '.webp'; img.classList.add('on'); }
+  show(front, 'empty');
+  function setMode(mode, name, why){
+    if(mode === V.mode && name === V.cur) return;
+    V.mode = mode; V.cur = name;
+    show(back, name);
+    setTimeout(function(){
+      if(V.cur !== name) return;                 /* 期间又切了 ⇒ 作废这次换层 */
+      front.classList.remove('on');
+      var t = front; front = back; back = t;
+      clip.classList.toggle('xk-scene-b', V.mode === 'B');
+    }, 620);
+    V.switches.push({ at: Math.round(performance.now()), to: name, why: why });
+    if(V.switches.length > 20) V.switches.shift();
+  }
+  function pick(){
+    if(V.mode === 'B' || Math.random() < V.pB){
+      var n = ACT[Math.floor(Math.random() * ACT.length)];
+      if(n === V.cur) n = ACT[(ACT.indexOf(n) + 1) % ACT.length];
+      setMode('B', n, 'dwell');
+    } else {
+      setMode('A', 'empty', 'dwell');
+    }
+  }
+  function arm(){ if(timer) clearTimeout(timer); timer = setTimeout(function(){ pick(); arm(); }, dwell); }
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){ if(timer){ clearTimeout(timer); timer = null; } } else if(!timer){ arm(); }
+  });
+  arm();
+  V.setMode = function(mode, name){ setMode(mode || 'A', name || 'empty', 'manual'); };
+})();
+'''
+home_style = home_style + SCENE_CSS
+home_body = sub1(home_body, SCENE_ANCHOR, SCENE_ANCHOR + SCENE_MARKUP, '场景机: 两层场景图（backplate 之后、她之前）')
+home_script = home_script + SCENE_JS
+print('场景机：A=空实验室+动态的她 / B=6 场景静帧（dwell 45~60s、交叉淡入 600ms、?xk-scene=<ms> 旋钮）')
+
 # 1) 共享头
 write(os.path.join(PART, 'head-meta.html'), HEAD_META)
 
