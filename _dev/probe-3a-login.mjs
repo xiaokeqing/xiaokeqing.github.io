@@ -17,7 +17,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 const ROOT = 'F:\\7AAA\\AI\\blog';
-const PUB = path.join(ROOT, 'public');
+/* ★可按环境变量指向任意构建目录（**默认仍是 public/，行为一字不变**）：
+   例：XK_PUB=F:\7AAA\AI\blog\_dev\_build-self node _dev/probe-3a-login.mjs
+   为什么加：本探针原本只打共享的 public/，而并行线的改动未必已进 public/（共享目录，别的线在用）
+   ⇒ 加这个开关后可在**自己的独立构建目录**上验证登录面（项目"每条线独立 -d 目录"的纪律）。 */
+const PUB = process.env.XK_PUB ? path.resolve(process.env.XK_PUB) : path.join(ROOT, 'public');
 const OUT = path.join(ROOT, '_shots');
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const PORT = 8841, CDP = 9391;
@@ -201,6 +205,13 @@ add('④ 文案#4 逐字 + N 取自响应头（后端 expose 了 Retry-After）'
 add('④ 文案#4 逐字 + N 取自 body.retryAfter（后端**未** expose 头时的兜底）', !!(r4b.snap && r4b.snap.cap.indexOf('尝试过于频繁，请 9 秒后再试') >= 0), JSON.stringify(r4b.snap && { cap: r4b.snap.cap, ra: r4b.snap.retryAfter }));
 add('③ 200+loggedIn:true ⇒ state=logged-in / 🔓', !!(r5.snap && r5.snap.state === 'logged-in' && r5.snap.btnText === '🔓'), JSON.stringify(r5.snap && { s: r5.snap.state, t: r5.snap.btnText }));
 add('④ 文案#5 逐字：软上限仍可继续使用', !!(r6.snap && r6.snap.cap.indexOf('今日自用调用已达软上限 500 次，仍可继续使用（仅提醒，不限额）') >= 0), JSON.stringify(r6.snap && r6.snap.cap));
+/* ★与 ③b 的关系（2026-10-16 复核，**断言逻辑无需改动**）：
+   本条的判据是字面量 **"已登录"**（\u5df2\u767b\u5f55），而 ③b 解锁的登录成功文案是
+   「登录成功 —— 已进入自用模式（…最多 R 轮 / M 分钟内有效）」—— **不含"已登录"这个子串**
+   （③a 阶段用的是"自用令牌已校验通过…"，也不含）。⇒ ③b 落地后本条**仍成立且仍有意义**
+   （它挡的是"已登录"这类旧措辞，不是禁止一切登录成功提示）。
+   实测：`XK_PUB=…\_dev\_build-self node _dev/probe-3a-login.mjs` ⇒ 21/21 PASS。
+   ⚠ 若**将来**把 ③b 文案改成含"已登录"的写法，那就应当同时更新本条判据（而不是让它静静失败）。 */
 add('⑦ 页面里不出现"已登录"字样（探针跑到的每一页）', runs.every((r) => r.snap && r.snap.hasLoginSuccessWord === false), runs.map((r) => r.snap && r.snap.hasLoginSuccessWord).join(','));
 add('⑤ 退出：本地删键', !!(r7.snap && !r7.snap.lsToken && r7.snap.state === 'anon'), JSON.stringify(r7.snap && { ls: r7.snap.lsToken, s: r7.snap.state }));
 add('⑤ 退出：出现 confirm 且被接受', r7.dialogs.some((d) => d.type === 'confirm'), JSON.stringify(r7.dialogs.map((d) => d.type)));

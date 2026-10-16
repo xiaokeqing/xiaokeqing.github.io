@@ -3557,10 +3557,18 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     disabled:  '自用入口当前未启用（服务端未配置令牌）',
     throttled: '尝试过于频繁，请 N 秒后再试',
     soft:      '今日自用调用已达软上限 500 次，仍可继续使用（仅提醒，不限额）',
-    offline:   '连不上服务，请稍后重试'
+    offline:   '连不上服务，请稍后重试',
+    /* ★③b（2026-10-16）：登录成功后的"自用模式"正式文案 —— ③a 阶段明确禁止出现"已登录"字样，③b 解锁。
+       {R}/{M} 由后端 data.conversation 的真实值替换（maxRounds / ttlMinutes），**不写死**。 */
+    ok:        '登录成功 —— 已进入自用模式（自用池：可连续追问，最多 {R} 轮 / {M} 分钟内有效）。'
   };
-  var XL = window.__xkLogin = { state: 'anon', reason: 'notoken', status: 0, retryAfter: 0,
-    checkedAt: 0, hasToken: false, softLimit: false, quota: null, errors: [] };
+  /* ★③b：文案表与两个 localStorage/sessionStorage 键挂到共享出口 —— 提问段是**后面的独立 IIFE**，
+     要复用同一份文案（§4：合并两套表，避免漂移）与同一个键名（§6：不要重新定义字符串）。 */
+  var CID_KEY = 'xk-conversation-id';
+  window.__xkL10N = L10N;
+  window.__xkKeys = { token: TOKEN_KEY, cid: CID_KEY };
+  var XL = window.__xkLogin = { state: 'anon', reason: 'notoken', status: 0, retryAfter: 0, exposedRetryAfter: null,
+    checkedAt: 0, hasToken: false, softLimit: false, quota: null, limits: null, conversation: null, errors: [] };
   function paintLogin() {
     var on = (XL.state === 'logged-in');
     D.loggedIn = on;
@@ -3589,9 +3597,11 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
         if (x.s === 200 && d.loggedIn === true) {
           XL.state = 'logged-in'; XL.reason = ''; XL.quota = d.quota || null;
           XL.softLimit = !!(d.quota && d.quota.softLimitReached);
+          XL.limits = d.limits || null;                 /* ★③b：提问超时按后端 limits.deadlineMs 取，不写死 20s */
+          XL.conversation = d.conversation || null;      /* ★③b：maxRounds / ttlMinutes 的真值来源 */
           revealLogin('token-verified'); paintLogin();
-          say(XL.softLimit ? ('自用令牌已校验通过 —— ' + L10N.soft)
-                           : '自用令牌已校验通过 —— 自用入口已就绪。');
+          var cv0 = d.conversation || {}, rt0 = String(cv0.maxRounds || 5), tt0 = String(cv0.ttlMinutes || 30);
+          say(L10N.ok.replace('{R}', rt0).replace('{M}', tt0) + (XL.softLimit ? (' ' + L10N.soft) : ''));
         } else if (x.s === 429) {
           XL.state = 'throttled'; XL.reason = b.reason || 'LOGIN_RATE_LIMITED';
           paintLogin();
@@ -3627,8 +3637,10 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       try { out = window.confirm('退出登录：只删除本机浏览器里的自用令牌（服务端没有会话可销）。继续？'); } catch (e) { }
       if (!out) { return; }
       try { localStorage.removeItem(TOKEN_KEY); } catch (e) { }
+      try { sessionStorage.removeItem(CID_KEY); } catch (e) { }   /* ★③b：多轮会话 id 一并清掉（§6） */
       XL.state = 'anon'; XL.reason = 'logout'; XL.status = 0; XL.quota = null; XL.softLimit = false;
-      paintLogin(); say('已退出自用：本机令牌已删除。');
+      XL.conversation = null; XL.limits = null;
+      paintLogin(); say('已退出自用：本机令牌与多轮会话都已删除。');
       return;
     }
     if (!userToken()) { say(L10N.notoken); }
@@ -3687,6 +3699,24 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       5. 🔊 默认关 ⇒ 只出字幕；开着才尝试统一播放器（闸门在 kurisu-player 的 playLine 那一处）；
       6. 失败/超时/额度照后端原话（HTTP 码 / Retry-After 倒计时 / quota.remaining），不补"像答案"的文字；
       7. 不做 SSE / WebSocket。
+     ================= ★批次 ③b（2026-10-16）：登录后接**自用面** =================
+     施工依据：docs/施工说明-前端自用面③b-20261016.md（主规格）+ 后端契约 §10（令牌面）。
+       ① URL：`__xkLogin.state === 'logged-in'` ⇒ `POST /api/user/ask`；否则仍 `POST /api/public/ask`
+          （**公开面行为一字不改**）。登录态**每次重取**（时序坑：__xkLogin 在另一个 IIFE 里赋值）。
+       ② 多轮：`sessionStorage['xk-conversation-id']`（键名取自 `window.__xkKeys.cid`）；
+          首句不带 id，拿到 `data.conversationId` 后存起来、后续请求带上；**退出登录一并清除**。
+          body **只**允许 `{question, conversationId?}`（后端只认这两个键）。
+       ③ 配额展示：`quota.remaining` 恒显示；自用面另显 `used/limit`；`softLimitReached=true` 时
+          追加 §10.5-⑤ 文案且**输入框仍可用**（软上限只提醒、不硬停）。
+       ④ 多轮进度：只报后端真值 `round / historyRounds / maxRounds`（公开面没有这些字段）。
+       ⑤ 未生成：`state='model-failed'` 或 `generated=false` ⇒ 逐字显示「本次没有生成结论（模型或链路不可用）」
+          —— **绝不把 answer 当结论渲染**。
+       ⑥ 429 秒数三层兜底：响应头 `Retry-After` → 体 `retryAfter`/`data.retryAfter` → 默认 60（并如实披露）；
+          `window.__xkAsk.retryLayer` 记录命中哪一层（探针断言用）。
+       ⑦ 来源披露：自用面 `toolExecutionAllowed=true` 且后端 mock 默认开启 ⇒ 回答追加来源标注，
+          不当真实值（主规格 §2 的安全提醒）。
+       ⑧ 超时：自用面按后端 `limits.deadlineMs`（60000）+5s 取，不写死 20 秒（公开面仍 20s）。
+       ⑨ 令牌纪律不变：一律经 `__xkAdmin.fetch`；只在 wb-api 同源时才带 `X-User-Token`。
      ⚠ 与 /ai/ 那个聊天框（#chatlog/#askInput，在 v-ai 那一屏里）**不是同一个东西**：本栏只挂主页，
         id 全部用 xkAsk* 前缀，靠这一点避免和 shell-script 的 xkPush/xkRenderAnswer 撞名。
      诊断：window.__xkAsk = {inited, allowed, state, status, ms, retryAfter, quota, errors, lastQuestionLen} */
@@ -3694,7 +3724,11 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     var bar = document.getElementById('xkAskBar');
     if (!bar) { return; }
     var D2 = window.__xkAsk = { inited: false, allowed: false, state: '', status: 0, ms: 0, retryAfter: 0,
-      quota: null, errors: [], lastQuestionLen: 0 };
+      quota: null, errors: [], lastQuestionLen: 0,
+      /* ★③b 新增诊断字段（探针用；不上屏）：self / url / sentCid / cid / round / historyRounds /
+         toolExecutionAllowed / retryLayer / rateHits / timeoutMs */
+      self: false, url: '', sentCid: '', cid: '', round: 0, historyRounds: 0,
+      toolExecutionAllowed: false, retryLayer: '', rateHits: 0, timeoutMs: 0 };
     var onHome = false;
     try { onHome = document.body.classList.contains('is-home'); } catch (e) { }
     if (!onHome) {
@@ -3715,16 +3749,23 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     var META = document.querySelector('meta[name="wb-api"]');
     var API = ((META && META.getAttribute('content')) || '').replace(/\/+$/, '');
     var ASK_TIMEOUT = 20000, ASK_MAX = 600;
-    /* 后端线 §10.5 的降级文案（逐字）；"登录成功"类字样在 ③b（后端重建上线）之前**一律不出现**。 */
+    /* ★③b：文案表**合并为一处**（§4 明确要求消除第二份会漂移的表）。
+       与登录面共用 window.__xkL10N（③a 的五条契约文案）；此处只补**提问段独有**的四条。
+       ⚠ 取不到共享表时（理论不会发生）保留兜底字面量，保证不出现 undefined 文案。 */
+    var L = window.__xkL10N || {};
     var TXT = {
-      notoken: '自用入口：请粘贴自用令牌（令牌只保存在本机浏览器，不会上传到别处）',
-      invalid: '令牌无效或已轮换 —— 请向站主要一份新的自用令牌',
-      disabled: '自用入口当前未启用（服务端未配置令牌）',
-      throttled: '尝试过于频繁，请 N 秒后再试',
-      soft: '今日自用调用已达软上限 500 次，仍可继续使用（仅提醒，不限额）',
-      offline: '请求没能送达 —— 我不编答案；过一会儿再试。',
-      timeout: '等了 20 秒还没返回 —— 这次请求已放弃（不补推测答案）。',
-      nofield: '这次后端没有给出 state / stateLabel —— 只出字幕，不猜她的表情。'
+      notoken: L.notoken || '自用入口：请粘贴自用令牌（令牌只保存在本机浏览器，不会上传到别处）',
+      invalid: L.invalid || '令牌无效或已轮换 —— 请向站主要一份新的自用令牌',
+      disabled: L.disabled || '自用入口当前未启用（服务端未配置令牌）',
+      throttled: L.throttled || '尝试过于频繁，请 N 秒后再试',
+      soft: L.soft || '今日自用调用已达软上限 500 次，仍可继续使用（仅提醒，不限额）',
+      offline: L.offline || '连不上服务，请稍后重试',
+      /* ——— 以下为提问段独有 ——— */
+      timeout: '等了 N 秒还没返回 —— 这次请求已放弃（不补推测答案）。',
+      nofield: '这次后端没有给出 state / stateLabel —— 只出字幕，不猜她的表情。',
+      /* ★③b §2：自用面 toolExecutionAllowed=true 且后端 mock 默认开启 ⇒ 展示来源时必须如实标注（不许当真实值） */
+      nosrc: '（自用面：允许工具调用，指标或含模拟源 mock）',
+      undisclosed: '（后端未给秒数，按限流窗口默认 60 秒）'
     };
     var ASK_EMO = { 'model': 'normal', 'rule-based': 'sided_thinking', 'input-insufficient': 'sided_thinking',
       'no-retrieval': 'sided_thinking', 'retrieval-failed': 'sided_thinking', 'model-failed': 'sided_thinking',
@@ -3749,27 +3790,67 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       if (!s) { return ''; }
       return s.length > 120 ? (s.slice(0, 120) + '…') : s;
     }
-    function rem(d) {
-      return (d && d.quota && d.quota.remaining != null) ? (' 剩余 ' + d.quota.remaining + ' 次') : '';
+    function rem(d, self) {
+      if (!(d && d.quota)) { return ''; }
+      var q = d.quota, s = '';
+      if (q.remaining != null) { s += ' 剩余 ' + q.remaining + ' 次'; }
+      /* ★③b：自用池把 limit/used 一并报出（契约 §10.3 / §10.5-⑤ 的展示要求）；公开面口径不动 */
+      if (self && q.limit != null && q.used != null) { s += '（本池 ' + q.used + '/' + q.limit + '）'; }
+      if (self && q.softLimitReached) { s += ' · ' + TXT.soft; }   /* 软上限只提醒，不禁用输入框 */
+      return s;
     }
-    function render(d) {
+    /* ★③b：多轮会话 id（只有自用面有）—— 键名复用共享出口，不重新定义字符串（§6） */
+    function cidGet() {
+      var K = (window.__xkKeys && window.__xkKeys.cid) || 'xk-conversation-id';
+      try { return sessionStorage.getItem(K) || ''; } catch (e) { return ''; }
+    }
+    function cidSet(v) {
+      var K = (window.__xkKeys && window.__xkKeys.cid) || 'xk-conversation-id';
+      try { sessionStorage.setItem(K, String(v)); } catch (e) { }
+    }
+    /* ★③b：自用面的等待上限按后端 limits.deadlineMs（契约 60000）取，**不写死 20 秒**
+       —— 公开面沿用 20s：自用池允许工具调用，20 秒会把合法答案掐掉。 */
+    function selfTimeout() {
+      var lim = null;
+      try { lim = window.__xkLogin && window.__xkLogin.limits; } catch (e) { }
+      var ms = Number((lim && lim.deadlineMs) || 60000);
+      return Math.max(5000, ms + 5000);
+    }
+    function render(d, self) {
       var st = (d && d.state) || '';
       D2.state = st;
       D2.quota = (d && d.quota) || null;
+      D2.self = !!self;
+      D2.round = (d && d.round) || 0;
+      D2.historyRounds = (d && d.historyRounds) || 0;
+      D2.cid = (d && d.conversationId) || '';
+      D2.toolExecutionAllowed = !!(d && d.toolExecutionAllowed === true);
       /* ★只按 state 驱动表情；状态→表现的真值表在服务端，这里只做"这一格该不该动"的映射 */
       var emo = ASK_EMO[st] || 'normal';
       setEmo(emo);
-      var line = '', why = labelOf(d), tail = rem(d);
+      var line = '', why = labelOf(d), tail = rem(d, self);
+      /* ★③b：多轮进度（公开面没有 round/historyRounds 这些字段）—— 只报后端给的真值 */
+      var turn = '';
+      if (self && d && d.round != null) {
+        turn = '（第 ' + d.round + ' 轮';
+        if (d.maxRounds != null) { turn += ' / 上限 ' + d.maxRounds + ' 轮'; }
+        if (d.historyRounds != null) { turn += '，已带上下文 ' + d.historyRounds + ' 轮'; }
+        turn += '）';
+      }
+      /* ★③b §2：自用面 toolExecutionAllowed=true 且后端 mock 默认开启 ⇒ **如实标注来源**，不当真实值 */
+      var src = (self && d && d.toolExecutionAllowed === true) ? (' ' + TXT.nosrc) : '';
       if (!d || !st) { line = TXT.nofield; }
-      else if (d.generated === true && st === 'model') { line = '答完了（' + why + '）' + tail + '：' + shortAnswer(d.answer); }
+      else if (d.generated === true && st === 'model') { line = '答完了' + turn + '（' + why + '）' + tail + '：' + shortAnswer(d.answer) + src; }
       else if (d.injection && d.injection.blocked) { line = '输入命中提示注入护栏（' + why + '）—— 我只把它当不可信数据，没执行它。'; }
       else if (st === 'rule-based') { line = '这条我不作答（' + why + '）—— 我不会为了"有回答"而编。'; }
       else if (st === 'input-insufficient' || st === 'no-retrieval') { line = '依据不足，我不给结论（' + why + '）。'; }
-      else {
-        line = '这次没生成结论（' + why + '）';
+      else if (st === 'model-failed' || d.generated === false) {
+        /* §5 补充（逐字）：本次没有生成结论 —— **不许**把 answer 当答案渲染 */
+        line = '本次没有生成结论（模型或链路不可用）';
         if (d.failureReason) { line += ' —— 后端原话：' + shortAnswer(d.failureReason); }
         line += '。';
       }
+      else { line = '这次没生成结论（' + why + '）。'; }
       /* ⚠ 顺序有讲究（实测踩过）：speak() 内部也会写字幕条 = 她的"台词"，
          所以必须**先 speak() 再 askSay()** —— 否则刚拿到的后端答案会被台词盖掉。 */
       speak(d.generated === true ? 'greet_back' : 'fallback_no_data', '', false);
@@ -3779,22 +3860,39 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       D2.status = status;
       D2.retryAfter = parseInt(retryAfter || 0, 10) || 0;   /* 响应头是字符串（"7"）⇒ 诊断字段存整数 */
       var msg = (body && (body.message || (body.error && body.error.message))) || '';
-      /* ① 429：后端原话 + Retry-After 倒计时（不自己编"稍后再试"的秒数） */
+      /* ★③b §5：N 的**三层兜底** —— ① `Retry-After` 响应头（跨域需后端 Expose 才读得到）
+         ② 响应体 `retryAfter` / `data.retryAfter` ③ 默认 60（**并如实披露**"后端未给秒数"）
+         注意：后端 `579cfe1` 之后头与体都给秒数；三层同时保留 ⇒ 幂等，且不会退化成"永远 60"。 */
       if (status === 429) {
-        var secs = parseInt(retryAfter || (body && body.retryAfter) || 0, 10) || 0;
+        var hh = parseInt(retryAfter || 0, 10) || 0;
+        var bb = parseInt((body && body.retryAfter) || 0, 10) || 0;
+        var dd = parseInt((body && body.data && body.data.retryAfter) || 0, 10) || 0;
+        var secs = hh || bb || dd || 0, disclosed = '';
+        D2.retryLayer = hh ? 'header' : (bb ? 'body' : (dd ? 'data' : 'default'));
+        if (!secs) { secs = 60; disclosed = ' ' + TXT.undisclosed; }
+        D2.retryAfter = secs;
+        D2.rateHits = (D2.rateHits || 0) + 1;
         var extra = (body && body.data && body.data.quota && body.data.quota.remaining != null)
           ? ('（剩余 ' + body.data.quota.remaining + ' 次）') : '';
+        /* §6：把限流如实记到登录面（**不把 state 改成 throttled** —— 令牌仍然有效，
+           若改了状态，下一次提问会静默切回公开池，与"自用面"口径冲突；这里只记原因与秒数） */
+        try {
+          var XLx = window.__xkLogin;
+          if (XLx) { XLx.retryAfter = secs; XLx.lastAskState = 'throttled'; XLx.lastAskReason = (body && body.reason) || 'LOGIN_RATE_LIMITED'; }
+        } catch (e) { }
         setEmo('normal');
-        if (secs > 0) { ticker(secs, msg || '请求被限流。', extra); }
-        else { askSay('提问', '请求被限流' + extra + (msg ? (' —— ' + msg) : '') + '。'); }
+        ticker(secs, (msg || '请求被限流。'), extra + disclosed);
         speak('fallback_throttled', '', false);
         return;
       }
       setEmo('normal');
       if (status === 401) {
         var reason = (body && (body.reason || (body.error && body.error.reason))) || '';
+        D2.authReason = reason;
+        try { var XL2 = window.__xkLogin; if (XL2) { XL2.lastAskState = 'bad-token'; XL2.lastAskReason = reason; } } catch (e) { }
         askSay('提问', (reason === 'USER_LOGIN_DISABLED') ? TXT.disabled : TXT.invalid);
       } else {
+        try { var XL3 = window.__xkLogin; if (XL3) { XL3.lastAskState = 'offline'; } } catch (e) { }
         askSay('提问', '接口返回 HTTP ' + status + (msg ? (' —— ' + msg) : '') + '（不显示任何替代答案）。');
       }
       speak('fallback_no_data', '', false);
@@ -3819,19 +3917,31 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       if (!q || D2.busy) { return; }
       if (q.length > ASK_MAX) { q = q.slice(0, ASK_MAX); }   /* 与后端 maxQuestionChars 同口径 */
       D2.lastQuestionLen = q.length;
+      /* ★③b：登录态**每次重取**（时序坑：window.__xkLogin 在另一个 IIFE 里赋值，别在闭包外缓存）
+         登录 ⇒ POST /api/user/ask（自用池 + 多轮）；未登录 ⇒ 原样 POST /api/public/ask（公开面口径不动） */
+      var self = false;
+      try { self = !!(window.__xkLogin && window.__xkLogin.state === 'logged-in'); } catch (e) { }
+      var cid = cidGet();
+      var url = API + (self ? '/api/user/ask' : '/api/public/ask');
+      var payload = { question: q };
+      if (self && cid) { payload.conversationId = cid; }     /* ★多轮：只有登录面有；body **只**这两个键 */
+      var to = self ? selfTimeout() : ASK_TIMEOUT;
+      D2.self = self; D2.sentCid = (self && cid) || ''; D2.url = url; D2.timeoutMs = to;
       D2.busy = true; snd.disabled = true;
       inp.value = ''; if (cnt) { cnt.textContent = '0/' + ASK_MAX; }
       setEmo('sided_thinking');
-      askSay('提问', '正在走公开检索链路…（最多等 20 秒，不做流式）');
+      askSay('提问', (self ? '正在走自用链路（自用池，可多轮追问）…' : '正在走公开检索链路…')
+        + '（最多等 ' + Math.round(to / 1000) + ' 秒，不做流式）');
       var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
-      var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, ASK_TIMEOUT);
+      var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, to);
       var t0 = Date.now();
-      adminApi.fetch(API + '/api/public/ask', {
+      /* ★必须走 __xkAdmin.fetch：它负责"只在目标是 wb-api 同源时才带 X-User-Token"（③a 红线） */
+      adminApi.fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         mode: 'cors', credentials: 'omit', cache: 'no-store',
         signal: ctrl ? ctrl.signal : undefined,
-        body: JSON.stringify({ question: q })
+        body: JSON.stringify(payload)
       }).then(function (res) {
         clearTimeout(timer);
         var status = res.status, ra = res.headers.get('Retry-After');
@@ -3840,13 +3950,15 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
           if (!res.ok) { fail(status, body, ra); return; }
           var d = (body && body.data !== undefined) ? body.data : null;
           if (!d) { fail(status, body, ra); return; }
-          render(d);
+          /* ★③b：把后端回的 conversationId 存起来 ⇒ 下一句自动带上（多轮） */
+          if (self && d.conversationId) { cidSet(d.conversationId); }
+          render(d, self);
         });
       })['catch'](function (err) {
         clearTimeout(timer);
         D2.ms = Date.now() - t0;
         setEmo('normal');
-        if (err && err.name === 'AbortError') { askSay('提问', TXT.timeout); }
+        if (err && err.name === 'AbortError') { askSay('提问', TXT.timeout.replace('N', String(Math.round(to / 1000)))); }
         else { D2.errors.push('ask: ' + (err && err.message ? err.message : err)); askSay('提问', TXT.offline); }
         speak('fallback_offline', '', false);
       }).then(function () { D2.busy = false; snd.disabled = false; });

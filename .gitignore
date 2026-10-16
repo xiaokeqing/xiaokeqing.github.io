@@ -104,6 +104,7 @@ _shots/*
 #   3a 登录令牌 21 条断言 / 慢网三态与保留上次数据 / 糊的量化依据 / 导航与布局断言
 !_dev/probe-3a-login.mjs
 !_dev/probe-3b-selfask.mjs
+!_dev/probe-lipsync.mjs
 !_dev/probe-slownet.mjs
 !_dev/probe-blur-factor.mjs
 !_dev/shot-batch-d-nav.mjs

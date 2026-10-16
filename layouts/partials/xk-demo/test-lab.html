@@ -290,18 +290,34 @@
         <br>① 访客/未登录：DOM 里那一条永远带 <code>hidden</code>（截图取证 <code>_shots/batchB-home-visitor.png</code>，
         机器可读 <code>_shots/batchB-shot-report.json</code> 的 <code>askBarHidden/askBarRequests</code>）；
         ② 开隐蔽入口（<code>?admin=1</code> / <code>#admin</code> / 1.5 秒内连点头像 5 次）才可见；
-        ③ 提交 = Enter 或「提问」按钮 → <code>__xkAdmin.fetch(meta[name=wb-api] + '/api/public/ask')</code>，
-        body 只有 <code>{question}</code>（≤600 字符）、有令牌时自动带 <code>X-User-Token</code>；超时 <code>XK_ASK_TIMEOUT=20000</code>，
-        429 读 <code>Retry-After</code> 倒计时、<code>quota.remaining</code> 如实显示；
+        ③ 提交 = Enter 或「提问」按钮 → 走 <code>__xkAdmin.fetch</code>：
+        <b>登录后</b> <code>POST /api/user/ask</code>（自用池；body <code>{question, conversationId?}</code>，
+        多轮 id 存 <code>sessionStorage['xk-conversation-id']</code>），<b>未登录</b> 仍
+        <code>POST /api/public/ask</code>（公开面口径一字不改）；有令牌时自动带 <code>X-User-Token</code>
+        <b>且只发给同源 wb-api</b>。超时：公开面 <code>20000</code>；自用面按后端
+        <code>limits.deadlineMs(60000)+5s</code>。429 秒数三层兜底（头 → 体 → 默认 60 并披露），
+        <code>quota.remaining</code>（自用面另加 <code>used/limit</code>）如实显示；
         <br>④ 硬性口径未变：<code>🔊</code> 默认关 ⇒ <b>只出字幕</b>；失败/超时/额度**照后端原话**、不补"像答案"的文字、不刷屏报错；不做 SSE/WebSocket。
         <br>本页**不**放活的输入栏：测试页是公开只读页，挂一条真能 POST 的栏会违反"发布面不发起写请求"这条纪律（栏只存在于主页）。
       </div>
     </div>
-    <p class="lab-iss"><b>已知问题</b>：后端线 <code>docs/落地上线-后端令牌登录与自用池-20261016.md</code> 的 <code>/api/user/*</code> 尚未写入
-      <code>APP_USER_TOKEN_SHA256</code> ⇒ 现场返回 <code>401 USER_LOGIN_DISABLED</code>。站点线已按契约 §10 接好前半（③a）：
-      隐蔽入口出现 👤 → 点它粘贴令牌 → <code>localStorage['xk-user-token']</code> → <code>GET /api/user/status</code> 探针
-      （**只有 200 且 <code>data.loggedIn===true</code> 才算登录态**），失败按 §10.5 五条降级文案逐字显示、
-      <b>不假装登录成功</b>。自用问答（③b，<code>POST /api/user/ask</code>）等后端上线后再接。
+    <p class="lab-iss"><b>现状（2026-10-16 更新 · ③b 落地）</b>：
+      <s>后端线 <code>/api/user/*</code> 尚未写入自用令牌哈希（服务端环境变量） ⇒ 现场返回 <code>401 USER_LOGIN_DISABLED</code></s>
+      —— <b>该说法已过期，勿再引用</b>：服务端令牌哈希已于 2026-10-16 18:20 写入并启用。现测口径为
+      「无令牌 ⇒ <code>401 TOKEN_MISSING</code>；错令牌 ⇒ <code>401 TOKEN_INVALID</code>；真令牌 ⇒
+      <code>200 data.loggedIn=true</code>」；<code>USER_LOGIN_DISABLED</code> 只在服务端被清空哈希时才出现
+      （分支保留，但<b>不是当前状态</b>）。
+      <br>站点线已按契约 §10 接完前半（③a）与自用问答（③b）：隐蔽入口出现 👤 → 点它粘贴令牌 →
+      <code>localStorage['xk-user-token']</code> → <code>GET /api/user/status</code> 探针
+      （**只有 200 且 <code>data.loggedIn===true</code> 才算登录态**）。提问走 <code>POST /api/user/ask</code>
+      （自用池 + 多轮 <code>conversationId</code>，最多 5 轮 / 30 分钟），显示
+      <code>quota.used/limit/remaining</code> 与软上限提醒（<b>只提醒、不禁用输入框</b>），
+      429 秒数按「响应头 → 响应体 → 默认 60（并如实披露）」三层兜底；失败按 §10.5 五条降级文案逐字显示、
+      <b>不假装登录成功</b>；<code>state=model-failed</code>/<code>generated=false</code> 时明确写
+      「本次没有生成结论」，绝不把正文当答案。
+      <br>⚠ <b>口径提醒</b>：自用面 <code>toolExecutionAllowed=true</code>，而
+      <code>prometheus.mock-enabled</code> / <code>cls.mock-enabled</code> 默认开启 ⇒ 回答可能引用<b>模拟指标</b>；
+      前端已在回答末尾如实标注来源，<b>不把模拟值当真值</b>。
       栏体只在登录面出现这一点是硬口径，不做"访客也能提问"的开关。</p>
   </section>
 </section>
