@@ -4835,6 +4835,40 @@ BG_DOM = (
 if u'.bgshade' not in chrome:
     chrome = BG_DOM + chrome
 
+# ==================== ★P2（站主口径：/test/ 的数据要"安置"成正经可视化）· AI 页 tab ====================
+# 归属：知识库 → `/ai/` 新增 tab「知识库」；AI 质量 → `/ai/` 新增 tab「AI 质量」（数据源等后端 `/api/public/eval.js`）
+# 零新增 CSS：复用监测中心的 `.ops-tabs` / `.ops-tab`（该页本来就有这套 tab 样式）
+# ⚠️ 与监测中心的 `[data-pane]` 隔离：这里用 `data-aitab`，并自带点击处理（api-bind 的 bindAiTabs）
+AI_TABS = (
+    u'   <nav class="ops-tabs" id="aiTabs" role="tablist" aria-label="AI 问答分区">\n'
+    u'     <div class="ops-tab on" data-aitab="chat" role="tab" tabindex="0">问答</div>\n'
+    u'     <div class="ops-tab" data-aitab="kb" role="tab" tabindex="0">知识库</div>\n'
+    u'     <div class="ops-tab" data-aitab="eval" role="tab" tabindex="0">AI 质量</div>\n'
+    u'   </nav>\n'
+)
+# AI 质量卡：**先落骨架 + 如实写"读不到"**（后端端点未到之前不许编数）。指标口径与 scripts/eval 一致。
+AI_EVAL_CARD = (
+    u'      <div class="card" data-xk-block="eval" style="display:none">\n'
+    u'        <div class="card-hd"><span class="led"></span>AI 质量 · 评测指标'
+    u'<span style="margin-left:auto;font-size:11px;color:var(--acc)">scripts/eval · 96 题</span></div>\n'
+    u'        <div class="stats" style="padding:14px 15px 4px">\n'
+    u'          <div class="stat"><div class="n sk" data-eval="hit">—</div><div class="l">要点命中率</div></div>\n'
+    u'          <div class="stat"><div class="n sk" data-eval="refuse">—</div><div class="l">拒答正确率</div></div>\n'
+    u'          <div class="stat"><div class="n sk" data-eval="strict">—</div><div class="l">严格口径通过</div></div>\n'
+    u'          <div class="stat"><div class="n sk" data-eval="cite">—</div><div class="l">引用率</div></div>\n'
+    u'        </div>\n'
+    u'        <p class="attk-note" data-eval-note style="padding:0 15px 14px">读不到：评测端点还没上线（后端线待补）。'
+    u'真值来自仓库 <code>scripts/eval</code> 的 96 题批次，<b>前端不编数</b>；端点上线后由它写这四格。'
+    u'<span style="color:var(--mut)">（本卡在端点到齐前不伪装成数字）</span></p>\n'
+    u'      </div>\n'
+)
+views_out = sub1(views_out, u'<div class="ai-grid">', AI_TABS + u'<div class="ai-grid">', 'P2: AI 页 tab 条')
+views_out = sub1(views_out, u'<div class="card" data-xk-block="kb"', AI_EVAL_CARD + u'      <div class="card" data-xk-block="kb"',
+                 'P2: AI 质量占位卡（读不到态）')
+# P2：知识库结果下方加"来源类型分布条"容器（真值由 renderKb 按 results[].sourceType 聚合写；零新 CSS，复用 ul.geo）
+views_out = sub1(views_out, u'<div data-kb-out></div>', u'<div data-kb-out></div>\n        <div data-kb-src></div>',
+                 'P2: 知识库来源分布容器')
+
 # ==================== ★P0（站主 2026-10-16）：内容页右列整体换成「手机」 ====================
 # 站主原话（配箭头截图）："剩下的页面右边全变成手机，放一个助手"。
 # 保守做法（不新起第二套 UI）：

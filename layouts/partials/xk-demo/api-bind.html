@@ -964,9 +964,11 @@
     var out = box.querySelector('[data-kb-out]');
     var note = box.querySelector('[data-kb-note]');
     var rule = box.querySelector('[data-kb-rule]');
+    var srcBox = box.querySelector('[data-kb-src]');      /* ★P2：来源类型分布条容器 */
     var results = (d && Array.isArray(d.results)) ? d.results : [];
     var avail = !(d && d.available === false);
     if (rule && d && d.rule && d.rule.note) rule.textContent = ' ' + d.rule.note;
+    if (srcBox) { srcBox.innerHTML = ''; }
     if (!avail) {                       /* R-UNIT-1：后端给了原因就必须人读化显示，不许只写"读不到" */
       out.innerHTML = '';
       txt(note, '读不到：' + (d.note || '后端 available=false（原因未给）'));
@@ -978,12 +980,30 @@
       return;
     }
     out.innerHTML = results.slice(0, 3).map(function (x) {
-      var score = (x.score === undefined || x.score === null || isNaN(Number(x.score))) ? '—' : Number(x.score).toFixed(2);
+      var score = (x.score === undefined || x.score === null || isNaN(Number(x.score))) ? '—' : Number(x.score).toFixed(3);
       return '<div class="comp"><div class="hd"><span class="sev" style="background:var(--acc)"></span>' +
         esc(x.title || '（无标题）') + '<b style="margin-left:auto;color:var(--acc)">' + esc(score) + '</b></div>' +
         '<p>' + esc(x.snippet) + '</p>' +
         '<p style="opacity:.75">' + esc([x.sourceTypeLabel, x.trustLevelLabel, x.publicRule].filter(Boolean).join(' · ')) + '</p></div>';
     }).join('');
+    /* ★P2（站主口径：把该给访客看的数据做成可视化）：**本次 top-k 的来源类型构成**分布条。
+       如实：样本只有本次返回的 top-k 条，**不是全库分布**（文案里写明）。零新 CSS，复用 ul.geo/.bar。 */
+    if (srcBox) {
+      var agg = {}, order = [], i2, k2;
+      for (i2 = 0; i2 < results.length; i2++) {
+        k2 = results[i2].sourceTypeLabel || results[i2].sourceType || '未标注来源类型';
+        if (agg[k2] === undefined) { agg[k2] = 0; order.push(k2); }
+        agg[k2]++;
+      }
+      var mx = 1;
+      for (i2 = 0; i2 < order.length; i2++) { if (agg[order[i2]] > mx) { mx = agg[order[i2]]; } }
+      var rows = order.map(function (k) {
+        return '<li><span class="cc" style="width:auto">' + esc(k) + '</span><span class="bar"><i style="width:' +
+          Math.max(8, Math.round(agg[k] / mx * 100)) + '%"></i></span><span>' + agg[k] + ' 条</span></li>';
+      }).join('');
+      srcBox.innerHTML = '<div style="font:11.5px var(--mono);color:var(--mut);padding:10px 0 2px">' +
+        '本次 top-k=' + results.length + ' 的来源类型构成（<b>不是</b>全库分布）</div><ul class="geo">' + rows + '</ul>';
+    }
     txt(note, '命中 ' + (d.hitCount === undefined ? results.length : d.hitCount) + ' 条 · 后端 top-k=3（前端不分页、不轮询）· 只检索公开白名单');
   }
 
@@ -1260,6 +1280,35 @@
     }, 800);
     paint();
   }
+  /* ★P2（站主口径：把 /test/ 该给访客看的数据"安置"成正经可视化）· `/ai/` 分区 tab
+     问答 / 知识库 / AI 质量。纪律：**切 tab 不自动发请求** —— 知识库仍只在 Enter/点检索时请求（不轮询）。 */
+  function bindAiTabs() {
+    var nav = document.getElementById('aiTabs');
+    var sec = document.getElementById('v-ai');
+    if (!nav || !sec) { return; }
+    var panes = {
+      chat: [sec.querySelector('.chat'), sec.querySelector('.chat-note')],
+      kb: [sec.querySelector('[data-xk-block="kb"]')],
+      eval: [sec.querySelector('[data-xk-block="eval"]')]
+    };
+    function show(t) {
+      Object.keys(panes).forEach(function (k) {
+        panes[k].forEach(function (el) { if (el) { el.style.display = (k === t) ? '' : 'none'; } });
+      });
+      var bs = nav.querySelectorAll('[data-aitab]');
+      for (var i = 0; i < bs.length; i++) { bs[i].classList.toggle('on', bs[i].getAttribute('data-aitab') === t); }
+    }
+    nav.addEventListener('click', function (ev) {
+      var b = (ev.target && ev.target.closest) ? ev.target.closest('[data-aitab]') : null;
+      if (b) { show(b.getAttribute('data-aitab')); }
+    });
+    nav.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' && ev.key !== ' ') { return; }
+      var el = ev.target;
+      if (el && el.getAttribute && el.getAttribute('data-aitab')) { ev.preventDefault(); show(el.getAttribute('data-aitab')); }
+    });
+    show('chat');
+  }
   if (BASE_JOBS.length) {
     load();
     setInterval(load, REFRESH);
@@ -1279,6 +1328,6 @@
     setTimeout(function () { clearInterval(nphTimer); }, 3200);
   }
   /* ★T22：/ai/ 不轮询（有 embedding 成本）—— 只在用户点话题词 / 按 Enter 时请求一次 */
-  if (SSR === 'ai') bindKb();
+  if (SSR === 'ai') { bindAiTabs(); bindKb(); }   /* ★P2：先挂分区 tab（切 tab 不发请求），再挂知识库检索 */
 })();
 </script>

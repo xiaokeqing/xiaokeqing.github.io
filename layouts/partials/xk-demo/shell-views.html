@@ -196,7 +196,12 @@
   <!-- AI 问答：纯对话 -->
 
 <section class="view{{ if eq $v "ai" }} on{{ end }}" id="v-ai">
-   <div class="ai-grid">
+      <nav class="ops-tabs" id="aiTabs" role="tablist" aria-label="AI 问答分区">
+     <div class="ops-tab on" data-aitab="chat" role="tab" tabindex="0">问答</div>
+     <div class="ops-tab" data-aitab="kb" role="tab" tabindex="0">知识库</div>
+     <div class="ops-tab" data-aitab="eval" role="tab" tabindex="0">AI 质量</div>
+   </nav>
+<div class="ai-grid">
     <div class="chatwrap">
       <div class="chat">
         <div class="chat-hd">
@@ -214,6 +219,16 @@
         </div>
       </div>
       <p class="chat-note">回答非流式传输（一次性返回 + 前端渐进显示）· 取不到就显示原因，绝不编答案</p>
+            <div class="card" data-xk-block="eval" style="display:none">
+        <div class="card-hd"><span class="led"></span>AI 质量 · 评测指标<span style="margin-left:auto;font-size:11px;color:var(--acc)">scripts/eval · 96 题</span></div>
+        <div class="stats" style="padding:14px 15px 4px">
+          <div class="stat"><div class="n sk" data-eval="hit">—</div><div class="l">要点命中率</div></div>
+          <div class="stat"><div class="n sk" data-eval="refuse">—</div><div class="l">拒答正确率</div></div>
+          <div class="stat"><div class="n sk" data-eval="strict">—</div><div class="l">严格口径通过</div></div>
+          <div class="stat"><div class="n sk" data-eval="cite">—</div><div class="l">引用率</div></div>
+        </div>
+        <p class="attk-note" data-eval-note style="padding:0 15px 14px">读不到：评测端点还没上线（后端线待补）。真值来自仓库 <code>scripts/eval</code> 的 96 题批次，<b>前端不编数</b>；端点上线后由它写这四格。<span style="color:var(--mut)">（本卡在端点到齐前不伪装成数字）</span></p>
+      </div>
       <div class="card" data-xk-block="kb" style="margin-top:16px">
         <div class="card-hd"><span class="led"></span>知识库检索 · 公开白名单<span style="margin-left:auto;font-size:11px;color:var(--acc)">GET /api/public/kb?q=</span></div>
         <ul class="bl" style="padding-top:12px">
@@ -226,6 +241,7 @@
           <button id="kbBtn" style="background:var(--acc);border:0;color:#04282b;font-weight:600;padding:0 18px;border-radius:99px;cursor:pointer">检索</button>
         </div>
         <div data-kb-out></div>
+        <div data-kb-src></div>
         <p class="attk-note" data-kb-note style="padding:0 15px 12px">选一个话题词或自己输入关键词 —— 后端 top-k=3，前端不分页、不轮询。</p>
       </div>
     </div>
