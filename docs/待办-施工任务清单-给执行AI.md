@@ -215,6 +215,7 @@ T5.6（D1）★ boot→hi 两段式：原型脚本直接加载 hi ✗，仓库�
 **做法**：修 `_dev/build_statemachine_manifest.py` 的清单生成（按"所有 prob=0 边的目标剪辑"取，别按别的口径 ✗），重新生成
 `static/kurisu/statemachine.json` 与 `docs/amadeus-research/data/statemachine.json`（源），并核对 manifest/预载清单不受影响
 **验收**：重新生成后 `host_triggered_entries` = **9 个**且包含 `thinking_trans`；38/88 不变；门禁绿
+> 历史口径注（2026-10-16）：此处 38/88 是当时实测值；现行实测为 **38 节点 / 92 边**（见 `static/kurisu/statemachine.json`）。
 **工时/风险**：20~30min ｜ 低
 
 ---
@@ -364,7 +365,7 @@ E4 文档漂移：`docs/交接-六页整份搬demo-20261014.md:114` 仍写旧断
 | T5.4 主页残留 `1,284` | ✅ 改占位+api-bind 填真值（6b35e89） | 静态里改占位，JS 填真值 |
 | T5.5 /posts/ 卡片非链接 | ✅ Hugo range 8 篇真文章（6b35e89） | |
 | T5.6 boot→hi | ✅ 已实施（d8e03e6） | 省 47%~70%、视觉不变 ✓ |
-| T6 生成器 thinking_trans | ✅ | 已改"从 prob=0 边派生" ⇒ 9 个含 thinking_trans ✓，38/88 不变 ✓ |
+| T6 生成器 thinking_trans | ✅ | 已改"从 prob=0 边派生" ⇒ 9 个含 thinking_trans ✓，38/88 不变 ✓（历史口径注 2026-10-16：38/88 为当时实测；现行实测 38 节点 / 92 边） |
 | T7 视频接线 | ❌ | 留到 T8 一起（对 opening/speaking 零帮助 ✗）|
 | T8 状态机 + 口型 | ❌ | 最难；"活起来"的关键 |
 | T9 资产瘦身 | ❌ | **顺序不能反**：先接线再删 medium/hi ✗ |
