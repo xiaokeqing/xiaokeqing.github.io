@@ -35,13 +35,15 @@
     <span>语音未启用</span>
   </div>
 </aside>
-<!-- ★P0（站主 2026-10-16）：手机 = 页面级右列常驻件（替掉 .holo） -->
+<!-- ★P8-A（站主 2026-10-16）：手机 = 页面级右列常驻件（替掉 .holo）；外壳 300×618（1:2.06） -->
 <aside class="phone live" id="phone" aria-label="手机里的桐莉栖">
   <div class="phone-scr">
-    <div class="phone-name" id="phoneName">桐莉栖<span class="phone-sub">KURISU · HOLO-LINK</span></div>
-    <canvas id="phoneCanvas" width="264" height="336" aria-hidden="true"></canvas>
-    <div class="phone-status"><span id="phoneClock">—</span><span>HOLO-LINK · 5G ▮</span></div>
-    <div class="phone-line" id="phoneLine">问点什么吧，我在这边听着。</div>
+    <div class="phone-island" aria-hidden="true"></div>
+    <div class="phone-bar"><span id="phoneClock">—</span><span id="phoneName">桐莉栖</span><span>HOLO-LINK · 5G ▮▮▮</span></div>
+    <div class="phone-glare" aria-hidden="true"></div>
+    <!-- 渲染源由 phone-emote.js 接管（E-mote）；未接管时是 Sprite 三段降级。⚠ 这里**故意不写 width/height 属性**（内部分辨率由渲染源自定：Sprite 会自己设 321×432）。 -->
+    <canvas id="phoneCanvas" aria-hidden="true"></canvas>
+    <div class="phone-cap"><span id="phoneLine">问点什么吧，我在这边听着。</span></div>
     <div class="phone-live">
       <div class="bars2"><i></i><i></i><i></i><i></i><i></i></div>
       <span id="phoneState">IDLE</span>
@@ -52,6 +54,7 @@
       <button id="phMood" type="button" aria-label="换个动作" title="换个动作">🙂</button>
       <button id="phAnim" type="button" aria-label="动画开关" title="动画开关">⚙️</button>
     </div>
+    <div class="phone-home" aria-hidden="true"></div>
   </div>
 </aside>
 <div class="holo-bubble" id="holoBubble" title="展开面板"><canvas id="bubbleCanvas" width="132" height="132"></canvas></div>

@@ -485,16 +485,40 @@
   .bgshade{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}
   body.is-home .bg,body.is-home .bgshade,body.is-home .bglite{display:none}
 
-/* ★P0（站主 2026-10-16）：内容页右列 = 手机（替掉 .holo）；主页无手机 */
+/* ★P8-A（站主 2026-10-16）：内容页右列 = 手机（替掉 .holo）；主页无手机 */
 #holo{display:none !important}                 /* 只隐藏，不删：holoFold/holoBubble 的 JS 仍在跑 */
-.phone{position:fixed;right:14px;top:14px;z-index:55}   /* 与 .holo 同位置（.holo 是 fixed right:14 top:14，宽 284） */
 body.is-home .phone{display:none}
-.phone-name{font:12px var(--mono);color:var(--acc);letter-spacing:.04em;padding:2px 4px 8px;display:flex;gap:8px;align-items:baseline}
-.phone-name .phone-sub{color:var(--mut);font-size:10.5px}
-.phone-btns{display:flex;gap:6px;padding:8px 2px 2px}
-.phone-btns button{flex:1;min-height:34px;background:none;border:1px solid var(--line2);color:var(--txt);border-radius:9px;font:15px var(--sans);cursor:pointer}
-.phone-btns button:hover{color:var(--acc);border-color:var(--acc)}
+.phone{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:55;
+  width:300px;height:618px;padding:8px;border-radius:34px;
+  background:linear-gradient(160deg,#2b3138,#0c0f13 55%,#23272d);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 3px 12px rgba(0,0,0,.65),0 18px 44px rgba(0,0,0,.5)}
+.phone-scr{position:relative;width:284px;height:600px;border-radius:26px;overflow:hidden;background:#07090c}
+/* 默认（Sprite 降级）：**以宽为准**保比例 + 底部锚点（脚底距屏底 150px，给字幕/按钮让位）。不用 height:100% 的原因：帧 321×432 ⇒ 高 600 时宽会变 446 > 屏 284，两侧会被裁。 */
+#phoneCanvas{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:100%;height:auto;display:block}
+html.xk-phone-emote #phoneCanvas{left:0;top:0;bottom:auto;transform:none;width:100%;height:100%}
+/* 灵动岛 / 状态栏 / 斜向反光 / Home 条 */
+.phone-island{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:88px;height:24px;border-radius:14px;background:#000;z-index:5}
+.phone-bar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;
+  font:10.5px var(--mono);color:var(--mut);padding:10px 14px 0;z-index:6}
+.phone-bar #phoneName{color:var(--acc);letter-spacing:.04em}
+.phone-glare{position:absolute;inset:0;pointer-events:none;z-index:4;
+  background:linear-gradient(115deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 38%)}
+.phone-home{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:104px;height:4px;border-radius:2px;background:rgba(255,255,255,.35);z-index:6}
+/* 屏底两行字幕（半透明黑底白字） */
+.phone-cap{position:absolute;left:0;right:0;bottom:108px;padding:0 14px;z-index:6}
+.phone-cap span{display:block;font:12.5px/1.5 var(--sans);color:#fff;background:rgba(0,0,0,.55);
+  border-radius:8px;padding:4px 8px;max-height:3em;overflow:hidden}
+.phone-live{position:absolute;left:0;right:0;bottom:86px;display:flex;align-items:center;gap:8px;
+  justify-content:center;z-index:6;font:10.5px var(--mono);color:var(--mut)}
+/* 屏底玻璃胶囊按钮行（4×44 圆） */
+.phone-btns{position:absolute;left:0;right:0;bottom:16px;display:flex;gap:8px;justify-content:center;z-index:7}
+.phone-btns button{width:44px;height:44px;border-radius:50%;font:17px var(--sans);color:var(--txt);cursor:pointer;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
+.phone-btns button:hover,.phone-btns button:active{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.14)}
 .phone-btns button.off{opacity:.45}
+.phone-btns button.lit{box-shadow:0 0 12px rgba(127,212,216,.65);border-color:var(--acc)}
+@media (max-height:820px){.phone{top:84px;bottom:84px;transform:none;height:auto;max-height:calc(100vh - 168px)}}
 @media (max-width:980px){.phone{display:none}}
 
   /* ★ 生产站差异（唯一一处 CSS 新增，值逐字照抄上面的 .dock button 三条）：
