@@ -3458,6 +3458,8 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     <button class="xk-idcard-btn" id="xkSndBtn" type="button" aria-pressed="false"
       title="声音：默认关闭（点一下打开）">🔇</button>
     <button class="xk-idcard-btn" id="xkLoginBtn" type="button" title="登录（自用模式）" hidden>👤</button>
+    <button class="xk-idcard-btn" id="xkLiteBtn" type="button" aria-pressed="false"
+      title="场景光束：点一下开/关（只影响背景）">✧</button>
   </span>
 </aside>
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
@@ -3620,6 +3622,23 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   function toggleSound() { setSound(!D.sound, 'btn'); }
   snd.addEventListener('click', toggleSound);
   setSound(lg('xk-sound-on') === '1', 'restore');
+
+  /* ---------- 场景光束开关（★2026-10-16 站主口径：光束保留，做成左上角头像旁的小功能）
+     只切 `<html class="xk-lite">`；光束层样式与图在生成器的 BG_CSS（/kurisu/scene/bg/light_high.webp）；
+     状态存 localStorage['xk-lite']；prefers-reduced-motion 下不淡入（BG_CSS 里已写）。 ---------- */
+  var lite = document.getElementById('xkLiteBtn');
+  function setLite(v, why) {
+    D.lite = !!v;
+    ls('xk-lite', D.lite ? '1' : '0');
+    try { document.documentElement.classList.toggle('xk-lite', D.lite); } catch (e) { }
+    if (lite) {
+      lite.textContent = D.lite ? '✨' : '✧';
+      lite.setAttribute('aria-pressed', D.lite ? 'true' : 'false');
+      lite.setAttribute('title', D.lite ? '场景光束：已打开（点一下关掉）' : '场景光束：已关闭（点一下打开）');
+    }
+  }
+  if (lite) { lite.addEventListener('click', function () { setLite(!D.lite, 'btn'); }); }
+  setLite(lg('xk-lite') === '1', 'restore');
 
   /* ★批次 ③a（2026-10-16）· 自用令牌（判据、探针、降级、退出）—— 契约逐字见
      docs/落地上线-后端令牌登录与自用池-20261016.md §10。
@@ -4639,6 +4658,37 @@ views_out = sub1(views_out,
                  '<div class="donut donut-svg"><svg id="donutSvg" viewBox="0 0 118 118" role="img" '
                  'aria-label="告警来源分布"></svg><span class="donut-c">—</span></div>',
                  'R2: donut SVG 化')
+# ★2026-10-16（站主："把该给访客看的重要数据做成可视化"，像 AI 问答页/监测中心那样）·
+#   **第一批：接口健康模块进监测中心**。数据源全是真数据：本页真实发生的 /api/public/* 请求
+#   （performance resource timing 的 duration）+ /api/health 的真实响应；取不到写"读不到"。
+#   零新增 CSS —— 复用既有 .mod / ul.mod-bd.geo / .bar / .attk-note，版式与相邻模块一致。
+API_HEALTH_MOD = (
+    '          <div class="mod" data-xk-block="apihealth">'
+    '<div class="mod-hd"><span class="led"></span>接口健康 · 本机实测延迟'
+    '<span class="tag">本页真实请求 + /api/health</span></div>\n'
+    '            <ul class="mod-bd geo" data-ih-list>\n'
+    '              <li><span class="cc">alerts</span><span class="bar"><i style="width:0%"></i></span>'
+    '<span data-ih-v="alerts">取数中…</span></li>\n'
+    '              <li><span class="cc">geo</span><span class="bar"><i style="width:0%"></i></span>'
+    '<span data-ih-v="geo">取数中…</span></li>\n'
+    '              <li><span class="cc">honeypot</span><span class="bar"><i style="width:0%"></i></span>'
+    '<span data-ih-v="honeypot">取数中…</span></li>\n'
+    '              <li><span class="cc">/api/health</span><span class="bar"><i style="width:0%"></i></span>'
+    '<span data-ih-v="health">取数中…</span></li>\n'
+    '            </ul>\n'
+    '            <p class="attk-note" data-ih-note>取数中…</p>\n'
+    '          </div>\n'
+)
+views_out = sub1(views_out,
+                 '                <li><i class="lg ok"></i>—<b>—</b></li>\n'
+                 '              </ul>\n'
+                 '            </div>\n'
+                 '          </div>\n',
+                 '                <li><i class="lg ok"></i>—<b>—</b></li>\n'
+                 '              </ul>\n'
+                 '            </div>\n'
+                 '          </div>\n' + API_HEALTH_MOD,
+                 'C2-P1: 接口健康模块（监测中心·真数据延迟条）')
 views_out = sub1(views_out,
                  '<div class="chat-ft">',
                  '<div class="anchor-row ask-ex" id="askEx"></div>\n        <div class="chat-ft">',
@@ -4745,17 +4795,25 @@ shell_style = shell_style + LAYOUT_PATCH
 #   图已入库：`static/kurisu/scene/bg/room_empty.webp`（上游 scenarios/BG_empty.png 转换而来）。
 BG_CSS = (
     u'\n  /* ★底图两层（逐字照 docs/demo-内容页外壳.html:45-47/:417）—— 内容页的暖玻璃面板需要照片底 */\n'
-    u'  .bg{position:fixed;inset:0;z-index:-2;background:#0A0D11 center/cover no-repeat;'
-    u'background-image:url(/kurisu/scene/bg/room_empty.webp);transform:scale(1.1)}\n'
+    u'  /*   ★2026-10-16 站主口径②：**不要 10 张背景切换器**；背景只放"人物不在的电视/书桌图"（desk.webp），\n'
+    u'      人物在手机面板里（主页的她在 CRT 里）；光束保留、做成左上角头像旁的小按钮；配色切换器不要（用现有暖色）。 */\n'
+    u'  .bg{position:fixed;inset:0;z-index:-3;background:#0A0D11 center/cover no-repeat;'
+    u'background-image:url(/images/crt/desk.webp);transform:scale(1.1)}\n'
+    u'  /*  光束层：默认关，`<html class="xk-lite">` 时淡入（左上角 ✨ 按钮切，localStorage 记忆） */\n'
+    u'  .bglite{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:0;transition:opacity .45s ease;'
+    u'background:center/cover no-repeat url(/kurisu/scene/bg/light_high.webp)}\n'
+    u'  html.xk-lite .bglite{opacity:.5}\n'
+    u'  @media (prefers-reduced-motion:reduce){.bglite{transition:none}}\n'
     u'  .bgshade{position:fixed;inset:0;z-index:-1;'
     u'background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}\n'
-    u'  body.is-home .bg,body.is-home .bgshade{display:none}\n'
+    u'  body.is-home .bg,body.is-home .bgshade,body.is-home .bglite{display:none}\n'
 )
 shell_style = shell_style + BG_CSS
 #   底图两层的 DOM：写在 chrome 最前面（demo 里就是 body 后第一件事）
 BG_DOM = (
     u'<!-- ★底图两层（恢复自 docs/demo-内容页外壳.html:427 + :45-47）：内容页的暖玻璃面板需要照片底 -->\n'
     u'<div class="bg" aria-hidden="true"></div>\n'
+    u'<div class="bglite" aria-hidden="true"></div>\n'
     u'<div class="bgshade" aria-hidden="true"></div>\n'
 )
 if u'.bgshade' not in chrome:

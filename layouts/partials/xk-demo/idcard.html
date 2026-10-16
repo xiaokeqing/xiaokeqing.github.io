@@ -131,6 +131,8 @@
     <button class="xk-idcard-btn" id="xkSndBtn" type="button" aria-pressed="false"
       title="声音：默认关闭（点一下打开）">🔇</button>
     <button class="xk-idcard-btn" id="xkLoginBtn" type="button" title="登录（自用模式）" hidden>👤</button>
+    <button class="xk-idcard-btn" id="xkLiteBtn" type="button" aria-pressed="false"
+      title="场景光束：点一下开/关（只影响背景）">✧</button>
   </span>
 </aside>
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
@@ -293,6 +295,23 @@
   function toggleSound() { setSound(!D.sound, 'btn'); }
   snd.addEventListener('click', toggleSound);
   setSound(lg('xk-sound-on') === '1', 'restore');
+
+  /* ---------- 场景光束开关（★2026-10-16 站主口径：光束保留，做成左上角头像旁的小功能）
+     只切 `<html class="xk-lite">`；光束层样式与图在生成器的 BG_CSS（/kurisu/scene/bg/light_high.webp）；
+     状态存 localStorage['xk-lite']；prefers-reduced-motion 下不淡入（BG_CSS 里已写）。 ---------- */
+  var lite = document.getElementById('xkLiteBtn');
+  function setLite(v, why) {
+    D.lite = !!v;
+    ls('xk-lite', D.lite ? '1' : '0');
+    try { document.documentElement.classList.toggle('xk-lite', D.lite); } catch (e) { }
+    if (lite) {
+      lite.textContent = D.lite ? '✨' : '✧';
+      lite.setAttribute('aria-pressed', D.lite ? 'true' : 'false');
+      lite.setAttribute('title', D.lite ? '场景光束：已打开（点一下关掉）' : '场景光束：已关闭（点一下打开）');
+    }
+  }
+  if (lite) { lite.addEventListener('click', function () { setLite(!D.lite, 'btn'); }); }
+  setLite(lg('xk-lite') === '1', 'restore');
 
   /* ★批次 ③a（2026-10-16）· 自用令牌（判据、探针、降级、退出）—— 契约逐字见
      docs/落地上线-后端令牌登录与自用池-20261016.md §10。
