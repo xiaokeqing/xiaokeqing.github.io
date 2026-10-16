@@ -2569,7 +2569,7 @@
   "codec": "aac(m4a) + opus(webm)",
   "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
   "hopMs": 10,
-  "lineCount": 162,
+  "lineCount": 160,
   "lines": [
    {
     "audio": "kurisu/voice/greet_first.m4a",
@@ -2679,50 +2679,6 @@
      "webm": "692b9fe0305db5f10ccdb7246c61c44a5a09c95a9b9c0c37ef3ffa3f823987b7"
     },
     "text": "笔记都在这一页，按时间倒序排好了。",
-    "trigger": "page_intro"
-   },
-   {
-    "audio": "kurisu/voice/nav_labs.m4a",
-    "audioBytes": {
-     "m4a": 21595,
-     "webm": 17872
-    },
-    "audioSources": {
-     "m4a": "kurisu/voice/nav_labs.m4a",
-     "webm": "kurisu/voice/nav_labs.webm"
-    },
-    "durationMs": 3382,
-    "envelope": "kurisu/voice/nav_labs.envelope.json",
-    "id": "nav_labs",
-    "scene": "切到攻防靶场",
-    "seconds": 3.382,
-    "sha256": {
-     "m4a": "cf5122442518a9655ffbe0831287140bf160bba1e65396a978a9a99a07141469",
-     "webm": "d3781e9610568ab88742dc9ca76b6d86a9acf0b028c87042bd06ec2c4d0ea406"
-    },
-    "text": "攻防靶场只做检测，不执行、不处置。",
-    "trigger": "page_intro"
-   },
-   {
-    "audio": "kurisu/voice/nav_about.m4a",
-    "audioBytes": {
-     "m4a": 33340,
-     "webm": 27498
-    },
-    "audioSources": {
-     "m4a": "kurisu/voice/nav_about.m4a",
-     "webm": "kurisu/voice/nav_about.webm"
-    },
-    "durationMs": 5331,
-    "envelope": "kurisu/voice/nav_about.envelope.json",
-    "id": "nav_about",
-    "scene": "切到关于",
-    "seconds": 5.331,
-    "sha256": {
-     "m4a": "3295e2020c6cd0ff1b93eb08ee115333896fcfa07f3fc1affff3e3ec3a2469a3",
-     "webm": "1f9ab702078f9af6baec5e021605e8316d836408a16732119da46635fe40bf78"
-    },
-    "text": "这一页讲的是项目本身，还有数据口径和取舍。",
     "trigger": "page_intro"
    },
    {
@@ -6138,7 +6094,7 @@
   ],
   "note": "本段的唯一真源是 static/kurisu/voice/bank.json（运行期 kurisu-player.js 只读它）；这里的数字由 _dev/refresh_manifest_voice.py 从磁盘文件重算，供索引/核对用。",
   "sampleRate": 8000,
-  "totalBytes": 11358467,
+  "totalBytes": 11258162,
   "voiceNote": "音色 = GPT-SoVITS v3 桐莉栖（本机合成）。换音色/换句子 = 换 voice/ 下的文件 + 改 bank.json，播放器不用改。"
  }
 }

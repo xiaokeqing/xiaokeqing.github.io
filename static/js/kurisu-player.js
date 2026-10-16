@@ -1340,12 +1340,18 @@
        "字幕 + 帧里自带的嘴"（= 规格 §3.1 的 L3 降级），这正是规格 §4 末行写的那种观感。 */
   var VOICE = {
     bank: null, bankLoading: null, unlocked: false,
+    /* ★T3（语音接线，2026-10-16）：原声优先索引 `voice/bank-merged.origfirst.json`。
+       **按需取**：只有"声音开关已开、且真的要播某一句"时才会 fetch（默认关声 ⇒ 一个字节都不取），
+       一次会话只取一次。它是"id → 文件"的**唯一真值来源**。 */
+    index: null, indexLoading: null,
     audio: null, line: null, envelope: null, speaking: false, mouthValue: 0,
     pending: null, last: null,
     variant: 'auto',        // 'auto' = 按每个 label 的 preferredVariant；'patch' / 'frame' = 强制
     diag: {
       unlockedBy: null, blockedPlays: 0, plays: 0, lastLine: null,
-      mouthShown: 0, mouthHidden: 0, variant: 'patch', bankLines: 0, errors: []
+      mouthShown: 0, mouthHidden: 0, variant: 'patch', bankLines: 0, errors: [],
+      /* ★T3 取证字段（探针/自证用，不上屏）：索引条数、本次取到的文件与来源、只见字幕的次数 */
+      indexIds: 0, indexKind: null, indexUrl: null, subtitleOnly: 0
     }
   };
 
@@ -1363,6 +1369,47 @@
         return b;
       });
     return VOICE.bankLoading;
+  }
+
+  /* ====================================================== ★T3 · 原声优先接线（语音线，2026-10-16）
+     口径**逐字**来自 `voice/bank-merged.origfirst.json` 的 note 字段：
+       「前端唯一查找表：按 id 命中后，**优先用 orig（原声）**；没有 orig 再用 synth；两者都无 ⇒ 只出字幕。」
+     设计取舍（如实记录，供复核）：
+       · **分辨率**（id → 文件）以 merged 索引为唯一真值；**选择**（说哪一句 = pickLine）仍读 `bank.json`，
+         因为 merged 的条目只有 {id, trigger, orig/synth{audio,envelope,text,webm}}，
+         **没有 emotion / group / scene / tags / seconds / question** —— 选择层要用这些字段，
+         改它就会改变"她说什么话"（不是本次授权的范围）✗
+       · 取索引失败（404/网络抖动）⇒ **退回接线前的 bank.json 解析**（`playLineLegacy`），并如实记账；
+         绝不因为索引拿不到就静音或报错刷屏 ✓
+       · 索引里既无 orig 也无 synth ⇒ **只出字幕**（`NO_AUDIO_FOR_LINE`），不假装有声 ✓ */
+  function voiceIndexUrl(basePath) {
+    return joinUrl(basePath || '/', 'kurisu/voice/bank-merged.origfirst.json');
+  }
+  function loadVoiceIndex(basePath) {
+    if (VOICE.index) { return Promise.resolve(VOICE.index); }
+    if (VOICE.indexLoading) { return VOICE.indexLoading; }
+    VOICE.indexLoading = fetch(voiceIndexUrl(basePath), { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) { throw new Error('voice index HTTP ' + r.status); } return r.json(); })
+      .then(function (j) {
+        VOICE.index = (j && j.lookup) || {};
+        VOICE.diag.indexIds = Object.keys(VOICE.index).length;
+        return VOICE.index;
+      });
+    return VOICE.indexLoading;
+  }
+  /** 按 id 命中后：orig（原声）优先 → 再 synth → 都没有返回 null（调用方只出字幕） */
+  function resolveVoiceEntry(index, id) {
+    var rec = index && index[id];
+    if (!rec) { return null; }
+    var sub = rec.orig || rec.synth || null;
+    if (!sub || !sub.audio) { return null; }
+    return { id: id, kind: rec.orig ? 'orig' : 'synth', trigger: rec.trigger || '',
+             audio: sub.audio, envelope: sub.envelope || '', seconds: sub.seconds, text: sub.text || '' };
+  }
+  /** 见上：索引里 synth 条目不写 seconds；若 bank.json 已因选择层load过，就白捡它的值（不再多发请求） */
+  function legacySeconds(id) {
+    var rec = (VOICE.bank && VOICE.bank.lines) ? VOICE.bank.lines[id] : null;
+    return rec ? rec.seconds : undefined;
   }
   function loadEnvelope(basePath, url) {
     return fetch(joinUrl(basePath || '/', url), { credentials: 'same-origin' })
@@ -1494,6 +1541,10 @@
       global.localStorage.setItem(PICK.key, JSON.stringify({ recent: PICK.recent, counts: PICK.counts }));
     } catch (e) { /* 存不下不影响本次会话的选择 */ }
   }
+  /* ★T3：**选择层**（说哪一句）仍读 `bank.json` —— 它带 emotion / group / scene / tags / seconds /
+     question 这些选择要用的字段，而 merged 索引的条目只有 {id, trigger, orig/synth{audio,envelope,text,webm}}。
+     分辨率（id → 文件）已改走 merged 索引（见 playLine）。若哪天要把选择层也换成 merged，
+     必须先把上述字段补进 merged —— 那属于改数据/改"她说什么话"，不在本次授权范围 ✗ */
   function pickBankLines(basePath) {
     if (VOICE.bank) { return Promise.resolve(VOICE.bank.lines || {}); }
     return loadVoiceBank(basePath).then(function (b) { return (b && b.lines) || {}; });
@@ -1647,20 +1698,69 @@
   }
   global.addEventListener('hashchange', navVoicePlay);
 
-  /** 播一句 L1 台词：先查 bank（静态文件），拿不到就只出字幕（L3 降级，绝不假装有声） */
+  /** 播一句 L1 台词：走**原声优先索引**（`bank-merged.origfirst.json`）；索引拿不到就退回 bank.json；
+      两者都没有这一句 ⇒ 只出字幕（L3 降级，绝不假装有声） */
   function playLine(basePath, id, text) {
     /* ★批次A（2026-10-16 站主）：全站**唯一的声音闸门**是左上角头像卡那颗 🔊, 默认关。
-       关着的时候：一不出声、二**连 bank.json 都不取**（既省首屏字节，也保证"没开声就不播"这条
+       关着的时候：一不出声、二**连 bank.json / 索引都不取**（既省首屏字节，也保证"没开声就不播"这条
        口径只有一个落点）。开关打开那一刻由头像卡派发 `xk-sound` 事件，各页自己把压下的那一句补播。 */
     if (global.__xkSound && !global.__xkSound.on) {
       VOICE.diag.blockedPlays = (VOICE.diag.blockedPlays || 0) + 1;
       return Promise.resolve({ ok: false, reason: 'SOUND_OFF', id: id,
                                detail: '声音开关默认关（左上角 🔊 打开）' });
     }
+    /* ★T3：按 id 命中 → **优先 orig（原声）** → 再 synth → 都没有 ⇒ 只出字幕。 */
+    return loadVoiceIndex(basePath).then(function (index) {
+      var e = resolveVoiceEntry(index, id);
+      if (!e) {
+        VOICE.diag.subtitleOnly++;
+        VOICE.diag.errors.push('no-audio: ' + id);
+        voiceNote('这句没有可播的音频（原声与合成都没有）—— 只出字幕，不假装有声。');
+        return { ok: false, reason: 'NO_AUDIO_FOR_LINE', subtitleOnly: true, id: id,
+                 indexHit: !!(index && index[id]),
+                 detail: '索引里这条既无 orig 也无 synth ⇒ 只出字幕' };
+      }
+      var seconds = (e.seconds != null) ? e.seconds : legacySeconds(id);
+      var line = { id: id, url: joinUrl(basePath || '/', e.audio), text: text || e.text || '',
+                   kind: e.kind, seconds: seconds };
+      return loadEnvelope(basePath, e.envelope).then(function (env) {
+        line.envelope = env;
+        VOICE.last = line;
+        VOICE.diag.indexKind = e.kind;
+        VOICE.diag.indexUrl = line.url;
+        if (!VOICE.unlocked) {
+          VOICE.pending = line;
+          VOICE.diag.blockedPlays++;
+          voiceNote('动画与字幕照常；声音被浏览器的自动播放策略拦住了 —— 点 🔊 或按任意键开声。');
+          return { ok: false, reason: 'AUTOPLAY_BLOCKED', needGesture: true, id: id,
+                   url: line.url, kind: e.kind, envelopeValues: (env.values || []).length };
+        }
+        var ok = playVoiceNow(line);
+        return { ok: ok, source: (e.kind === 'orig' ? 'bank-orig' : 'bank-synth'), id: id, url: line.url,
+                 kind: e.kind, seconds: seconds, envelopeValues: (env.values || []).length };
+      }, function (envErr) {
+        /* ④ 降级：包络拿不到（404/网络抖动）也**只出字幕**，不报错刷屏、不假装在播 ✓
+           （voiceMouthTick 对 null envelope 已有兜底：退回"帧里自带的嘴"） */
+        VOICE.diag.errors.push('envelope: ' + id);
+        VOICE.last = line;
+        if (!VOICE.unlocked) { VOICE.pending = line; return { ok: false, reason: 'AUTOPLAY_BLOCKED', id: id }; }
+        return { ok: !!playVoiceNow(line), source: 'bank-no-envelope', id: id, kind: e.kind,
+                 seconds: seconds, envelopeValues: 0, envelopeMissing: true };
+      });
+    }, function (err) {
+      /* 索引拿不到 ⇒ **退回接线前的 bank.json 解析**（行为与接线前一致），如实记账 */
+      VOICE.diag.errors.push('index-fallback: ' + (err && err.message));
+      return playLineLegacy(basePath, id, text);
+    });
+  }
+
+  /** ★T3 之前的老解析路径（读 `bank.json`）。现在只在**索引取不到**时兜底，行为逐字保留。 */
+  function playLineLegacy(basePath, id, text) {
     return loadVoiceBank(basePath).then(function (bank) {
       var rec = (bank.lines || {})[id];
       if (!rec) { return { ok: false, reason: 'NO_SUCH_LINE', id: id }; }
-      var line = { id: id, url: joinUrl(basePath || '/', rec.audio), text: rec.text || text || '' };
+      var line = { id: id, url: joinUrl(basePath || '/', rec.audio), text: rec.text || text || '',
+                   kind: 'legacy' };
       return loadEnvelope(basePath, rec.envelope).then(function (env) {
         line.envelope = env;
         VOICE.last = line;
@@ -1675,8 +1775,6 @@
         return { ok: ok, source: 'bank', id: id, url: line.url,
                  seconds: rec.seconds, envelopeValues: (env.values || []).length };
       }, function (envErr) {
-        /* ④ 降级：包络拿不到（404/网络抖动）也**只出字幕**，不报错刷屏、不假装在播 ✓
-           （voiceMouthTick 对 null envelope 已有兜底：退回"帧里自带的嘴"） */
         VOICE.diag.errors.push('envelope: ' + id);
         VOICE.last = line;
         if (!VOICE.unlocked) { VOICE.pending = line; return { ok: false, reason: 'AUTOPLAY_BLOCKED', id: id }; }
@@ -2810,8 +2908,10 @@
   function markVisited() {
     try { global.localStorage.setItem(VISIT_KEY, '1'); } catch (e) { /* 隐私模式忽略 */ }
   }
-  var NAV_LINE = { home: 'nav_home', notes: 'nav_notes', monitor: 'nav_monitor', ai: 'nav_ai',
-                   range: 'nav_labs', labs: 'nav_labs', about: 'nav_about' };
+  /* ★T3（2026-10-16 语音线）：删掉 range / labs / about 三个键 —— 那两个页面已删（T27），
+     对应的两条死语音 `nav_labs` / `nav_about` 也已从 `bank.json` 与 merged 索引里移除。
+     留着这三个键就会变成"有键无文件"的**新断链**（正是本次要清掉的那种）。 */
+  var NAV_LINE = { home: 'nav_home', notes: 'nav_notes', monitor: 'nav_monitor', ai: 'nav_ai' };
   var lastNavLine = null;
 
   /** 切页解说：一个路由只讲解一次（同一路由的重复 scan 不重复说话） */

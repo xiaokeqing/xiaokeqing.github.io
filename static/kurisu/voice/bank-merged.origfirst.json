@@ -4,10 +4,10 @@
   "synth": "kurisu/voice/bank.json"
  },
  "counts": {
-  "ids": 646,
+  "ids": 644,
   "withBoth": 0,
   "withOrig": 484,
-  "withSynth": 162
+  "withSynth": 160
  },
  "format": "xiaokeqing.kurisu.voicebank.merged.v1",
  "lookup": {
@@ -1078,17 +1078,6 @@
    },
    "trigger": "greeting"
   },
-  "nav_about": {
-   "id": "nav_about",
-   "synth": {
-    "audio": "kurisu/voice/nav_about.m4a",
-    "envelope": "kurisu/voice/nav_about.envelope.json",
-    "source": "synth",
-    "text": "这一页讲的是项目本身，还有数据口径和取舍。",
-    "webm": "kurisu/voice/nav_about.webm"
-   },
-   "trigger": "page_intro"
-  },
   "nav_ai": {
    "id": "nav_ai",
    "synth": {
@@ -1108,17 +1097,6 @@
     "source": "synth",
     "text": "回到主页了。我还是待在这台显示器里。",
     "webm": "kurisu/voice/nav_home.webm"
-   },
-   "trigger": "page_intro"
-  },
-  "nav_labs": {
-   "id": "nav_labs",
-   "synth": {
-    "audio": "kurisu/voice/nav_labs.m4a",
-    "envelope": "kurisu/voice/nav_labs.envelope.json",
-    "source": "synth",
-    "text": "攻防靶场只做检测，不执行、不处置。",
-    "webm": "kurisu/voice/nav_labs.webm"
    },
    "trigger": "page_intro"
   },

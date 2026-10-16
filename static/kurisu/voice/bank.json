@@ -6,8 +6,8 @@
  "sampleRate": 8000,
  "hopMs": 10,
  "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
- "lineCount": 162,
- "totalBytes": 11358467,
+ "lineCount": 160,
+ "totalBytes": 11258162,
  "lines": {
   "greet_first": {
    "id": "greet_first",
@@ -168,70 +168,6 @@
     "target": -16.0
    },
    "envelopeSource": "dist/nav_notes.m4a"
-  },
-  "nav_labs": {
-   "id": "nav_labs",
-   "trigger": "page_intro",
-   "group": "page_intro",
-   "text": "攻防靶场只做检测，不执行、不处置。",
-   "scene": "切到攻防靶场",
-   "emotion": "",
-   "source": "existing",
-   "audio": "kurisu/voice/nav_labs.m4a",
-   "envelope": "kurisu/voice/nav_labs.envelope.json",
-   "seconds": 3.382,
-   "audioBytes": 21595,
-   "envelopeValues": 339,
-   "audioSources": {
-    "m4a": "kurisu/voice/nav_labs.m4a",
-    "webm": "kurisu/voice/nav_labs.webm"
-   },
-   "durationMs": 3382,
-   "sha256": {
-    "m4a": "cf5122442518a9655ffbe0831287140bf160bba1e65396a978a9a99a07141469",
-    "webm": "d3781e9610568ab88742dc9ca76b6d86a9acf0b028c87042bd06ec2c4d0ea406"
-   },
-   "bytes": {
-    "m4a": 21595,
-    "webm": 17872
-   },
-   "loudness": {
-    "lufs": -16.06,
-    "target": -16.0
-   },
-   "envelopeSource": "dist/nav_labs.m4a"
-  },
-  "nav_about": {
-   "id": "nav_about",
-   "trigger": "page_intro",
-   "group": "page_intro",
-   "text": "这一页讲的是项目本身，还有数据口径和取舍。",
-   "scene": "切到关于",
-   "emotion": "",
-   "source": "existing",
-   "audio": "kurisu/voice/nav_about.m4a",
-   "envelope": "kurisu/voice/nav_about.envelope.json",
-   "seconds": 5.331,
-   "audioBytes": 33340,
-   "envelopeValues": 534,
-   "audioSources": {
-    "m4a": "kurisu/voice/nav_about.m4a",
-    "webm": "kurisu/voice/nav_about.webm"
-   },
-   "durationMs": 5331,
-   "sha256": {
-    "m4a": "3295e2020c6cd0ff1b93eb08ee115333896fcfa07f3fc1affff3e3ec3a2469a3",
-    "webm": "1f9ab702078f9af6baec5e021605e8316d836408a16732119da46635fe40bf78"
-   },
-   "bytes": {
-    "m4a": 33340,
-    "webm": 27498
-   },
-   "loudness": {
-    "lufs": -16.3,
-    "target": -16.0
-   },
-   "envelopeSource": "dist/nav_about.m4a"
   },
   "nav_ai": {
    "id": "nav_ai",
@@ -5261,7 +5197,7 @@
  },
  "groups": {
   "greeting": 2,
-  "page_intro": 24,
+  "page_intro": 22,
   "fallback": 35,
   "idle_banter": 1,
   "status": 39,
