@@ -1995,7 +1995,10 @@
      打开方式（二选一）：URL 加 `?xk-voice-diag=1`，或页面里先设 `window.__xkVoiceOn = true`。
      为什么要它：口型的"逻辑对齐"是构造性的（见下方契约），但**渲染出来的口型**只能
      用"音频时刻 ↔ 口型值 ↔ 当前句 id"三件套去端到端测（渲染栅格 / 动画帧对齐）。
-     不打开时本函数不做任何额外工作（零开销）。 */
+     不打开时本函数不做任何额外工作（零开销）。
+     ★命名教训（2026-10-16）：出口名**不能用 `__xkVoice`** —— 那个全局已被
+     `layouts/partials/xk-demo/shell-script.html:827` 的 `window.__xkVoice = XKV`（语音子系统状态）占用。
+     故本出口命名为 `__xkVoiceTick`。 */
   var forensicVoice = null;
   function forensicVoiceOn() {
     if (forensicVoice === null) {
@@ -2032,9 +2035,10 @@
 
   /* 复用同一个对象，避免逐帧新建造成 GC 抖动；字段含义：
      t = 音频播放时刻(秒) ｜ mouth = 本次算出的口型值 ｜ clip = 正在播的句 id ｜ hopMs = 包络栅格 ｜
-     speaking = 是否在说话 ｜ at = 发布时刻(ms)，供探针对齐 rAF 时间戳 */
+     speaking = 是否在说话 ｜ at = 发布时刻(ms)，供探针对齐 rAF 时间戳
+     ★对象**只在开关打开时才创建**（默认 `typeof window.__xkVoiceTick === 'undefined'`，与"默认关、零开销"口径一致） */
   function publishVoiceDiag(t, mouth) {
-    var d = global.__xkVoice || (global.__xkVoice = { t: 0, mouth: 0, clip: null, hopMs: null, speaking: false, at: 0 });
+    var d = global.__xkVoiceTick || (global.__xkVoiceTick = { t: 0, mouth: 0, clip: null, hopMs: null, speaking: false, at: 0 });
     d.t = t;
     d.mouth = mouth;
     d.clip = (VOICE.line && (VOICE.line.id || VOICE.line.label)) || null;

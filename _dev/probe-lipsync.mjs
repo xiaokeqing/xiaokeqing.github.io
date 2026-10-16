@@ -65,7 +65,7 @@ ws.addEventListener('message', (ev) => {
 });
 await rpc('Page.enable'); await rpc('Runtime.enable');
 
-await rpc('Page.navigate', { url: BASE + PAGE });
+await rpc('Page.navigate', { url: BASE + PAGE + (PAGE.indexOf('?') >= 0 ? '&' : '?') + 'xk-voice-diag=1' });
 await sleep(3500);
 
 /* 页内测量（全部只读：读 rAF 栅格 / 音频时钟 / 画布像素） */
@@ -129,12 +129,94 @@ const expr = `(async () => {
       out.mouth = { canvas: { w: c.width, h: c.height }, frames: energ.length, meanDelta: +mean.toFixed(3),
                     maxDelta: +Math.max(...dif, 0).toFixed(3), moving: dif.filter((x) => x > mean * 2).length };
     }
+
+    /* ④ ★L7 端到端口型（2026-10-16 主窗口加的**只读**取证出口 __xkVoiceTick；本探针只读、不改播放器）
+       必须走**播放器自己的说话路径**：否则 VOICE.speaking 不为真、出口不发布真值。
+       出口契约：window.__xkVoiceTick = { t(音频秒), mouth, clip, hopMs, speaking, at(performance.now()) } */
+    out.diag = { entry: 'n/a', hookType: typeof window.__xkVoiceTick, samples: [] };
+    try {
+      const K = window.KurisuPlayer;
+      if (!K) { out.diag.entry = 'no KurisuPlayer'; }
+      else if (typeof K.speakGroup === 'function') { await K.speakGroup('/', 'greeting'); out.diag.entry = 'speakGroup'; }
+      else if (typeof K.speak === 'function') { await K.speak('greet_first'); out.diag.entry = 'speak'; }
+      else if (typeof K.stage === 'function' && K.stage() && typeof K.stage().speak === 'function') { await K.stage().speak('greet_first'); out.diag.entry = 'stage.speak'; }
+      else { out.diag.entry = 'no-usable-entry'; }
+      await new Promise((r) => setTimeout(r, 250));
+      const st = [];
+      await new Promise((res) => {
+        const t0 = performance.now();
+        const f = () => {
+          const v = window.__xkVoiceTick;
+          if (v && v.speaking) st.push({ at: v.at, t: v.t, mouth: v.mouth, clip: v.clip, hopMs: v.hopMs });
+          if (performance.now() - t0 > 3200) return res();
+          requestAnimationFrame(f);
+        };
+        requestAnimationFrame(f);
+      });
+      out.diag.samples = st;
+      out.diag.hookAfter = typeof window.__xkVoiceTick;
+    } catch (e) { out.err.push('L7: ' + e.message); }
   } catch (e) { out.err.push('fatal: ' + e.message); }
   return JSON.stringify(out);
 })()`;
 
 const r = await rpc('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
 const m = JSON.parse(r.result.value);
+
+/* ---- L7 端到端（2026-10-16）：①契约公式逐样本核对 ②有效更新栅格 ③时钟关系 ④默认关闭 ---- */
+let formula = { checked: 0, mismatches: 0, firstWindow: 0, worstAbs: 0, clip: null, hopMs: null };
+if (m.diag && m.diag.samples && m.diag.samples.length) {
+  try {
+    const bank = await (await fetch(BASE + '/kurisu/voice/bank.json')).json();
+    const withClip = m.diag.samples.filter((s) => s.clip && bank.lines && bank.lines[s.clip]);
+    const clip = withClip.length ? withClip[0].clip : null;
+    if (clip) {
+      const line = bank.lines[clip];
+      const env = await (await fetch(BASE + '/' + line.envelope)).json();
+      const hop = env.hopMs || bank.hopMs || 10;
+      const vals = env.values || [];
+      formula.clip = clip; formula.hopMs = hop;
+      for (const s of m.diag.samples) {
+        if (typeof s.mouth !== 'number' || typeof s.t !== 'number') continue;
+        let i = Math.floor((s.t * 1000) / hop);
+        if (i < 0) i = 0;
+        let v = vals[i]; if (typeof v !== 'number') v = 0;
+        let exp = Math.min(1, Math.max(0, v * 3.75));
+        /* 首窗保底（契约：speaking 且 i===0 且 contracted 更小时取 max(0.12, contracted)）——单独计数，算作合规 */
+        if (i === 0) { formula.firstWindow++; exp = Math.max(0.12, exp); }
+        formula.checked++;
+        const dd = Math.abs(exp - s.mouth);
+        if (dd > formula.worstAbs) formula.worstAbs = dd;
+        if (dd > 1e-6) formula.mismatches++;
+      }
+    }
+  } catch (e) { formula.err = String((e && e.message) || e); }
+}
+let grid = null;
+if (m.diag && m.diag.samples && m.diag.samples.length > 1) {
+  const d = [];
+  for (let i = 1; i < m.diag.samples.length; i++) {
+    if (m.diag.samples[i].mouth !== m.diag.samples[i - 1].mouth) d.push(m.diag.samples[i].at - m.diag.samples[i - 1].at);
+  }
+  d.sort((a, b) => a - b);
+  const q = (p) => (d.length ? +d[Math.min(d.length - 1, Math.floor(d.length * p))].toFixed(2) : null);
+  grid = { changes: d.length, p50: q(0.5), p95: q(0.95), max: d.length ? +d[d.length - 1].toFixed(2) : null };
+}
+let clockRel = null;
+if (m.diag && m.diag.samples && m.diag.samples.length > 1) {
+  const f0 = m.diag.samples[0], l0 = m.diag.samples[m.diag.samples.length - 1];
+  const dAt = l0.at - f0.at, dT = (l0.t - f0.t) * 1000;
+  clockRel = { dAtMs: +dAt.toFixed(1), dTms: +dT.toFixed(1), ratio: dAt ? +(dT / dAt).toFixed(4) : null,
+               stalls: m.diag.samples.filter((s, i) => i > 0 && s.t === m.diag.samples[i - 1].t).length };
+}
+let defaultOff = { ok: false, msg: '未测' };
+try {
+  await rpc('Page.navigate', { url: BASE + PAGE });
+  await sleep(2500);
+  const rr = await rpc('Runtime.evaluate', { expression: 'typeof window.__xkVoiceTick', returnByValue: true });
+  const ty = String(rr.result.value);
+  defaultOff = { ok: ty === 'undefined', msg: '不带 ?xk-voice-diag=1 时 typeof window.__xkVoiceTick = ' + ty };
+} catch (e) { defaultOff = { ok: false, msg: '默认关闭检查失败: ' + ((e && e.message) || e) }; }
 
 const checks = [];
 const rec = (id, ok, msg) => checks.push({ id, ok, msg });
@@ -145,6 +227,15 @@ rec('L3 包络覆盖 vs 音频时长（系统性偏移）', !!(m.env && Math.abs
 rec('L4 音频时钟可前进（含限流/静音环境）', !!(m.clock && m.clock.audioMs > 0), m.clock ? `wall=${m.clock.wallMs}ms audio=${m.clock.audioMs}ms ratio=${m.clock.ratio} 停顿帧=${m.clock.stalls}` : '读不到');
 rec('L5 画布可读（像素级口型观测可行）', !!(m.mouth && m.mouth.frames > 0), m.mouth ? `canvas=${m.mouth.canvas.w}x${m.mouth.canvas.h} 帧=${m.mouth.frames} 运动帧=${m.mouth.moving} 均值差=${m.mouth.meanDelta}` : '读不到（可能跨源污染或页面无画布）');
 rec('L6 控制台无 error/warning', consoleMsgs.length === 0, consoleMsgs.slice(0, 3).join(' | ') || '0 条');
+rec('L7a 出口默认关闭（零开销；不带 ?xk-voice-diag=1）', defaultOff.ok, defaultOff.msg);
+rec('L7b 端到端口型采样（走播放器自身说话路径）', !!(m.diag && m.diag.samples && m.diag.samples.length),
+  m.diag ? `入口=${m.diag.entry} 采样=${m.diag.samples.length} 帧（hook 类型=${m.diag.hookType}）` : '读不到');
+rec('L7c 发布值 == 契约公式 clamp(envelope[floor(t/hop)]*3.75,0,1)', formula.checked > 0 && formula.mismatches === 0,
+  formula.checked ? `核对 ${formula.checked} 样本 / 不符 ${formula.mismatches} / 最大偏差 ${formula.worstAbs}（clip=${formula.clip} hopMs=${formula.hopMs}；首窗保底 0.12 命中 ${formula.firstWindow} 次，按契约计为合规）`
+    : ('无样本' + (formula.err ? ' err=' + formula.err : '')));
+rec('L7d 有效更新栅格与时钟关系', !!(grid && grid.changes > 0),
+  (grid ? `mouth 变化 ${grid.changes} 次；Δat p50=${grid.p50}ms p95=${grid.p95}ms max=${grid.max}ms` : '无变化点')
+  + (clockRel ? ` ｜ Δt/Δat=${clockRel.ratio}（停顿帧 ${clockRel.stalls}）` : ''));
 
 const jsBound = m.raf ? +(m.raf.p95 + (m.env?.hopMs || 10)).toFixed(2) : null;
 const report = {
@@ -156,7 +247,7 @@ const report = {
     jsSideUpperBoundNote: 'JS 侧可见量化上界 = rAF p95 + 包络窗 hopMs；**不含**扬声器可闻偏移',
     audibleOffset: null,
     audibleOffsetNote: '可闻 A/V 偏移**不是 JS 可测**：需回环采集（WASAPI loopback / ffmpeg 录屏+录声）后做互相关。本机无 ffmpeg ⇒ 本期不产出该数字（宁缺不编 ✗）',
-    needsPlayerHook: '要端到端测"渲染出来的口型"，需播放器暴露只读出口（如 window.__xkVoice={t,mouth,clip}）——本探针**未改动** static/js/kurisu-player.js，已列为待办',
+    needsPlayerHook: '要端到端测"渲染出来的口型"，需播放器暴露只读出口（如 window.__xkVoiceTick={t,mouth,clip}）——本探针**未改动** static/js/kurisu-player.js，已列为待办',
   },
   checks,
   consoleMsgs,
