@@ -2,7 +2,7 @@
    用法：node _dev/probe-slownet.mjs [--pub=<目录>] [--label=after|before]
    造响应：CDP Fetch 域拦 https://demo.xiaokeqing.cn/api/public/**
      行为：ok（别名 200 + 新鲜度字段 + Age）/ degraded（200 但 available=false）/ fail（failRequest）
-           / slow15（alerts 延迟 15s）/ rate-header（429 + Retry-After 头）/ rate-body（429 + body.retryAfter）
+           / slow15（alerts 延迟 15s）/ slow-hp（honeypot 延迟 15s：验渐进渲染）/ rate-header（429 + Retry-After 头）/ rate-body（429 + body.retryAfter）
            / rate-none（429 且不给秒数）
    输出：_shots/probe-slownet-<label>.json + _shots/b2-<label>-NN-*.png + 控制台 PASS/FAIL */
 import { spawn } from 'node:child_process';
@@ -141,7 +141,8 @@ ws.addEventListener('message', (ev) => {
         .catch(() => { }).then(() => { inFlight--; });
     };
     inFlight++;
-    if (MODE === 'slow15' && name === 'alerts') { setTimeout(respond, 15000); } else { respond(); }
+    const slowName = MODE === 'slow15' ? 'alerts' : (MODE === 'slow-hp' ? 'honeypot' : null);
+    if (slowName && name === slowName) { setTimeout(respond, 15000); } else { respond(); }
   }
 });
 
@@ -303,6 +304,58 @@ const home390 = await homeRun({ name: '390x844', w: 390, h: 844, mobile: true })
 fs.writeFileSync(path.join(OUT, 'home-snap-' + LABEL + '.json'),
   JSON.stringify({ at: new Date().toISOString(), label: LABEL, servedFrom: PUB, runs: [home1440, home390] }, null, 1), 'utf8');
 
+/* ★B5：渐进渲染 —— ①慢端点拖 15s 时其它卡 <3s 出数；②未到的端点保持骨架、不写"读不到"；③降级不阻塞首屏 */
+const SNAP_PROG = `(function(){
+  function t(e){ return e ? String(e.textContent).replace(/\\s+/g,' ').trim() : null; }
+  var mods = document.querySelectorAll('.ops-rail .mod');
+  function firstK(i){ var m = mods[i]; if(!m) return null; var k = m.querySelector('.row .k'); return k ? t(k) : null; }
+  function firstKsk(i){ var m = mods[i]; if(!m) return null; var k = m.querySelector('.row .k'); return k ? k.classList.contains('sk') : null; }
+  var body = (document.body && document.body.innerText) || '';
+  var sync = document.querySelector('.screen-hd .sync');
+  return { threat: t(mods[0] && mods[0].querySelector('.lv')), geoFirst: firstK(1), honeyFirst: firstK(2),
+    honeySkeleton: firstKsk(2), syncText: sync ? t(sync) : null, hasNA: body.indexOf('读不到') >= 0,
+    naCtx: (function(){ var out=[], i=0; while((i=body.indexOf('读不到',i))>=0 && out.length<4){ out.push(body.slice(Math.max(0,i-34), i+20).replace(/\\s+/g,' ')); i+=3; } return out; })() };
+})()`;
+const isReal = (v) => !!v && v !== '—' && v.indexOf('读不到') < 0 && v.indexOf('取数中') < 0 && String(v).trim() !== '';
+const progRun = async (tag, mode, budgetMs) => {
+  consoleMsgs.length = 0;
+  MODE = 'fail';
+  await rpc('Page.navigate', { url: BASE + '/' });
+  await sleep(900);
+  await evalJs(clearLG);
+  MODE = mode;
+  apiHits.length = 0;
+  const t0 = Date.now();
+  await rpc('Page.navigate', { url: BASE + '/alerts/' });
+  let firstData = null, firstTwo = null, allThree = null, firstRender = null, degShown = null, painted = null;
+  let naBefore3s = false, skBefore3s = null, naFirst = null;
+  while (Date.now() - t0 < budgetMs) {
+    const s = await evalJs(SNAP_PROG);
+    const ms = Date.now() - t0;
+    const real = [s.threat, s.geoFirst, s.honeyFirst].filter(isReal).length;
+    const two = [s.threat, s.geoFirst].filter(isReal).length;
+    if (firstData === null && real > 0) firstData = ms;
+    if (firstTwo === null && two === 2) firstTwo = ms;
+    if (allThree === null && real === 3) allThree = ms;
+    if (firstRender === null && s.syncText && s.syncText.indexOf('取数中') < 0) firstRender = ms;
+    /* ★B5③ 严格判据：**卡片**离开 SSR 骨架（'—'）的时刻 —— 与同步行文案无关（"重试中"会立刻盖掉"降级值"） */
+    if (painted === null && ((s.threat && s.threat !== '—') || (s.geoFirst && s.geoFirst !== '—'))) painted = ms;
+    if (ms < 3000) {
+      if (s.hasNA) { naBefore3s = true; if (!naFirst) naFirst = { ms: ms, ctx: s.naCtx, sync: s.syncText, honeySkel: s.honeySkeleton }; }
+      if (s.honeySkeleton === true) skBefore3s = ms;
+    }
+    await sleep(120);
+  }
+  const snap = await evalJs(SNAP_PROG);
+  const png = await shot('12-' + tag);
+  const run = { name: '12-' + tag, mode, firstData, firstTwo, allThree, firstRender, degShown, painted, naBefore3s, naFirst,
+    honeySkeletonAt3s: skBefore3s, snap, apiHits: apiHits.map(nameOf), shot: png, console: consoleMsgs.slice() };
+  runs.push(run);
+  return run;
+};
+const r12 = await progRun('progressive-slowhoneypot', 'slow-hp', 18000);
+const r13 = await progRun('degraded-nonblocking', 'degraded', 6000);
+
 /* ---------------- 判定 ---------------- */
 const checks = [];
 const add = (n, ok, d) => checks.push({ name: n, ok: !!ok, detail: d });
@@ -396,6 +449,17 @@ try {
 add('★B4b 首页可见真值不受影响：与改前基线（' + baseName + '）的确定性可见真值子集逐项一致 —— 计数器／CRT 状态行／HOLO 文案／导航项／.screen 与 .stats 布局盒',
   baseOk, JSON.stringify(baseDiff));
 add('无 JS 绑定异常（window.__xkBindErr 为空）', runs.every((r) => !r.snap || !r.snap.bindErr), JSON.stringify(runs.map((r) => r.snap && r.snap.bindErr)));
+add('★B5 渐进渲染①：honeypot 被拖到 15s 时，alerts+geo 两张卡的真值 <3s 就出（改前＝等最慢那条＝15s）',
+  r12.firstTwo !== null && r12.firstTwo < 3000,
+  JSON.stringify({ firstData: r12.firstData, firstTwo: r12.firstTwo, allThree: r12.allThree }));
+add('★B5 渐进渲染②：未到的 honeypot 卡 3s 内保持骨架（.sk 仍在），且 3s 内**不出现"读不到"**',
+  r12.honeySkeletonAt3s !== null && r12.naBefore3s === false,
+  JSON.stringify({ honeySkeletonAt3s: r12.honeySkeletonAt3s, naBefore3s: r12.naBefore3s, naFirst: r12.naFirst, snap: r12.snap }));
+add('★B5 渐进渲染③：降级时不阻塞首屏 —— **卡片**离开骨架（— 占位）的时间 <1.2s；改前＝等 1.5s 定时器 + 补请求之后才渲染',
+  r13.painted !== null && r13.painted < 1200,
+  JSON.stringify({ painted: r13.painted, degShown: r13.degShown, firstRender: r13.firstRender, sync: r13.snap && r13.snap.syncText }));
+add('★B5 对账：三张卡"全到齐"的时间仍应是慢端点到达之后（≥14s，不假装提前都有数据）',
+  r12.allThree !== null && r12.allThree >= 14000, JSON.stringify({ allThree: r12.allThree, firstTwo: r12.firstTwo }));
 add('★别名 404 回落：先打别名、再打旧路径（每端点各一次，只回落一次）',
   r10.apiHits.filter((u) => /\.js(\?|$)/.test(u)).length === FIRST && r10.apiHits.filter((u) => !/\.js(\?|$)/.test(u)).length === FIRST,
   JSON.stringify({ alias: r10.apiHits.filter((u) => /\.js(\?|$)/.test(u)).length, old: r10.apiHits.filter((u) => !/\.js(\?|$)/.test(u)).length }));

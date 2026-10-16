@@ -128,6 +128,7 @@
     return null;
   }
   function staleCount() { var n = 0; for (var k in staleUsed) { if (staleUsed.hasOwnProperty(k)) n++; } return n; }
+  function pendCount() { var n = 0; for (var k in pendingJobs) { if (pendingJobs.hasOwnProperty(k)) n++; } return n; }
   function noteInto(host, text, title) {   /* ★B3：通用卡角小字（429 与"上次数据"共用同一出口） */
     var note = host.querySelector('.xk-stale');
     if (!text) { if (note && note.parentNode) note.parentNode.removeChild(note); return; }
@@ -255,6 +256,41 @@
   var lastSnapMin = 0;       /* ★B3：本轮各端点 snapshotAt 的最早值（用于"各端点快照不同"的诚实表述） */
   var lastSnapGa = false;    /* ★B3：本轮时刻是否退到了 generatedAt 兜底（旧路径无 snapshotAt） */
   var lastViaOld = false;    /* ★B3：本轮是否走了"别名 404 → 旧路径"回落 */
+  /* ★B5（渐进渲染）：`pendingJobs` = 本轮**还没到**的端点名。
+     区别对待两种"没有值"：**没到/还没取过（pending）⇒ 保持骨架/取数中**；**到了但失败 ⇒ 照旧写"读不到"**。
+     这样"哪个端点先到就先渲染哪张卡"才不会把别的卡写成假缺失。
+     ⚠️ `pend()` 的口径 = "**这个端点本轮还没到，或者压根还没取过**"（B4 的按 tab 懒加载下，
+     别的 tab 的端点确实"还没取"——那同样不是"读不到"，必须保持骨架）。 */
+  var pendingJobs = {};
+  function pend(name) { return !!pendingJobs[name] || !partCache[apiPath(name)]; }
+  function markPending(jobs) {
+    pendingJobs = {};
+    (jobs || []).forEach(function (n) { pendingJobs[n] = 1; });
+  }
+  /* ★B5：**"还没到"不许写成"读不到"** —— 生成物在初始化时会先调一次 `drawSpark()`，
+     那时 `window.XK24H` 还没到，它就把「24 小时攻击时序」的表头写成 `读不到（/alerts · stats24h）`；
+     同理实时流的占位行带 `[读不到]`。这不是本次改动引入的（改前也一样，只是没人量过），
+     但按"未到＝骨架/取数中"的口径必须纠正：这里只改**文字**，不动版式/配色/字体。
+     `alerts` 一到 `bindSpark` 就会写回真表头，本函数只在前 3 秒的窗口里兜住。 */
+  function neutralPendingHeads() {
+    if (!pend('alerts')) return;
+    /* ⚠️ 必须按**画布元素**定位到那张卡：live 页第一张 `.mod` 是「TOP 攻击来源」（tag `/geo`），
+       盲选 `.mod-hd .tag` 会改错元素（我自己踩过一次，探针没抓到、是靠读代码发现的）。 */
+    var cv = document.querySelector('.ops-tab[data-pane="live"] #spark24');
+    var wrap = cv && cv.closest ? cv.closest('.mod') : null;
+    var el = wrap ? wrap.querySelector('.mod-hd .tag') : null;
+    if (el) {
+      if (String(el.textContent).indexOf('读不到') >= 0) el.textContent = '取数中…（/alerts 在路上）';
+      if (!el.__xkGuarded) {                       /* 生成物的 switchView() 可能在 DOMContentLoaded 里再写一次 */
+        el.__xkGuarded = 1;
+        new MutationObserver(function () {
+          if (pend('alerts') && String(el.textContent).indexOf('读不到') >= 0) el.textContent = '取数中…（/alerts 在路上）';
+        }).observe(el, { childList: true, characterData: true, subtree: true });
+      }
+    }
+    var tf = document.getElementById('termFeed');
+    if (tf && String(tf.textContent).indexOf('读不到') >= 0) tf.innerHTML = '';
+  }
 
   function get(path) {
     return new Promise(function (resolve, reject) {
@@ -345,6 +381,10 @@
       el.textContent = '● ' + rates.length + ' 个端点' + rateText(same ? w : { s: w.s, src: w.src }) +
         (sn ? ' · ' + sn + ' 格显示的是上次数据' : ' · 无上次成功数据可用') +
         ' · 429 本轮不再补请求（省额度）· 不补数、不编造';
+    } else if (pendCount()) {
+      /* ★B5：还有端点在路上 —— 明说"取数中（已到的先渲染）"，**不写"读不到"**、也不假装"刚刚同步" */
+      el.textContent = '● 取数中… 还有 ' + pendCount() + ' 个端点在路上（已到的卡片先出数）' +
+        (lastSync ? ' · 当前数据时刻 ' + clockOf(lastSync) + '（后端 snapshotAt）' : '') + ' · 不补数、不编造';
     } else if (sn) {
       /* ★B2：有格子用的是上次数据 —— 必须明说，别让"刚刚同步"盖住"这几格其实没刷新" */
       el.textContent = '● ' + sn + ' 格显示的是上次数据（本次取不到：' + (errShort(parts) || '端点未取到') + '）· ' +
@@ -382,11 +422,14 @@
   }
   function mods() { return document.querySelectorAll('.ops-rail .mod'); }
 
-  function bindRail(parts) {
+  /* ★B5：渐进渲染 —— 原 `bindRail` 拆成"一张卡一个来源"的四个小绑定：
+     `alerts` 先到就先出威胁等级、`geo` 先到就先出 TOP 来源、`honeypot` 先到就先出蜜罐凭据，
+     **各自只在"自己的端点已到（或已失败）"时才写 DOM**；未到的端点保持 SSR 骨架，绝不写"读不到"。 */
+  function bindThreat(parts) {
     var ms = mods();
-    var al = pick(parts, 'alerts'), geo = pick(parts, 'geo'), hp = pick(parts, 'honeypot');
-
-    /* ① 威胁等级：等级由 24h 真实严重度分布推出（口径写在旁边），没有该字段就写读不到 */
+    if (!ms[0] || pend('alerts')) return;                 /* ★B5：还没到 ⇒ 骨架照旧 */
+    var al = pick(parts, 'alerts');
+    /* 威胁等级：等级由 24h 真实严重度分布推出（口径写在旁边），没有该字段就写读不到 */
     var sev = al && al.stats24h && al.stats24h.available !== false ? al.stats24h.bySeverity : null;
     var lv = null, basis = NA;
     if (sev) {
@@ -397,48 +440,59 @@
       var nz = keys.filter(function (k) { return n(k[0]) > 0; });
       basis = '24h ' + (nz.length ? nz : keys).slice(0, 2).map(function (k) { return k[1] + ' ' + fmt(n(k[0])); }).join(' · ');
     }
-    if (ms[0]) { txt(ms[0].querySelector('.lv'), lv || NA); txt(ms[0].querySelector('.trend'), basis); }
-
-    /* ② TOP 攻击来源 ← /api/public/geo byCountry（后端不给 IP，只给国家/地区 + 计数） */
+    txt(ms[0].querySelector('.lv'), lv || NA);
+    txt(ms[0].querySelector('.trend'), basis);
+  }
+  function bindGeo(parts) {
+    var ms = mods();
+    if (!ms[1] || pend('geo')) return;                    /* ★B5 */
+    /* TOP 攻击来源 ← /api/public/geo byCountry（后端不给 IP，只给国家/地区 + 计数） */
+    var geo = pick(parts, 'geo');
     var top = (geo && Array.isArray(geo.byCountry) && geo.byCountry.length) ? geo.byCountry.slice(0, 4) : null;
     fillRows(rowsOf(ms[1]), top ? top.map(function (c) {
       return [(c.country || '—') + ' · ' + (c.countryName || '—'), fmt(c.count) + ' 次' + (c.sharePercent !== undefined ? ' · ' + c.sharePercent + '%' : '')];
     }) : [[NA, '/geo']]);
-
-    /* ③ 蜜罐捕获凭据 ← /api/public/honeypot topCredentials（只给结构：用户名 + 长度 + 是否弱口令） */
+  }
+  function bindHoney(parts) {
+    var ms = mods();
+    if (!ms[2] || pend('honeypot')) return;               /* ★B5 */
+    /* 蜜罐捕获凭据 ← /api/public/honeypot topCredentials（只给结构：用户名 + 长度 + 是否弱口令） */
+    var hp = pick(parts, 'honeypot');
     var creds = (hp && Array.isArray(hp.topCredentials) && hp.topCredentials.length) ? hp.topCredentials.slice(0, 4) : null;
     fillRows(rowsOf(ms[2]), creds ? creds.map(function (c) {
       return [(c.username || '—') + ' / ' + (c.passwordLength !== undefined ? c.passwordLength + ' 位' : '—'),
         '×' + (Number(c.count) || 0) + ' · ' + (c.weakPassword ? '弱口令' : (c.passwordCharClasses || '—'))];
     }) : [[NA, '/honeypot']]);
-
-    /* ④ HOLO 面板那句话：数字换成真值（三个文本节点 + 两个 .qk 原件，不新增元素）
+  }
+  function bindHolo(parts) {
+    /* HOLO 面板那句话：数字换成真值（三个文本节点 + 两个 .qk 原件，不新增元素）
        ★B4：`audit` 在首屏**没有取**（它在「攻击图谱/数据统计」页才取）⇒ 这时**整句省略"护栏"分句**，
-       绝不写"读不到"（"没取"≠"取不到"）；等 audit 取到后这句自然补齐。 */
+       绝不写"读不到"（"没取"≠"取不到"）；等 audit 取到后这句自然补齐。
+       ★B5：蜜罐还没到 ⇒ 整句保持 SSR 原文（不写"读不到"）。 */
     var say = document.getElementById('holoSay');
-    if (say) {
-      var qk = say.querySelectorAll('.qk');
-      var auPart = parts.filter(function (x) { return x.path.indexOf('/audit') >= 0; })[0];
-      var auKnown = !!auPart;                                  /* 本轮到底取过 /audit 没有 */
-      var guard = okOrStale(auPart) && okOrStale(auPart).summary;
-      var guardN = guard ? fmt(guard.blockedByGuard) : null;
-      var hpN = hpReal(hp) ? hpReal(hp).label : null;   /* ★S3/X12：不再把 total=10000 当真值上屏 */
-      var tn = textNodes(say);
-      if (qk.length === 2 && tn.length >= 3) {
-        if (guardN || hpN) {
-          tn[0].nodeValue = auKnown ? '公开只读端点汇总：护栏拦下 ' : '公开只读端点汇总：';
-          qk[0].textContent = auKnown ? (guardN ? guardN + ' 个动作' : NA) : '';
-          tn[1].nodeValue = auKnown ? '，蜜罐累计事件 ' : '蜜罐累计事件 ';
-          qk[1].textContent = hpN ? hpN + ' 条' : NA;
-          tn[2].nodeValue = auKnown ? '。明细都在「监测中心」的大屏里。'
-            : '（护栏拦截数在「攻击图谱」页取）。明细都在「监测中心」的大屏里。';
-        } else {
-          tn[0].nodeValue = '公开只读端点 ';
-          qk[0].textContent = NA;
-          tn[1].nodeValue = ' ';
-          qk[1].textContent = '';
-          tn[2].nodeValue = '· 不补数、不编造（' + (parts.length ? errShort(parts) : '端点未取到') + '）';
-        }
+    if (!say || pend('honeypot')) return;
+    var hp = pick(parts, 'honeypot');
+    var qk = say.querySelectorAll('.qk');
+    var auPart = parts.filter(function (x) { return x.path.indexOf('/audit') >= 0; })[0];
+    var auKnown = !!auPart;                                  /* 本轮到底取过 /audit 没有 */
+    var guard = okOrStale(auPart) && okOrStale(auPart).summary;
+    var guardN = guard ? fmt(guard.blockedByGuard) : null;
+    var hpN = hpReal(hp) ? hpReal(hp).label : null;   /* ★S3/X12：不再把 total=10000 当真值上屏 */
+    var tn = textNodes(say);
+    if (qk.length === 2 && tn.length >= 3) {
+      if (guardN || hpN) {
+        tn[0].nodeValue = auKnown ? '公开只读端点汇总：护栏拦下 ' : '公开只读端点汇总：';
+        qk[0].textContent = auKnown ? (guardN ? guardN + ' 个动作' : NA) : '';
+        tn[1].nodeValue = auKnown ? '，蜜罐累计事件 ' : '蜜罐累计事件 ';
+        qk[1].textContent = hpN ? hpN + ' 条' : NA;
+        tn[2].nodeValue = auKnown ? '。明细都在「监测中心」的大屏里。'
+          : '（护栏拦截数在「攻击图谱」页取）。明细都在「监测中心」的大屏里。';
+      } else {
+        tn[0].nodeValue = '公开只读端点 ';
+        qk[0].textContent = NA;
+        tn[1].nodeValue = ' ';
+        qk[1].textContent = '';
+        tn[2].nodeValue = '· 不补数、不编造（' + (parts.length ? errShort(parts) : '端点未取到') + '）';
       }
     }
   }
@@ -655,15 +709,18 @@
 
   function bindOps(parts) {
     bindSync(parts);
-    bindBans(parts);          /* ★T20 */
-    bindStories(parts);       /* ★T21 */
-    bindRail(parts);
-    bindSpark(parts);
-    bindTypes(parts);
-    bindCounters(parts);
-    bindGraphData(parts);
-    bindStats(parts);
-    bindFeed(parts);
+    /* ★B5：**谁到了就渲染谁** —— 依赖某端点的绑定，在该端点还没到时整个跳过（保持骨架），
+       绝不因为"还没到"而把已经有数据的卡写成空白/读不到。 */
+    if (!pend('audit')) bindBans(parts);                     /* ★T20 */
+    if (!pend('stories')) bindStories(parts);                 /* ★T21 */
+    bindThreat(parts);                                       /* B5：内部各自判 pending */
+    bindGeo(parts);
+    bindHoney(parts);
+    bindHolo(parts);
+    if (!pend('alerts')) { bindSpark(parts); bindTypes(parts); bindFeed(parts); }
+    if (!pend('alerts') && !pend('honeypot')) bindGraphData(parts);
+    if (!pend('alerts') && !pend('audit') && !pend('honeypot') && !pend('geo')) bindCounters(parts);
+    if (!pend('webstats') && !pend('geo') && !pend('overview')) bindStats(parts);
   }
 
   /* ---------------------------------------------------------------- ★T20 处置成果 · 封禁榜
@@ -996,6 +1053,7 @@
       window.__xkBindErr = (SSR || '?') + ': ' + String((e && e.message) || e);
     }
     markStale(parts);                            /* ★B2/B3：卡角小字（429 优先，其次"上次数据"） */
+    neutralPendingHeads();                       /* ★B5：还有端点在路上时，把生成物先写的"读不到"兜回中性态 */
     if (SSR === 'monitor') bindSync(parts);      /* ★B2/B3：此刻记账已全 —— 用最终口径重写同步行 */
   }
   /* 服务端"冷缓存"时会返回一版"这次没数据"的降级响应（app.js 里记录的同一个现象：
@@ -1024,26 +1082,46 @@
       return Promise.resolve();
     }
     /* ★B3：一律取 `.js` 别名（可被 CF 缓存 ⇒ 命中时不回源、不吃限流）
-       ★B4：只取**当前 tab 需要**的端点（首屏 live = 3 个） */
-    return Promise.all(needJobs().map(function (n) { return settle(apiPath(n)); })).then(function (fresh) {
-      var rates = fresh.filter(function (p) { return !!p.rate; });
-      if (rates.length) { rateHoldUntil = Date.now() + rates[0].rate.s * 1000; }   /* 记冷却截止 */
-      var retry = fresh.filter(degraded);
-      /* ★B3：有 429 ⇒ **不补请求**（站主指示）；没有 429 时才走既有的"降级补一次" */
-      if (rates.length || !retry.length) { render(unionParts(fresh)); return fresh; }
-      setSyncState('重试中… （' + retry.length + ' 个端点本次降级，正在补一次请求）');   /* ★B2：与"读不到"可分辨 */
-      return new Promise(function (r) { setTimeout(r, 1500); })
-        .then(function () { return Promise.all(retry.map(function (p) { return settle(p.path); })); })
-        .then(function (again) {
-          again.forEach(function (p2) {
-            if (p2.ok && p2.d && !degraded(p2)) {
-              var t = fresh.filter(function (x) { return x.path === p2.path; })[0];
-              if (t) { t.ok = true; t.d = p2.d; t.err = null; t.retried = true; t.fresh = p2.fresh; }
-            }
-          });
-          render(unionParts(fresh)); return fresh;
-        }).catch(function () { render(unionParts(fresh)); return fresh; });
+       ★B4：只取**当前 tab 需要**的端点（首屏 live = 3 个）
+       ★B5：**渐进渲染** —— 不再 `Promise.all` 后一次性渲染，而是"每到一个就渲染一次"，
+       所以"看到第一条数据"的时间 = **最快那条**（改前 = 最慢那条）。只有**还没到**的端点会被标 pending。 */
+    var jobs = needJobs();
+    jobs.forEach(function (n) { if (!partCache[apiPath(n)]) pendingJobs[n] = 1; });
+    return Promise.all(jobs.map(function (n) {
+      return settle(apiPath(n)).then(function (p) {
+        partCache[p.path] = p;                                  /* 到了就进缓存（成功/失败都进） */
+        if (p.rate) { rateHoldUntil = Date.now() + p.rate.s * 1000; }
+        delete pendingJobs[n];                                  /* 这个端点已到 ⇒ 不再是 pending */
+        render(unionParts([]));                                 /* ★B5：立刻渲染"已到 + 缓存旧值"的全集 */
+        return p;
+      });
+    })).then(function (all) {
+      var rates = all.filter(function (p) { return !!p.rate; });
+      /* ★B3：有 429 ⇒ **不补请求**（站主指示）；此时把 pending 清空，让同步行说清"被限流" */
+      if (rates.length) { Object.keys(pendingJobs).forEach(function (k) { delete pendingJobs[k]; }); render(unionParts([])); return all; }
+      /* ★B5：降级补请求**移出首屏关键路径** —— 首屏上面已经画完了，这里只挂一个后台补一次 */
+      var retry = all.filter(degraded);
+      if (retry.length) scheduleRetry(retry);
+      return all;
     });
+  }
+  /* ★B5：降级补请求（后台，不阻塞首屏）。为什么还留 1200ms：降级多是"服务端快照刚过期"，
+     立即重试会再撞同一份冷快照；而它已不在关键路径上，用户此刻看到的是"已到的真值 + 未到的骨架"。 */
+  function scheduleRetry(retry) {
+    setSyncState('重试中… （' + retry.length + ' 个端点本次降级，正在后台补一次请求）');   /* ★B2：与"读不到"可分辨 */
+    setTimeout(function () {
+      Promise.all(retry.map(function (p) { return settle(p.path); })).then(function (again) {
+        var upd = [];
+        again.forEach(function (p2) {
+          if (p2.ok && p2.d && !degraded(p2)) { partCache[p2.path] = p2; upd.push(p2); }   /* 补到真值才覆盖 */
+        });
+        Object.keys(pendingJobs).forEach(function (k) { delete pendingJobs[k]; });
+        render(unionParts(upd));
+      }).catch(function () {
+        Object.keys(pendingJobs).forEach(function (k) { delete pendingJobs[k]; });
+        render(unionParts([]));
+      });
+    }, 1200);
   }
   /* ★B4：切到某 tab 时补取它独有的端点（已取过的不再请求；取到后立刻重渲染）。
      为什么"取过就不再请求"：CF 边缘 TTL=45s、站点轮询 40s ⇒ 切回来的数据最多 40s 旧，
@@ -1056,11 +1134,22 @@
       setSyncState('被限流冷却中 · ' + Math.ceil((rateHoldUntil - Date.now()) / 1000) + ' 秒后可重试（本轮不发请求）');
       return Promise.resolve();
     }
-    return Promise.all(jobs.map(function (n) { return settle(apiPath(n)); })).then(function (fresh) {
-      var rates = fresh.filter(function (p) { return !!p.rate; });
-      if (rates.length) { rateHoldUntil = Date.now() + rates[0].rate.s * 1000; }
-      render(unionParts(fresh));
-      return fresh;
+    /* ★B5：切 tab 也走渐进 —— 这批里哪个先到就先渲染（未到的保持骨架） */
+    jobs.forEach(function (n) { pendingJobs[n] = 1; });
+    return Promise.all(jobs.map(function (n) {
+      return settle(apiPath(n)).then(function (p) {
+        partCache[p.path] = p;
+        if (p.rate) rateHoldUntil = Date.now() + p.rate.s * 1000;
+        delete pendingJobs[n];
+        render(unionParts([]));
+        return p;
+      });
+    })).then(function (all) {
+      var rates = all.filter(function (p) { return !!p.rate; });
+      if (rates.length) { Object.keys(pendingJobs).forEach(function (k) { delete pendingJobs[k]; }); render(unionParts([])); return all; }
+      var retry = all.filter(degraded);
+      if (retry.length) scheduleRetry(retry);
+      return all;
     });
   }
   /* ★B4：切 tab 的钩子 —— 监听 `#opsTabs` 的 class 变化（点击 / 方向键 / `#hash` 深链都会改 class），
@@ -1088,6 +1177,17 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   }
   if (SSR === 'monitor') watchTabs();   /* ★B4：切 tab 才取该 tab 独有的端点 */
+  /* ★B5：数据到达前的头 3 秒里，反复把生成物抢先写的"读不到"兜回中性态（alerts 一到即停） */
+  if (SSR === 'monitor') {
+    neutralPendingHeads();
+    document.addEventListener('DOMContentLoaded', neutralPendingHeads);   /* 生成物的 switchView() 在这一刻才跑 */
+    window.addEventListener('load', neutralPendingHeads);
+    var nphTimer = setInterval(function () {
+      if (!pend('alerts')) { clearInterval(nphTimer); return; }
+      neutralPendingHeads();
+    }, 200);
+    setTimeout(function () { clearInterval(nphTimer); }, 3200);
+  }
   /* ★T22：/ai/ 不轮询（有 embedding 成本）—— 只在用户点话题词 / 按 Enter 时请求一次 */
   if (SSR === 'ai') bindKb();
 })();
