@@ -2674,10 +2674,22 @@ var XK_SM_JS = (function(){
       cand = V.T[kind] || null;
     }
     if(cand){
+      /* ★2026-10-16 修（站主实测"动作没活起来"的根因之一）：
+         原实现是"返回**第一个**可用的" ⇒ 每次 `host:voice` 都必然选到同一段
+         （线上实测：66 条时间轴里 63 条是 `angry_speaking` 自环、每 ~3 秒一次）。
+         现在：在"可用且不等于当前段"的候选里**随机**挑；一个都没有时才退回全集。 */
+      var avail = [];
       for(var i = 0; i < cand.length; i++){
         var cl = cand[i];
-        if((V.hostEntries && V.hostEntries.indexOf(cl) >= 0) || V.byClip[cl]) return cl;
+        if(((V.hostEntries && V.hostEntries.indexOf(cl) >= 0) || V.byClip[cl]) && cl !== V.cur) avail.push(cl);
       }
+      if(!avail.length){
+        for(var j = 0; j < cand.length; j++){
+          var cj = cand[j];
+          if((V.hostEntries && V.hostEntries.indexOf(cj) >= 0) || V.byClip[cj]) avail.push(cj);
+        }
+      }
+      if(avail.length) return avail[Math.floor(V.RNG() * avail.length)];
     }
     /* 兜底：把 current 的出边里、指向 host 入口的那条挑出来 */
     var es = V.out[V.cur] || [];
@@ -2687,9 +2699,29 @@ var XK_SM_JS = (function(){
     return V.root;
   }
   function roll(){
+    /* ★2026-10-16 修（站主实测"动作没活起来"的**主根因**）：
+       图里存在 `cur → cur` 的自环边且 `prob>0`，原实现直接按权重掷骰 ⇒ 实测线上
+       `angry_speaking → angry_speaking` 连中 **63 次**（每 ~3 秒一次），她看起来"冻"在一个动作上。
+       现在两条规则：
+         ① **优先非自环边**（只有"没有别的正概率边"时才允许自环）；
+         ② **反卡死**：连续 3 次落到同一段 ⇒ 强制回 `root`（idle），reason 记 `auto:anti-stall>` 供探针查。 */
     var out = V.out[V.cur] || [];
-    var e = pick(out);
+    var pos = [], self = [];
+    for(var k = 0; k < out.length; k++){
+      if(out[k].prob > 0){ (out[k].to === V.cur ? self : pos).push(out[k]); }
+    }
+    var e = pick(pos.length ? pos : self);
+    if(!e) e = pick(out);
     if(!e) return false;
+    if(e.to === V.cur){
+      V.sameStuck = (V.sameStuck || 0) + 1;
+      if(V.sameStuck >= 3 && V.byClip[V.root]){
+        V.sameStuck = 0;
+        return enter(V.root, 'auto:anti-stall>' + V.root);
+      }
+    }else{
+      V.sameStuck = 0;
+    }
     return enter(e.to, 'auto:' + e.from + '>' + e.to);
   }
   function host(kind, payload){
