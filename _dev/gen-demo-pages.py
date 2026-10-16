@@ -295,7 +295,13 @@ function xkvGreet(){
   xkvLoad().then(()=>{
     let seen = false;
     try{ seen = !!localStorage.getItem('xk-visited'); localStorage.setItem('xk-visited','1'); }catch(_){}
-    const id = seen ? 'greet_back' : 'greet_first';
+    /* ★2026-10-16 站主新口径：主页问候换成"欢迎使用 Amadeus 系统"那两句
+       （`greet_welcome` 首访 / `greet_welcome_back` 回访）。**旧的两句保留在库里作兜底**：
+       新句子若在 bank 里取不到（例如合并索引未更新），仍用旧的 ⇒ 保证"一定有声音，
+       且字幕与音频是同一句"（绝不让新字幕配旧音频）。 */
+    const wantNew = seen ? 'greet_welcome_back' : 'greet_welcome';
+    const legacy  = seen ? 'greet_back' : 'greet_first';
+    const id = xkvLine(wantNew) ? wantNew : legacy;
     XKV.entryId = id;
     xkvPlay(id);
   });
@@ -2478,6 +2484,7 @@ var XK_SM_JS = (function(){
   /* 语音 id → 情绪（沿用接手批那张表，收在这里；第二批做口型时会再读一次说话段）
      ★T27 收尾：nav_labs / nav_about 两句随靶场/关于两页删除作废（表里不再有这两个键）。 */
   var VOICE_EMO = {
+    greet_welcome:'happy', greet_welcome_back:'happy',
     greet_first:'happy', greet_back:'happy', tab_return:'happy',
     nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
     fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
@@ -3513,6 +3520,10 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   /* 固定台词表（口语版 · 入口 → 中文）。音轨文件与 lineId 一字不改；日语音轨仍是上一版录音，
      下一批重录时按这张表逐句重生成（见 docs/台词表-入口与固定台词-20261016.md）。 */
   var LINE_ZH = {
+    /* ★2026-10-16 站主新口径：进站问候换成"欢迎使用 Amadeus 系统"那两句（音频为 GPT-SoVITS v3 新合成，见 bank.json）；
+       旧的 greet_first / greet_back **保留**（新句子取不到时兜底，且它们的音轨仍是一字不改的老录音）。 */
+    greet_welcome: '你好，欢迎使用 Amadeus 系统。我是桐莉栖 —— 这上面的数字全是真的，慢慢看。',
+    greet_welcome_back: '又见面了。Amadeus 系统一直开着呢，你安心看就好。',
     greet_first: '你好，我是桐莉栖。这一屏的数字都是真的，看不清就凑近一点。',
     greet_back: '又见到你了。数据还是真的，我没换过口径。',
     nav_home: '回到主页了。我一直待在这台显示器里。',
