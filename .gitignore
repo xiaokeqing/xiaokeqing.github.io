@@ -91,4 +91,4 @@ _dev/*
 !_dev/_probe-idcard.mjs
 !_shots/batchA-shot-report.json
 !_shots/batchA2-shot-report.json
-!_shots/firstscreen-order-home.json
+!_shots/firstscreen-order-home.json!_dev/shot-batch-b-askbar.mjs
