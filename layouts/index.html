@@ -2036,7 +2036,29 @@ if(!RM){ setTimeout(xkmLoad, 2000); }
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){ if(timer){ clearTimeout(timer); timer = null; } } else if(!timer){ arm(); }
   });
-  arm();
+  /* ★2026-10-16 修（主窗口验收发现的真问题）：**开场期间不切场景**。
+     根因：T31 开场六阶段用**内联 `style.opacity`** 控制 `#charCanvas`（优先级高于类级规则
+     `.crt-clip.xk-scene-b .charcanvas{opacity:0}`）⇒ 开场期间进 B 模式"淡不出她"，
+     且首切发生在 2.6s（开场还没走完）⇒ 观感是"大头特写里夹一张静帧"。
+     判据（用既有钩子，不新造计时器）：生成器自己的口径是"主页要等**开场落定（showHud 里调 takeOver）**"
+     ⇒ `__xkSM.stats().tookOver === true` 即开场结束；置位同时把开场写的内联 opacity 摘掉（交还给 CSS）。
+     兜底：15s 内始终没落定（例如 statemachine.json 取不到、SM 未接管）也照常启动，避免永不轮换。 */
+  var started = false;
+  function openingDone(){
+    try{ var s = window.__xkSM && window.__xkSM.stats && window.__xkSM.stats(); return !!(s && s.tookOver); }catch(e){ return false; }
+  }
+  function startWhenOpeningDone(){
+    if(started) return;
+    started = true;
+    try{ var c = document.getElementById('charCanvas'); if(c) c.style.removeProperty('opacity'); }catch(e){}
+    V.startedAt = Math.round(performance.now());
+    arm();
+  }
+  if(openingDone()){ startWhenOpeningDone(); }
+  else {
+    var iv = setInterval(function(){ if(openingDone()){ clearInterval(iv); startWhenOpeningDone(); } }, 300);
+    setTimeout(function(){ clearInterval(iv); startWhenOpeningDone(); }, 15000);
+  }
   V.setMode = function(mode, name){ setMode(mode || 'A', name || 'empty', 'manual'); };
 })();
 
