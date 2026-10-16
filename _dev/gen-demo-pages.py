@@ -186,6 +186,10 @@ DOCK_A_CSS = u'''
      `.dock button` 上，生产页的元素是 <a> ⇒ 选择器不命中，必须给同一组值。
      值 = demo 的 `.dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}`。 */
   @media (max-width:980px){
+    /* ★批次 D（2026-10-16 站主：“导航栏放到头上面好”）：≤980px 导航改到头部
+       （头像卡下方一行）；桌面（>980px）左侧竖排一字不动。配色/字体零改动。 */
+    .dock{left:0;right:0;top:86px;bottom:auto;transform:none;flex-direction:row;max-width:none;
+      overflow-x:auto;border-radius:0 0 14px 0}
     .dock{gap:4px;padding:6px}
     .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
   }
@@ -382,8 +386,12 @@ DOCK_CSS = (
     '  .dock a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}\n'
     '  .dock a:hover{color:var(--txt)}\n'
     + T31_CSS + '\n'
+    '  /* ★批次 D（2026-10-16 站主：“导航栏放到头上面好”）：≤980px 时导航从**底部改到头部**。\n'
+    '     为什么是“头像卡下方”而不是同一行：左上角头像卡（站主点名）已占 90×90，\n'
+    '     同一行要放下 5 项×44px 必然溢出；排在它下面一行可以全宽横滑、不挡她的脸。桌面（>980px）左侧竖排一字不动。 */\n'
     '  @media (max-width:980px){\n'
-    '    .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}\n'
+    '    .dock{left:0;right:0;top:86px;bottom:auto;transform:none;flex-direction:row;\n'
+    '      max-width:none;overflow-x:auto;border-left:1px solid var(--line2);border-radius:0 0 14px 0;padding:4px 6px}\n'
     '    .dock .brand{display:none}\n'
     '    /* ★窗口 Q（2026-10-16）移动端硬伤 3（配对修复）：主页 dock 也是 <a>，值同 shell-style 的那一组 */\n'
     '    .dock{gap:4px;padding:6px}\n'
@@ -2998,7 +3006,9 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   .xk-idpanel .xk-close{position:absolute;right:7px;top:5px;background:none;border:0;cursor:pointer;
     color:var(--mut,#D2CBBD);font-size:13px;line-height:1;padding:2px}
   @media (max-width:980px){
-    body.xk-has-idcard .dock{top:auto}
+    /* ★批次 D（2026-10-16）：窄屏导航已改到头部（头像卡下方），这里必须给同一个 86px ——
+       原来写 top:auto 会把 DOCK_CSS 里那条（特异性更低）压掉，实测 dock 会贴到 top=0 并压住头像卡。 */
+    body.xk-has-idcard .dock{top:86px}
     .xk-idcard-av{width:56px;height:56px}
     .xk-idcard-av canvas{width:56px;height:56px}
     .xk-idcard-btn{width:34px;height:34px;font-size:15px}

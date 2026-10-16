@@ -422,6 +422,10 @@
      `.dock button` 上，生产页的元素是 <a> ⇒ 选择器不命中，必须给同一组值。
      值 = demo 的 `.dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}`。 */
   @media (max-width:980px){
+    /* ★批次 D（2026-10-16 站主：“导航栏放到头上面好”）：≤980px 导航改到头部
+       （头像卡下方一行）；桌面（>980px）左侧竖排一字不动。配色/字体零改动。 */
+    .dock{left:0;right:0;top:86px;bottom:auto;transform:none;flex-direction:row;max-width:none;
+      overflow-x:auto;border-radius:0 0 14px 0}
     .dock{gap:4px;padding:6px}
     .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
   }
