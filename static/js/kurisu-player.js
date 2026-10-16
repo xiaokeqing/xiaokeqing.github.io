@@ -396,11 +396,20 @@
     this._onResize = this.handleResize.bind(this);
     this._onMq = this.handleEnvChange.bind(this);
     this._askOff = null;
-    /* 状态机（37/87）默认关：由挂载点 data-xk-kurisu-sm="on" 或 opts.stateMachine 显式打开。
-       理由（字节代价）写在上面的状态机段注释里。 */
-    this.smOn = (opts.stateMachine === true || (opts.stateMachine !== false &&
-      this.mount.getAttribute('data-xk-kurisu-sm') === 'on')) &&
-      (opts.mode || this.mode) === 'stage';
+    /* 状态机（38 节点 / 92 边）的开关。
+       ★2026-10-16（站主裁决）：**电视（rail）也要演原动画** —— 原实现硬要求 `mode==='stage'`，
+       而现网 50 页挂载点全是 `rail` ⇒ 状态机永远不开，她只剩 idle 与开场（站主看到的"只有一进站的大头特效"）。
+       现在：`rail` 与 `stage` 都允许，且 **rail 默认开**（电视就是她的舞台；phone 轨另算，见 §二十）。
+       **一键关（三选一，任一即可）**：
+         · URL 加 `?xk-sm=off`（由状态机自己的 boot 读，见该段注释）
+         · `opts.stateMachine = false`
+         · 构建期把 `manifest.stateMachine.auto = false`（`smOff` 会据此拦掉）
+       保守边界：`prefers-reduced-motion` 时状态机自己不开（见其 boot）。 */
+    var smMode = (opts.mode || this.mode);
+    var smAttrOn = this.mount.getAttribute('data-xk-kurisu-sm') === 'on';
+    this.smOn = (opts.stateMachine === true ||
+      (opts.stateMachine !== false && (smAttrOn || smMode === 'rail'))) &&
+      (smMode === 'stage' || smMode === 'rail');
     this.smTimer = null;
     this.smRunning = false;
     this.smDiag = null;

@@ -111,26 +111,24 @@ def main():
         rows.append((lid, secs, len(wav), len(env), text))
     json.dump(bank, open(BANK, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
-    # ---- 同一份契约写进 manifest.json 的 voice 段（运行时与 L2 读同一份，别靠约定） ----
+    # ---- ★慢网减量（2026-10-16，主窗口）：**不再往 manifest.json 写 voice 段** ----
+    #   该段约 90~101 KB，是 voice/bank.json 的**重复**数据；而运行期**无人读它**
+    #   （全库唯一 `.voice` 命中是 shell-script.html 的 `V.T.voice = V.hostEntries`，
+    #   属状态机的"台词组→转场"表），manifest.json 却在首屏被取
+    #   （idcard 读 emotions.*.idle.frames / 状态机读图集清单）⇒ 在 3~6 KB/s 链路上是 ~20~30 秒死重。
+    #   语音事实的唯一真源 = static/kurisu/voice/bank.json。
+    #   三条写入路径都要堵：本脚本 + _dev/refresh_manifest_voice.py（已改为校验器）
+    #   + _dev/build_statemachine_manifest.py（已 mf.pop）。本脚本若被重跑（注意：它还会用 SAPI wav
+    #   覆盖日语素材，见文件头警告），这里**主动把已有 voice 段丢掉**，防止 json.load→dump 带回来。
     mf_path = os.path.join(REPO, 'static', 'kurisu', 'manifest.json')
     mf = json.load(open(mf_path, encoding='utf-8'))
-    mf['voice'] = {
-        'bank': 'kurisu/voice/bank.json',
-        'codec': bank['codec'],
-        'sampleRate': bank['sampleRate'],
-        'hopMs': bank['hopMs'],
-        'envelopeFormula': bank['envelopeFormula'],
-        'voiceNote': bank['voiceNote'],
-        'totalBytes': tot,
-        'lineCount': len(bank['lines']),
-        'lines': [
-            {'id': lid, 'audio': v['audio'], 'envelope': v['envelope'], 'text': v['text'],
-             'scene': v['scene'], 'seconds': v['seconds'], 'audioBytes': v['audioBytes']}
-            for lid, v in bank['lines'].items()
-        ],
-    }
-    json.dump(mf, open(mf_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    print('voice 段（%d 条）→ %s' % (len(bank['lines']), mf_path))
+    if 'voice' in mf:
+        _sz = len(json.dumps(mf['voice'], ensure_ascii=False).encode('utf-8'))
+        print('  ⚠ manifest.json 里存在 voice 段（%d B）—— 本次运行把它丢掉（不再写入该段）' % _sz)
+        mf.pop('voice', None)
+        json.dump(mf, open(mf_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    else:
+        print('  manifest.json 无 voice 段 ✓（本脚本不再写入该段）')
 
     print('| 台词 id | 时长s | 音频字节 | 包络点数 | 文本 |')
     print('|---|---:|---:|---:|---|')
