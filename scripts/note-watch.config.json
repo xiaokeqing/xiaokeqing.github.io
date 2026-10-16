@@ -1,0 +1,13 @@
+{
+  "_说明": "桌面「发笔记」B 版看守配置（scripts/note-watch.ps1 读它）。改完保存即生效（下个循环重新读取？否 —— 本版在启动时读取一次，改完请重启看守；enabled=false 会在下个循环退出）。",
+  "enabled": true,
+  "autoPublish": true,
+  "autoUndraft": false,
+  "push": true,
+  "debounceSeconds": 4,
+  "watchDir": "content\\posts",
+  "sshKey": "C:/Users/T/.ssh/secagent_ed25519",
+  "gitRemote": "origin",
+  "gitBranch": "main",
+  "publishBacklogOnStart": false
+}
