@@ -217,7 +217,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 11,
-     "file": "angry_speaking.patch.png",
+     "file": "angry_speaking.patch.webp",
      "overlay_entry": "textures/angry_trans/loop/kurisu_angry_trans0001.ktx2",
      "size": [
       34,
@@ -257,15 +257,6 @@
     "frameWidth": 134,
     "frames": 60,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "angry_trans.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -299,15 +290,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "closed_eye_trans.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -362,15 +344,6 @@
     "frameWidth": 268,
     "frames": 120,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / generated(0.5x q=72)",
     "tier": "hi"
    },
@@ -425,15 +398,6 @@
     "frameWidth": 268,
     "frames": 120,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle1.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "hi"
    },
@@ -483,15 +447,6 @@
     "frameWidth": 134,
     "frames": 290,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle2.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / generated(0.5x q=72)",
     "tier": "medium"
    },
@@ -573,15 +528,6 @@
     "frameWidth": 168,
     "frames": 738,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle_closed_eye.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / generated(0.5x q=72)",
     "tier": "medium"
    },
@@ -615,15 +561,6 @@
     "frameWidth": 134,
     "frames": 194,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle_mic_wind.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -689,15 +626,6 @@
     "frameWidth": 134,
     "frames": 600,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle_side_butterfly.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -731,15 +659,6 @@
     "frameWidth": 134,
     "frames": 180,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle_side_soft_wind.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / generated(0.5x q=72)",
     "tier": "medium"
    },
@@ -773,15 +692,6 @@
     "frameWidth": 134,
     "frames": 180,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle_side_wind.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -815,15 +725,6 @@
     "frameWidth": 134,
     "frames": 194,
     "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "idle_str_wind.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -859,7 +760,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 154,
-     "file": "key_point_speaking.patch.png",
+     "file": "key_point_speaking.patch.webp",
      "overlay_entry": "textures/key_point_speaking/loop/kurisu_speaking_loop0155.ktx2",
      "size": [
       34,
@@ -900,15 +801,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "thinking_to_key_point.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "reverse": true,
     "source": "statemachine.json / copied(thinking_to_key_point)",
     "tier": "medium"
@@ -945,7 +837,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "sad_speaking.patch.png",
+     "file": "sad_speaking.patch.webp",
      "overlay_entry": "textures/sad_speaking/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -985,15 +877,6 @@
     "frameWidth": 134,
     "frames": 60,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "sad_trans.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -1027,15 +910,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "serious_to_thinking.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -1071,7 +945,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 32,
-     "file": "shy_speaking1.patch.png",
+     "file": "shy_speaking1.patch.webp",
      "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
      "size": [
       34,
@@ -1129,7 +1003,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 299,
-     "file": "shy_speaking2.patch.png",
+     "file": "shy_speaking2.patch.webp",
      "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
      "size": [
       34,
@@ -1169,15 +1043,6 @@
     "frameWidth": 134,
     "frames": 60,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "shy_trans.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -1213,7 +1078,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "smile_speaking.patch.png",
+     "file": "smile_speaking.patch.webp",
      "overlay_entry": "textures/smile_speaking/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1255,7 +1120,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "speaking_closed_eye_1.patch.png",
+     "file": "speaking_closed_eye_1.patch.webp",
      "overlay_entry": "textures/speaking_closed_eye_1/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1313,7 +1178,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "speaking_closed_eye_2.patch.png",
+     "file": "speaking_closed_eye_2.patch.webp",
      "overlay_entry": "textures/speaking_closed_eye_2/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1371,7 +1236,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "speaking_long.patch.png",
+     "file": "speaking_long.patch.webp",
      "overlay_entry": "textures/speaking_long/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1413,7 +1278,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "speaking_loop1.patch.png",
+     "file": "speaking_loop1.patch.webp",
      "overlay_entry": "textures/speaking_loop1/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1471,7 +1336,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "speaking_loop2.patch.png",
+     "file": "speaking_loop2.patch.webp",
      "overlay_entry": "textures/speaking_loop2/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1566,7 +1431,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "speaking_med.patch.png",
+     "file": "speaking_med.patch.webp",
      "overlay_entry": "textures/speaking_med/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1629,7 +1494,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "speaking_short.patch.png",
+     "file": "speaking_short.patch.webp",
      "overlay_entry": "textures/speaking_short/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1669,15 +1534,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "speaking_trans.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / generated(0.5x q=72)",
     "tier": "medium"
    },
@@ -1734,7 +1590,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 5,
-     "file": "surprise_speaking.patch.png",
+     "file": "surprise_speaking.patch.webp",
      "overlay_entry": "textures/surprise_trans/loop/kurisu_surprise_trans0001.ktx2",
      "size": [
       34,
@@ -1774,15 +1630,6 @@
     "frameWidth": 134,
     "frames": 60,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "surprise_trans.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -1818,7 +1665,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "thinking_speaking1.patch.png",
+     "file": "thinking_speaking1.patch.webp",
      "overlay_entry": "textures/thinking_speaking1/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1913,7 +1760,7 @@
     "loopMode": "loop",
     "mouthPatch": {
      "closed_frame_idx": 0,
-     "file": "thinking_speaking2.patch.png",
+     "file": "thinking_speaking2.patch.webp",
      "overlay_entry": "textures/thinking_speaking2/loop/kurisu_speaking_loop0001.ktx2",
      "size": [
       34,
@@ -1953,15 +1800,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "thinking_to_key_point.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -1995,15 +1833,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "thinking_to_serious.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -2037,15 +1866,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "thinking_trans.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -2079,15 +1899,6 @@
     "frameWidth": 134,
     "frames": 120,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "trans_smile.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / copied",
     "tier": "medium"
    },
@@ -2121,15 +1932,6 @@
     "frameWidth": 134,
     "frames": 196,
     "loopMode": "once_then_hold",
-    "mouthPatch": {
-     "closed_frame_idx": null,
-     "file": "trans_standby.patch.png",
-     "overlay_entry": null,
-     "size": [
-      34,
-      18
-     ]
-    },
     "source": "statemachine.json / generated(0.5x q=72)",
     "tier": "medium"
    }

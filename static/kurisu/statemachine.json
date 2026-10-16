@@ -104,15 +104,7 @@
     ],
     "bytes": 2312750
    },
-   "mouthPatch": {
-    "file": "idle.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_6fknbp9",
@@ -175,15 +167,7 @@
     "bytes": 1968196
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "idle2.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_sugrzf5",
@@ -230,15 +214,7 @@
     "bytes": 1484378
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "idle_mic_wind.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_478pebn",
@@ -285,15 +261,7 @@
     "bytes": 1590472
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "idle_str_wind.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_5qqy7vp",
@@ -360,15 +328,7 @@
     ],
     "bytes": 2311002
    },
-   "mouthPatch": {
-    "file": "idle1.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_h60jwtz",
@@ -415,15 +375,7 @@
     "bytes": 1191988
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "trans_standby.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_tj6uxlr",
@@ -470,15 +422,7 @@
     "bytes": 883450
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "trans_smile.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_tcjdzf0",
@@ -525,15 +469,7 @@
     "bytes": 793910
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "speaking_trans.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_iomne8b",
@@ -581,7 +517,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "speaking_loop1.patch.png",
+    "file": "speaking_loop1.patch.webp",
     "size": [
      34,
      18
@@ -652,7 +588,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "speaking_loop2.patch.png",
+    "file": "speaking_loop2.patch.webp",
     "size": [
      34,
      18
@@ -706,15 +642,7 @@
     "bytes": 1211630
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "idle_side_wind.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_vo874gi",
@@ -761,15 +689,7 @@
     "bytes": 1087574
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "idle_side_soft_wind.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_k5b3qvq",
@@ -837,7 +757,7 @@
     "bytes": 2091890
    },
    "mouthPatch": {
-    "file": "speaking_short.patch.png",
+    "file": "speaking_short.patch.webp",
     "size": [
      34,
      18
@@ -944,7 +864,7 @@
     "bytes": 4667624
    },
    "mouthPatch": {
-    "file": "speaking_med.patch.png",
+    "file": "speaking_med.patch.webp",
     "size": [
      34,
      18
@@ -1015,7 +935,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "speaking_long.patch.png",
+    "file": "speaking_long.patch.webp",
     "size": [
      34,
      18
@@ -1070,7 +990,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "smile_speaking.patch.png",
+    "file": "smile_speaking.patch.webp",
     "size": [
      34,
      18
@@ -1124,15 +1044,7 @@
     "bytes": 426166
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "sad_trans.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_a998p67",
@@ -1180,7 +1092,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "sad_speaking.patch.png",
+    "file": "sad_speaking.patch.webp",
     "size": [
      34,
      18
@@ -1234,15 +1146,7 @@
     "bytes": 899690
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "thinking_trans.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_20x9amw",
@@ -1290,7 +1194,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "thinking_speaking1.patch.png",
+    "file": "thinking_speaking1.patch.webp",
     "size": [
      34,
      18
@@ -1397,7 +1301,7 @@
     "bytes": 5778906
    },
    "mouthPatch": {
-    "file": "thinking_speaking2.patch.png",
+    "file": "thinking_speaking2.patch.webp",
     "size": [
      34,
      18
@@ -1451,15 +1355,7 @@
     "bytes": 888204
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "thinking_to_serious.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_nnu2yb5",
@@ -1506,15 +1402,7 @@
     "bytes": 910014
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "thinking_to_key_point.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_8zysg7u",
@@ -1562,7 +1450,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "key_point_speaking.patch.png",
+    "file": "key_point_speaking.patch.webp",
     "size": [
      34,
      18
@@ -1616,15 +1504,7 @@
     "bytes": 847326
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "serious_to_thinking.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_la21lrm",
@@ -1671,15 +1551,7 @@
     "bytes": 409876
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "shy_trans.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_ezyyvyu",
@@ -1727,7 +1599,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "shy_speaking1.patch.png",
+    "file": "shy_speaking1.patch.webp",
     "size": [
      34,
      18
@@ -1798,7 +1670,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "shy_speaking2.patch.png",
+    "file": "shy_speaking2.patch.webp",
     "size": [
      34,
      18
@@ -1852,15 +1724,7 @@
     "bytes": 395228
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "surprise_trans.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_bqm6hqs",
@@ -1928,7 +1792,7 @@
     "bytes": 3406538
    },
    "mouthPatch": {
-    "file": "surprise_speaking.patch.png",
+    "file": "surprise_speaking.patch.webp",
     "size": [
      34,
      18
@@ -1982,15 +1846,7 @@
     "bytes": 436630
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "angry_trans.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_ijtkrmm",
@@ -2038,7 +1894,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "angry_speaking.patch.png",
+    "file": "angry_speaking.patch.webp",
     "size": [
      34,
      18
@@ -2124,15 +1980,7 @@
     "bytes": 4462158
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "idle_side_butterfly.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_khp4i06",
@@ -2179,15 +2027,7 @@
     "bytes": 983250
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "closed_eye_trans.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_7jh10a4",
@@ -2235,7 +2075,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "speaking_closed_eye_1.patch.png",
+    "file": "speaking_closed_eye_1.patch.webp",
     "size": [
      34,
      18
@@ -2306,7 +2146,7 @@
    },
    "hi": null,
    "mouthPatch": {
-    "file": "speaking_closed_eye_2.patch.png",
+    "file": "speaking_closed_eye_2.patch.webp",
     "size": [
      34,
      18
@@ -2408,15 +2248,7 @@
     "bytes": 4899836
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "idle_closed_eye.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   }
+   "mouthPatch": null
   },
   {
    "id": "_key_point_to_thinking",
@@ -2463,15 +2295,7 @@
     "bytes": 910014
    },
    "hi": null,
-   "mouthPatch": {
-    "file": "thinking_to_key_point.patch.png",
-    "size": [
-     34,
-     18
-    ],
-    "overlay_entry": null,
-    "closed_frame_idx": null
-   },
+   "mouthPatch": null,
    "atlas_clip": "thinking_to_key_point",
    "reverse": true
   }

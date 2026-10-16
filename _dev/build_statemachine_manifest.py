@@ -29,6 +29,7 @@ SM_IN = os.path.join(REPO, 'docs', 'amadeus-research', 'data', 'statemachine.jso
 SM_OUT = os.path.join(REPO, 'static', 'kurisu', 'statemachine.json')
 MEDIA = os.path.join(REPO, 'static', 'kurisu', 'medium')
 HI = os.path.join(REPO, 'static', 'kurisu', 'hi')
+MOUTH = os.path.join(REPO, 'static', 'kurisu', 'mouth')
 GEN_META = os.path.join(REPO, '_dev', 'medium-manifest.json')
 TABLE = os.path.join(REPO, '_dev', 'medium-volume-table.md')
 DRY = '--dry' in sys.argv
@@ -68,6 +69,8 @@ gen = json.load(open(GEN_META, encoding='utf-8'))['clips']
 
 problems = []
 tot_referenced = 0
+mouth_ok = 0        # 节点解析到磁盘上真实存在的嘴部补丁
+mouth_null = 0      # 节点没有真实素材 ⇒ mouthPatch 显式置 null（不留假路径）
 files_seen = set()
 medium_file_bytes = {}   # file → 真实字节；同一份图集被多个节点引用时只算一次
 files_seen_hi = set()
@@ -112,7 +115,29 @@ for n in sm['nodes']:
             'first_frame': p['first_frame'], 'last_frame': p['last_frame'],
             'pixels': p['pixels'], 'bytes': real,
         })
+    # 嘴部补丁（P0-④ 的闭嘴层）：元数据 web/meta/<clip>.json 里声明的是产线转换**之前**的
+    # `.patch.png`，而 static/kurisu/mouth/ 实际存的是 `.patch.webp`（16 个剪辑 × 三件套：
+    # <clip>.patch.webp / <clip>.closedRegion.webp / <clip>.json）。这里**据实解析**，只登记磁盘上
+    # 真实存在的文件名：
+    #   ① 声明的文件在 → 用它；② 不在 → 试同名 .webp / .png；③ 都没有 → mouthPatch 显式置 null。
+    # 为什么必须置 null 而不是留着：留假路径就是"指向不存在文件的假数据"（零造假红线），
+    # 且 _dev/check-asset-integrity.py 会把它算成断链（2026-10-16 实测 76 条：manifest 38 + statemachine 38）。
     mouth = meta.get('mouth_patch') or {}
+    _mouth_declared = mouth.get('file')
+    mouth_file = None
+    if _mouth_declared:
+        if os.path.exists(os.path.join(MOUTH, _mouth_declared)):
+            mouth_file = _mouth_declared
+        else:
+            _stem = os.path.splitext(_mouth_declared)[0]
+            for _ext in ('.webp', '.png'):
+                if os.path.exists(os.path.join(MOUTH, _stem + _ext)):
+                    mouth_file = _stem + _ext
+                    break
+    if mouth_file:
+        mouth_ok += 1
+    else:
+        mouth_null += 1
     # hi 档（可选）：主页最常用那几段才有。几何取 web/meta 的 atlas_pages，文件必须真在 static/kurisu/hi/
     hi_pages = []
     hi_bytes = 0
@@ -151,13 +176,14 @@ for n in sm['nodes']:
         'atlas_source': origin,
         'medium': {'pages': pages, 'bytes': sum(p['bytes'] for p in pages)},
         'hi': ({'pages': hi_pages, 'bytes': hi_bytes} if hi_pages else None),
-        # 嘴部补丁：34x18 的小图（P0-④ 的闭嘴层素材），这里只登记来源，不搬运
-        'mouthPatch': {
-            'file': mouth.get('file'),
+        # 嘴部补丁：34x18 的小图（P0-④ 的闭嘴层素材），这里只登记来源，不搬运。
+        # file 只写**磁盘上真实存在**的名字（见本节点循环上方的据实解析）；没有素材就显式 null。
+        'mouthPatch': ({
+            'file': mouth_file,
             'size': mouth.get('size'),
             'overlay_entry': mouth.get('overlay_entry'),
             'closed_frame_idx': mouth.get('closed_frame_idx'),
-        },
+        } if mouth_file else None),
     })
     if n.get('atlas_clip'):
         nodes_out[-1]['atlas_clip'] = n['atlas_clip']
@@ -240,8 +266,13 @@ if problems:
     sys.exit(2)
 
 if not DRY:
-    json.dump(out, open(SM_OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    open(TABLE, 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+    # ★换行符（2026-10-16 口型素材批）：仓库里这两个 JSON 存的是**纯 LF**，而本脚本原先用
+    #   `open(..., 'w')` 在 Windows 上是文本模式 ⇒ 写出 CRLF。后果不是功能问题，而是
+    #   **每次重跑都产生"整文件换行符翻新"的假 diff**（实测 manifest.json 2448 行、statemachine.json
+    #   252 行的噪声），真正的改动（几十行）被淹没，评审与回滚都变难。
+    #   ⇒ 三处写盘一律显式 `newline='\n'`，让产物与仓库存储形态一致。
+    json.dump(out, open(SM_OUT, 'w', encoding='utf-8', newline='\n'), ensure_ascii=False, indent=1)
+    open(TABLE, 'w', encoding='utf-8', newline='\n').write('\n'.join(lines) + '\n')
     # ---- 同时把 37 个剪辑的几何写进 manifest.json 的 clipsMedium 段 ----
     # 为什么要有这一段：manifest.json 是"剪辑清单"的正式契约文件，只读它的人
     # （别的工具/别的 AI）也该看见全部 37 段；字段名沿用**既有契约名**
@@ -295,8 +326,17 @@ if not DRY:
         st['hiClips'] = [n['clip'] for n in nodes_out if n.get('hi')]
         st['hiTotalBytes'] = tot_hi
         st['hostTriggeredEntries'] = zero_targets
-    json.dump(mf, open(MANIFEST, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    # ★键顺序（2026-10-16 口型素材批）：仓库里 manifest.json 是**整体字典序**写的
+    #   （顶层 budgets/clips/clipsMedium/emotions/format/generator/scene/stateMachine/voice，
+    #   内层同样字典序），而 statemachine.json 是**插入序**。本脚本属于 manifest 的那次 dump
+    #   原先漏了 sort_keys ⇒ 每次重跑都把 clipsMedium 整段按节点序重排，产生上千行"顺序噪声"，
+    #   真实改动（几十行）被淹没。这里补回 sort_keys=True 以复现仓库既有形态；
+    #   statemachine.json 保持插入序（与 HEAD 一致）。
+    json.dump(mf, open(MANIFEST, 'w', encoding='utf-8', newline='\n'),
+              ensure_ascii=False, indent=1, sort_keys=True)
     print('clipsMedium 段（%d 段）→ %s' % (len(cm), MANIFEST))
+print('嘴部补丁：%d 个节点解析到真实文件 / %d 个显式置 null（mouth/ 磁盘 %d 个文件）'
+      % (mouth_ok, mouth_null, len(os.listdir(MOUTH)) if os.path.isdir(MOUTH) else 0))
 print('OK：%d 节点 / %d 边 / medium %d 文件 %.2f MB / hi %d 文件 %.2f MB → %s' %
       (len(nodes_out), len(sm['edges']), len(files_seen), tot_referenced / 1048576,
        len(files_seen_hi), tot_hi / 1048576, SM_OUT))
