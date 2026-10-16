@@ -256,8 +256,43 @@ Invoke-Checked 'tar.exe' @('-czf', $TmpTar, '-C', $PublicDir, '.') '打包'
 $tarLen = (Get-Item -LiteralPath $TmpTar).Length
 Ok ("tar.gz = {0:N2} MB" -f ($tarLen / 1MB))
 
+# ★2026-10-16：把「临时 worktree + 临时包」的清理提成函数 —— 原先只在**成功路径尾部**调用，
+#   于是 `-DryRun` 在 4/6 之后直接 `exit 0`，每次 DryRun 都留下一个 worktree 注册 + 一个 %TEMP% 大包
+#   （实测累积到 **26 个包 / 2.26GB**）。现在**两条出口都走这里**。
+#   清理失败**不作任何判定**（真正的发布结论在这之前已经给出）。
+function Invoke-PublishCleanup {
+    param([switch]$RemoveCurrentTar)   # DryRun 的包只为"上传前哈希判定"存在，用完即删
+    if ($WorktreeAdded) {
+        Write-Host "`n[清理] 移除临时 worktree：$WorkDir" -ForegroundColor Cyan
+        # ★2026-10-16：这两条同属"**未包裹**的原生命令"（清理段不属于发布主流程）。
+        #   · `git worktree remove --force` 对**已经被删掉**的目录会返回 128（实测），且可能往
+        #     stderr 写一行 ⇒ EAP=Stop 下抛 NativeCommandError，脚本在 `exit 0` 之前中止；
+        #   · 与 Invoke-Checked 同法：临时放宽 EAP + 吞掉 stderr，**不作任何结果判定**（清理失败
+        #     不影响发布结论，真正的发布判定在这之前已经完成）。
+        $eapClean = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & git -C $BlogDir worktree remove --force $WorkDir 2>$null
+            & git -C $BlogDir worktree prune 2>$null
+        } finally { $ErrorActionPreference = $eapClean }
+        Ok '已清理临时 worktree'
+    }
+    # 收敛陈旧临时包：只保留**本次**这一个（每个 82~144MB，不收敛会无限堆积 —— 见上面 2.26GB）
+    if ($TmpTar -and (Test-Path -LiteralPath $TmpTar)) {
+        $tmpDir = [IO.Path]::GetDirectoryName($TmpTar)
+        Get-ChildItem -LiteralPath $tmpDir -Filter 'xk-site-*.tar.gz' -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -ne $TmpTar } |
+            ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue }
+    }
+    if ($RemoveCurrentTar -and $TmpTar -and (Test-Path -LiteralPath $TmpTar)) {
+        Remove-Item -LiteralPath $TmpTar -Force -ErrorAction SilentlyContinue
+        Ok ("已删除本次 DryRun 临时包：" + [IO.Path]::GetFileName($TmpTar))
+    }
+}
+
 if ($DryRun) {
-    Write-Host "`n[DryRun] 已构建 + 校验 + **整树哈希判定**（上面那两行就是上传前的判定）+ 打包，未上传。包在：$TmpTar" -ForegroundColor Yellow
+    Write-Host "`n[DryRun] 已构建 + 校验 + **整树哈希判定**（上面那两行就是上传前的判定）+ 打包，未上传。" -ForegroundColor Yellow
+    Invoke-PublishCleanup -RemoveCurrentTar
     exit 0
 }
 
@@ -344,21 +379,7 @@ Write-Host " index.html：$indexLen B（sha256 $($indexSha.Substring(0,16))…�
 Write-Host " 入口：https://xiaokeqing.cn/（切域名前可用 Host 头/回环或 staging 域名验证）" -ForegroundColor DarkGray
 Write-Host '========================================' -ForegroundColor Green
 
-if ($WorktreeAdded) {
-    Write-Host "`n[清理] 移除临时 worktree：$WorkDir" -ForegroundColor Cyan
-    # ★2026-10-16：这两条同属"**未包裹**的原生命令"（清理段不属于发布主流程）。
-    #   · `git worktree remove --force` 对**已经被删掉**的目录会返回 128（实测），且可能往
-    #     stderr 写一行 ⇒ EAP=Stop 下抛 NativeCommandError，脚本在 `exit 0` 之前中止；
-    #   · 与 Invoke-Checked 同法：临时放宽 EAP + 吞掉 stderr，**不作任何结果判定**（清理失败
-    #     不影响发布结论，真正的发布判定在这之前已经完成）。
-    $eapClean = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try {
-        & git -C $BlogDir worktree remove --force $WorkDir 2>$null
-        & git -C $BlogDir worktree prune 2>$null
-    } finally { $ErrorActionPreference = $eapClean }
-    Ok '已清理临时 worktree'
-}
+Invoke-PublishCleanup
 
 # ★2026-10-16「假失败退出码 1」的完整口径（接手窗口实测，写在这里备查）：
 #   · 本脚本**成功路径自身返回 0**：`-DryRun`（干净调用、未合并 stderr）= 0；把尾部
@@ -372,7 +393,7 @@ if ($WorktreeAdded) {
 #   · **建议调用方式**：`powershell -File ... *> 日志`（注意：**别**在 `-File` 后面直接写
 #     `*>`，那会被当成脚本参数并报 RedirectionNotSupported —— 要用变量捕获再落盘，或在
 #     外层 shell 里重定向），或 `| Out-Host`；不要用 `2>&1 | Select-Object`。
-#   · **已知遗留（本轮未改，属行为变更，需单独派工）**：`-DryRun` 在 `4/6` 之后直接 `exit 0`，
-#     **不会**执行上面的 worktree 清理 ⇒ 每次 `-DryRun` 都留下一个临时 worktree 注册与一个
-#     %TEMP% 大包（实测：本次留下 xk-site-publish-20261016-210142）。
+#   · **已修（2026-10-16 运维收尾线）**：`-DryRun` 走 `Invoke-PublishCleanup -RemoveCurrentTar`
+#     ⇒ 不再留下 worktree 注册，并删掉本次临时包；成功路径同样调用（保留本次包、清掉更早的
+#     同模式临时包）⇒ `%TEMP%\xk-site-*.tar.gz` 收敛为最多 1 个。
 exit 0
