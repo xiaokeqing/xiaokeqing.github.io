@@ -1053,7 +1053,12 @@ tickClock(); setInterval(tickClock, 20000);
 const holo = document.getElementById('holo');
 const stateEl = document.getElementById('holoState');
 const sayEl = document.getElementById('holoSay');
-let emo = 'normal', mode = 'speaking', speakTimer = null;
+/* ★慢网减量（2026-10-16，主窗口量到的事实）：初始 `mode='speaking'` 会让首帧就去取
+   `kurisu/avatar/<emo>.speaking.webp`（normal 那张 189KB），而**开页并没有任何音频在播**
+   （语音要手势 + 声音开关），2.6 秒后又被 L1078 切回 idle ⇒ 这 189KB 纯属白取（真机实测 2.8s）。
+   改成初始 idle：首帧只取 idle 那张（normal.idle.webp 84.7KB，本来就要用）；
+   一旦有真台词（下方 `speak()`）或音频播放，`mode` 仍会被置 'speaking'、该图那时才取 —— 三态语义不变。 */
+let emo = 'normal', mode = 'idle', speakTimer = null;
 function render(){
   const strip = EMOS[emo][mode === 'speaking' ? 'speaking' : 'idle'];
   panelAv.set(strip);

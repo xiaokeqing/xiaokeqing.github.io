@@ -1655,7 +1655,11 @@ function xkvText(id, fallback){
 function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
 function xkvLoad(){
   if(XKV.bank) return Promise.resolve(XKV.bank);
-  return fetch(XK_VOICE_BANK, {cache:'no-store'}).then(r=>{
+  /* ★慢网减量（2026-10-16）：原来这里是 `cache:'no-store'` —— 它会让 idcard 的 **prefetch 白费**
+     并强制每次都整份重下 37KB（真机实测：bank.json 被下两次 = 11.8s + 10.8s，链路只有 3~6KB/s）。
+     改 `no-cache`：仍然**每次都向源站再验证**（不会拿到过期的 bank），但命中就只回 304（几百字节），
+     且能复用 prefetch 已经落到 HTTP 缓存的响应体 ⇒ 不再有第二次 37KB 下载。 */
+  return fetch(XK_VOICE_BANK, {cache:'no-cache'}).then(r=>{
     if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
   }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
 }

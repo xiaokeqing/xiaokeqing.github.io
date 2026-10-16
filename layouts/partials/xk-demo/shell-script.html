@@ -583,7 +583,12 @@ var __xkPhoneDefer = document.body.classList.contains('is-ai');   /* /ai/：首�
 const holo = document.getElementById('holo');
 const stateEl = document.getElementById('holoState');
 const sayEl = document.getElementById('holoSay');
-let emo = 'normal', mode = 'speaking', speakTimer = null;
+/* ★慢网减量（2026-10-16，主窗口量到的事实）：初始 `mode='speaking'` 会让首帧就去取
+   `kurisu/avatar/<emo>.speaking.webp`（normal 那张 189KB），而**开页并没有任何音频在播**
+   （语音要手势 + 声音开关），2.6 秒后又被 L1078 切回 idle ⇒ 这 189KB 纯属白取（真机实测 2.8s）。
+   改成初始 idle：首帧只取 idle 那张（normal.idle.webp 84.7KB，本来就要用）；
+   一旦有真台词（下方 `speak()`）或音频播放，`mode` 仍会被置 'speaking'、该图那时才取 —— 三态语义不变。 */
+let emo = 'normal', mode = 'idle', speakTimer = null;
 function setPhone(){
   if(__xkPhoneDefer){ phoneStateEl.textContent = '连接中'; return; }
   /* ★P0-①：按 XK_TIER 当前的档取图（手机上 = boot 中档；降档后 = 静态 poster） */
@@ -828,7 +833,9 @@ window.__xkVoice = XKV;
 function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
 function xkvLoad(){
   if(XKV.bank) return Promise.resolve(XKV.bank);
-  return fetch('/kurisu/voice/bank.json', {cache:'no-store'}).then(r=>{
+  /* ★慢网减量（2026-10-16）：`no-store` → `no-cache`（内容页同主页，理由见 HOME_VOICE 里那段注释）：
+     既不做无谓的第二次 37KB 整份重下，又保留"每次都向源站再验证"的新鲜度保证。 */
+  return fetch('/kurisu/voice/bank.json', {cache:'no-cache'}).then(r=>{
     if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
   }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
 }

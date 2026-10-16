@@ -859,7 +859,36 @@
     } catch (e) { D.errors.push('loadPlayer: ' + e); }
   }
   D.loadPlayer = loadPlayer;
-  setTimeout(loadPlayer, 1800);
+  /* ★慢网减量（2026-10-16）：原来固定 `setTimeout(loadPlayer, 1800)` —— 正好落在首屏数据到达前后，
+     59KB 的播放器与 HTML/API **抢同一条窄带**（真机：链路 3~6KB/s，它实测 11.9s 才到）。
+     改为"**三选一先到即加载**"，把带宽先让给数据，同时保证她**最终一定出现**：
+       ① 首个 `/api/public/**` 响应落地（数据先出，她随后到）
+       ② 首次用户手势（pointerdown/keydown/touchstart）
+       ③ 最迟 6000ms 兜底
+     ⚠️ 不改播放器本体行为；若三条都不触发（无 API 且无交互的极端情况）仍由 ③ 兜住。 */
+  var __xkPlayerArmed = false;
+  function armPlayerLoad(why) {
+    if (__xkPlayerArmed) { return; }
+    __xkPlayerArmed = true;
+    D.playerWhy = why;
+    setTimeout(loadPlayer, 0);
+  }
+  D.armPlayerLoad = armPlayerLoad;
+  try {
+    if (typeof PerformanceObserver === 'function') {
+      var __xkPO = new PerformanceObserver(function (list) {
+        var es = list.getEntries();
+        for (var i = 0; i < es.length; i++) {
+          if (String(es[i].name).indexOf('/api/public/') >= 0) { armPlayerLoad('first-api-data'); return; }
+        }
+      });
+      __xkPO.observe({ type: 'resource', buffered: true });
+    }
+  } catch (e) { D.errors.push('armPlayerLoad/PO: ' + e); }
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+    addEventListener(ev, function () { armPlayerLoad('gesture:' + ev); }, { once: true, passive: true });
+  });
+  setTimeout(function () { armPlayerLoad('deadline-6s'); }, 6000);
 
   /* ---------- P0-④：首屏优先 + 其余空闲预取 ----------
      站主原话："一打开网页，首先把整体的图片加载出来，按时间顺序，要展示的先显示；

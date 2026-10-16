@@ -281,6 +281,16 @@ if not DRY:
     # 单一事实来源仍是 docs/amadeus-research/data/statemachine.json，两个文件由本脚本一次生成，不会漂移。
     MANIFEST = os.path.join(REPO, 'static', 'kurisu', 'manifest.json')
     mf = json.load(open(MANIFEST, encoding='utf-8'))
+    # ★慢网减量（2026-10-16，主窗口）：**主动丢掉 manifest 的 voice 段**。
+    #   为什么：voice 段约 90~101 KB，是本段与 static/kurisu/voice/bank.json 的**重复**数据
+    #   （同样的 lines / sha256 / 包络计数）。运行期**没有任何代码读它** ——
+    #   全库唯一的 `.voice` 命中是 shell-script.html 的 `V.T.voice = V.hostEntries`
+    #   （状态机的"台词组 → 转场剪辑"表，与 manifest.voice 无关）。
+    #   而 manifest.json 确实在首屏被取（idcard 用它读 emotions.*.idle.frames；状态机用它读图集清单）
+    #   ⇒ 在 3~6 KB/s 的链路上，这 90KB 是 ~20~30 秒的死重。
+    #   语音事实的唯一真源是 static/kurisu/voice/bank.json。
+    #   本脚本每次重跑都会把整份 mf 写回，所以必须在这里丢，否则会被原样带回去。
+    mf.pop('voice', None)
     cm = {}
     for n in nodes_out:
         pages = (n['hi']['pages'] if n.get('hi') else n['medium']['pages'])

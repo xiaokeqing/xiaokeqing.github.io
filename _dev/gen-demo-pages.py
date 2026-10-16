@@ -231,7 +231,11 @@ function xkvText(id, fallback){
 function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
 function xkvLoad(){
   if(XKV.bank) return Promise.resolve(XKV.bank);
-  return fetch(XK_VOICE_BANK, {cache:'no-store'}).then(r=>{
+  /* ★慢网减量（2026-10-16）：原来这里是 `cache:'no-store'` —— 它会让 idcard 的 **prefetch 白费**
+     并强制每次都整份重下 37KB（真机实测：bank.json 被下两次 = 11.8s + 10.8s，链路只有 3~6KB/s）。
+     改 `no-cache`：仍然**每次都向源站再验证**（不会拿到过期的 bank），但命中就只回 304（几百字节），
+     且能复用 prefetch 已经落到 HTTP 缓存的响应体 ⇒ 不再有第二次 37KB 下载。 */
+  return fetch(XK_VOICE_BANK, {cache:'no-cache'}).then(r=>{
     if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
   }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
 }
@@ -1121,7 +1125,9 @@ window.__xkVoice = XKV;
 function xkvLine(id){ return (XKV.bank && XKV.bank.lines && XKV.bank.lines[id]) || null; }
 function xkvLoad(){
   if(XKV.bank) return Promise.resolve(XKV.bank);
-  return fetch('/kurisu/voice/bank.json', {cache:'no-store'}).then(r=>{
+  /* ★慢网减量（2026-10-16）：`no-store` → `no-cache`（内容页同主页，理由见 HOME_VOICE 里那段注释）：
+     既不做无谓的第二次 37KB 整份重下，又保留"每次都向源站再验证"的新鲜度保证。 */
+  return fetch('/kurisu/voice/bank.json', {cache:'no-cache'}).then(r=>{
     if(!r.ok) throw new Error('bank HTTP '+r.status); return r.json();
   }).then(b=>{ XKV.bank = b; return b; }).catch(e=>{ XKV.errors.push('bank: '+e); return null; });
 }
@@ -4099,7 +4105,36 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     } catch (e) { D.errors.push('loadPlayer: ' + e); }
   }
   D.loadPlayer = loadPlayer;
-  setTimeout(loadPlayer, 1800);
+  /* ★慢网减量（2026-10-16）：原来固定 `setTimeout(loadPlayer, 1800)` —— 正好落在首屏数据到达前后，
+     59KB 的播放器与 HTML/API **抢同一条窄带**（真机：链路 3~6KB/s，它实测 11.9s 才到）。
+     改为"**三选一先到即加载**"，把带宽先让给数据，同时保证她**最终一定出现**：
+       ① 首个 `/api/public/**` 响应落地（数据先出，她随后到）
+       ② 首次用户手势（pointerdown/keydown/touchstart）
+       ③ 最迟 6000ms 兜底
+     ⚠️ 不改播放器本体行为；若三条都不触发（无 API 且无交互的极端情况）仍由 ③ 兜住。 */
+  var __xkPlayerArmed = false;
+  function armPlayerLoad(why) {
+    if (__xkPlayerArmed) { return; }
+    __xkPlayerArmed = true;
+    D.playerWhy = why;
+    setTimeout(loadPlayer, 0);
+  }
+  D.armPlayerLoad = armPlayerLoad;
+  try {
+    if (typeof PerformanceObserver === 'function') {
+      var __xkPO = new PerformanceObserver(function (list) {
+        var es = list.getEntries();
+        for (var i = 0; i < es.length; i++) {
+          if (String(es[i].name).indexOf('/api/public/') >= 0) { armPlayerLoad('first-api-data'); return; }
+        }
+      });
+      __xkPO.observe({ type: 'resource', buffered: true });
+    }
+  } catch (e) { D.errors.push('armPlayerLoad/PO: ' + e); }
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+    addEventListener(ev, function () { armPlayerLoad('gesture:' + ev); }, { once: true, passive: true });
+  });
+  setTimeout(function () { armPlayerLoad('deadline-6s'); }, 6000);
 
   /* ---------- P0-④：首屏优先 + 其余空闲预取 ----------
      站主原话："一打开网页，首先把整体的图片加载出来，按时间顺序，要展示的先显示；

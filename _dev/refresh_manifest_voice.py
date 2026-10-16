@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
-"""T8 顺手项：把 static/kurisu/manifest.json 的 voice 段刷新到与 voice/bank.json 一致。
+"""校验器（2026-10-16 起不再是"刷新器"）：校验 voice/bank.json 自身自洽，并断言 manifest.json 里**没有** voice 段。
+
+**为什么改：**原来它把 bank.json 的 160 条（含 sha256/包络/来源）**复制**进 manifest.json 的 voice 段，
+约 90~101 KB。而运行期**没有任何代码读 manifest.voice**（全库唯一 `.voice` 命中是 shell-script.html 的
+`V.T.voice = V.hostEntries`，属于状态机的"台词组→转场"表），manifest.json 却在首屏被取
+（idcard 读 emotions.*.idle.frames / 状态机读图集清单）⇒ 在 3~6 KB/s 的链路上这是 ~20~30 秒死重，
+且数据与 bank.json 重复。**语音事实的唯一真源 = static/kurisu/voice/bank.json。**
+防回归：唯一的写入者既已移除，`_dev/build_statemachine_manifest.py` 里也显式 `mf.pop('voice', None)`。
+
+用法：python _dev/refresh_manifest_voice.py   （退出码 0=通过；7=manifest 里又冒出 voice 段）
 
 为什么：窗口 B 换过声音（12 句 v3 同口径可复现重跑版，总字节 716,960 -> 714,845），
 bank.json 是唯一真源，manifest 的 voice 段还是旧数字 + 旧 sha256 ⇒ 口径不一致。
@@ -83,27 +92,22 @@ def main():
         print('行数校验不过：%d != %s' % (len(out), bank.get('lineCount')), file=sys.stderr)
         sys.exit(6)
 
-    voice.update({
-        'bank': 'kurisu/voice/bank.json',
-        'codec': bank.get('codec'),
-        'sampleRate': bank.get('sampleRate'),
-        'hopMs': bank.get('hopMs'),
-        'envelopeFormula': bank.get('envelopeFormula'),
-        'voiceNote': bank.get('voiceNote'),
-        'totalBytes': total,
-        'lineCount': len(out),
-        'lines': out,
-        'note': ('本段的唯一真源是 static/kurisu/voice/bank.json（运行期 kurisu-player.js 只读它）；'
-                 '这里的数字由 _dev/refresh_manifest_voice.py 从磁盘文件重算，供索引/核对用。'),
-    })
-    mf['voice'] = voice
-    io.open(MF, 'w', encoding='utf-8').write(json.dumps(mf, ensure_ascii=False, indent=1, sort_keys=True))
+    # ★慢网减量（2026-10-16，主窗口）：本脚本**不再写入** manifest 的 voice 段。
+    #   该段约 90~101 KB，是与 voice/bank.json 的重复数据，运行期无人读它，而 manifest.json
+    #   确实在首屏被取 ⇒ 在 3~6 KB/s 的链路上是 ~20~30 秒死重。语音事实的唯一真源 = bank.json。
+    #   现在本脚本只做"静态校验"：校验 bank 自身自洽（逐行 sha256/字节从磁盘重算）＋
+    #   断言 manifest 里**不该再有** voice 段（防回归）。
+    if 'voice' in mf:
+        sz = len(json.dumps(mf['voice'], ensure_ascii=False).encode('utf-8'))
+        print('回归：manifest.json 又出现了 voice 段（%d B，约 %.1f KB）——本脚本已改为只校验、不写入。'
+              % (sz, sz / 1024.0), file=sys.stderr)
+        print('请检查 _dev/build_statemachine_manifest.py（那里应显式 mf.pop("voice", None)）。', file=sys.stderr)
+        sys.exit(7)
 
-    print('刷新 static/kurisu/manifest.json 的 voice 段：')
-    print('  lineCount : %s -> %d' % (old_count, len(out)))
-    print('  totalBytes: %s -> %d' % (old_total, total))
-    print('  逐行 sha256 已从磁盘重算，且与 bank.json 自报值一致 ✓')
-    print('  写回：%s' % MF)
+    print('静态校验通过（本脚本不再写入 manifest）：')
+    print('  bank.json：lines=%d、totalBytes=%d，逐行 sha256/字节已从磁盘重算且与自报值一致 ✓' % (len(out), total))
+    print('  manifest.json：**无 voice 段** ✓（语音事实的唯一真源 = static/kurisu/voice/bank.json）')
+    print('  若哪天这里报“回归”，说明 voice 段被别处写回 —— 去 build_statemachine_manifest.py 堵源头。')
 
 
 if __name__ == '__main__':
