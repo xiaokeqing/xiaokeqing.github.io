@@ -32,12 +32,17 @@ import argparse
 import csv
 import datetime as _dt
 import json
+import re
 import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DATASET = REPO / "scripts" / "eval" / "datasets" / "qa-40.jsonl"
 DEFAULT_RUBRIC = REPO / "scripts" / "eval" / "datasets" / "refusal-rubric.json"
+# 2026-10-16 新增（角色线杂项 T4-①）：persona 机读词表（zh+ja：口癖 + 禁忌 + 风格违规）。
+# 说明：此前只有 scripts/eval/catchphrases.json 的 3 条上游**日文**正则（其自述「中文语料无判别力」），
+# 中文口径从未成表 ⇒ 本文件补齐。旧文件**保持不动**（作为「先定词表」的历史证据）。
+DEFAULT_PERSONA_TERMS = REPO / "scripts" / "eval" / "persona-terms.json"
 
 
 def load_dataset(path: Path):
@@ -58,6 +63,46 @@ def load_rubric(path: Path):
 
 def hit(text_lower: str, needle: str) -> bool:
     return needle.lower() in text_lower
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-16 新增（T4-①）：persona 词表指标 —— 口癖命中率 / 禁忌触发数
+# 设计原则：**只新增**，不改动上面任何既有指标（要点命中/拒答/严格/引用/幻觉/状态/注入）。
+# 词表与判据见 scripts/eval/persona-terms.json（每条 pattern 都带 source 与 detectability）。
+# ---------------------------------------------------------------------------
+def load_persona_terms(path: Path):
+    """读 persona 词表；文件不存在时返回 None（指标记为 None + 说明，**不伪造 0**）。"""
+    if not path or not Path(path).is_file():
+        return None
+    doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    for key in ("catchphrases", "taboos", "styleViolations"):
+        for ent in doc.get(key) or []:
+            ent["_re"] = re.compile(ent["pattern"], re.IGNORECASE)
+    return doc
+
+
+def _scan(text: str, entries):
+    """返回命中的词表条目（含命中原文片段，供人核对）。"""
+    out = []
+    for ent in entries or []:
+        m = ent["_re"].search(text or "")
+        if m:
+            s = max(0, m.start() - 20)
+            out.append({"id": ent["id"], "pattern": ent["pattern"],
+                        "severity": ent.get("severity"), "detectability": ent.get("detectability"),
+                        "snippet": (text[s:m.end() + 20]).replace("\n", " ")})
+    return out
+
+
+def persona_scan(answer: str, terms):
+    """对单条回答做 persona 扫描；terms 为 None 时返回 None（宁可缺指标，不编造）。"""
+    if terms is None:
+        return None
+    return {
+        "catchphrases": _scan(answer, terms.get("catchphrases")),
+        "taboos": _scan(answer, terms.get("taboos")),
+        "style": _scan(answer, terms.get("styleViolations")),
+    }
 
 
 def score_item(item, answer: str, citations, rubric=None, state=""):
@@ -99,6 +144,8 @@ def main(argv=None) -> int:
     ap.add_argument("--raw-dir", required=True, help="qa_run.py 的 raw/ 目录")
     ap.add_argument("--out-dir", default="")
     ap.add_argument("--export-judge", default="", help="导出裁判包 jsonl 路径")
+    ap.add_argument("--persona-terms", default=str(DEFAULT_PERSONA_TERMS),
+                    help="persona 机读词表（口癖/禁忌/风格）；缺失时该两项指标记 None ✗不许编造")
     args = ap.parse_args(argv)
 
     dataset = Path(args.dataset)
@@ -160,6 +207,17 @@ def main(argv=None) -> int:
     inj_rows = [r for r in collected_rows if r["item"]["id"] in inj_expect]
     inj_blocked = [r for r in inj_rows if isinstance(r["injection"], dict) and r["injection"].get("blocked")]
 
+    # ---- 2026-10-16 新增：persona 指标（口癖命中率 / 禁忌触发数 / 风格违规）—— 只统计**有效答卷**
+    persona_terms = load_persona_terms(Path(args.persona_terms))
+    for r in collected_rows:
+        r["persona"] = persona_scan(r["answer"], persona_terms)
+    p_checked = len(collected_rows) if persona_terms else 0
+    cp_rows = [r for r in collected_rows if r["persona"] and r["persona"]["catchphrases"]]
+    tb_rows = [r for r in collected_rows if r["persona"] and r["persona"]["taboos"]]
+    st_rows = [r for r in collected_rows if r["persona"] and r["persona"]["style"]]
+    cp_hits = sum(len(r["persona"]["catchphrases"]) for r in collected_rows if r["persona"])
+    tb_hits = sum(len(r["persona"]["taboos"]) for r in collected_rows if r["persona"])
+
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     summary = {
         "stamp": stamp,
@@ -186,6 +244,19 @@ def main(argv=None) -> int:
         "injectionGuard": {"blocked": len(inj_blocked), "expected": len(inj_rows),
                            "detail": {r["item"]["id"]: (r["injection"] or {}) for r in inj_rows}},
         "states": {r["item"]["id"]: r["state"] for r in collected_rows},
+        # 2026-10-16 新增（T4-①）：persona 口径（词表可复核；缺失即 None，不编造 ✗）
+        "personaTerms": str(args.persona_terms) if persona_terms else None,
+        "personaTermsLoaded": bool(persona_terms),
+        "personaChecked": p_checked,
+        "catchphraseHitRate": round(len(cp_rows) / p_checked, 4) if p_checked else None,
+        "catchphraseRows": len(cp_rows),
+        "catchphraseHits": cp_hits,
+        "tabooTriggerRate": round(len(tb_rows) / p_checked, 4) if p_checked else None,
+        "tabooRows": len(tb_rows),
+        "tabooHits": tb_hits,
+        "styleViolationRows": len(st_rows),
+        "tabooDetail": {r["item"]["id"]: r["persona"]["taboos"] for r in tb_rows},
+        "catchphraseDetail": {r["item"]["id"]: [c["id"] for c in r["persona"]["catchphrases"]] for r in cp_rows},
     }
 
     # ---- 表
@@ -208,7 +279,27 @@ def main(argv=None) -> int:
                  f"| 与 refusal-rubric.json 的 expected_state 一致 |")
     lines.append(f"| 注入护栏拦截 | {summary['injectionGuard']['blocked']}/{summary['injectionGuard']['expected']} "
                  f"| injection.blocked=true 的条数（PromptInjectionGuard） |")
+    # ---- 2026-10-16 新增（T4-①）：persona 两指标（只新增行，不改上面任何一行）
+    if persona_terms:
+        lines.append(f"| 口癖命中率（persona） | {summary['catchphraseHitRate']} "
+                     f"| {len(cp_rows)}/{p_checked} 条有效答卷命中 ≥1 条口癖（词表 `persona-terms.json`，命中条目 {cp_hits}） |")
+        lines.append(f"| 禁忌触发率（persona） | {summary['tabooTriggerRate']} "
+                     f"| {len(tb_rows)}/{p_checked} 条有效答卷命中 ≥1 条禁忌（命中条目 {tb_hits}）—— **命中即需人核**，见下表 |")
+        lines.append(f"| 风格违规（persona） | {len(st_rows)}/{p_checked} "
+                     f"| 感叹号／「您」／「主人」／语气词堆砌 —— 单列，**不计入禁忌数** |")
+    else:
+        lines.append("| 口癖命中率（persona） | 读不到 | `persona-terms.json` 缺失 ⇒ 本指标不产出（**不伪造 0** ✗） |")
+        lines.append("| 禁忌触发率（persona） | 读不到 | 同上 |")
     lines.append("")
+    if persona_terms and tb_rows:
+        lines.append("## 禁忌命中明细（persona · 需人核）\n")
+        lines.append("| id | 禁忌 | 严重度 | 可判定性 | 命中片段 |")
+        lines.append("|---|---|---|---|---|")
+        for r in tb_rows:
+            for t in r["persona"]["taboos"]:
+                lines.append(f"| `{r['item']['id']}` | {t['id']} `{t['pattern']}` | {t['severity']} "
+                             f"| {t['detectability']} | {t['snippet']} |")
+        lines.append("")
     if invalid_rows:
         lines.append("## 无效答卷（不计分 ✗）\n")
         lines.append("| id | state | 原因 |")
@@ -289,6 +380,12 @@ def main(argv=None) -> int:
           f"fabrication={summary['fabricationHits']} stateMatch={summary['stateConsistency']}")
     print(f"md  → {md_path}")
     print(f"csv → {csv_path}")
+    if persona_terms:
+        print(f"=== PERSONA === cpHitRate={summary['catchphraseHitRate']} tabooRate={summary['tabooTriggerRate']} "
+              f"tabooRows={len(tb_rows)} styleRows={len(st_rows)} checked={p_checked} "
+              f"terms={args.persona_terms}")
+    else:
+        print("=== PERSONA === 词表缺失 ⇒ 两项新指标未产出（不伪造 0 ✗）")
     return 0
 
 
