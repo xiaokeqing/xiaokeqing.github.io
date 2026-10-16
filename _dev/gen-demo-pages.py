@@ -1176,15 +1176,215 @@ CLIPS_BOOT_NEW = (
     "  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24},\n"
     "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24}")
 
+XK_TIER_JS = (
+    "/* ================= ★P0-①（2026-10-16 站主 P0 修复半）：手机内存兜底 =================\n"
+    "   根因方向（批次 B §10.3 用排除法定到的）：iPhone Safari 连 video/webm;codecs=vp9 都不认\n"
+    "   ⇒ __xkVid 走 auto 降级进 pixel 档 ⇒ 画的是 /kurisu/full/*.hi.webp，\n"
+    "   而单张 hi 解码 = 34~53MB（manifest 的 decodedBytes 实测值：opening 38.8MB / idle 35.5MB /\n"
+    "   speaking·thinking 53.3MB）⇒ iOS 逐标签页内存上限把已解码位图丢掉 ⇒ 上屏就是**一整块灰**。\n"
+    "   本模块只做四件事（每条都留证据，验收脚本读 window.__xkTier）：\n"
+    "     ① 手机上**只到中档**：hi 一个请求都不发（noHi），走 medium 档 = /kurisu/full/*.boot.webp\n"
+    "        —— **同瓦片**（321×432 / 380×290）、24 帧、解码 10.6~13.3MB ⇒ 画质不变、内存降 3~4 倍；\n"
+    "     ② **位图被丢弃的检测**：抽检\"她应该在那里\"的画布区（非透明像素计数），连续 3 次全空 ⇒ 判定丢了；\n"
+    "     ③ **重试一次**（丢掉缓存里的 Image 重新取图 = 重新解码）；仍为空 ⇒ 降档 hi→medium→poster，\n"
+    "        写 degradeReason（宁可出静态帧，**不许静默留灰块** ✗）；\n"
+    "     ④ 诊断：window.__xkTier = {mobile,lowMem,noHi,initTier,tier,degraded,degradeReason,retries,checks,\n"
+    "        lastCheck,events,errors} ｜ 手机面板另记 bodyTier / bodyRetry。\n"
+    "   证据旋钮（只在 URL 上生效，默认行为逐字不变 —— 写在这里是为了\"能本地确定性复现降档链\"）：\n"
+    "     ?xk-tier=hi|medium|poster|auto  强制某一档（auto = 手机 medium / 桌面 hi）\n"
+    "     ?xk-tier-fail=<role>[,<role>]   把某几个角色当\"位图已被丢弃\"（复现 检测→重试→降档→静态帧）\n"
+    "     ?xk-tier-blank=1                抽检永远判空（同上，对全部角色）\n"
+    "   纪律：不改配色/背景/字体；**桌面 auto = hi，逐字等于改前**；不改首屏字节（手机上只会更小：hi 不在请求里）。\n"
+    "   ⚠ 这里的\"medium 档\"就是 full 系列的**中档 boot**（同瓦片、内存 1/4），不是 static/kurisu/medium/\n"
+    "     （134×180 瓦片 —— 那是\"脸糊\"的另一件事，属 ④ 的分析页；本模块只要\"内存降下来、脸还在\"）。 */\n"
+    "var XK_TIER = window.__xkTier || (function(){\n"
+    "  function q(k){ var m = new RegExp('[?&]' + k + '=([^&#]*)').exec(location.search || ''); return m ? decodeURIComponent(m[1]) : ''; }\n"
+    "  var ua = navigator.userAgent || '';\n"
+    "  var narrow = false;\n"
+    "  try { narrow = matchMedia('(max-width: 980px)').matches; } catch(e){}\n"
+    "  var mobile = /iPhone|iPad|iPod|Android|Mobile/i.test(ua) || narrow;\n"
+    "  var dm = (typeof navigator.deviceMemory === 'number') ? navigator.deviceMemory : 8;\n"
+    "  var forced = q('xk-tier');\n"
+    "  var T = { t0: performance.now(), mobile: mobile, lowMem: dm <= 4, narrow: narrow, dm: dm,\n"
+    "            forced: forced || 'auto', noHi: false, initTier: 'hi', tier: {}, degraded: {}, degradeReason: {},\n"
+    "            retries: {}, checks: 0, lastCheck: null, strike: 0, watchOn: false, phoneWatch: false,\n"
+    "            body: null, bodyTier: {}, bodyRetry: {}, bodyRole: null,\n"
+    "            fail: (q('xk-tier-fail') || '').split(',').filter(Boolean), blank: q('xk-tier-blank') === '1',\n"
+    "            events: [], history: [], errors: [] };\n"
+    "  T.noHi = (forced === 'medium' || forced === 'poster') ? true : (forced === 'hi' ? false : (mobile || T.lowMem));\n"
+    "  T.initTier = (forced === 'poster') ? 'poster' : (T.noHi ? 'medium' : 'hi');\n"
+    "  T.log = function(s){ try { var e = Math.round(performance.now() - T.t0) + 'ms ' + s; T.events.push(e); if(T.events.length > 30){ T.events.shift(); } T.history.push(e); if(T.history.length > 60){ T.history.shift(); } } catch(e){} };\n"
+    "  T.log('init mobile=' + mobile + ' lowMem=' + T.lowMem + ' noHi=' + T.noHi + ' tier=' + T.initTier + ' forced=' + T.forced);\n"
+    "  window.__xkTier = T;\n"
+    "  return T;\n"
+    "})();\n"
+    "XK_TIER.posterUrl = function(name){ return '/kurisu/full/' + name + '.poster.webp'; };\n"
+    "XK_TIER.role = function(name){ try { return (typeof CLIPS !== 'undefined' && CLIPS && CLIPS[name]) ? CLIPS[name] : null; } catch(e){ return null; } };\n"
+    "XK_TIER.tierOf = function(name){ return XK_TIER.tier[name] || XK_TIER.initTier; };\n"
+    "/* hi 只在\"没被限档、也没降过档\"时可用 —— 手机 noHi 与任何已降档的角色都在这里被挡住 */\n"
+    "XK_TIER.hiAllowed = function(name){ return !XK_TIER.noHi && !XK_TIER.tier[name]; };\n"
+    "XK_TIER.degrade = function(name, why){\n"
+    "  var c = XK_TIER.role(name); if(!c) return false;\n"
+    "  var cur = XK_TIER.tierOf(name);\n"
+    "  var next = (cur === 'hi' && c.bootSrc) ? 'medium' : 'poster';\n"
+    "  XK_TIER.tier[name] = next; XK_TIER.degraded[name] = next;\n"
+    "  XK_TIER.degradeReason[name] = why + ' @' + cur + '→' + next;\n"
+    "  XK_TIER.log('degrade ' + name + ' ' + XK_TIER.degradeReason[name]);\n"
+    "  if(next === 'poster'){ c.bootSrc = null; c.src = XK_TIER.posterUrl(name); c.frames = 1; }\n"
+    "  return next;\n"
+    "};\n"
+    "XK_TIER.retry = function(name){\n"
+    "  var c = XK_TIER.role(name); if(!c) return false;\n"
+    "  if(XK_TIER.retries[name]) return false;\n"
+    "  var cur = XK_TIER.tierOf(name);\n"
+    "  var url = (cur === 'hi') ? c.src : (cur === 'medium' ? c.bootSrc : c.src);\n"
+    "  if(!url) return false;\n"
+    "  XK_TIER.retries[name] = 1;\n"
+    "  try { if(cache){ delete cache[url]; } } catch(e){}\n"
+    "  try { img(url); } catch(e){ XK_TIER.errors.push('retry: ' + e); }\n"
+    "  XK_TIER.log('retry ' + name + ' @' + cur + '（同一个 URL 重新取图 = 重新解码）');\n"
+    "  return true;\n"
+    "};\n"
+    "/* 抽检\"她应该在那里\"的竖条：返回非透明像素计数（null = 读不到） */\n"
+    "XK_TIER.sample = function(cv){\n"
+    "  if(!cv || !cv.width || !cv.height) return null;\n"
+    "  var ctx = null; try { ctx = cv.getContext('2d'); } catch(e){ return null; }\n"
+    "  if(!ctx) return null;\n"
+    "  var W = cv.width, H = cv.height;\n"
+    "  var x0 = Math.floor(W * 0.20), x1 = Math.floor(W * 0.80);\n"
+    "  var y0 = Math.floor(H * 0.15), y1 = Math.floor(H * 0.95);\n"
+    "  var n = 0, nz = 0, rows = 24, step = Math.max(1, Math.floor((y1 - y0) / rows));\n"
+    "  for(var y = y0; y < y1; y += step){\n"
+    "    var d;\n"
+    "    try { d = ctx.getImageData(x0, y, Math.max(2, x1 - x0), 1).data; }\n"
+    "    catch(e){ XK_TIER.errors.push('getImageData: ' + e); return null; }\n"
+    "    for(var i = 3; i < d.length; i += 4){ n++; if(d[i] > 8){ nz++; } }\n"
+    "  }\n"
+    "  XK_TIER.checks++;\n"
+    "  XK_TIER.lastCheck = { w:W, h:H, samples:n, opaque:nz, at:Math.round(performance.now() - XK_TIER.t0) };\n"
+    "  return nz;\n"
+    "};\n"
+    "XK_TIER.applyForce = function(){\n"
+    "  try {\n"
+    "    if(typeof CLIPS === 'undefined' || !CLIPS) return;\n"
+    "    for(var k in CLIPS){ if(!Object.prototype.hasOwnProperty.call(CLIPS, k)) continue;\n"
+    "      if(XK_TIER.forced === 'poster'){ XK_TIER.tier[k] = 'medium'; XK_TIER.degrade(k, 'URL 旋钮 ?xk-tier=poster'); }\n"
+    "      else if(XK_TIER.noHi){ XK_TIER.tier[k] = 'medium'; }\n"
+    "    }\n"
+    "  } catch(e){ XK_TIER.errors.push('applyForce: ' + e); }\n"
+    "};\n"
+    "/* 主板画布（CRT）：cur = 当前 CLIPS 角色名 */\n"
+    "XK_TIER.watchCRT = function(){\n"
+    "  if(XK_TIER.watchOn) return false;\n"
+    "  var cv = document.getElementById('charCanvas');\n"
+    "  if(!cv || typeof CLIPS === 'undefined' || !CLIPS) return false;\n"
+    "  XK_TIER.watchOn = true;\n"
+    "  var fast = XK_TIER.blank || XK_TIER.fail.length > 0;\n"
+    "  if(XK_TIER.noHi || XK_TIER.forced !== 'auto' || fast){ XK_TIER.applyForce(); }\n"
+    "  var every = fast ? 500 : 1500, need = fast ? 1 : 3, gate = fast ? 1200 : 6000;\n"
+    "  XK_TIER.log('watchCRT on every=' + every + ' need=' + need + ' gate=' + gate);\n"
+    "  setInterval(function(){\n"
+    "    if(performance.now() - XK_TIER.t0 < gate) return;\n"
+    "    if(typeof XK_BOOT !== 'undefined' && XK_BOOT && XK_BOOT.phase < 4) return;\n"
+    "    var name = null;\n"
+    "    try { name = (typeof cur === 'string' && CLIPS[cur]) ? cur : null; } catch(e){}\n"
+    "    if(!name) return;\n"
+    "    var fastNow = XK_TIER.blank || XK_TIER.fail.indexOf(name) >= 0;\n"
+    "    if(XK_TIER.tierOf(name) === 'poster') return;   /* 已到底档，不再折腾（含旋钮复现） */\n"
+    "    var nz = XK_TIER.sample(cv);\n"
+    "    if(nz === null) return;\n"
+    "    if(fastNow) nz = 0;\n"
+    "    if(nz > 0){ XK_TIER.strike = 0; return; }\n"
+    "    XK_TIER.strike++;\n"
+    "    if(XK_TIER.strike < need) return;\n"
+    "    XK_TIER.strike = 0;\n"
+    "    if(!XK_TIER.retries[name]){ XK_TIER.retry(name); return; }\n"
+    "    XK_TIER.degrade(name, 'drawImage 后抽检 0 非透明像素（位图被系统丢弃）');\n"
+    "  }, every);\n"
+    "  return true;\n"
+    "};\n"
+    "/* 手机面板（外壳里的 phoneCanvas，用 full 全身剪辑） */\n"
+    "XK_TIER.bindBody = function(B){\n"
+    "  XK_TIER.body = B;\n"
+    "  try {\n"
+    "    for(var k in B){ if(!Object.prototype.hasOwnProperty.call(B, k)) continue;\n"
+    "      var b = B[k];\n"
+    "      if(XK_TIER.noHi && b && /\\.hi\\.webp$/.test(b.src)){\n"
+    "        b.src = b.src.replace(/\\.hi\\.webp$/, '.boot.webp'); b.frames = 24; XK_TIER.bodyTier[k] = 'medium';\n"
+    "      } else { XK_TIER.bodyTier[k] = XK_TIER.noHi ? 'medium' : 'hi'; }\n"
+    "    }\n"
+    "    XK_TIER.log('bindBody tier=' + JSON.stringify(XK_TIER.bodyTier));\n"
+    "  } catch(e){ XK_TIER.errors.push('bindBody: ' + e); }\n"
+    "};\n"
+    "XK_TIER.bodyOf = function(role){ XK_TIER.bodyRole = role; return (XK_TIER.body && XK_TIER.body[role]) ? XK_TIER.body[role] : null; };\n"
+    "XK_TIER.retryBody = function(role){\n"
+    "  if(XK_TIER.bodyRetry[role]) return false;\n"
+    "  var B = XK_TIER.body; if(!B || !B[role]) return false;\n"
+    "  XK_TIER.bodyRetry[role] = 1;\n"
+    "  var b = B[role]; b.src = b.src + (b.src.indexOf('?') < 0 ? '?' : '&') + 'xk_r=1';\n"
+    "  XK_TIER.log('retryBody ' + role + ' @' + (XK_TIER.bodyTier[role] || 'hi'));\n"
+    "  try { if(typeof render === 'function'){ render(); } } catch(e){}\n"
+    "  return true;\n"
+    "};\n"
+    "XK_TIER.degradeBody = function(role, why){\n"
+    "  var B = XK_TIER.body; if(!B || !B[role]) return false;\n"
+    "  var cur = XK_TIER.bodyTier[role] || 'hi';\n"
+    "  var next = (cur === 'hi') ? 'medium' : 'poster';\n"
+    "  XK_TIER.bodyTier[role] = next; XK_TIER.degraded['phone:' + role] = next;\n"
+    "  XK_TIER.degradeReason['phone:' + role] = why + ' @' + cur + '→' + next;\n"
+    "  XK_TIER.log('degradeBody ' + role + ' → ' + next);\n"
+    "  if(next === 'medium'){ var b = B[role]; b.src = b.src.replace(/\\.hi\\.webp$/, '.boot.webp'); b.frames = 24; }\n"
+    "  else { B[role] = { src: '/kurisu/full/' + role + '.poster.webp', frames: 1, interval: 42 }; }\n"
+    "  try { if(typeof render === 'function'){ render(); } } catch(e){}\n"
+    "  return next;\n"
+    "};\n"
+    "XK_TIER.watchPhone = function(){\n"
+    "  if(XK_TIER.phoneWatch) return false;\n"
+    "  var cv = document.getElementById('phoneCanvas');\n"
+    "  if(!cv || !XK_TIER.body) return false;\n"
+    "  XK_TIER.phoneWatch = true;\n"
+    "  var fast = XK_TIER.blank || XK_TIER.fail.length > 0;\n"
+    "  var every = fast ? 500 : 1500, need = fast ? 1 : 3, gate = fast ? 1200 : 6000;\n"
+    "  XK_TIER.log('watchPhone on every=' + every);\n"
+    "  setInterval(function(){\n"
+    "    if(performance.now() - XK_TIER.t0 < gate) return;\n"
+    "    try { if(typeof __xkPhoneDefer !== 'undefined' && __xkPhoneDefer) return; } catch(e){}\n"
+    "    var vAi = document.getElementById('v-ai');\n"
+    "    if(vAi && !vAi.classList.contains('on')) return;\n"
+    "    var role = XK_TIER.bodyRole; if(!role) return;\n"
+    "    var fastNow = XK_TIER.blank || XK_TIER.fail.indexOf(role) >= 0;\n"
+    "    if(XK_TIER.bodyTier[role] === 'poster') return;   /* 已到底档，不再折腾 */\n"
+    "    var nz = XK_TIER.sample(cv);\n"
+    "    if(nz === null) return;\n"
+    "    if(fastNow) nz = 0;\n"
+    "    if(nz > 0){ XK_TIER.strike = 0; return; }\n"
+    "    XK_TIER.strike++;\n"
+    "    if(XK_TIER.strike < need) return;\n"
+    "    XK_TIER.strike = 0;\n"
+    "    if(!XK_TIER.bodyRetry[role] && XK_TIER.bodyTier[role] === 'medium'){ XK_TIER.retryBody(role); return; }\n"
+    "    XK_TIER.degradeBody(role, '手机面板抽检 0 非透明像素（位图被系统丢弃）');\n"
+    "  }, every);\n"
+    "  return true;\n"
+    "};\n"
+    "setTimeout(function(){ try { XK_TIER.watchCRT(); XK_TIER.watchPhone(); } catch(e){ XK_TIER.errors.push('watch: ' + e); } }, 1200);\n")
+
 XK_CLIPIM_JS = (
     "/* ★T5.6 boot→hi：hi 已就绪就用 hi；否则 boot 小图集（前 24 帧，网格/瓦片同规格）先播，\n"
     "   hi 由 play() 延迟触发（越过首屏窗口）；到位后按同一帧号无缝接力，画质不变。\n"
     "   警告：hi 只能 peek 缓存、不能 img() 创建 —— img() 创建即发请求，会把 hi 拉回首屏；\n"
-    "   且必须先 peek hi 再兜底 boot —— 顺序反了会永远卡在 boot 档，开场永不落幕。 */\n"
+    "   且必须先 peek hi 再兜底 boot —— 顺序反了会永远卡在 boot 档，开场永不落幕。\n"
+    "   ★P0-①：hi 的 peek 现在过一道 XK_TIER.hiAllowed() —— 手机上（或已降档的角色）连 peek 都不做，\n"
+    "   直接吃 boot 中档（34~53MB 的位图根本不会出现在内存里）。 */\n"
     "function xkClipIm(name){\n"
     "  const c = CLIPS[name];\n"
-    "  const px = cache[c.src];\n"
-    "  if(px && px.complete && px.naturalWidth) return {im:px, c:c};\n"
+    "  if(XK_TIER.hiAllowed(name)){\n"
+    "    const px = cache[c.src];\n"
+    "    if(px && px.complete && px.naturalWidth) return {im:px, c:c};\n"
+    "  }\n"
+    "  if(!XK_TIER.hiAllowed(name) && !c.bootSrc){\n"
+    "    XK_TIER.degrade(name, 'noHi 且该角色没有中档（boot）⇒ 直接静态帧');\n"
+    "    return {im:img(c.src), c:c};\n"
+    "  }\n"
     "  if(c.bootSrc){\n"
     "    const bt = img(c.bootSrc);\n"
     "    if(bt.complete && bt.naturalWidth) return {im:bt, c:Object.assign({}, c, {frames:c.bootFrames})};\n"
@@ -1198,8 +1398,8 @@ def xk_boot_patches(script, is_home):
     s = sub1(s, CLIPS_BOOT_OLD, CLIPS_BOOT_NEW, 'T5.6: CLIPS 加 boot 档')
     s = sub1(s,
              "function play(name){\n",
-             XK_CLIPIM_JS + "function play(name){\n",
-             'T5.6: xkClipIm helper')
+             XK_TIER_JS + XK_CLIPIM_JS + "function play(name){\n",
+             'T5.6 + P0①: XK_TIER + xkClipIm helper')
     s = sub1(s,
              "  if(cur){\n    const c = CLIPS[cur];\n    const im = img(c.src);\n    if((im.complete && im.naturalWidth) && !RM){",
              "  if(cur){\n    const _xk = xkClipIm(cur);\n    const c = _xk.c, im = _xk.im;\n    if((im.complete && im.naturalWidth) && !RM){",
@@ -1215,10 +1415,12 @@ def xk_boot_patches(script, is_home):
              "     越过首屏门禁的 1.5s 窗口，入户字节才真的降下来。boot 加载失败则立刻回退 hi。 */\n"
              "  if(c.bootSrc){\n"
              "    const bt = img(c.bootSrc);\n"
-             "    const late = ()=>{ setTimeout(()=>{ img(c.src); }, 1700); };\n"
+             "    /* ★P0-①：手机/已降档的角色**不上 hi 档**（hi 单张解码 34~53MB，iOS 会把它丢掉） */\n"
+             "    const late = ()=>{ if(!XK_TIER.hiAllowed(name)) return; setTimeout(()=>{ img(c.src); }, 1700); };\n"
              "    if(bt.complete && bt.naturalWidth){ late(); }\n"
-             "    else { bt.addEventListener('load', late, {once:true}); bt.addEventListener('error', ()=>{ img(c.src); }, {once:true}); }\n"
-             "  } else { img(c.src); }\n"
+             "    else { bt.addEventListener('load', late, {once:true});\n"
+             "           bt.addEventListener('error', function(){ if(!XK_TIER.hiAllowed(name)){ XK_TIER.degrade(name, 'boot 中档取图失败（error）'); } else { img(c.src); } }, {once:true}); }\n"
+             "  } else { if(XK_TIER.hiAllowed(name)){ img(c.src); } else { XK_TIER.degrade(name, 'noHi 且该角色无中档 ⇒ 静态帧'); } }\n"
              "  drawFrame();",
              'T5.6: play() boot 优先预载 + hi 延迟')
     return s
@@ -1226,6 +1428,24 @@ def xk_boot_patches(script, is_home):
 s1 = xk_boot_patches(s1, False)
 shell_scripts[1] = s1
 home_script = xk_boot_patches(home_script, True)
+
+# ---- ★P0-①（2026-10-16）：手机面板（外壳 phoneCanvas）也走同一套内存兜底 ----
+#   手机面板用的是 full 全身剪辑（idle/speaking/thinking.hi.webp 单张解码 35.5/53.3MB）
+#   ⇒ 手机上同样只到中档 boot（同瓦片 321×432、24 帧、13.3MB），并共用 XK_TIER 的
+#      检测→重试一次→降档→degradeReason。落点：`const BODY` / `phoneBody.set(...)` 两处。
+#   （XK_TIER_JS 在 T5.6 段定义，所以这段必须放在它后面。）
+sc = subn(sc,
+          r"const BODY = \{.*?\n\};",
+          lambda m: (XK_TIER_JS + m.group(0) +
+                     "\nXK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），并挂降档链 */\n"),
+          1, 'P0①: 手机面板注入 XK_TIER + 绑档')
+sc = sub1(sc,
+          "  phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);",
+          "  /* ★P0-①：按 XK_TIER 当前的档取图（手机上 = boot 中档；降档后 = 静态 poster） */\n"
+          "  var _xkRole = (mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle'));\n"
+          "  XK_TIER.bodyOf(_xkRole);\n"
+          "  phoneBody.set(XK_TIER.body[_xkRole] || BODY[_xkRole]);",
+          'P0①: 手机面板按档取图')
 # 注：下面三条锚定 L1/CRT 生成代码的补丁必须放在 L1 段之后（见 L1 段末尾），
 #   因为它们在 L1 补丁跑完之前目标文本还不存在。
 # 图谱数据不再是写死的样例
@@ -1781,7 +2001,11 @@ var XKV2_BLOCK = (function(){
     enabled:false, videoOK:false, disp:false, manifest:null, mfState:0, mfP:null,
     preload:'', gesture:false, cur:null,
     decoded:{}, failed:{}, errors:[], alive:0, clock:0, free:[],
-    drawn:0, fallbackDrawn:0, released:0, alphaFail:0, probe:null
+    drawn:0, fallbackDrawn:0, released:0, alphaFail:0, probe:null,
+    /* ★P0-①（2026-10-16）：alpha 采样从"整场只采第一枚"扩到"**每次切剪辑都采一次**" ——
+       iOS 上"声明支持 VP9 但解不出 alpha"是半途才暴露的（批次 B §10.3 第 2 条），
+       只采一次会漏掉后上场的剪辑。历史留在 probes[]，最近一次仍在 probe（老口径兼容）。 */
+    probeClip:null, probes:[]
   };
   window.__xkVid = V;
 
@@ -1899,7 +2123,8 @@ var XKV2_BLOCK = (function(){
       c.have = c.pending;
       c.pending = -1;
       if(c.seekTimer){ clearTimeout(c.seekTimer); c.seekTimer = 0; }
-      if(!V.probe && c.have >= 0) probeAlpha(c);
+      /* ★P0-①：每次**切剪辑**都采一次（原来 !V.probe 只采整场第一枚 ⇒ 半途画错一帧查不到） */
+      if(c.have >= 0 && V.probeClip !== c.name){ V.probeClip = c.name; probeAlpha(c); }
     }catch(e){ c.err.push('draw: ' + e.message); fallback(c); }
   }
   function fallback(c){
@@ -1996,6 +2221,11 @@ var XKV2_BLOCK = (function(){
       }
       var ratio = magenta / n;
       V.probe = { clip:c.name, magentaRatio:Math.round(ratio * 1000) / 1000, ok:ratio >= 0.06 };
+      /* ★P0-①：历史（每次切剪辑一条）+ 真的"连续"两次才整站回 pixel（原来 alphaFail 不清零，
+         采样本数一多就会把两次**不相邻**的失败也当成"连续"） */
+      V.probes.push({ clip:c.name, magentaRatio:V.probe.magentaRatio, ok:V.probe.ok,
+                      at:Math.round(performance.now()) });
+      if(V.probes.length > 12){ V.probes.shift(); }
       if(!V.probe.ok){
         V.alphaFail++;
         c.err.push('alpha 采样不像透明（品红比 ' + V.probe.magentaRatio + '）');
@@ -2004,7 +2234,7 @@ var XKV2_BLOCK = (function(){
           V.reason = '连续 ' + V.alphaFail + ' 个剪辑解不出 alpha ⇒ 全站回图集';
           for(var k in V.decoded) release(V.decoded[k], true);
         }else{ fallback(c); }
-      }
+      }else{ V.alphaFail = 0; }
     }catch(e){ V.probe = { clip:c.name, error:String(e), ok:false }; }
   }
   /* ---- 每帧入口：返回 true = 这一帧已经画好了，页面不要再画图集 ---- */
@@ -2088,7 +2318,8 @@ var XKV2_BLOCK = (function(){
              return { mode:V.mode, reason:V.reason, alive:V.alive, decoded:dc,
                       failed:Object.keys(V.failed).length, bytesFetchedHint:bytes, drawn:V.drawn,
                       fallbackDrawn:V.fallbackDrawn, released:V.released, preload:V.preload,
-                      gesture:V.gesture, probe:V.probe, errors:V.errors.slice(-4) };
+                      gesture:V.gesture, probe:V.probe, probes:V.probes, alphaFail:V.alphaFail,
+                      errors:V.errors.slice(-4) };
            } };
 })();
 '''
@@ -3656,6 +3887,26 @@ _n_brace_c = IDCARD_PARTIAL.count('-}}')
 if _n_brace_o != 2 or _n_brace_c != 2:
     raise SystemExit('batchB: idcard partial 里 {{ / -}} 不止两处注释（%d / %d）—— JS/CSS 里混进了模板定界符'
                      % (_n_brace_o, _n_brace_c))
+
+# =====================================================================
+# ★P0-①(补)：手机上"中档 = 终档" ⇒ 开场必须能走完
+# ---------------------------------------------------------------------
+#   取证脚本一跑就抓到（_shots/p0tier-after-report.json：mobile 上 9.4s 还 cur='opening'）：
+#   T5.6 的 boot→hi 两段式里，"还在 boot 档就循环不走开场"这条判据写的是
+#     `cur === 'opening' && c.frames !== CLIPS.opening.frames`
+#   —— 手机上 hi 被 P0-① 永久挡住 ⇒ 这个条件永远为真 ⇒ **开场永远播不完、永远切不到 idle**
+#   （她卡在 24 帧的开场循环里；不灰，但也永远不落幕）。
+#   ⇒ 把"hi 还允许"这一条并进判据：手机上中档就是终档，按"开场播完"处理（接硬切）。
+# =====================================================================
+_hs2_before = home_script
+home_script = sub1(
+    home_script,
+    "          if(cur === 'opening' && c.frames !== CLIPS.opening.frames){   /* ★T5.6：还在 boot 档——循环等 hi 到位接力，不当开场播完 */",
+    "          if(cur === 'opening' && c.frames !== CLIPS.opening.frames && XK_TIER.hiAllowed('opening')){   /* ★T5.6 + ★P0-①：\n"
+    "              还在 boot 档**且 hi 档允许**才循环等接力；手机上 hi 永不来 ⇒ 中档就是终档，按\"开场播完\"走（接硬切） */",
+    'P0①: 手机上开场不会卡在 boot 档')
+if home_script == _hs2_before:
+    raise SystemExit('P0①: boot 档判据没被改到')
 
 # --------------------------------------------------------------------- 落盘
 print('生成：')
