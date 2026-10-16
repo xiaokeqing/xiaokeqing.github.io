@@ -975,7 +975,7 @@ XK_TIER.watchPhone = function(){
     if(performance.now() - XK_TIER.t0 < gate) return;
     try { if(typeof __xkPhoneDefer !== 'undefined' && __xkPhoneDefer) return; } catch(e){}
     var vAi = document.getElementById('v-ai');
-    if(vAi && !vAi.classList.contains('on')) return;
+    if(document.body.classList.contains('is-home')) return;
     var role = XK_TIER.bodyRole; if(!role) return;
     var fastNow = XK_TIER.blank || XK_TIER.fail.indexOf(role) >= 0;
     if(XK_TIER.bodyTier[role] === 'poster') return;   /* 已到底档，不再折腾 */
@@ -1123,7 +1123,7 @@ var XK_SM_JS = (function(){
     try{
       document.documentElement.className += ' xk-no-kurisu';
       var st = document.createElement('style');
-      st.textContent = 'html.xk-no-kurisu #charCanvas,html.xk-no-kurisu #avCanvas,html.xk-no-kurisu #bubbleCanvas,html.xk-no-kurisu #xkIdAvCanvas,html.xk-no-kurisu #phoneCanvas{display:none !important}';
+      st.textContent = 'html.xk-no-kurisu #charCanvas,html.xk-no-kurisu #avCanvas,html.xk-no-kurisu #bubbleCanvas,html.xk-no-kurisu #xkIdAvCanvas,html.xk-no-kurisu #phoneCanvas,html.xk-no-kurisu #phone{display:none !important}';
       (document.head || document.documentElement).appendChild(st);
     }catch(e){}
   }
