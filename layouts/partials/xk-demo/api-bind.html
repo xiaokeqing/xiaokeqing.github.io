@@ -201,6 +201,7 @@
      命中 CF 缓存的请求**不到源站** ⇒ 天然绕过「每 IP 20 次/分」的公开面限流。 */
   var ALIAS = {
     overview: 'overview.js', alerts: 'alerts.js', honeypot: 'honeypot.js', audit: 'audit.js',
+    home: 'home.js',    /* ★P9：监测中心首屏聚合端点（后端已上线、白名单已加） */
     latest: 'latest.js', geo: 'geo.js', stories: 'stories.js', story: 'story.js', webstats: 'webstats.js',
     kb: 'kb.js'
   };
@@ -1023,7 +1024,7 @@
        `bindHome` 是空壳 ⇒ 首页那 3 个端点取回来**没有任何消费者**（首页可见真值只剩角色字幕/导航/头像卡，都不来自 API）。
        在"每请求几十秒"的链路上这是纯浪费。证据：`_dev/probe-slownet.mjs` 的 home-* 场景（请求数 0 + 两档视口整屏截图 +
        确定性可见真值子集：计数器／CRT 状态行／HOLO 文案／导航项／布局盒，与改前基线逐项一致）。 */
-  var BASE_JOBS = SSR === 'monitor' ? ['alerts', 'geo', 'honeypot'] : [];
+  var BASE_JOBS = SSR === 'monitor' ? ['home'] : [];   /* ★P9：首屏 3 请求 → 1（home 聚合；失败由 load() 回落三个单独端点） */
   var PANE_EXTRA = { live: [], graph: ['audit'], matrix: [], stats: ['audit', 'webstats', 'overview', 'stories'] };
   function activePane() {
     var t = document.querySelector('.ops-tab.on[data-pane]');
@@ -1094,19 +1095,28 @@
     return false;
   }
 
-  function load() {
-    if (!BASE_JOBS.length || document.hidden) return Promise.resolve();
-    /* ★B3：429 冷却期内**不发任何请求**（省额度；否则继续吃 20 次/分的限额，越刷越黑） */
-    if (Date.now() < rateHoldUntil) {
-      setSyncState('被限流冷却中 · ' + Math.ceil((rateHoldUntil - Date.now()) / 1000) + ' 秒后可重试（本轮不发请求）');
-      return Promise.resolve();
-    }
-    /* ★B3：一律取 `.js` 别名（可被 CF 缓存 ⇒ 命中时不回源、不吃限流）
-       ★B4：只取**当前 tab 需要**的端点（首屏 live = 3 个）
-       ★B5：**渐进渲染** —— 不再 `Promise.all` 后一次性渲染，而是"每到一个就渲染一次"，
-       所以"看到第一条数据"的时间 = **最快那条**（改前 = 最慢那条）。只有**还没到**的端点会被标 pending。 */
-    var jobs = needJobs();
-    jobs.forEach(function (n) { if (!partCache[apiPath(n)]) pendingJobs[n] = 1; });
+  /* ★P9（站主口径：监测中心首屏 3 请求 → 1）：聚合端点 `/api/public/home.js`（后端已上线、白名单已加）。
+     做法 = **扇出**：把 `data.{alerts,geo,honeypot}` 各就各位成三个 part，**`path` 仍写各自的别名路径** ⇒
+     `pick()/degraded()/markStale()/pend()/errShort()` 等**全部下游零改动**，每个模块自己的
+     "取数中 / 读不到 / 上次成功数据"三态**照旧成立**（不会退化成"整页一起等"）。
+     失败时返回 `{ok:false, err}` 交给 load() 决定：**429 不回落**（省额度），其它失败**回落三个单独端点各一次**
+     （理由：弱网上"一个聚合超时"比"三个并发全失败"少见，但聚合本身也可能被限流/冷缓存降级 ⇒ 必须留回落，否则聚合一挂整屏就空）。 */
+  function settleHome() {
+    return get(apiPath('home')).then(function (r) {
+      var env = (r && r.d) || {}, names = ['alerts', 'geo', 'honeypot'], parts = [];
+      for (var i = 0; i < names.length; i++) {
+        var n = names[i], d = env[n];
+        if (d === undefined || d === null) { return { ok: false, err: { message: '聚合缺字段 ' + n }, status: 0 }; }
+        var pth = apiPath(n);
+        saveGood(pth, d);                                   /* ★B2：仍然存"上次成功数据"（每个模块各自的兜底） */
+        parts.push({ path: pth, ok: true, d: d, err: null, stale: false, staleAt: 0, staleD: null,
+          fresh: r.fresh, rate: null, viaOld: false, fromHome: true });
+      }
+      return { ok: true, parts: parts };
+    }, function (e) { return { ok: false, err: e }; });
+  }
+  /* 逐个端点取（原路径：既是首屏聚合失败后的回落，也是切 tab 补取用的同一段） */
+  function runJobs(jobs) {
     return Promise.all(jobs.map(function (n) {
       return settle(apiPath(n)).then(function (p) {
         partCache[p.path] = p;                                  /* 到了就进缓存（成功/失败都进） */
@@ -1124,6 +1134,44 @@
       if (retry.length) scheduleRetry(retry);
       return all;
     });
+  }
+  function load() {
+    if (!BASE_JOBS.length || document.hidden) return Promise.resolve();
+    /* ★B3：429 冷却期内**不发任何请求**（省额度；否则继续吃 20 次/分的限额，越刷越黑） */
+    if (Date.now() < rateHoldUntil) {
+      setSyncState('被限流冷却中 · ' + Math.ceil((rateHoldUntil - Date.now()) / 1000) + ' 秒后可重试（本轮不发请求）');
+      return Promise.resolve();
+    }
+    /* ★B3：一律取 `.js` 别名（可被 CF 缓存 ⇒ 命中时不回源、不吃限流）
+       ★B4：只取**当前 tab 需要**的端点（首屏 live = 3 个）
+       ★B5：**渐进渲染** —— 不再 `Promise.all` 后一次性渲染，而是"每到一个就渲染一次"，
+       所以"看到第一条数据"的时间 = **最快那条**（改前 = 最慢那条）。只有**还没到**的端点会被标 pending。 */
+    var jobs = needJobs();
+    jobs.forEach(function (n) { if (!partCache[apiPath(n)]) pendingJobs[n] = 1; });
+    /* ★P9：监测中心首屏 = **1 个请求**（home 聚合）⇒ 扇出成三个 part（每个模块自己的三态照旧）。
+       pending 仍然**按模块**置位（上面那行），所以三块各自显示"取数中"，不是"整页一起等"。 */
+    if (SSR === 'monitor' && jobs.indexOf('home') >= 0) {
+      return settleHome().then(function (res) {
+        if (res.ok) {
+          res.parts.forEach(function (p) { partCache[p.path] = p; });
+          ['home', 'alerts', 'geo', 'honeypot'].forEach(function (n) { delete pendingJobs[n]; });
+          render(unionParts([]));
+          var retry = res.parts.filter(degraded);
+          if (retry.length) scheduleRetry(retry);
+          return res.parts;
+        }
+        /* 429：**不回落**（继续打只会更黑），与 runJobs 的既有策略一致 */
+        if (res.err && (res.err.rate || res.err.status === 429)) {
+          rateHoldUntil = Date.now() + (((res.err.rate && res.err.rate.s) || 60) * 1000);
+          ['home', 'alerts', 'geo', 'honeypot'].forEach(function (n) { delete pendingJobs[n]; });
+          render(unionParts([]));
+          return [];
+        }
+        /* 其它失败：回落**三个单独端点各一次**（一次而已，不递归；再失败就走三态文案 + 上次成功数据） */
+        return runJobs(['alerts', 'geo', 'honeypot']);
+      });
+    }
+    return runJobs(jobs);
   }
   /* ★B5：降级补请求（后台，不阻塞首屏）。为什么还留 1200ms：降级多是"服务端快照刚过期"，
      立即重试会再撞同一份冷快照；而它已不在关键路径上，用户此刻看到的是"已到的真值 + 未到的骨架"。 */
