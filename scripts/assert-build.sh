@@ -115,7 +115,12 @@ head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 # 【2026-10-14 补】tts / stories / story 是**预登记**：L2 动态语音（/api/public/tts，没 Key 时是
 # 设计关闭态 503）与故事线（/api/public/stories）都在公开面文档里写着，属于"会存在的端点"。
 # 预登记不会让断言变松 —— 只有页面真的引用它时这条才起作用，而那时它确实是个存在的端点。
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story"
+# 【2026-10-16 补】home / deploy / eval 是**新上线的公开端点**（线上实测 200，CORS=*、max-age=45/ETag 与别名同口径）：
+#   · /api/public/home.js   = alerts+geo+honeypot 三合一聚合（首屏 3 请求 → 1）
+#   · /api/public/deploy.js = 部署可追溯（当前 available:false + RELEASE_INFO_NOT_CONFIGURED —— 后端待配 release-info 文件）
+#   · /api/public/eval.js   = AI 质量报告（当前 available:false + EVAL_REPORT_NOT_CONFIGURED —— 后端待配评测报告文件路径）
+#   ★三者都遵守"取不到不编数"：available:false + reason，页面据此如实写"读不到"。
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
