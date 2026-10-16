@@ -6,8 +6,8 @@
  "sampleRate": 8000,
  "hopMs": 10,
  "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
- "lineCount": 160,
- "totalBytes": 11258162,
+ "lineCount": 162,
+ "totalBytes": 11427987,
  "lines": {
   "greet_first": {
    "id": "greet_first",
@@ -5193,10 +5193,74 @@
     "target": -16.0
    },
    "envelopeSource": "dist/fallback_m32.m4a"
+  },
+  "greet_welcome": {
+   "id": "greet_welcome",
+   "trigger": "greeting",
+   "group": "greeting",
+   "text": "你好，欢迎使用 Amadeus 系统。我是桐莉栖 —— 这上面的数字全是真的，慢慢看。",
+   "scene": "首访进站（站主 2026-10-16 新口径：欢迎使用 Amadeus 系统）",
+   "emotion": "shy",
+   "source": "synth",
+   "audio": "kurisu/voice/synth/greet_welcome.m4a",
+   "envelope": "kurisu/voice/synth/greet_welcome.envelope.json",
+   "seconds": 10.522,
+   "audioBytes": 61900,
+   "envelopeValues": 1004,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/greet_welcome.m4a",
+    "webm": "kurisu/voice/synth/greet_welcome.webm"
+   },
+   "durationMs": 10522,
+   "sha256": {
+    "m4a": "3c9be7437c9500806601b413e59491355da01a230309662880446d4ce9824cbf",
+    "webm": "50e0d38164966eed2fab8de0b74f9455937e8d54ea3cf98e0e3cb620265d4564"
+   },
+   "bytes": {
+    "m4a": 61900,
+    "webm": 51482
+   },
+   "loudness": {
+    "lufs": null,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/greet_welcome.m4a"
+  },
+  "greet_welcome_back": {
+   "id": "greet_welcome_back",
+   "trigger": "greeting",
+   "group": "greeting",
+   "text": "又见面了。Amadeus 系统一直开着呢，你安心看就好。",
+   "scene": "回访进站（站主 2026-10-16 新口径）",
+   "emotion": "shy",
+   "source": "synth",
+   "audio": "kurisu/voice/synth/greet_welcome_back.m4a",
+   "envelope": "kurisu/voice/synth/greet_welcome_back.envelope.json",
+   "seconds": 5.491,
+   "audioBytes": 30920,
+   "envelopeValues": 497,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/greet_welcome_back.m4a",
+    "webm": "kurisu/voice/synth/greet_welcome_back.webm"
+   },
+   "durationMs": 5491,
+   "sha256": {
+    "m4a": "efeaa364697e56ea55ddcd357cafe631f78ed36a72d73438c9105d7df452d0b9",
+    "webm": "d3450c9ce96701ffd1893feb2cfeeeb5db1d5ddff2902ca9ae99e0a4648ea576"
+   },
+   "bytes": {
+    "m4a": 30920,
+    "webm": 25523
+   },
+   "loudness": {
+    "lufs": null,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/greet_welcome_back.m4a"
   }
  },
  "groups": {
-  "greeting": 2,
+  "greeting": 4,
   "page_intro": 22,
   "fallback": 35,
   "idle_banter": 1,
