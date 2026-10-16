@@ -1999,13 +1999,17 @@
      ★命名教训（2026-10-16）：出口名**不能用 `__xkVoice`** —— 那个全局已被
      `layouts/partials/xk-demo/shell-script.html:827` 的 `window.__xkVoice = XKV`（语音子系统状态）占用。
      故本出口命名为 `__xkVoiceTick`。 */
-  var forensicVoice = null;
+  /* ★注意（2026-10-16 修）：**只记忆化 URL 判据，不记忆化 `__xkVoiceOn`**
+     —— 否则页面启动时若先跑过一次 tick（此时 URL 无参数、`__xkVoiceOn` 还没被探针设上），
+     就会把"关"缓存成永久 false，探针事后设 `__xkVoiceOn = true` 再也打不开
+     （T5 报告里"先设 __xkVoiceOn=true 再 speak 仍 ABSENT"就是这个原因）。 */
+  var forensicVoiceUrl = null;
   function forensicVoiceOn() {
-    if (forensicVoice === null) {
-      forensicVoice = !!(global.__xkVoiceOn ||
-        (global.location && /[?&]xk-voice-diag=1/.test(global.location.search || '')));
+    if (global.__xkVoiceOn) { return true; }
+    if (forensicVoiceUrl === null) {
+      forensicVoiceUrl = !!(global.location && /[?&]xk-voice-diag=1/.test(global.location.search || ''));
     }
-    return forensicVoice;
+    return forensicVoiceUrl;
   }
   function voiceMouthTick() {
     if (!VOICE.speaking || !VOICE.audio) {

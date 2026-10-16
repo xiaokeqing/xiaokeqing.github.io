@@ -105,6 +105,7 @@ _shots/*
 !_dev/probe-3a-login.mjs
 !_dev/probe-3b-selfask.mjs
 !_dev/probe-lipsync.mjs
+!_dev/probe-sm-walk.mjs
 !_dev/probe-slownet.mjs
 !_dev/probe-blur-factor.mjs
 !_dev/shot-batch-d-nav.mjs
