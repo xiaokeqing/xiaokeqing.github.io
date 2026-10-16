@@ -297,9 +297,12 @@
         <br>本页**不**放活的输入栏：测试页是公开只读页，挂一条真能 POST 的栏会违反"发布面不发起写请求"这条纪律（栏只存在于主页）。
       </div>
     </div>
-    <p class="lab-iss"><b>已知问题</b>：后端线 <code>docs/后端令牌登录与自用池设计-20261016.md</code> 的 <code>/api/user/*</code> 尚未上线
-      ⇒ 令牌探针与「已登录 · 自用模式」文案属下一半（③b）；现在只有"无令牌不渲染 + 粘贴框 + 探针失败降级"，
-      <b>不假装已登录</b>。栏体只在登录面出现这一点是硬口径，不做"访客也能提问"的开关。</p>
+    <p class="lab-iss"><b>已知问题</b>：后端线 <code>docs/落地上线-后端令牌登录与自用池-20261016.md</code> 的 <code>/api/user/*</code> 尚未写入
+      <code>APP_USER_TOKEN_SHA256</code> ⇒ 现场返回 <code>401 USER_LOGIN_DISABLED</code>。站点线已按契约 §10 接好前半（③a）：
+      隐蔽入口出现 👤 → 点它粘贴令牌 → <code>localStorage['xk-user-token']</code> → <code>GET /api/user/status</code> 探针
+      （**只有 200 且 <code>data.loggedIn===true</code> 才算登录态**），失败按 §10.5 五条降级文案逐字显示、
+      <b>不假装登录成功</b>。自用问答（③b，<code>POST /api/user/ask</code>）等后端上线后再接。
+      栏体只在登录面出现这一点是硬口径，不做"访客也能提问"的开关。</p>
   </section>
 </section>
 

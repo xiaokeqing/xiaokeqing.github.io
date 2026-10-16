@@ -17,14 +17,19 @@
      · 失败/超时/额度照后端原话（XK_ASK_TIMEOUT=20000 · 429 读 Retry-After · quota.remaining）；**只出字幕**；
      · 不做 SSE/WebSocket（公开面只有一次性 POST）。
     ★批次 ③a（2026-10-16）· 登录按钮改走后端令牌模型（前半）—— 本偏件里同时落地 `__xkAdmin` 的令牌形态：
-     · 登录态判据从"Cloudflare Access Cookie 存在性"换成 localStorage['xk-user-token']（旧写法恒 false，可安全过渡）；
-     · 探针 `GET /api/user/status`、退出=本地删键、失败/降级文案**照后端线附录 B**；
-     · 后端重建上线前**不许出现任何"已登录"字样**（探针会失败 ⇒ 按附录 B 降级，不假装已登录）✗。
+     · 登录态**只认后端**：`GET {wb-api}/api/user/status` 返回 **200** 且 `data.loggedIn === true` 才算登录态；
+       localStorage 里有值**不算**登录态（旧写法判 `CF_Authorization` Cookie，恒 false，已整段换掉）；
+     · 令牌只进 `X-User-Token` 请求头，且**只在目标是 meta[name=wb-api] 那个来源时**才带（第三方域/CDN 一律不带）；
+     · 令牌来自站主手动粘贴（window.prompt），存 localStorage['xk-user-token']；退出 = 本地删键；
+       坏令牌**不删**本地值（可能只是粘贴出错，让站主自己重试）；失败/降级文案**逐字**照 §10.5；
+     · ③b（后端重建上线）之前**页面里不得出现"登录成功"类字样**：探针失败就按 §10.5 降级，不假装登录成功 ✗。
    素材：8 类情绪 = static/kurisu/avatar/<emo>.idle.webp（132px 单元 · 8 列，与 HOLO 面板同一套）；
          8 个常用动作 = static/kurisu/manifest.json clipsMedium 里**真实存在**的剪辑名（只在主页全身画布上演）。
    固定台词：LINE_ZH 是入口 → 中文口语台词（音轨文件与 lineId 不变；表见 docs/台词表-入口与固定台词-20261016.md），
             同时挂到 window.__xkLineZh，主页内联播放器(HOME_VOICE)读同一份文案 ⇒ 五页只有一份文案。
    诊断：window.__xkId = {sound, emo, admin, loggedIn, panel, plays, errors}
+        登录面另有 window.__xkLogin = {state, reason, status, retryAfter, checkedAt, hasToken, softLimit, quota, errors}
+        （state: anon / checking / logged-in / bad-token / throttled / offline / error）
    ⚠ /ai/ 冷缓存首屏超预算的**真凶不在本偏件**（2026-10-16 实测，别照旧推论改错地方）：
      冷缓存直访 /ai/ = 1652KB > 1650KB，构成只有三个 ——
        /kurisu/full/speaking.hi.webp 1554.7KB（外壳手机的"说话"全身图集，shell-script.html 的 render() 首帧就取）
@@ -289,8 +294,83 @@
   snd.addEventListener('click', toggleSound);
   setSound(lg('xk-sound-on') === '1', 'restore');
 
-  /* ---------- 登录（站主自用；访客不渲染这个按钮） ---------- */
-  function accessCookie() { try { return document.cookie.indexOf('CF_Authorization=') >= 0; } catch (e) { return false; } }
+  /* ★批次 ③a（2026-10-16）· 自用令牌（判据、探针、降级、退出）—— 契约逐字见
+     docs/落地上线-后端令牌登录与自用池-20261016.md §10。
+     登录态**只认后端**：`GET {wb-api}/api/user/status` 返回 200 且 `data.loggedIn === true` 才算；
+     localStorage 里有值只是"有一把待校验的令牌"，**不是**登录态。
+     红线：① 令牌只进 `X-User-Token` 请求头，且只在目标是 wb-api 那个来源时才带；
+           ② 不进 URL、不进 cookie、不打日志、不进任何产物；③ 本文件里没有任何令牌字面量 ✗。 */
+  var TOKEN_KEY = 'xk-user-token';
+  var API_META = document.querySelector('meta[name="wb-api"]');
+  function apiBase() { return ((API_META && API_META.getAttribute('content')) || '').replace(/\/+$/, ''); }
+  /* 令牌的去向白名单：只有与 wb-api **同源**的 URL 才准带令牌 */
+  function sameAsApi(u) {
+    var b = apiBase(); if (!b) { return false; }
+    try { return (new URL(u, location.href)).origin === (new URL(b, location.href)).origin; }
+    catch (e) { return false; }
+  }
+  function userToken() { var t = lg(TOKEN_KEY); return (t && t.length) ? t : ''; }
+  /* 登录面文案 —— §10.5 五条**逐字**（第 4 条的 N 按 Retry-After 替换） */
+  var L10N = {
+    notoken:   '自用入口：请粘贴自用令牌（令牌只保存在本机浏览器，不会上传到别处）',
+    invalid:   '令牌无效或已轮换 —— 请向站主要一份新的自用令牌',
+    disabled:  '自用入口当前未启用（服务端未配置令牌）',
+    throttled: '尝试过于频繁，请 N 秒后再试',
+    soft:      '今日自用调用已达软上限 500 次，仍可继续使用（仅提醒，不限额）',
+    offline:   '连不上服务，请稍后重试'
+  };
+  var XL = window.__xkLogin = { state: 'anon', reason: 'notoken', status: 0, retryAfter: 0,
+    checkedAt: 0, hasToken: false, softLimit: false, quota: null, errors: [] };
+  function paintLogin() {
+    var on = (XL.state === 'logged-in');
+    D.loggedIn = on;
+    login.setAttribute('aria-pressed', on ? 'true' : 'false');
+    login.textContent = on ? '🔓' : '👤';
+    login.title = on ? '自用令牌已校验通过（自用池）' : '登录（自用模式）';
+  }
+  function probeLogin() {
+    var base = apiBase(), t = userToken();
+    XL.hasToken = !!t; XL.checkedAt = Date.now(); XL.errors.length = 0;
+    if (!base) { XL.state = 'offline'; XL.reason = 'no-api-base'; paintLogin(); return; }
+    if (!t) { XL.state = 'anon'; XL.reason = 'notoken'; XL.status = 0; paintLogin(); return; }
+    fetch(base + '/api/user/status', { headers: { 'X-User-Token': t }, cache: 'no-store', credentials: 'omit' })
+      .then(function (r) {
+        XL.status = r.status;
+        /* ⚠ 实测发现（2026-10-16）：跨域下 `Retry-After` **不是** CORS 安全响应头 ⇒ 后端若不显式回
+           `Access-Control-Expose-Headers: Retry-After`，浏览器里 `r.headers.get()` 恒为 null（探针已复现）。
+           所以 N 做三层兜底：响应头 → body.retryAfter / body.data.retryAfter → 60。 */
+        XL.retryAfter = parseInt(r.headers.get('Retry-After') || 0, 10) || 0;
+        XL.exposedRetryAfter = r.headers.get('Retry-After');
+        return r.json().catch(function () { return null; }).then(function (b) { return { s: r.status, b: b }; });
+      })
+      .then(function (x) {
+        var b = x.b || {}, d = b.data || {};
+        if (!XL.retryAfter) { XL.retryAfter = parseInt(b.retryAfter || d.retryAfter || 0, 10) || 0; }
+        if (x.s === 200 && d.loggedIn === true) {
+          XL.state = 'logged-in'; XL.reason = ''; XL.quota = d.quota || null;
+          XL.softLimit = !!(d.quota && d.quota.softLimitReached);
+          revealLogin('token-verified'); paintLogin();
+          say(XL.softLimit ? ('自用令牌已校验通过 —— ' + L10N.soft)
+                           : '自用令牌已校验通过 —— 自用入口已就绪。');
+        } else if (x.s === 429) {
+          XL.state = 'throttled'; XL.reason = b.reason || 'LOGIN_RATE_LIMITED';
+          paintLogin();
+          say(L10N.throttled.replace('N', String(XL.retryAfter || 60)));
+        } else if (x.s === 401 || x.s === 403) {
+          XL.state = 'bad-token';
+          XL.reason = b.reason || 'TOKEN_INVALID';
+          paintLogin();   /* ⚠ 这里**不删** localStorage：可能只是粘贴出错，让站主重试（§10.2） */
+          say(XL.reason === 'USER_LOGIN_DISABLED' ? L10N.disabled : L10N.invalid);
+        } else {
+          XL.state = 'error'; XL.reason = 'HTTP ' + x.s;
+          paintLogin(); say(L10N.offline);
+        }
+      })
+      .catch(function (e) {
+        XL.state = 'offline'; XL.reason = String((e && e.message) || e);
+        XL.errors.push(XL.reason); paintLogin(); say(L10N.offline);
+      });
+  }
   function revealLogin(why) {
     if (!login.hidden) { return; }
     login.hidden = false;
@@ -301,30 +381,36 @@
        （未登录时它返回 false：栏不出来、一个请求也不发）。 */
     try { if (window.__xkAskBar && window.__xkAskBar.poke) { window.__xkAskBar.poke(); } } catch (e) { }
   }
-  function applyLogin() {
-    D.loggedIn = accessCookie();
-    if (D.loggedIn) { revealLogin('access-cookie'); }
-    login.setAttribute('aria-pressed', D.loggedIn ? 'true' : 'false');
-    login.textContent = D.loggedIn ? '🔓' : '👤';
-    login.title = D.loggedIn ? '已登录 · 自用模式' : '登录（自用模式；通道待接入）';
-  }
   login.addEventListener('click', function () {
-    if (D.loggedIn) { say('已登录 · 自用模式（本会话本地状态；凭据不经前端）'); return; }
-    say('登录通道待接入（需开 Cloudflare Access）—— 开了之后这里才会真的登录。');
+    if (XL.state === 'logged-in') {
+      var out = true;
+      try { out = window.confirm('退出登录：只删除本机浏览器里的自用令牌（服务端没有会话可销）。继续？'); } catch (e) { }
+      if (!out) { return; }
+      try { localStorage.removeItem(TOKEN_KEY); } catch (e) { }
+      XL.state = 'anon'; XL.reason = 'logout'; XL.status = 0; XL.quota = null; XL.softLimit = false;
+      paintLogin(); say('已退出自用：本机令牌已删除。');
+      return;
+    }
+    if (!userToken()) { say(L10N.notoken); }
+    var v = null;
+    /* ⚠ 令牌**不进 URL**（会进浏览器历史/Referer/日志）——只从这里的粘贴框收 */
+    try { v = window.prompt('粘贴自用令牌（只存在本机 localStorage["' + TOKEN_KEY + '"]，只发给 ' + apiBase() + '）：'); } catch (e) { }
+    if (v == null) { return; }
+    v = String(v).replace(/^\s+|\s+$/g, '');
+    if (!v) { say(L10N.notoken); return; }
+    try { localStorage.setItem(TOKEN_KEY, v); } catch (e) { say(L10N.offline); return; }
+    XL.state = 'checking'; XL.reason = ''; XL.status = 0; paintLogin(); probeLogin();
   });
   (function () {
     var q = /(^|[?&])admin=1(&|$)/.test(location.search);
     var h = /#admin(\.|$|\/|\?)/.test(location.hash) || location.hash === '#admin';
     if (q || h) { revealLogin(q ? 'url-query' : 'url-hash'); }
     else if (sg('xk-admin-ui') === '1') { revealLogin('session'); }
+    if (userToken()) { revealLogin('stored-token'); }   /* 有令牌就一直显示按钮（隐蔽入口那条不变） */
   })();
-  applyLogin();
+  paintLogin();
+  probeLogin();
 
-  /* 自用令牌（★批次 ③a 的前半：判据 = localStorage['xk-user-token'] 存在；
-     旧的 `accessCookie()`（判 CF_Authorization Cookie）恒 false —— 换掉它不影响任何访客行为）。
-     红线：令牌原文只放进请求头 X-User-Token，**不**写进任何产物、不做任何本地"解出身份"的推断。 */
-  var TOKEN_KEY = 'xk-user-token';
-  function userToken() { var t = lg(TOKEN_KEY); return (t && t.length) ? t : ''; }
   function withToken(h) {
     var o = h || {};
     var t = userToken();
@@ -344,7 +430,8 @@
     fetch: function (u, o) {
       if (!admin.allowed()) { return Promise.reject(new Error('ADMIN_ONLY')); }
       var opt = o || {};
-      opt.headers = withToken(opt.headers);
+      /* ★批次 ③a：令牌**只**发给 meta[name=wb-api] 那个来源（第三方域/CDN 一律不带）✗ */
+      if (userToken() && sameAsApi(u)) { opt.headers = withToken(opt.headers); }
       return fetch(u, opt);
     },
     get: function (u) { return admin.fetch(u, { cache: 'no-store', credentials: 'omit' }); }
@@ -388,9 +475,9 @@
     var META = document.querySelector('meta[name="wb-api"]');
     var API = ((META && META.getAttribute('content')) || '').replace(/\/+$/, '');
     var ASK_TIMEOUT = 20000, ASK_MAX = 600;
-    /* 后端线附录 B 的降级文案（逐字）；"已登录"三个字在 ③b（后端重建上线）之前**一律不出现**。 */
+    /* 后端线 §10.5 的降级文案（逐字）；"登录成功"类字样在 ③b（后端重建上线）之前**一律不出现**。 */
     var TXT = {
-      notoken: '自用入口：请粘贴自用令牌（令牌只保存在本机浏览器）',
+      notoken: '自用入口：请粘贴自用令牌（令牌只保存在本机浏览器，不会上传到别处）',
       invalid: '令牌无效或已轮换 —— 请向站主要一份新的自用令牌',
       disabled: '自用入口当前未启用（服务端未配置令牌）',
       throttled: '尝试过于频繁，请 N 秒后再试',
@@ -694,7 +781,7 @@
       document.head.appendChild(l);
     } catch (e) { D.errors.push('prefetch: ' + e); }
   }
-  /* ★`window.__xkAdmin`（含 X-User-Token 走头）**已上移到 applyLogin() 之后**定义 ——
+  /* ★`window.__xkAdmin`（含 X-User-Token 走头）**已上移到登录那一段（paintLogin/probeLogin 那段）之后**定义 ——
      因为 askBarSetup() 就在那一段里读它（批次 ② 实测：放在这里会让闸门永远读不到 ⇒ 输入栏不出现）。
      本处保留一行指路注释，避免下一个接手的人再挪回来。 */
   setTimeout(function () {
