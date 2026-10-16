@@ -1454,8 +1454,209 @@
     }
   }
 
+  /* ============================================================ 选句器（防复读）· 2026-10-15 窗口 B 接线准备件
+     问题：`playLine(basePath, id, text)` 只会"按 id 直取"。线上真正反复触发的入口（导航、状态、兜底）
+     如果都写死同一个 id，访客听到的永远是**同一句** —— 台词库再大也没用 ✗。
+     做法（与窗口 T 的 `docs/台词选句与防复读规则-20261015.md` 对齐）：
+       ① 语义筛子集：ctx.emotion / ctx.tags 命中才留在候选里（**正确性压过多样性** ✓）
+       ② 排除最近 N 条已播（N = min(4, 组内条数-1)），保证短时间内不复读
+       ③ 剩余候选上按 w = 1/(1+近 20 次出现次数) 加权随机
+       ④ 组里只有 1 条时不假装随机，如实记 noAlternative（窗口 T 规则 R4 ✓）
+     降级链（任一步空集都往下退，绝不因为"想不重复"而卡住不出声 ✗）：
+       排除最近 N → 空 ⇒ 只排除最近 1 → 仍空 ⇒ 用全组并记 diag。
+     ⚠️ 只决定"选哪一条"，**不改 playLine 按 id 取音频的既有契约** ✗。 */
+  var PICK = {
+    key: 'xk-line-recent-v1',
+    windowN: 4,
+    weightWindow: 20,
+    recent: null,
+    counts: null,
+    diag: { picks: 0, noAlternative: 0, byGroup: {}, fallbackLevel: {}, lastPick: null }
+  };
+  function pickLoadState() {
+    if (PICK.recent) { return; }
+    PICK.recent = {}; PICK.counts = {};
+    try {
+      var raw = global.localStorage && global.localStorage.getItem(PICK.key);
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && typeof o === 'object') {
+          PICK.recent = (o.recent && typeof o.recent === 'object') ? o.recent : {};
+          PICK.counts = (o.counts && typeof o.counts === 'object') ? o.counts : {};
+        }
+      }
+    } catch (e) { /* 隐私模式/配额：退回内存态，不影响出声 */ }
+  }
+  function pickSaveState() {
+    try {
+      if (!global.localStorage) { return; }
+      /* 只存 id（窗口 T 口径：不存文本/时间戳/用户标识 ⇒ 无隐私面 ✓） */
+      global.localStorage.setItem(PICK.key, JSON.stringify({ recent: PICK.recent, counts: PICK.counts }));
+    } catch (e) { /* 存不下不影响本次会话的选择 */ }
+  }
+  function pickBankLines(basePath) {
+    if (VOICE.bank) { return Promise.resolve(VOICE.bank.lines || {}); }
+    return loadVoiceBank(basePath).then(function (b) { return (b && b.lines) || {}; });
+  }
+  /** 从组里挑一条。返回 {ok,id,group,level,candidates,subset}。
+   *  group = trigger 组名；ctx.preferId 指定首选 id（导航页用），它必须属于该组 ✓。 */
+  function pickLine(basePath, group, ctx) {
+    ctx = ctx || {};
+    return pickBankLines(basePath).then(function (lines) {
+      if (!lines) { return { ok: false, reason: 'BANK_UNAVAILABLE', group: group }; }
+      var all = [];
+      for (var id in lines) {
+        if (!Object.prototype.hasOwnProperty.call(lines, id)) { continue; }
+        var rec = lines[id] || {};
+        if ((rec.trigger || rec.group || '') !== group) { continue; }
+        all.push(id);
+      }
+      if (!all.length) { return { ok: false, reason: 'NO_SUCH_GROUP', group: group }; }
+      pickLoadState();
+      /* ⓪ 指定优先 id（导航用）：规则是"点导航到某页 ⇒ 播该页 nav_*"，
+         这是**语义要求**不是"随机里偏好"，所以硬返回它 ✓（但照样记账，权重窗口继续演进 ✓） */
+      if (ctx.preferId && all.indexOf(ctx.preferId) >= 0) {
+        var pre = PICK.recent[group] || [];
+        pre.unshift(ctx.preferId);
+        if (pre.length > PICK.weightWindow) { pre.length = PICK.weightWindow; }
+        PICK.recent[group] = pre;
+        var pc = PICK.counts[group] || {};
+        pc[ctx.preferId] = (pc[ctx.preferId] || 0) + 1;
+        PICK.counts[group] = pc;
+        pickSaveState();
+        PICK.diag.picks++;
+        PICK.diag.byGroup[group] = (PICK.diag.byGroup[group] || 0) + 1;
+        PICK.diag.fallbackLevel[0] = (PICK.diag.fallbackLevel[0] || 0) + 1;
+        PICK.diag.lastPick = { group: group, id: ctx.preferId, level: 0, prefer: true };
+        return { ok: true, id: ctx.preferId, group: group, level: 0, prefer: true };
+      }
+      /* ① 语义筛子集 */
+      var subset = all.filter(function (id) {
+        var rec = lines[id] || {};
+        if (ctx.emotion) {
+          var e = rec.emotion || '';
+          if (e !== ctx.emotion && !(ctx.emotion === 'calm' && e === '')) { return false; }
+        }
+        if (ctx.tags && ctx.tags.length) {
+          var tags = rec.tags || [];
+          var hit = false;
+          for (var i = 0; i < ctx.tags.length; i++) {
+            if (tags.indexOf(ctx.tags[i]) >= 0) { hit = true; break; }
+          }
+          if (!hit) { return false; }
+        }
+        return true;
+      });
+      if (!subset.length) { subset = all; }   /* 语义筛空 ⇒ 宁用全组，也不出声失败 ✓ */
+      /* ④ 单条组：不假装随机 */
+      if (subset.length === 1) {
+        PICK.diag.picks++; PICK.diag.noAlternative++;
+        PICK.diag.byGroup[group] = (PICK.diag.byGroup[group] || 0) + 1;
+        PICK.diag.lastPick = { group: group, id: subset[0], level: 3, noAlternative: true };
+        return { ok: true, id: subset[0], group: group, level: 3, noAlternative: true };
+      }
+      var recent = (PICK.recent[group] || []);
+      var nEff = Math.min(PICK.windowN, subset.length - 1);
+      /* ② 排除最近 N（降级链） */
+      var cand = subset.filter(function (id) { return recent.slice(0, nEff).indexOf(id) < 0; });
+      var level = 1;
+      if (!cand.length) {
+        cand = subset.filter(function (id) { return recent.slice(0, 1).indexOf(id) < 0; });
+        level = 2;
+      }
+      if (!cand.length) { cand = subset; level = 3; }
+      /* ③ 加权随机 */
+      var cnt = PICK.counts[group] || {};
+      var weights = cand.map(function (id) { return 1 / (1 + (cnt[id] || 0)); });
+      var total = weights.reduce(function (a, b) { return a + b; }, 0);
+      var r = smRand() * total;
+      var chosen = cand[cand.length - 1];
+      for (var k = 0; k < cand.length; k++) {
+        r -= weights[k];
+        if (r <= 0) { chosen = cand[k]; break; }
+      }
+      recent.unshift(chosen);
+      if (recent.length > PICK.weightWindow) { recent.length = PICK.weightWindow; }
+      PICK.recent[group] = recent;
+      cnt[chosen] = (cnt[chosen] || 0) + 1;
+      var seenTotal = recent.reduce(function (a, x) { return a + (cnt[x] || 0); }, 0);
+      if (seenTotal > PICK.weightWindow * 2) {
+        for (var cid in cnt) { cnt[cid] = Math.floor(cnt[cid] / 2); }
+      }
+      PICK.counts[group] = cnt;
+      pickSaveState();
+      PICK.diag.picks++;
+      PICK.diag.byGroup[group] = (PICK.diag.byGroup[group] || 0) + 1;
+      PICK.diag.fallbackLevel[level] = (PICK.diag.fallbackLevel[level] || 0) + 1;
+      PICK.diag.lastPick = { group: group, id: chosen, level: level,
+                             candidates: cand.length, subset: subset.length };
+      return { ok: true, id: chosen, group: group, level: level,
+               candidates: cand.length, subset: subset.length };
+    });
+  }
+  /** 按组播一句：先选句、再走既有 playLine（音频仍只取这一句 ✓） */
+  function speakGroup(basePath, group, ctx) {
+    return pickLine(basePath, group, ctx).then(function (pick) {
+      if (!pick || !pick.ok) { return pick || { ok: false, reason: 'PICK_FAILED' }; }
+      return playLine(basePath, pick.id, (ctx && ctx.text) || '').then(function (r) {
+        return { ok: !!(r && (r.ok || r.reason === 'AUTOPLAY_BLOCKED')), reason: r && r.reason,
+                 id: pick.id, group: group, level: pick.level, source: 'bank' };
+      });
+    });
+  }
+
+  /* ============================================================ 导航板块语音（四页 ⇒ nav_*）
+     线上四个可导航板块：home / monitor / notes / ai（`xk-dock.html`、`xk-navpill.html` 的
+     data-xk-nav，与 app.js 的 NAV_OF_ROUTE 一致）。nav_labs / nav_about **已随页面删除作废** ✗。
+     触发：监听 hashchange（**不改 app.js** ✗ —— app.js 才是 SPA 外壳的写入者），
+     把 #/monitor/... 映射成板块名，再走 speakGroup('page_intro', {preferId})。
+     去抖：同一板块 10 分钟内不重复（sessionStorage 记，刷新不清零）。 */
+  var NAV_VOICE = { map: { home: 'nav_home', monitor: 'nav_monitor', notes: 'nav_notes', ai: 'nav_ai' },
+                    key: 'xk-nav-voice-at', dedupMs: 10 * 60 * 1000 };
+  function navVoiceSection() {
+    var h = (global.location && global.location.hash) || '';
+    var p = (global.location && global.location.pathname) || '/';
+    var m = /^#\/([a-z]+)/.exec(h);
+    var name = m ? m[1] : '';
+    if (!name) {
+      if (/^\/ai\b/.test(p)) { name = 'ai'; }
+      else if (/^\/alerts\b/.test(p)) { name = 'monitor'; }
+      else if (/^\/posts\b/.test(p)) { name = 'notes'; }
+      else if (p === '/' || /^\/index\.html$/.test(p)) { name = 'home'; }
+    }
+    var id = NAV_VOICE.map[name];
+    return id ? { name: name, id: id } : null;
+  }
+  function navVoicePlay() {
+    var sec = navVoiceSection();
+    if (!sec) { return; }
+    var now = Date.now(), last = 0, lastSec = '';
+    try {
+      var raw = global.sessionStorage && global.sessionStorage.getItem(NAV_VOICE.key);
+      if (raw) { var o = JSON.parse(raw); last = o.at || 0; lastSec = o.section || ''; }
+    } catch (e) { /* 忽略 */ }
+    if (lastSec === sec.name && (now - last) < NAV_VOICE.dedupMs) { return; }
+    try {
+      if (global.sessionStorage) {
+        global.sessionStorage.setItem(NAV_VOICE.key, JSON.stringify({ section: sec.name, at: now }));
+      }
+    } catch (e) { /* 忽略 */ }
+    speakGroup('/', 'page_intro', { preferId: sec.id }).then(function (r) {
+      VOICE.diag.lastNav = { section: sec.name, id: (r && r.id) || sec.id, ok: !!(r && r.ok) };
+    });
+  }
+  global.addEventListener('hashchange', navVoicePlay);
+
   /** 播一句 L1 台词：先查 bank（静态文件），拿不到就只出字幕（L3 降级，绝不假装有声） */
   function playLine(basePath, id, text) {
+    /* ★批次A（2026-10-16 站主）：全站**唯一的声音闸门**是左上角头像卡那颗 🔊, 默认关。
+       关着的时候：一不出声、二**连 bank.json 都不取**（既省首屏字节，也保证"没开声就不播"这条
+       口径只有一个落点）。开关打开那一刻由头像卡派发 `xk-sound` 事件，各页自己把压下的那一句补播。 */
+    if (global.__xkSound && !global.__xkSound.on) {
+      VOICE.diag.blockedPlays = (VOICE.diag.blockedPlays || 0) + 1;
+      return Promise.resolve({ ok: false, reason: 'SOUND_OFF', id: id,
+                               detail: '声音开关默认关（左上角 🔊 打开）' });
+    }
     return loadVoiceBank(basePath).then(function (bank) {
       var rec = (bank.lines || {})[id];
       if (!rec) { return { ok: false, reason: 'NO_SUCH_LINE', id: id }; }
@@ -1473,6 +1674,14 @@
         var ok = playVoiceNow(line);
         return { ok: ok, source: 'bank', id: id, url: line.url,
                  seconds: rec.seconds, envelopeValues: (env.values || []).length };
+      }, function (envErr) {
+        /* ④ 降级：包络拿不到（404/网络抖动）也**只出字幕**，不报错刷屏、不假装在播 ✓
+           （voiceMouthTick 对 null envelope 已有兜底：退回"帧里自带的嘴"） */
+        VOICE.diag.errors.push('envelope: ' + id);
+        VOICE.last = line;
+        if (!VOICE.unlocked) { VOICE.pending = line; return { ok: false, reason: 'AUTOPLAY_BLOCKED', id: id }; }
+        return { ok: !!playVoiceNow(line), source: 'bank-no-envelope', id: id,
+                 seconds: rec.seconds, envelopeValues: 0, envelopeMissing: true };
       });
     }, function (err) {
       return { ok: false, reason: 'BANK_UNAVAILABLE', detail: String(err && err.message) };
@@ -2739,6 +2948,12 @@
       var p = mounts.length ? mounts[0] : null;
       return p ? p.speak(id, text) : speakImpl(id, text, { basePath: '/' });
     },
+    /** 按组播一句（防复读选句器；验收入口 ✓） */
+    speakGroup: function (group, ctx) { return speakGroup('/', group, ctx); },
+    /** 选句器取证：抽了多少次 / 出现过几次"组内只有 1 条" / 每组候选规模 ✓ */
+    linePickDiag: function () { return JSON.parse(JSON.stringify(PICK.diag)); },
+    /** 导航语音取证（最近一次播了哪个板块的哪条 id） */
+    navDiag: function () { return VOICE.diag.lastNav || null; },
     /** 宿主触发（事件驱动入口的手动版，演示/验收用）：reason = voice|emotion|idle */
     hostTrigger: function (reason) {
       var p = KurisuPlayer.stage();

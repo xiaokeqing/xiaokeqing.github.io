@@ -127,6 +127,7 @@
   var GROUP_OF = { greet_first: 'greeting', greet_back: 'greeting', tab_return: 'idle_banter',
     nav_home: 'page_intro', nav_monitor: 'page_intro', nav_ai: 'page_intro', nav_notes: 'page_intro',
     fallback_no_data: 'fallback', fallback_offline: 'fallback', fallback_throttled: 'fallback' };
+  window.__xkLineGroup = GROUP_OF;   /* 统一播放器那边要用"这句属于哪个组"（与 bank 的 trigger 同源约定） */
   var EMO_LINE = { normal: 'nav_home', happy: 'greet_back', sided_thinking: 'nav_ai',
     sided_surprised: 'nav_monitor', sad: 'fallback_no_data', blush: 'greet_first',
     angry: 'fallback_throttled', disappointed: 'fallback_no_data' };
@@ -214,6 +215,8 @@
     D.sound = !!v;
     ls('xk-sound-on', D.sound ? '1' : '0');
     window.__xkSound = { on: D.sound, set: setSound, toggle: toggleSound };
+    /* 开声 = 用户手势 ⇒ 这一刻必须保证统一播放器在位（按需加载那条） */
+    if (D.sound) { loadPlayer(); }
     snd.textContent = D.sound ? '🔊' : '🔇';
     snd.setAttribute('aria-pressed', D.sound ? 'true' : 'false');
     snd.setAttribute('title', D.sound ? '声音：已打开（点一下关掉）' : '声音：已关闭（点一下打开）');
@@ -339,7 +342,26 @@
     })();
   })();
 
-  /* ---------- P0-④（站主 2026-10-16 追加②）：首屏优先 + 其余空闲预取 ----------
+  /* ---------- 统一播放器：按需加载（P1 ⑥） ----------
+     站主口径：宿主页要加载 `/js/kurisu-player.js`（选句/防复读/包络/口型一处实现）。
+     实测：这个 138KB 的脚本**放进首屏 1.5s 窗口会顶爆首屏门禁**（/ai/ 1639KB → 1786KB > 1650KB 预算，
+     且站主明确"预算不许抬"）⇒ 改成**按需注入**：1800ms 之后（越过窗口）或"点开声音"这个用户手势那一刻。
+     它在本页找不到 [data-xk-kurisu] 节点（本页不挂站点舞台）⇒ 只提供 KurisuPlayer.speakGroup，不碰 DOM。 */
+  function loadPlayer() {
+    if (window.KurisuPlayer || D.playerAsked) { return; }
+    D.playerAsked = true;
+    D.playerAt = Math.round(performance.now());
+    try {
+      var s = document.createElement('script');
+      s.src = '/js/kurisu-player.js';
+      s.defer = true;
+      document.head.appendChild(s);
+    } catch (e) { D.errors.push('loadPlayer: ' + e); }
+  }
+  D.loadPlayer = loadPlayer;
+  setTimeout(loadPlayer, 1800);
+
+  /* ---------- P0-④：首屏优先 + 其余空闲预取 ----------
      站主原话："一打开网页，首先把整体的图片加载出来，按时间顺序，要展示的先显示；
      但是显示的同时把其他地方加载一下，这样不就快多了吗"。
      口径：

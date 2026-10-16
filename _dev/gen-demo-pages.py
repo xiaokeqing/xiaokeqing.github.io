@@ -241,6 +241,20 @@ function xkvPlay(id){
   if(!line){ XKV.errors.push('no line: '+id); return; }
   if(!xkSoundOn()){ XKV.pending = id; if(typeof typeSub === 'function') typeSub(xkvText(id, line.text)); return; }   /* ★批次A：声音关着 ⇒ 只出字幕 */
   if(!XKV.unlocked){ XKV.pending = id; if(typeof typeSub === 'function') typeSub(xkvText(id, line.text)); return; }        /* 手势前：只记 pending，不播 */
+  /* ★批次A-P1（站主 2026-10-16）：**音频一律交给统一播放器** `KurisuPlayer.speakGroup`
+     （选句 / 防复读 / 包络 / 口型只有那一处实现；这份简化的内联播放器不再自己 new Audio）。
+     字幕与画布动画钩子仍由这一段负责（文案取共享的 xkvText）；统一播放器取不到才退回下面的本地实现。 */
+  if(window.KurisuPlayer && typeof window.KurisuPlayer.speakGroup === 'function'){
+    const _grp = (window.__xkLineGroup || {})[id] || 'greeting';
+    if(typeof typeSub === 'function') typeSub(xkvText(id, line.text));
+    if(typeof xkVoiceAnim === 'function'){ xkVoiceAnim(id); }
+    XKV.lastId = id;
+    KurisuPlayer.speakGroup('/', _grp, {preferId:id}).then(r=>{
+      if(r && r.ok){ XKV.plays++; } else { XKV.errors.push('speakGroup: ' + ((r && r.reason) || '?')); }
+      if(typeof xkVoiceEnd === 'function'){ xkVoiceEnd(); }
+    }, e=>{ XKV.errors.push('speakGroup: ' + e); if(typeof xkVoiceEnd === 'function'){ xkVoiceEnd(); } });
+    return;
+  }
   if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
   try{
     if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} }
@@ -3007,6 +3021,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   var GROUP_OF = { greet_first: 'greeting', greet_back: 'greeting', tab_return: 'idle_banter',
     nav_home: 'page_intro', nav_monitor: 'page_intro', nav_ai: 'page_intro', nav_notes: 'page_intro',
     fallback_no_data: 'fallback', fallback_offline: 'fallback', fallback_throttled: 'fallback' };
+  window.__xkLineGroup = GROUP_OF;   /* 统一播放器那边要用"这句属于哪个组"（与 bank 的 trigger 同源约定） */
   var EMO_LINE = { normal: 'nav_home', happy: 'greet_back', sided_thinking: 'nav_ai',
     sided_surprised: 'nav_monitor', sad: 'fallback_no_data', blush: 'greet_first',
     angry: 'fallback_throttled', disappointed: 'fallback_no_data' };
@@ -3094,6 +3109,8 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     D.sound = !!v;
     ls('xk-sound-on', D.sound ? '1' : '0');
     window.__xkSound = { on: D.sound, set: setSound, toggle: toggleSound };
+    /* 开声 = 用户手势 ⇒ 这一刻必须保证统一播放器在位（按需加载那条） */
+    if (D.sound) { loadPlayer(); }
     snd.textContent = D.sound ? '🔊' : '🔇';
     snd.setAttribute('aria-pressed', D.sound ? 'true' : 'false');
     snd.setAttribute('title', D.sound ? '声音：已打开（点一下关掉）' : '声音：已关闭（点一下打开）');
@@ -3219,7 +3236,26 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     })();
   })();
 
-  /* ---------- P0-④（站主 2026-10-16 追加②）：首屏优先 + 其余空闲预取 ----------
+  /* ---------- 统一播放器：按需加载（P1 ⑥） ----------
+     站主口径：宿主页要加载 `/js/kurisu-player.js`（选句/防复读/包络/口型一处实现）。
+     实测：这个 138KB 的脚本**放进首屏 1.5s 窗口会顶爆首屏门禁**（/ai/ 1639KB → 1786KB > 1650KB 预算，
+     且站主明确"预算不许抬"）⇒ 改成**按需注入**：1800ms 之后（越过窗口）或"点开声音"这个用户手势那一刻。
+     它在本页找不到 [data-xk-kurisu] 节点（本页不挂站点舞台）⇒ 只提供 KurisuPlayer.speakGroup，不碰 DOM。 */
+  function loadPlayer() {
+    if (window.KurisuPlayer || D.playerAsked) { return; }
+    D.playerAsked = true;
+    D.playerAt = Math.round(performance.now());
+    try {
+      var s = document.createElement('script');
+      s.src = '/js/kurisu-player.js';
+      s.defer = true;
+      document.head.appendChild(s);
+    } catch (e) { D.errors.push('loadPlayer: ' + e); }
+  }
+  D.loadPlayer = loadPlayer;
+  setTimeout(loadPlayer, 1800);
+
+  /* ---------- P0-④：首屏优先 + 其余空闲预取 ----------
      站主原话："一打开网页，首先把整体的图片加载出来，按时间顺序，要展示的先显示；
      但是显示的同时把其他地方加载一下，这样不就快多了吗"。
      口径：
@@ -3335,6 +3371,11 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
 {{ partial "xk-demo/idcard.html" . }}
+  {{- /* ★批次A-P1（站主 2026-10-16）：宿主页**按需加载**统一播放器 `/js/kurisu-player.js`
+         （选句/防复读/包络/口型一处实现）。为什么不写死 <script src>：
+         实测把 138KB 的播放器放进首屏窗口会顶爆首屏门禁（/ai/ 1639KB → 1786KB，预算 1650KB 不许抬 ✗）
+         ⇒ 由头像卡在 **1800ms 之后**（或"点开声音"这个用户手势那一刻）注入，
+         正好符合站主追加②"首屏优先、其余空闲预取"。 */}}
 <script>
 %s
 </script>
@@ -3399,6 +3440,7 @@ for section, view, cname in PAGES:
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
 {{ partial "xk-demo/idcard.html" . }}
+  {{- /* ★批次A-P1：统一播放器按需加载（同主页那条理由：138KB 放进首屏会顶爆 /ai/ 的门禁） */}}
 {{ partial "xk-demo/shell-script.html" . }}
 {{ partial "xk-demo/api-bind.html" . }}
 </body>
