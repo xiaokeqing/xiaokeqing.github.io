@@ -4,10 +4,10 @@
   "synth": "kurisu/voice/bank.json"
  },
  "counts": {
-  "ids": 644,
-  "withBoth": 0,
+  "ids": 646,
   "withOrig": 484,
-  "withSynth": 160
+  "withSynth": 162,
+  "withBoth": 0
  },
  "format": "xiaokeqing.kurisu.voicebank.merged.v1",
  "lookup": {
@@ -7578,6 +7578,28 @@
     "webm": "kurisu/voice/tab_return.webm"
    },
    "trigger": "idle_banter"
+  },
+  "greet_welcome": {
+   "id": "greet_welcome",
+   "trigger": "greeting",
+   "synth": {
+    "audio": "kurisu/voice/synth/greet_welcome.m4a",
+    "webm": "kurisu/voice/synth/greet_welcome.webm",
+    "envelope": "kurisu/voice/synth/greet_welcome.envelope.json",
+    "source": "synth",
+    "text": "你好，欢迎使用 Amadeus 系统。我是桐莉栖 —— 这上面的数字全是真的，慢慢看。"
+   }
+  },
+  "greet_welcome_back": {
+   "id": "greet_welcome_back",
+   "trigger": "greeting",
+   "synth": {
+    "audio": "kurisu/voice/synth/greet_welcome_back.m4a",
+    "webm": "kurisu/voice/synth/greet_welcome_back.webm",
+    "envelope": "kurisu/voice/synth/greet_welcome_back.envelope.json",
+    "source": "synth",
+    "text": "又见面了。Amadeus 系统一直开着呢，你安心看就好。"
+   }
   }
  },
  "note": "前端唯一查找表：按 id 命中后，**优先用 orig（原声）**；没有 orig 再用 synth；两者都无 ⇒ 只出字幕。"
