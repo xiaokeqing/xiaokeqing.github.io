@@ -45,7 +45,7 @@
         <div class="ops-tab on" data-pane="live">
           <div class="ops-live">
             <div class="term">
-              <div class="term-hd"><span>实时攻击流</span><span class="term-path">GET /api/public/alerts · 只读聚合（5 分钟窗口）</span><span class="term-live"><i></i>LIVE</span></div>
+              <div class="term-hd"><span>实时攻击流</span><span class="term-path">GET /api/public/alerts · 只读聚合（5 分钟窗口）</span><button class="feed-pause" id="feedPause" type="button" aria-pressed="false" title="暂停/继续追加新行（取数不受影响）">暂停</button><span class="term-live"><i></i>LIVE</span></div>
               <div class="term-bd" id="termFeed"></div>
             </div>
             <div class="ops-rail">
@@ -54,18 +54,18 @@
               </div>
               <div class="mod"><div class="mod-hd"><span class="led"></span>TOP 攻击来源<span class="tag">/geo</span></div>
                 <div class="mod-bd">
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
                 </div>
               </div>
               <div class="mod"><div class="mod-hd"><span class="led"></span>蜜罐捕获凭据<span class="tag">已脱敏 · 只给结构</span></div>
                 <div class="mod-bd">
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span class="chip">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
+                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
                 </div>
               </div>
             </div>
@@ -83,10 +83,10 @@
             </div>
           </div>
           <div class="stats">
-            <div class="stat"><div class="n" data-count="">—</div><div class="l">24h 告警</div></div>
-            <div class="stat"><div class="n" data-count="">—</div><div class="l">护栏拦截（/audit）</div></div>
-            <div class="stat"><div class="n" data-count="">—</div><div class="l">蜜罐交互</div></div>
-            <div class="stat"><div class="n" data-count="">—</div><div class="l">来源网段 24h（/geo）</div></div>
+            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">24h 告警</div></div>
+            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">护栏拦截（/audit）</div></div>
+            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">蜜罐交互</div></div>
+            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">来源网段 24h（/geo）</div></div>
           </div>
         </div>
 
@@ -94,6 +94,7 @@
         <div class="ops-tab" data-pane="matrix">
           <div class="mod"><div class="mod-hd"><span class="led"></span>告警类型矩阵 · 每格是服务端给的类型标签<span class="tag">/alerts · stats.byType</span></div>
             <div class="mod-bd"><div class="attk" id="attkGrid"></div>
+              <div class="attk-lg"><span><i class="lg warn"></i>hot · 有命中</span><span><i class="lg red"></i>fire · 命中 ≥ 峰值的 60%</span><span>hover / 键盘聚焦格子：看占比与最近一条真实告警</span></div>
               <p class="attk-note">每格的数字是本站 <code class="k">/api/public/alerts</code> 的 <code class="k">stats.byType</code> 真实计数（类型标签由服务端给，前端不编 ATT&amp;CK 映射）；命中越多颜色越热。取不到就把整块标成读不到，不补样例值。</p></div>
           </div>
         </div>
@@ -140,10 +141,10 @@
           <div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>
             <div class="mod-bd">
               <div class="stats">
-                <div class="stat"><div class="n" data-ban="total">—</div><div class="l">累计封禁 blockTotal</div></div>
-                <div class="stat"><div class="n" data-ban="active">—</div><div class="l">当前生效 blockActive</div></div>
-                <div class="stat"><div class="n" data-ban="guard">—</div><div class="l">护栏拦下动作 blockedByGuard</div></div>
-                <div class="stat"><div class="n" data-ban="actions">—</div><div class="l">已执行动作 executedActions</div></div>
+                <div class="stat"><div class="n sk" data-ban="total">—</div><div class="l">累计封禁 blockTotal</div></div>
+                <div class="stat"><div class="n sk" data-ban="active">—</div><div class="l">当前生效 blockActive</div></div>
+                <div class="stat"><div class="n sk" data-ban="guard">—</div><div class="l">护栏拦下动作 blockedByGuard</div></div>
+                <div class="stat"><div class="n sk" data-ban="actions">—</div><div class="l">已执行动作 executedActions</div></div>
               </div>
               <div data-ban-list>
                 <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
@@ -158,7 +159,7 @@
           </div>
           <div class="mod"><div class="mod-hd"><span class="led"></span>告警来源分布 · 按传感器类型<span class="tag">/overview · bySource</span></div>
             <div class="mod-bd proto">
-              <div class="donut"><span class="donut-c">—</span></div>
+              <div class="donut donut-svg"><svg id="donutSvg" viewBox="0 0 118 118" role="img" aria-label="告警来源分布"></svg><span class="donut-c">—</span></div>
               <ul class="proto-lg">
                 <li><i class="lg teal"></i>—<b>—</b></li>
                 <li><i class="lg warn"></i>—<b>—</b></li>
@@ -187,6 +188,7 @@
           <div class="msg ai"><div class="who">AI 安全 · <span class="st">公开只读</span></div>你好，这里是公开只读的安全知识库问答。问题会走真实检索增强链路，答案附带引用与状态标注；只解释概念与防御，不读取内部事件数据。</div>
 
         </div>
+        <div class="anchor-row ask-ex" id="askEx"></div>
         <div class="chat-ft">
           <input id="askInput" placeholder="问一个安全概念或防御做法…（Enter 发送）">
           <button id="askBtn">发送</button>
@@ -229,7 +231,8 @@
 
 <section class="view{{ if eq $v "notes" }} on{{ end }}" id="v-notes">
     <div class="card"><div class="card-hd"><span class="led"></span>INDEX · 全部笔记<span style="margin-left:auto;font-size:11px;color:var(--acc)">Hugo content</span></div>
-{{ if eq .page.Section "posts" }}{{ range .page.Pages }}<div class="note"><span class="dt">{{ .Date.Format "2006-01-02" }}</span><div><a class="tt" href="{{ .RelPermalink }}" style="color:inherit;text-decoration:none">{{ .Title }}</a><div class="ds">阅读约 {{ .ReadingTime }} min</div></div></div>{{ end }}{{ end }}
+{{ if eq .page.Section "posts" }}{{ $cats := slice }}{{ range .page.Pages }}{{ with .Params.categories }}{{ $cats = $cats | append . }}{{ end }}{{ end }}{{ $cats = sort (uniq $cats) }}{{ if gt (len $cats) 0 }}<div class="cat-row" id="catRow"><a href="#" class="on" data-cat="">全部</a>{{ range $cats }}<a href="#" data-cat="{{ . }}">{{ . }}</a>{{ end }}</div>{{ end }}{{ end }}
+{{ if eq .page.Section "posts" }}{{ range .page.Pages }}<div class="note"{{ with .Params.categories }} data-cat="{{ delimit . "," }}"{{ end }}><span class="dt">{{ .Date.Format "2006-01-02" }}</span><div><a class="tt" href="{{ .RelPermalink }}" style="color:inherit;text-decoration:none">{{ .Title }}</a><div class="ds">阅读约 {{ .ReadingTime }} min</div></div></div>{{ end }}{{ end }}
     </div>
   </section>
 

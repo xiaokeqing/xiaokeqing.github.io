@@ -144,6 +144,34 @@
     .glow,.crt-sub .cursor{animation:none}
   }
 
+  /* ---- ★批次 R2（2026-10-16）：主页 CRT 真实事件行 + 宽屏值班便签 ----
+     色值全部照抄本页 :root 的 warm 口径（var 直接引用），不新增配色。 */
+  .sk{color:transparent !important;border-radius:6px;display:inline-block;min-width:2.6em;
+    background:linear-gradient(90deg,var(--line) 25%,var(--line2) 50%,var(--line) 75%);
+    background-size:200% 100%;animation:skp 1.4s ease-in-out infinite}
+  @keyframes skp{0%{background-position:180% 0}100%{background-position:-20% 0}}
+  @media (prefers-reduced-motion:reduce){.sk{animation:none}}
+  .dock a:focus-visible,.desk-note .dn-go:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .crt-feed{position:absolute;left:16%;right:16%;bottom:.9%;z-index:5;text-align:center;
+    font:10.5px var(--mono);color:rgba(232,244,255,.72);text-shadow:0 1px 2px rgba(0,0,0,.8);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+  .desk-note{display:none}
+  @media (min-width:1400px){
+    .desk-note{display:block;position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:40;width:230px;
+      background:var(--solid);border:1px solid var(--line2);border-radius:14px;
+      padding:12px 14px;backdrop-filter:blur(4px);box-shadow:0 12px 40px rgba(0,0,0,.45);
+      color:var(--txt);font-size:13px;line-height:1.6}
+    .desk-note .dn-hd{display:flex;align-items:center;gap:6px;font:600 11px var(--mono);color:var(--acc);
+      letter-spacing:.1em;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:8px}
+    .desk-note .dn-hd i{width:7px;height:7px;border-radius:50%;background:#3ECF8E;box-shadow:0 0 6px #3ECF8E}
+    .desk-note .dn-num{font:600 24px var(--mono);color:var(--acc)}
+    .desk-note .dn-num.sk{min-width:2.4em;border-radius:8px}
+    .desk-note .dn-row{color:var(--mut);font-size:12px;margin-top:4px}
+    .desk-note .dn-go{display:inline-block;margin-top:9px;font:12px var(--mono);color:var(--acc);text-decoration:none;
+      border:1px solid var(--line2);padding:4px 12px;border-radius:99px}
+    .desk-note .dn-go:hover{border-color:var(--acc)}
+  }
+
   /* ★R3 布局补丁（2026-10-16 外部审查）—— 以下全部只在 ≤980px 生效 */
   @media (max-width:980px){
     /* ① 交互件命中区补齐到 44px（只动命中区，配色/字号/边框色一个字节不改） */
@@ -188,6 +216,7 @@
     </div>
     <div class="crtboot noise" id="crtBoot" aria-hidden="true"></div>
     <div class="crt-sub" id="crtSub" hidden><span id="subText"></span><span class="cursor"></span></div>
+    <div class="crt-feed" id="crtFeed" hidden></div>   /* ★R2：字幕下方一行真实事件（api-bind 从主页既有 3 端点写，不新增请求） */
   </div>
 </div>
 
@@ -200,6 +229,14 @@
   <a href="/test/">测试</a>
 </nav>
 
+<aside class="desk-note" id="deskNote" aria-label="值班便签（真实接口数据，≥1400px 才显示）">
+  <div class="dn-hd"><i></i>值班便签 · DUTY NOTE</div>
+  <div class="dn-num sk" data-dn="alerts">—</div>
+  <div class="dn-row">24h 告警（/alerts · stats24h）</div>
+  <div class="dn-row" data-dn="top">TOP 类型：—</div>
+  <div class="dn-row" data-dn="sync">sync —</div>
+  <a class="dn-go" href="/alerts/">进作战室 →</a>
+</aside>
 <div class="bootveil" id="bootveil"></div>
 <div class="fallback" id="fallback">CRT 高度不足 260px，该视口下降级为移动端 CHIP 模式<br>（见 demo-内容页外壳.html）</div>
 
@@ -356,17 +393,19 @@ function xkDockIn(why){
   d.setAttribute('data-xk-dock-at', String(Math.round(performance.now() - XK_BOOT.t0)));
 }
 function xkTransStart(t){
-  /* ★T31：把"opening 播完 → 等 idle 图就绪 → 起推拉"抽成一处，供"自然播完"与"跳过"共用。
-     自然路径传 rAF 的 t，TRANS 取值与抽之前逐字等价（行为零变化）。 */
+  /* ★批次 C（2026-10-16 站主点名）：开场**不要退场特效，硬切**。
+     站主用录屏逐帧证实：10.0s 还是特写、10.4s 已经切到常驻 ⇒ 中间**没有**平滑缩放。
+     所以这里只把 TRANS 立成"该切了"的旗标（= 1），不再起 L1 那段 900ms 推拉。
+     仍然等 idle 图就绪（不然切过去是空帧 ✗）—— 只是不再有过渡动画。 */
   if(cur !== 'opening' || TRANS) return;
   fi = CLIPS.opening.frames - 1;
   const idleIm = xkClipIm('idle').im;
   const btIdle = img(CLIPS.idle.bootSrc);
-  if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
-  if(idleIm.complete && idleIm.naturalWidth){ TRANS = (t === undefined ? performance.now() : t); }
+  if(btIdle && !(btIdle.complete && btIdle.naturalWidth)) btIdle.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = 1; } }, {once:true});
+  if(idleIm.complete && idleIm.naturalWidth){ TRANS = 1; }
   else {
-    idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = performance.now(); } }, {once:true});
-    idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = performance.now(); }, {once:true});
+    idleIm.addEventListener('load', ()=>{ if(cur === 'opening' && !TRANS){ fi = CLIPS.opening.frames - 1; TRANS = 1; } }, {once:true});
+    idleIm.addEventListener('error', ()=>{ if(cur === 'opening' && !TRANS) TRANS = 1; }, {once:true});
   }
 }
 const CLIPS = {
@@ -754,7 +793,7 @@ var XKV2_BLOCK = (function(){
 
 function drawFrame(){
   if(XK_ACT){ xkmPaint(); return; }   /* ★表情模式：重画当前表情帧 */
-  if(TRANS){ xkDrawTrans(Math.min(1, (performance.now() - TRANS) / 900)); return; }   /* ★L1：推拉中以过渡渲染为准 */
+  if(TRANS){ return; }   /* ★批次 C：取消 900ms 推拉（硬切）—— 这一帧定格特写，下一帧切 idle */
   /* ★T7：视频层先出帧；它说"这一帧我出了"就不再画图集（false = 照原样画图集） */
   if(XKV2_BLOCK.draw(cur, fi, {plan:CLIPS[cur], ctx:ctx, w:canvas.width, h:canvas.height})) return;
   /* ★T8：状态机接管后，这一帧由它决定；它没画出来（图还没到）就照原样走下面的原型逻辑 */
@@ -1558,11 +1597,7 @@ function loop(t){
       acc += t - lastT;
       if(acc >= c.interval){
         acc = 0;
-        if(TRANS){   /* ★L1：推拉中——按墙上时间推进，不占帧步进 */
-          const k = Math.min(1, (t - TRANS) / 900);
-          if(k >= 1){ TRANS = 0; play('idle'); showHud(); }
-          else { xkDrawTrans(k); lastT = t; requestAnimationFrame(loop); return; }
-        }
+        if(TRANS){ TRANS = 0; play('idle'); showHud(); }   /* ★批次 C：定格特写 → 直接切 idle（无缩放） */
         if(cur === 'opening' && !PWR && fi === 0) PWR = t;   /* ★CRT 通电：opening 首帧就绪那一刻起振（图片晚到也能吃上） */
         fi++;
         if(fi >= c.frames){

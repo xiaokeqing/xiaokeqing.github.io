@@ -45,7 +45,7 @@ function feedCap(){
 }
 function feedRow(it){
   const el = document.createElement('div');
-  el.className = 'tl';
+  el.className = 'tl lv-' + (it.cls || 'dns');   /* ★R2：行左 2px 级别色条（颜色映射在 CSS 里，复用既有类型色的变量，不新增色值） */
   el.innerHTML = `<span class="ts">${xkEsc(it.ts)}</span> <span class="tg ${it.cls}">${xkEsc(it.tag)}</span> ${xkEsc(it.text)}`;
   termFeed.appendChild(el);
 }
@@ -77,7 +77,9 @@ addEventListener('resize', feedTrim);
 
 /* 24 小时攻击时序 —— ★第十二批重写：数据改成 /api/public/alerts 的 stats24h.trend
    （25 个小时桶真实计数，由 api-bind 写进 window.XK24H）；取不到就清空画布 + 表头写"读不到"，
-   不再用 Math.sin + 取模画一条看着像波形的假曲线（原实现就是这么画的）。 */
+   不再用 Math.sin + 取模画一条看着像波形的假曲线（原实现就是这么画的）。
+   ★R2（2026-10-16）：补横轴刻度（0/6/12/18/24h）+ 峰值点标记 + 当前小时（末桶）高亮点。
+   色值全部是本样式表里已有值（acc/警示色/mut 的 warm 口径），不新增配色。 */
 let sparkDone = false;
 function drawSpark(){
   const c = document.getElementById('spark24'); if(!c) return;
@@ -95,26 +97,56 @@ function drawSpark(){
   if(tag) tag.textContent = '/alerts · stats24h（' + bins.length + ' 个小时桶）';
   const vals = bins.map(b=>Number(b.count)||0);
   const max = Math.max.apply(null, vals) || 1;
-  const yOf = v => (h-8) - (h-16) * (v/max);
+  const xOf = i => i/(vals.length-1)*w;
+  const yOf = v => (h-14) - (h-24) * (v/max);          /* ★R2：底部留 10px 给刻度字，顶部留 8px 给峰值标记 */
+  /* ★R2：刻度层（ baseline + 0/6/12/18/24h 刻度字，8px mono ） */
+  const axes = ()=>{
+    x.strokeStyle = 'rgba(210,203,189,.28)'; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(0,h-10.5); x.lineTo(w,h-10.5); x.stroke();
+    x.fillStyle = 'rgba(210,203,189,.75)'; x.font = '8px ui-monospace,Menlo,Consolas,monospace';
+    x.textAlign = 'center';
+    const ticks = [0,6,12,18,24];
+    ticks.forEach(t=>{
+      const i = Math.round(t/24*(vals.length-1));
+      const px = Math.min(Math.max(xOf(i), 8), w-10);
+      x.fillText(t+'h', px, h-1);
+      x.fillRect(xOf(i), h-13, 1, 3);
+    });
+  };
   const area = ()=>{
-    x.beginPath(); x.moveTo(0,h);
-    vals.forEach((v,i)=>x.lineTo(i/(vals.length-1)*w, yOf(v)));
-    x.lineTo(w,h); x.closePath();
+    x.beginPath(); x.moveTo(0,h-10);
+    vals.forEach((v,i)=>x.lineTo(xOf(i), yOf(v)));
+    x.lineTo(w,h-10); x.closePath();
     x.fillStyle = 'rgba(127,212,216,.10)'; x.fill();
   };
   const line = upto=>{
     x.beginPath();
     const n = Math.max(2, Math.ceil(vals.length*upto));
-    for(let i=0;i<n;i++){ const px = i/(vals.length-1)*w; i===0 ? x.moveTo(px,yOf(vals[i])) : x.lineTo(px,yOf(vals[i])); }
+    for(let i=0;i<n;i++){ const px = xOf(i); i===0 ? x.moveTo(px,yOf(vals[i])) : x.lineTo(px,yOf(vals[i])); }
     x.strokeStyle = '#7FD4D8'; x.lineWidth = 1.6; x.stroke();
   };
-  area();
-  if(RM || sparkDone){ line(1); return; }
+  /* ★R2：峰值点（warn 色）+ 当前小时（末桶，acc 色描边点）；upto 没到就不画，跟着动画一起出现 */
+  const marks = upto=>{
+    const n = Math.max(2, Math.ceil(vals.length*upto));
+    const pi = vals.indexOf(max);
+    if(pi >= 0 && pi < n){                              /* 全零窗口 max 兜底成 1 ⇒ indexOf=-1，此时不画峰值点 */
+      x.beginPath(); x.arc(xOf(pi), yOf(vals[pi]), 2.6, 0, 6.284);
+      x.fillStyle = '#E8B45A'; x.fill();
+    }
+    const li = vals.length - 1;
+    if(li < n){
+      x.beginPath(); x.arc(xOf(li), yOf(vals[li]), 2.6, 0, 6.284);
+      x.fillStyle = '#12100D'; x.fill();
+      x.strokeStyle = '#7FD4D8'; x.lineWidth = 1.6; x.stroke();
+    }
+  };
+  axes();
+  if(RM || sparkDone){ area(); line(1); marks(1); return; }
   sparkDone = true;
   const t0 = performance.now(), dur = 1100;
   (function step(t){
     const k = Math.min(1,(t-t0)/dur);
-    x.clearRect(0,0,w,h); area(); line(k);
+    x.clearRect(0,0,w,h); axes(); area(); line(k); marks(k);
     if(k<1) requestAnimationFrame(step);
   })(t0);
 }
@@ -195,8 +227,17 @@ function startGraph(){
 
 /* 告警类型矩阵 —— ★第十二批重写（原来是写死的 TACTIC_HITS 样例值）。
    服务端没有 ATT&CK 战术字段，所以这里一格 = 服务端真实给的一个类型标签 + /alerts 的
-   stats.byType 真实计数；映射关系由服务端给，前端不编。取不到就写"读不到"。 */
+   stats.byType 真实计数；映射关系由服务端给，前端不编。取不到就写"读不到"。
+   ★R2（2026-10-16）：每格补 hover/聚焦摘要（占比 + 最近一条真实告警一句话，数据来自
+   已在手的 XK_FEED，不发新请求）；格子可聚焦（tabindex）—— 摘要条 CSS 在 shell-style 的 R2 段。 */
 const attkGrid = document.getElementById('attkGrid');
+function attkTip(label){
+  /* 从实时攻击流里找这个类型的最近一条（XK_FEED 新的在前），找不到就只给占比 */
+  const items = window.XK_FEED || [];
+  const plain = String(label || '').replace(/ *告警$/, '');
+  const hit = items.find(it => String(it.tag || '').indexOf(plain) >= 0);
+  return hit ? hit.ts + ' ' + hit.text : '';
+}
 function renderTypes(){
   if(!attkGrid) return;
   const rows = window.XK_TYPES;
@@ -205,13 +246,19 @@ function renderTypes(){
     attkGrid.innerHTML = '<div class="cell"><b>读不到</b><span class="taid">/api/public/alerts</span><div class="num">—</div></div>';
     return;
   }
+  const total = rows.reduce((s,r)=>s + (Number(r.count)||0), 0) || 1;
   const max = Math.max.apply(null, rows.map(r=>Number(r.count)||0)) || 1;
   rows.forEach((r,i)=>{
     const hit = Number(r.count) || 0;
     const cell = document.createElement('div');
     cell.className = 'cell' + (hit/max >= .6 ? ' fire' : hit>0 ? ' hot' : '');
+    cell.tabIndex = 0;                                  /* ★R2：键盘聚焦也能看摘要 */
+    const share = Math.round(hit / total * 100);
+    const last = attkTip(r.label || r.key);
     cell.innerHTML = `<b>${xkEsc(r.label || r.key || '—')}</b><span class="taid">${xkEsc(r.key || '')}</span>` +
-      `<div class="num">${hit.toLocaleString('en-US')}</div>`;
+      `<div class="num">${hit.toLocaleString('en-US')}</div>` +
+      `<div class="tip" role="tooltip">占本窗口 <span class="tt-share">${share}%</span>（${hit.toLocaleString('en-US')} 次）` +
+      (last ? `<br>最近：${xkEsc(last)}` : '') + `</div>`;   /* ★R2：hover 摘要，数据零新增请求 */
     attkGrid.appendChild(cell);
   });
 }
@@ -224,6 +271,7 @@ function runCounters(){
   /* ★第十二批：data-count 为空 = 该数字这次没取到 → 写"读不到"，**不写 0 冒充**；
      真值由 api-bind 从真实端点写进 data-count 与文本。 */
   document.querySelectorAll('[data-count]').forEach(el=>{
+    el.classList && el.classList.remove('sk');          /* ★R2：写实值的同时摘掉骨架条 */
     const raw = el.dataset.count, T = Number(raw);
     if(raw === '' || raw === undefined || !isFinite(T)){ el.textContent = '读不到'; return; }
     if(RM){ el.textContent = T.toLocaleString('en-US'); return; }
@@ -651,21 +699,29 @@ function xkQuota(d){
     ? '额度池 '+d.quota.pool+'：已用 '+(d.quota.used==null?'—':d.quota.used)+' / '+(d.quota.limit==null?'—':d.quota.limit)+' · 每 IP 6 次/分钟'
     : '额度：未返回 · 每 IP 6 次/分钟';
 }
+/* ★R2：引用卡升级成"引用卡组" —— 标题行给命中数，每条是原生 <details> 可展开核验（零 JS）。
+   0 条引用时不渲染卡组，由状态徽标单独说明（generated=false 的拒答不该假装有引用）。 */
 function xkCites(d){
   const cs = d.citations || []; if(!cs.length) return '';
-  return cs.map((c,i)=>{
+  const items = cs.map((c,i)=>{
     const bits = [];
     if(c.sourceTypeLabel) bits.push(c.sourceTypeLabel);
     if(c.trustLevelLabel) bits.push(c.trustLevelLabel);
     if(c.score!=null && !isNaN(Number(c.score))) bits.push('相关度 ' + (Math.round(Number(c.score)*100)/100));
-    return '<div class="cite">['+(i+1)+'] 《'+xkAskEsc(c.title||'（无标题）')+'》'+(bits.length?' · '+xkAskEsc(bits.join(' · ')):'')+
-      (c.snippet?'<br><span style="opacity:.85">'+xkAskEsc(c.snippet)+'</span>':'')+'</div>';
+    return '<details class="cite"><summary>['+(i+1)+'] 《'+xkAskEsc(c.title||'（无标题）')+'》'+(bits.length?' · '+xkAskEsc(bits.join(' · ')):'')+'</summary>'+
+      '<div class="snip">'+(c.snippet?xkAskEsc(c.snippet):'（后端未返回片段）')+'</div></details>';
   }).join('');
+  return '<div class="citebox"><div class="citebox-hd">引用命中 '+cs.length+' 条 · 点任一条展开片段核验（全部来自公开白名单语料）</div>'+items+'</div>';
 }
+/* ★R2：状态徽标分档（颜色映射在 CSS，复用 ok/warn/bad 既有状态色，不新增色值） */
+const XK_STATE_CLS = {
+  'model':'st-ok', 'rule-based':'st-warn', 'input-insufficient':'st-warn', 'no-retrieval':'st-warn',
+  'retrieval-failed':'st-bad', 'model-failed':'st-bad', 'injection-blocked':'st-bad'
+};
 function xkRenderAnswer(el, d){
   const st = d.state || '';
   const label = d.stateLabel || (XK_STATE_LABEL[st] ? XK_STATE_LABEL[st][0] : (st || '未识别状态'));
-  let html = '<div class="who">AI 安全 · <span class="st">'+xkAskEsc(label)+'</span></div>';
+  let html = '<div class="who">AI 安全 · <span class="st '+(XK_STATE_CLS[st]||'')+'">'+xkAskEsc(label)+'</span></div>';
   if(d.injection && d.injection.blocked)
     html += '<p>输入命中提示注入护栏（'+xkAskEsc(d.injection.hitCount||0)+' 条规则）；下面是把它当"不可信数据"处理后的结果。</p>';
   if(d.failureReason) html += '<p><b>服务端说明：</b>'+xkAskEsc(d.failureReason)+'</p>';
@@ -780,6 +836,86 @@ function xkvPlay(id){
 addEventListener('pointerdown', xkvUnlock, {once:true});
 addEventListener('keydown', xkvUnlock, {once:true});
 setTimeout(()=>{ xkvLoad().then(()=>xkvPlay(xkvPageLine())); }, 1800);
+
+
+/* ================= ★批次 R2（2026-10-16 前端优化批）：交互层 ================= */
+/* ① 作战室 tab：hash 直达 + ←/→ 方向键（不拆页面，只让某个 tab 可分享/可直达） */
+(function(){
+  if(!document.querySelector('#v-monitor.on')) return;      /* 只有 /alerts/ 的作战室是亮的 */
+  var nav = document.getElementById('opsTabs'); if(!nav) return;
+  var tabs = Array.prototype.slice.call(nav.querySelectorAll('button'));
+  if(!tabs.length) return;
+  tabs.forEach(function(b){
+    b.addEventListener('click', function(){
+      try{ history.replaceState(null, '', '#' + b.dataset.tab); }catch(_){}
+    });
+  });
+  var h = (location.hash || '').replace(/^#/, '');
+  if(h){ tabs.forEach(function(b){ if(b.dataset.tab === h) b.click(); }); }
+  nav.addEventListener('keydown', function(ev){
+    if(ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+    var i = tabs.indexOf(document.activeElement);
+    if(i < 0) return;
+    ev.preventDefault();
+    var n = tabs[(i + (ev.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+    n.focus(); n.click();
+  });
+})();
+/* ② 实时攻击流：暂停/继续（暂停期间新行进 backlog，恢复时补渲染；不丢数据、不多请求） */
+(function(){
+  var btn = document.getElementById('feedPause');
+  if(!btn || typeof feedRow !== 'function') return;
+  var paused = false, backlog = [], queued = {};
+  btn.addEventListener('click', function(){
+    paused = !paused;
+    btn.classList.toggle('on', paused);
+    btn.textContent = paused ? '继续' : '暂停';
+    btn.setAttribute('aria-pressed', String(paused));
+    if(!paused && backlog.length){
+      backlog.forEach(function(it){ feedSeen[it.key] = 1; feedRow(it); });
+      backlog = []; queued = {}; feedTrim();
+    }
+  });
+  var orig = window.__xkRenderFeed;
+  window.__xkRenderFeed = function(){
+    var items = window.XK_FEED;
+    if(paused && items && items.length){
+      items.forEach(function(it){ if(!feedSeen[it.key] && !queued[it.key]){ queued[it.key] = 1; backlog.push(it); } });
+      return;   /* 暂停中：只入队不上屏（「读不到/空」提示行不受暂停影响，仍走 orig） */
+    }
+    orig();
+  };
+})();
+/* ③ AI 页：示例问题 chips（复用 anchor-row 胶囊样式；点了 = 填进输入框并发送） */
+(function(){
+  var row = document.getElementById('askEx'); if(!row) return;
+  if(!document.querySelector('#v-ai.on')) return;
+  var QS = ['什么是暴力破解？怎么防', '蜜罐是怎么抓到攻击者的', 'SQL 注入的原理与防御', '提示注入是什么'];
+  row.innerHTML = QS.map(function(q){
+    return '<a href="#" data-q="' + xkAskEsc(q) + '">' + xkAskEsc(q) + '</a>';
+  }).join('');
+  row.addEventListener('click', function(ev){
+    var a = ev.target.closest ? ev.target.closest('[data-q]') : null; if(!a) return;
+    ev.preventDefault();
+    var inp = document.getElementById('askInput'); if(!inp) return;
+    inp.value = a.getAttribute('data-q');
+    if(typeof askDemo === 'function') askDemo();
+  });
+})();
+/* ④ 笔记：分类 chips 过滤（纯前端，列表已在 SSR 里，零请求） */
+(function(){
+  var row = document.getElementById('catRow'); if(!row) return;
+  row.addEventListener('click', function(ev){
+    var a = ev.target.closest ? ev.target.closest('[data-cat]') : null; if(!a) return;
+    ev.preventDefault();
+    Array.prototype.forEach.call(row.querySelectorAll('a'), function(x){ x.classList.toggle('on', x === a); });
+    var cat = a.getAttribute('data-cat');
+    Array.prototype.forEach.call(document.querySelectorAll('#v-notes .note'), function(n){
+      var cs = (n.getAttribute('data-cat') || '').split(',');
+      n.style.display = (!cat || cs.indexOf(cat) >= 0) ? '' : 'none';
+    });
+  });
+})();
 
 </script>
 <script id="scene-js">

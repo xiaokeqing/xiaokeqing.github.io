@@ -53,7 +53,7 @@
   function maskText(t) {
     return String(t === null || t === undefined ? '' : t).replace(/(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}/g, '$1.x');
   }
-  function txt(el, s) { if (el) el.textContent = s; }
+  function txt(el, s) { if (el) { el.textContent = s; if (el.classList) el.classList.remove('sk'); } }   /* ★R2：写实值即摘骨架条 */
   function textNodes(el) {
     var out = [], n = el.childNodes;
     for (var i = 0; i < n.length; i++) { if (n[i].nodeType === 3) out.push(n[i]); }
@@ -269,35 +269,80 @@
 
     /* ★T21：故事线已挪到 bindStories()（候选池 + 点击懒加载时间线），这里不再直接写那 4 行 ✗ */
 
-    /* 告警来源分布（原"协议分布"）← /api/public/overview alerts.bySource：甜甜圈与图例都是真值 */
-
-    /* 告警来源分布（原"协议分布"）← /api/public/overview alerts.bySource：甜甜圈与图例都是真值 */
+    /* 告警来源分布（原"协议分布"）← /api/public/overview alerts.bySource：甜甜圈与图例都是真值
+       ★R2（2026-10-16）：conic-gradient → SVG 分段弧（pathLength=100 口径）。
+       理由：渐变是"一张死图"，分段弧才有 hover 高亮、<title> 读屏、与图例联动；
+       段色用 style="stroke:var(--acc/--warn/--acc2/--ok)" —— 跟皮肤切换，不写死 hex。 */
     var ov = pick(parts, 'overview');
     var bs = (ov && ov.alerts && Array.isArray(ov.alerts.bySource)) ? ov.alerts.bySource : null;
     var donut = document.querySelector('.donut');
+    var svg = document.getElementById('donutSvg');
     var items = document.querySelectorAll('.proto-lg li');
     var center = document.querySelector('.donut-c');
-    if (bs) {
+    var SEGV = ['--acc', '--warn', '--acc2', '--ok'];
+    var SEGL = ['teal', 'warn', 'purp', 'ok'];
+    if (bs && bs.length && svg) {
       var total = bs.reduce(function (s, x) { return s + (Number(x.count) || 0); }, 0) || 1;
-      var colors = ['var(--acc)', 'var(--warn)', 'var(--acc2)', 'var(--ok)'];
-      var stops = [], acc = 0;
-      bs.forEach(function (x, i) {
-        var from = acc / total * 100; acc += Number(x.count) || 0;
-        stops.push(colors[i % colors.length] + ' ' + from.toFixed(2) + '% ' + (acc / total * 100).toFixed(2) + '%');
+      window.__xkDonut = bs.map(function (x) {
+        return { label: x.label || x.key || '—', count: Number(x.count) || 0,
+          pct: Math.round((Number(x.count) || 0) / total * 100) };
       });
-      if (donut) donut.style.background = stops.length ? 'conic-gradient(' + stops.join(',') + ')' : '';
-      if (center) center.textContent = '窗口';
+      var acc = 0, segs = '';
+      bs.forEach(function (x, i) {
+        var len = (Number(x.count) || 0) / total * 100;
+        segs += '<circle class="seg" cx="59" cy="59" r="48" pathLength="100" data-seg="' + i + '"' +
+          ' style="stroke:var(' + SEGV[i % 4] + ')"' +
+          ' stroke-dasharray="' + Math.max(0, len - 0.8).toFixed(2) + ' 100"' +   /* 段间留 0.8 缝，读起来是分"段"不是一坨 */
+          ' stroke-dashoffset="' + (-acc).toFixed(2) + '">' +
+          '<title>' + esc(x.label || x.key) + ' ' + Math.round(len) + '%（' + (fmt(x.count) || '0') + ' 条）</title></circle>';
+        acc += len;
+      });
+      svg.innerHTML = segs;
+      txt(center, '窗口');
       for (var k = 0; k < items.length; k++) {
-        var it = items[k], x2 = bs[k];
+        var x2 = bs[k];
         if (!x2) { items[k].innerHTML = '<i class="lg ok"></i>—<b>—</b>'; items[k].style.display = 'none'; continue; }
         items[k].style.display = '';
-        items[k].innerHTML = '<i class="lg ' + ['teal', 'warn', 'purp', 'ok'][k % 4] + '"></i>' + esc(x2.label || x2.key) +
+        items[k].setAttribute('data-seg', k);
+        items[k].innerHTML = '<i class="lg ' + SEGL[k % 4] + '"></i>' + esc(x2.label || x2.key) +
           '<b>' + (Number(x2.count) || 0 ? Math.round((Number(x2.count) || 0) / total * 100) + '%' : '0%') + '</b>';
       }
+      /* hover 联动（只接一次）：段 ↔ 图例互相同步高亮，中心字换成该段占比 */
+      var dimTo = function (idx) {
+        if (!svg) return;
+        var segs2 = svg.querySelectorAll('.seg');
+        for (var m = 0; m < segs2.length; m++) {
+          segs2[m].classList.toggle('dim', idx !== null && Number(segs2[m].getAttribute('data-seg')) !== idx);
+        }
+        if (center) {
+          if (idx === null) { center.textContent = '窗口'; }
+          else {
+            var d2 = window.__xkDonut && window.__xkDonut[idx];
+            center.textContent = d2 ? d2.pct + '%' : '窗口';
+          }
+        }
+      };
+      if (!svg.getAttribute('data-wired')) {
+        svg.setAttribute('data-wired', '1');
+        svg.addEventListener('mouseover', function (ev) {
+          var s = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-seg');
+          if (s !== null && s !== undefined) dimTo(Number(s));
+        });
+        svg.addEventListener('mouseout', function () { dimTo(null); });
+        var lg = document.querySelector('.proto-lg');
+        if (lg) {
+          lg.addEventListener('mouseover', function (ev) {
+            var li = ev.target && ev.target.closest ? ev.target.closest('li[data-seg]') : null;
+            if (li) dimTo(Number(li.getAttribute('data-seg')));
+          });
+          lg.addEventListener('mouseout', function () { dimTo(null); });
+        }
+      }
     } else {
+      if (svg) svg.innerHTML = '';
       if (donut) donut.style.background = '';
-      if (center) center.textContent = NA;
-      for (var m = 0; m < items.length; m++) { items[m].style.display = ''; items[m].innerHTML = '<i class="lg ok"></i>—<b>—</b>'; }
+      txt(center, NA);
+      for (var m2 = 0; m2 < items.length; m2++) { items[m2].style.display = ''; items[m2].innerHTML = '<i class="lg ok"></i>—<b>—</b>'; }
     }
   }
 
@@ -316,6 +361,40 @@
       });
     }
     if (window.__xkRenderFeed) window.__xkRenderFeed();
+  }
+
+  /* ---------------------------------------------------------------- ★R2 主页：CRT 事件行 + 值班便签
+     数据全部来自主页既有 3 端点（alerts/audit/honeypot），不新增请求、不新增轮询。 */
+  function bindHome(parts) {
+    var al = pick(parts, 'alerts'), au = pick(parts, 'audit');
+    var s24 = al && al.stats24h;
+    /* CRT 字幕下行：一条真实摘要（优先最近一条告警；没有就给累计口径；全挂就如实写读不到） */
+    var feed = document.getElementById('crtFeed');
+    if (feed) {
+      var list = al && Array.isArray(al.list) ? al.list : [];
+      if (list.length) {
+        var a = list[0];
+        feed.textContent = '最近一条 · ' + String(a.typeLabel || a.sourceLabel || '告警') + ' · ' +
+          maskIp(a.srcIp) + ' ×' + (Number(a.count) || 1) + '（/api/public/alerts 实值）';
+      } else if (au && au.summary) {
+        feed.textContent = '护栏累计拦下 ' + (fmt(au.summary.blockedByGuard) || NA) + ' 个动作 · 本窗口告警流为空';
+      } else {
+        feed.textContent = '接口这次读不到（' + (errShort(parts) || '不可达') + '）· 不补数、不编造';
+      }
+      feed.hidden = false;
+    }
+    /* 值班便签（CSS 只在 ≥1400px 渲染，窄屏这整块不占位） */
+    var dn = document.getElementById('deskNote');
+    if (dn) {
+      var total24 = (s24 && s24.available !== false) ? fmt(s24.total) : null;
+      txt(dn.querySelector('[data-dn="alerts"]'), total24 === null ? NA : total24);
+      var types = al && al.stats && Array.isArray(al.stats.byType) ? al.stats.byType.slice() : [];
+      types.sort(function (x, y) { return (Number(y.count) || 0) - (Number(x.count) || 0); });
+      txt(dn.querySelector('[data-dn="top"]'), types.length
+        ? 'TOP 类型：' + String(types[0].label || types[0].key || '—') + ' · ' + (fmt(types[0].count) || '—') + ' 次'
+        : 'TOP 类型：' + NA);
+      txt(dn.querySelector('[data-dn="sync"]'), lastSync ? 'sync ' + clockOf(lastSync) + ' · 40s 一轮只读轮询' : 'sync ' + NA);
+    }
   }
 
   function bindOps(parts) {
@@ -351,6 +430,7 @@
       if (!el) return;
       var v = sum ? fmt(sum[kv[1]]) : null;
       el.textContent = (v === null) ? NA : v;       /* 取不到写"读不到"，绝不补 0 */
+      if (el.classList) el.classList.remove('sk');  /* ★R2：摘骨架条 */
     });
     var note = box.querySelector('[data-ban-note]');
     var rows = box.querySelectorAll('[data-ban-list] .row');
@@ -604,6 +684,7 @@
     lastParts = parts;
     /* ★Q-2（2026-10-15 站主）：主页 CRT 那块 SEC-LAB 状态卡已删 ⇒ 这里的 bindCrt 一并摘掉 */
     if (SSR === 'monitor') bindOps(parts);
+    if (SSR === 'home') bindHome(parts);   /* ★R2：CRT 事件行 + 值班便签（主页 3 端点复用，零新增请求） */
   }
   /* 服务端"冷缓存"时会返回一版"这次没数据"的降级响应（app.js 里记录的同一个现象：
      /api/public/alerts 冷缓存下 stats24h.available=false，同一 URL 过一会儿再取就是真值）。
