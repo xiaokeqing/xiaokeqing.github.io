@@ -848,6 +848,8 @@
      且站主明确"预算不许抬"）⇒ 改成**按需注入**：1800ms 之后（越过窗口）或"点开声音"这个用户手势那一刻。
      它在本页找不到 [data-xk-kurisu] 节点（本页不挂站点舞台）⇒ 只提供 KurisuPlayer.speakGroup，不碰 DOM。 */
   function loadPlayer() {
+    /* ★全站关角色总开关（v4 §六#2 合规）：开关打开时不拉播放器（也就不会有角色/语音） */
+    if (window.__xkNoKurisu) { return; }
     if (window.KurisuPlayer || D.playerAsked) { return; }
     D.playerAsked = true;
     D.playerAt = Math.round(performance.now());

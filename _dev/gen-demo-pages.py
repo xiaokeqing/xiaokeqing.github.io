@@ -2444,6 +2444,28 @@ XK_SM_JS = r'''
    诊断口径：window.__xkSM（on/cur/fi/why/reasons/tl/fp/seed/replay/hiddenSkipped/errs）
    ================================================================================ */
 var XK_SM_JS = (function(){
+  /* ★2026-10-16（`07-v4定稿 §六#2` 合规要求 + 站主要"一键关"）：**全站关角色总开关**。
+     触发（任一即可）：URL `?xk-no-kurisu=1` / `?xk-kurisu=off`；或页面在任何脚本之前设 `window.__xkNoKurisu = true`。
+     行为（三件一起）：① 状态机不启用（V.on 保持 false）② `<html>` 加 `xk-no-kurisu` 并注入隐藏角色画布的 CSS
+     ③ 置 `window.__xkNoKurisu = true`（播放器加载器据此不再拉 `/js/kurisu-player.js`）。
+     为什么要有它：角色素材衍生于商业游戏资产（授权口径=非商业技术学习/研究/演示）⇒ 页面必须能"一键不含角色"。 */
+  var NO_KURISU = (function(){
+    try{
+      if(window.__xkNoKurisu === true) return true;
+      var q = location.search || '';
+      if(/[?&]xk-no-kurisu=1/.test(q) || /[?&]xk-kurisu=off/.test(q)) return true;
+    }catch(e){}
+    return false;
+  })();
+  if(NO_KURISU){
+    window.__xkNoKurisu = true;
+    try{
+      document.documentElement.className += ' xk-no-kurisu';
+      var st = document.createElement('style');
+      st.textContent = 'html.xk-no-kurisu #charCanvas,html.xk-no-kurisu #avCanvas,html.xk-no-kurisu #bubbleCanvas,html.xk-no-kurisu #xkIdAvCanvas,html.xk-no-kurisu #phoneCanvas{display:none !important}';
+      (document.head || document.documentElement).appendChild(st);
+    }catch(e){}
+  }
   /* ---- 四类宿主触发 → 入口剪辑（9 个 prob=0 入口的子集；运行时优先用 JSON 里的 host_triggered_entries）---- */
   var T0 = {
     voice:     ['speaking_trans','speaking_short','key_point_speaking'],
@@ -2879,6 +2901,7 @@ var XK_SM_JS = (function(){
   var API = {
     state:V,
     boot:function(){
+      if(NO_KURISU){ V.errs.push('kurisu-off'); return Promise.resolve(false); }   /* ★全站关角色总开关（见该 IIFE 顶部注释）*/
       if(qp('xk-sm') === 'off'){ V.errs.push('xk-sm=off'); return Promise.resolve(false); }
       var rm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
       if(rm){ V.errs.push('reduced-motion ⇒ 不启用状态机'); return Promise.resolve(false); }
@@ -4126,6 +4149,8 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
      且站主明确"预算不许抬"）⇒ 改成**按需注入**：1800ms 之后（越过窗口）或"点开声音"这个用户手势那一刻。
      它在本页找不到 [data-xk-kurisu] 节点（本页不挂站点舞台）⇒ 只提供 KurisuPlayer.speakGroup，不碰 DOM。 */
   function loadPlayer() {
+    /* ★全站关角色总开关（v4 §六#2 合规）：开关打开时不拉播放器（也就不会有角色/语音） */
+    if (window.__xkNoKurisu) { return; }
     if (window.KurisuPlayer || D.playerAsked) { return; }
     D.playerAsked = true;
     D.playerAt = Math.round(performance.now());
