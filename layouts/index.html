@@ -1399,10 +1399,22 @@ var XK_SM_JS = (function(){
     for(var k = 0; k < out.length; k++){
       if(out[k].prob > 0){ (out[k].to === V.cur ? self : pos).push(out[k]); }
     }
+    /* ★2026-10-16 三次修：**主动打断"N 点循环"**。
+       背景：① 反自环修掉后线上露出"两点乒乓"（`speaking_closed_eye_1 ↔ _2`，各 12~13 次）；
+             ② 只加"近期访问惩罚"**不够** —— 那两条边只有彼此，回到候选全被排除后退回全集，又回到乒乓。
+       判据：最近 4 步里不同剪辑 ≤ 2 个 ⇒ 判定为循环，**强制回到 root（idle）**，
+             reason 记 `auto:anti-cycle>idle`（探针可统计）。idle 的出边多，一跳出去就散开了。 */
+    var r4 = (V.recent || []).slice(-4);
+    if(r4.length >= 4){
+      var u4 = [];
+      for(var z = 0; z < r4.length; z++){ if(u4.indexOf(r4[z]) < 0) u4.push(r4[z]); }
+      if(u4.length <= 2 && V.byClip[V.root] && V.cur !== V.root){
+        return enter(V.root, 'auto:anti-cycle>' + V.root);
+      }
+    }
     var pool = pos.length ? pos : self;
-    /* ★2026-10-16 二次修：**近期访问惩罚** —— 修掉自环后线上暴露出"两点乒乓"
-       （`speaking_closed_eye_1 ↔ _2` 各 10 次）。优先选"最近 4 步没到过"的边；全都到过才退回全集
-       （这时前面的"反自环/反卡死"仍然生效）。 */
+    /* 近期访问惩罚：优先选"最近 4 步没到过"的边；全都到过才退回全集
+       （此时上面的循环打断与下面的反自环/反卡死仍然生效）。 */
     var recent = V.recent || [];
     var cands = [];
     for(var q = 0; q < pool.length; q++){ if(recent.indexOf(pool[q].to) < 0) cands.push(pool[q]); }
