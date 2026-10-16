@@ -107,6 +107,10 @@ function Get-TreeFiles {
         $rel = './' + ($f.FullName.Substring($root.Length).TrimStart('\', '/') -replace '\\', '/')
         $h = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLower()
         $map[$rel] = $h
+        # ★2026-10-16：整树哈希**排除顶层 ./index.json**，与接收侧 srv2-site-receive.sh 的 tree_hash() 同口径
+        #   （它带构建时刻 generatedAt，两次构建必然不同；不排除则两侧哈希永不相等、RESULT=no-change 不可达）。
+        #   注意：仍留在 $map 里供逐文件差异分类使用（那一层由 $TreeNondet 忽略它）。
+        if ($rel -eq './index.json') { continue }
         $key = -join ([Text.Encoding]::UTF8.GetBytes($rel) | ForEach-Object { $_.ToString('x2') })
         [void]$rows.Add([pscustomobject]@{ Key = $key; Line = ($h + '  ' + $rel) })
     }
@@ -121,8 +125,8 @@ function Get-TreeFiles {
 function Get-RemoteTreeFiles {
     # 只读：不需要 sudo（/opt/secagent/site 是 a+rX）。取不到就返回 $null（不当作失败）。
     # 返回 @{ Hash = 整树哈希; Files = @{ './rel' = 'sha256' }; Count }
-    $cmdList = "cd /opt/secagent/site && LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum"
-    $cmdHash = "cd /opt/secagent/site && LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1"
+    $cmdList = "cd /opt/secagent/site && LC_ALL=C find . -type f ! -path './index.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum"
+    $cmdHash = "cd /opt/secagent/site && LC_ALL=C find . -type f ! -path './index.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1"
     $eap = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
