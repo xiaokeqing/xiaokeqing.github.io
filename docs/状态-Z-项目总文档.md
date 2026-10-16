@@ -64,3 +64,10 @@
 - 产物：**2 个文件**（总文档 + 本状态件），未新增、未改、未删任何其它文件。
 - `git add` **只加这两个路径**；**未 commit、未 push**；仓库其它窗口的改动（`docs/状态-G-展示设计.md`、`docs/需要站主办理的账号与费用总表-20261015.md`、`scripts/voice/*` 等）**一律没碰** ✓
 - 归属：上游作者素材包 / 开源项目（GPT-SoVITS / Qwen3-ASR / Wazuh / Suricata / Cowrie / Dionaea / Hugo / Cloudflare 等）在总文档里**逐条标了归属，没有写成我们的** ✗
+
+---
+
+> **2026-10-16 收口注记**：本文中"Cloudflare beacon 与『零第三方脚本』承诺冲突"一项**已收口** ——
+> 站主在 CF 控制台把 Web Analytics 置为 **Disable**；规划侧实测线上首页
+> `cloudflareinsights=0`、`beacon.min.js=0` ⇒ **"全站零第三方脚本"现在成立**。
+> 原文按历史快照保留不改，仅供对照。

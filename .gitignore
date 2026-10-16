@@ -80,3 +80,15 @@ _dev/*
 # 窗口 Q 站点接手批（2026-10-15 批准入库）：首屏 initiator 取证 / 开场六阶段逐帧取证
 !_dev/probe-firstscreen-initiator.mjs
 !_dev/probe-boot-phases.mjs
+
+# 外部审查接手批（窗口 R，2026-10-16）：事实快照 / 资产引用完整性(第四道门禁候选) / 布局静态审计
+!_dev/snapshot-facts.py
+!_dev/check-asset-integrity.py
+!_dev/audit-layout-static.py
+# 站点线批次 A 的取证脚本与机器可读报告（规划侧 2026-10-16 批准入库）
+!_dev/shot-batch-a.mjs
+!_dev/firstscreen-order.mjs
+!_dev/_probe-idcard.mjs
+!_shots/batchA-shot-report.json
+!_shots/batchA2-shot-report.json
+!_shots/firstscreen-order-home.json

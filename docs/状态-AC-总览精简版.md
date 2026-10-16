@@ -25,3 +25,10 @@
    在 §②④ 与 §③ 逐处标了归属 ✗
 ✓ 服务器侧只有只读探测（curl -w / ls / readlink / sitemap.xml），未重启、未改配置、未打印密钥字面值
 ```
+
+---
+
+> **2026-10-16 收口注记**：本文中"Cloudflare beacon 与『零第三方脚本』承诺冲突"一项**已收口** ——
+> 站主在 CF 控制台把 Web Analytics 置为 **Disable**；规划侧实测线上首页
+> `cloudflareinsights=0`、`beacon.min.js=0` ⇒ **"全站零第三方脚本"现在成立**。
+> 原文按历史快照保留不改，仅供对照。
