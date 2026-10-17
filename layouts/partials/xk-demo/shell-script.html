@@ -557,6 +557,7 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
   var em = window.XKPhoneEmote.mount(cv, { model: 'kurisu_c', mode: 'idle', crop: 0.52 });
   if(!em) return;
   document.documentElement.classList.add('xk-phone-emote');
+  window.__xkPhoneAnim = false;   /* ★V2.1：手机只放 E-mote，停掉原始帧动画 */
   XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;
   em.onStatus(function(s){
     if(!s) return;

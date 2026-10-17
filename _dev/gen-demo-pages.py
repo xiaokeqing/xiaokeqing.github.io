@@ -1564,6 +1564,7 @@ XK_EMOTE_BOOT_JS = (
     "  var em = window.XKPhoneEmote.mount(cv, { model: 'kurisu_c', mode: 'idle', crop: 0.52 });\n"
     "  if(!em) return;\n"
     "  document.documentElement.classList.add('xk-phone-emote');\n"
+    "  window.__xkPhoneAnim = false;   /* ★V2.1：手机只放 E-mote，停掉原始帧动画 */\n"
     "  XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;\n"
     "  em.onStatus(function(s){\n"
     "    if(!s) return;\n"
@@ -5142,11 +5143,12 @@ PHONE_CSS = (
     u'#holo{display:none !important}                 /* 只隐藏，不删：holoFold/holoBubble 的 JS 仍在跑 */\n'
     u'body.is-home .phone{display:none}\n'
     u'.phone{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:55;\n'
-    u'  width:300px;height:618px;padding:8px;border-radius:34px;\n'
+    u'  width:min(300px,44vh);height:auto;padding:8px;border-radius:34px;\n'
     u'  background:linear-gradient(160deg,#2b3138,#0c0f13 55%,#23272d);\n'
     u'  border:1px solid rgba(255,255,255,.16);\n'
     u'  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 3px 12px rgba(0,0,0,.65),0 18px 44px rgba(0,0,0,.5)}\n'
-    u'.phone-scr{position:relative;width:284px;height:600px;border-radius:26px;overflow:hidden;background:#07090c}\n'
+    u'.phone-scr{position:relative;width:100%;aspect-ratio:284/600;border-radius:26px;overflow:hidden;\n'
+    u'  background:#07090c url(/kurisu/full/idle.poster.webp) center bottom/contain no-repeat}\n'
     u'/* 默认（Sprite 降级）：**以宽为准**保比例 + 底部锚点（脚底距屏底 150px，给字幕/按钮让位）。'
     u'不用 height:100% 的原因：帧 321×432 ⇒ 高 600 时宽会变 446 > 屏 284，两侧会被裁。 */\n'
     u'#phoneCanvas{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:100%;height:auto;display:block}\n'
@@ -5172,7 +5174,6 @@ PHONE_CSS = (
     u'.phone-btns button:hover,.phone-btns button:active{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.14)}\n'
     u'.phone-btns button.off{opacity:.45}\n'
     u'.phone-btns button.lit{box-shadow:0 0 12px rgba(127,212,216,.65);border-color:var(--acc)}\n'
-    u'@media (max-height:820px){.phone{top:84px;bottom:84px;transform:none;height:auto;max-height:calc(100vh - 168px)}}\n'
     u'@media (max-width:980px){.phone{display:none}}\n'
 )
 views_out = re.sub(r'\n\s*<!-- 手机里的她.*?</aside>', '', views_out, flags=re.S)          # ① 移出 v-ai，避免重复 id

@@ -225,7 +225,8 @@
         if (typeof EmotePlayer === 'undefined') { throw new Error('EmotePlayer 未就绪（插件未注册）'); }
         var pr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
         var cssW = canvas.clientWidth || canvas.width, cssH = canvas.clientHeight || canvas.height;
-        if (!canvas.width || canvas.width === 300) { canvas.width = Math.round(cssW * pr); canvas.height = Math.round(cssH * pr); }
+        /* ★V2.2：画布内部尺寸必须跟 CSS 盒子一致（否则 Sprite 留下的 321×432 会被拉进 282×597 变形） */
+    if (cssW > 0 && cssH > 0) { canvas.width = Math.round(cssW * pr); canvas.height = Math.round(cssH * pr); }
         EmotePlayer.createRenderCanvas(canvas.width, canvas.height);
         player = new EmotePlayer(canvas);
         if (!EmotePlayer.device.initialized) { throw new Error('WebGL 初始化失败'); }
@@ -236,6 +237,13 @@
             player.loadData(res.bytes);
             if (!player.playerId || !player.isCharaProfileAvailable) { throw new Error('模型无法识别'); }
             st.bytes = bytes;
+            /* ★V2.3：引擎初始化会把画布改回它自己的尺寸 ⇒ 模型加载完再按 CSS 盒子重设一次，
+               并在新尺寸上重排取景（finishSetup 里的 scale/coord 依赖 canvas.width/height） */
+            var rr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+            if (canvas.clientWidth > 0 && canvas.clientHeight > 0) {
+              canvas.width = Math.round(canvas.clientWidth * rr);
+              canvas.height = Math.round(canvas.clientHeight * rr);
+            }
             finishSetup(loader, registry, t0);
             return true;
           });
