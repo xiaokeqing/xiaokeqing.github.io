@@ -300,7 +300,7 @@ function xkvGreet(){
        新句子若在 bank 里取不到（例如合并索引未更新），仍用旧的 ⇒ 保证"一定有声音，
        且字幕与音频是同一句"（绝不让新字幕配旧音频）。 */
     const wantNew = seen ? 'greet_welcome_back' : 'greet_welcome';
-    const legacy  = seen ? 'greet_back' : 'greet_first';
+    const legacy  = seen ? 'greet_welcome_back' : 'greet_welcome';   /* greet_first/back 已于 rev7 下线 */
     const id = xkvLine(wantNew) ? wantNew : legacy;
     XKV.entryId = id;
     xkvPlay(id);
@@ -1179,6 +1179,13 @@ function askDemo(){
   xkPush('me', '').textContent = q;
   emo = 'sided_thinking'; mode = 'idle'; render();
   stateEl.textContent = 'THINKING';
+  /* ★E2 思考垫音：开声时先放一句短垫音，填住「等 3–20 秒」的空档；不改字幕 */
+  try {
+    if (D.sound && window.KurisuPlayer && KurisuPlayer.speakGroup) {
+      var _ls = ['lead_wait','lead_hmm','lead_check'];
+      KurisuPlayer.speakGroup('lead_in', { preferId: _ls[Math.floor(Math.random()*_ls.length)] });
+    }
+  } catch (e) {}
   xkBadge('AI 安全 · 生成中…');
   const pending = xkPush('ai', '<div class="who">AI 安全 · <span class="st">生成中…</span></div><p>正在走检索增强链路（最多 20 秒）…</p>');
   const t0 = Date.now();
@@ -1248,7 +1255,7 @@ function xkvUnlock(){
 }
 function xkvPageLine(){
   const on = document.querySelector('.view.on'); const id = on ? on.id : '';
-  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-ai':'nav_ai' })[id] || 'nav_home';
+  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-ai':'nav_ai', 'v-what':'nav_what', 'v-lab':'nav_lab' })[id] || 'nav_home';
 }
 function xkvPlay(id){
   const line = xkvLine(id);
@@ -1852,7 +1859,7 @@ var XK_EMO_LIST = [
 /* 语音 id → 表情（只影响"没手选表情时"的自动切换；表里没有的 id 走默认 speaking） */
 var XK_VOICE_EMO = {
   greet_first:'happy', greet_back:'happy', tab_return:'happy',
-  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
+  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking', nav_what:'normal', nav_lab:'sided_thinking', nav_what:'normal', nav_lab:'sided_thinking',
   fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
 };
 var XKM = { clips:null, loading:null, imgs:{}, emo:'normal', clip:null,
@@ -3873,7 +3880,9 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     nav_home: '这里是主页：左边四个入口，下面是最近更新的笔记。',
     nav_monitor: '监测中心：实时攻击流、威胁等级、攻击来源分布、蜜罐捕获的登录尝试，还有自动拦截记录。数字从后端直接读，取不到的地方会直接标出来。',
     nav_ai: 'AI 问答：可以问安全概念和防御做法，回答会附上出处。涉及站内事件数据的会直接拒答，这个面只解释公开知识。',
-    nav_notes: '笔记：这套系统怎么搭、怎么验证、哪里出过问题，都写在这里，每篇都带可核对的证据。',
+    nav_what: '介绍页：这是什么、能干什么，每个数字都标了来源。',
+  nav_lab: '靶场在隔离网络里跑，口令进得去，别人打不开。',
+  nav_notes: '笔记：这套系统怎么搭、怎么验证、哪里出过问题，都写在这里，每篇都带可核对的证据。',
     fallback_no_data: '这次没取到数据。不补数，读不到就是读不到。',
     fallback_offline: '请求没送达。我不编答案，等接口恢复再说。',
     fallback_throttled: '接口在限流，等一下再问。',

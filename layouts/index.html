@@ -1877,7 +1877,7 @@ function xkvGreet(){
        新句子若在 bank 里取不到（例如合并索引未更新），仍用旧的 ⇒ 保证"一定有声音，
        且字幕与音频是同一句"（绝不让新字幕配旧音频）。 */
     const wantNew = seen ? 'greet_welcome_back' : 'greet_welcome';
-    const legacy  = seen ? 'greet_back' : 'greet_first';
+    const legacy  = seen ? 'greet_welcome_back' : 'greet_welcome';   /* greet_first/back 已于 rev7 下线 */
     const id = xkvLine(wantNew) ? wantNew : legacy;
     XKV.entryId = id;
     xkvPlay(id);
@@ -1921,7 +1921,7 @@ var XK_EMO_LIST = [
 /* 语音 id → 表情（只影响"没手选表情时"的自动切换；表里没有的 id 走默认 speaking） */
 var XK_VOICE_EMO = {
   greet_first:'happy', greet_back:'happy', tab_return:'happy',
-  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking',
+  nav_home:'normal', nav_monitor:'sided_thinking', nav_notes:'normal', nav_ai:'sided_thinking', nav_what:'normal', nav_lab:'sided_thinking', nav_what:'normal', nav_lab:'sided_thinking',
   fallback_no_data:'disappointed', fallback_offline:'disappointed', fallback_throttled:'sad'
 };
 var XKM = { clips:null, loading:null, imgs:{}, emo:'normal', clip:null,

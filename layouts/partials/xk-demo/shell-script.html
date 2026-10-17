@@ -987,6 +987,13 @@ function askDemo(){
   xkPush('me', '').textContent = q;
   emo = 'sided_thinking'; mode = 'idle'; render();
   stateEl.textContent = 'THINKING';
+  /* ★E2 思考垫音：开声时先放一句短垫音，填住「等 3–20 秒」的空档；不改字幕 */
+  try {
+    if (D.sound && window.KurisuPlayer && KurisuPlayer.speakGroup) {
+      var _ls = ['lead_wait','lead_hmm','lead_check'];
+      KurisuPlayer.speakGroup('lead_in', { preferId: _ls[Math.floor(Math.random()*_ls.length)] });
+    }
+  } catch (e) {}
   xkBadge('AI 安全 · 生成中…');
   const pending = xkPush('ai', '<div class="who">AI 安全 · <span class="st">生成中…</span></div><p>正在走检索增强链路（最多 20 秒）…</p>');
   const t0 = Date.now();
@@ -1049,7 +1056,7 @@ function xkvUnlock(){
 }
 function xkvPageLine(){
   const on = document.querySelector('.view.on'); const id = on ? on.id : '';
-  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-ai':'nav_ai' })[id] || 'nav_home';
+  return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-ai':'nav_ai', 'v-what':'nav_what', 'v-lab':'nav_lab' })[id] || 'nav_home';
 }
 function xkvPlay(id){
   const line = xkvLine(id);

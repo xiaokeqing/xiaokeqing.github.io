@@ -9,7 +9,7 @@
     ★T27（2026-10-15 站主）：/labs/ 与 /about/ 两页已删 ⇒ 六页 → 四页，本清单同步删两行。
     ★2026-10-16（窗口 Q）：新增测试模块页 /test/ ⇒ 四页 → 五页（gate-firstscreen.mjs 同步）。
   · 每页必须有 `#xk-views` 模板表（SPA 换页依赖它）；
-  · 五页都不得出现站外资源引用。
+  · 七页都不得出现站外资源引用（2026-10-17 新增 /what/ 介绍页与 /lab/ 靶场页）。
 用法：python _dev/check-ssr-contract.py [public]
 退出码：0 全通过 / 1 有不合格项
 """
@@ -24,6 +24,8 @@ PAGES = [
     ('posts/index.html', 'notes'),
     ('ai/index.html', 'ai'),
     ('test/index.html', 'test'),
+    ('what/index.html', 'what'),
+    ('lab/index.html', 'lab'),
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)
 RE_SSR = re.compile(r'data-xk-ssr=["\']?([a-z-]+)', re.I)

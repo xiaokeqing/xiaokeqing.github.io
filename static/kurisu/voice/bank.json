@@ -6,73 +6,9 @@
  "sampleRate": 8000,
  "hopMs": 10,
  "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
- "lineCount": 162,
- "totalBytes": 11600927,
+ "lineCount": 169,
+ "totalBytes": 11534212,
  "lines": {
-  "greet_first": {
-   "id": "greet_first",
-   "trigger": "greeting",
-   "group": "greeting",
-   "text": "我是 Amadeus 助手。这是一个安全监控网站，上面的入口都能点。",
-   "scene": "首访短版（rev4）",
-   "emotion": "smile",
-   "source": "synth-rev4",
-   "audio": "kurisu/voice/synth/greet_first.m4a",
-   "envelope": "kurisu/voice/synth/greet_first.envelope.json",
-   "seconds": 9.036,
-   "audioBytes": 55395,
-   "envelopeValues": 904,
-   "audioSources": {
-    "m4a": "kurisu/voice/synth/greet_first.m4a",
-    "webm": "kurisu/voice/synth/greet_first.webm"
-   },
-   "durationMs": 9036,
-   "sha256": {
-    "m4a": "4cd7924de16ba3a643c7399a69feebd4164dac26edad17cba3f1e38da7964041",
-    "webm": "4f34d2de3dccad97eed953823aaaa8f548e4e08eb0818901250d30a3ab9d8297"
-   },
-   "bytes": {
-    "m4a": 55395,
-    "webm": 47669
-   },
-   "loudness": {
-    "lufs": -16.09,
-    "target": -16.0
-   },
-   "envelopeSource": "dist/greet_first.m4a"
-  },
-  "greet_back": {
-   "id": "greet_back",
-   "trigger": "greeting",
-   "group": "greeting",
-   "text": "又见面了。",
-   "scene": "重逢（rev4）",
-   "emotion": "",
-   "source": "synth-rev4",
-   "audio": "kurisu/voice/synth/greet_back.m4a",
-   "envelope": "kurisu/voice/synth/greet_back.envelope.json",
-   "seconds": 0.753,
-   "audioBytes": 5728,
-   "envelopeValues": 76,
-   "audioSources": {
-    "m4a": "kurisu/voice/synth/greet_back.m4a",
-    "webm": "kurisu/voice/synth/greet_back.webm"
-   },
-   "durationMs": 753,
-   "sha256": {
-    "m4a": "2988e69904d9835efbecd86b7df4497e9837deebeb4ff3db1ffa06bd8d99a487",
-    "webm": "7575de6cd06a16cd9561de2854e9443722a3a3a1f6e76571ecc1bf6f4edd20a3"
-   },
-   "bytes": {
-    "m4a": 5728,
-    "webm": 4691
-   },
-   "loudness": {
-    "lufs": -16.04,
-    "target": -16.0
-   },
-   "envelopeSource": "dist/greet_back.m4a"
-  },
   "nav_home": {
    "id": "nav_home",
    "trigger": "page_intro",
@@ -744,102 +680,6 @@
     "target": -16.0
    },
    "envelopeSource": "dist/page_intro_m13.m4a"
-  },
-  "page_intro_m14": {
-   "id": "page_intro_m14",
-   "trigger": "page_intro",
-   "group": "page_intro",
-   "text": "关于页。项目本身、Demo、还有数据的口径和取舍都在这儿。",
-   "scene": "切到关于页",
-   "emotion": "",
-   "source": "synth",
-   "audio": "kurisu/voice/synth/page_intro_m14.m4a",
-   "envelope": "kurisu/voice/synth/page_intro_m14.envelope.json",
-   "seconds": 6.944,
-   "audioBytes": 43293,
-   "envelopeValues": 695,
-   "audioSources": {
-    "m4a": "kurisu/voice/synth/page_intro_m14.m4a",
-    "webm": "kurisu/voice/synth/page_intro_m14.webm"
-   },
-   "durationMs": 6944,
-   "sha256": {
-    "m4a": "33dcc566c9ecef4fd43b03cd41a7ef37698ba994c4dff2c3d003553764fa8981",
-    "webm": "57a7c93acccd5dd0dcd3c43c34fa6065658653ee236465104ff3f44a520cc4c1"
-   },
-   "bytes": {
-    "m4a": 43293,
-    "webm": 35582
-   },
-   "loudness": {
-    "lufs": -16.05,
-    "target": -16.0
-   },
-   "envelopeSource": "dist/page_intro_m14.m4a"
-  },
-  "page_intro_m15": {
-   "id": "page_intro_m15",
-   "trigger": "page_intro",
-   "group": "page_intro",
-   "text": "这一段是全文最该读的：只读公开端点，IP 由后端掩码。",
-   "scene": "切到关于页的「数据来源·口径·免责」锚点",
-   "emotion": "",
-   "source": "synth",
-   "audio": "kurisu/voice/synth/page_intro_m15.m4a",
-   "envelope": "kurisu/voice/synth/page_intro_m15.envelope.json",
-   "seconds": 7.934,
-   "audioBytes": 48968,
-   "envelopeValues": 794,
-   "audioSources": {
-    "m4a": "kurisu/voice/synth/page_intro_m15.m4a",
-    "webm": "kurisu/voice/synth/page_intro_m15.webm"
-   },
-   "durationMs": 7934,
-   "sha256": {
-    "m4a": "e45e51576807781bb38d148999f6db3da77ec094a611037a914daaa5342b427d",
-    "webm": "0ab13a4bf83a6e4ffb14dc042a1cf79189aef0ccbf252fda5a83acda0c50849d"
-   },
-   "bytes": {
-    "m4a": 48968,
-    "webm": 39964
-   },
-   "loudness": {
-    "lufs": -16.32,
-    "target": -16.0
-   },
-   "envelopeSource": "dist/page_intro_m15.m4a"
-  },
-  "page_intro_m16": {
-   "id": "page_intro_m16",
-   "trigger": "page_intro",
-   "group": "page_intro",
-   "text": "探测里那几项写着未接入。它们确实没上线，不是加载失败。",
-   "scene": "切到关于页的公开端点实时探测区，有端点未接入",
-   "emotion": "disappointed",
-   "source": "synth",
-   "audio": "kurisu/voice/synth/page_intro_m16.m4a",
-   "envelope": "kurisu/voice/synth/page_intro_m16.envelope.json",
-   "seconds": 7.094,
-   "audioBytes": 43786,
-   "envelopeValues": 710,
-   "audioSources": {
-    "m4a": "kurisu/voice/synth/page_intro_m16.m4a",
-    "webm": "kurisu/voice/synth/page_intro_m16.webm"
-   },
-   "durationMs": 7094,
-   "sha256": {
-    "m4a": "4115ae195a75c6945414c0e1fc964042532fa5c040a79f3747642de229f24965",
-    "webm": "6939c6c96ae439e65c949549d0417a0e43dee92a0423c35e77711ced250729e8"
-   },
-   "bytes": {
-    "m4a": 43786,
-    "webm": 36395
-   },
-   "loudness": {
-    "lufs": -16.13,
-    "target": -16.0
-   },
-   "envelopeSource": "dist/page_intro_m16.m4a"
   },
   "page_intro_m17": {
    "id": "page_intro_m17",
@@ -5257,16 +5097,401 @@
     "target": -16.0
    },
    "envelopeSource": "dist/greet_welcome_back.m4a"
+  },
+  "nav_what": {
+   "id": "nav_what",
+   "trigger": "page_intro",
+   "group": "page_intro",
+   "text": "这是介绍页。这站在干什么、数字从哪来、怎么自己敲一遍核实，都写在这。",
+   "scene": "切到介绍页（这是什么/能干什么/口径）",
+   "emotion": "normal",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/nav_what.m4a",
+   "envelope": "kurisu/voice/synth/nav_what.envelope.json",
+   "seconds": 8.111,
+   "audioBytes": 49760,
+   "envelopeValues": 812,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/nav_what.m4a",
+    "webm": "kurisu/voice/synth/nav_what.webm"
+   },
+   "durationMs": 8111,
+   "sha256": {
+    "m4a": "ecacea5121526890f53aa1a247fa20b747ee8168ebd01d1424c6b574d306a19b",
+    "webm": "8b4622b2b8609c82d162c70b8fb6441ebbd639fd64dbaf0d52398421ed050d62"
+   },
+   "bytes": {
+    "m4a": 49760,
+    "webm": 42359
+   },
+   "loudness": {
+    "lufs": -16.24,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/nav_what.m4a"
+  },
+  "nav_lab": {
+   "id": "nav_lab",
+   "trigger": "page_intro",
+   "group": "page_intro",
+   "text": "靶场页。要口令才能进，别人点不开。",
+   "scene": "切到靶场页（需口令，别人点不开）",
+   "emotion": "normal",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/nav_lab.m4a",
+   "envelope": "kurisu/voice/synth/nav_lab.envelope.json",
+   "seconds": 3.264,
+   "audioBytes": 20705,
+   "envelopeValues": 327,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/nav_lab.m4a",
+    "webm": "kurisu/voice/synth/nav_lab.webm"
+   },
+   "durationMs": 3264,
+   "sha256": {
+    "m4a": "e5c3e3fc74e3e7891a89f4681f92a19722826c136c1153452c57b1bab65e9c4c",
+    "webm": "16a9d942d27851de96341777e83cf5820882ad2f72eeb03d7d24321717ad118c"
+   },
+   "bytes": {
+    "m4a": 20705,
+    "webm": 16919
+   },
+   "loudness": {
+    "lufs": -16.16,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/nav_lab.m4a"
+  },
+  "lead_check": {
+   "id": "lead_check",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "这条我得查一下。",
+   "scene": "垫音：需要查证",
+   "emotion": "normal",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_check.m4a",
+   "envelope": "kurisu/voice/synth/lead_check.envelope.json",
+   "seconds": 1.006,
+   "audioBytes": 7435,
+   "envelopeValues": 101,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_check.m4a",
+    "webm": "kurisu/voice/synth/lead_check.webm"
+   },
+   "durationMs": 1006,
+   "sha256": {
+    "m4a": "46c752408b581cef08e3fb5cf0c753646c879592d5d1012b4091929206f9a14b",
+    "webm": "48eaea6e2b72a27c3383745d0edd1583d7ba6e0135d22647e1428427cfb7c4f2"
+   },
+   "bytes": {
+    "m4a": 7435,
+    "webm": 6078
+   },
+   "loudness": {
+    "lufs": -16.0,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_check.m4a"
+  },
+  "lead_wait": {
+   "id": "lead_wait",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "稍等。",
+   "scene": "垫音：通用等待",
+   "emotion": "normal",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_wait.m4a",
+   "envelope": "kurisu/voice/synth/lead_wait.envelope.json",
+   "seconds": 0.675,
+   "audioBytes": 5252,
+   "envelopeValues": 68,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_wait.m4a",
+    "webm": "kurisu/voice/synth/lead_wait.webm"
+   },
+   "durationMs": 675,
+   "sha256": {
+    "m4a": "a72134ff7bf7cac088c9356292b763a239327d8a47113d936da1765652b473a7",
+    "webm": "bea0e8d0a0438dd38614efd50109ce0122fc7210725b18df49f9de8ffe4462ad"
+   },
+   "bytes": {
+    "m4a": 5252,
+    "webm": 4227
+   },
+   "loudness": {
+    "lufs": -16.0,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_wait.m4a"
+  },
+  "lead_hmm": {
+   "id": "lead_hmm",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "嗯——我想想。",
+   "scene": "垫音：思考",
+   "emotion": "normal",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_hmm.m4a",
+   "envelope": "kurisu/voice/synth/lead_hmm.envelope.json",
+   "seconds": 2.493,
+   "audioBytes": 16330,
+   "envelopeValues": 250,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_hmm.m4a",
+    "webm": "kurisu/voice/synth/lead_hmm.webm"
+   },
+   "durationMs": 2493,
+   "sha256": {
+    "m4a": "103b8e7c501eff15ad7f5c5a4379671551d7355a1d88c1acfb0feddd23c15510",
+    "webm": "08c7fcead04b508673c82209669b4a3897038af55a54dc0423c1ebacb37d06e5"
+   },
+   "bytes": {
+    "m4a": 16330,
+    "webm": 11780
+   },
+   "loudness": {
+    "lufs": -16.01,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_hmm.m4a"
+  },
+  "lead_no_guarantee": {
+   "id": "lead_no_guarantee",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "我不给保证。",
+   "scene": "垫音：不给保证",
+   "emotion": "disappointed",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_no_guarantee.m4a",
+   "envelope": "kurisu/voice/synth/lead_no_guarantee.envelope.json",
+   "seconds": 0.962,
+   "audioBytes": 7012,
+   "envelopeValues": 97,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_no_guarantee.m4a",
+    "webm": "kurisu/voice/synth/lead_no_guarantee.webm"
+   },
+   "durationMs": 962,
+   "sha256": {
+    "m4a": "4332194ba15f7cfe11d88ddc8975c2364bfc87ecc32ed68d346e8b99adadf164",
+    "webm": "03911d91b52c4d519696007f765214a5f4ebc54adeecd4ffddc8e009615259e6"
+   },
+   "bytes": {
+    "m4a": 7012,
+    "webm": 5852
+   },
+   "loudness": {
+    "lufs": -15.99,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_no_guarantee.m4a"
+  },
+  "lead_internal": {
+   "id": "lead_internal",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "公开面读不到。",
+   "scene": "垫音：公开面读不到内部数据",
+   "emotion": "disappointed",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_internal.m4a",
+   "envelope": "kurisu/voice/synth/lead_internal.envelope.json",
+   "seconds": 1.623,
+   "audioBytes": 11053,
+   "envelopeValues": 163,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_internal.m4a",
+    "webm": "kurisu/voice/synth/lead_internal.webm"
+   },
+   "durationMs": 1623,
+   "sha256": {
+    "m4a": "c01495201157bb5f0dad1811ecf123bf67c1e34dc8650d6e7ea82479f7bb7cd0",
+    "webm": "6d710d51143aaa3d8fd3253a6c9fdbe5b476a66c88f9fac510aa6d03b755985e"
+   },
+   "bytes": {
+    "m4a": 11053,
+    "webm": 9447
+   },
+   "loudness": {
+    "lufs": -16.01,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_internal.m4a"
+  },
+  "lead_slow": {
+   "id": "lead_slow",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "慢点问。",
+   "scene": "垫音：连问太快",
+   "emotion": "angry",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_slow.m4a",
+   "envelope": "kurisu/voice/synth/lead_slow.envelope.json",
+   "seconds": 0.955,
+   "audioBytes": 6962,
+   "envelopeValues": 96,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_slow.m4a",
+    "webm": "kurisu/voice/synth/lead_slow.webm"
+   },
+   "durationMs": 955,
+   "sha256": {
+    "m4a": "b9070f0c3802577e29538fb5b6cd9ae5e8ae1c75dcc0f8214e96779d321452d1",
+    "webm": "97563eeb95401e8304ccf336d294767689ffc738622710fec89f36200917e0b5"
+   },
+   "bytes": {
+    "m4a": 6962,
+    "webm": 6447
+   },
+   "loudness": {
+    "lufs": -16.0,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_slow.m4a"
+  },
+  "lead_data": {
+   "id": "lead_data",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "看数据。",
+   "scene": "垫音：以数据为准",
+   "emotion": "normal",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_data.m4a",
+   "envelope": "kurisu/voice/synth/lead_data.envelope.json",
+   "seconds": 0.824,
+   "audioBytes": 6151,
+   "envelopeValues": 83,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_data.m4a",
+    "webm": "kurisu/voice/synth/lead_data.webm"
+   },
+   "durationMs": 824,
+   "sha256": {
+    "m4a": "95c0a6ec47e75f71a941054e7b121e21fcfb8407dbd3967b6f81823ff0639309",
+    "webm": "6727f8cbaffb6c13efbeea79c0038a1d37db3b66f4c41cb7ae9b153bfec3f263"
+   },
+   "bytes": {
+    "m4a": 6151,
+    "webm": 5346
+   },
+   "loudness": {
+    "lufs": -15.99,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_data.m4a"
+  },
+  "lead_unknown": {
+   "id": "lead_unknown",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "我不知道。",
+   "scene": "垫音：不知道就说不知道",
+   "emotion": "shy",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_unknown.m4a",
+   "envelope": "kurisu/voice/synth/lead_unknown.envelope.json",
+   "seconds": 0.903,
+   "audioBytes": 6698,
+   "envelopeValues": 91,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_unknown.m4a",
+    "webm": "kurisu/voice/synth/lead_unknown.webm"
+   },
+   "durationMs": 903,
+   "sha256": {
+    "m4a": "b18187387efd3a3f3dc1ea9a91dec66142bdc5052ba6f3215f3179d169ee2614",
+    "webm": "fbd361a2241d3cfa4a3497cdaf983217706d5c91950cd9c315c9e4f4f950fd59"
+   },
+   "bytes": {
+    "m4a": 6698,
+    "webm": 5524
+   },
+   "loudness": {
+    "lufs": -16.02,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_unknown.m4a"
+  },
+  "lead_interesting": {
+   "id": "lead_interesting",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "这问题有点意思。",
+   "scene": "垫音：问题有意思",
+   "emotion": "surprised",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_interesting.m4a",
+   "envelope": "kurisu/voice/synth/lead_interesting.envelope.json",
+   "seconds": 2.323,
+   "audioBytes": 15133,
+   "envelopeValues": 233,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_interesting.m4a",
+    "webm": "kurisu/voice/synth/lead_interesting.webm"
+   },
+   "durationMs": 2323,
+   "sha256": {
+    "m4a": "4fddb3ef3ff75f5632304b3f678277905c97e4522b6357deb6f79982c16a376c",
+    "webm": "a3cea21a5df292c52c3ce35eed89d19e0a612c08e123caa171e77c25942d129b"
+   },
+   "bytes": {
+    "m4a": 15133,
+    "webm": 12765
+   },
+   "loudness": {
+    "lufs": -16.0,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_interesting.m4a"
+  },
+  "lead_limit": {
+   "id": "lead_limit",
+   "trigger": "lead_in",
+   "group": "lead_in",
+   "text": "次数有限。",
+   "scene": "垫音：额度有限",
+   "emotion": "normal",
+   "source": "synth-rev7",
+   "audio": "kurisu/voice/synth/lead_limit.m4a",
+   "envelope": "kurisu/voice/synth/lead_limit.envelope.json",
+   "seconds": 1.187,
+   "audioBytes": 8432,
+   "envelopeValues": 119,
+   "audioSources": {
+    "m4a": "kurisu/voice/synth/lead_limit.m4a",
+    "webm": "kurisu/voice/synth/lead_limit.webm"
+   },
+   "durationMs": 1187,
+   "sha256": {
+    "m4a": "9f2bd3ebdbf0cb494fb737f755da58ff459656d032a2c72e28cbf989988beca2",
+    "webm": "16eb2f0b75380a431cf8070914453a3c2ebc219aa6d4cac24554f19a41aff4b0"
+   },
+   "bytes": {
+    "m4a": 8432,
+    "webm": 7089
+   },
+   "loudness": {
+    "lufs": -16.0,
+    "target": -16.0
+   },
+   "envelopeSource": "dist/lead_limit.m4a"
   }
  },
  "groups": {
-  "greeting": 4,
-  "page_intro": 22,
+  "page_intro": 21,
   "fallback": 35,
   "idle_banter": 1,
   "status": 39,
   "synth_quiet": 2,
-  "faq": 59
+  "faq": 59,
+  "greeting": 2,
+  "lead_in": 10
  },
  "expandNote": "2026-10-15 台词库扩容（窗口 B）：旧 12 条整条原样保留（id/文本/音频/包络/sha256 未变），新增 150 条为本站合成（v3 + 情绪路由，后处理口径与旧句完全一致）。"
 }

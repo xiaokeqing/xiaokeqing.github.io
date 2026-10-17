@@ -1671,7 +1671,7 @@
      触发：监听 hashchange（**不改 app.js** ✗ —— app.js 才是 SPA 外壳的写入者），
      把 #/monitor/... 映射成板块名，再走 speakGroup('page_intro', {preferId})。
      去抖：同一板块 10 分钟内不重复（sessionStorage 记，刷新不清零）。 */
-  var NAV_VOICE = { map: { home: 'nav_home', monitor: 'nav_monitor', notes: 'nav_notes', ai: 'nav_ai' },
+  var NAV_VOICE = { map: { home: 'nav_home', monitor: 'nav_monitor', notes: 'nav_notes', ai: 'nav_ai', what: 'nav_what', lab: 'nav_lab' },
                     key: 'xk-nav-voice-at', dedupMs: 10 * 60 * 1000 };
   function navVoiceSection() {
     var h = (global.location && global.location.hash) || '';
@@ -2927,7 +2927,7 @@
               return new Promise(function (res) { setTimeout(res, 460); }).then(function () {
                 /* 首访 / 回访分流（P1-⑧）：台词 id 不同，音色与链路完全一样；
                    音频受 autoplay 门控，未交互时只出字幕（动画照常）。 */
-                p.speak(visitedBefore() ? 'greet_back' : 'greet_first', null);
+                p.speak(visitedBefore() ? 'greet_welcome_back' : 'greet_welcome', null);   /* greet_first/back 已于 rev7 下线 */
                 markVisited();
                 return r;
               });
@@ -2960,7 +2960,7 @@
   /* ★T3（2026-10-16 语音线）：删掉 range / labs / about 三个键 —— 那两个页面已删（T27），
      对应的两条死语音 `nav_labs` / `nav_about` 也已从 `bank.json` 与 merged 索引里移除。
      留着这三个键就会变成"有键无文件"的**新断链**（正是本次要清掉的那种）。 */
-  var NAV_LINE = { home: 'nav_home', notes: 'nav_notes', monitor: 'nav_monitor', ai: 'nav_ai' };
+  var NAV_LINE = { home: 'nav_home', notes: 'nav_notes', monitor: 'nav_monitor', ai: 'nav_ai', what: 'nav_what', lab: 'nav_lab' };
   var lastNavLine = null;
 
   /** 切页解说：一个路由只讲解一次（同一路由的重复 scan 不重复说话） */

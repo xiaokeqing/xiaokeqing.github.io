@@ -32,6 +32,8 @@
 .what-tbl td code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#bfe3d0}
 .what-pre{margin:0;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
 .what-pre .c{color:rgba(255,255,255,.45)}
+.what-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.74)}
+.what-p b{color:#eaf6ff;font-weight:600}
 .what-foot{font-size:11.5px;color:rgba(255,255,255,.5);line-height:1.9;margin:2px 0 0}
 .what-foot a{color:#bfe3d0}
 </style>
@@ -69,6 +71,17 @@
           <h3>③ 直接问它</h3>
           <p>「AI 问答」页是对着<b>本站自己的知识库</b>检索后作答，引用到条目；检索不到就明说检索不到，
              不编造。问答接口同样有频率限制，公开面只做解释、不做取证判决。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>另外还有一台隔离靶场<span class="tag">凭口令进入</span></div>
+        <div class="mod-bd">
+          <p class="what-p">站上还跑着一台练习靶场（Pikachu）：<b>跑在独立内网、禁止出网、状态可每天重置</b>，
+            用来验证「真被打进来之后，告警会长什么样、面板会亮成什么样」。它不是给人随便玩的 ——
+            入口加了口令门禁，只有站主能登录，口令不在这页公开。</p>
+          <p class="what-foot">链路：<code>lab.xiaokeqing.cn</code> → Cloudflare 隧道 → nginx <code>auth_request</code>
+            → 口令页 → 签名 Cookie（24h）→ 容器；容器内不能出网，宿主机只能读到它自己的日志。</p>
         </div>
       </div>
 
