@@ -298,7 +298,7 @@ function xkBootPreload(){
 }
 function xkBootBlackFlicker(){
   const boot = document.getElementById('crtBoot');
-  const n = 2 + Math.floor(Math.random() * 3);          /* 2~4 次 */
+  const n = 6 + Math.floor(Math.random() * 4);          /* ★站主 10-17：6~9 次（原 2~4 次太短，看不清）*/
   (function step(i){
     if(i >= n){ xkBootWaitFace(); return; }
     const black = i % 2 === 0;
@@ -306,7 +306,7 @@ function xkBootBlackFlicker(){
       boot.classList.toggle('noise', black);
       boot.style.background = black ? '#000' : '#0A0E12';   /* 亮度跳一下（不规律，不是正弦）*/
     }
-    xkBootTimer(xkBootRnd(80, 140), function(){ step(i + 1); });
+    xkBootTimer(xkBootRnd(110, 190), function(){ step(i + 1); });
   })(0);
 }
 function xkBootWaitFace(){
@@ -328,12 +328,12 @@ function xkBootWaitFace(){
 function xkBootFaceFlicker(){
   xkBootSet(3, 'face');
   const clip = document.getElementById('crtClip');
-  const n = 2 + Math.floor(Math.random() * 2);          /* 2~3 次闪断 */
+  const n = 3 + Math.floor(Math.random() * 3);          /* ★站主 10-17：3~5 次闪断 */
   (function step(i){
-    if(i >= n){ xkBootReveal('flicker-end'); return; }   /* ★导航栏＝闪烁结束事件触发 */
+    if(i >= n){ xkBootBlink(false); xkBootTimer(700, function(){ xkBootReveal('flicker-end'); }); return; }   /* ★定格大脸 700ms 后揭幕；导航栏仍由揭示事件触发 */
     xkBootBlink(i % 2 === 0);                           /* 硬切，不是淡入 ✗ */
     if(clip) clip.style.transform = 'translateX(' + (Math.random() * 6 - 3).toFixed(1) + 'px)';
-    xkBootTimer(xkBootRnd(60, 100), function(){ step(i + 1); });
+    xkBootTimer(xkBootRnd(80, 120), function(){ step(i + 1); });
   })(0);
 }
 function xkBootReveal(why){
@@ -356,7 +356,7 @@ function xkBootReveal(why){
 }
 function xkBootStart(){
   if(RM){ xkBootBlink(true); xkBootSet(4, 'rm'); xkBootSet(5, 'rm'); xkDockIn('rm'); return; }
-  xkBootTimer(150, function(){ xkBootPreload(); xkBootSet(1, 'preload'); xkBootSet(2, 'black'); xkBootBlackFlicker(); });
+  xkBootTimer(260, function(){ xkBootPreload(); xkBootSet(1, 'preload'); xkBootSet(2, 'black'); xkBootBlackFlicker(); });
 }
 function xkBootSkip(){
   if(!started || XK_BOOT.revealed) return;
