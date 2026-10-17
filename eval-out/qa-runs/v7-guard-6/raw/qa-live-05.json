@@ -1,0 +1,88 @@
+{
+ "id": "qa-live-05",
+ "turn": 1,
+ "question": "两台服务器现在都在线吗？数据链路正常吗？",
+ "collectedAt": "2026-10-17T14:47:13",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 1.99,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 1.99,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:47:10",
+   "pool": "self",
+   "conversationId": "xk-92d00527-5e3",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 183,
+    "remaining": 317,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "一、适用场景",
+     "snippet": "## 一、适用场景\nWindows 服务器出现异常登录、Webshell、勒索、挖矿、反弹连接等可疑事件。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.512
+    },
+    {
+     "title": "5. 日志与审计",
+     "snippet": "### 5. 日志与审计\n- 开启 rsyslog、auditd，认证/提权/关键操作可审计；\n- 日志集中到日志服务器，防篡改，按规留存；\n- 时间同步（NTP/chrony）。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.516
+    },
+    {
+     "title": "三、共同的研判要点",
+     "snippet": "## 三、共同的研判要点\n- 都要回答三个问题：**从哪进来、影响多大、是否横向**；\n- 证据链：入口日志 → 落地文件/进程 → 持久化位置 → 外连 IOC → 受影响范围；\n- 处置后必须修复根因，否则反复复发。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.501
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：未执行\n目标：\n模式：BLOCKED\n说明：封禁目标 IP 为空\n```\n\n**护栏生效**：该目标命中保护策略，动作被拦截并未下发，符合安全预期。\n\n⚠️ 注意：处置执行：封禁来源 IP（过护栏+审批+审计） 执行失败（处置被 ResponseGuard 护栏拦截（已留痕），未真正下发）。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **一、适用场景**（可信度：medium，来源性质：community，相关度：0.512）\n   > ## 一、适用场景\n   > Windows 服务器出现异常登录、Webshell、勒索、挖矿、反弹连接等可疑事件。\n\n2. **5. 日志与审计**（可信度：medium，来源性质：community，相关度：0.516）\n   > ### 5. 日志与审计\n   > - 开启 rsyslog、auditd，认证/提权/关键操作可审计；\n   > - 日志集中到日志服务器，防篡改，按规留存；\n   > - 时间同步（NTP/chrony）。\n\n3. **三、共同的研判要点**（可信度：medium，来源性质：community，相关度：0.501）\n   > ## 三、共同的研判要点\n   > - 都要回答三个问题：**从哪进来、影响多大、是否横向**；\n   > - 证据链：入口日志 → 落地文件/进程 → 持久化位置 → 外连 IOC → 受影响范围；\n   > - 处置后必须修复根因，否则反复复发。",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

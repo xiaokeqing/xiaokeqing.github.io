@@ -1,0 +1,88 @@
+{
+ "id": "qa-cap-10",
+ "turn": 1,
+ "question": "你的回答能直接拿来当处置依据吗？",
+ "collectedAt": "2026-10-17T14:59:18",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 1.76,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 1.76,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:59:15",
+   "pool": "self",
+   "conversationId": "xk-1f41c97b-6bd",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 283,
+    "remaining": 217,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "三、共同的研判要点",
+     "snippet": "## 三、共同的研判要点\n- 都要回答三个问题：**从哪进来、影响多大、是否横向**；\n- 证据链：入口日志 → 落地文件/进程 → 持久化位置 → 外连 IOC → 受影响范围；\n- 处置后必须修复根因，否则反复复发。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.444
+    },
+    {
+     "title": "三、黄金处置原则",
+     "snippet": "## 三、黄金处置原则\n- **先止血、再溯源**：明确已扩散的先隔离，但要尽量保留证据。\n- **证据保全**：内存、日志、样本、镜像；避免在原始证据上直接操作。\n- **时间线优先**：用时间把\"入口→利用→落地→持久化→横向→外连\"串清楚。\n- **根因修复**：只清后门不堵漏洞会复发，必须修复入口并改密。\n- **最小影响沟通**：同步业务、领导、客户，按规定上报。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.452
+    },
+    {
+     "title": "安全事件分级与处置流程",
+     "snippet": "# 安全事件分级与处置流程",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.439
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：未执行\n目标：\n模式：BLOCKED\n说明：封禁目标 IP 为空\n```\n\n**护栏生效**：该目标命中保护策略，动作被拦截并未下发，符合安全预期。\n\n⚠️ 注意：处置执行：封禁来源 IP（过护栏+审批+审计） 执行失败（处置被 ResponseGuard 护栏拦截（已留痕），未真正下发）。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **三、共同的研判要点**（可信度：medium，来源性质：community，相关度：0.444）\n   > ## 三、共同的研判要点\n   > - 都要回答三个问题：**从哪进来、影响多大、是否横向**；\n   > - 证据链：入口日志 → 落地文件/进程 → 持久化位置 → 外连 IOC → 受影响范围；\n   > - 处置后必须修复根因，否则反复复发。\n\n2. **三、黄金处置原则**（可信度：medium，来源性质：community，相关度：0.452）\n   > ## 三、黄金处置原则\n   > - **先止血、再溯源**：明确已扩散的先隔离，但要尽量保留证据。\n   > - **证据保全**：内存、日志、样本、镜像；避免在原始证据上直接操作。\n   > - **时间线优先**：用时间把\"入口→利用→落地→持久化→横向→外连\"串清楚。\n   > - **根因修复**：只清后门不堵漏洞会复发，必须修复入口并改密。\n   > - **最小影响沟通**：同步业务、领导、客户，按规定上报。\n\n3. **安全事件分级与处置流程**（可信度：medium，来源性质：community，相关度：0.439）\n   > # 安全事件分级与处置流程",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

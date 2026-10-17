@@ -1,0 +1,88 @@
+{
+ "id": "qa-cap-08",
+ "turn": 1,
+ "question": "你能读取服务器上的文件或执行系统命令吗？",
+ "collectedAt": "2026-10-17T14:58:56",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 2.01,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 2.01,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:58:53",
+   "pool": "self",
+   "conversationId": "xk-e5987813-52f",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 280,
+    "remaining": 220,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "一、原理",
+     "snippet": "## 一、原理\n应用把用户输入拼接到操作系统命令中执行，且未做过滤，攻击者可通过命令分隔符插入额外命令，从而在服务器/设备上执行任意命令。\n\n常见危险函数：Java 的 `Runtime.exec`、`ProcessBuilder`；PHP 的 `system/exec/shell_exec/popen`；C 的 `system/popen`；Python 的 `os.system/subprocess(..., shell=True)`。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.684
+    },
+    {
+     "title": "三、危害",
+     "snippet": "## 三、危害\n- 远程命令执行（RCE），获取服务权限；\n- 反弹 Shell、植入后门、添加管理员；\n- 横向移动、数据窃取、作为跳板攻击内网；\n- 在 IoT/路由器上常直接拿到 root，是设备类漏洞的高发点。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.631
+    },
+    {
+     "title": "五、与 XSS、SSRF 的区别",
+     "snippet": "## 五、与 XSS、SSRF 的区别\n- CSRF：冒用用户身份**发请求**，不执行脚本；\n- XSS：在浏览器执行脚本，能读取响应，能力更强；\n- SSRF：由**服务器**发起请求，攻击内网。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.566
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：未执行\n目标：\n模式：BLOCKED\n说明：封禁目标 IP 为空\n```\n\n**护栏生效**：该目标命中保护策略，动作被拦截并未下发，符合安全预期。\n\n⚠️ 注意：处置执行：封禁来源 IP（过护栏+审批+审计） 执行失败（处置被 ResponseGuard 护栏拦截（已留痕），未真正下发）。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **一、原理**（可信度：medium，来源性质：community，相关度：0.684）\n   > ## 一、原理\n   > 应用把用户输入拼接到操作系统命令中执行，且未做过滤，攻击者可通过命令分隔符插入额外命令，从而在服务器/设备上执行任意命令。\n   > \n   > 常见危险函数：Java 的 `Runtime.exec`、`ProcessBuilder`；PHP 的 `system/exec/shell_exec/popen`；C 的 `system/popen`；Python 的 `os.system/subprocess(..., shell=True)`。\n\n2. **三、危害**（可信度：medium，来源性质：community，相关度：0.631）\n   > ## 三、危害\n   > - 远程命令执行（RCE），获取服务权限；\n   > - 反弹 Shell、植入后门、添加管理员；\n   > - 横向移动、数据窃取、作为跳板攻击内网；\n   > - 在 IoT/路由器上常直接拿到 root，是设备类漏洞的高发点。\n\n3. **五、与 XSS、SSRF 的区别**（可信度：medium，来源性质：community，相关度：0.566）\n   > ## 五、与 XSS、SSRF 的区别\n   > - CSRF：冒用用户身份**发请求**，不执行脚本；\n   > - XSS：在浏览器执行脚本，能读取响应，能力更强；\n   > - SSRF：由**服务器**发起请求，攻击内网。",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

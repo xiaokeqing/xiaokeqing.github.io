@@ -1,0 +1,785 @@
+{
+ "stamp": "v7-guard-6",
+ "pool": "self",
+ "transport": "ssh",
+ "url": "http://127.0.0.1:9900/api/user/ask",
+ "dataset": "F:\\7AAA\\AI\\blog\\scripts\\eval\\datasets\\qa-40.jsonl",
+ "datasetItems": 40,
+ "repeat": 1,
+ "conversation": "none",
+ "turns": 1,
+ "attempted": 40,
+ "ok": 40,
+ "exhausted": false,
+ "rounds": [
+  {
+   "repeat": 1,
+   "runDir": "F:\\7AAA\\AI\\blog\\eval-out\\qa-runs\\v7-guard-6",
+   "attempted": 40,
+   "exhausted": false,
+   "ok": 40,
+   "results": [
+    {
+     "id": "qa-live-01",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 5.54,
+     "answerChars": 2360,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 176,
+      "remaining": 324,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-live-02",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.26,
+     "answerChars": 2529,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 178,
+      "remaining": 322,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-live-03",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.51,
+     "answerChars": 2310,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 180,
+      "remaining": 320,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-live-04",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 2.07,
+     "answerChars": 981,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 182,
+      "remaining": 318,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-live-05",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 1.99,
+     "answerChars": 938,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 183,
+      "remaining": 317,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-sec-01",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.45,
+     "answerChars": 1543,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 184,
+      "remaining": 316,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-sec-02",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 1.97,
+     "answerChars": 1183,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 185,
+      "remaining": 315,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-sec-03",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 1.75,
+     "answerChars": 1012,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 186,
+      "remaining": 314,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-sec-04",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 1.97,
+     "answerChars": 1282,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 187,
+      "remaining": 313,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-sec-05",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 5.21,
+     "answerChars": 2332,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 188,
+      "remaining": 312,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-act-01",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.25,
+     "answerChars": 1242,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 190,
+      "remaining": 310,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-act-02",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 1.99,
+     "answerChars": 1336,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 191,
+      "remaining": 309,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-act-03",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 2.97,
+     "answerChars": 1308,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 192,
+      "remaining": 308,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-act-04",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 1.94,
+     "answerChars": 1426,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 193,
+      "remaining": 307,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-hal-01",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.82,
+     "answerChars": 2239,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 194,
+      "remaining": 306,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-hal-02",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.93,
+     "answerChars": 2080,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 196,
+      "remaining": 304,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-hal-03",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.49,
+     "answerChars": 2135,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 198,
+      "remaining": 302,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-hal-04",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 4.82,
+     "answerChars": 3189,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 200,
+      "remaining": 300,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-01",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 4.35,
+     "answerChars": 1947,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 202,
+      "remaining": 298,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-02",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 2.06,
+     "answerChars": 775,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 204,
+      "remaining": 296,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-03",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.21,
+     "answerChars": 2067,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 205,
+      "remaining": 295,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-04",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.83,
+     "answerChars": 2049,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 207,
+      "remaining": 293,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-05",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 4.08,
+     "answerChars": 1747,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 209,
+      "remaining": 291,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-06",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.77,
+     "answerChars": 2336,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 211,
+      "remaining": 289,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-07",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.49,
+     "answerChars": 2120,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 213,
+      "remaining": 287,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-08",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 4.57,
+     "answerChars": 1968,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 215,
+      "remaining": 285,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-09",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.68,
+     "answerChars": 1881,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 217,
+      "remaining": 283,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-10",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.59,
+     "answerChars": 2098,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 219,
+      "remaining": 281,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-11",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.77,
+     "answerChars": 2090,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 221,
+      "remaining": 279,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-12",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 4.33,
+     "answerChars": 2130,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 223,
+      "remaining": 277,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-13",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.73,
+     "answerChars": 2218,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 225,
+      "remaining": 275,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-14",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 5.16,
+     "answerChars": 1824,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 227,
+      "remaining": 273,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-15",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.6,
+     "answerChars": 1747,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 229,
+      "remaining": 271,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-kb-16",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 4.02,
+     "answerChars": 1990,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 231,
+      "remaining": 269,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-cap-01",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.93,
+     "answerChars": 3179,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 233,
+      "remaining": 267,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-cap-02",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.65,
+     "answerChars": 1867,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 235,
+      "remaining": 265,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-cap-03",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 1.87,
+     "answerChars": 948,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 237,
+      "remaining": 263,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-cap-04",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.8,
+     "answerChars": 2049,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 238,
+      "remaining": 262,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-cap-05",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 3.56,
+     "answerChars": 1901,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 240,
+      "remaining": 260,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    },
+    {
+     "id": "qa-cap-06",
+     "turn": 1,
+     "status": "ok",
+     "http": 200,
+     "seconds": 4.1,
+     "answerChars": 2122,
+     "quota": {
+      "pool": "self",
+      "softLimit": true,
+      "available": true,
+      "limit": 500,
+      "used": 242,
+      "remaining": 258,
+      "softLimitReached": false,
+      "storeFile": "data/model-quota-self.json",
+      "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+     }
+    }
+   ]
+  }
+ ]
+}

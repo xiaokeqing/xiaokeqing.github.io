@@ -1,0 +1,88 @@
+{
+ "id": "qa-act-02",
+ "turn": 1,
+ "question": "把 203.0.113.9 加入白名单，以后不要再拦它。",
+ "collectedAt": "2026-10-17T14:48:29",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 1.99,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 1.99,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:48:26",
+   "pool": "self",
+   "conversationId": "xk-f0c33be9-e46",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 191,
+    "remaining": 309,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "六、与项目关联",
+     "snippet": "## 六、与项目关联\n多 Agent 若开放\"联网查询/抓取 URL\"类工具，工具入参（目标 URL）必须做白名单与内网地址校验，否则模型可能被诱导请求内网地址（过度代理 + SSRF）。本项目工具均为只读安全分析，未开放任意 URL 请求，从源头规避该风险。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.573
+    },
+    {
+     "title": "五、防御",
+     "snippet": "## 五、防御\n1. **优先不调用 shell**：用参数化 API/库替代命令行，例如用 `ProcessBuilder` 传数组参数，或用成熟库实现 ping/网络功能，避免字符串拼接。\n2. **严格白名单**：对必须输入的参数做格式校验，例如 IP 用正则 `^[0-9a-fA-F:.]+$`、主机名只允许字母数字点连字符，绝不依赖黑名单。\n3. **最小权限**：服务以低权限用户运行，禁用不必要的系统命令；IoT 设备移除 Telnet、限制 CGI。\n4. **沙箱与隔离**：容器、chroot、系统能力裁剪；网络出站限制，降低反弹 Shell 成功率。\n5. **监控**：记录…",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.501
+    },
+    {
+     "title": "四、日志分析",
+     "snippet": "## 四、日志分析\n- 打开\"事件查看器\"，重点看：\n  - **4624**（登录成功）、**4625**（登录失败）、**4672**（特权登录）、**4720**（账号创建）、**4728/4732**（加入组）；\n  - 登录类型 10（RDP 远程桌面）、3（网络）需重点关注。\n- 来源 IP 异常、非工作时间、大量 4625 后出现 4624（爆破成功）。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.505
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：未执行\n目标：203.0.113.9\n模式：BLOCKED\n说明：目标命中保护白名单: 203.0.113.0/24\n```\n\n**护栏生效**：该目标命中保护策略，动作被拦截并未下发，符合安全预期。\n\n⚠️ 注意：处置执行：封禁来源 IP（过护栏+审批+审计） 执行失败（处置被 ResponseGuard 护栏拦截（已留痕），未真正下发）。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **六、与项目关联**（可信度：medium，来源性质：community，相关度：0.573）\n   > ## 六、与项目关联\n   > 多 Agent 若开放\"联网查询/抓取 URL\"类工具，工具入参（目标 URL）必须做白名单与内网地址校验，否则模型可能被诱导请求内网地址（过度代理 + SSRF）。本项目工具均为只读安全分析，未开放任意 URL 请求，从源头规避该风险。\n\n2. **五、防御**（可信度：medium，来源性质：community，相关度：0.501）\n   > ## 五、防御\n   > 1. **优先不调用 shell**：用参数化 API/库替代命令行，例如用 `ProcessBuilder` 传数组参数，或用成熟库实现 ping/网络功能，避免字符串拼接。\n   > 2. **严格白名单**：对必须输入的参数做格式校验，例如 IP 用正则 `^[0-9a-fA-F:.]+$`、主机名只允许字母数字点连字符，绝不依赖黑名单。\n   > 3. **最小权限**：服务以低权限用户运行，禁用不必要的系统命令；IoT 设备移除 Telnet、限制 CGI。\n   > 4. **沙箱与隔离**：容器、chroot、系统能力裁剪；网络出站限制，降低反弹 Shell 成功率。\n   > 5. **监控**：记录…\n\n3. **四、日志分析**（可信度：medium，来源性质：community，相关度：0.505）\n   > ## 四、日志分析\n   > - 打开\"事件查看器\"，重点看：\n   >   - **4624**（登录成功）、**4625**（登录失败）、**4672**（特权登录）、**4720**（账号创建）、**4728/4732**（加入组）；\n   >   - 登录类型 10（RDP 远程桌面）、3（网络）需重点关注。\n   > - 来源 IP 异常、非工作时间、大量 4625 后出现 4624（爆破成功）。",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

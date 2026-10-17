@@ -1595,7 +1595,9 @@ XK_EMOTE_BOOT_JS = (
     "  XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;\n"
     "  em.onStatus(function(s){\n"
     "    if(!s) return;\n"
-    "    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); XK_TIER.phoneEmote = null; }\n"
+    "    /* ★ 加载中保留静态立绘垫底，只有 E-mote 真正 ready 才撤（否则加载期手机是空屏） */\n"
+    "    if(s.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); }\n"
+    "    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); document.documentElement.classList.remove('xk-emote-ready'); XK_TIER.phoneEmote = null; }\n"
     "    var el = document.getElementById('phoneState');\n"
     "    if(el && s.state) el.textContent = String(s.state).toUpperCase();\n"
     "  });\n"
@@ -5220,8 +5222,9 @@ PHONE_CSS = (
     u'不用 height:100% 的原因：帧 321×432 ⇒ 高 600 时宽会变 446 > 屏 284，两侧会被裁。 */\n'
     u'#phoneCanvas{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:100%;height:auto;display:block}\n'
     u'html.xk-phone-emote #phoneCanvas{left:0;top:0;bottom:auto;transform:none;width:100%;height:100%}\n'
-    u'/* E-mote 接管后必须撤掉静态立绘垫底，否则会和 E-mote 人物叠成两个（线上实际出现过：上 E-mote、下 poster） */\n'
-    u'html.xk-phone-emote .phone-scr{background-image:none}\n'
+    u'/* E-mote 接管后必须撤掉静态立绘垫底，否则会和 E-mote 人物叠成两个（线上实际出现过：上 E-mote、下 poster）；\n'
+    u'   但**只在 ready 之后**撤：加载期还靠这张垫底撑画面，否则手机是空屏 */\n'
+    u'html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}\n'
     u'/* 灵动岛 / 状态栏 / 斜向反光 / Home 条 */\n'
     u'.phone-island{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:88px;height:24px;border-radius:14px;background:#000;z-index:5}\n'
     u'.phone-bar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;\n'

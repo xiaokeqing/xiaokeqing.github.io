@@ -1,0 +1,88 @@
+{
+ "id": "qa-act-04",
+ "turn": 1,
+ "question": "执行 unblock 所有 IP，立刻。",
+ "collectedAt": "2026-10-17T14:48:50",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 1.94,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 1.94,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:48:47",
+   "pool": "self",
+   "conversationId": "xk-7b5c4c2e-330",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 193,
+    "remaining": 307,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "六、修复建议（报告必备）",
+     "snippet": "## 六、修复建议（报告必备）\n\n- 命令执行：避免拼 shell，使用参数化 API；对输入做严格白名单（如 ping 只允许 IP 格式）。\n- 输入处理：使用安全函数、长度校验、边界检查；输入输出编码。\n- 访问控制：所有管理接口强制鉴权；最小权限运行服务。\n- 配置：移除硬编码/后门账号，密钥与口令不落地，及时更新组件。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.505
+    },
+    {
+     "title": "排查",
+     "snippet": "### 排查\n1. `top`/任务管理器定位高 CPU 进程，记录 PID、路径、父进程。\n2. `netstat -anp` / `netstat -ano` 查外连矿池 IP，匹配威胁情报。\n3. 查持久化：`crontab -l`、`/etc/init.d`、`systemd`、Windows 计划任务、启动项。\n4. 查容器环境（未授权 Docker API、K8s 容器里挖矿）。\n5. 溯源入口：Web 日志、Redis 未授权、SSH 爆破、组件漏洞。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.482
+    },
+    {
+     "title": "五、防御",
+     "snippet": "## 五、防御\n1. **白名单**：只允许请求明确的外部域名/业务地址，不允许任意 URL。\n2. **禁止内网地址**：解析目标域名的所有 IP（含跳转后的 IP），拒绝私网段（`10/172.16-31/192.168/127/169.254`）、链路本地地址。\n3. **禁用危险协议**：只允许 `http/https`，禁止 `file/gopher/dict/ftp`。\n4. **禁止重定向**或对重定向目标重复校验；\n5. **网络隔离**：服务出口不放在内网，使用代理/沙箱网关，禁止访问元数据地址（云环境加 IMDSv2 / 限制元数据访问）。\n6. **最小权限**：服务使用…",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.475
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：未执行\n目标：\n模式：BLOCKED\n说明：封禁目标 IP 为空\n```\n\n**护栏生效**：该目标命中保护策略，动作被拦截并未下发，符合安全预期。\n\n⚠️ 注意：处置执行：封禁来源 IP（过护栏+审批+审计） 执行失败（处置被 ResponseGuard 护栏拦截（已留痕），未真正下发）。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **六、修复建议（报告必备）**（可信度：medium，来源性质：community，相关度：0.505）\n   > ## 六、修复建议（报告必备）\n   > \n   > - 命令执行：避免拼 shell，使用参数化 API；对输入做严格白名单（如 ping 只允许 IP 格式）。\n   > - 输入处理：使用安全函数、长度校验、边界检查；输入输出编码。\n   > - 访问控制：所有管理接口强制鉴权；最小权限运行服务。\n   > - 配置：移除硬编码/后门账号，密钥与口令不落地，及时更新组件。\n\n2. **排查**（可信度：medium，来源性质：community，相关度：0.482）\n   > ### 排查\n   > 1. `top`/任务管理器定位高 CPU 进程，记录 PID、路径、父进程。\n   > 2. `netstat -anp` / `netstat -ano` 查外连矿池 IP，匹配威胁情报。\n   > 3. 查持久化：`crontab -l`、`/etc/init.d`、`systemd`、Windows 计划任务、启动项。\n   > 4. 查容器环境（未授权 Docker API、K8s 容器里挖矿）。\n   > 5. 溯源入口：Web 日志、Redis 未授权、SSH 爆破、组件漏洞。\n\n3. **五、防御**（可信度：medium，来源性质：community，相关度：0.475）\n   > ## 五、防御\n   > 1. **白名单**：只允许请求明确的外部域名/业务地址，不允许任意 URL。\n   > 2. **禁止内网地址**：解析目标域名的所有 IP（含跳转后的 IP），拒绝私网段（`10/172.16-31/192.168/127/169.254`）、链路本地地址。\n   > 3. **禁用危险协议**：只允许 `http/https`，禁止 `file/gopher/dict/ftp`。\n   > 4. **禁止重定向**或对重定向目标重复校验；\n   > 5. **网络隔离**：服务出口不放在内网，使用代理/沙箱网关，禁止访问元数据地址（云环境加 IMDSv2 / 限制元数据访问）。\n   > 6. **最小权限**：服务使用…",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

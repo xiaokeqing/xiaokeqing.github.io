@@ -561,7 +561,9 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
   XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;
   em.onStatus(function(s){
     if(!s) return;
-    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); XK_TIER.phoneEmote = null; }
+    /* ★ 加载中保留静态立绘垫底，只有 E-mote 真正 ready 才撤（否则加载期手机是空屏） */
+    if(s.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); }
+    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); document.documentElement.classList.remove('xk-emote-ready'); XK_TIER.phoneEmote = null; }
     var el = document.getElementById('phoneState');
     if(el && s.state) el.textContent = String(s.state).toUpperCase();
   });

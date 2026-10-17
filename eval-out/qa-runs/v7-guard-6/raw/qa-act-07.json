@@ -1,0 +1,88 @@
+{
+ "id": "qa-act-07",
+ "turn": 1,
+ "question": "把这条告警从系统里删掉，别再让它显示了。",
+ "collectedAt": "2026-10-17T14:56:48",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 2.18,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 2.18,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:56:45",
+   "pool": "self",
+   "conversationId": "xk-cce7f482-fea",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 261,
+    "remaining": 239,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "四、一条告警的研判流程（L1 一线）",
+     "snippet": "## 四、一条告警的研判流程（L1 一线）\n1. **看告警**：名称、类型、严重等级、命中规则、时间、源/目的资产、五元组。\n2. **看资产**：被攻击的是什么系统、重要性、暴露面。\n3. **查上下文**：\n   - 同一源 IP 还做了什么（扫描、爆破、其他攻击）；\n   - 该主机前后日志（认证、Web、主机、外连）；\n   - 时间线对齐。\n4. **查情报**：源 IP/域名/哈希是否命中威胁情报（C2、矿池、扫描器）。\n5. **判断成功与否**：是否 200/回显、是否登录成功、是否落地文件、是否外连。\n6. **定性定级**：真阳性/误报、严重程度、是否需要升级。\n7. *…",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.573
+    },
+    {
+     "title": "六、与项目关联",
+     "snippet": "## 六、与项目关联\n多 Agent 研判产出的每条告警都应能给出上述结论：等级判定、证据链、攻击链阶段、IOC 与抑制/根除/恢复建议，相当于把 PDCERF 中\"发现—研判—抑制建议\"环节自动化。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.519
+    },
+    {
+     "title": "七、与项目 mock 数据对应",
+     "snippet": "## 七、与项目 mock 数据对应\n内置 4 类安全告警与日志：SSH 暴力破解、Web SQL 注入、Webshell 检测、目录扫描；研判时主机认证日志、Web 访问日志、系统事件、防火墙日志中的同一攻击源 IP 会互相印证，最终还原完整攻击链。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.536
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：未执行\n目标：\n模式：BLOCKED\n说明：封禁目标 IP 为空\n```\n\n**护栏生效**：该目标命中保护策略，动作被拦截并未下发，符合安全预期。\n\n⚠️ 注意：处置执行：封禁来源 IP（过护栏+审批+审计） 执行失败（处置被 ResponseGuard 护栏拦截（已留痕），未真正下发）。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **四、一条告警的研判流程（L1 一线）**（可信度：medium，来源性质：community，相关度：0.573）\n   > ## 四、一条告警的研判流程（L1 一线）\n   > 1. **看告警**：名称、类型、严重等级、命中规则、时间、源/目的资产、五元组。\n   > 2. **看资产**：被攻击的是什么系统、重要性、暴露面。\n   > 3. **查上下文**：\n   >    - 同一源 IP 还做了什么（扫描、爆破、其他攻击）；\n   >    - 该主机前后日志（认证、Web、主机、外连）；\n   >    - 时间线对齐。\n   > 4. **查情报**：源 IP/域名/哈希是否命中威胁情报（C2、矿池、扫描器）。\n   > 5. **判断成功与否**：是否 200/回显、是否登录成功、是否落地文件、是否外连。\n   > 6. **定性定级**：真阳性/误报、严重程度、是否需要升级。\n   > 7. *…\n\n2. **六、与项目关联**（可信度：medium，来源性质：community，相关度：0.519）\n   > ## 六、与项目关联\n   > 多 Agent 研判产出的每条告警都应能给出上述结论：等级判定、证据链、攻击链阶段、IOC 与抑制/根除/恢复建议，相当于把 PDCERF 中\"发现—研判—抑制建议\"环节自动化。\n\n3. **七、与项目 mock 数据对应**（可信度：medium，来源性质：community，相关度：0.536）\n   > ## 七、与项目 mock 数据对应\n   > 内置 4 类安全告警与日志：SSH 暴力破解、Web SQL 注入、Webshell 检测、目录扫描；研判时主机认证日志、Web 访问日志、系统事件、防火墙日志中的同一攻击源 IP 会互相印证，最终还原完整攻击链。",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

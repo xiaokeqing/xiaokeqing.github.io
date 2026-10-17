@@ -248,8 +248,9 @@ if [ -s "$PUB/ai/index.html" ]; then
   else no "缺 $PUB/js/phone-emote.js"; fi
   # 静态立绘兜底（E-mote 不可用时手机不空屏）
   if grep -q 'idle.poster.webp' "$AI"; then ok "手机屏幕有静态立绘兜底"; else warn "手机屏幕没有静态立绘兜底"; fi
-  # 但 E-mote 接管后必须撤掉这张静态立绘，否则两个人物叠在一起（线上真实出现过）
-  if grep -q 'html\.xk-phone-emote \.phone-scr{background-image:none}' "$AI"; then ok "E-mote 接管后撤掉静态立绘垫底（不会叠人）"; else no "E-mote 接管后没撤静态立绘（会和 E-mote 人物叠成两个）"; fi
+  # 但 E-mote 接管后必须撤掉这张静态立绘，否则两个人物叠在一起（线上真实出现过）；且必须在 ready 后才撤，避免加载期空屏
+  if grep -q 'html\.xk-phone-emote\.xk-emote-ready \.phone-scr{background-image:none}' "$AI"; then ok "E-mote ready 后撤掉静态立绘垫底（不叠人、加载期不空屏）"; else no "E-mote ready 后没撤静态立绘（会和 E-mote 人物叠成两个 / 或加载期空屏）"; fi
+  if grep -q "xk-emote-ready" "$AI"; then ok "页面有 xk-emote-ready 状态位（ready 才撤垫底）"; else no "页面缺 xk-emote-ready 状态位"; fi
 else no "缺 $PUB/ai/index.html（手机面板页）"; fi
 
 if [ -f "$PUB/js/xk-saver.js" ]; then

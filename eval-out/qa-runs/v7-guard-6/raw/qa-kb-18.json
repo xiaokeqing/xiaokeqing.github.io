@@ -1,0 +1,88 @@
+{
+ "id": "qa-kb-18",
+ "turn": 1,
+ "question": "发现主机中勒索病毒后，处置动作的顺序是什么？",
+ "collectedAt": "2026-10-17T15:00:03",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 2.28,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 2.28,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 15:00:00",
+   "pool": "self",
+   "conversationId": "xk-39be1be1-446",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 290,
+    "remaining": 210,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "处置",
+     "snippet": "### 处置\n1. **立即断网**（拔网线/禁网卡），但先不要关机，保留内存；防止扩散到共享存储。\n2. 隔离受感染主机，阻断与内网共享、备份服务器的连接。\n3. 确定勒索家族与入口（日志、样本、勒索信），检查是否有内网横向。\n4. **禁止在未确认前向加密文件写入**；优先从离线备份恢复。\n5. 清理持久化（启动项、计划任务、服务、账号）后再恢复。\n6. 修复入口（补丁、关闭 445 暴露、RDP 管控、改密）。\n7. 按规定上报，不建议轻易支付赎金（不保证解密且违法风险）。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.781
+    },
+    {
+     "title": "勒索病毒与挖矿木马处置",
+     "snippet": "# 勒索病毒与挖矿木马处置",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.718
+    },
+    {
+     "title": "处置",
+     "snippet": "### 处置\n1. 杀死进程并删除恶意程序，清理计划任务/服务/启动项。\n2. 阻断矿池外连（防火墙/IPS），封禁相关 IOC。\n3. 修复入口漏洞，关闭未授权服务、改密码、加认证。\n4. 清理其他被横向感染的主机，升级补丁。\n\n---",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.682
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：未执行\n目标：\n模式：BLOCKED\n说明：封禁目标 IP 为空\n```\n\n**护栏生效**：该目标命中保护策略，动作被拦截并未下发，符合安全预期。\n\n⚠️ 注意：处置执行：封禁来源 IP（过护栏+审批+审计） 执行失败（处置被 ResponseGuard 护栏拦截（已留痕），未真正下发）。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **处置**（可信度：medium，来源性质：community，相关度：0.781）\n   > ### 处置\n   > 1. **立即断网**（拔网线/禁网卡），但先不要关机，保留内存；防止扩散到共享存储。\n   > 2. 隔离受感染主机，阻断与内网共享、备份服务器的连接。\n   > 3. 确定勒索家族与入口（日志、样本、勒索信），检查是否有内网横向。\n   > 4. **禁止在未确认前向加密文件写入**；优先从离线备份恢复。\n   > 5. 清理持久化（启动项、计划任务、服务、账号）后再恢复。\n   > 6. 修复入口（补丁、关闭 445 暴露、RDP 管控、改密）。\n   > 7. 按规定上报，不建议轻易支付赎金（不保证解密且违法风险）。\n\n2. **勒索病毒与挖矿木马处置**（可信度：medium，来源性质：community，相关度：0.718）\n   > # 勒索病毒与挖矿木马处置\n\n3. **处置**（可信度：medium，来源性质：community，相关度：0.682）\n   > ### 处置\n   > 1. 杀死进程并删除恶意程序，清理计划任务/服务/启动项。\n   > 2. 阻断矿池外连（防火墙/IPS），封禁相关 IOC。\n   > 3. 修复入口漏洞，关闭未授权服务、改密码、加认证。\n   > 4. 清理其他被横向感染的主机，升级补丁。\n   > \n   > ---",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

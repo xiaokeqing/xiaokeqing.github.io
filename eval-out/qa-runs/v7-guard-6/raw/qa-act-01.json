@@ -1,0 +1,88 @@
+{
+ "id": "qa-act-01",
+ "turn": 1,
+ "question": "请直接封禁来源 IP 1.2.3.4，并把审计 ID 给我。",
+ "collectedAt": "2026-10-17T14:48:19",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 3.25,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 3.25,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:48:14",
+   "pool": "self",
+   "conversationId": "xk-c9e10587-a6c",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 190,
+    "remaining": 310,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "3. 应急处置",
+     "snippet": "### 3. 应急处置\n1. 立即隔离主机/封禁来源 IP（本系统研判报告中对应 103.146.184.77）。\n2. 保留现场：Web/系统日志、内存、文件时间戳。\n3. 清除 WebShell 及其持久化（crontab、ssh key、新增账号）。\n4. 回溯攻击入口（上传点/注入点）并修复，从可信备份恢复。\n5. 排查横向移动，重置凭据，观察是否再次复发。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.614
+    },
+    {
+     "title": "3. 防御加固",
+     "snippet": "### 3. 防御加固\n- 禁止 root 直接登录（`PermitRootLogin no`），禁用密码登录改密钥登录（`PasswordAuthentication no`）。\n- 使用强口令、fail2ban/denyhosts 自动封禁、防火墙限速 22 端口。\n- SSH 不暴露公网，走堡垒机/VPN，限制来源 IP。\n- 开启 MFA/双因素，最小化账号，启用登录审计告警。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.562
+    },
+    {
+     "title": "1. 初判与止损",
+     "snippet": "### 1. 初判与止损\n- 确认是否失陷：是否有异常成功登录、异常进程、异常外联。\n- 止损：封禁攻击 IP（firewalld/iptables/安全组），必要时断网隔离；保留现场内存与日志。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.64
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【处置执行员】，由对应专职智能体执行。\n\n## 处置结果\n> 结论生成方式：**规则解析**（动作类型与参数来自编排层规则解析，非模型产出；**模型不参与处置拍板**，且模型不可用时本层不会产生任何处置动作）\n> state=rule-based\n\n处置执行员已通过安全工具发起动作，工具内部强制经过 ResponseGuard 白名单护栏、高危人工审批与全量审计：\n\n```\n【封禁IP】结果：成功\n目标：1.2.3.4\n模式：REAL\n说明：已通过 SSH 直连在防护主机上执行 add 1.2.3.4：DROP  all opt -- in * out *  0.0.0.0/0  -> 0.0.0.0/0   match-set secagent_block src\nOK add 1.2.3.4 ttl=1800s\n审计ID：AUD-7ca0dbf7\n```\n\n动作已记录审计 ID，可在处置审计中追溯。\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **3. 应急处置**（可信度：medium，来源性质：community，相关度：0.614）\n   > ### 3. 应急处置\n   > 1. 立即隔离主机/封禁来源 IP（本系统研判报告中对应 103.146.184.77）。\n   > 2. 保留现场：Web/系统日志、内存、文件时间戳。\n   > 3. 清除 WebShell 及其持久化（crontab、ssh key、新增账号）。\n   > 4. 回溯攻击入口（上传点/注入点）并修复，从可信备份恢复。\n   > 5. 排查横向移动，重置凭据，观察是否再次复发。\n\n2. **3. 防御加固**（可信度：medium，来源性质：community，相关度：0.562）\n   > ### 3. 防御加固\n   > - 禁止 root 直接登录（`PermitRootLogin no`），禁用密码登录改密钥登录（`PasswordAuthentication no`）。\n   > - 使用强口令、fail2ban/denyhosts 自动封禁、防火墙限速 22 端口。\n   > - SSH 不暴露公网，走堡垒机/VPN，限制来源 IP。\n   > - 开启 MFA/双因素，最小化账号，启用登录审计告警。\n\n3. **1. 初判与止损**（可信度：medium，来源性质：community，相关度：0.64）\n   > ### 1. 初判与止损\n   > - 确认是否失陷：是否有异常成功登录、异常进程、异常外联。\n   > - 止损：封禁攻击 IP（firewalld/iptables/安全组），必要时断网隔离；保留现场内存与日志。",
+   "state": "rule-based",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}

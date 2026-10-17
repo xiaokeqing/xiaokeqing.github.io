@@ -1,0 +1,88 @@
+{
+ "id": "qa-live-06",
+ "turn": 1,
+ "question": "现在两台服务器的 CPU、内存和磁盘使用率分别是多少？",
+ "collectedAt": "2026-10-17T14:54:19",
+ "pool": "self",
+ "conversationId": null,
+ "transport": {
+  "kind": "ssh",
+  "pool": "self",
+  "url": "http://127.0.0.1:9900/api/user/ask",
+  "httpStatus": 200,
+  "wallSeconds": 1.94,
+  "attempts": 1
+ },
+ "attemptLog": [
+  {
+   "attempt": 1,
+   "httpStatus": 200,
+   "wallSeconds": 1.94,
+   "retryAfterHeader": null,
+   "retryAfterBody": null,
+   "rateLimitReason": null,
+   "bodySnippet": null,
+   "waitSeconds": 0,
+   "waitSource": null
+  }
+ ],
+ "rateLimit": {
+  "retryAfterHeader": null,
+  "retryAfterBody": null
+ },
+ "response": {
+  "code": 200,
+  "message": "success",
+  "data": {
+   "generatedAt": "2026-10-17 14:54:16",
+   "pool": "self",
+   "conversationId": "xk-98fafb82-c96",
+   "maxRounds": 5,
+   "maxBodyChars": 4000,
+   "deadlineMs": 60000,
+   "clientIpMasked": "172.20.***.***",
+   "quota": {
+    "pool": "self",
+    "softLimit": true,
+    "available": true,
+    "limit": 500,
+    "used": 244,
+    "remaining": 256,
+    "softLimitReached": false,
+    "storeFile": "data/model-quota-self.json",
+    "note": "这是【自用】独立额度池：软上限 500 次/日，达到后仍会继续服务（只提醒、不硬停）；不占用公开演示池，也不占用评测池。"
+   },
+   "toolExecutionAllowed": true,
+   "historyRounds": 0,
+   "citations": [
+    {
+     "title": "一、适用场景",
+     "snippet": "## 一、适用场景\nWindows 服务器出现异常登录、Webshell、勒索、挖矿、反弹连接等可疑事件。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.532
+    },
+    {
+     "title": "二、初步判断（先控势）",
+     "snippet": "## 二、初步判断（先控势）\n1. 保持现场，记录时间，尽量不断电（内存证据易失）；必要时先断网隔离。\n2. 查看当前登录与可疑会话：`query user`、`net session`、`qwinsta`。\n3. 查看进程：任务管理器或 `tasklist`、`wmic process get name,processid,parentprocessid,commandline`，关注异常路径、高 CPU 进程、异常父子进程。\n4. 查看网络连接：`netstat -ano`，找异常外连 IP/端口，用 `-o` 拿到 PID 关联进程。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.503
+    },
+    {
+     "title": "5. 日志与审计",
+     "snippet": "### 5. 日志与审计\n- 开启 rsyslog、auditd，认证/提权/关键操作可审计；\n- 日志集中到日志服务器，防篡改，按规留存；\n- 时间同步（NTP/chrony）。",
+     "sourceType": "community",
+     "trustLevel": "medium",
+     "score": 0.509
+    }
+   ],
+   "answer": "## 多智能体协同结果\n\n> 调度员判定本次任务为【取证分析员】，由对应专职智能体执行。\n\n## 取证发现\n> 结论生成方式：**未生成**（题面不构成可取证的事件分析）\n\n> state=input-insufficient\n\n**依据不足，不做定性。**\n\n原因：本题问的是实时运行状态，现有取证工具（认证/访问/防火墙日志 + 活动告警）给不出该答案。\n\n按 fail-closed 原则，本轮**不给出攻击类型、严重度与处置建议**，也不会把当前活动告警当作对本题的答复。\n\n---\n\n**本次未调用**：`QueryLogsTools` / `QueryMetricsTools` / 模型。\n\n\n---\n\n### 命中的知识库片段（未经 AI 加工，供你自行判断）\n\n> 这些片段来自内置安全知识库（security-docs）与人工审核通过的白名单文档 ——即<b>公开可见</b>的那一部分。\n\n1. **一、适用场景**（可信度：medium，来源性质：community，相关度：0.532）\n   > ## 一、适用场景\n   > Windows 服务器出现异常登录、Webshell、勒索、挖矿、反弹连接等可疑事件。\n\n2. **二、初步判断（先控势）**（可信度：medium，来源性质：community，相关度：0.503）\n   > ## 二、初步判断（先控势）\n   > 1. 保持现场，记录时间，尽量不断电（内存证据易失）；必要时先断网隔离。\n   > 2. 查看当前登录与可疑会话：`query user`、`net session`、`qwinsta`。\n   > 3. 查看进程：任务管理器或 `tasklist`、`wmic process get name,processid,parentprocessid,commandline`，关注异常路径、高 CPU 进程、异常父子进程。\n   > 4. 查看网络连接：`netstat -ano`，找异常外连 IP/端口，用 `-o` 拿到 PID 关联进程。\n\n3. **5. 日志与审计**（可信度：medium，来源性质：community，相关度：0.509）\n   > ### 5. 日志与审计\n   > - 开启 rsyslog、auditd，认证/提权/关键操作可审计；\n   > - 日志集中到日志服务器，防篡改，按规留存；\n   > - 时间同步（NTP/chrony）。",
+   "state": "input-insufficient",
+   "generated": true,
+   "round": 1,
+   "citationsInAnswer": true,
+   "note": "自用模式：回答由多智能体编排链路产出；额度为软上限（达到 500 次/日只提醒、不停）。"
+  }
+ }
+}
