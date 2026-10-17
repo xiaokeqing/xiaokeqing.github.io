@@ -131,9 +131,10 @@ addEventListener('resize', feedTrim);
   const put = (id, v) => { const n = el(id); if(n) n.textContent = v; };
   const num = v => (typeof v === 'number' && isFinite(v)) ? v.toLocaleString('zh-CN') : '未取到';
   async function load(){
-    let audit = null, honey = null;
-    try{ audit = (await (await fetch(API + '/api/public/audit',{cache:'no-store'})).json()).data; }catch(_){}
-    try{ honey = (await (await fetch(API + '/api/public/honeypot',{cache:'no-store'})).json()).data; }catch(_){}
+    /* ★速度：两个端点并行取，且一律走可被 CF 缓存的 `.js` 别名（不带 .js 的路径必然回源，实测 0.9~2.6s） */
+    const grab = async p => { try { return (await (await fetch(API + '/api/public/' + p + '.js')).json()).data; } catch(_) { return null; } };
+    const got = await Promise.all([grab('audit'), grab('honeypot')]);
+    const audit = got[0], honey = got[1];
     const s = (audit && audit.summary) || {};
     put('ohBlocked', num(s.blockedByGuard));
     put('ohIps', num(s.blockTotal));

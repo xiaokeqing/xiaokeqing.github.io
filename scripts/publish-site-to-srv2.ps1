@@ -336,9 +336,9 @@ if ($DryRun) {
 
 # ---------- 5) 上传 ----------
 Step '5/6' "上传到 ${SshHost}:$RemoteTar（并同步接收脚本）"
+Invoke-Checked 'ssh' @('-o', 'BatchMode=yes', $SshHost, "mkdir -p $RemoteDeployDir && chmod 700 $RemoteDeployDir") '建远端发布暂存目录'
 Invoke-Checked 'scp' @('-q', '-o', 'BatchMode=yes', $TmpTar, "${SshHost}:$RemoteTar") 'scp 上传 tar 包'
 Ok 'tar 包已上传'
-Invoke-Checked 'ssh' @('-o', 'BatchMode=yes', $SshHost, "mkdir -p $RemoteDeployDir && chmod 700 $RemoteDeployDir") '建远端发布暂存目录'
 Invoke-Checked 'scp' @('-q', '-o', 'BatchMode=yes', $ReceiveLocal, "${SshHost}:$RemoteDeployDir/srv2-site-receive.sh") 'scp 上传接收脚本'
 Invoke-Checked 'ssh' @('-o', 'BatchMode=yes', $SshHost, "sudo -n install -m 0755 -o root -g root $RemoteDeployDir/srv2-site-receive.sh $ReceiveRemote") '安装接收脚本'
 Ok "接收脚本已就位：$ReceiveRemote"

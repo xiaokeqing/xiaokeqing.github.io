@@ -34,6 +34,7 @@ FAIL=0
 
 ok()   { PASS=$((PASS + 1)); printf '  \033[1;32m[PASS]\033[0m %s\n' "$*"; }
 no()   { FAIL=$((FAIL + 1)); printf '  \033[1;31m[FAIL]\033[0m %s\n' "$*"; }
+warn() { printf "  \033[1;33m[WARN]\033[0m %s\n" "$*"; }
 head1() { printf '\n\033[1;36m== %s\033[0m\n' "$*"; }
 
 # 只扫文本文件：-I 让 grep 跳过二进制（png/jpg/woff），
@@ -290,6 +291,34 @@ for pg in index.html alerts/index.html posts/index.html ai/index.html test/index
 done
 if [ "$DESK_N" -gt 0 ] && [ "$DESK_OK" -eq "$DESK_N" ]; then ok "五页共用书桌底图（$DESK_OK/$DESK_N）"; else no "有页面缺书桌底图（$DESK_OK/$DESK_N）—— 站主要求所有页共用书桌"; fi
 if [ -s "$PUB/ai/index.html" ] && grep -q 'CC BY-NC-SA' "$PUB/ai/index.html"; then ok "E-mote 素材署名在位（CC BY-NC-SA 4.0）"; else warn "缺 E-mote 署名（许可要求保留署名）"; fi
+
+# ---------- ⑬ 新页产物契约：/what/ 介绍页 与 /lab/ 靶场页（2026-10-17 新增）----------
+# 这两页是本轮新写的独立页面，失败方式与"漏构建"同性质，所以要在发布前硬拦截：
+#   · 产物不存在     —— Hugo "构建成功"也可能没生成（layout 漏了 / draft / 输出路径错）
+#   · 字节数太小     —— 模板没吃到内容只剩骨架（两页真实产物约 15.5 万字节，阈值取 100000）
+#   · 缺 data-xk-ssr —— SPA 换页靠 <main> 上的路由名，缺了夹层视图直接空白
+# 口径与 _dev/check-ssr-contract.py 的 PAGES 清单一致（那边 7 页全查，这里把两个新页
+# 变成发布前硬拦截：它们是本轮新加的，还没经过多轮发布验证）。
+# ★引号口径：产物被 minify 成 <main ... data-xk-ssr=what>（属性没引号），
+#   所以判据用 ["']? 宽匹配，不写死带引号的字面量（写死会假红）。
+# $1=路由名（=URL 段） $2=中文页名
+new_page_gate() {
+  local route=$1 name=$2 f="$PUB/$1/index.html" sz pat
+  pat="data-xk-ssr=[\"']?${route}([^a-z-]|$)"
+  if [ ! -f "$f" ]; then
+    no "$route/index.html 不存在（$name 没被构建进产物）"
+    return
+  fi
+  sz=$(stat -c %s "$f")
+  if [ "$sz" -gt 100000 ] && grep -qE "$pat" "$f"; then
+    ok "$route/index.html $sz 字节 > 100000，且含 data-xk-ssr=$route（$name）"
+  else
+    no "$route/index.html 不合格：$sz 字节（需 >100000）；data-xk-ssr=$route $(grep -qE "$pat" "$f" && echo 在位 || echo 缺失)（$name）"
+  fi
+}
+head1 "⑬ /what/ 与 /lab/ 新页产物契约（存在 + >100000 字节 + data-xk-ssr）"
+new_page_gate what 介绍页
+new_page_gate lab 靶场说明页
 
 # ---------- 汇总 ----------
 head1 "汇总"

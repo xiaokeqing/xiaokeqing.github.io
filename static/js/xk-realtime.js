@@ -136,6 +136,21 @@
     if (!API) return;
     load().then(mount);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  /* ★速度：图谱默认页不是首屏（默认停在「实时攻击」），stories 这次 2–5 秒的跨境往返不该挡首屏。
+     所以只在 #atkGraph 真正可见（= 用户点了「攻击图谱」）时才取一次。 */
+  function startWhenVisible(){
+    var seen = false;
+    function visible(){
+      var c = document.getElementById('atkGraph');
+      return !!(c && c.offsetParent !== null);
+    }
+    if (visible()) { setTimeout(boot, 200); return; }
+    var tries = 0;
+    var iv = setInterval(function(){
+      if (visible()) { clearInterval(iv); if (!seen) { seen = true; boot(); } }
+      else if (++tries > 600) { clearInterval(iv); }
+    }, 400);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startWhenVisible);
+  else startWhenVisible();
 })();
