@@ -792,6 +792,38 @@
       return;
     }
     if (!sum) { txt(note, '读不到（/audit.summary 缺失：四个数字各自写"读不到"）—— 不补数'); }
+    /* ★处置时间线：把 blocks[] 按 createdAt 画到 24h 轴上（解封=琥珀，生效中=青）。
+       取不到就清空并写原因，不补样例点。 */
+    var tl = box.querySelector('[data-ban-tl]');
+    function renderBanTimeline(list) {
+      if (!tl) return;
+      if (!list || !list.length) { tl.innerHTML = '<span class="tl-note">本窗口没有封禁事件（不是取不到）</span>'; return; }
+      var ts = [], i;
+      for (i = 0; i < list.length; i++) {
+        var t = Date.parse(String(list[i].createdAt || '').replace(' ', 'T'));
+        if (isFinite(t)) ts.push(t);
+      }
+      if (!ts.length) { tl.innerHTML = '<span class="tl-note">时间读不到（createdAt 缺失或格式不认识）</span>'; return; }
+      var hi = Math.max.apply(null, ts), lo = hi - 24 * 3600 * 1000;
+      var html = '<span class="tl-note">最近 24 小时 · ' + list.length + ' 条封禁动作（点看来源与时长）</span>' +
+        '<div class="axis"></div>';
+      for (i = 0; i <= 4; i++) {
+        var pct = 10 + (80 * i / 4);
+        var d = new Date(lo + (hi - lo) * i / 4);
+        html += '<span class="tick" style="left:' + pct + '%">' + ('0' + d.getHours()).slice(-2) + ':00</span>';
+      }
+      for (i = 0; i < list.length; i++) {
+        var b2 = list[i], t2 = Date.parse(String(b2.createdAt || '').replace(' ', 'T'));
+        if (!isFinite(t2)) continue;
+        var x = 10 + 80 * (t2 - lo) / Math.max(1, hi - lo);
+        var un = b2.unblocked === true;
+        var tip = (un ? '解封' : '封禁') + ' · ' + maskIp(b2.ip) +
+          ' · ' + (b2.durationMinutes == null ? '时长读不到' : b2.durationMinutes + ' min') +
+          ' · ' + String(b2.createdAt || '').replace('T', ' ').slice(0, 16);
+        html += '<span class="ev' + (un ? ' warn' : '') + '" style="left:' + x.toFixed(2) + '%" title="' + esc(tip) + '"></span>';
+      }
+      tl.innerHTML = html;
+    }
     if (blocks && blocks.length) {
       for (var i = 0; i < rows.length; i++) {
         var b = blocks[i];
@@ -802,9 +834,11 @@
         blankRow(rows[i], maskIp(b.ip) + ' · ' + (b.source || b.actor || '来源读不到'), mid,
           un ? ('已解封' + (b.unblockMode ? '（' + b.unblockMode + '）' : '')) : '生效中', un ? 'warn' : 'ok');
       }
+      renderBanTimeline(blocks);
       if (sum) txt(note, '最近 ' + blocks.length + ' 条封禁留痕（原值分组、显示打码）· 触发方/处置者/留痕号来自 /audit；' +
         '护栏拦下 = blockedByGuard（是"动作数"，不是封禁数）');
     } else if (blocks) {
+      renderBanTimeline(blocks);
       txt(note, '本窗口没有封禁记录（不是取不到，是真的没有）');
       blankRow(rows[0], '—', '', '', '');
       hideFrom(1);
@@ -1274,6 +1308,15 @@
       return all;
     });
   }
+  /* ★deferred-audit：禁/解封留痕（/audit）只有「处置成果 · 封禁榜」和「处置运维」用，
+     首屏关键路径里没有它 ⇒ 过去这两个模块永远停在"取数中…"（因为 pend('audit') 一直为真）。
+     现在首屏画完再补一次，成功/失败都会进 partCache，标题与时间线随即落地。 */
+  function deferAudit() {
+    if (partCache[apiPath('audit')]) return;
+    setTimeout(function () {
+      if (!partCache[apiPath('audit')] && Date.now() >= rateHoldUntil) runJobs(['audit']);
+    }, 1200);
+  }
   function load() {
     if (!BASE_JOBS.length || document.hidden) return Promise.resolve();
     /* ★B3：429 冷却期内**不发任何请求**（省额度；否则继续吃 20 次/分的限额，越刷越黑） */
@@ -1295,6 +1338,7 @@
           res.parts.forEach(function (p) { partCache[p.path] = p; });
           ['home', 'alerts', 'geo', 'honeypot'].forEach(function (n) { delete pendingJobs[n]; });
           render(unionParts([]));
+          deferAudit();
           var retry = res.parts.filter(degraded);
           if (retry.length) scheduleRetry(retry);
           return res.parts;

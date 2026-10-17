@@ -462,6 +462,16 @@
 @media (max-width:980px){ .screen-bd{padding-bottom:76px} .ops-hero{margin-bottom:12px} }
 
 @media (min-width:981px){ body.xk-has-idcard .main{padding-left:184px} }
+
+/* ★ban-tl：处置时间线（24h 轴 + 事件点）。数据来自 /api/public/audit 的 blocks[]。 */
+.ban-tl{position:relative;height:46px;margin:2px 0 10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.ban-tl .axis{position:absolute;left:10px;right:10px;top:24px;height:1px;background:var(--line2)}
+.ban-tl .tick{position:absolute;top:28px;font:10px var(--mono);color:var(--mut);transform:translateX(-50%);white-space:nowrap}
+.ban-tl .ev{position:absolute;top:18px;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);cursor:pointer;
+  background:var(--acc);box-shadow:0 0 0 3px rgba(120,230,225,.14)}
+.ban-tl .ev.warn{background:#E8B45A;box-shadow:0 0 0 3px rgba(232,180,90,.16)}
+.ban-tl .ev:hover{outline:1px solid var(--txt)}
+.ban-tl .tl-note{position:absolute;left:10px;top:5px;font:11px var(--sans);color:var(--mut)}
 </style>
 </head>
 <body data-skin="warm" class="is-home">
