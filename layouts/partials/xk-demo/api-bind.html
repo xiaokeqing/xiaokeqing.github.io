@@ -352,7 +352,29 @@
   function errText(parts) {
     var bad = parts.filter(function (p) { return !p.ok; });
     if (!bad.length) return '';
-    return bad.map(function (p) { return epName(p.path) + ' ' + (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达'); }).join('、');
+    return bad.map(function (p) { return epName(p.path) + ' ' + whyOf(p.err); }).join('、');
+  }
+  /* ★V4-P4 诊断（2026-10-17 14:00）：把"不可达"拆成**可读原因**。
+     线上实测：直接打开 /api/public/deploy.js 能拿到 JSON，但页面里显示"不可达"
+     —— 只有把 AbortError（20s 超时）与 TypeError（CORS/网络）分开，才能定位是哪个环节。 */
+  function whyOf(e) {
+    if (!e) return '未发起';
+    if (e.status) return 'HTTP ' + e.status;
+    if (e.name === 'AbortError') return '超时（' + Math.round(TIMEOUT / 1000) + 's 未返回）';
+    if (e.name === 'TypeError') return '网络/CORS 被拦（' + (e.message || 'fetch failed') + '）';
+    return (e.name ? e.name + '：' : '') + (e.message || '不可达');
+  }
+  /* ★自动重试一次：切 tab 取的端点在慢链路上容易首包超时；失败后 1.5s 补一次，
+     成功就重新渲染（partCache 里换掉失败项）。每个端点只补一次，避免刷请求。 */
+  var retriedOnce = {};
+  function retryOnce(name) {
+    if (retriedOnce[name]) return;
+    retriedOnce[name] = 1;
+    setTimeout(function () {
+      settle(apiPath(name)).then(function (p) {
+        if (p.ok) { partCache[p.path] = p; render(unionParts([])); }
+      }, function () {});
+    }, 1500);
   }
 
   function errShort(parts) {
@@ -818,10 +840,11 @@
        —— release 是**嵌套对象**、buildTime 可能是 "unknown"、**没有 history/files**（后端白名单没透出）。
        所以：① 读嵌套字段；② 端点没给的就写"端点未提供"，不拿别的数顶替；③ 绝不把对象直接塞 textContent。 */
     if (!d) {
-      var why = !p ? '端点在本次取数清单外' : (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达');
+      var why = !p ? '端点在本次取数清单外' : whyOf(p.err);
       cell('release', NA); cell('built', NA); cell('files', NA); cell('bytes', NA);
       row(0, NA, '读不到（/deploy 未取到：' + why + '）', ''); hideFrom(1);
-      txt(note, '读不到（/deploy 未取到：' + why + '）—— 不补数');
+      txt(note, '读不到（/deploy 未取到：' + why + '）—— 不补数；正在自动重试一次…');
+      retryOnce('deploy');
       return;
     }
     var rel = (d.release && typeof d.release === 'object') ? d.release : {};
@@ -873,9 +896,10 @@
     }
     function hideFrom(i) { for (var j = i; j < rows.length; j++) { rows[j].style.display = 'none'; } }
     if (!au) {
-      var why = !p ? '端点在本次取数清单外' : (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达');
+      var why = !p ? '端点在本次取数清单外' : whyOf(p.err);
       row(0, NA, '读不到（/audit 未取到：' + why + '）', ''); hideFrom(1);
-      txt(note, '读不到（/audit 未取到：' + why + '）—— 不补数');
+      txt(note, '读不到（/audit 未取到：' + why + '）—— 不补数；正在自动重试一次…');
+      retryOnce('audit');
       return;
     }
     var acts = Array.isArray(au.actions) ? au.actions.slice(0, rows.length) : [];
