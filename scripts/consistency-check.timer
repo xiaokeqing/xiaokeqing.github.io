@@ -1,0 +1,18 @@
+[Unit]
+# 站点一致性 CI 定时器 —— 每 15 分钟一次。
+# 仓库内路径：scripts/consistency-check.timer
+# 装到：/etc/systemd/system/consistency-check.timer（root:root 0644）
+Description=Run site consistency check every 15 minutes
+
+[Timer]
+# 每小时 0/15/30/45 分触发（整点对齐，方便和日志对时间）
+OnCalendar=*:0/15
+# 机器重启/关机期间错过的触发，开机后补跑一次
+Persistent=true
+# 允许几十秒的抖动，避免和 weekly-report / 备份任务撞在同一秒
+AccuracySec=1min
+RandomizedDelaySec=30
+Unit=consistency-check.service
+
+[Install]
+WantedBy=timers.target

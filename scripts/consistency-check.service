@@ -1,0 +1,28 @@
+[Unit]
+# 站点一致性 CI —— oneshot 巡检，由 consistency-check.timer 每 15 分钟唤起一次。
+# 仓库内路径：scripts/consistency-check.service
+# 装到：/etc/systemd/system/consistency-check.service（root:root 0644）
+Description=SecAgent site consistency check (pages / endpoints / site integrity / backend build)
+Documentation=file:/opt/secagent/tools/consistency-check.sh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# 脚本与工作目录都在 /opt/secagent/tools（和 weekly-report.service 同一套约定）
+WorkingDirectory=/opt/secagent/tools
+ExecStart=/opt/secagent/tools/consistency-check.sh
+# 显式给 PATH：oneshot 里不依赖登录 shell 的 PATH，curl/sha256sum/python3 都在这里
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=TZ=Asia/Shanghai
+# 15 个 HTTP 检查以并发 8 跑，最坏约 135s（45s 主路径 + 45s 兜底各一轮），300s 留足余量；
+# 真超时了说明站点整体不可达 —— 那本身就是要报的问题。
+TimeoutStartSec=300
+Nice=10
+CPUQuota=20%
+MemoryMax=96M
+# 故意不加 SuccessExitStatus：
+#   退出码 0 = 全部通过；1 = 有检查失败；2 = 脚本自身环境问题（缺 python3 等）。
+#   让 systemd 把 1/2 都标成 failed，`systemctl --failed` 与 journalctl 里能直接看见这次巡检红过。
+#   代价：timer 不会因此自动重试，失败证据只有 exit status + /opt/secagent/reports/ci/latest.json。
+#   这与 weekly-report.service 的取舍一致（宁可红，不要静默绿）。

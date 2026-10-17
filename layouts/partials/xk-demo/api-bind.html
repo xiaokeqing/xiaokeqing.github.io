@@ -738,6 +738,483 @@
        并保留 B2 口径：来自"上次成功数据"的值必须在页面上标注。 */
   function bindHome(parts) { /* 主页已无对应元素（R2 收敛撤掉事件行与值班便签） */ }
 
+  /* ════════════════════════════════════════════════════════════════════════════
+     ★攻击来源地图（点阵底图 + 国家气泡）—— /alerts/ › 数据统计 › 来源与故事组
+     · 取数：**复用 `/api/public/home` 扇出的 geo part**（零新增请求；失败 / 上次成功值口径同其它卡：
+             `okOrStale` 记账后，卡角由 `markStale` 自动标「上次数据·hh:mm」）
+     · 底图：`/data/world-map.json`（1° 陆地 360×142 位掩码 + 175 国质心 + 51 微型国家），
+             **只在 canvas 首次可见时 fetch 一次**（IntersectionObserver；失败不缓存，下次可见再试）
+     · 诚实口径（红线，同 F §4）：
+         ① 气泡落点 = **国家质心**，不是攻击者真实坐标（GeoIP 只到国家/省）—— 图注写死这句；
+         ② `available=false` 或拿不到 `geoSource` ⇒ 图上写「读不到（原因）」，**不画假点**；
+         ③ `byCountry` 空 ⇒「本窗口没有可定位的来源」；geo part 未到 ⇒ 骨架「取数中…」，不画 0；
+         ④ 占比分母只用 `coverage.geocoded`（脚注照实写「已定位 N / 告警 M」）。
+     · 零第三方脚本：经纬网 / 点阵 / 气泡 / 标签 / 命中测试全在这里手写（画法照 _dev/map-demo.html）。
+     ════════════════════════════════════════════════════════════════════════════ */
+  var MAP_URL = '/data/world-map.json';
+  var MAP_LAT_TOP = 84, MAP_LAT_BOTTOM = -58;      /* 与 world-map.json 的 grid.lat0 / lat0-(H-1)*step 一致 */
+  var MAP_LON_LEFT = -180, MAP_LON_SPAN = 360, MAP_LAT_SPAN = MAP_LAT_TOP - MAP_LAT_BOTTOM;
+  var mapWorld = null, mapWorldReq = null, mapWorldErr = '';
+  var mapLand = null, mapGeo = null, mapGeoRaw = null, mapGeoErr = '';
+  var mapMetric = 'count';                          /* 默认按告警次数；可切独立 IP */
+  var mapMarks = [], mapView = null, mapPinned = null, mapBound = false;
+  var mapSkipped = 0, mapMerged = 0;
+
+  function mapRoot() { return document.querySelector('[data-xk-atkmap]'); }
+  function mapNode(sel) { var r = mapRoot(); return r ? r.querySelector(sel) : null; }
+  function mapCanvas() { return document.getElementById('xkAtkMap'); }
+
+  function mapMsg(s) {
+    var m = mapNode('[data-xk-atkmap-msg]');
+    if (!m) return;
+    m.classList.remove('sk');
+    if (s) { m.textContent = s; m.removeAttribute('hidden'); }
+    else { m.textContent = ''; m.setAttribute('hidden', 'hidden'); }
+  }
+
+  /* ---- 底图懒加载 ------------------------------------------------------------------ */
+  function mapLoad() {
+    if (mapWorld) return Promise.resolve(mapWorld);
+    if (mapWorldReq) return mapWorldReq;
+    mapWorldReq = fetch(MAP_URL, { credentials: 'omit' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      if (!j || !j.grid || !j.maskB64) throw new Error('缺 grid/maskB64');
+      mapWorld = j; mapLand = null; mapWorldErr = '';
+      return j;
+    })['catch'](function (e) {
+      mapWorldErr = (e && e.message) || '不可达';
+      mapWorldReq = null;                 /* 不缓存失败：下次可见时再试一次 */
+      return null;
+    });
+    return mapWorldReq;
+  }
+  function mapVisible() {
+    var cv = mapCanvas();
+    if (!cv) return false;
+    var r = cv.getBoundingClientRect();
+    return r.width > 40 && r.height > 20;
+  }
+  function mapKick() {                    /* 只在"看得见"时被动取底图（首屏不做无谓请求） */
+    if (!mapVisible()) return;
+    if (mapWorld) { mapUpdate(); return; }
+    mapLoad().then(function () { mapUpdate(); });
+  }
+
+  /* ---- 位掩码 → 点阵（bit i = 第 i 格陆地；同 _dev/map-demo.html 的解码） ---------------- */
+  function mapB64(b64) {
+    var bin = atob(b64), n = bin.length, out = new Uint8Array(n), i;
+    for (i = 0; i < n; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function mapDecode() {
+    if (mapLand || !mapWorld) return mapLand;
+    var g = mapWorld.grid, W = g.W, H = g.H, bytes = mapB64(mapWorld.maskB64);
+    var tmp = [], i, c, r;
+    for (r = 0; r < H; r++) {
+      for (c = 0; c < W; c++) {
+        i = r * W + c;
+        if (bytes[i >> 3] & (1 << (i & 7))) tmp.push(c, r);
+      }
+    }
+    mapLand = new Int16Array(tmp);
+    return mapLand;
+  }
+  function mapCoord(cc) {
+    if (!mapWorld || !cc) return null;
+    if (mapWorld.centroids && mapWorld.centroids[cc]) return mapWorld.centroids[cc];
+    if (mapWorld.micro && mapWorld.micro[cc]) return mapWorld.micro[cc];   /* 51 个微型国家兜底 */
+    return null;
+  }
+  function mapVal(c) { return mapMetric === 'ip' ? (Number(c.uniqueIps) || 0) : (Number(c.count) || 0); }
+  function mapName(c) { var nm = c.countryName || ''; return (!nm || nm === c.country) ? '' : nm; }
+
+  /* ---- 配色：读运行期 CSS 令牌（--acc → --warn → --bad），不在 canvas 里写死色号 ---------- */
+  function mapRgb(s, fb) {
+    if (!s) return fb;
+    var m = /^#([0-9a-f]{6})$/i.exec(s);
+    if (m) { var v = parseInt(m[1], 16); return [v >> 16 & 255, v >> 8 & 255, v & 255]; }
+    m = /^#([0-9a-f]{3})$/i.exec(s);
+    if (m) { var h = m[1]; return [parseInt(h.charAt(0) + h.charAt(0), 16), parseInt(h.charAt(1) + h.charAt(1), 16), parseInt(h.charAt(2) + h.charAt(2), 16)]; }
+    m = /^rgba?\(([^)]+)\)/i.exec(s);
+    if (m) { var p = m[1].split(','); return [Math.round(Number(p[0])), Math.round(Number(p[1])), Math.round(Number(p[2]))]; }
+    return fb;
+  }
+  function mapTokens() {
+    var cv = mapCanvas(), cs = null;
+    try { cs = cv ? getComputedStyle(cv) : null; } catch (e) { cs = null; }
+    function tok(name, fb) {
+      var v = '';
+      try { v = String((cs && cs.getPropertyValue(name)) || '').trim(); } catch (e) { v = ''; }
+      return mapRgb(v, fb);
+    }
+    return { acc: tok('--acc', [127, 212, 216]), warn: tok('--warn', [232, 180, 90]),
+             bad: tok('--bad', [232, 131, 123]), mut: tok('--mut', [210, 203, 189]) };
+  }
+  function mapMix(a, b, s) {
+    return [Math.round(a[0] + (b[0] - a[0]) * s), Math.round(a[1] + (b[1] - a[1]) * s), Math.round(a[2] + (b[2] - a[2]) * s)];
+  }
+  function mapColor(t, TK) {
+    t = Math.max(0, Math.min(1, t || 0));
+    var c = t < .55 ? mapMix(TK.acc, TK.warn, t / .55) : mapMix(TK.warn, TK.bad, (t - .55) / .45);
+    return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+  }
+  function mapRgba(rgb, a) {
+    var m = /rgb\((\d+),(\d+),(\d+)\)/.exec(rgb);
+    return m ? 'rgba(' + m[1] + ',' + m[2] + ',' + m[3] + ',' + a + ')' : rgb;
+  }
+
+  /* ---- 画布尺寸（DPR 感知；CSS 高度由 .xk-atkmap-stage 的 aspect-ratio 定） --------------- */
+  function mapLayout() {
+    var cv = mapCanvas();
+    if (!cv) return false;
+    var st = cv.parentNode;
+    var w = st ? st.clientWidth : 0, h = st ? st.clientHeight : 0;
+    if (!w || !h) return false;
+    var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    }
+    var ctx = null;
+    try { ctx = cv.getContext('2d'); } catch (e) { ctx = null; }
+    if (!ctx) return false;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    mapView = { w: w, h: h, ctx: ctx };
+    return true;
+  }
+
+  /* ---- 主绘制 ------------------------------------------------------------------------ */
+  function mapPaint(withData) {
+    if (!mapLayout()) return;
+    var ctx = mapView.ctx, W = mapView.w, H = mapView.h, i, n, x, y;
+    var TK = mapTokens();
+    var g = mapWorld.grid, cell = W / g.W;
+    function px(lon) { return (lon - MAP_LON_LEFT) / MAP_LON_SPAN * W; }
+    function py(lat) { return (MAP_LAT_TOP - lat) / MAP_LAT_SPAN * H; }
+
+    ctx.clearRect(0, 0, W, H);
+
+    /* 经纬网：每 30°，赤道/本初子午线略亮（只做定位参考，不塞数字） */
+    ctx.lineWidth = 1;
+    for (i = -180; i <= 180; i += 30) {
+      ctx.strokeStyle = i === 0 ? 'rgba(255,246,235,.16)' : 'rgba(255,246,235,.06)';
+      x = Math.round(px(i)) + .5;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (i = -60; i <= 60; i += 30) {
+      ctx.strokeStyle = i === 0 ? 'rgba(255,246,235,.16)' : 'rgba(255,246,235,.06)';
+      y = Math.round(py(i)) + .5;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    /* 陆地 1° 点阵（暗色小点；密度自适应，缩到手机宽也不糊） */
+    var land = mapDecode();
+    if (land) {
+      var ds = Math.max(1.1, Math.min(2.8, cell * .34));
+      ctx.fillStyle = 'rgba(' + TK.mut.join(',') + ',.30)';
+      for (i = 0, n = land.length; i < n; i += 2) {
+        ctx.fillRect(px(g.lon0 + (land[i] + .5) * g.step) - ds / 2,
+                     py(g.lat0 - (land[i + 1] + .5) * g.step) - ds / 2, ds, ds);
+      }
+    }
+
+    mapMarks = []; mapSkipped = 0; mapMerged = 0;
+    if (!withData) { mapSrc(); return; }
+
+    var bc = (mapGeo && Array.isArray(mapGeo.byCountry)) ? mapGeo.byCountry : [];
+    var pts = [], V = 0, c, v, at, j;
+    for (j = 0; j < bc.length; j++) {
+      c = bc[j] || {};
+      v = mapVal(c);
+      at = mapCoord(c.country);
+      if (!at) { if (v > 0) mapSkipped++; continue; }
+      if (!(v > 0)) continue;
+      pts.push({ cc: String(c.country || ''), nm: mapName(c), v: v, X: px(at[0]), Y: py(at[1]), r: 0, items: [c] });
+      if (v > V) V = v;
+    }
+    if (!pts.length) {
+      mapMsg('本窗口没有可定位的来源（当前度量下各国的值为 0，或质心表里没有这些国家代码）');
+      mapSrc();
+      return;
+    }
+
+    /* 半径 = √归一化（面积正比于量级），再按画布宽度收口，避免小屏糊成一片 */
+    var rmax = Math.max(6, Math.min(30, W * .030));
+    function rad(t) { t = Math.max(0, Math.min(1, t)); return Math.max(2.6, rmax * Math.sqrt(t)); }
+    for (j = 0; j < pts.length; j++) pts[j].r = rad(pts[j].v / V);
+
+    /* 近邻合并：两气泡重叠到 0.8×(r1+r2) 以内就并成一个（**只影响画法**；tip 里的数字是合计，不平均） */
+    pts.sort(function (a, b) { return a.v - b.v; });
+    var changed = true, a, b2, d, tot;
+    while (changed) {
+      changed = false;
+      for (a = 0; a < pts.length && !changed; a++) {
+        for (b2 = a + 1; b2 < pts.length; b2++) {
+          d = Math.sqrt(Math.pow(pts[a].X - pts[b2].X, 2) + Math.pow(pts[a].Y - pts[b2].Y, 2));
+          if (d >= .8 * (pts[a].r + pts[b2].r)) continue;
+          tot = pts[a].v + pts[b2].v;
+          pts[a].X = (pts[a].X * pts[a].v + pts[b2].X * pts[b2].v) / (tot || 1);
+          pts[a].Y = (pts[a].Y * pts[a].v + pts[b2].Y * pts[b2].v) / (tot || 1);
+          pts[a].v = tot;
+          pts[a].r = rad(tot / V);
+          pts[a].items = pts[a].items.concat(pts[b2].items);
+          pts[a].cc = ''; pts[a].nm = '';
+          pts.splice(b2, 1);
+          mapMerged++;
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    /* 由小到大画（大泡压在上面，避免被碎泡埋掉） */
+    pts.sort(function (p, q) { return p.v - q.v; });
+    var P, r, col, grd, t;
+    for (j = 0; j < pts.length; j++) {
+      P = pts[j];
+      t = Math.min(1, P.v / V);
+      r = P.r;
+      col = mapColor(t, TK);
+      grd = ctx.createRadialGradient(P.X, P.Y, r * .35, P.X, P.Y, r * 2.1);
+      grd.addColorStop(0, mapRgba(col, .30));
+      grd.addColorStop(1, mapRgba(col, 0));
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(P.X, P.Y, r * 2.1, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = mapRgba(col, .55);
+      ctx.beginPath(); ctx.arc(P.X, P.Y, r, 0, 6.2832); ctx.fill();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = mapRgba(col, .95); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,246,235,.85)';
+      ctx.beginPath(); ctx.arc(P.X, P.Y, Math.max(1.1, r * .22), 0, 6.2832); ctx.fill();
+    }
+    mapMarks = pts;
+
+    /* 国家代码标签：只给大泡，撞了就让位，四个候选位都放不下就不画（宁缺不糊） */
+    ctx.font = '600 11px ui-monospace,Consolas,monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    var boxes = [], i2, lb, w2, tx, ty, box, ok2, k2;
+    function hitBox(bx, by, bw, bh) {
+      for (k2 = 0; k2 < boxes.length; k2++) {
+        if (bx < boxes[k2][0] + boxes[k2][2] && bx + bw > boxes[k2][0] &&
+            by < boxes[k2][1] + boxes[k2][3] && by + bh > boxes[k2][1]) return true;
+      }
+      return false;
+    }
+    function hitMark(bx, by, bw, bh) {
+      for (k2 = 0; k2 < pts.length; k2++) {
+        var dx = Math.max(bx - pts[k2].X, 0, pts[k2].X - (bx + bw));
+        var dy = Math.max(by - pts[k2].Y, 0, pts[k2].Y - (by + bh));
+        if (dx * dx + dy * dy < (pts[k2].r + 2) * (pts[k2].r + 2)) return true;
+      }
+      return false;
+    }
+    for (i2 = pts.length - 1; i2 >= 0; i2--) {
+      P = pts[i2];
+      if (P.r < 7) continue;
+      lb = P.cc || (P.items.length === 1 ? P.nm : '');
+      if (!lb) continue;
+      w2 = Math.ceil(ctx.measureText(lb).width) + 8;
+      box = [0, 0, w2, 15];
+      ok2 = false;
+      for (k2 = 0; k2 < 4 && !ok2; k2++) {
+        tx = P.X; ty = P.Y - P.r - 11;
+        if (k2 === 1) ty = P.Y + P.r + 11;
+        if (k2 === 2) { tx = P.X + P.r + 6 + w2 / 2; ty = P.Y; }
+        if (k2 === 3) { tx = P.X - P.r - 6 - w2 / 2; ty = P.Y; }
+        box[0] = tx - w2 / 2; box[1] = ty - 7;
+        if (box[0] < 1 || box[0] + w2 > W - 1 || box[1] < 1 || box[1] + 15 > H - 1) continue;
+        if (hitBox(box[0], box[1], w2, 15)) continue;
+        if (hitMark(box[0], box[1], w2, 15)) continue;
+        ok2 = true;
+      }
+      if (!ok2) continue;
+      boxes.push([box[0], box[1], w2, 15]);
+      ctx.fillStyle = 'rgba(20,18,16,.78)';
+      ctx.fillRect(box[0], box[1], w2, 15);
+      ctx.fillStyle = 'rgba(250,247,240,.92)';
+      ctx.fillText(lb, tx, ty);
+    }
+    mapSrc();
+  }
+
+  /* ---- 脚注（诚实口径写死在这里；数字随数据走，取不到就写"读不到"） ------------------------ */
+  function mapSrc() {
+    var el = mapNode('[data-xk-atkmap-src]');
+    if (!el) return;
+    if (!mapGeo) {
+      el.textContent = '读不到（/geo ' + (mapGeoRaw ? ('本轮未取到' + (mapGeoErr ? ' · ' + mapGeoErr : '')) : '还没到') + '）';
+      return;
+    }
+    var cov = mapGeo.coverage || {};
+    var bits = [];
+    var src = mapGeo.geoSource ? String(mapGeo.geoSource) : '';
+    bits.push('来源 ' + (src || '读不到（geoSource 缺失）'));
+    var gcod = fmt(cov.geocoded), tall = fmt(cov.totalAlerts);
+    bits.push('分母 已定位 ' + (gcod || '读不到') + ' 次 / 告警 ' + (tall || '读不到') + ' 次');
+    bits.push('度量 ' + (mapMetric === 'ip' ? '独立 IP' : '告警次数'));
+    bits.push('画了 ' + mapMarks.length + ' 个气泡');
+    if (mapMerged) bits.push(mapMerged + ' 处近邻已合并（数字是合计）');
+    if (mapSkipped) bits.push(mapSkipped + ' 国缺质心坐标未画');
+    el.textContent = bits.join(' · ');
+  }
+
+  /* ---- hover / 点击提示 --------------------------------------------------------------- */
+  function mapTipHtml(P) {
+    var h = '', c, cnt, ips;
+    if (P.items.length > 1) {
+      h += '<div class="cc">近邻合并 · ' + P.items.length + ' 国</div>';
+      h += '<div class="r"><span>' + (mapMetric === 'ip' ? '独立 IP' : '告警次数（合计）') + '</span><b>' +
+           esc(fmt(P.v) || '0') + '</b></div>';
+      h += '<div class="prov">' + P.items.map(function (x) { return esc(String(x.country || '')); }).join(' · ') + '</div>';
+    } else {
+      c = P.items[0];
+      cnt = Number(c.count) || 0; ips = Number(c.uniqueIps) || 0;
+      h += '<div class="cc">' + esc(P.cc || '') + ' · ' + esc(P.nm || '名称读不到') + '</div>';
+      h += '<div class="r"><span>告警次数</span><b>' + esc(fmt(c.count) || '0') + '</b></div>';
+      h += '<div class="r"><span>独立 IP</span><b>' + esc(fmt(c.uniqueIps) || '0') + '</b></div>';
+      h += '<div class="r"><span>平均次数/IP</span><b>' + (ips > 0 ? esc((cnt / ips).toFixed(1)) : '读不到') + '</b></div>';
+      if (c.sharePercent !== null && c.sharePercent !== undefined && c.sharePercent !== '') {
+        h += '<div class="r"><span>占已定位</span><b>' + esc(String(c.sharePercent)) + '%</b></div>';
+      }
+      if (Array.isArray(c.byProvince) && c.byProvince.length) {
+        h += '<div class="prov">省份 ' + c.byProvince.slice(0, 3).map(function (p) {
+          return esc(String((p && p.province) || '未知')) + ' ' + esc(fmt(p && p.count) || '0');
+        }).join(' · ') + '</div>';
+      }
+    }
+    h += '<div class="prov">落点是该国质心，不是攻击者真实坐标</div>';
+    return h;
+  }
+  function mapShowTip(P, x, y) {
+    var tip = mapNode('[data-xk-atkmap-tip]');
+    if (!tip) return;
+    if (!P) { tip.classList.remove('on'); return; }
+    var st = tip.parentNode, w = st ? st.clientWidth : 0, h = st ? st.clientHeight : 0;
+    tip.innerHTML = mapTipHtml(P);
+    /* 先量后放：横向按实际宽度夹在舞台内；纵向优先放气泡上方，顶不下就翻到下方（stage 是 overflow:hidden） */
+    var tw = tip.offsetWidth || 0, th = tip.offsetHeight || 0;
+    var cx = Math.max(tw / 2 + 4, Math.min(Math.max(tw / 2 + 4, w - tw / 2 - 4), x));
+    var ty = (y - th - 10 >= 4) ? (y - th - 10) : (y + 14);
+    ty = Math.max(4, Math.min(Math.max(4, h - th - 4), ty));
+    tip.style.left = Math.round(cx) + 'px';
+    tip.style.top = Math.round(ty) + 'px';
+    tip.classList.add('on');
+  }
+  function mapHit(ev) {
+    var cv = mapCanvas();
+    if (!cv || !mapMarks.length) return null;
+    var r = cv.getBoundingClientRect();
+    var x = ev.clientX - r.left, y = ev.clientY - r.top;
+    var best = Infinity, P = null, i, m, d;
+    for (i = 0; i < mapMarks.length; i++) {
+      m = mapMarks[i];
+      d = Math.sqrt(Math.pow(m.X - x, 2) + Math.pow(m.Y - y, 2));
+      if (d < Math.max(10, m.r + 6) && d < best) { best = d; P = m; }
+    }
+    return P;
+  }
+
+  /* ---- 状态机：底图 / geo / 可用性 三态都落地才画点，否则只写文字 --------------------------- */
+  function mapUpdate() {
+    mapSrc();
+    mapMarks = [];
+    if (!mapWorld) { mapMsg(mapWorldErr ? '底图读不到（/data/world-map.json：' + mapWorldErr + '）' : '取数中…'); return; }
+    if (!mapGeoRaw) { mapMsg('取数中…'); mapPaint(false); return; }
+    if (!mapGeo) {
+      mapMsg('读不到（/geo：' + (mapGeoErr || '本轮未取到') + '）');
+      mapPaint(false);
+      return;
+    }
+    if (mapGeo.available === false) {
+      mapMsg('读不到（/geo available=false' + (mapGeo.reason ? ' · ' + mapGeo.reason : '') + '）');
+      mapPaint(false);
+      return;
+    }
+    var bc = Array.isArray(mapGeo.byCountry) ? mapGeo.byCountry : [];
+    if (!bc.length) { mapMsg('本窗口没有可定位的来源'); mapPaint(false); return; }
+    mapMsg('');
+    mapPaint(true);
+  }
+
+  /* ---- 一次性挂载：按钮 / 懒加载 / 提示 / 重绘 ------------------------------------------- */
+  function bindMapShell() {
+    if (mapBound) return;
+    var root = mapRoot();
+    if (!root) return;
+    mapBound = true;
+    var cv = mapCanvas();
+
+    /* ① 底图只在首次可见时取；之后每次重新可见都顺带重画（切屏后 canvas 会被清空） */
+    if (cv) {
+      if (typeof IntersectionObserver === 'function') {
+        var io = new IntersectionObserver(function (es) {
+          for (var i = 0; i < es.length; i++) { if (es[i].isIntersecting) { mapKick(); } }
+        }, { rootMargin: '120px' });
+        io.observe(cv);
+      } else {
+        mapKick();                              /* 老浏览器：直接取（不阻塞首屏，脚本跑完才到） */
+      }
+    }
+
+    /* ② 度量切换：数据都在同一份 byCountry 里（count / uniqueIps），只重绘不取数 */
+    var btns = root.querySelectorAll('[data-xk-metric]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function (ev) {
+        var el = ev.currentTarget;
+        mapMetric = el.getAttribute('data-xk-metric') === 'ip' ? 'ip' : 'count';
+        for (var k = 0; k < btns.length; k++) {
+          var on = btns[k] === el;
+          btns[k].classList.toggle('on', on);
+          btns[k].setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
+        mapPinned = null;
+        mapUpdate();
+      });
+    }
+
+    /* ③ hover / 点击（触摸端点一下：钉住 —— 手机上 hover 不存在） */
+    if (cv) {
+      cv.addEventListener('pointermove', function (ev) {
+        if (mapPinned) return;
+        var P = mapHit(ev);
+        if (P) mapShowTip(P, P.X, P.Y - P.r - 6); else mapShowTip(null);
+      });
+      cv.addEventListener('pointerleave', function () { if (!mapPinned) mapShowTip(null); });
+      cv.addEventListener('click', function (ev) {
+        var P = mapHit(ev);
+        if (P && P === mapPinned) { mapPinned = null; mapShowTip(null); return; }
+        mapPinned = P;
+        if (P) mapShowTip(P, P.X, P.Y - P.r - 6); else mapShowTip(null);
+      });
+    }
+
+    /* ④ 尺寸变化重绘（去抖；先量后画，避免每帧重排） */
+    var rt = null;
+    function again() {
+      if (rt) clearTimeout(rt);
+      rt = setTimeout(function () { rt = null; if (mapGeo) mapPaint(true); else mapUpdate(); }, 160);
+    }
+    window.addEventListener('resize', again);
+    if (typeof ResizeObserver === 'function' && cv && cv.parentNode) {
+      try { new ResizeObserver(again).observe(cv.parentNode); } catch (e) { }
+    }
+  }
+
+  /* ---- 绑定入口：只用**已有的 geo part**（/api/public/home 扇出），不新增任何请求 ------------- */
+  function bindMap(parts) {
+    var root = mapRoot();
+    if (!root) return;                       /* 别的页没有这张卡 */
+    bindMapShell();
+    var raw = null, i;
+    for (i = 0; i < (parts || []).length; i++) {
+      if (parts[i].path.indexOf('/geo') >= 0) { raw = parts[i]; break; }
+    }
+    mapGeoRaw = raw || null;
+    mapGeo = raw ? okOrStale(raw) : null;    /* 本次值优先 → 上次成功值兜底（并记账 ⇒ 卡角「上次数据」） */
+    mapGeoErr = raw && !raw.ok ? whyOf(raw.err) : '';
+    mapUpdate();
+  }
+
   function bindOps(parts) {
     bindSync(parts);
     /* ★B5：**谁到了就渲染谁** —— 依赖某端点的绑定，在该端点还没到时整个跳过（保持骨架），
@@ -749,6 +1226,7 @@
     bindGeo(parts);
     bindHoney(parts);
     bindHolo(parts);
+    bindMap(parts);   /* ★攻击来源地图：复用 geo part，零新增请求 */
     if (!pend('alerts')) { bindSpark(parts); bindTypes(parts); bindFeed(parts); }
     if (!pend('alerts') && !pend('honeypot')) bindGraphData(parts);
     if (!pend('alerts') && !pend('audit') && !pend('honeypot') && !pend('geo')) bindCounters(parts);
@@ -1585,6 +2063,7 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   }
   if (SSR === 'monitor') watchTabs();   /* ★B4：切 tab 才取该 tab 独有的端点 */
+  if (SSR === 'monitor') bindMapShell();   /* ★攻击来源地图：按钮 / 懒加载 / 提示只挂一次 */
   if (SSR === 'monitor') bindApiHealth();   /* ★C2-P1：接口健康可视化（真数据延迟条） */
   /* ★B5：数据到达前的头 3 秒里，反复把生成物抢先写的"读不到"兜回中性态（alerts 一到即停） */
   if (SSR === 'monitor') {

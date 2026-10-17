@@ -143,6 +143,24 @@
               </div>
             </div>
           </div>
+          <div class="mod xk-atkmap-card" data-xk-atkmap>
+            <div class="mod-hd"><span class="led"></span>攻击来源地图 · 国家气泡<span class="tag">/geo · 质心</span></div>
+            <div class="xk-atkmap-bar">
+              <div class="xk-atkmap-metrics" role="group" aria-label="度量切换">
+                <button type="button" class="on" data-xk-metric="count" aria-pressed="true">告警次数</button>
+                <button type="button" data-xk-metric="ip" aria-pressed="false">独立 IP</button>
+              </div>
+              <span class="xk-atkmap-scale" data-xk-atkmap-scale><i></i>气泡大小 = √度量值 · 色温 = 相对量级</span>
+            </div>
+            <div class="xk-atkmap-stage">
+              <canvas id="xkAtkMap" role="img"
+                aria-label="攻击来源地图：底图为 1 度陆地点阵；气泡落点是各国质心，不是攻击者真实坐标（GeoIP 只到国家/省）"></canvas>
+              <p class="xk-atkmap-msg sk" data-xk-atkmap-msg>取数中…</p>
+              <div class="xk-atkmap-tip" data-xk-atkmap-tip aria-hidden="true"></div>
+            </div>
+            <p class="xk-atkmap-foot">落点：<b>国家质心</b>，不是攻击者真实坐标（GeoIP 只到国家/省）；<span data-xk-atkmap-src>取数中…</span> · 底图 Natural Earth 1:110m（公有领域）。</p>
+          </div>
+
           <div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>
             <div class="mod-bd">
               <div class="stats">
