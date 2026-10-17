@@ -46,14 +46,6 @@
   /* stage：按底图比例 cover（manifest scene.cover.css 口径） */
   .stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
     width:max(100vw,177.68vh);height:max(56.28vw,100vh)}
-  /* 窄屏（手机/竖屏）：cover 舞台在 <980px 会把 CRT 裁掉两侧；改为整屏 + CRT 92vw 居中（保持 1.32275 比例） */
-  /* 窄屏（手机/竖屏）：cover 舞台在 <980px 会把 CRT 裁掉两侧。改为「等比缩小整个舞台」，
-     让舞台按 --crt-w 反算宽度 ⇒ CRT 恰为 92vw，同时底图照片里的电视与 CRT 覆盖层仍严格对齐。 */
-  @media (max-width:979px){
-    body .stage{width:min(262.5vw,302.1vh);height:min(147.74vw,169.98vh);
-      left:50%;top:50%;transform:translate(-50%,-50%)}
-    .crt-sub{left:8%;right:8%}
-  }
   .desk{position:absolute;inset:0;width:100%;height:100%;display:block}
 
   /* CRT 容器（bounds 百分比写死，与视口无关） */

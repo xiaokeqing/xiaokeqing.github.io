@@ -334,13 +334,6 @@
   /* stage：按底图比例 cover（manifest scene.cover.css 口径） */
   .stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
     width:max(100vw,177.68vh);height:max(56.28vw,100vh)}
-  /* 窄屏（手机/竖屏）：上面是 1500×844 固定比例的 cover 舞台，<980px 时 CRT 会被裁掉两侧。
-     改为舞台=整屏、CRT 按 92vw 居中，保持 1.32275 电视比例，不拉伸。 */
-  @media (max-width:979px){
-    body .stage{width:min(262.5vw,302.1vh);height:min(147.74vw,169.98vh);
-      left:50%;top:50%;transform:translate(-50%,-50%)}
-    .crt-sub{left:8%;right:8%}
-  }
   .desk{position:absolute;inset:0;width:100%;height:100%;display:block}
 
   /* CRT 容器（bounds 百分比写死，与视口无关） */
@@ -529,7 +522,19 @@ html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}
 .phone-btns button:hover,.phone-btns button:active{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.14)}
 .phone-btns button.off{opacity:.45}
 .phone-btns button.lit{box-shadow:0 0 12px rgba(127,212,216,.65);border-color:var(--acc)}
-@media (max-width:980px){.phone{display:none}}
+/* 窄屏（<980px）：不再整块隐藏——默认只出一条**竖直静态立绘**（不加载 E-mote/WebGL），点一下放大。
+   理由：手机上 E-mote 要跑 WebGL 模型（内存/耗电），但"完全看不见她"也不符合站点气质。 */
+@media (max-width:980px){
+  .phone{display:block;right:8px;bottom:8px;top:auto;transform:none;width:74px;padding:4px;
+    border-radius:16px;opacity:.94;transition:width .18s ease,right .18s ease}
+  .phone .phone-scr{aspect-ratio:284/600;border-radius:12px;background-size:cover;background-position:center top;background-color:#07090c}
+  .phone #phoneCanvas{display:none!important}
+  .phone .phone-bar,.phone .phone-island,.phone .phone-cap,.phone .phone-live,.phone .phone-btns,.phone .phone-home{display:none!important}
+  html.xk-phone-open .phone{right:50%;bottom:50%;transform:translate(50%,50%);width:min(76vw,38vh);z-index:80;
+    border-radius:30px;padding:8px;opacity:1;box-shadow:0 0 0 100vmax rgba(4,7,10,.74),0 24px 64px rgba(0,0,0,.6)}
+  html.xk-phone-open .phone .phone-bar{display:flex!important}
+  html.xk-phone-open .phone .phone-cap,html.xk-phone-open .phone .phone-live{display:block!important}
+}
 
   /* ★ 生产站差异（唯一一处 CSS 新增，值逐字照抄上面的 .dock button 三条）：
      demo 的导航是 <button data-v=…>（它自己的 JS 切 view），生产页换成 <a href="真路由">，

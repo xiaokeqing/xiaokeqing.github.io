@@ -1577,6 +1577,22 @@ home_script = xk_boot_patches(home_script, True)
 XK_EMOTE_BOOT_JS = (
     "\n/* ★V2 手机面板优先 E-mote（桌面大屏/够内存才加载；失败一行不改继续 Sprite 三段） */\n"
     "(function(){\n"
+    "  /* 窄屏：手机面板退化为竖直静态立绘条，点一下放大/收起（不挂 E-mote，见下 w<1280 闸）*/\n"
+    "  (function(){\n"
+    "    var ph = document.querySelector('.phone');\n"
+    "    if(!ph || !window.matchMedia || !matchMedia('(max-width:980px)').matches) return;\n"
+    "    ph.style.cursor = 'pointer';\n"
+    "    ph.setAttribute('role','button');\n"
+    "    ph.addEventListener('click', function(e){\n"
+    "      if(e.target && e.target.closest && e.target.closest('.phone-btns')) return;\n"
+    "      document.documentElement.classList.toggle('xk-phone-open');\n"
+    "    });\n"
+    "    document.addEventListener('click', function(e){\n"
+    "      if(!document.documentElement.classList.contains('xk-phone-open')) return;\n"
+    "      if(ph.contains(e.target)) return;\n"
+    "      document.documentElement.classList.remove('xk-phone-open');\n"
+    "    }, true);\n"
+    "  })();\n"
     "  var n = 0;\n"
     "  function go(){\n"
     "  var cv = document.getElementById('phoneCanvas');\n"
@@ -5246,7 +5262,19 @@ PHONE_CSS = (
     u'.phone-btns button:hover,.phone-btns button:active{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.14)}\n'
     u'.phone-btns button.off{opacity:.45}\n'
     u'.phone-btns button.lit{box-shadow:0 0 12px rgba(127,212,216,.65);border-color:var(--acc)}\n'
-    u'@media (max-width:980px){.phone{display:none}}\n'
+    u'/* 窄屏（<980px）：不再整块隐藏——默认只出一条**竖直静态立绘**（不加载 E-mote/WebGL），点一下放大。\n'
+    u'   理由：手机上 E-mote 要跑 WebGL 模型（内存/耗电），但"完全看不见她"也不符合站点气质。 */\n'
+    u'@media (max-width:980px){\n'
+    u'  .phone{display:block;right:8px;bottom:8px;top:auto;transform:none;width:74px;padding:4px;\n'
+    u'    border-radius:16px;opacity:.94;transition:width .18s ease,right .18s ease}\n'
+    u'  .phone .phone-scr{aspect-ratio:284/600;border-radius:12px;background-size:cover;background-position:center top;background-color:#07090c}\n'
+    u'  .phone #phoneCanvas{display:none!important}\n'
+    u'  .phone .phone-bar,.phone .phone-island,.phone .phone-cap,.phone .phone-live,.phone .phone-btns,.phone .phone-home{display:none!important}\n'
+    u'  html.xk-phone-open .phone{right:50%;bottom:50%;transform:translate(50%,50%);width:min(76vw,38vh);z-index:80;\n'
+    u'    border-radius:30px;padding:8px;opacity:1;box-shadow:0 0 0 100vmax rgba(4,7,10,.74),0 24px 64px rgba(0,0,0,.6)}\n'
+    u'  html.xk-phone-open .phone .phone-bar{display:flex!important}\n'
+    u'  html.xk-phone-open .phone .phone-cap,html.xk-phone-open .phone .phone-live{display:block!important}\n'
+    u'}\n'
 )
 views_out = re.sub(r'\n\s*<!-- 手机里的她.*?</aside>', '', views_out, flags=re.S)          # ① 移出 v-ai，避免重复 id
 shell_style = shell_style + PHONE_CSS                                                       # ④⑤⑥ 定位/宽度/按钮样式

@@ -543,6 +543,22 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
 
 /* ★V2 手机面板优先 E-mote（桌面大屏/够内存才加载；失败一行不改继续 Sprite 三段） */
 (function(){
+  /* 窄屏：手机面板退化为竖直静态立绘条，点一下放大/收起（不挂 E-mote，见下 w<1280 闸）*/
+  (function(){
+    var ph = document.querySelector('.phone');
+    if(!ph || !window.matchMedia || !matchMedia('(max-width:980px)').matches) return;
+    ph.style.cursor = 'pointer';
+    ph.setAttribute('role','button');
+    ph.addEventListener('click', function(e){
+      if(e.target && e.target.closest && e.target.closest('.phone-btns')) return;
+      document.documentElement.classList.toggle('xk-phone-open');
+    });
+    document.addEventListener('click', function(e){
+      if(!document.documentElement.classList.contains('xk-phone-open')) return;
+      if(ph.contains(e.target)) return;
+      document.documentElement.classList.remove('xk-phone-open');
+    }, true);
+  })();
   var n = 0;
   function go(){
   var cv = document.getElementById('phoneCanvas');
