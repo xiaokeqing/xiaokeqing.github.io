@@ -439,6 +439,13 @@
 .ban-tl .ev:hover{outline:1px solid var(--txt)}
 .ban-tl .tl-note{position:absolute;left:10px;top:5px;font:11px var(--sans);color:var(--mut)}
 
+/* ★attk-tech：ATT&CK 技术编号行（跟随类型矩阵，取最近窗口聚合） */
+.attk-tech{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.attk-tech .tech{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:99px;
+  padding:3px 9px;font:11.5px var(--mono);color:var(--mut);background:rgba(255,255,255,.03)}
+.attk-tech .tech b{color:var(--acc);font-weight:600}
+.attk-tech .tech i{font-style:normal;color:var(--txt);opacity:.85}
+
   /* ---- ★批次 R2（2026-10-16 前端优化批）：骨架/焦点 + 作战室交互层（配色字体零改动） ---- */
   /* 骨架条：占位「—」取数回来前的呼吸条；api-bind 写实值时摘掉 .sk。颜色只用既有 --line/--line2 令牌 */
   .sk{color:transparent !important;border-radius:6px;display:inline-block;min-width:2.6em;

@@ -712,6 +712,8 @@
         var text = String(a.title || a.ruleName || '（无规则名）').replace(/\s+/g, ' ').slice(0, 90) +
           ' → ×' + (Number(a.count) || 1) + ' · ' + maskIp(a.srcIp);
         return { key: String(a.aggId || t + a.title), ts: t, cls: cls, tag: tag, text: text,
+          /* ★ATT&CK：服务端按 ruleName 映射的技术编号（可能为 null = 未归类，不猜） */
+          attck: (a.attck && a.attck.id) ? { id: String(a.attck.id), name: String(a.attck.name || ''), label: String(a.attck.label || '') } : null,
           /* ★A3：这一行的明细（点开行时显示），全部取服务端原值，前端不改写 */
           d: { agg: String(a.aggId || ''), win: String(a.startTime || '').slice(11, 19) + '~' + String(a.endTime || '').slice(11, 19),
                n: Number(a.count) || 1, ip: maskIp(a.srcIp), geo: String(a.srcGeo || ''), sev: String(a.severityLabel || ''),

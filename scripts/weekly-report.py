@@ -575,6 +575,149 @@ def build_report(now, ws, we, wk, endpoints, errors, base):
     return "\n".join(L)
 
 
+# ---------------------------------------------------------------------------
+# 静态页导出（给 nginx 的 /reports/ 目录用）
+#   为什么不用 markdown 库：这里只依赖标准库，而报告本身就是我们生成的固定结构
+#   （# / ## 标题、> 引用、| 表格 |、- 列表、**粗体**、`代码`），一个小转换器够了。
+# ---------------------------------------------------------------------------
+_ESC = {"&": "&amp;", "<": "&lt;", ">": "&gt;"}
+
+
+def _esc(t):
+    return "".join(_ESC.get(c, c) for c in t)
+
+
+def _inline(t):
+    t = _esc(t)
+    out = []
+    i = 0
+    while i < len(t):
+        if t.startswith("**", i):
+            j = t.find("**", i + 2)
+            if j > 0:
+                out.append("<b>%s</b>" % t[i + 2:j])
+                i = j + 2
+                continue
+        if t[i] == "`":
+            j = t.find("`", i + 1)
+            if j > 0:
+                out.append("<code>%s</code>" % t[i + 1:j])
+                i = j + 1
+                continue
+        out.append(t[i])
+        i += 1
+    return "".join(out)
+
+
+def render_md_html(md):
+    lines = md.split("\n")
+    html = []
+    i = 0
+    while i < len(lines):
+        ln = lines[i]
+        s = ln.rstrip()
+        if not s.strip():
+            i += 1
+            continue
+        if s.startswith("# "):
+            html.append("<h1>%s</h1>" % _inline(s[2:]))
+        elif s.startswith("## "):
+            html.append("<h2>%s</h2>" % _inline(s[3:]))
+        elif s.startswith("### "):
+            html.append("<h3>%s</h3>" % _inline(s[4:]))
+        elif s.startswith(">"):
+            buf = []
+            while i < len(lines) and lines[i].lstrip().startswith(">"):
+                buf.append(_inline(lines[i].lstrip().lstrip(">").strip()))
+                i += 1
+            html.append("<blockquote>%s</blockquote>" % "<br>".join(buf))
+            continue
+        elif s.lstrip().startswith("|"):
+            rows = []
+            while i < len(lines) and lines[i].lstrip().startswith("|"):
+                cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                rows.append(cells)
+                i += 1
+            body = []
+            for r, cells in enumerate(rows):
+                if set("".join(cells)) <= set("-: "):
+                    continue
+                tag = "th" if r == 0 else "td"
+                body.append("<tr>" + "".join("<%s>%s</%s>" % (tag, _inline(c), tag) for c in cells) + "</tr>")
+            html.append("<table>%s</table>" % "".join(body))
+            continue
+        elif s.lstrip().startswith("- "):
+            items = []
+            while i < len(lines) and lines[i].lstrip().startswith("- "):
+                items.append("<li>%s</li>" % _inline(lines[i].lstrip()[2:]))
+                i += 1
+            html.append("<ul>%s</ul>" % "".join(items))
+            continue
+        else:
+            html.append("<p>%s</p>" % _inline(s))
+        i += 1
+    return "\n".join(html)
+
+
+_PAGE = """<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%s</title>
+<style>
+:root{--bg:#0b0f12;--fg:#dfe7ea;--mut:#8ea3ab;--acc:#78e6e1;--line:#22313a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.75 -apple-system,"Segoe UI",system-ui,"Microsoft YaHei",sans-serif}
+main{max-width:82ch;margin:0 auto;padding:28px 18px 64px}
+a{color:var(--acc)}
+h1{font-size:22px;margin:8px 0 6px}
+h2{font-size:17px;margin:26px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:18px 0 6px;color:var(--acc)}
+p,li{color:var(--fg)}
+blockquote{margin:12px 0;padding:10px 14px;border-left:3px solid var(--acc);background:#101820;color:var(--mut)}
+table{width:100%%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#101820;color:var(--mut);font-weight:600}
+code{background:#101820;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12.5px}
+ul{padding-left:20px}
+.nav{font-size:13px;color:var(--mut);margin-bottom:14px}
+</style></head><body><main>
+<div class="nav"><a href="/">← 回站点</a> · <a href="/reports/">全部周报</a></div>
+%s
+</main></body></html>
+"""
+
+
+def write_html_for(md_path, report):
+    """写同名 .html + 目录 index.html（列表按文件名倒序）。"""
+    import glob
+    import os
+    html_path = os.path.splitext(md_path)[0] + ".html"
+    title = report.split("\n", 1)[0].lstrip("# ").strip() or "安全战报"
+    with open(html_path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(_PAGE % (title, render_md_html(report)))
+    d = os.path.dirname(os.path.abspath(md_path))
+    items = []
+    for p in sorted(glob.glob(os.path.join(d, "weekly-*.html")), reverse=True):
+        name = os.path.basename(p)
+        head = ""
+        try:
+            with open(p, encoding="utf-8") as fh:
+                txt = fh.read()
+            k = txt.find("<h1>")
+            if k >= 0:
+                head = txt[k + 4:txt.find("</h1>", k)]
+        except OSError:
+            pass
+        items.append('<li><a href="%s">%s</a>%s</li>' % (_esc(name), _esc(name),
+                                                          ("<br><span style=\"color:var(--mut);font-size:13px\">%s</span>" % head) if head else ""))
+    idx = _PAGE % ("安全战报 · 周报目录",
+                   "<h1>安全战报 · 周报目录</h1><p>每周一 06:00 自动生成；每个数字都能追溯到公开端点。"
+                   "没有条目就是还没跑过。</p><ul>" + "".join(items) + "</ul>")
+    with open(os.path.join(d, "index.html"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(idx)
+    return html_path
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="生成每周安全战报（公开只读端点，Markdown）",
@@ -665,6 +808,12 @@ def main(argv=None):
         with open(out_path, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(report)
         sys.stderr.write("已写入 %s（%d 字节）\n" % (out_path, len(report.encode("utf-8"))))
+        if out_path.endswith(".md"):
+            try:
+                write_html_for(out_path, report)
+                sys.stderr.write("已写入同名 .html 与目录 index.html\n")
+            except OSError as exc:
+                sys.stderr.write("HTML 导出失败（不影响 .md）：%s\n" % exc)
     else:
         sys.stdout.write(report)
 

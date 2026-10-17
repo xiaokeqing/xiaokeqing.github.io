@@ -351,7 +351,42 @@ function renderTypes(){
     cell.addEventListener('blur', clearTip);
     attkGrid.appendChild(cell);
   });
+  renderTech();
 }
+/* ★ATT&CK 行：把最近窗口里已经映射出技术编号的告警按 T1xxx 聚合。
+   口径（写进图例，避免被读成"全站统计"）：窗口 = /api/public/alerts 的最近 200 条聚合；
+   数字是该聚合条目自带的 count 之和，未归类的规则名**不塞 OTHER**，只如实说"未归类"。 */
+function renderTech(){
+  if(!attkGrid) return;
+  let host = document.getElementById('attkTech');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'attkTech'; host.className = 'attk-tech';
+    attkGrid.parentNode.insertBefore(host, attkGrid.nextSibling);
+  }
+  const feed = window.XK_FEED || [];
+  const agg = {}; const order = [];
+  feed.forEach(function(it){
+    const t = it && it.attck;
+    if(!t || !t.id) return;
+    if(!agg[t.id]){ agg[t.id] = { id:t.id, name:t.name, label:t.label, n:0 }; order.push(t.id); }
+    agg[t.id].n += (it.d && Number(it.d.n)) || 1;
+  });
+  if(!order.length){
+    host.innerHTML = '<span class="attk-note">ATT&CK：最近窗口里没有可映射的规则名（未归类，不猜编号）</span>';
+    return;
+  }
+  order.sort(function(a,b){ return agg[b].n - agg[a].n; });
+  let html = '<span class="attk-note">ATT&CK 技术编号 · 最近窗口聚合命中：</span>';
+  order.forEach(function(id){
+    const t = agg[id];
+    html += '<span class="tech" title="' + xkEsc(t.id + ' ' + t.name) + '">' +
+      '<b>' + xkEsc(t.id) + '</b>' + xkEsc(t.label || t.name || '') +
+      '<i>×' + t.n.toLocaleString('en-US') + '</i></span>';
+  });
+  host.innerHTML = html;
+}
+window.__xkRenderTech = renderTech;
 window.__xkRenderTypes = renderTypes;
 
 /* 数据统计：数字滚动 */
