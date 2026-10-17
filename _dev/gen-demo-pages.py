@@ -3556,6 +3556,9 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   /* ★必须留着这一条：上面的 display:flex 会盖掉浏览器对 [hidden] 的 display:none ⇒ 登录按钮会对访客露出来 */
   .xk-idcard-btn[hidden]{display:none}
   .xk-idcard-btn:hover{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8)}
+  /* 登录键单独拉成整行文字钮：站主要"看得见的登录按键"，图标钮认不出来 */
+  .xk-idcard-col #xkLoginBtn{grid-column:1/-1;width:auto;height:22px;font-size:11px;
+    letter-spacing:.04em;border-radius:7px;gap:3px}
   .xk-idcard-btn[aria-pressed="true"]{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8);
     background:rgba(57,208,216,.12)}
   .xk-idcard-btn:focus-visible,.xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
@@ -3901,7 +3904,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     var on = (XL.state === 'logged-in');
     D.loggedIn = on;
     login.setAttribute('aria-pressed', on ? 'true' : 'false');
-    login.textContent = on ? '🔓' : '👤';
+    login.textContent = on ? '退出' : '登录';
     login.title = on ? ('已登录：' + (XL.username || '站主') + '（点一下退出）') : '登录（只有站主能登）';
   }
   /* ---------- 登录弹窗（动态建一次，之后复用） ---------- */
