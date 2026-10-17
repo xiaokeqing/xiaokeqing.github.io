@@ -1,8 +1,8 @@
 {{- /* ============================================================================
    /lab/ = 「靶场」说明页（手写页，不归 _dev/gen-demo-pages.py 管）。
    ----------------------------------------------------------------------------
-   定位：靶场本体在 lab.xiaokeqing.cn（Pikachu + 口令门禁，只有站主进得去）。
-   这一页是**公开说明**：它是什么、为什么你点不进去、里面有哪些洞、边界怎么定的。
+   2026-10-17 晚：腾讯云安全告警后，靶场**从公网撤下**，只留内网（SSH 隧道）。
+   这一页是**公开说明**：里面有哪些靶场、为什么不对公网开、我怎么进去。
    手写理由同 /what/：纯静态陈述，不取数、不跑作战室状态机。
    ============================================================================ */ -}}
 {{- $v := "lab" -}}
@@ -18,15 +18,19 @@
 .lab-hero .t2{font-size:15px;letter-spacing:.03em;color:#e8f3f8;font-weight:600;margin:0}
 .lab-hero .s2{margin:4px 0 0;font-size:12px;color:rgba(255,255,255,.62);line-height:1.7}
 .lab-dot{width:9px;height:9px;border-radius:50%;background:#59d18f;box-shadow:0 0 10px #59d18f;flex:0 0 auto}
+.lab-dot.off{background:#e8b45a;box-shadow:0 0 10px #e8b45a}
 .lab-cta{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap}
 .lab-btn{display:inline-block;padding:8px 15px;border-radius:8px;font-size:12.5px;text-decoration:none;
   border:1px solid rgba(160,220,240,.35);color:#cfe9f5;background:rgba(120,190,220,.1)}
 .lab-btn.primary{border-color:rgba(90,210,150,.5);color:#d6f5e4;background:rgba(90,210,150,.14)}
 .lab-btn:hover{filter:brightness(1.25)}
 .lab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-@media (max-width:980px){.lab-grid{grid-template-columns:1fr}}
+.lab-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1100px){.lab-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:980px){.lab-grid,.lab-grid.three{grid-template-columns:1fr}}
 .lab-card{padding:14px 15px}
 .lab-card h3{margin:0 0 8px;font-size:13px;letter-spacing:.04em;color:#cfe9f5;font-weight:600}
+.lab-card h3 .p{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.45);margin-left:6px}
 .lab-card p{margin:0 0 6px;font-size:12.5px;line-height:1.9;color:rgba(255,255,255,.78)}
 .lab-card ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.78)}
 .lab-vulns{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
@@ -50,67 +54,91 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 靶场 <em class="ops-en">TARGET-RANGE</em></span>
-      <span class="sync">● 本体在 lab.xiaokeqing.cn · 需访问码</span>
+      <span class="sync">● 公网已关闭 · 只走内网隧道</span>
     </div>
     <div class="screen-bd lab-bd">
 
       <div class="mod lab-hero">
-        <span class="lab-dot"></span>
+        <span class="lab-dot off"></span>
         <div>
-          <p class="t2">Pikachu 漏洞练习平台 · 在线（仅站主可进）</p>
-          <p class="s2">跑在独立的内网网络里：禁出网、单独 IP、512MB / 1 核限额；外面套一道口令门禁，
-            没有访问码的人只会看到一页 401。</p>
+          <p class="t2">三台靶场 · 内网在线（公网入口已撤）</p>
+          <p class="s2">Pikachu、DVWA、OWASP Juice Shop 跑在独立的内网网络 <code>labnet</code> 里：禁出网、单独 IP、各自限内存限核；
+            公网已经没有入口——要用只能从我这边开一条 SSH 隧道进去。</p>
         </div>
         <div class="lab-cta">
-          <a class="lab-btn primary" href="https://lab.xiaokeqing.cn/" rel="noopener">进入靶场 →</a>
+          <a class="lab-btn primary" href="#how">怎么进去 →</a>
+        </div>
+      </div>
+
+      <div class="lab-grid three">
+        <div class="mod lab-card">
+          <h3>Pikachu<span class="p">:8081</span></h3>
+          <p>PHP + MySQL，国内教学向，15 类洞都有独立小场景，适合一层层按清单过。</p>
+          <div class="lab-vulns">
+            <span>暴力破解</span><span>XSS</span><span>CSRF</span><span>SQL 注入</span>
+            <span>RCE</span><span>文件包含</span><span>文件上传</span><span>SSRF</span>
+          </div>
+        </div>
+        <div class="mod lab-card">
+          <h3>DVWA<span class="p">:8082</span></h3>
+          <p>同类的 PHP 靶场，好处是 <b>难度可调</b>（low → impossible）：同一处洞能在四个级别上对比手工利用与防护差别。</p>
+          <div class="lab-vulns">
+            <span>命令注入</span><span>SQL 盲注</span><span>反射/存储 XSS</span>
+            <span>文件包含</span><span>弱会话</span><span>CSRF</span>
+          </div>
+        </div>
+        <div class="mod lab-card">
+          <h3>Juice Shop<span class="p">:8083</span></h3>
+          <p>现代的 Node 靶场，带一条 100+ 关的闯关计分轨，偏 <b>业务逻辑</b>与前端面，练「这些漏洞串起来能干什么」。</p>
+          <div class="lab-vulns">
+            <span>越权</span><span>注入</span><span>XXE</span><span>不安全反序列化</span>
+            <span>目录遍历</span><span>评分闯关</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mod" id="how">
+        <div class="mod-hd"><span class="led"></span>怎么进去<span class="tag">只有我能开</span></div>
+        <div class="mod-bd">
+          <p class="lab-kv">三个靶场只监听服务器自己的 <code>127.0.0.1</code>，公网没有任何路径能到它们。要练的时候我在这边做一条隧道：</p>
+          <pre class="lab-pre"><span class="c"># 在我本机执行（三条端口一次全带出来）</span>
+ssh -N -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8083:127.0.0.1:8083 secagent-srv2
+<span class="c"># 然后浏览器打开</span>
+http://127.0.0.1:8081/   <span class="c"># Pikachu</span>
+http://127.0.0.1:8082/   <span class="c"># DVWA（首次进要点 Create/Reset Database）</span>
+http://127.0.0.1:8083/   <span class="c"># Juice Shop</span></pre>
+          <p class="lab-foot">关掉 ssh 就断，不留常开入口；容器本身也出不了网，打穿它拿不到任何东西。</p>
         </div>
       </div>
 
       <div class="lab-grid">
         <div class="mod lab-card">
-          <h3>里面有什么</h3>
-          <p>Pikachu 自带 15 类、几十个子场景，都是**故意留的洞**：</p>
-          <div class="lab-vulns">
-            <span>暴力破解</span><span>XSS</span><span>CSRF</span><span>SQL 注入</span>
-            <span>RCE</span><span>文件包含</span><span>文件下载</span><span>文件上传</span>
-            <span>越权</span><span>目录遍历</span><span>敏感信息泄露</span><span>PHP 反序列化</span>
-            <span>XXE</span><span>URL 跳转</span><span>SSRF</span>
-          </div>
-        </div>
-        <div class="mod lab-card">
-          <h3>为什么别人点不开</h3>
+          <h3>为什么不对公网开</h3>
           <ul>
-            <li><b>公开靶场等于给别人一台免费跳板。</b>放在公网上，扫描器几小时内就会发现它；</li>
-            <li>就算没被利用，跑洞的流量也会污染我这边的告警统计，<b>让真实攻击淹没在练习流量里</b>；</li>
-            <li>所以做了口令页：正确访问码 → 种一枚 24 小时的签名 Cookie；错码就是 401，不告诉你差在哪。</li>
+            <li><b>公开靶场等于送人一台免费跳板</b>：扫描器几小时内就会找到它；</li>
+            <li>2026-10-17 我试过用口令页护住 <code>lab.xiaokeqing.cn</code>，第二天云厂商就按「对外暴露高危漏洞站」发了告警；</li>
+            <li>所以干脆把公网入口整条摘掉，<b>只保留内网 + SSH 隧道</b>，云侧扫不到、也不该扫。</li>
           </ul>
         </div>
-      </div>
-
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>边界怎么定的<span class="tag">可以查</span></div>
-        <div class="mod-bd">
+        <div class="mod lab-card">
+          <h3>边界怎么定的</h3>
           <p class="lab-kv">
             <b>网络：</b>容器在 <code>labnet</code>（<code>--internal</code>）里，没有默认网关，容器内 <code>wget</code> 外网直接失败；<br>
-            <b>入口：</b><code>lab.xiaokeqing.cn</code> → Cloudflare 隧道 → nginx <code>auth_request</code> → 口令服务（只监听 127.0.0.1:8090）；<br>
-            <b>资源：</b><code>--memory 512m --cpus 1</code>，挂 <code>unless-stopped</code>，跑挂了也只影响它自己；<br>
-            <b>隔离：</b>它与博客、API 不在同一网络里，出不了内网，也碰不到别的容器。
+            <b>入口：</b>nginx 只监听 <code>127.0.0.1:8081/8082/8083</code>，Cloudflare 隧道里已没有 lab 这条 ingress；<br>
+            <b>资源：</b>各自 <code>--memory</code> 限额 + <code>--cpus 1</code>，挂 <code>unless-stopped</code>，跑挂了只影响它自己。
           </p>
-          <pre class="lab-pre"><span class="c"># 没有 Cookie 时，入口只有这一个回答</span>
-$ curl -sI https://lab.xiaokeqing.cn/
-HTTP/2 302
-location: https://lab.xiaokeqing.cn/_gate/login?next=/</pre>
         </div>
       </div>
 
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>你也想练怎么办<span class="tag">不用来敲我这台</span></div>
         <div class="mod-bd">
-          <p class="lab-kv">一行命令在你自己机器上起同款（Docker 装了就行）：</p>
-          <pre class="lab-pre">docker run -d --name pikachu -p 8088:80 area39/pikachu:latest
-<span class="c"># 然后开 http://127.0.0.1:8088 ，先点页面上的「初始化安装」</span></pre>
-          <p class="lab-foot">如果你只是路过想看效果：这一页已经把能看的部分都写出来了；
-            真要动手，自己起一台更安全——我这台的访问码不外发。</p>
+          <p class="lab-kv">三行命令在你自己机器上起同款（装了 Docker 就行）：</p>
+          <pre class="lab-pre">docker run -d --name pikachu -p 8081:80 area39/pikachu:latest
+docker run -d --name dvwa    -p 8082:80 vulnerables/web-dvwa:latest
+docker run -d --name juice   -p 8083:3000 bkimminich/juice-shop:latest
+<span class="c"># 然后开 http://127.0.0.1:8081 / :8082 / :8083</span></pre>
+          <p class="lab-foot">这一页已经把能看的部分都写出来了；真要动手，自己起一台更安全——我这台不对公网开放。</p>
         </div>
       </div>
 

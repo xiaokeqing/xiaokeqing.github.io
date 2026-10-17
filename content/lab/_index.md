@@ -1,6 +1,6 @@
 ---
-title: "靶场 · Pikachu 漏洞练习平台"
-description: "一个隔离在独立内网、禁出网、带口令门禁的 Pikachu 靶场：这一页讲它是什么、为什么别人点不开、边界怎么定的。"
+title: "靶场 · Pikachu / DVWA / Juice Shop"
+description: "三台跑在隔离内网里的靶场（禁出网、单独 IP、限额），公网入口已撤，只有站主能通过 SSH 隧道进去：这一页讲里面有什么、为什么不对公网开、边界怎么定的。"
 layout: "list"
 hideDate: true
 ---
