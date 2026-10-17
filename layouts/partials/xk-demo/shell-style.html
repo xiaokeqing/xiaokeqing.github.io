@@ -452,9 +452,10 @@
   .cat-row a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1)}
 
   /* 数据统计 · 子分区（一屏一主题；零新增配色，全部吃既有变量） */
-  .sst-nav{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
-  .sst-nav button{font:12.5px var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
-    border:1px solid var(--line);border-radius:99px;padding:6px 15px;cursor:pointer;
+  .sst-nav{display:flex;gap:6px;margin:0;padding-left:10px;border-left:1px solid var(--line);
+    flex-wrap:wrap;align-items:center}
+  .sst-nav button{font:12px var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
+    border:1px solid var(--line);border-radius:99px;padding:3px 11px;cursor:pointer;
     transition:color .16s,border-color .16s,background .16s}
   .sst-nav button:hover{color:var(--txt);border-color:rgba(255,246,235,.30)}
   .sst-nav button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}

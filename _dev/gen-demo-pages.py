@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """把两个 demo 文件"整份搬"成生产页模板（本轮口径，2026-10-14 第四批）。
 
 口径（站主原话）：
@@ -5054,9 +5054,10 @@ views_out = sub1(views_out,
 #         / 部署与接口(接口健康 + 版本时间轴)
 SST_CSS = u'''
   /* 数据统计 · 子分区（一屏一主题；零新增配色，全部吃既有变量） */
-  .sst-nav{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
-  .sst-nav button{font:12.5px var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
-    border:1px solid var(--line);border-radius:99px;padding:6px 15px;cursor:pointer;
+  .sst-nav{display:flex;gap:6px;margin:0;padding-left:10px;border-left:1px solid var(--line);
+    flex-wrap:wrap;align-items:center}
+  .sst-nav button{font:12px var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
+    border:1px solid var(--line);border-radius:99px;padding:3px 11px;cursor:pointer;
     transition:color .16s,border-color .16s,background .16s}
   .sst-nav button:hover{color:var(--txt);border-color:rgba(255,246,235,.30)}
   .sst-nav button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -5101,8 +5102,21 @@ SST_JS = u'''
       g[2].forEach(function(x){ if(kids[x]) p.appendChild(kids[x]); });
       panes.push(p);
     });
-    pane.insertBefore(nav, pane.firstChild);
+    /* 子导航搬到顶栏那一行（紧跟在「数据统计」右边）—— 站主口径：「放到上面那栏，正好空了挺多地方」。
+       只在「数据统计」亮着时显示，所以别的 tab 下这一行还是原来那四个按钮。 */
+    var host = document.getElementById('opsTabs');
+    if(host && host.parentNode){ host.parentNode.insertBefore(nav, host.nextSibling); }
+    else { pane.insertBefore(nav, pane.firstChild); }
     panes.forEach(function(p){ pane.appendChild(p); });
+    function syncVis(){
+      var on = pane.classList.contains('on');
+      nav.style.display = on ? '' : 'none';
+      /* 显示子导航时把 tabs 的 auto 外边距收掉：否则 auto 会把剩余空白全吃掉，
+         子导航被挤到第二行（站主要的是"放到上面那栏"）。 */
+      if(host){ host.style.marginLeft = on ? '0' : ''; host.style.marginRight = on ? '0' : ''; }
+    }
+    try{ new MutationObserver(syncVis).observe(pane, {attributes:true, attributeFilter:['class']}); }catch(e){}
+    syncVis();
     function pick(name){
       var ok=false;
       btns.forEach(function(b){ var on=b.getAttribute('data-sst')===name;
