@@ -446,6 +446,7 @@ try {
     }
     $relJson = $relObj | ConvertTo-Json -Depth 6
     [IO.File]::WriteAllText($localRel, $relJson, [Text.UTF8Encoding]::new($false))
+    & ssh -o BatchMode=yes $relHost "mkdir -p /home/ubuntu/.xk-deploy && chmod 700 /home/ubuntu/.xk-deploy" 2>&1 | Out-Null
     & scp -q $localRel "${relHost}:/home/ubuntu/.xk-deploy/xk-release-info.json" 2>&1 | Out-Null
         $syncOut = (& ssh -o BatchMode=yes $relHost "python3 -m json.tool /home/ubuntu/.xk-deploy/xk-release-info.json > /dev/null && install -m 644 /home/ubuntu/.xk-deploy/xk-release-info.json $relPath && echo RELINFO_SYNCED" 2>&1 | Out-String).Trim()
     if ($syncOut -match 'RELINFO_SYNCED') { Ok "release-info.json 已同步：$release（history $($hist.Count) 条）" }
