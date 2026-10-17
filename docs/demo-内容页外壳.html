@@ -123,7 +123,7 @@
   .skin-toggle button.on{color:var(--acc);border-color:var(--acc)}
 
   /* 主区 */
-  .main{margin:0 auto;padding:16px 344px 60px 88px;max-width:1520px}
+  .main{margin:0 auto;padding:22px 344px 64px 88px;max-width:1520px}
   body:not(.is-home) .main{padding-top:14px}
   .pgtitle{font:600 21px var(--sans);letter-spacing:.01em}
   .pglead{color:var(--mut);font-size:13px;margin:4px 0 16px}
@@ -133,30 +133,34 @@
   /* 监测中心：一整块大屏幕 */
   .screen{background:var(--panel);border:1px solid var(--line2);border-radius:16px;overflow:hidden;
     box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
-  .screen-hd{display:flex;align-items:center;gap:10px;padding:11px 18px;flex-wrap:wrap;
+  .screen-hd{display:flex;align-items:center;gap:12px;padding:13px 20px;flex-wrap:wrap;
     background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
   .screen-hd .led{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
-  .screen-hd .t{font:600 13px var(--mono);letter-spacing:.1em}
+  .screen-hd .t{font:600 13.5px var(--mono);letter-spacing:.12em}
   .screen-hd .sub{font:11px var(--mono);color:var(--mut)}
-  .screen-hd .sync{margin-left:auto;font:12.5px var(--mono);color:var(--mut)}
-  .screen-bd{padding:16px;display:flex;flex-direction:column;gap:14px}
+  .screen-hd .sync{margin-left:auto;font:12px var(--mono);color:var(--mut);
+    background:rgba(255,246,235,.045);border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+  .screen-bd{padding:18px;display:flex;flex-direction:column;gap:16px}
 
-  .mod{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .mod-hd{display:flex;align-items:center;gap:8px;padding:8px 13px;border-bottom:1px solid var(--line);
-    font:12.5px var(--mono);color:var(--mut);letter-spacing:.09em}
+  .mod{background:var(--panel2);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .mod-hd{display:flex;align-items:center;gap:8px;padding:9px 15px;border-bottom:1px solid var(--line);
+    font:12.5px var(--mono);color:var(--mut);letter-spacing:.1em}
   .mod-hd .led{width:6px;height:6px;border-radius:50%;background:var(--ok)}
   .mod-hd .tag{margin-left:auto;font-size:10.5px;color:var(--acc)}
-  .mod-bd{padding:12px 13px}
+  .mod-bd{padding:14px 15px}
 
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  .stat{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:rgba(255,255,255,.02)}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.025)}
   body[data-skin="light"] .stat{background:rgba(255,255,255,.6)}
   .stat .n{font:600 25px var(--mono);color:var(--acc)}
   .stat .n em{font-style:normal;font-size:12px;color:var(--mut);margin-left:4px}
   .stat .l{font-size:12px;color:var(--mut);margin-top:2px}
-  .grid23{display:grid;grid-template-columns:2fr 1fr;gap:14px}
-  .grid32{display:grid;grid-template-columns:1fr 2fr;gap:14px}
-  .grid22{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid23{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+  .grid32{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+  .grid22{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  /* 数字列等宽：同一列的 9,171 / 4,265 不再左右跳 */
+  .stat .n,.row .v,.num{font-variant-numeric:tabular-nums}
 
   .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
   .row:last-child{border-bottom:0}
@@ -347,6 +351,18 @@
     /* ★2026-10-17：`.ops-live` 是 `1fr 296px`，窄屏没复写过 ⇒ 494 宽下左侧实时流只剩 ~130px，
        卡片被挤成一条竖字。窄屏改单列。 */
     .ops-live{grid-template-columns:minmax(0,1fr)}.ops-live>*{min-width:0}
+    /* ★2026-10-17 美化 v2（窄屏）：屏头原来把 标题/OPS-ROOM/胶囊/tabs/sync 各占一行，
+       白白吃掉 ~180px 纵向空间。窄屏口径：藏副标题、sync 压成单行小字、tabs 不换行、胶囊间距收紧。 */
+    .screen-hd{padding:10px 13px;gap:8px}
+    .screen-hd .sub{display:none}
+    .screen-hd .sync{margin-left:0;flex-basis:100%;font-size:11px;padding:2px 9px;line-height:1.5}
+    .ops-tabs{margin:0;gap:2px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .ops-tabs button{padding:5px 9px;font-size:12px;white-space:nowrap}
+    .screen-bd{padding:13px;gap:13px}
+    .mod-hd{padding:8px 12px}
+    .mod-bd{padding:12px}
+    /* ★美化 v3（窄屏）：终端面板固定 314px 高，单列下等于把一屏占掉一半；窄屏压到 40vh。 */
+    .term-bd{height:min(314px,40vh)}
     /* ★窗口 Q（2026-10-16）移动端硬伤 1 修复：`.ai-grid` 是 `1fr 292px`，`1fr` 那列受子内容
        min-content 约束不能收缩 ⇒ 网格最小宽 ≈608px ⇒ 窄屏下整个**布局视口**被撑到 620px，
        而 `#dock{position:fixed;bottom:10px}` 相对布局视口定位 ⇒ used top = 1343-47-10 = 1286，
