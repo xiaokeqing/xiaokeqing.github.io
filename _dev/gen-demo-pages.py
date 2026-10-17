@@ -3763,15 +3763,15 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   var LINE_ZH = {
     /* ★2026-10-16 站主新口径：进站问候换成"欢迎使用 Amadeus 系统"那两句（音频为 GPT-SoVITS v3 新合成，见 bank.json）；
        旧的 greet_first / greet_back **保留**（新句子取不到时兜底，且它们的音轨仍是一字不改的老录音）。 */
-    greet_welcome: '你好，我是 Amadeus 助手。这个网站是站主自己搭的安全运营系统的展示页：他有一套真在跑的服务器监控，告警、攻击来源、自动拦截的记录都在这儿，脱敏之后原样摆出来；搭建过程也写成了手记，包括哪里翻过车。主页四个入口，从哪个进都行。',
-    greet_welcome_back: '又来啦。系统一直开着，数据刚换过一轮。想从哪儿看？',
+    greet_welcome: '欢迎来到 XK-LAB。这个站分三块：监测中心看实时攻击和拦截记录，AI 问答查安全概念，笔记写这套系统怎么搭的。三个都不用登录。',
+    greet_welcome_back: '欢迎回来。数据已经更新过了。',
     greet_first: '我是 Amadeus 助手。这个网站是干什么的，从上面四个入口看一圈就明白了。',
     greet_back: '又见面了。',
-    nav_home: '这里是入口：监测中心放真实的告警和拦截记录，AI 问答答安全概念，笔记写这套系统是怎么搭起来的，下面是最近在写的东西。',
-    nav_monitor: '这一屏是监测中心：左边实时告警流，右边威胁等级和攻击来源，下面是 24 小时趋势。数字是后端直接读的，读不到的地方会标出来。',
-    nav_ai: 'AI 问答：这里是公开的安全知识问答，回答走真实检索，会附引用和状态标注。只讲公开的概念和防御做法，不读站内的事件数据。',
-    nav_notes: '笔记：这套系统怎么搭、怎么验证、哪里出过问题，都写在这里。每一篇都能被人独立核对。',
-    fallback_no_data: '这次没读到数据。我不补数，读不到就是读不到。',
+    nav_home: '这里是主页：左边四个入口，下面是最近更新的笔记。',
+    nav_monitor: '监测中心：实时攻击流、威胁等级、攻击来源分布、蜜罐捕获的登录尝试，还有自动拦截记录。数字从后端直接读，取不到的地方会直接标出来。',
+    nav_ai: 'AI 问答：可以问安全概念和防御做法，回答会附上出处。涉及站内事件数据的会直接拒答，这个面只解释公开知识。',
+    nav_notes: '笔记：这套系统怎么搭、怎么验证、哪里出过问题，都写在这里，每篇都带可核对的证据。',
+    fallback_no_data: '这次没取到数据。不补数，读不到就是读不到。',
     fallback_offline: '请求没送达。我不编答案，等接口恢复再说。',
     fallback_throttled: '接口在限流，等一下再问。',
     tab_return: '你回来了。刚才我没说话，只是在这儿等着。'
@@ -5240,15 +5240,7 @@ views_out = sub1(views_out,
                  '<div class="anchor-row ask-ex" id="askEx"></div>\n        <div class="chat-ft">',
                  'R2: AI 示例问题 chips 容器')
 # 笔记分类 chips：卡头下加一行（构建期按 front-matter categories 去重输出），每条笔记带 data-cat
-views_out = sub1(views_out,
-                 '<span style="margin-left:auto;font-size:11px;color:var(--acc)">Hugo content</span></div>',
-                 '<span style="margin-left:auto;font-size:11px;color:var(--acc)">Hugo content</span></div>\n'
-                 '{{ if eq .page.Section "posts" }}{{ $cats := slice }}{{ range .page.Pages }}'
-                 '{{ with .Params.categories }}{{ $cats = $cats | append . }}{{ end }}{{ end }}'
-                 '{{ $cats = sort (uniq $cats) }}{{ if gt (len $cats) 0 }}'
-                 '<div class="cat-row" id="catRow"><a href="#" class="on" data-cat="">全部</a>'
-                 '{{ range $cats }}<a href="#" data-cat="{{ . }}">{{ . }}</a>{{ end }}</div>{{ end }}{{ end }}',
-                 'R2: 笔记分类 chips 行')
+# R3: 上面这条 R2「笔记分类 chips」已被 R3 的搜索框+计数 chips 取代，整段删除（否则页面出现两排分类）
 views_out = sub1(views_out,
                  '{{ range .page.Pages }}<div class="note"><span class="dt">',
                  '{{ range .page.Pages }}<div class="note"{{ with .Params.categories }} data-cat="{{ delimit . "," }}"{{ end }}><span class="dt">',
@@ -5266,6 +5258,17 @@ views_out = sub1(views_out,
 # ---- R2 汇入（样式 + 脚本）----
 shell_style = shell_style + R2_CSS
 shell_style = shell_style + SST_CSS
+
+# ---- R3（2026-10-17）：笔记索引 = 搜索框 + 分类计数 + 摘要卡 ----
+R3_CSS = '\n    /* ★R3（2026-10-17）笔记索引：搜索框 + 分类计数 + 摘要卡。原来只有「日期 + 标题 + 阅读约 N min」，\n       站主原话「根本找不到笔记在哪里」；判据是：不点进正文也能判断这篇讲什么。 */\n    .notes-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 15px;border-bottom:1px solid var(--line)}\n    .notes-q{flex:1 1 240px;min-width:150px;background:rgba(12,14,18,.55);border:1px solid var(--line2);\n      border-radius:10px;padding:8px 12px;color:var(--txt);font:13px var(--sans);outline:none}\n    .notes-q:focus{border-color:var(--acc)}\n    .notes-q::placeholder{color:var(--mut)}\n    .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:15px}\n    .note-card{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--line);\n      border-radius:12px;background:rgba(20,22,26,.42);text-decoration:none;color:inherit;\n      transition:border-color .18s ease,transform .18s ease}\n    .note-card:hover{border-color:var(--line2);transform:translateY(-1px)}\n    .nc-top{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut)}\n    .nc-cat{color:var(--acc);border:1px solid rgba(57,208,216,.35);border-radius:20px;padding:1px 8px;\n      font-size:10.5px;letter-spacing:.06em;white-space:nowrap}\n    .nc-tt{font:600 15px/1.45 var(--sans);color:var(--txt)}\n    .nc-ds{font-size:12.5px;line-height:1.75;color:var(--mut);\n      display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}\n    .nc-ft{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:auto;font-size:11px;color:var(--mut)}\n    .nc-tag{border:1px solid var(--line);border-radius:20px;padding:1px 7px;font-size:10.5px}\n    .nc-rt{margin-left:auto;font-variant-numeric:tabular-nums}\n    .notes-empty{padding:28px 15px;text-align:center;color:var(--mut);font-size:13px}\n    @media (max-width:980px){.notes-grid{grid-template-columns:minmax(0,1fr);padding:12px}}\n'
+_R3_NEW = '{{ if eq .page.Section "posts" }}<div class="notes-bar"><input id="noteQ" class="notes-q" type="search" placeholder="搜标题 / 摘要 / 标签…（Esc 清空）" autocomplete="off">{{ if eq .page.Section "posts" }}{{ $pages := .page.Pages }}{{ $cats := slice }}{{ range $pages }}{{ with .Params.categories }}{{ $cats = $cats | append . }}{{ end }}{{ end }}{{ $cats = sort (uniq $cats) }}{{ if gt (len $cats) 0 }}<div class="cat-row" id="catRow" style="padding:0"><a href="#" class="on" data-cat="">全部 {{ len $pages }}</a>{{ range $c := $cats }}{{ $n := 0 }}{{ range $pages }}{{ if in (.Params.categories | default slice) $c }}{{ $n = add $n 1 }}{{ end }}{{ end }}<a href="#" data-cat="{{ $c }}">{{ $c }} {{ $n }}</a>{{ end }}</div>{{ end }}{{ end }}</div><div class="notes-grid" id="notesGrid">{{ range .page.Pages }}<a class="note-card" href="{{ .RelPermalink }}" data-cat="{{ delimit (.Params.categories | default slice) "," }}" data-txt="{{ .Title }} {{ with .Params.summary }}{{ . }}{{ end }} {{ with .Params.description }}{{ . }}{{ end }} {{ delimit (.Params.tags | default slice) " " }}"><div class="nc-top"><span class="nc-cat">{{ delimit (.Params.categories | default (slice "未分类")) " · " }}</span><span class="dt">{{ .Date.Format "2006-01-02" }}</span></div><div class="nc-tt">{{ .Title }}</div><div class="nc-ds">{{ with .Params.summary }}{{ . }}{{ else }}{{ with .Params.description }}{{ . }}{{ else }}{{ .Summary }}{{ end }}{{ end }}</div><div class="nc-ft">{{ range .Params.tags }}<span class="nc-tag">{{ . }}</span>{{ end }}<span class="nc-rt">{{ .ReadingTime }} min</span></div></a>{{ end }}</div><div class="notes-empty" id="notesEmpty" hidden>没有匹配的笔记。换个关键词，或者点「全部」。</div><script>(function(){var q=document.getElementById("noteQ"),row=document.getElementById("catRow"),grid=document.getElementById("notesGrid"),empty=document.getElementById("notesEmpty");if(!grid)return;var cards=[].slice.call(grid.querySelectorAll(".note-card")),cat="";function apply(){var s=(q&&q.value||"").trim().toLowerCase(),n=0;cards.forEach(function(c){var okc=!cat||(c.getAttribute("data-cat")||"").indexOf(cat)>=0;var okt=!s||(c.getAttribute("data-txt")||"").toLowerCase().indexOf(s)>=0;var show=okc&&okt;c.style.display=show?"":"none";if(show)n++;});if(empty)empty.hidden=n>0;}if(row)row.addEventListener("click",function(e){var a=e.target.closest("a[data-cat]");if(!a)return;e.preventDefault();[].forEach.call(row.children,function(x){x.classList.toggle("on",x===a);});cat=a.getAttribute("data-cat")||"";apply();});if(q){q.addEventListener("input",apply);q.addEventListener("keydown",function(e){if(e.key==="Escape"){q.value="";apply();}});}apply();})();</script>{{ end }}'
+import re as _r3_re
+_R3_PAT = _r3_re.compile(r'\{\{ if eq \.page\.Section "posts" \}\}\{\{ range \.page\.Pages \}\}<div class="note".*?\{\{ end \}\}\{\{ end \}\}', _r3_re.S)
+views_out, _r3_n = _R3_PAT.subn(_R3_NEW, views_out)
+if _r3_n != 1:
+    raise SystemExit('R3: 笔记列表命中 %d 次（期望 1）—— 上面的 R2 补丁结构变了' % _r3_n)
+shell_style = shell_style + R3_CSS
+print('批次 R3：笔记索引已换成搜索 + 分类计数 + 摘要卡')
 home_style = home_style + R2_HOME_CSS
 if not shell_scripts[0].rstrip().endswith('</script>'):
     raise SystemExit('R2: 外壳第一段 <script> 结构变了，交互层插入点失效')

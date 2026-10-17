@@ -7,7 +7,7 @@
  "hopMs": 10,
  "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
  "lineCount": 162,
- "totalBytes": 11613265,
+ "totalBytes": 11600927,
  "lines": {
   "greet_first": {
    "id": "greet_first",
@@ -77,27 +77,27 @@
    "id": "nav_home",
    "trigger": "page_intro",
    "group": "page_intro",
-   "text": "主页有四个入口：监测中心看攻击和拦截，AI 问答查安全知识，笔记看技术笔记，下面是最近更新的。",
-   "scene": "主页（rev4：四个入口分别是什么）",
-   "emotion": "",
-   "source": "synth-rev4",
+   "text": "这里是主页：左边四个入口，下面是最近更新的笔记。",
+   "scene": "主页入口介绍",
+   "emotion": "normal",
+   "source": "synth-rev6",
    "audio": "kurisu/voice/synth/nav_home.m4a",
    "envelope": "kurisu/voice/synth/nav_home.envelope.json",
-   "seconds": 10.917,
-   "audioBytes": 66521,
-   "envelopeValues": 1092,
+   "seconds": 4.713,
+   "audioBytes": 29424,
+   "envelopeValues": 472,
    "audioSources": {
     "m4a": "kurisu/voice/synth/nav_home.m4a",
     "webm": "kurisu/voice/synth/nav_home.webm"
    },
-   "durationMs": 10917,
+   "durationMs": 4713,
    "sha256": {
-    "m4a": "3d1231e4744f3f672204fab9e41bb3f1c7182e559357ee0b5eaaf16eba980120",
-    "webm": "3a16255174087d60a6571bf0c15c2c6156462c180d287ccdd0a1613a75f42e12"
+    "m4a": "876f00e4bc757c60bcd4d5af742ce3c3655c8fa66dcdca88b7664b1f048a83ab",
+    "webm": "a088b4b3664ff2c41c0196fc2c3a4aff50d00d8b173334cc5194abbfd1d4b935"
    },
    "bytes": {
-    "m4a": 66521,
-    "webm": 56912
+    "m4a": 29424,
+    "webm": 24001
    },
    "loudness": {
     "lufs": -16.34,
@@ -109,27 +109,27 @@
    "id": "nav_monitor",
    "trigger": "page_intro",
    "group": "page_intro",
-   "text": "监测中心：左边是正在发生的攻击告警，右边是威胁等级和攻击来源，下面是 24 小时的攻击趋势。",
-   "scene": "监测中心（rev4：这屏有什么）",
-   "emotion": "",
-   "source": "synth-rev4",
+   "text": "监测中心：实时攻击流、威胁等级、攻击来源分布、蜜罐捕获的登录尝试，还有自动拦截记录。数字从后端直接读，取不到的地方会直接标出来。",
+   "scene": "监测中心介绍（功能逐项说清）",
+   "emotion": "normal",
+   "source": "synth-rev6",
    "audio": "kurisu/voice/synth/nav_monitor.m4a",
    "envelope": "kurisu/voice/synth/nav_monitor.envelope.json",
-   "seconds": 8.616,
-   "audioBytes": 53407,
-   "envelopeValues": 862,
+   "seconds": 16.708,
+   "audioBytes": 102085,
+   "envelopeValues": 1671,
    "audioSources": {
     "m4a": "kurisu/voice/synth/nav_monitor.m4a",
     "webm": "kurisu/voice/synth/nav_monitor.webm"
    },
-   "durationMs": 8616,
+   "durationMs": 16708,
    "sha256": {
-    "m4a": "59fc5f9865e8f831bfbd9fe74d70d6d7899e353fdca98ec5914f1989385507b0",
-    "webm": "84dc0ff0c08d9b6521d392dceb5ac3de14cd8cd6b1baf20371c56bc147829cd7"
+    "m4a": "c35c9a138fffbb74148b3bc9dc91a718a4d92d98bfbf1579fc6075498a8fa737",
+    "webm": "776ebf7464d320d09142b2ee72d9b65bb276e1bf2c7c5ec7dbc8baf583da9804"
    },
    "bytes": {
-    "m4a": 53407,
-    "webm": 44912
+    "m4a": 102085,
+    "webm": 83307
    },
    "loudness": {
     "lufs": -16.12,
@@ -141,27 +141,27 @@
    "id": "nav_notes",
    "trigger": "page_intro",
    "group": "page_intro",
-   "text": "笔记：记录这套系统怎么做、怎么验证的。",
-   "scene": "笔记（rev4：写的是什么）",
-   "emotion": "",
-   "source": "synth-rev4",
+   "text": "笔记：这套系统怎么搭、怎么验证、哪里出过问题，都写在这里，每篇都带可核对的证据。",
+   "scene": "笔记介绍",
+   "emotion": "normal",
+   "source": "synth-rev6",
    "audio": "kurisu/voice/synth/nav_notes.m4a",
    "envelope": "kurisu/voice/synth/nav_notes.envelope.json",
-   "seconds": 4.587,
-   "audioBytes": 28679,
-   "envelopeValues": 459,
+   "seconds": 6.459,
+   "audioBytes": 39981,
+   "envelopeValues": 646,
    "audioSources": {
     "m4a": "kurisu/voice/synth/nav_notes.m4a",
     "webm": "kurisu/voice/synth/nav_notes.webm"
    },
-   "durationMs": 4587,
+   "durationMs": 6459,
    "sha256": {
-    "m4a": "4e5effd76d1e34401bb0d7bf4c85723afd21ee0d2c4c8a1930d4847c3877a8b1",
-    "webm": "cfbf2722f2ef97c343302e8c51bf0ff75ca2008dd97f0412475ef0bb6d17ed47"
+    "m4a": "503da8d463e2a528df36e9746f40e4bea894ea78541ff05132bb3460f469f2e5",
+    "webm": "a23c4ce2438db045197a2b62216c803d29cc591f251e53247ce4fb5e0fe71c88"
    },
    "bytes": {
-    "m4a": 28679,
-    "webm": 23813
+    "m4a": 39981,
+    "webm": 33161
    },
    "loudness": {
     "lufs": -16.25,
@@ -173,27 +173,27 @@
    "id": "nav_ai",
    "trigger": "page_intro",
    "group": "page_intro",
-   "text": "AI 问答：可以问安全概念和防御做法，回答会附上出处。",
-   "scene": "AI 问答（rev4：能问什么）",
-   "emotion": "",
-   "source": "synth-rev4",
+   "text": "AI 问答：可以问安全概念和防御做法，回答会附上出处。涉及站内事件数据的会直接拒答，这个面只解释公开知识。",
+   "scene": "AI 问答介绍（含边界）",
+   "emotion": "normal",
+   "source": "synth-rev6",
    "audio": "kurisu/voice/synth/nav_ai.m4a",
    "envelope": "kurisu/voice/synth/nav_ai.envelope.json",
-   "seconds": 6.824,
-   "audioBytes": 42261,
-   "envelopeValues": 683,
+   "seconds": 11.539,
+   "audioBytes": 69977,
+   "envelopeValues": 1154,
    "audioSources": {
     "m4a": "kurisu/voice/synth/nav_ai.m4a",
     "webm": "kurisu/voice/synth/nav_ai.webm"
    },
-   "durationMs": 6824,
+   "durationMs": 11538,
    "sha256": {
-    "m4a": "c32414eec335be12806e369885ab596a018f6cedeefb49d527a1a298ad5223a7",
-    "webm": "7e74bbf232fa342bbbeb823ab6e79dd3789d1fe0124dfd31c35c15eb368f73c4"
+    "m4a": "f761d86c76ecd364c706c0af41a9701d9234430648195118c403916b48308251",
+    "webm": "943df3a21d83e89c42fbedca5250ede8c60f090a5e0ff3dd326e631dfb792e7c"
    },
    "bytes": {
-    "m4a": 42261,
-    "webm": 35106
+    "m4a": 69977,
+    "webm": 57970
    },
    "loudness": {
     "lufs": -16.06,
@@ -205,27 +205,27 @@
    "id": "fallback_no_data",
    "trigger": "fallback",
    "group": "fallback",
-   "text": "这一次没读到数据。我不补数，读不到就是读不到。",
-   "scene": "接口拿不到数据（状态行显示读不到）",
-   "emotion": "disappointed",
-   "source": "existing",
-   "audio": "kurisu/voice/fallback_no_data.m4a",
-   "envelope": "kurisu/voice/fallback_no_data.envelope.json",
-   "seconds": 6.086,
-   "audioBytes": 37323,
-   "envelopeValues": 609,
+   "text": "这次没取到数据。不补数，读不到就是读不到。",
+   "scene": "取数失败兜底",
+   "emotion": "normal",
+   "source": "synth-rev6",
+   "audio": "kurisu/voice/synth/fallback_no_data.m4a",
+   "envelope": "kurisu/voice/synth/fallback_no_data.envelope.json",
+   "seconds": 3.099,
+   "audioBytes": 19906,
+   "envelopeValues": 310,
    "audioSources": {
-    "m4a": "kurisu/voice/fallback_no_data.m4a",
-    "webm": "kurisu/voice/fallback_no_data.webm"
+    "m4a": "kurisu/voice/synth/fallback_no_data.m4a",
+    "webm": "kurisu/voice/synth/fallback_no_data.webm"
    },
-   "durationMs": 6086,
+   "durationMs": 3098,
    "sha256": {
-    "m4a": "1be104648b841477afe169645bb8b5013fe805c98236cd5515fbdf625ac632b7",
-    "webm": "78799c27252ad95f31021992fc3f31ba374e2b4bff1140cb7a5aaa27c5decf83"
+    "m4a": "ed6c4b075a3e16de363972f8e3d5b3a309d538f06e8d918ff68ffe16f2f4ab1c",
+    "webm": "05ad4f870e58e29a6ace956b7b24b86879d996001840f5d90e883ecd6aefbfdd"
    },
    "bytes": {
-    "m4a": 37323,
-    "webm": 30526
+    "m4a": 19906,
+    "webm": 17521
    },
    "loudness": {
     "lufs": -16.29,
@@ -5198,27 +5198,27 @@
    "id": "greet_welcome",
    "trigger": "greeting",
    "group": "greeting",
-   "text": "你好，我是 Amadeus 助手。这是一个安全监控网站：能看实时攻击告警、攻击来自哪些国家、系统自动拦下了什么；也能问安全知识，看技术笔记。上面几个入口，从哪个进都行。",
-   "scene": "首访进站（rev4：这是什么网站 + 有哪些功能，白话短句）",
-   "emotion": "shy",
-   "source": "synth-rev4",
+   "text": "欢迎来到 XK-LAB。这个站分三块：监测中心看实时攻击和拦截记录，AI 问答查安全概念，笔记写这套系统怎么搭的。三个都不用登录。",
+   "scene": "首访开屏（机器口吻，讲清这站有三块）",
+   "emotion": "normal",
+   "source": "synth-rev6",
    "audio": "kurisu/voice/synth/greet_welcome.m4a",
    "envelope": "kurisu/voice/synth/greet_welcome.envelope.json",
-   "seconds": 21.363,
-   "audioBytes": 129305,
-   "envelopeValues": 2137,
+   "seconds": 15.511,
+   "audioBytes": 93972,
+   "envelopeValues": 1552,
    "audioSources": {
     "m4a": "kurisu/voice/synth/greet_welcome.m4a",
     "webm": "kurisu/voice/synth/greet_welcome.webm"
    },
-   "durationMs": 21363,
+   "durationMs": 15511,
    "sha256": {
-    "m4a": "0fa4c0a220216edd740d9c80a87fc510d5e0d5fe0364493ccbc26a6309911bc2",
-    "webm": "728d9f8e9f74058809beb13dc04e23bdb0c8d179032df984064aa0d2748afabe"
+    "m4a": "af61cd1fe115bd9973bc7957ddb0eb7d45b309e2d8377e775f02819bf1b29af9",
+    "webm": "5f92497fa1f4db3096887c2cd5f1e24c2b863aebb4d4c7ac85b4cddc72ee895c"
    },
    "bytes": {
-    "m4a": 129305,
-    "webm": 107004
+    "m4a": 93972,
+    "webm": 78572
    },
    "loudness": {
     "lufs": -16.24,
@@ -5230,27 +5230,27 @@
    "id": "greet_welcome_back",
    "trigger": "greeting",
    "group": "greeting",
-   "text": "又来啦。数据刚更新过。",
-   "scene": "回访（rev4：一句话）",
-   "emotion": "shy",
-   "source": "synth-rev4",
+   "text": "欢迎回来。数据已经更新过了。",
+   "scene": "回访开屏（不重复介绍）",
+   "emotion": "normal",
+   "source": "synth-rev6",
    "audio": "kurisu/voice/synth/greet_welcome_back.m4a",
    "envelope": "kurisu/voice/synth/greet_welcome_back.envelope.json",
-   "seconds": 3.249,
-   "audioBytes": 20618,
-   "envelopeValues": 325,
+   "seconds": 2.698,
+   "audioBytes": 17292,
+   "envelopeValues": 270,
    "audioSources": {
     "m4a": "kurisu/voice/synth/greet_welcome_back.m4a",
     "webm": "kurisu/voice/synth/greet_welcome_back.webm"
    },
-   "durationMs": 3249,
+   "durationMs": 2698,
    "sha256": {
-    "m4a": "71989ac078791bea986fd586ad1511d72fbba4279f940224fb6a92a3b826b2fc",
-    "webm": "24a0afb41657ab0a1a773fffc7792f1016f5a25d36fd93ff9702d9e7b3876d16"
+    "m4a": "5bbf387ba6373e09419d8c9692c9a11adf2857cdd8f2e6237cf8048d47432335",
+    "webm": "2790e2e0c37736a9782896b831619049dcf31751a7f1404ba75d31e00f8d9956"
    },
    "bytes": {
-    "m4a": 20618,
-    "webm": 16987
+    "m4a": 17292,
+    "webm": 13867
    },
    "loudness": {
     "lufs": -16.28,

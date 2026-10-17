@@ -17,10 +17,19 @@
 {{ partial "xk-demo/shell-style.html" . }}
   <style>
     /* 正文排版：暖玻璃底上的可读性（字号/行距沿用旧博客，颜色换暖灰） */
-    .xk-article{max-width:78ch;margin:0 auto;padding:26px 30px 30px;color:var(--txt);
+    .xk-article{max-width:min(78ch,100%);margin:0 auto;padding:26px 30px 30px;color:var(--txt);
       background:rgba(10,12,16,.40);border:1px solid var(--line);border-radius:14px;
-      backdrop-filter:blur(6px);
+      backdrop-filter:blur(6px);overflow-wrap:anywhere;
       font:15.5px/1.85 var(--sans);text-shadow:0 1px 10px rgba(10,8,5,.55)}
+    /* 窄屏：文章卡片内边距收一档、标题降一级、表格自己横向滚（否则整页被宽表撑出横向滚动条） */
+    @media (max-width:980px){
+      .xk-article{padding:16px 14px 20px;border-radius:12px;font-size:15px;line-height:1.8}
+      .xk-article h1{font-size:21px;line-height:1.35}
+      .xk-article h2{font-size:18px;margin:24px 0 10px}
+      .xk-article h3{font-size:16px}
+      .xk-article table{display:block;width:100%;max-width:100%;overflow-x:auto;white-space:nowrap}
+      .xk-article pre{overflow-x:auto}
+    }
     .xk-article h1{font:600 27px/1.35 var(--sans);margin:6px 0 10px;letter-spacing:.01em}
     .xk-article h2{font:600 21px/1.4 var(--sans);margin:32px 0 12px;padding-bottom:8px;
       border-bottom:1px solid var(--line)}
