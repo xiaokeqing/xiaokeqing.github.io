@@ -5514,6 +5514,7 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
 %s
 </script>
 {{ partial "xk-demo/api-bind.html" . }}
+<script src="/js/xk-realtime.js" defer></script>
 </body>
 </html>
 ''' % (home_style, home_body, home_script))
@@ -5783,6 +5784,7 @@ for section, view, cname in PAGES:
   {{- /* ★批次A-P1：统一播放器按需加载（同主页那条理由：138KB 放进首屏会顶爆 /ai/ 的门禁） */}}
 {{ partial "xk-demo/shell-script.html" . }}
 {{ partial "xk-demo/api-bind.html" . }}
+<script src="/js/xk-realtime.js" defer></script>
 </body>
 </html>
 ''' % (section, view, cname, view, view, view, body_class, view)

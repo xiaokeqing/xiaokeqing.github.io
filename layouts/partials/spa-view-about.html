@@ -16,10 +16,10 @@
     <header class="xk-page__hd">
       <div class="xk-page__plate">
         <h1 class="xk-page__title">{{ if $isDemo }}在线 Demo{{ else if $isProjects }}项目{{ else }}项目 · Demo{{ end }}</h1>
-        <p class="xk-page__lead">{{ if $isDemo }}在线 Demo{{ else if $isProjects }}SecAgent{{ else }}SecAgent · 在线 Demo{{ end }}</p>
+        <p class="xk-page__lead">{{ if $isDemo }}在线 Demo{{ else if $isProjects }}五个项目 · 只写可核实的{{ else }}SecAgent · 在线 Demo{{ end }}</p>
       </div>
       <nav class="xk-anchors" aria-label="本页小节">
-        <a class="xk-chip" href="#xk-about-project" data-xk-anchor>项目：SecAgent</a>
+        <a class="xk-chip" href="#xk-about-project" data-xk-anchor>{{ if $isDemo }}项目：SecAgent{{ else }}项目{{ end }}</a>
         <a class="xk-chip" href="#xk-about-demo" data-xk-anchor>在线 Demo</a>
         {{/* 站主第九轮 ⑤：主页不再出现技术免责 → 「数据来源 / 口径 / 免责」整块落在这一节 */}}
         <a class="xk-chip" href="#xk-about-data" data-xk-anchor>数据来源 · 口径 · 免责</a>
@@ -29,7 +29,7 @@
     <div class="xk-portal">
       <div class="xk-portal__main">
         <section class="xk-card" id="xk-about-project">
-          <header class="xk-card__hd"><h2 class="xk-card__title">项目：SecAgent</h2></header>
+          <header class="xk-card__hd"><h2 class="xk-card__title">{{ if $isDemo }}项目：SecAgent{{ else }}项目清单{{ end }}</h2></header>
           <div class="xk-md">{{ with site.GetPage "/projects" }}{{ .Content }}{{ end }}</div>
         </section>
 
