@@ -3107,7 +3107,11 @@ def xk_sm_patches(script, is_home):
                  "started = true; lastT = performance.now();\n",
                  "window.__xkSmIsHome = %s;\n"
                  "function xkSmBoot(){ try{ XK_SM_JS.boot(); }catch(e){} }\n"
-                 "setTimeout(xkSmBoot, 600);   /* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/\n"
+                 "/* ★2026-10-17 站主定：**电视只用立绘那套（full/*）**，状态机（38 条 medium 动作图集）"
+                 "不再接管主页 —— 那套挪去手机面板（作 E-mote 的第二级降级）。\n"
+                 "   保留 xkSmBoot 与 __xkSM 对象（首屏门禁 gate-firstscreen 第 251 行仍读 __xkSM.reasons()），"
+                 "只是**不调用** boot。 */\n"
+                 "if(!window.__xkSmIsHome){ setTimeout(xkSmBoot, 600); }   /* 内容页照旧；主页不启 */\n"
                  "started = true; lastT = performance.now();\n" % ('true' if is_home else 'false'),
                  'T8: 启动挂钩')
     return s
