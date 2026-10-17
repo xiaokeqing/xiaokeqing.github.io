@@ -1,0 +1,546 @@
+{{- /* ============================================================================
+   /status/ = 「可重跑验证」的可视化版本（手写页，不归 _dev/gen-demo-pages.py 管）。
+   ----------------------------------------------------------------------------
+   这一页不写结论：打开就把 8 个只读端点逐个 fetch 一遍，把 HTTP 状态、耗时、
+   响应字节、PASS/FAIL 贴成表；再摊开构建/发布字段、数据新鲜度与三条 curl。
+   取不到的字段一律写「未取到」并带上原因，不填 0、不补样例值。
+   结构沿用外壳同一套类（.screen/.screen-hd/.screen-bd/.mod/.mod-hd/.mod-bd/.t/.led/.sync/.tag），
+   只补本页 .st-* 规则；不引外部字体/CDN/任何外链资源。
+   ============================================================================ */ -}}
+{{- $v := "status" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源 */
+.st-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.st-back:hover{color:#bfe3d0}
+.st-bd{display:flex;flex-direction:column;gap:14px}
+.st-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.st-lead b{color:#cfe9f5;font-weight:600}
+.st-lead code,.st-note code,.st-tbl code,.st-kv code,.st-pre code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.st-run{background:none;border:1px solid rgba(160,220,240,.35);color:#cfe9f5;border-radius:7px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;padding:3px 10px;cursor:pointer;flex:none}
+.st-run:hover{border-color:rgba(160,220,240,.6);color:#eaf6ff}
+.st-run[disabled]{opacity:.45;cursor:default}
+.st-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:rgba(255,255,255,.66)}
+.st-sum b{font-size:16px;letter-spacing:.02em;color:#eaf6ff;font-weight:600}
+.st-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.st-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:780px}
+.st-tbl th,.st-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.st-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.st-tbl td:nth-child(3),.st-tbl td:nth-child(4),.st-tbl td:nth-child(5),.st-tbl td:nth-child(6){white-space:nowrap}
+.st-tbl td:nth-child(2),.st-tbl td:nth-child(7){color:rgba(255,255,255,.72)}
+.st-ep{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#d7e7ef;white-space:nowrap}
+.st-num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.82)}
+.st-pass{color:#6FD3A0;font-weight:600}
+.st-fail{color:#E8837B;font-weight:600}
+.st-warn{color:#E8B45A}
+.st-na{color:rgba(255,255,255,.42)}
+.st-kv{width:100%;border-collapse:collapse;font-size:12.5px}
+.st-kv th,.st-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.st-kv thead th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.st-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap}
+.st-kv td.f{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.45);word-break:break-all}
+.st-kv td.v{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#e8f3f8;word-break:break-all}
+.st-hist{margin:4px 0 0;padding-left:16px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.72)}
+.st-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
+.st-pre .c{color:rgba(255,255,255,.45)}
+.st-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.st-note b{color:rgba(255,255,255,.76);font-weight:600}
+.st-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="status">
+<section class="view on" id="v-status">
+  <a class="st-back" href="/what/">← 返回介绍页 /what/</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 状态页 <em class="ops-en">STATUS</em></span>
+      <button class="st-run" id="stRun" type="button">重新体检</button>
+      <span class="sync" id="stSync">● 打开即体检 · 8 个只读端点</span>
+    </div>
+    <div class="screen-bd st-bd">
+
+      <p class="st-lead">
+        这一页<b>不写结论</b>：打开就把 8 个只读端点逐个打一遍，把 HTTP 状态、耗时、响应字节、PASS/FAIL
+        一行行贴出来，再摊开构建版本与数据新鲜度。每个数字都写着来源端点，<b>取不到就是「未取到」</b>——
+        没有样例值、没有补零、没有缓存外的美图。
+      </p>
+      <noscript><p class="st-noscript">本页所有数字都由浏览器前端 fetch 得到。你关掉了 JavaScript，所以下面只会出现占位的「未取到」——
+        这不是接口挂了，是这一页本来就靠它取数。</p></noscript>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>端点体检 · 逐个 fetch 实测<span class="tag">8 个端点 · GET · 只读</span></div>
+        <div class="mod-bd">
+          <p class="st-sum"><b id="stPass">—</b><span id="stSumTxt">等待体检…</span></p>
+          <div class="st-scroll">
+            <table class="st-tbl">
+              <thead><tr>
+                <th>端点</th><th>用途</th><th>HTTP</th><th>耗时 ms</th><th>字节</th><th>判定</th><th>说明</th>
+              </tr></thead>
+              <tbody id="stBody">
+                <tr><td colspan="7" class="st-na">等待体检…（数据全部由前端 fetch 得到，脚本被禁用时这里不会出现任何数字）</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="st-note">
+            <b>口径</b>：基址来自 <code>&lt;meta name="wb-api"&gt;</code>，路径就是表格每一行自己写的；
+            <b class="st-pass">PASS</b> = HTTP 2xx 且响应能解析成 JSON（<code>.js</code> 别名还要求 <code>code=200</code>），
+            <b class="st-fail">FAIL</b> = 其它一切情况（超时、跨源失败、非 JSON、接口自报失败——此时 HTTP/字节可能显示「未取到」）。
+            耗时 = fetch 发起到响应体读完；字节 = 解码后的 UTF-8 字节数（跨源读不到压缩后传输量）。
+            接口带 <code>max-age=45s</code>，命中浏览器或边缘缓存时耗时会接近 0ms —— 所以「快」不等于「新」，新不新看下面第 3 块。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>构建与发布 · 线上跑的是哪个版本<span class="tag">/api/health · /api/public/deploy.js</span></div>
+        <div class="mod-bd">
+          <div class="st-scroll">
+            <table class="st-kv">
+              <thead><tr><th>项目</th><th>字段（端点）</th><th>值</th></tr></thead>
+              <tbody>
+                <tr><th>构建 SHA</th><td class="f">/api/health · buildSha</td><td class="v" id="stSha">未取到</td></tr>
+                <tr><th>进程已运行</th><td class="f">/api/health · uptimeMs</td><td class="v" id="stUptime">未取到</td></tr>
+                <tr><th>健康自述</th><td class="f">/api/health · status / application / branch</td><td class="v" id="stHealth">未取到</td></tr>
+                <tr><th>发布目录</th><td class="f">deploy.js · data.release.release</td><td class="v" id="stRelease">未取到</td></tr>
+                <tr><th>发布时刻 builtAt</th><td class="f">deploy.js · release.builtAt / publishedAt / switchedAt</td><td class="v" id="stBuiltAt">未取到</td></tr>
+                <tr><th>文件数 files</th><td class="f">deploy.js · release.files / fileCount</td><td class="v" id="stFiles">未取到</td></tr>
+                <tr><th>总字节 totalBytes</th><td class="f">deploy.js · release.totalBytes</td><td class="v" id="stTotalBytes">未取到</td></tr>
+                <tr><th>最近发布 history</th><td class="f">deploy.js · release.history（取最近 3 条）</td><td class="v" id="stHist">未取到</td></tr>
+                <tr><th>版本对得上吗</th><td class="f">health.buildSha vs deploy.build.sha</td><td class="v" id="stShaMatch">未取到</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="st-note">
+            <b>为什么有的是「未取到」</b>：<code>deploy.js</code> 只端出源站上那份 release 信息里真的写了的键。
+            线上这份目前没有 <code>files</code> / <code>history</code>，所以那两行固定显示「未取到」而不是编造；
+            <code>builtAt</code> 会按 <code>publishedAt</code> → <code>switchedAt</code> → <code>build.buildTime</code> 的顺序找，
+            都找不到就照实说。最后一行是两处自述的交叉核对：<b>不一致说明前端与进程不是同一次发布</b>。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>数据新鲜度 · 看到的是几秒前的世界<span class="tag">/api/public/home.js</span></div>
+        <div class="mod-bd">
+          <div class="st-scroll">
+            <table class="st-kv">
+              <thead><tr><th>项目</th><th>字段（端点）</th><th>值</th></tr></thead>
+              <tbody>
+                <tr><th>数据时间</th><td class="f">home.js · data.alerts.generatedAt</td><td class="v" id="stGen">未取到</td></tr>
+                <tr><th>缓存秒数</th><td class="f">home.js · data.alerts.cacheSeconds</td><td class="v" id="stCache">未取到</td></tr>
+                <tr><th>距今（本机时钟）</th><td class="f">页面按 generatedAt 现算（该值不带时区，按浏览者本地时间解析）</td><td class="v" id="stAge">未取到</td></tr>
+                <tr><th>服务端快照</th><td class="f">home.js · snapshotAt / cacheAgeSeconds</td><td class="v" id="stSnap">未取到</td></tr>
+                <tr><th>响应头 Age</th><td class="f">本次 home.js 响应的 Age 头（真实年龄 ≈ cacheAgeSeconds + Age）</td><td class="v" id="stAgeHdr">未取到</td></tr>
+                <tr><th>新鲜度判定</th><td class="f">age ≤ cacheSeconds + 2 秒容差</td><td class="v" id="stFresh">未取到</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="st-note">
+            判定优先用服务端 <code>snapshotAt</code>（带时区、口径最硬），取不到才退回按 <code>generatedAt</code> 用本机时钟算；
+            两个都在秒级刷新，所以这行会随时间自己变旧 —— 这正是要你看的：<b>页面上的数字不是硬编码，它在变旧</b>。
+            接口带 <code>stale-while-revalidate=90</code>：边缘节点回源刷新期间会先把最多约两分钟的旧副本发给你，
+            所以「偏旧」通常不是接口挂了（刷新一次多半回到「新鲜」）；<code>cacheAgeSeconds + Age</code> 就是这份数据的真实年龄。
+            本机时钟如果比服务端快/慢，会出现负数或整小时级偏差，此时页面写「本机时钟早于服务端…」并<b>不判定</b>，而不是假装新鲜。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>你也可以自己敲<span class="tag">三条 curl · 只读 · 不写入</span></div>
+        <div class="mod-bd">
+<pre class="st-pre"><span class="c"># ① 服务是否活着 + 构建 SHA（对应表格第 1 行）</span>
+curl -s https://demo.xiaokeqing.cn/api/health
+
+<span class="c"># ② 首页聚合：alerts + geo + honeypot 三合一（对应表格第 2 行）</span>
+curl -s https://demo.xiaokeqing.cn/api/public/home.js
+
+<span class="c"># ③ 处置审计：护栏 / 封禁留痕（对应表格第 4 行）</span>
+curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
+          <p class="st-note">
+            同一时刻在你自己的终端敲，数字应该和上面那几张表对得上；<b>对不上，问题就在这里，不是页面修图</b>。
+            取不到的时候（断网、401、429 限流、源站挂了），本页对应行就显示「未取到」并带上原因：
+            卡片不填 0，不拿别的时刻的数凑数，也不把旧缓存当新数据 —— 这正是这一页的意义。
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+<script>
+(function () {
+  'use strict';
+  var NA = '未取到';
+  var TIMEOUT = 20000;
+  var meta = document.querySelector('meta[name="wb-api"]');
+  var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+  var EPS = [
+    { p: '/api/health',            use: '服务自述 + 构建 SHA' },
+    { p: '/api/public/home.js',    use: '首页聚合（alerts + geo + honeypot）' },
+    { p: '/api/public/alerts.js',  use: '告警列表 + 窗口计数' },
+    { p: '/api/public/audit.js',   use: '处置审计（动作留痕）' },
+    { p: '/api/public/honeypot.js',use: '蜜罐连接 / 口令结构' },
+    { p: '/api/public/geo.js',     use: '来源地理统计' },
+    { p: '/api/public/webstats.js',use: 'Web 访问统计' },
+    { p: '/api/public/deploy.js',  use: '构建与发布信息' }
+  ];
+  var last = { home: null, health: null, deploy: null };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  function nowMs() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+  function show(id, text, cls) {
+    var el = $(id);
+    if (!el) return;
+    var t = (text === null || text === undefined || text === '') ? NA : String(text);
+    el.textContent = t;
+    el.className = 'v' + (cls ? ' ' + cls : '');
+  }
+  function pad2(n) { return ('0' + n).slice(-2); }
+  function clock(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+  function num(v) {
+    if (v === null || v === undefined || v === '') return null;
+    var n = Number(v);
+    return isFinite(n) ? n : null;
+  }
+  function fmtInt(n) { return n === null ? NA : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function fmtBytes(n) {
+    if (n === null) return NA;
+    var mb = n / 1048576;
+    return fmtInt(n) + ' B ≈ ' + (Math.round(mb * 10) / 10) + ' MB';
+  }
+  function fmtDur(ms) {
+    var n = num(ms);
+    if (n === null) return NA;
+    var s = Math.round(n / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    return (h ? h + 'h ' : '') + ((h || m) ? m + 'm ' : '') + r + 's';
+  }
+  function parseWall(s) {
+    var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
+  }
+  function parseIso(s) {
+    var t = Date.parse(String(s || ''));
+    return isNaN(t) ? null : t;
+  }
+  function pick(obj, keys) {
+    if (!obj) return null;
+    for (var i = 0; i < keys.length; i++) {
+      var v = obj[keys[i]];
+      if (v !== undefined && v !== null && v !== '' && v !== 'unknown') return v;
+    }
+    return null;
+  }
+  function bytesOf(s) {
+    if (!window.TextEncoder) return null;
+    try { return new TextEncoder().encode(s).length; } catch (e) { return null; }
+  }
+
+  function probe(ep) {
+    var t0 = nowMs();
+    var out = { p: ep.p, use: ep.use, status: null, ms: null, bytes: null, ok: false, code: null,
+                json: null, data: null, err: null, ageHdr: null };
+    var init = { method: 'GET', mode: 'cors', credentials: 'omit' };
+    var ctrl = null, timer = null;
+    if (window.AbortController) {
+      ctrl = new AbortController();
+      init.signal = ctrl.signal;
+      timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT);
+    }
+    return fetch(API + ep.p, init).then(function (res) {
+      out.status = res.status;
+      out.ageHdr = res.headers.get('age');
+      return res.text().then(function (text) {
+        out.ms = Math.round(nowMs() - t0);
+        out.bytes = bytesOf(text);
+        try { out.json = JSON.parse(text); } catch (e) { out.json = null; }
+        if (!out.json) {
+          out.ok = false;
+          out.err = res.ok ? '响应不是 JSON' : ('HTTP ' + res.status + ' · 响应不是 JSON');
+        } else {
+          out.code = (out.json.code === undefined) ? null : Number(out.json.code);
+          out.data = (out.json.data !== undefined) ? out.json.data : out.json;
+          out.ok = res.ok && (out.code === null || out.code === 200);
+          if (!res.ok) out.err = 'HTTP ' + res.status;
+          else if (out.code !== null && out.code !== 200) out.err = '接口自报 code=' + out.code;
+        }
+        return out;
+      });
+    }).catch(function (e) {
+      out.ms = Math.round(nowMs() - t0);
+      out.err = (e && e.name === 'AbortError')
+        ? ('超时 ' + Math.round(TIMEOUT / 1000) + 's 未返回')
+        : ('请求失败：' + ((e && e.message) || e));
+      return out;
+    }).then(function (o) {
+      if (timer) clearTimeout(timer);
+      return o;
+    });
+  }
+
+  function detailOf(o) {
+    if (!o.ok) return o.err || '未取到';
+    var j = o.json, d = o.data;
+    if (o.p === '/api/health') {
+      var bits0 = [];
+      if (j.status) bits0.push('status=' + j.status);
+      if (j.application) bits0.push(j.application);
+      if (j.buildSha) bits0.push('sha ' + String(j.buildSha).slice(0, 10));
+      return bits0.length ? bits0.join(' · ') : '—';
+    }
+    if (!d || typeof d !== 'object') return '—';
+    var bits = [];
+    if (d.available === false) bits.push('端点通，数据不可得（' + (d.reason || d.note || 'available=false') + '）');
+    if (d.generatedAt) bits.push('数据时间 ' + d.generatedAt);
+    if (d.alerts && d.alerts.generatedAt) bits.push('alerts 数据时间 ' + d.alerts.generatedAt);
+    if (d.windowMinutes !== undefined) bits.push('窗口 ' + d.windowMinutes + ' 分钟');
+    if (d.window && d.window.minutes !== undefined) bits.push('窗口 ' + d.window.minutes + ' 分钟');
+    if (d.connections !== undefined) bits.push('连接 ' + d.connections + ' · 登录 ' + d.logins);
+    if (d.countryCount !== undefined) bits.push('国家 ' + d.countryCount);
+    if (o.p === '/api/public/deploy.js' && d.release && typeof d.release === 'object') {
+      bits.push('release ' + (d.release.available ? '可用' : '不可得'));
+    }
+    return bits.length ? bits.join(' · ') : '—';
+  }
+
+  function renderTable(list) {
+    var body = $('stBody');
+    if (!body) return;
+    var html = [], pass = 0, took = 0;
+    for (var i = 0; i < list.length; i++) {
+      var o = list[i];
+      if (o.ok) pass++;
+      took = Math.max(took, o.ms || 0);
+      var st = (o.status === null) ? '<span class="st-na">未取到</span>' : esc(o.status);
+      html.push('<tr>' +
+        '<td><span class="st-ep">' + esc(o.p) + '</span></td>' +
+        '<td>' + esc(o.use) + '</td>' +
+        '<td class="st-num">' + st + '</td>' +
+        '<td class="st-num">' + (o.ms === null ? '—' : esc(o.ms)) + '</td>' +
+        '<td class="st-num">' + (o.bytes === null ? '—' : fmtInt(o.bytes)) + '</td>' +
+        '<td>' + (o.ok ? '<b class="st-pass">PASS</b>' : '<b class="st-fail">FAIL</b>') + '</td>' +
+        '<td>' + esc(detailOf(o)) + '</td>' +
+        '</tr>');
+    }
+    body.innerHTML = html.join('');
+    var p = $('stPass'), txt = $('stSumTxt');
+    if (p) p.textContent = pass + '/' + list.length;
+    if (txt) {
+      var t;
+      if (pass === list.length) {
+        t = '全部通过';
+      } else {
+        var bad = [];
+        for (var k = 0; k < list.length; k++) if (!list[k].ok) bad.push(list[k].p);
+        var head = bad.slice(0, 3).join('、');
+        if (bad.length > 3) head += ' 等 ' + bad.length + ' 个';
+        t = '未通过：' + head;
+      }
+      txt.textContent = t + ' · 体检于 ' + clock(new Date()) + ' · 最慢 ' + took + ' ms';
+    }
+    var sync = $('stSync');
+    if (sync) sync.textContent = '● ' + pass + '/' + list.length + ' 通过 · ' + clock(new Date());
+  }
+
+  function renderBuild(h, d) {
+    var health = (h && h.ok) ? h.json : null;
+    var dep = (d && d.ok && d.data && typeof d.data === 'object') ? d.data : null;
+    var hErr = (h && h.ok) ? '' : ('（' + ((h && h.err) || '未取到') + '）');
+
+    if (health) {
+      show('stSha', health.buildSha ? String(health.buildSha) : NA);
+      var up = num(health.uptimeMs);
+      show('stUptime', up === null ? NA : (fmtDur(up) + '（' + fmtInt(up) + ' ms）'));
+      var hb = [];
+      if (health.status) hb.push('status=' + health.status);
+      if (health.application) hb.push(health.application);
+      if (health.embeddedGitBranch) hb.push('branch=' + health.embeddedGitBranch);
+      if (health.artifactMd5) hb.push('md5 ' + String(health.artifactMd5).slice(0, 8));
+      show('stHealth', hb.length ? hb.join(' · ') : NA);
+    } else {
+      show('stSha', NA + hErr);
+      show('stUptime', NA + hErr);
+      show('stHealth', NA + hErr);
+    }
+
+    var rel = dep ? dep.release : null;
+    var relObj = (rel && typeof rel === 'object') ? rel : null;
+    var relName = relObj ? pick(relObj, ['release', 'releaseDir', 'dir']) : (typeof rel === 'string' ? rel : null);
+    var dErr = (d && d.ok) ? '' : ('（' + ((d && d.err) || '未取到') + '）');
+    var relWhy = '';
+    if (relObj && relObj.available === false) relWhy = '（release 不可得：' + (relObj.reason || relObj.note || 'available=false') + '）';
+
+    show('stRelease', relName || (NA + (relWhy || dErr)));
+
+    var builtAt = relObj ? pick(relObj, ['builtAt', 'publishedAt', 'switchedAt']) : null;
+    if (!builtAt && dep && dep.build) builtAt = pick(dep.build, ['buildTime', 'builtAt', 'publishedAt']);
+    var builtWhy = '';
+    if (!builtAt && dep && dep.build && dep.build.buildTime === 'unknown') builtWhy = '（build.buildTime=unknown，进程自述没带构建时刻）';
+    show('stBuiltAt', builtAt || (NA + (builtWhy || relWhy || dErr)));
+
+    var files = relObj ? pick(relObj, ['files', 'fileCount', 'filesCount']) : null;
+    var filesWhy = relWhy || (relObj ? '（deploy 响应里没有 files/fileCount 字段）' : dErr);
+    show('stFiles', files === null ? (NA + filesWhy) : fmtInt(num(files)));
+
+    var tb = relObj ? num(pick(relObj, ['totalBytes', 'bytes'])) : null;
+    show('stTotalBytes', tb === null ? (NA + (relWhy || dErr)) : fmtBytes(tb));
+
+    var hist = relObj ? relObj.history : null;
+    if (!hist && dep) hist = dep.history || dep.releaseHistory;
+    var histEl = $('stHist');
+    if (histEl) {
+      if (hist && hist.length) {
+        var arr = [], n = Math.min(hist.length, 3);
+        for (var i = 0; i < n; i++) {
+          var it = hist[i], line;
+          if (it && typeof it === 'object') {
+            var lb = [];
+            var nm = pick(it, ['release', 'releaseDir', 'name', 'sha', 'commit']);
+            var at = pick(it, ['builtAt', 'publishedAt', 'switchedAt', 'at', 'time']);
+            if (nm) lb.push(String(nm));
+            if (at) lb.push(String(at));
+            line = lb.length ? lb.join(' · ') : JSON.stringify(it);
+          } else {
+            line = String(it);
+          }
+          arr.push('<li>' + esc(line) + '</li>');
+        }
+        histEl.innerHTML = '<ul class="st-hist">' + arr.join('') + '</ul>';
+      } else {
+        histEl.textContent = NA + (dep ? '（这份 deploy 响应里没有 history 字段——不是没加载）' : dErr);
+      }
+    }
+
+    var match = $('stShaMatch');
+    if (match) {
+      var hs = health && health.buildSha ? String(health.buildSha) : null;
+      var ds = dep && dep.build && dep.build.sha ? String(dep.build.sha) : null;
+      if (hs && ds) {
+        var same = hs === ds || hs.indexOf(ds) === 0 || ds.indexOf(hs) === 0;
+        match.textContent = same ? '一致 · ' + ds.slice(0, 12) : ('不一致！health=' + hs.slice(0, 12) + ' · deploy=' + ds.slice(0, 12));
+        match.className = 'v ' + (same ? 'st-pass' : 'st-warn');
+      } else {
+        match.textContent = NA + '（两边至少缺一边，无法核对）';
+        match.className = 'v st-na';
+      }
+    }
+  }
+
+  function renderFresh(home) {
+    var root = (home && home.ok) ? home.json : null;
+    var d = root ? home.data : null;
+    var al = (d && d.alerts) ? d.alerts : null;
+    var gen = al ? al.generatedAt : null;
+    var cache = al ? num(al.cacheSeconds) : null;
+    var snap = root ? root.snapshotAt : null;
+    var snapAge = root ? num(root.cacheAgeSeconds) : null;
+    var genTs = parseWall(gen);
+    var snapTs = parseIso(snap);
+
+    show('stGen', gen || (NA + ((home && home.err) ? '（' + home.err + '）' : '')));
+    show('stCache', cache === null ? NA : (cache + ' 秒'));
+
+    var ageGen = (genTs === null) ? null : Math.round((Date.now() - genTs) / 1000);
+    if (ageGen === null) {
+      show('stAge', NA + '（该值缺失或格式变了）');
+    } else if (ageGen < 0) {
+      show('stAge', ageGen + ' 秒（提前：本机时钟比服务端快 ' + (-ageGen) + ' 秒）', 'st-warn');
+    } else {
+      show('stAge', ageGen + ' 秒前');
+    }
+
+    if (snap) {
+      show('stSnap', snap + (snapAge === null ? '' : ('（服务端自报 cacheAgeSeconds=' + snapAge + '）')));
+    } else {
+      show('stSnap', NA);
+    }
+
+    var ah = home ? home.ageHdr : null;
+    if (home && !home.ok) show('stAgeHdr', NA + '（home 未取到）');
+    else if (ah === null || ah === '') show('stAgeHdr', NA + '（本次没命中缓存，或浏览器没暴露这个头）');
+    else show('stAgeHdr', ah + ' 秒');
+
+    var age = null, src = '';
+    if (snapTs !== null) { age = Math.round((Date.now() - snapTs) / 1000); src = 'snapshotAt'; }
+    else if (ageGen !== null) { age = ageGen; src = 'generatedAt（本机时区解析）'; }
+
+    var f = $('stFresh');
+    if (!f) return;
+    if (age === null) {
+      f.textContent = NA + '（缺少可用的时间字段）';
+      f.className = 'v st-na';
+    } else if (age < 0) {
+      f.textContent = '不判定：本机时钟早于服务端 ' + (-age) + ' 秒（时区或时钟不同源）';
+      f.className = 'v st-warn';
+    } else if (cache === null) {
+      f.textContent = '距今 ' + age + ' 秒（cacheSeconds 未取到，无法判断窗口）· 依据 ' + src;
+      f.className = 'v st-warn';
+    } else if (age <= cache + 2) {
+      f.textContent = '新鲜：距今 ' + age + ' 秒 ≤ 缓存窗口 ' + cache + ' 秒 · 依据 ' + src;
+      f.className = 'v st-pass';
+    } else {
+      f.textContent = '偏旧：距今 ' + age + ' 秒 > 缓存窗口 ' + cache + ' 秒 · 依据 ' + src;
+      f.className = 'v st-warn';
+    }
+  }
+
+  function render(list) {
+    renderTable(list);
+    var i;
+    last.health = null; last.home = null; last.deploy = null;
+    for (i = 0; i < list.length; i++) {
+      if (list[i].p === '/api/health') last.health = list[i];
+      if (list[i].p === '/api/public/home.js') last.home = list[i];
+      if (list[i].p === '/api/public/deploy.js') last.deploy = list[i];
+    }
+    renderBuild(last.health, last.deploy);
+    renderFresh(last.home);
+  }
+
+  function run() {
+    var btn = $('stRun');
+    if (btn) { btn.disabled = true; btn.textContent = '体检中…'; }
+    var sync = $('stSync');
+    if (sync) sync.textContent = '● 体检中：逐个 fetch 8 个端点…';
+    var all = [];
+    for (var i = 0; i < EPS.length; i++) all.push(probe(EPS[i]));
+    Promise.all(all).then(function (list) {
+      render(list);
+    }).catch(function (e) {
+      var body = $('stBody');
+      if (body) body.innerHTML = '<tr><td colspan="7" class="st-fail">体检本身出错：' + esc((e && e.message) || e) + '</td></tr>';
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = '重新体检'; }
+    });
+  }
+
+  var btn = $('stRun');
+  if (btn) btn.addEventListener('click', run, false);
+  run();
+
+  /* 数字会自己变旧：每 2 秒按当前时钟重算一次「距今」，不重新打端点 */
+  setInterval(function () {
+    if (document.hidden) return;
+    if (last.home) renderFresh(last.home);
+  }, 2000);
+})();
+</script>
+</body>
+</html>

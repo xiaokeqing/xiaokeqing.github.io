@@ -26,6 +26,7 @@ PAGES = [
     ('test/index.html', 'test'),
     ('what/index.html', 'what'),
     ('lab/index.html', 'lab'),
+    ('status/index.html', 'status'),
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)
 RE_SSR = re.compile(r'data-xk-ssr=["\']?([a-z-]+)', re.I)

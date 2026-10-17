@@ -1454,11 +1454,11 @@
        ⇒ 从别的来源（本地预览、其他域名）读不到是正常的，不要因此显示"永久读不到"的行。 */
     try {
       healthT0 = performance.now();
-      fetch(API + '/api/health', { cache: 'default' }).then(function (r) { return r.json(); }).then(function (j) {
+      setTimeout(function(){ fetch(API + '/api/health', { cache: 'default' }).then(function (r) { return r.json(); }).then(function (j) {
         healthMs = healthT0 != null ? Math.round(performance.now() - healthT0) : null;
         healthTxt = (j && (j.status || (j.ok ? 'ok' : null))) || 'ok';
         paint();
-      }).catch(function () { healthTxt = null; paint(); });
+      }).catch(function () { healthTxt = null; paint(); }); }, 1800); /* healthDeferred：首屏之后再探，别抢关键路径 */
     } catch (e) { healthTxt = null; }
     var n = 0;
     var timer = setInterval(function () {
