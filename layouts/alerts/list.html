@@ -13,6 +13,9 @@
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
+  {{- /* ★V3（2026-10-17）：极弱网省流模式。head 里同步引入（2KB），只为尽早判定（saveData/2g/3g
+         或 ?xk-saver=1）并给 <html> 上 xk-saver 类；重活（不启动状态机/不取垫板）由它自己安排。 */}}
+  <script src="/js/xk-saver.js"></script>
 {{ partial "xk-demo/shell-style.html" . }}
 </head>
 <body data-skin="warm" data-phone="v1" class="xk-has-idcard{{ if eq $v "ai" }} is-ai{{ end }}">

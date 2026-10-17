@@ -21,6 +21,9 @@
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video" data-xk-boot="0">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
+  {{- /* ★V3（2026-10-17）：极弱网省流模式。head 里同步引入（2KB），只为尽早判定（saveData/2g/3g
+         或 ?xk-saver=1）并给 <html> 上 xk-saver 类；重活（不启动状态机/不取垫板）由它自己安排。 */}}
+  <script src="/js/xk-saver.js"></script>
   {{- /* ★P0-④：首屏第一张（壁纸）preload + high —— 只这一张抢带宽，其余按顺序 decode */}}
   <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
 <style>
@@ -203,7 +206,7 @@
       <img class="xk-scene" id="xkSceneA" alt="" aria-hidden="true">
       <img class="xk-scene" id="xkSceneB" alt="" aria-hidden="true">
       <canvas class="charcanvas" id="charCanvas" aria-hidden="true"></canvas>
-      <img class="plate" src="/kurisu/scene/subtitle_frame_big.webp" alt="" aria-hidden="true">
+      <img class="plate" data-src="/kurisu/scene/subtitle_frame_big.webp" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" aria-hidden="true">
       <div class="scan"></div>
       <div class="vig"></div>
     </div>
@@ -235,7 +238,7 @@
 <script>
 
 /* ================= 数据：全部来自 static/kurisu/manifest.json ================= */
-const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches || !!window.__xkSaver;   /* ★V3：省流模式按 RM 走（不播开场、不取 opening/idle 图集）*/
 
 /* ================= ★T31 开场六阶段（站主 2026-10-15 逐帧规格） =================
    phase 0 壁纸        ：veil 撤下；CRT 仍是黑屏、导航栏隐藏（全部由 CSS/标记保证，无 JS 也成立）
@@ -1331,6 +1334,20 @@ var XK_SM_JS = (function(){
       }
       setHost(g.edges, g.host_triggered_entries);
       V.on = true;
+      /* ★2026-10-17 自愈：接管（takeOver → start）可能因页面时机丢失 —— 实测：线上/本地都会偶发
+         （showHud 早于本模块加载时那句 takeOver 就丢了；主页还会等开场，慢链路下更晚）。
+         模块内部兜底：每 1.2s 看一次，只要还没开演就补调 takeOver，直到开演或 30 次为止。 */
+      if(!V._selfHeal){
+        var _shN = 0;
+        V._selfHeal = setInterval(function(){
+          try{
+            if(!V.on) return;
+            if(V.cur){ clearInterval(V._selfHeal); V._selfHeal = null; return; }
+            if(++_shN > 30){ clearInterval(V._selfHeal); V._selfHeal = null; return; }
+            if(document.visibilityState !== 'hidden' && window.__xkSmTakeOver) window.__xkSmTakeOver();
+          }catch(e){ try{ clearInterval(V._selfHeal); }catch(e2){} V._selfHeal = null; }
+        }, 1200);
+      }
       return true;
     }).catch(function(err){
       V.err = String((err && err.message) || err);
@@ -1756,7 +1773,7 @@ function xkSmBoot(){ try{ XK_SM_JS.boot(); }catch(e){}
 /* ★2026-10-17 站主定：**C 方案** —— 开场用立绘那套(full/*)，进站后由状态机演 38 条动作；
    但状态机的 idle/轮换只从 **≥268px** 的剪辑里挑（entryFor 里过滤），低清的 134/168 剪辑不参与轮换
    （情绪按钮仍可显式调用）。状态机在主页恢复启动。 */
-setTimeout(xkSmBoot, 600);   /* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/
+if(!window.__xkSaver) setTimeout(xkSmBoot, 600);   /* ★V3：省流模式不起状态机（不取任何剪辑图集）*//* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/
 xkBootStart();   /* ★T31 开场六阶段：RM 直接稳定态；非 RM 150ms 后进 ②③④⑤ */
 started = true; lastT = performance.now();
 requestAnimationFrame(loop);
