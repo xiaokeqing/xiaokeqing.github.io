@@ -1729,7 +1729,7 @@ function showHud(){
   if(typeof XK_SM_JS !== 'undefined') XK_SM_JS.takeOver();   /* ★T8：开场落定后交给状态机 */
   /* ★2026-10-15：语音正在说的时候字幕归语音那条，别被这句默认文案顶掉 */
   const _v = window.__xkVoice;
-  if(!(_v && _v.audio && !_v.audio.paused)) typeSub('你好，我是桐莉栖。监测数据都是真的——看不清就走近一点。');
+  if(!(_v && _v.audio && !_v.audio.paused)) typeSub('这里分三块：监测中心看实时攻击，AI 问答查概念，笔记写搭建过程。都不用登录。');
 }
 let typeTimer = null;
 function typeSub(text){
@@ -1789,7 +1789,7 @@ const desk = document.querySelector('.desk');
    资产：static/kurisu/voice/bank.json（12 条日语 m4a，逐条带 text / seconds / 包络）。
    纪律：手势前不播（只记 pending）；取不到就只显示字幕，绝不假装在播；RM 不自动播。 */
 const XK_VOICE_BANK = '/kurisu/voice/bank.json';
-const XK_DEFAULT_SAY = '你好，我是桐莉栖。这一屏的数字都是真的——看不清就走近一点。';
+const XK_DEFAULT_SAY = '这里分三块：监测中心看实时攻击，AI 问答查概念，笔记写搭建过程。都不用登录。';
 const XKV = { bank:null, unlocked:false, pending:null, lastId:null, audio:null, plays:0, errors:[] };
 window.__xkVoice = XKV;
 /* ★批次A（2026-10-16 站主）：声音开关默认关 ⇒ 没开声就只记 pending + 只出字幕，开了再补播。

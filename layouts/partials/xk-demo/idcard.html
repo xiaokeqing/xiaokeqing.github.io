@@ -44,20 +44,32 @@
 <style>
   /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）
      值只新增这一组，不改任何既有配色/字体/背景（站主点名的"头像卡片"这一处新增） */
-  .xk-idcard{position:fixed;left:0;top:14px;z-index:61;display:flex;flex-direction:column;align-items:center;gap:4px;
-    padding:6px 4px;background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
-    border-left:none;border-radius:0 14px 14px 0;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
-  .xk-idcard-av{width:48px;height:48px;flex:none;padding:0;cursor:pointer;display:block;
+  .xk-idcard{position:fixed;left:10px;top:14px;z-index:61;display:grid;grid-template-columns:42px minmax(0,1fr);
+    align-items:center;gap:9px;width:146px;padding:8px 10px 7px;
+    background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+  .xk-idmeta{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .xk-idsub{font:8.5px/1 var(--mono,monospace);letter-spacing:.05em;text-transform:uppercase;color:var(--mut,#D2CBBD);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .xk-idstat{grid-column:1/-1;display:flex;align-items:center;gap:6px;padding-top:6px;margin-top:1px;
+    border-top:1px solid var(--line,rgba(255,246,235,.15));font:10.5px/1.2 var(--sans,sans-serif);color:var(--mut,#D2CBBD)}
+  .xk-idstat .dots{margin-left:auto;display:flex;gap:3px;flex:none}
+  .xk-idstat .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,246,235,.22);display:block}
+  .xk-idstat .dots i.on1{background:#F2A6B0}.xk-idstat .dots i.on2{background:#9FD8E6}
+  .xk-idstat .dots i.on3{background:#E8B45A}
+  .xk-idcard-av{width:42px;height:42px;flex:none;padding:0;cursor:pointer;display:block;
     border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:10px;overflow:hidden;
     background:#E8ECEF;line-height:0}
-  .xk-idcard-av canvas{width:48px;height:48px;display:block}
+  .xk-idcard-av canvas{width:42px;height:42px;display:block}
   /* ★2026-10-17 站主口径：头像就单纯一个头像，头像下面写名字 */
-  .xk-idname{font:600 9.5px/1 var(--mono,monospace);letter-spacing:.14em;text-transform:uppercase;
-    color:var(--mut,#D2CBBD);user-select:none}
+  .xk-idname{font:600 12.5px/1.15 var(--sans,sans-serif);letter-spacing:.02em;
+    color:var(--txt,#FAF7F0);user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* ★2026-10-17 站主口径：功能文字全写到左下角，做成一行文字钮（不再用认不出的图标） */
-  .xk-idcard-col{position:fixed;left:14px;bottom:14px;z-index:63;display:flex;flex-wrap:wrap;gap:6px;
-    max-width:calc(100vw - 28px)}
-  .xk-idcard-btn{width:auto;min-width:54px;height:26px;padding:0 10px;cursor:pointer;font-size:11.5px;line-height:1;
+  /* ★2026-10-17 站主口径（m06282）：功能钮跟导航一样**竖着**排，别摊成一横条挤在底部。
+   >980px：左栏三块（头像卡 → 导航 → 功能钮）由 idcard 里的 stackRail() 统一竖排并垂直居中；
+   ≤980px：退回底部横排（手机横向空间比纵向值钱）。 */
+  .xk-idcard-col{position:fixed;left:10px;bottom:14px;z-index:63;display:flex;flex-direction:column;gap:5px;width:146px}
+  .xk-idcard-btn{width:100%;min-width:0;height:23px;padding:0 4px;cursor:pointer;font-size:11px;line-height:1;
     display:flex;align-items:center;justify-content:center;
     border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:8px;
     background:rgba(0,0,0,.22);color:var(--txt,#FAF7F0)}
@@ -65,7 +77,7 @@
   .xk-idcard-btn[hidden]{display:none}
   .xk-idcard-btn:hover{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8)}
   /* 登录键单独拉成整行文字钮：站主要"看得见的登录按键"，图标钮认不出来 */
-  .xk-idcard-col #xkLoginBtn{height:26px;font-size:11.5px;letter-spacing:.04em;gap:4px}
+  .xk-idcard-col #xkLoginBtn{height:23px;font-size:11px;letter-spacing:.02em;gap:4px}
   .xk-idcard-btn[aria-pressed="true"]{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8);
     background:rgba(57,208,216,.12)}
   .xk-idcard-btn:focus-visible,.xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
@@ -120,7 +132,9 @@
     .xk-idcard-av canvas{width:56px;height:56px}
     .xk-idcard-btn{height:30px;font-size:12px}
     /* 窄屏把功能条摊成一行（头像右边）：竖排在手机上会压住导航 */
-    .xk-idcard-col{gap:6px}
+    .xk-idcard-col{flex-direction:row;width:auto;max-width:calc(100vw - 28px);left:14px;bottom:14px;gap:6px}
+.crt-sub{bottom:calc(env(safe-area-inset-bottom,0px) + 54px)}
+  .xk-idcard-btn{width:auto;min-width:54px;height:26px;padding:0 10px;font-size:11.5px}
     .xk-idcard-col #xkLoginBtn{width:auto;height:30px;font-size:12px}
     .xk-idcap{bottom:58px;top:auto}
     .xk-idpanel{left:6px;bottom:52px;top:auto}
@@ -160,7 +174,14 @@
     aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">
     <canvas id="xkIdAvCanvas" width="132" height="132" aria-hidden="true"></canvas>
   </button>
-  <span class="xk-idname" aria-hidden="true">Amadeus</span>
+  <span class="xk-idmeta">
+    <span class="xk-idname">桐莉栖</span>
+    <span class="xk-idsub">HOLO-LINK</span>
+  </span>
+  <div class="xk-idstat" id="xkIdStat" aria-hidden="true">
+    <span id="xkIdStatTxt">待命</span>
+    <span class="dots"><i class="on1"></i><i class="on2"></i><i class="on3"></i><i></i><i></i></span>
+  </div>
 </aside>
 <div class="xk-idcard-col" role="group" aria-label="功能">
     <button class="xk-idcard-btn" id="xkLoginBtn" type="button"
@@ -175,6 +196,36 @@
       title="场景光束：点一下开/关（只影响背景）">光束</button>
     <span></span>
 </div>
+
+<script>
+/* ★2026-10-17（站主 m06282「位置太挤了…导航栏不行直接放到中间吧」）：
+   宽屏把「头像卡 / 导航 / 功能钮」三块竖排在左边缘并**垂直居中**——原来三块各自 fixed 定位，
+   窗口一矮就互相压（他为这个截过图）。这里只做竖直排布，不改任何一块自身样式；
+   窄屏（≤980）直接 return，走 CSS 里那套「头像左上 + 导航底部 + 功能钮底部横排」。 */
+(function(){
+  if (window.matchMedia('(max-width:980px)').matches) return;
+  function rail(){
+    var card = document.querySelector('.xk-idcard'),
+        dock = document.querySelector('.dock'),
+        col  = document.querySelector('.xk-idcard-col');
+    var els = [card, dock, col].filter(Boolean);
+    if (!els.length) return;
+    var gap = 10, total = 0, i;
+    els.forEach(function(e){ e.style.left = '10px'; e.style.transform = 'none';
+      e.style.right = 'auto'; e.style.bottom = 'auto'; e.style.top = '0px'; });
+    els.forEach(function(e){ total += e.offsetHeight + gap; });
+    total -= gap;
+    var y = Math.max(12, Math.round((window.innerHeight - total) / 2));
+    els.forEach(function(e){ e.style.top = y + 'px'; y += e.offsetHeight + gap; });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', rail);
+  else rail();
+  window.addEventListener('resize', rail);
+  window.addEventListener('load', rail);
+  window.__xkRail = rail;
+})();
+</script>
+
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
 <div class="xk-idpanel" id="xkIdPanel" role="dialog" aria-label="桐莉栖 · 情绪与动作面板"></div>
 <div class="xk-login" id="xkLogin" role="dialog" aria-modal="true" aria-label="站主登录"></div>
