@@ -489,6 +489,38 @@
 }
 .xk-idname{white-space:nowrap}               /* P0-1：名字不换行 */
 .xk-idcard{overflow:visible}
+  /* ---- ★攻击来源地图（点阵底图 + 国家气泡）：底图 /data/world-map.json 只在画布首次可见时取一次；
+     气泡落点 = 国家质心，不是攻击者真实坐标（GeoIP 只到国家/省）。零第三方脚本，canvas 自己画。 ---- */
+  .xk-atkmap-card{grid-column:1/-1}
+  .xk-atkmap-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:0 0 8px}
+  .xk-atkmap-metrics{display:flex;gap:6px;flex-wrap:wrap}
+  .xk-atkmap-metrics button{font:12px/1.5 var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
+    border:1px solid var(--line);border-radius:99px;padding:3px 11px;cursor:pointer;
+    transition:color .16s,border-color .16s,background .16s}
+  .xk-atkmap-metrics button:hover{color:var(--txt);border-color:var(--line2)}
+  .xk-atkmap-metrics button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .xk-atkmap-metrics button.on{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.10)}
+  .xk-atkmap-scale{font-size:11px;color:var(--mut);white-space:nowrap}
+  .xk-atkmap-scale i{display:inline-block;width:9px;height:9px;margin:0 4px 0 2px;border-radius:50%;
+    border:1px solid var(--acc);background:rgba(127,212,216,.30);vertical-align:middle}
+  .xk-atkmap-stage{position:relative;aspect-ratio:360/142;min-height:150px;border:1px solid var(--line);
+    border-radius:10px;background:rgba(20,19,17,.35);overflow:hidden}
+  .xk-atkmap-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .xk-atkmap-msg{position:absolute;inset:0;margin:0;display:flex;align-items:center;justify-content:center;
+    padding:10px 18px;text-align:center;font-size:12.5px;line-height:1.75;color:var(--mut);pointer-events:none}
+  .xk-atkmap-msg[hidden]{display:none}
+  .xk-atkmap-tip{position:absolute;left:0;top:0;z-index:3;min-width:132px;max-width:240px;padding:7px 9px;
+    border:1px solid var(--line2);border-radius:9px;background:rgba(24,22,20,.96);
+    box-shadow:0 10px 26px rgba(0,0,0,.38);font-size:11.5px;line-height:1.65;color:var(--txt);
+    pointer-events:none;opacity:0;transform:translate(-50%,0);transition:opacity .12s}
+  .xk-atkmap-tip.on{opacity:1}
+  .xk-atkmap-tip .cc{font:600 12px/1.4 var(--mono);color:var(--acc);margin:0 0 3px}
+  .xk-atkmap-tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--mut)}
+  .xk-atkmap-tip .r b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+  .xk-atkmap-tip .prov{margin-top:5px;padding-top:5px;border-top:1px solid var(--line);font-size:11px;color:var(--mut)}
+  .xk-atkmap-foot{margin:9px 0 0;font-size:11.5px;line-height:1.8;color:var(--mut)}
+  .xk-atkmap-foot b{color:var(--txt);font-weight:600}
+  @media (max-width:760px){.xk-atkmap-stage{aspect-ratio:auto;min-height:190px}}
 </style>
 </head>
 <body data-skin="warm" class="is-home">
@@ -698,6 +730,24 @@
               </div>
             </div>
           </div>
+          <div class="mod xk-atkmap-card" data-xk-atkmap>
+            <div class="mod-hd"><span class="led"></span>攻击来源地图 · 国家气泡<span class="tag">/geo · 质心</span></div>
+            <div class="xk-atkmap-bar">
+              <div class="xk-atkmap-metrics" role="group" aria-label="度量切换">
+                <button type="button" class="on" data-xk-metric="count" aria-pressed="true">告警次数</button>
+                <button type="button" data-xk-metric="ip" aria-pressed="false">独立 IP</button>
+              </div>
+              <span class="xk-atkmap-scale" data-xk-atkmap-scale><i></i>气泡大小 = √度量值 · 色温 = 相对量级</span>
+            </div>
+            <div class="xk-atkmap-stage">
+              <canvas id="xkAtkMap" role="img"
+                aria-label="攻击来源地图：底图为 1 度陆地点阵；气泡落点是各国质心，不是攻击者真实坐标（GeoIP 只到国家/省）"></canvas>
+              <p class="xk-atkmap-msg sk" data-xk-atkmap-msg>取数中…</p>
+              <div class="xk-atkmap-tip" data-xk-atkmap-tip aria-hidden="true"></div>
+            </div>
+            <p class="xk-atkmap-foot">落点：<b>国家质心</b>，不是攻击者真实坐标（GeoIP 只到国家/省）；<span data-xk-atkmap-src>取数中…</span> · 底图 Natural Earth 1:110m（公有领域）。</p>
+          </div>
+
           <div class="mod"><div class="mod-hd"><span class="led"></span>协议分布 · 按传感器类型<span class="tag">/overview</span></div>
             <div class="mod-bd proto">
               <div class="donut"><span class="donut-c">24h</span></div>
