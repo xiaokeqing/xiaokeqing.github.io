@@ -410,7 +410,7 @@ try {
     $relHost = 'secagent-srv1'
     $relPath = '/opt/secagent/data/public-api/release-info.json'
     $now = (Get-Date).ToString('yyyy-MM-ddTHH:mm:sszzz')
-    $commitSha = ((& git -C $RepoRoot rev-parse HEAD) | Out-String).Trim()
+    Push-Location $RepoRoot; $commitSha = ((& git rev-parse HEAD) | Out-String).Trim(); Pop-Location
     $localRel = Join-Path $TempBase 'xk-release-info.json'
     if (Test-Path -LiteralPath $localRel) { Remove-Item -LiteralPath $localRel -Force }
     & scp -q "${relHost}:$relPath" $localRel 2>&1 | Out-Null
