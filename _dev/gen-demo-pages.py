@@ -3563,6 +3563,16 @@ chrome = sub1(chrome, DOCK_ANCHOR_CONTENT, DOCK_ANCHOR_CONTENT + '  ' + DOCK_WHA
               'WHAT: 外壳 dock 新增「介绍」')
 home_body = sub1(home_body, DOCK_ANCHOR_HOME, DOCK_ANCHOR_HOME + '  ' + DOCK_WHAT_HOME,
                  'WHAT: 主页 dock 新增「介绍」')
+
+# ---- ★LAB（站主 2026-10-17）：dock 第六项「靶场」→ /lab/ ---------------
+#   为什么要单独一页：靶场本体在 lab.xiaokeqing.cn（口令门禁，外人进不去），
+#   博客这页是**公开说明**——讲清它是什么、为什么别人点不开、里面有哪些漏洞类型。
+DOCK_LAB_CONTENT = '<a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">靶场</a>\n'
+DOCK_LAB_HOME = '<a href="/lab/">靶场</a>\n'
+chrome = sub1(chrome, DOCK_ANCHOR_CONTENT, DOCK_ANCHOR_CONTENT + '  ' + DOCK_LAB_CONTENT,
+              'LAB: 外壳 dock 新增「靶场」')
+home_body = sub1(home_body, DOCK_ANCHOR_HOME, DOCK_ANCHOR_HOME + '  ' + DOCK_LAB_HOME,
+                 'LAB: 主页 dock 新增「靶场」')
 # ★P6（站主 2026-10-16 裁定"`/test/` 不要了"）：**从顶部导航摘掉「测试」项**（两处 dock 都摘）。
 #   注意：**只摘导航，不删页面** —— `_dev/check-ssr-contract.py` 的五页清单仍把 `/test/` 当第 5 页，
 #   连页面一起删要先改门禁与 dock 模板（等站主再说）。robots.txt 的 `Disallow: /test/` 由主窗口加。
