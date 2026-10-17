@@ -1,5 +1,5 @@
 // 仅用于本仓库的已解包 Motion 数据；二进制格式参考见 README。
-import { fail } from "./i18n.mjs";
+import { fail } from "./i18n.js";
 const utf8 = new TextEncoder();
 const join = (parts) => {
   const result = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
@@ -188,7 +188,10 @@ export function prepareModel(model) {
 }
 
 export async function loadModel(name, report = () => {}) {
-  const folder = `./红莉栖E-mote模型/${name}/`;
+  /* ★2026-10-17 修：原来写 `./红莉栖E-mote模型/${name}/` 是**相对页面 URL** 的，
+     在 /ai/ 这类子路径页面会 404（实测 /ai/红莉栖E-mote模型/... ⇒ error.loadResource）。
+     改成相对**本模块自身**的 URL（import.meta.url）⇒ 永远指向 /kurisu/emote/loader/ 下。 */
+  const folder = new URL(`./红莉栖E-mote模型/${name}/`, import.meta.url).href;
   const url = (path) => folder + path.split("/").map(encodeURIComponent).join("/");
   const get = async (path) => {
     const response = await fetch(url(path));

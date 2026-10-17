@@ -1527,11 +1527,52 @@ home_script = xk_boot_patches(home_script, True)
 #   ⇒ 手机上同样只到中档 boot（同瓦片 321×432、24 帧、13.3MB），并共用 XK_TIER 的
 #      检测→重试一次→降档→degradeReason。落点：`const BODY` / `phoneBody.set(...)` 两处。
 #   （XK_TIER_JS 在 T5.6 段定义，所以这段必须放在它后面。）
+# ---- ★2026-10-17 V2（站主定）：手机面板优先 E-mote，失败回落 Sprite 三段 ----
+#   门槛（收紧版，站主同意）：宽度 ≥1280px 且 deviceMemory≥8（未上报则放行）且 cores≥4 且非主页且未被关。
+#   ⇒ 手机/平板/低配一律**不加载**（避免 wasm 512MB 预留把小内存设备打挂），也不需要站主手机做真机验证。
+#   失败/被关/不支持（mount 返回 null 或 onStatus 报 error）⇒ 移除 xk-phone-emote 类，原 Sprite 逻辑照旧。
+XK_EMOTE_BOOT_JS = (
+    "\n/* ★V2 手机面板优先 E-mote（桌面大屏/够内存才加载；失败一行不改继续 Sprite 三段） */\n"
+    "(function(){\n"
+    "  var n = 0;\n"
+    "  function go(){\n"
+    "  var cv = document.getElementById('phoneCanvas');\n"
+    "  /* ★时序：phone-emote.js 是 defer 脚本、可能比本段后到 ⇒ 最多等 10s（40×250ms）再挂 */\n"
+    "  if(!cv || !window.XKPhoneEmote){ if(++n < 40) setTimeout(go, 250); return; }\n"
+    "  try { if(document.body && document.body.classList.contains('is-home')) return; } catch(e){}\n"
+    "  var w = window.innerWidth || 0, mem = navigator.deviceMemory || 0, cores = navigator.hardwareConcurrency || 0;\n"
+    "  if(w < 1280) return;\n"
+    "  if(mem && mem < 8) return;\n"
+    "  if(cores && cores < 4) return;\n"
+    "  if(window.__xkPhoneEmoteOff) return;\n"
+    "  var em = window.XKPhoneEmote.mount(cv, { model: 'kurisu_c', mode: 'idle', crop: 0.52 });\n"
+    "  if(!em) return;\n"
+    "  document.documentElement.classList.add('xk-phone-emote');\n"
+    "  XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;\n"
+    "  em.onStatus(function(s){\n"
+    "    if(!s) return;\n"
+    "    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); XK_TIER.phoneEmote = null; }\n"
+    "    var el = document.getElementById('phoneState');\n"
+    "    if(el && s.state) el.textContent = String(s.state).toUpperCase();\n"
+    "  });\n"
+    "  /* 模式跟随：读手机面板状态文字（IDLE/THINKING/SPEAKING），变化时通知 E-mote（不改原 setPhone） */\n"
+    "  var last = '';\n"
+    "  setInterval(function(){\n"
+    "    var el = document.getElementById('phoneState'); if(!el) return;\n"
+    "    var t = String(el.textContent || '').toUpperCase();\n"
+    "    if(t === last) return;\n"
+    "    last = t;\n"
+    "    var m = t.indexOf('SPEAK') >= 0 ? 'speaking' : (t.indexOf('THINK') >= 0 ? 'thinking' : 'idle');\n"
+    "    try { em.setMode(m); } catch(e){}\n"
+    "  }, 800);\n"
+    "  }\n"
+    "  go();\n"
+    "})();\n")
 sc = subn(sc,
           r"const BODY = \{.*?\n\};",
           lambda m: (XK_TIER_JS + m.group(0) +
-                     "\nXK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），并挂降档链 */\n"),
-          1, 'P0①: 手机面板注入 XK_TIER + 绑档')
+                     "\nXK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），并挂降档链 */\n" + XK_EMOTE_BOOT_JS),
+          1, 'P0①: 手机面板注入 XK_TIER + 绑档 + V2 E-mote 优先')
 sc = sub1(sc,
           "  phoneBody.set(BODY[mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle')]);",
           "  /* ★P0-①：按 XK_TIER 当前的档取图（手机上 = boot 中档；降档后 = 静态 poster） */\n"
@@ -5041,6 +5082,7 @@ PHONE_MOD = (
     u'    <!-- 渲染源由 phone-emote.js 接管（E-mote）；未接管时是 Sprite 三段降级。'
     u'⚠ 这里**故意不写 width/height 属性**（内部分辨率由渲染源自定：Sprite 会自己设 321×432）。 -->\n'
     u'    <canvas id="phoneCanvas" aria-hidden="true"></canvas>\n'
+    u'    <script src="/js/phone-emote.js" defer></script>\n'
     u'    <div class="phone-cap"><span id="phoneLine">问点什么吧，我在这边听着。</span></div>\n'
     u'    <div class="phone-live">\n'
     u'      <div class="bars2"><i></i><i></i><i></i><i></i><i></i></div>\n'

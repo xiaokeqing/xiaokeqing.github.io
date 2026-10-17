@@ -32,7 +32,7 @@
   NS.version = '1.0.0';
 
   var BASE = NS.base || '/kurisu/emote/';
-  var LOADER_URL = BASE + 'loader/psb.mjs';
+  var LOADER_URL = BASE + 'loader/psb.js';
   var RUNTIME_URLS = [BASE + 'runtime/FreeMoteDriver.js', BASE + 'runtime/emoteplayer.js'];
 
   /* 随包模型登记表：dir 必须与 loader 侧目录名一致（psb.mjs 由 name 推导 <name>.psb.m.json） */

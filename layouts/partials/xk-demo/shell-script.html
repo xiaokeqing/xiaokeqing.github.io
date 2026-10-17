@@ -541,6 +541,43 @@ const BODY = {
 };
 XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），并挂降档链 */
 
+/* ★V2 手机面板优先 E-mote（桌面大屏/够内存才加载；失败一行不改继续 Sprite 三段） */
+(function(){
+  var n = 0;
+  function go(){
+  var cv = document.getElementById('phoneCanvas');
+  /* ★时序：phone-emote.js 是 defer 脚本、可能比本段后到 ⇒ 最多等 10s（40×250ms）再挂 */
+  if(!cv || !window.XKPhoneEmote){ if(++n < 40) setTimeout(go, 250); return; }
+  try { if(document.body && document.body.classList.contains('is-home')) return; } catch(e){}
+  var w = window.innerWidth || 0, mem = navigator.deviceMemory || 0, cores = navigator.hardwareConcurrency || 0;
+  if(w < 1280) return;
+  if(mem && mem < 8) return;
+  if(cores && cores < 4) return;
+  if(window.__xkPhoneEmoteOff) return;
+  var em = window.XKPhoneEmote.mount(cv, { model: 'kurisu_c', mode: 'idle', crop: 0.52 });
+  if(!em) return;
+  document.documentElement.classList.add('xk-phone-emote');
+  XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;
+  em.onStatus(function(s){
+    if(!s) return;
+    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); XK_TIER.phoneEmote = null; }
+    var el = document.getElementById('phoneState');
+    if(el && s.state) el.textContent = String(s.state).toUpperCase();
+  });
+  /* 模式跟随：读手机面板状态文字（IDLE/THINKING/SPEAKING），变化时通知 E-mote（不改原 setPhone） */
+  var last = '';
+  setInterval(function(){
+    var el = document.getElementById('phoneState'); if(!el) return;
+    var t = String(el.textContent || '').toUpperCase();
+    if(t === last) return;
+    last = t;
+    var m = t.indexOf('SPEAK') >= 0 ? 'speaking' : (t.indexOf('THINK') >= 0 ? 'thinking' : 'idle');
+    try { em.setMode(m); } catch(e){}
+  }, 800);
+  }
+  go();
+})();
+
 function makeBodyPlayer(canvas){
   const ctx = canvas.getContext('2d');
   canvas.width = 321; canvas.height = 432;
