@@ -5220,6 +5220,8 @@ PHONE_CSS = (
     u'不用 height:100% 的原因：帧 321×432 ⇒ 高 600 时宽会变 446 > 屏 284，两侧会被裁。 */\n'
     u'#phoneCanvas{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:100%;height:auto;display:block}\n'
     u'html.xk-phone-emote #phoneCanvas{left:0;top:0;bottom:auto;transform:none;width:100%;height:100%}\n'
+    u'/* E-mote 接管后必须撤掉静态立绘垫底，否则会和 E-mote 人物叠成两个（线上实际出现过：上 E-mote、下 poster） */\n'
+    u'html.xk-phone-emote .phone-scr{background-image:none}\n'
     u'/* 灵动岛 / 状态栏 / 斜向反光 / Home 条 */\n'
     u'.phone-island{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:88px;height:24px;border-radius:14px;background:#000;z-index:5}\n'
     u'.phone-bar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;\n'
