@@ -61,8 +61,8 @@
       <div class="mod lab-hero">
         <span class="lab-dot off"></span>
         <div>
-          <p class="t2">三台靶场 · 内网在线（公网入口已撤）</p>
-          <p class="s2">Pikachu、DVWA、OWASP Juice Shop 跑在独立的内网网络 <code>labnet</code> 里：禁出网、单独 IP、各自限内存限核；
+          <p class="t2">六台靶场 · 内网在线（公网入口已撤）</p>
+          <p class="s2">Pikachu、DVWA、OWASP Juice Shop、WebGoat、DVNA、DSVW 跑在独立的内网网络 <code>labnet</code> 里：禁出网、单独 IP、各自限内存限核；
             公网已经没有入口——要用只能从我这边开一条 SSH 隧道进去。</p>
         </div>
         <div class="lab-cta">
@@ -95,18 +95,46 @@
             <span>目录遍历</span><span>评分闯关</span>
           </div>
         </div>
+        <div class="mod lab-card">
+          <h3>WebGoat<span class="p">:8084</span></h3>
+          <p>OWASP 官方<b>教学式</b>靶场：30+ 节课边讲边练，每节课只讲一个点，适合按顺序补基础。登录 <code>webgoat-user</code> / <code>webgoat</code>。</p>
+          <div class="lab-vulns">
+            <span>SQL 注入</span><span>XSS</span><span>CSRF</span><span>XXE</span>
+            <span>JWT/会话</span><span>访问控制 IDOR</span><span>SSRF</span><span>反序列化</span>
+          </div>
+        </div>
+        <div class="mod lab-card">
+          <h3>DVNA<span class="p">:8085</span></h3>
+          <p>Node/Express 全栈靶场，服务端逻辑占比高，适合看<b>同一套代码</b>里前台与 API 两侧的洞。登录 <code>admin</code> / <code>admin123</code>。</p>
+          <div class="lab-vulns">
+            <span>登录 SQL 注入</span><span>命令注入</span><span>模板注入 SSTI</span>
+            <span>任意上传/下载</span><span>SSRF</span><span>账号枚举</span><span>信息泄露</span>
+          </div>
+        </div>
+        <div class="mod lab-card">
+          <h3>DSVW<span class="p">:8086</span></h3>
+          <p>单页浓缩型（不到 100 行）：一页列出几十个洞，每条都给 vulnerable / exploit / info 三连链接，适合<b>快速过一遍</b>广度。无认证。</p>
+          <div class="lab-vulns">
+            <span>盲注/UNION</span><span>XPath 注入</span><span>登录绕过</span><span>HPP</span>
+            <span>XSS 三型</span><span>XXE</span><span>路径穿越</span><span>文件包含</span><span>RCE</span>
+          </div>
+        </div>
       </div>
 
       <div class="mod" id="how">
         <div class="mod-hd"><span class="led"></span>怎么进去<span class="tag">只有我能开</span></div>
         <div class="mod-bd">
-          <p class="lab-kv">三个靶场只监听服务器自己的 <code>127.0.0.1</code>，公网没有任何路径能到它们。要练的时候我在这边做一条隧道：</p>
-          <pre class="lab-pre"><span class="c"># 在我本机执行（三条端口一次全带出来）</span>
-ssh -N -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8083:127.0.0.1:8083 secagent-srv2
+          <p class="lab-kv">六个靶场只监听服务器自己的 <code>127.0.0.1</code>，公网没有任何路径能到它们。要练的时候我在这边做一条隧道：</p>
+          <pre class="lab-pre"><span class="c"># 在我本机执行（六个端口一次全带出来）</span>
+ssh -N -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8083:127.0.0.1:8083 \
+       -L 8084:127.0.0.1:8084 -L 8085:127.0.0.1:8085 -L 8086:127.0.0.1:8086 secagent-srv2
 <span class="c"># 然后浏览器打开</span>
 http://127.0.0.1:8081/   <span class="c"># Pikachu</span>
 http://127.0.0.1:8082/   <span class="c"># DVWA（首次进要点 Create/Reset Database）</span>
-http://127.0.0.1:8083/   <span class="c"># Juice Shop</span></pre>
+http://127.0.0.1:8083/   <span class="c"># Juice Shop</span>
+http://127.0.0.1:8084/   <span class="c"># WebGoat（webgoat-user / webgoat）</span>
+http://127.0.0.1:8085/   <span class="c"># DVNA（admin / admin123）</span>
+http://127.0.0.1:8086/   <span class="c"># DSVW（无认证）</span></pre>
           <p class="lab-foot">关掉 ssh 就断，不留常开入口；容器本身也出不了网，打穿它拿不到任何东西。</p>
         </div>
       </div>
@@ -124,7 +152,7 @@ http://127.0.0.1:8083/   <span class="c"># Juice Shop</span></pre>
           <h3>边界怎么定的</h3>
           <p class="lab-kv">
             <b>网络：</b>容器在 <code>labnet</code>（<code>--internal</code>）里，没有默认网关，容器内 <code>wget</code> 外网直接失败；<br>
-            <b>入口：</b>nginx 只监听 <code>127.0.0.1:8081/8082/8083</code>，Cloudflare 隧道里已没有 lab 这条 ingress；<br>
+            <b>入口：</b>nginx 只监听 <code>127.0.0.1:8081~8086</code>，Cloudflare 隧道里已没有 lab 这条 ingress；<br>
             <b>资源：</b>各自 <code>--memory</code> 限额 + <code>--cpus 1</code>，挂 <code>unless-stopped</code>，跑挂了只影响它自己。
           </p>
         </div>
@@ -133,11 +161,14 @@ http://127.0.0.1:8083/   <span class="c"># Juice Shop</span></pre>
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>你也想练怎么办<span class="tag">不用来敲我这台</span></div>
         <div class="mod-bd">
-          <p class="lab-kv">三行命令在你自己机器上起同款（装了 Docker 就行）：</p>
-          <pre class="lab-pre">docker run -d --name pikachu -p 8081:80 area39/pikachu:latest
-docker run -d --name dvwa    -p 8082:80 vulnerables/web-dvwa:latest
-docker run -d --name juice   -p 8083:3000 bkimminich/juice-shop:latest
-<span class="c"># 然后开 http://127.0.0.1:8081 / :8082 / :8083</span></pre>
+          <p class="lab-kv">六行命令在你自己机器上起同款（装了 Docker 就行）：</p>
+          <pre class="lab-pre">docker run -d --name pikachu  -p 8081:80   area39/pikachu:latest
+docker run -d --name dvwa     -p 8082:80   vulnerables/web-dvwa:latest
+docker run -d --name juice    -p 8083:3000 bkimminich/juice-shop:latest
+docker run -d --name webgoat  -p 8084:8080 webgoat/webgoat:latest
+docker run -d --name dvna     -p 8085:9090 appsecco/dvna:sqlite
+docker run -d --name dsvw     -p 8086:8000 appsecco/dsvw:latest
+<span class="c"># 然后开 http://127.0.0.1:8081 ~ :8086</span></pre>
           <p class="lab-foot">这一页已经把能看的部分都写出来了；真要动手，自己起一台更安全——我这台不对公网开放。</p>
         </div>
       </div>
