@@ -1028,8 +1028,10 @@ function xkMd(src){
   }).join('');
 }
 let xkAsking = false;
-/* 站主已登录 ⇒ 走自用面 POST /api/user/ask（请求头 X-User-Token），**不受公开面「每 IP 6 次/分钟」限制**；
-   未登录/令牌失效 ⇒ 照旧走公开面。两条路的响应字段一致，展示层不用分叉。 */
+/* 站主已登录 ⇒ 同一个公开端点，但带上 X-User-Token：后端认到有效令牌就**跳过「每 IP 6 次/分钟」限流**
+   （响应结构完全不变，所以展示层不用分叉）。未登录/令牌失效 ⇒ 照旧限额。
+   为什么不用 /api/user/ask：那条路的响应字段与公开面不同（answer/round/note…），展示层得再写一套，
+   而这一层只需要「不限次」，不值得引入第二套契约。 */
 function xkOwnerToken(){
   try {
     var t = localStorage.getItem('xk-auth-token');
@@ -1042,25 +1044,18 @@ function xkAskApi(question){
   const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
   const timer = setTimeout(()=>{ if(ctrl) ctrl.abort(); }, XK_ASK_TIMEOUT);
   const owner = xkOwnerToken();
-  const url = XK_ASK_API + (owner ? '/api/user/ask' : '/api/public/ask');
   const headers = {'Content-Type':'application/json'};
   if (owner) headers['X-User-Token'] = owner;
-  return fetch(url, {
+  return fetch(XK_ASK_API + '/api/public/ask', {
     method:'POST', headers: headers,
     mode:'cors', credentials:'omit', cache:'no-store',
     signal: ctrl ? ctrl.signal : undefined,
     body: JSON.stringify({ question: String(question).slice(0, XK_ASK_MAX) })
   }).then(res=>{ clearTimeout(timer);
-    /* 令牌过期/被撤销：清掉本地态，退回公开面重发一次（用户不会看到一次莫名其妙的白问） */
+    /* 令牌过期/被撤销：清掉本地态，让 UI 回到「未登录」；本次请求仍按原样把结果交给展示层 */
     if (owner && (res.status === 401 || res.status === 403)) {
       try { localStorage.removeItem('xk-auth-token'); localStorage.removeItem('xk-auth-user'); } catch(e){}
       if (window.__xkLogin) { window.__xkLogin.state = 'anon'; window.__xkLogin.reason = 'token-expired'; }
-      return fetch(XK_ASK_API + '/api/public/ask', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        mode:'cors', credentials:'omit', cache:'no-store',
-        body: JSON.stringify({ question: String(question).slice(0, XK_ASK_MAX) })
-      }).then(r2=>r2.json().catch(()=>null).then(body=>({ status:r2.status, ok:r2.ok, body,
-        retryAfter:r2.headers.get('Retry-After') })));
     }
     return res.json().catch(()=>null).then(body=>({ status:res.status, ok:res.ok, body,
       retryAfter:res.headers.get('Retry-After') }));
@@ -1081,8 +1076,7 @@ function xkQuota(d){
   const owner = !!xkOwnerToken();
   if (owner) {
     const used = (d && d.quota && d.quota.used != null) ? d.quota.used : null;
-    const lim  = (d && d.quota && d.quota.limit != null) ? d.quota.limit : 500;
-    q.textContent = '站主登录：不限次（软限额每日 ' + lim + ' 次，只提醒不硬停）' +
+    q.textContent = '站主登录：不限次（软限额每日只提醒不硬停）' +
       (used == null ? '' : ' · 今日已用 ' + used + ' 次');
     return;
   }
@@ -1120,7 +1114,12 @@ function xkRenderAnswer(el, d){
     html += '<p>输入命中提示注入护栏（'+xkAskEsc(d.injection.hitCount||0)+' 条规则）；下面是把它当"不可信数据"处理后的结果。</p>';
   if(d.failureReason) html += '<p><b>服务端说明：</b>'+xkAskEsc(d.failureReason)+'</p>';
   const _ans = d.answer;
-  const _clean = xkEmoClean(_ans);          /* ★V5：先剥 [EMO:xxx] 再进 markdown，页面零标签 */
+  /* ★2026-10-17 去重：后端 2026-10-17 起在正文末尾附一行「依据：N 条 ›」，而本页下面还会渲染一张
+     可展开的引用卡（同一 N）。两边都留 = 页面上出现两次"依据"。
+     取舍：正文那行**剥掉**，改由引用卡的标题行显示（保留"可展开看片段"这个能力，且只有一处）。 */
+  const _rawClean = xkEmoClean(_ans);
+  const _citeLine = /(^|\n)\s*依据：\s*\d+\s*条\s*›?\s*$/;
+  const _clean = _rawClean ? _rawClean.replace(_citeLine, '').replace(/\n+$/, '') : _rawClean;
   if(_clean) html += xkMd(_clean);
   else if(!d.failureReason) html += '<p>这次没有返回答案正文（state='+xkAskEsc(st||'—')+'）。</p>';
   html += xkCites(d);
