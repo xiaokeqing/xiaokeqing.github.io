@@ -451,6 +451,26 @@
   .cat-row a:hover{color:var(--acc)}
   .cat-row a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1)}
 
+  /* 数据统计 · 子分区（一屏一主题；零新增配色，全部吃既有变量） */
+  .sst-nav{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+  .sst-nav button{font:12.5px var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
+    border:1px solid var(--line);border-radius:99px;padding:6px 15px;cursor:pointer;
+    transition:color .16s,border-color .16s,background .16s}
+  .sst-nav button:hover{color:var(--txt);border-color:rgba(255,246,235,.30)}
+  .sst-nav button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .sst-nav button.on{color:var(--acc);border-color:var(--acc);background:rgba(255,246,235,.10)}
+  .sst-pane{display:none}
+  .sst-pane.on{display:grid;gap:14px;align-items:start}
+  .sst-pane.on[data-sst="ov"],.sst-pane.on[data-sst="act"],.sst-pane.on[data-sst="sys"]{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  /* 概览：前两张并排、第三张（来源与故事整体）占满一整行 */
+  .sst-pane.on[data-sst="ov"]>*:nth-child(3){grid-column:1/-1}
+  .sst-pane.on>*{min-width:0}
+  @media (max-width:1100px){
+    .sst-pane.on[data-sst="ov"],.sst-pane.on[data-sst="act"],.sst-pane.on[data-sst="sys"]{
+      grid-template-columns:minmax(0,1fr)}
+  }
+
   /* ★R3 布局补丁（2026-10-16 外部审查）—— 以下全部只在 ≤980px 生效 */
   @media (max-width:980px){
     /* ① 交互件命中区补齐到 44px（只动命中区，配色/字号/边框色一个字节不改） */

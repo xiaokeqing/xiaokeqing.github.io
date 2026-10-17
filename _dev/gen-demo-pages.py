@@ -4915,6 +4915,135 @@ views_out = sub1(views_out,
                  '            </div>\n'
                  '          </div>\n' + API_HEALTH_MOD + VH_DEPLOY_MOD + VH_OPS_MOD,
                  'C2-P1: 接口健康模块（监测中心·真数据延迟条）+ V4 部署时间轴/处置动作')
+# ---- ★SST（站主 2026-10-17）：数据统计一屏装不下（8 张卡纵向排下来要滑两屏多）
+#   站主原话：「数据统计下面这个条太长了……看看能不能直接在一页都显示完，不用往下滑，
+#   你可以再开一两个导航栏这样」。做法：在这一屏内部再开一条子导航（4 个分区），
+#   一组一屏、不再长滚；只切显示，**不动取数**（仍按原懒加载口径：切到哪个 tab 才请求）。
+#   分区：概览(7×24 + 来源分布) / 来源与故事(grid32 那一组) / 处置留痕(封禁榜 + 处置动作)
+#         / 部署与接口(接口健康 + 版本时间轴)
+SST_CSS = u'''
+  /* 数据统计 · 子分区（一屏一主题；零新增配色，全部吃既有变量） */
+  .sst-nav{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+  .sst-nav button{font:12.5px var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
+    border:1px solid var(--line);border-radius:99px;padding:6px 15px;cursor:pointer;
+    transition:color .16s,border-color .16s,background .16s}
+  .sst-nav button:hover{color:var(--txt);border-color:rgba(255,246,235,.30)}
+  .sst-nav button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .sst-nav button.on{color:var(--acc);border-color:var(--acc);background:rgba(255,246,235,.10)}
+  .sst-pane{display:none}
+  .sst-pane.on{display:grid;gap:14px;align-items:start}
+  .sst-pane.on[data-sst="ov"],.sst-pane.on[data-sst="act"],.sst-pane.on[data-sst="sys"]{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  /* 概览：前两张并排、第三张（来源与故事整体）占满一整行 */
+  .sst-pane.on[data-sst="ov"]>*:nth-child(3){grid-column:1/-1}
+  .sst-pane.on>*{min-width:0}
+  @media (max-width:1100px){
+    .sst-pane.on[data-sst="ov"],.sst-pane.on[data-sst="act"],.sst-pane.on[data-sst="sys"]{
+      grid-template-columns:minmax(0,1fr)}
+  }
+'''
+SST_JS = u'''
+  /* ★数据统计子分区（站主 2026-10-17「一屏装不下」）：
+     运行期把这个面板的顶层卡片按 4 组搬进各自的 .sst-pane，只切显示、不动取数。
+     分组不变式：顶层 7 个块 —— 7×24(0) / grid32 来源与故事(1) / 封禁榜(2) /
+     来源分布(3) / 接口健康(4) / 部署(5) / 处置动作(6)。数量不对就整段跳过（宁可不拆，不许拆错）。 */
+  (function(){
+   function boot(){
+    var pane = document.querySelector('.ops-tab[data-pane="stats"]'); if(!pane) return;
+    if(pane.querySelector('.sst-nav')) return;                 /* 已经拆过 */
+    var kids = [].slice.call(pane.children);
+    if(kids.length !== 7) return;                              /* 结构变了：不硬拆 */
+    var GROUPS = [['ov','概览',[0,3,1]],
+                  ['act','处置留痕',[2,6]],['sys','部署与接口',[4,5]]];
+    var nav = document.createElement('nav');
+    nav.className='sst-nav'; nav.id='sstNav'; nav.setAttribute('role','tablist');
+    nav.setAttribute('aria-label','数据统计分区');
+    var panes = [], btns = [];
+    GROUPS.forEach(function(g, n){
+      var b=document.createElement('button');
+      b.type='button'; b.setAttribute('data-sst', g[0]); b.setAttribute('role','tab');
+      b.textContent=g[1]; if(n===0) b.className='on';
+      b.setAttribute('aria-selected', n===0?'true':'false');
+      nav.appendChild(b); btns.push(b);
+      var p=document.createElement('div');
+      p.className='sst-pane'+(n===0?' on':''); p.setAttribute('data-sst', g[0]);
+      g[2].forEach(function(x){ if(kids[x]) p.appendChild(kids[x]); });
+      panes.push(p);
+    });
+    pane.insertBefore(nav, pane.firstChild);
+    panes.forEach(function(p){ pane.appendChild(p); });
+    function pick(name){
+      var ok=false;
+      btns.forEach(function(b){ var on=b.getAttribute('data-sst')===name;
+        b.classList.toggle('on',on); b.setAttribute('aria-selected', on?'true':'false'); if(on) ok=true; });
+      panes.forEach(function(p){ p.classList.toggle('on', p.getAttribute('data-sst')===name); });
+      if(!ok && btns[0]) pick('ov');
+    }
+    nav.addEventListener('click', function(e){
+      var b=e.target.closest('button'); if(!b) return; pick(b.getAttribute('data-sst'));
+    });
+    pick('ov');
+   }
+   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  })();
+'''
+
+
+def _sst_split(html):
+    """把数据统计面板的顶层卡片按分区重新分组（深度扫描，不依赖正则配对）。"""
+    open_tag = '<div class="ops-tab" data-pane="stats">'
+    i = html.find(open_tag)
+    if i < 0:
+        raise SystemExit('SST: 找不到「数据统计」面板标记，插入点失效')
+    start = i + len(open_tag)
+    tag = re.compile(r'<div\b|</div>')
+    depth, j, child_start, spans = 1, start, None, []
+    pane_end = None
+    while True:
+        m = tag.search(html, j)
+        if not m:
+            raise SystemExit('SST: 面板没有闭合')
+        if m.group(0) == '</div>':
+            depth -= 1
+            if depth == 0:
+                if child_start is not None:
+                    spans.append((child_start, m.start()))
+                pane_end = m.start()
+                break
+            if depth == 1 and child_start is not None:
+                spans.append((child_start, m.start()))
+                child_start = None
+        else:
+            depth += 1
+            if depth == 2:
+                child_start = m.start()
+        j = m.end()
+    if len(spans) != 7:
+        raise SystemExit('SST: 期望 7 张顶层卡，实际 %d —— 结构变了，先核对再改' % len(spans))
+
+    def blk(idx):
+        return '\n' + html[spans[idx][0]:spans[idx][1]] + '\n'
+
+    groups = [
+        ('ov',  '概览',        [0, 3]),
+        ('src', '来源与故事',  [1]),
+        ('act', '处置留痕',    [2, 6]),
+        ('sys', '部署与接口',  [4, 5]),
+    ]
+    nav = ('<nav class="sst-nav" id="sstNav" role="tablist" aria-label="数据统计分区">\n'
+           + ''.join('<button type="button" data-sst="%s" role="tab" aria-selected="%s"'
+                     ' class="%s">%s</button>\n'
+                     % (k, 'true' if n == 0 else 'false', 'on' if n == 0 else '', label)
+                     for n, (k, label, _) in enumerate(groups))
+           + '</nav>\n')
+    panes = ''.join('<div class="sst-pane%s" data-sst="%s">%s</div>\n'
+                    % (' on' if n == 0 else '', k, ''.join(blk(x) for x in idxs))
+                    for n, (k, label, idxs) in enumerate(groups))
+    return html[:start] + '\n' + nav + panes + html[pane_end:]
+
+
+# SST 分组改由前端 SST_JS 做（Python 侧不再重排 DOM；深度扫描会被内联脚本里的 "<div" 骗到）
+
 views_out = sub1(views_out,
                  '<div class="chat-ft">',
                  '<div class="anchor-row ask-ex" id="askEx"></div>\n        <div class="chat-ft">',
@@ -4945,10 +5074,12 @@ views_out = sub1(views_out,
 
 # ---- R2 汇入（样式 + 脚本）----
 shell_style = shell_style + R2_CSS
+shell_style = shell_style + SST_CSS
 home_style = home_style + R2_HOME_CSS
 if not shell_scripts[0].rstrip().endswith('</script>'):
     raise SystemExit('R2: 外壳第一段 <script> 结构变了，交互层插入点失效')
 shell_scripts[0] = shell_scripts[0].rstrip()[:-len('</script>')] + R2_JS + '\n</script>'
+shell_scripts[0] = shell_scripts[0].rstrip()[:-len('</script>')] + SST_JS + '\n</script>'
 print('批次 R2：骨架/焦点/term暂停/donut SVG/tab hash/引用卡组/示例chips/笔记分类 已汇入；'
       '矩阵摘要已收敛进图例行；主页 CRT 事件行与值班便签已按站主批撤销')
 
