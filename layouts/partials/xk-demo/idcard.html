@@ -184,14 +184,14 @@
   var LINE_ZH = {
     /* ★2026-10-16 站主新口径：进站问候换成"欢迎使用 Amadeus 系统"那两句（音频为 GPT-SoVITS v3 新合成，见 bank.json）；
        旧的 greet_first / greet_back **保留**（新句子取不到时兜底，且它们的音轨仍是一字不改的老录音）。 */
-    greet_welcome: '你好，欢迎使用 Amadeus 系统。我是桐莉栖 —— 这上面的数字全是真的，慢慢看。',
-    greet_welcome_back: '又见面了。Amadeus 系统一直开着呢，你安心看就好。',
-    greet_first: '你好，我是桐莉栖。这一屏的数字都是真的，看不清就凑近一点。',
-    greet_back: '又见到你了。数据还是真的，我没换过口径。',
-    nav_home: '回到主页了。我一直待在这台显示器里。',
-    nav_monitor: '这一屏是我们监测到的情况，数字都是真的；取不到我就写读不到。',
-    nav_ai: '有问题就问我，我照真检索到的东西答；答不了我就说答不了。',
-    nav_notes: '笔记都在这儿，新的排在最前面。',
+    greet_welcome: '你好，我是桐莉栖。这里是 Amadeus 观测站——左边是实时告警，中间是能对话的终端，右边是我平时记的笔记。想看哪儿就点，读不到的地方我会直说。',
+    greet_welcome_back: '又见面了。系统一直开着，数字也换过一轮了。要从上次那屏接着看吗？',
+    greet_first: '欢迎。这儿讲的全是这台机器上真实发生过的事，慢慢看。',
+    greet_back: '又见到你了。数据的口径没变，我说话也没变。',
+    nav_home: '回到主页了。想从哪块看起？我陪你走。',
+    nav_monitor: '监测中心——实时告警流、攻击来源分布、处置记录都在这屏。数字是后端真读的；读不到我就写读不到。',
+    nav_ai: 'AI 问答——安全概念、防御做法、CVE 复现都能问，答案带引用。答不了我就说答不了，不编。',
+    nav_notes: '笔记——工程实践、渗透记录、复盘，新的排在前面。写错了我会改，但不会删。',
     fallback_no_data: '这次没读到数据。我不补数，读不到就是读不到。',
     fallback_offline: '请求没送达。我不编答案，等接口恢复再说。',
     fallback_throttled: '接口在限流，等一下再问。',
@@ -268,7 +268,7 @@
     var grp = GROUP_OF[id], ok = false;
     try {
       if (grp && window.KurisuPlayer && typeof window.KurisuPlayer.speakGroup === 'function') {
-        var pr = window.KurisuPlayer.speakGroup('/', grp, { preferId: id });
+        var pr = window.KurisuPlayer.speakGroup(grp, { preferId: id });
         ok = true;
         if (pr && pr.then) {
           pr.then(function (r) {

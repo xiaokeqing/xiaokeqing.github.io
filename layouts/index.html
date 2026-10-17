@@ -1830,7 +1830,7 @@ function xkvPlay(id){
     if(typeof typeSub === 'function') typeSub(xkvText(id, line.text));
     if(typeof xkVoiceAnim === 'function'){ xkVoiceAnim(id); }
     XKV.lastId = id;
-    KurisuPlayer.speakGroup('/', _grp, {preferId:id}).then(r=>{
+    KurisuPlayer.speakGroup(_grp, {preferId:id}).then(r=>{
       if(r && r.ok){ XKV.plays++; } else { XKV.errors.push('speakGroup: ' + ((r && r.reason) || '?')); }
       if(typeof xkVoiceEnd === 'function'){ xkVoiceEnd(); }
     }, e=>{ XKV.errors.push('speakGroup: ' + e); if(typeof xkVoiceEnd === 'function'){ xkVoiceEnd(); } });
