@@ -120,6 +120,11 @@ def fmt_num(value):
     return UNKNOWN if value is None else format(value, ",")
 
 
+def fmt_with(value, unit):
+    """'266 次'；值为空就只写「未取到」，不留下孤零零的单位。"""
+    return UNKNOWN if value is None else "%s %s" % (fmt_num(value), unit)
+
+
 def pct(part, whole):
     if not whole or part is None:
         return None
@@ -190,6 +195,17 @@ def mask_ip(ip):
 # --------------------------------------------------------------------------
 # 各端点的归一化
 # --------------------------------------------------------------------------
+IPV4_RE = re.compile(r"\b(\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d{1,3})\b")
+
+
+def scrub_ips(text):
+    """把自由文本（规则名/告警标题里常拼着来源 IP）里的四段 IPv4 一并掩码。
+    只用于展示文本；结构化字段的计数去重仍用原始值。"""
+    if not isinstance(text, str):
+        return text
+    return IPV4_RE.sub(lambda m: "%s.x" % m.group(1), text)
+
+
 def norm_audit(data):
     """把 /audit 归一成 report 直接可用的结构；字段缺失用 None，不抛异常。"""
     if not data:
@@ -410,13 +426,13 @@ def build_report(now, ws, we, wk, endpoints, errors, base):
     add("")
     add("| 项 | 数值 | 说明 |")
     add("|---|---|---|")
-    add("| 24h 告警 | %s 条 | `stats24h.total`，未去重；state=%s |" % (
-        fmt_num(alerts_total), dig(alerts, "stats24h", "state") or UNKNOWN))
+    add("| 24h 告警 | %s | `stats24h.total`，未去重；state=%s |" % (
+        fmt_with(alerts_total, "条"), dig(alerts, "stats24h", "state") or UNKNOWN))
     add("| 24h 严重 / 高危 | %s | 同一 24h 桶 |" % (sev_line(alerts) or UNKNOWN))
     win_total = dig(alerts, "total")
-    add("| 当前聚合窗口告警（去重） | %s 条 | `alerts.total`，窗口 %s 分钟 |" % (
-        fmt_num(win_total), fmt_num(alerts_win)))
-    add("| 当前窗口原始条数 | %s | `alerts.rawTotal`，最近 %s 条内 |" % (
+    add("| 当前聚合窗口告警（去重） | %s | `alerts.total`，窗口 %s |" % (
+        fmt_with(win_total, "条"), fmt_with(alerts_win, "分钟")))
+    add("| 当前窗口原始条数 | %s | `alerts.rawTotal`；`alerts.windowSize` = %s 条为取数上限 |" % (
         fmt_num(dig(alerts, "rawTotal")), fmt_num(dig(alerts, "windowSize"))))
     add("| 蜜罐连接 / 登录 / 登录失败 | %s / %s / %s | 同一响应内字段（口径一致） |" % (
         fmt_num(dig(honey, "connections")), fmt_num(dig(honey, "logins")), fmt_num(dig(honey, "loginFails"))))
@@ -438,7 +454,7 @@ def build_report(now, ws, we, wk, endpoints, errors, base):
     add("|---|---|---|---|---|")
     for i, c in enumerate(countries[:5], 1):
         add("| %d | %s（`%s`） | %s | %s | %s |" % (
-            i, c.get("countryName") or "未知", c.get("country") or "?", fmt_num(as_int(c.get("count"))),
+            i, scrub_ips(c.get("countryName")) or "未知", c.get("country") or "?", fmt_num(as_int(c.get("count"))),
             fmt_num(as_int(c.get("uniqueIps"))),
             ("%.1f%%" % c["sharePercent"]) if isinstance(c.get("sharePercent"), (int, float)) else UNKNOWN))
     if not countries:
@@ -448,7 +464,7 @@ def build_report(now, ws, we, wk, endpoints, errors, base):
     add("|---|---|---|---|---|")
     for i, a in enumerate((dig(geo, "byAsnTop") or [])[:5], 1):
         add("| %d | `AS%s` | %s | %s | %s |" % (
-            i, a.get("asn") if a.get("asn") is not None else "?", a.get("org") or "未知",
+            i, a.get("asn") if a.get("asn") is not None else "?", scrub_ips(a.get("org")) or "未知",
             fmt_num(as_int(a.get("count"))), fmt_num(as_int(a.get("uniqueIps")))))
     if not (dig(geo, "byAsnTop") or []):
         add("| — | %s | — | — | — |" % UNKNOWN)
@@ -467,7 +483,7 @@ def build_report(now, ws, we, wk, endpoints, errors, base):
     add("## 4. Top 5 攻击 IP（脱敏）")
     add("")
     add("> 口径：`honeypot.topSources[]`，采样窗口 `sampled=%s`；IP 显示按仓库既有规则"
-        "「保留前三段 + 末段换 `x`」（如 `172.16.18.12` → `172.16.18.x`）。"
+        "「保留前三段 + 末段换 `x`」（`a.b.c.d` → `a.b.c.x`）。"
         "去重与计数用原始值，只有展示被掩码。" % fmt_num(dig(honey, "sampled")))
     add("")
     add("| # | 来源 IP（已掩码） | 命中次数 |")
@@ -497,7 +513,7 @@ def build_report(now, ws, we, wk, endpoints, errors, base):
     add("|---|---|---|")
     rules = top_rules(alerts)
     for i, (name, cnt) in enumerate(rules, 1):
-        add("| %d | %s | %s |" % (i, name.replace("|", "\\|"), fmt_num(cnt)))
+        add("| %d | %s | %s |" % (i, scrub_ips(name).replace("|", "\\|"), fmt_num(cnt)))
     if not rules:
         add("| — | %s | — |" % UNKNOWN)
     add("")
@@ -589,6 +605,11 @@ def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
         try:
             sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:  # noqa: BLE001
+            pass
+    if hasattr(sys.stderr, "reconfigure"):
+        try:
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
         except Exception:  # noqa: BLE001
             pass
 

@@ -1,0 +1,25 @@
+[Unit]
+Description=SecAgent 每周安全战报（公开只读端点 → Markdown）
+Documentation=https://github.com/xiaokeqing/SecAgent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# 周报只做一件事：取 4 个公开只读端点 → 写 /opt/secagent/reports/weekly-<运行日期>.md
+# 命名交给脚本的 --out-dir：ExecStart 里的 % 必须写成 %% 才能落到脚本，容易踩坑，不走那条路。
+WorkingDirectory=/opt/secagent/tools
+# 报告里的「本周」按本地时区切 ISO 周，必须钉死时区，否则换机/换 TZ 会切错周
+Environment=TZ=Asia/Shanghai
+Environment=PYTHONIOENCODING=utf-8
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /opt/secagent/tools/weekly-report.py --out-dir /opt/secagent/reports --timeout 30
+# 四个端点：2026-10-17 在 srv2 实测合计 ~4s；脚本内部每端点最多 2 次 × 30s，
+# 上游整体卡死时 4 个端点理论最坏 ~4 分钟，留 5 分钟。
+TimeoutStartSec=300
+Nice=10
+CPUQuota=20%
+MemoryMax=96M
+# 退出码语义（见脚本头）：0 全部取到 / 3 部分取到（报告已如实写出）/ 2 全部失败
+# 故意不把 3 加进 SuccessExitStatus：让「有端点没取到」在 systemctl --failed 里看得见。
+# 若某段时间只有个别端点偶发失败、报告够用，再自己加：SuccessExitStatus=0 3

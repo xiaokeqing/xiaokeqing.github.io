@@ -1,0 +1,16 @@
+[Unit]
+Description=Weekly timer: SecAgent 安全战报（每周一 06:00 Asia/Shanghai）
+Documentation=https://github.com/xiaokeqing/SecAgent
+
+[Timer]
+# 周一 06:00。srv2 系统时区 2026-10-17 实测为 Asia/Shanghai（CST, +0800），
+# 这里仍显式带上时区后缀，换到 UTC 机器上也不会偏移 8 小时。
+OnCalendar=Mon *-*-* 06:00:00 Asia/Shanghai
+# 抖 10 分钟，避开整点巡检（沿用 secagent-static-daily 的约定）
+RandomizedDelaySec=600
+# 当周机器关机就错过一次 → Persistent=true 让开机后补跑；周报补跑一次无害
+Persistent=true
+Unit=weekly-report.service
+
+[Install]
+WantedBy=timers.target
