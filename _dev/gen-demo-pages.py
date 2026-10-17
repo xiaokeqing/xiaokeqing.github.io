@@ -437,6 +437,13 @@ LAZY_PATCHES = [
     ('<img class="glow" src=', '<img loading="lazy" class="glow" src=', 'views'),
     ('<img class="backplate" src=', '<img loading="lazy" class="backplate" src=', 'views'),
     ('<img class="plate" src=', '<img loading="lazy" class="plate" src=', 'views'),
+    # ②b ★V3（2026-10-17）：垫板 subtitle_frame_big.webp = 373.4KB，是首屏第二大块（仅次于 HTML 本身）。
+    #    改成 data-src + 1×1 透明占位：正常网络由 /js/xk-saver.js 立刻补回 src（请求时机几乎不变），
+    #    省流模式则根本不取（只保留底图 + 一行提示）。断言 pattern 变了就报错，防止补丁静默失效。
+    ('<img loading="lazy" class="plate" src="demo-assets/subtitle_frame_big.webp"',
+     '<img loading="lazy" class="plate" data-src="demo-assets/subtitle_frame_big.webp" '
+     'src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"',
+     'views'),
     # ② 背景选择器的 10 张缩略图：都在关着的弹层里（display:none）→ lazy；
     #    当前那张背景是 #bgEl 的 CSS background（setBg），照 demo 立刻载，不受影响。
     ('<img src="${b.file}" alt="${b.name}">', '<img loading="lazy" src="${b.file}" alt="${b.name}">', 'script0'),
@@ -490,6 +497,15 @@ for old, new, where in LAZY_PATCHES:
         if shell_scripts[0].count(old) != 1:
             raise SystemExit('懒加载补丁对不上（%s 出现 %d 次）：%s' % (where, shell_scripts[0].count(old), old[:60]))
         shell_scripts[0] = shell_scripts[0].replace(old, new)
+
+# ②b ★V3（2026-10-17）：**主页**的垫板（373.4KB）同样改成 data-src + 1×1 透明占位 —— 省流模式不取；
+#    正常网络由 /js/xk-saver.js 在 head 段补回真 src（非省流时请求时机与之前一致）。
+_PLATE_FROM = '<img class="plate" src="/kurisu/scene/subtitle_frame_big.webp"'
+_PLATE_TO = ('<img class="plate" data-src="/kurisu/scene/subtitle_frame_big.webp" '
+             'src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"')
+if home_body.count(_PLATE_FROM) != 1:
+    raise SystemExit('主页垫板补丁对不上（出现 %d 次）：%s' % (home_body.count(_PLATE_FROM), _PLATE_FROM[:60]))
+home_body = home_body.replace(_PLATE_FROM, _PLATE_TO)
 
 LAZY_NOTE = u'''
   /* ★ 生产站差异（站主第四批口径③"允许行为级懒加载，不许改版式"）：下面这几处**只改加载时机**，
@@ -3203,7 +3219,7 @@ def xk_sm_patches(script, is_home):
                  "/* ★2026-10-17 站主定：**C 方案** —— 开场用立绘那套(full/*)，进站后由状态机演 38 条动作；\n"
                  "   但状态机的 idle/轮换只从 **≥268px** 的剪辑里挑（entryFor 里过滤），低清的 134/168 剪辑不参与轮换\n"
                  "   （情绪按钮仍可显式调用）。状态机在主页恢复启动。 */\n"
-                 "setTimeout(xkSmBoot, 600);   /* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/\n"
+                 "if(!window.__xkSaver) setTimeout(xkSmBoot, 600);   /* ★V3：省流模式不起状态机（不取任何剪辑图集）*//* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/\n"
                  "started = true; lastT = performance.now();\n" % ('true' if is_home else 'false'),
                  'T8: 启动挂钩')
     return s
@@ -3233,7 +3249,8 @@ home_script = sub1(home_script,
                    'T5.6: L1 等 idle boot 就绪即进场')
 
 # ---- ★T31 开场六阶段（注入位置必须在 T5.6 之后，理由见 T31 段注释）----
-home_script = sub1(home_script, T31_JS_ANCHOR, T31_JS_ANCHOR + T31_JS, 'T31: 注入六阶段状态机 JS')
+T31_JS_ANCHOR_NEW = "const RM = matchMedia('(prefers-reduced-motion: reduce)').matches || !!window.__xkSaver;   /* ★V3：省流模式按 RM 走（不播开场、不取 opening/idle 图集）*/\n"
+home_script = sub1(home_script, T31_JS_ANCHOR, T31_JS_ANCHOR_NEW + T31_JS, 'T31: 注入六阶段状态机 JS')
 home_script = sub1(home_script, T31_PWR_OLD, T31_PWR_NEW, 'T31: 旧通电四拍让位')
 home_script = sub1(home_script, T31_TRANS_OLD, T31_TRANS_NEW, 'T31: opening 末帧 → xkTransStart()')
 home_script = sub1(home_script, T31_START_OLD, T31_START_NEW, 'T31: 启动处起六阶段')
@@ -4982,6 +4999,9 @@ write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ==================
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video" data-xk-boot="0">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
+  {{- /* ★V3（2026-10-17）：极弱网省流模式。head 里同步引入（2KB），只为尽早判定（saveData/2g/3g
+         或 ?xk-saver=1）并给 <html> 上 xk-saver 类；重活（不启动状态机/不取垫板）由它自己安排。 */}}
+  <script src="/js/xk-saver.js"></script>
   {{- /* ★P0-④：首屏第一张（壁纸）preload + high —— 只这一张抢带宽，其余按顺序 decode */}}
   <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
 <style>%s
@@ -5236,6 +5256,9 @@ for section, view, cname in PAGES:
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
 <head>
 {{ partial "xk-demo/head-meta.html" . }}
+  {{- /* ★V3（2026-10-17）：极弱网省流模式。head 里同步引入（2KB），只为尽早判定（saveData/2g/3g
+         或 ?xk-saver=1）并给 <html> 上 xk-saver 类；重活（不启动状态机/不取垫板）由它自己安排。 */}}
+  <script src="/js/xk-saver.js"></script>
 {{ partial "xk-demo/shell-style.html" . }}
 </head>
 <body data-skin="warm" data-phone="v1"%s>
