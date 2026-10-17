@@ -1322,6 +1322,8 @@ for _line in ('<a href="/labs/" class="{{ if eq $v "range" }}on{{ end }}">靶场
               '<a href="/about/" class="{{ if eq $v "about" }}on{{ end }}">关于</a>\n'):
     chrome = sub1(chrome, _line, '', 'T27: chrome dock 删项')
 
+
+
 # --------------------------------------------------------------------- ★T20/T21/T22（窗口 F 的字段映射）
 #   T20 封禁榜 ← /audit（summary + blocks[]）；T21 故事线 ← /stories + 点击懒加载 /story?src=；
 #   T22 知识库 ← /kb?q=（都在 /ai/ 页，只在用户操作时请求）。绑定实现在手写的 api-bind.html 里。
@@ -3550,6 +3552,17 @@ DOCK_ANCHOR_CONTENT = '<a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }
 DOCK_ANCHOR_HOME = '<a href="/posts/">笔记</a>\n'
 DOCK_TEST_CONTENT = '<a href="/test/" class="{{ if eq $v "test" }}on{{ end }}">测试</a>\n'
 DOCK_TEST_HOME = '<a href="/test/">测试</a>\n'
+
+# ---- ★WHAT（站主 2026-10-17）：dock 第五项「介绍」→ /what/ -----------------
+#   理由是「把功能介绍放进导航，正好省掉语音里那段罗嗦的栏目介绍」。
+#   口径：/what/ 是**手写** layout（layouts/what/list.html），不由本生成器产出；
+#   这里只负责把导航项插进两处 dock（外壳 chrome + 主页 body），保持顺序在后、笔记之后。
+DOCK_WHAT_CONTENT = '<a href="/what/" class="{{ if eq $v "what" }}on{{ end }}">介绍</a>\n'
+DOCK_WHAT_HOME = '<a href="/what/">介绍</a>\n'
+chrome = sub1(chrome, DOCK_ANCHOR_CONTENT, DOCK_ANCHOR_CONTENT + '  ' + DOCK_WHAT_CONTENT,
+              'WHAT: 外壳 dock 新增「介绍」')
+home_body = sub1(home_body, DOCK_ANCHOR_HOME, DOCK_ANCHOR_HOME + '  ' + DOCK_WHAT_HOME,
+                 'WHAT: 主页 dock 新增「介绍」')
 # ★P6（站主 2026-10-16 裁定"`/test/` 不要了"）：**从顶部导航摘掉「测试」项**（两处 dock 都摘）。
 #   注意：**只摘导航，不删页面** —— `_dev/check-ssr-contract.py` 的五页清单仍把 `/test/` 当第 5 页，
 #   连页面一起删要先改门禁与 dock 模板（等站主再说）。robots.txt 的 `Disallow: /test/` 由主窗口加。

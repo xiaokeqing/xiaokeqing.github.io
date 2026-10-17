@@ -1,0 +1,127 @@
+{{- /* ============================================================================
+   /what/ = 「这是什么 · 能干什么」介绍页（手写页，不归 _dev/gen-demo-pages.py 管）。
+   ----------------------------------------------------------------------------
+   为什么手写：这一页是**纯静态陈述**，不取数、不跑作战室状态机，因此不需要
+   shell-views.html 里那四屏 section 的任何一条。结构与样式仍沿用外壳同一套类
+   （.screen / .screen-hd / .screen-bd / .mod / .tag / .led），只补 4 条本页专用规则。
+   导航：dock 第五项由生成器插（_dev/gen-demo-pages.py 的 DOCK_WHAT_*），本页只需 $v="what"。
+   ============================================================================ */ -}}
+{{- $v := "what" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：只用外壳已有的色板变量，不加新配色 */
+.what-bd{display:flex;flex-direction:column;gap:14px}
+.what-lead{font-size:14px;line-height:1.95;color:rgba(255,255,255,.86);margin:0}
+.what-lead b{color:#cfe9f5;font-weight:600}
+.what-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:980px){.what-grid{grid-template-columns:1fr}}
+.what-card{padding:14px 15px}
+.what-card h3{margin:0 0 8px;font-size:13.5px;letter-spacing:.04em;color:#cfe9f5;font-weight:600}
+.what-card p{margin:0;font-size:12.5px;line-height:1.9;color:rgba(255,255,255,.78)}
+.what-kv{margin:0;font-size:12.5px;line-height:1.9;color:rgba(255,255,255,.8)}
+.what-kv code,.what-card code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.what-kv b{color:#e8f3f8}
+.what-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.what-tbl th,.what-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.what-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em}
+.what-tbl td code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#bfe3d0}
+.what-pre{margin:0;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
+.what-pre .c{color:rgba(255,255,255,.45)}
+.what-foot{font-size:11.5px;color:rgba(255,255,255,.5);line-height:1.9;margin:2px 0 0}
+.what-foot a{color:#bfe3d0}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="what">
+<section class="view on" id="v-what">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 这是什么 <em class="ops-en">WHAT-IS-THIS</em></span>
+      <span class="sync">● 纯静态说明 · 页面上的数字都能 curl 复核</span>
+    </div>
+    <div class="screen-bd what-bd">
+
+      <p class="what-lead">
+        这是一个跑在两台云主机上的<b>安全观测站</b>：把主机层的 Wazuh、网络层的 Suricata、
+        以及三台蜜罐（Cowrie / Dionaea）产生的告警，汇进同一个面板，对外只开只读接口。
+        它的问题是<b>「我这边到底在被怎么打、我拦下了什么」</b>——所以每个数字下面都写着它从哪个端点来。
+      </p>
+
+      <div class="what-grid">
+        <div class="mod what-card">
+          <h3>① 看攻击实况</h3>
+          <p>实时攻击流（5 分钟窗口聚合）、攻击图谱（攻击者 → 四阶段粒子流）、威胁矩阵（14 个 ATT&CK 手法格）、
+             数据统计（来源国 / ASN / 规则命中）。数据源：<code>/alerts</code> <code>/stories</code> <code>/geo</code> <code>/webstats</code>。</p>
+        </div>
+        <div class="mod what-card">
+          <h3>② 看处置链</h3>
+          <p>护栏拦下了多少动作、真正执行了几个、封过哪些地址、蜜罐被连了多少次、攻击者拿什么口令撞的。
+             数据源：<code>/audit</code> <code>/honeypot</code>。地址一律打码到前三段。</p>
+        </div>
+        <div class="mod what-card">
+          <h3>③ 直接问它</h3>
+          <p>「AI 问答」页是对着<b>本站自己的知识库</b>检索后作答，引用到条目；检索不到就明说检索不到，
+             不编造。问答接口同样有频率限制，公开面只做解释、不做取证判决。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>数据从哪来 · 口径与免责<span class="tag">可复核</span></div>
+        <div class="mod-bd">
+          <table class="what-tbl">
+            <thead><tr><th>指标</th><th>端点 / 字段</th><th>口径（容易误读的地方）</th></tr></thead>
+            <tbody>
+              <tr><td>累计拦截</td><td><code>audit.summary.blockedByGuard</code></td><td>护栏拦下的动作数，<b>累计</b>，不是本周</td></tr>
+              <tr><td>累计封禁 IP</td><td><code>audit.summary.blockTotal</code></td><td>留痕条数去重后的地址数；同时给出当前生效数</td></tr>
+              <tr><td>蜜罐连接</td><td><code>honeypot.connections</code></td><td><code>total</code> 恒为 10000，那是<b>统计上限哨兵</b>，不是真实累计</td></tr>
+              <tr><td>24h 告警</td><td><code>geo.coverage.totalAlerts</code></td><td>窗口内未去重总量；其中带源 IP 的才进地理统计</td></tr>
+              <tr><td>告警源</td><td><code>dataSource.wazuhMode</code></td><td><code>REAL</code> = 真的 Wazuh 在供数；降级会显式写出来</td></tr>
+            </tbody>
+          </table>
+          <p class="what-foot">公开面只读、不含任何写操作；地理统计用 DB-IP Lite 离线库，只到国家/省，不定位到人。
+            蜜罐是真实诱饵，攻击者的口令尝试会被记录但<b>不会</b>在页面上明示原文。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>不信就自己敲<span class="tag">/api/public/*</span></div>
+        <div class="mod-bd">
+          <pre class="what-pre"><span class="c"># 全部只读，可直接 curl；返回 JSON，字段同上表</span>
+curl -s https://demo.xiaokeqing.cn/api/health | head -c 200
+curl -s https://demo.xiaokeqing.cn/api/public/audit | head -c 400
+curl -s https://demo.xiaokeqing.cn/api/public/honeypot | head -c 400</pre>
+          <p class="what-foot">这些接口由站点同源的 <code>meta[name=wb-api]</code> 声明，页面自己也不写死域名；
+            取不到数据时页面显示「未取到」而不是填 0 —— 失败要看得见。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>几条工程取舍<span class="tag">为什么这么做</span></div>
+        <div class="mod-bd">
+          <p class="what-kv">
+            <b>① 公开面只读。</b>访客能看到的是聚合结果，命令、文件、原始日志一概不出站。<br>
+            <b>② 失败关闭。</b>取数失败、令牌缺失、门禁不通过，一律停在「未取到 / 401」，不做兜底编造。<br>
+            <b>③ 每个数字可回查。</b>页面上的数字都带端点名；写笔记时也按这个口径标来源，不写「大概」「几十」。
+          </p>
+          <p class="what-foot">细节写在笔记里：<a href="/posts/verifiable-deploy-chain/">可验证的发布链</a> ·
+            <a href="/posts/public-api-rate-limit-owner-token/">公开接口防刷</a> ·
+            <a href="/posts/backup-two-machines-gone/">备份链的四个洞</a></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>
