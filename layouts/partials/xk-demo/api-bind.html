@@ -203,7 +203,8 @@
     overview: 'overview.js', alerts: 'alerts.js', honeypot: 'honeypot.js', audit: 'audit.js',
     home: 'home.js',    /* ★P9：监测中心首屏聚合端点（后端已上线、白名单已加） */
     latest: 'latest.js', geo: 'geo.js', stories: 'stories.js', story: 'story.js', webstats: 'webstats.js',
-    kb: 'kb.js'
+    kb: 'kb.js',
+    deploy: 'deploy.js', eval: 'eval.js'   /* ★V4：发布链快照（P4）/ 96 题评测（P5）—— 后端 available=true */
   };
   function apiPath(name, query) {
     return '/api/public/' + (ALIAS[name] || name) + (query ? '?' + query : '');
@@ -712,7 +713,8 @@
     bindSync(parts);
     /* ★B5：**谁到了就渲染谁** —— 依赖某端点的绑定，在该端点还没到时整个跳过（保持骨架），
        绝不因为"还没到"而把已经有数据的卡写成空白/读不到。 */
-    if (!pend('audit')) bindBans(parts);                     /* ★T20 */
+    if (!pend('audit')) { bindBans(parts); bindOpsActions(parts); }   /* ★T20 / ★V4-P3 */
+    if (!pend('deploy')) bindDeploy(parts);                          /* ★V4-P4 部署时间轴 */
     if (!pend('stories')) bindStories(parts);                 /* ★T21 */
     bindThreat(parts);                                       /* B5：内部各自判 pending */
     bindGeo(parts);
@@ -784,6 +786,97 @@
       blankRow(rows[0], NA, '', '', '');
       hideFrom(1);
     }
+  }
+
+  /* ---------------------------------------------------------------- ★V4-P4 部署可追溯 · 版本时间轴
+     数据源 /api/public/deploy.js（发布链产物：release/builtAt/files/totalBytes + history[]）。
+     空态：端点没到 ⇒ 保持骨架；到了却失败 ⇒ "读不到 + 原因"；history 为空 ⇒ "没有历史（不是取不到）"。 */
+  function bindDeploy(parts) {
+    var box = document.querySelector('[data-xk-block="deploy"]');
+    if (!box) return;
+    var p = parts.filter(function (x) { return x.path.indexOf('/deploy') >= 0; })[0];
+    var d = okOrStale(p);
+    var note = box.querySelector('[data-vh-deploy-note]');
+    var rows = box.querySelectorAll('[data-vh-deploy-tl] .row');
+    function cell(k, v) {
+      var el = box.querySelector('[data-vh-deploy="' + k + '"]');
+      if (!el) return;
+      el.textContent = (v === null || v === undefined || v === '') ? NA : v;
+      if (el.classList) el.classList.remove('sk');
+    }
+    function row(i, k, mid, chip) {
+      var r = rows[i];
+      if (!r) return;
+      r.style.display = '';
+      r.innerHTML = '<span class="k">' + esc(k) + '</span><span>' + esc(mid) + '</span>' +
+        '<span class="chip">' + esc(chip) + '</span>';
+    }
+    function hideFrom(i) { for (var j = i; j < rows.length; j++) { rows[j].style.display = 'none'; } }
+    if (!d) {
+      var why = !p ? '端点在本次取数清单外' : (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达');
+      cell('release', NA); cell('built', NA); cell('files', NA); cell('bytes', NA);
+      row(0, NA, '读不到（/deploy 未取到：' + why + '）', ''); hideFrom(1);
+      txt(note, '读不到（/deploy 未取到：' + why + '）—— 不补数');
+      return;
+    }
+    cell('release', d.release || NA);
+    cell('built', d.builtAt ? String(d.builtAt).replace('T', ' ').slice(5, 16) : NA);
+    cell('files', fmt(d.files));
+    cell('bytes', d.totalBytes ? (Math.round(d.totalBytes / 1048576 * 10) / 10) + ' MB' : NA);
+    var hist = Array.isArray(d.history) ? d.history.slice(0, rows.length) : [];
+    if (!hist.length) {
+      row(0, '—', '没有发布历史（不是取不到）', ''); hideFrom(1);
+    } else {
+      for (var i = 0; i < hist.length; i++) {
+        var h = hist[i] || {};
+        var when = h.at ? String(h.at).replace('T', ' ').slice(5, 16) : '时间读不到';
+        var mb = h.bytes ? (Math.round(h.bytes / 1048576 * 10) / 10) + ' MB' : '体积读不到';
+        row(i, when, h.release || NA, mb);
+      }
+      hideFrom(hist.length);
+    }
+    txt(note, '版本时间轴取自 /api/public/deploy 的 history（发布链真实产物，最近 ' + hist.length + ' 次）；取不到写"读不到 + 原因"，不补样例值。');
+  }
+
+  /* ---------------------------------------------------------------- ★V4-P3 处置运维 · 处置动作
+     数据源 /api/public/audit.js 的 actions[]（封禁/解封留痕）。IP 一律 maskIp/maskText（口径同封禁榜）。 */
+  function bindOpsActions(parts) {
+    var box = document.querySelector('[data-xk-block="ops"]');
+    if (!box) return;
+    var p = parts.filter(function (x) { return x.path.indexOf('/audit') >= 0; })[0];
+    var au = okOrStale(p);
+    var note = box.querySelector('[data-vh-ops-note]');
+    var rows = box.querySelectorAll('[data-vh-ops-tl] .row');
+    function row(i, k, mid, chip, cls) {
+      var r = rows[i];
+      if (!r) return;
+      r.style.display = '';
+      r.innerHTML = '<span class="k">' + esc(k) + '</span><span>' + esc(mid) + '</span>' +
+        '<span class="chip ' + (cls || '') + '">' + esc(chip) + '</span>';
+    }
+    function hideFrom(i) { for (var j = i; j < rows.length; j++) { rows[j].style.display = 'none'; } }
+    if (!au) {
+      var why = !p ? '端点在本次取数清单外' : (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达');
+      row(0, NA, '读不到（/audit 未取到：' + why + '）', ''); hideFrom(1);
+      txt(note, '读不到（/audit 未取到：' + why + '）—— 不补数');
+      return;
+    }
+    var acts = Array.isArray(au.actions) ? au.actions.slice(0, rows.length) : [];
+    if (!acts.length) {
+      row(0, '—', '本窗口没有处置动作（不是取不到）', ''); hideFrom(1);
+      txt(note, '本窗口没有处置动作记录（不是取不到，是真的没有）');
+      return;
+    }
+    for (var i = 0; i < acts.length; i++) {
+      var a = acts[i] || {};
+      var when = a.time ? String(a.time).replace('T', ' ').slice(5, 16) : '时间读不到';
+      var what = (a.action || '动作读不到') + ' · ' + (a.actor || '执行者读不到');
+      var tgt = a.target ? maskText(a.target) : (a.reason ? maskText(String(a.reason).slice(0, 18)) : '—');
+      var ok = a.success === true;
+      row(i, when, maskText(what + ' → ' + tgt), ok ? '成功' : (a.mode || '未成功'), ok ? 'ok' : 'warn');
+    }
+    hideFrom(acts.length);
+    txt(note, '处置动作来自 /audit.actions（最近 ' + acts.length + ' 条；IP 打码，失败动作也照实显示）');
   }
 
   /* ---------------------------------------------------------------- ★T21 攻击故事线
@@ -1025,7 +1118,7 @@
        在"每请求几十秒"的链路上这是纯浪费。证据：`_dev/probe-slownet.mjs` 的 home-* 场景（请求数 0 + 两档视口整屏截图 +
        确定性可见真值子集：计数器／CRT 状态行／HOLO 文案／导航项／布局盒，与改前基线逐项一致）。 */
   var BASE_JOBS = SSR === 'monitor' ? ['home'] : [];   /* ★P9：首屏 3 请求 → 1（home 聚合；失败由 load() 回落三个单独端点） */
-  var PANE_EXTRA = { live: [], graph: ['audit'], matrix: [], stats: ['audit', 'webstats', 'overview', 'stories'] };
+  var PANE_EXTRA = { live: [], graph: ['audit'], matrix: [], stats: ['audit', 'webstats', 'overview', 'stories', 'deploy'] };
   function activePane() {
     var t = document.querySelector('.ops-tab.on[data-pane]');
     return (t && t.getAttribute('data-pane')) || 'live';
@@ -1328,6 +1421,42 @@
     }, 800);
     paint();
   }
+  /* ★V4-P5（站主口径：把 /test/ 的数据安置成正经可视化）· `/ai/`「AI 质量」tab
+     **切到该 tab 才请求一次**（评测批次不会 40s 变一次，不轮询）；四格 + 一行补充口径。
+     取不到写"读不到 + 原因"，不补数。 */
+  var evalLoaded = false;
+  function bindEval() {
+    if (evalLoaded) return;
+    evalLoaded = true;
+    var box = document.querySelector('[data-xk-block="eval"]');
+    if (!box) return;
+    var note = box.querySelector('[data-eval-note]');
+    function cell(k, v) {
+      var el = box.querySelector('[data-eval="' + k + '"]');
+      if (!el) return;
+      el.textContent = v;
+      if (el.classList) el.classList.remove('sk');
+    }
+    function pct(v) { return (v === null || v === undefined || isNaN(Number(v))) ? NA : (Math.round(Number(v) * 1000) / 10) + '%'; }
+    get(apiPath('eval')).then(function (r) {
+      var d = r && r.d;
+      if (!d) { throw new Error('empty'); }
+      cell('hit', pct(d.keyPointHitRate));
+      cell('refuse', pct(d.refusalRate));
+      cell('strict', pct(d.strictRate));
+      cell('cite', pct(d.citationRate));
+      var extra = [];
+      if (d.sampleSize) { extra.push(d.sampleSize + ' 题'); }
+      if (d.personaCatchphraseRate !== null && d.personaCatchphraseRate !== undefined) { extra.push('口癖率 ' + pct(d.personaCatchphraseRate)); }
+      if (d.tabooRate !== null && d.tabooRate !== undefined) { extra.push('禁忌率 ' + pct(d.tabooRate)); }
+      if (d.generatedAt) { extra.push('批次 ' + String(d.generatedAt).slice(0, 15)); }
+      txt(note, '数据来自 /api/public/eval（仓库 scripts/eval 的批次，前端不编数）' + (extra.length ? ' · ' + extra.join(' · ') : ''));
+    }).catch(function (e) {
+      cell('hit', NA); cell('refuse', NA); cell('strict', NA); cell('cite', NA);
+      txt(note, '读不到（/eval 未取到：' + ((e && e.status) ? 'HTTP ' + e.status : '不可达') + '）—— 不补数');
+    });
+  }
+
   /* ★P2（站主口径：把 /test/ 该给访客看的数据"安置"成正经可视化）· `/ai/` 分区 tab
      问答 / 知识库 / AI 质量。纪律：**切 tab 不自动发请求** —— 知识库仍只在 Enter/点检索时请求（不轮询）。 */
   function bindAiTabs() {
@@ -1345,6 +1474,7 @@
       });
       var bs = nav.querySelectorAll('[data-aitab]');
       for (var i = 0; i < bs.length; i++) { bs[i].classList.toggle('on', bs[i].getAttribute('data-aitab') === t); }
+      if (t === 'eval') { bindEval(); }   /* ★V4-P5：切到"AI 质量"才取一次 eval.js */
     }
     nav.addEventListener('click', function (ev) {
       var b = (ev.target && ev.target.closest) ? ev.target.closest('[data-aitab]') : null;

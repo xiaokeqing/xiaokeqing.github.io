@@ -4820,6 +4820,46 @@ API_HEALTH_MOD = (
     '            </div>\n'
     '          </div>\n'
 )
+# ★V4（站主 2026-10-17："把该给访客看的重要数据做成可视化"）· 第三/四批：**部署时间轴 + 处置动作**。
+#   数据源：/api/public/deploy.js（history[] 真发布记录）、/api/public/audit.js（actions[] 封禁/解封留痕）。
+#   纪律同上：零新增配色/字体，只复用 .mod/.stats/.stat/.row/.k/.chip/.attk-note；
+#   取不到写"读不到 + 原因"，端点没到保持骨架（不写"读不到"冒充缺失）。
+def _tl_rows(n, tag):
+    out = ''
+    for i in range(n):
+        out += ('                <div class="row xk-tl" data-tl="%s"><span class="k">—</span>'
+                '<span>取数中…</span><span class="chip">—</span></div>\n' % tag)
+    return out
+
+
+VH_DEPLOY_MOD = (
+    '          <div class="mod" data-xk-block="deploy"><div class="mod-hd"><span class="led"></span>部署可追溯 · 版本时间轴'
+    '<span class="tag">/deploy</span></div>\n'
+    '            <div class="mod-bd">\n'
+    '              <div class="stats">\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="release">—</div><div class="l">当前版本</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="built">—</div><div class="l">构建时刻</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="files">—</div><div class="l">文件数</div></div>\n'
+    '                <div class="stat"><div class="n sk" data-vh-deploy="bytes">—</div><div class="l">总体积</div></div>\n'
+    '              </div>\n'
+    '              <div data-vh-deploy-tl style="margin-top:12px">\n'
+    + _tl_rows(8, 'deploy') +
+    '              </div>\n'
+    '              <p class="attk-note" data-vh-deploy-note>版本时间轴取自 /api/public/deploy 的 history（发布链真实产物，最近 8 次）；取不到写"读不到 + 原因"，不补样例值。</p>\n'
+    '            </div>\n'
+    '          </div>\n'
+)
+VH_OPS_MOD = (
+    '          <div class="mod" data-xk-block="ops"><div class="mod-hd"><span class="led"></span>处置运维 · 处置动作'
+    '<span class="tag">/audit · IP 已打码</span></div>\n'
+    '            <div class="mod-bd">\n'
+    '              <div data-vh-ops-tl>\n'
+    + _tl_rows(8, 'ops') +
+    '              </div>\n'
+    '              <p class="attk-note" data-vh-ops-note>处置动作来自 /audit.actions（封禁/解封留痕，最近 8 条；IP 走打码口径）；取不到写"读不到 + 原因"，不补 0。</p>\n'
+    '            </div>\n'
+    '          </div>\n'
+)
 views_out = sub1(views_out,
                  '                <li><i class="lg ok"></i>—<b>—</b></li>\n'
                  '              </ul>\n'
@@ -4828,8 +4868,8 @@ views_out = sub1(views_out,
                  '                <li><i class="lg ok"></i>—<b>—</b></li>\n'
                  '              </ul>\n'
                  '            </div>\n'
-                 '          </div>\n' + API_HEALTH_MOD,
-                 'C2-P1: 接口健康模块（监测中心·真数据延迟条）')
+                 '          </div>\n' + API_HEALTH_MOD + VH_DEPLOY_MOD + VH_OPS_MOD,
+                 'C2-P1: 接口健康模块（监测中心·真数据延迟条）+ V4 部署时间轴/处置动作')
 views_out = sub1(views_out,
                  '<div class="chat-ft">',
                  '<div class="anchor-row ask-ex" id="askEx"></div>\n        <div class="chat-ft">',
