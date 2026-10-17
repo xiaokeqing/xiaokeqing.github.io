@@ -583,6 +583,15 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
     var el = document.getElementById('phoneState');
     if(el && s.state) el.textContent = String(s.state).toUpperCase();
   });
+  /* ★兜底（2026-10-17 实测踩到）：模型从缓存命中时 mount 里就已经 ready，onStatus 只报「变化」，
+     这一枪收不到 ⇒ 静态立绘和 E-mote 叠成两个人。这里补一个轮询，直到状态真为 ready 为止。 */
+  var _rp = setInterval(function(){
+    try{
+      var s2 = (em.status && em.status()) || null;
+      if(s2 && s2.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); clearInterval(_rp); }
+      else if(s2 && (s2.state === 'error' || s2.state === 'off')){ clearInterval(_rp); }
+    }catch(e){ clearInterval(_rp); }
+  }, 400);
   /* 模式跟随：读手机面板状态文字（IDLE/THINKING/SPEAKING），变化时通知 E-mote（不改原 setPhone） */
   var last = '';
   setInterval(function(){
