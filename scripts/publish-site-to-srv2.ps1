@@ -70,7 +70,8 @@ $TempBase = if ($PSBoundParameters.ContainsKey('TempBase') -and $TempBase) { $Te
 if (-not (Test-Path -LiteralPath $TempBase)) { New-Item -ItemType Directory -Force -Path $TempBase | Out-Null }
 $WorkDir = Join-Path $TempBase "xk-site-publish-$Stamp"
 $TmpTar  = Join-Path $TempBase "xk-site-$Stamp.tar.gz"
-$RemoteTar = "/tmp/xk-site-$Stamp.tar.gz"
+$RemoteDeployDir = "/home/ubuntu/.xk-deploy"
+$RemoteTar = "$RemoteDeployDir/xk-site-$Stamp.tar.gz"
 $ReceiveLocal = Join-Path $PSScriptRoot 'srv2-site-receive.sh'
 $ReceiveRemote = '/opt/secagent/scripts/srv2-site-receive.sh'
 $WorktreeAdded = $false
@@ -337,8 +338,9 @@ if ($DryRun) {
 Step '5/6' "上传到 ${SshHost}:$RemoteTar（并同步接收脚本）"
 Invoke-Checked 'scp' @('-q', '-o', 'BatchMode=yes', $TmpTar, "${SshHost}:$RemoteTar") 'scp 上传 tar 包'
 Ok 'tar 包已上传'
-Invoke-Checked 'scp' @('-q', '-o', 'BatchMode=yes', $ReceiveLocal, "${SshHost}:/tmp/srv2-site-receive.sh") 'scp 上传接收脚本'
-Invoke-Checked 'ssh' @('-o', 'BatchMode=yes', $SshHost, "sudo -n install -m 0755 -o root -g root /tmp/srv2-site-receive.sh $ReceiveRemote") '安装接收脚本'
+Invoke-Checked 'ssh' @('-o', 'BatchMode=yes', $SshHost, "mkdir -p $RemoteDeployDir && chmod 700 $RemoteDeployDir") '建远端发布暂存目录'
+Invoke-Checked 'scp' @('-q', '-o', 'BatchMode=yes', $ReceiveLocal, "${SshHost}:$RemoteDeployDir/srv2-site-receive.sh") 'scp 上传接收脚本'
+Invoke-Checked 'ssh' @('-o', 'BatchMode=yes', $SshHost, "sudo -n install -m 0755 -o root -g root $RemoteDeployDir/srv2-site-receive.sh $ReceiveRemote") '安装接收脚本'
 Ok "接收脚本已就位：$ReceiveRemote"
 
 # ---------- 6) 远端切换 + 自检 ----------
@@ -435,8 +437,8 @@ try {
     }
     $relJson = $relObj | ConvertTo-Json -Depth 6
     [IO.File]::WriteAllText($localRel, $relJson, [Text.UTF8Encoding]::new($false))
-    & scp -q $localRel "${relHost}:/tmp/xk-release-info.json" 2>&1 | Out-Null
-        $syncOut = (& ssh -o BatchMode=yes $relHost "python3 -m json.tool /tmp/xk-release-info.json > /dev/null && install -m 644 /tmp/xk-release-info.json $relPath && echo RELINFO_SYNCED" 2>&1 | Out-String).Trim()
+    & scp -q $localRel "${relHost}:/home/ubuntu/.xk-deploy/xk-release-info.json" 2>&1 | Out-Null
+        $syncOut = (& ssh -o BatchMode=yes $relHost "python3 -m json.tool /home/ubuntu/.xk-deploy/xk-release-info.json > /dev/null && install -m 644 /home/ubuntu/.xk-deploy/xk-release-info.json $relPath && echo RELINFO_SYNCED" 2>&1 | Out-String).Trim()
     if ($syncOut -match 'RELINFO_SYNCED') { Ok "release-info.json 已同步：$release（history $($hist.Count) 条）" }
     else { Warn "release-info.json 同步未确认：$syncOut" }
 } catch {
