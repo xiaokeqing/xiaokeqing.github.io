@@ -277,6 +277,17 @@ if [ -s "$PUB/ai/index.html" ]; then
   if grep -q '__xkEmoStat' "$AI5"; then ok "V5: 页面暴露 __xkEmoStat() 自检入口（运行时量泄漏率）"; else no "V5: 缺 __xkEmoStat（无法在浏览器里验收泄漏率）"; fi
 else warn "缺 $PUB/ai/index.html（跳过 V5 断言）"; fi
 
+# ---------- ⑥ 全站共用书桌底图 + E-mote 署名（站主：比例/底图不许各页各写一套）----------
+DESK_OK=0; DESK_N=0
+for pg in index.html alerts/index.html posts/index.html ai/index.html test/index.html; do
+  if [ -s "$PUB/$pg" ]; then
+    DESK_N=$((DESK_N + 1))
+    if grep -q 'class="\?desk' "$PUB/$pg"; then DESK_OK=$((DESK_OK + 1)); fi
+  fi
+done
+if [ "$DESK_N" -gt 0 ] && [ "$DESK_OK" -eq "$DESK_N" ]; then ok "五页共用书桌底图（$DESK_OK/$DESK_N）"; else no "有页面缺书桌底图（$DESK_OK/$DESK_N）—— 站主要求所有页共用书桌"; fi
+if [ -s "$PUB/ai/index.html" ] && grep -q 'CC BY-NC-SA' "$PUB/ai/index.html"; then ok "E-mote 素材署名在位（CC BY-NC-SA 4.0）"; else warn "缺 E-mote 署名（许可要求保留署名）"; fi
+
 # ---------- 汇总 ----------
 head1 "汇总"
 echo "  通过 $PASS 项，失败 $FAIL 项"
