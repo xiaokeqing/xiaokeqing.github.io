@@ -477,7 +477,9 @@
   /* ★底图两层（逐字照 docs/demo-内容页外壳.html:45-47/:417）—— 内容页的暖玻璃面板需要照片底 */
   /*   ★2026-10-16 站主口径②：**不要 10 张背景切换器**；背景只放"人物不在的电视/书桌图"（desk.webp），
       人物在手机面板里（主页的她在 CRT 里）；光束保留、做成左上角头像旁的小按钮；配色切换器不要（用现有暖色）。 */
-  .bg{position:fixed;inset:0;z-index:-3;background:#0A0D11 center/cover no-repeat;background-image:url(/images/crt/desk.webp);transform:scale(1.1)}
+  .bg{position:fixed;inset:0;z-index:-3;background:#0A0D11 center/cover no-repeat;background-image:url(/kurisu/scene/bg/room_empty.webp);transform:scale(1.1)}
+  /*   ★2026-10-17 站主口径（改）：背景照旧演示文件 `docs/demo-内容页外壳.html` 的默认值 room_empty（空实验室），
+      不要 desk.webp —— 书桌图留给主页（主页的她在 CRT 里），内容页用"人物不在的房间"才是旧演示的观感。*/
   /*  光束层：默认关，`<html class="xk-lite">` 时淡入（左上角 ✨ 按钮切，localStorage 记忆） */
   .bglite{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:0;transition:opacity .45s ease;background:center/cover no-repeat url(/kurisu/scene/bg/light_high.webp)}
   html.xk-lite .bglite{opacity:.5}
