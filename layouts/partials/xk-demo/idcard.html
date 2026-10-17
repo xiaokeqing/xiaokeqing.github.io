@@ -51,7 +51,7 @@
     border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:10px;overflow:hidden;
     background:#E8ECEF;line-height:0}
   .xk-idcard-av canvas{width:48px;height:48px;display:block}
-  .xk-idcard-col{display:flex;flex-direction:column;gap:4px}
+  .xk-idcard-col{display:grid;grid-template-columns:repeat(2,24px);grid-auto-rows:24px;gap:4px}
   .xk-idcard-btn{width:24px;height:24px;padding:0;cursor:pointer;font-size:12px;line-height:1;
     display:flex;align-items:center;justify-content:center;
     border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:8px;
@@ -82,6 +82,29 @@
   .xk-idpanel .xk-note{font:10.5px/1.5 var(--mono,monospace);color:var(--mut,#D2CBBD);margin-top:2px}
   .xk-idpanel .xk-close{position:absolute;right:7px;top:5px;background:none;border:0;cursor:pointer;
     color:var(--mut,#D2CBBD);font-size:13px;line-height:1;padding:2px}
+  /* ★2026-10-17 站主口径：账号 + 密码登录（只有站主能用，不开注册、不做多用户） */
+  .xk-login{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;
+    background:rgba(4,7,10,.62);backdrop-filter:blur(3px)}
+  .xk-login.open{display:flex}
+  .xk-login-card{width:min(348px,calc(100vw - 36px));padding:18px 18px 14px;border-radius:14px;
+    background:var(--solid,rgba(48,45,41,.97));border:1px solid var(--line2,rgba(255,246,235,.28));
+    box-shadow:0 24px 70px rgba(0,0,0,.6);color:var(--txt,#FAF7F0);font:13px/1.6 var(--sans,sans-serif)}
+  .xk-login-card h3{font:600 14.5px/1.4 var(--sans,sans-serif);margin-bottom:3px}
+  .xk-login-hd{font:11.5px/1.55 var(--mono,monospace);color:var(--mut,#D2CBBD);margin-bottom:13px}
+  .xk-login-card label{display:block;font:11.5px/1.5 var(--sans,sans-serif);color:var(--mut,#D2CBBD);margin:0 0 4px}
+  .xk-login-card input{width:100%;box-sizing:border-box;margin:0 0 10px;padding:9px 11px;border-radius:9px;
+    background:rgba(0,0,0,.26);border:1px solid var(--line2,rgba(255,246,235,.28));color:var(--txt,#FAF7F0);
+    font:13px/1.5 var(--sans,sans-serif);outline:none}
+  .xk-login-card input:focus-visible{border-color:var(--acc,#7FD4D8);outline:2px solid var(--acc,#7FD4D8);outline-offset:1px}
+  .xk-login-row{display:flex;gap:8px;align-items:center;margin-top:3px}
+  .xk-login-sub{flex:1;height:35px;border:0;border-radius:999px;cursor:pointer;
+    font:600 13px/1 var(--sans,sans-serif);background:var(--acc,#7FD4D8);color:#04282b}
+  .xk-login-sub[disabled]{opacity:.55;cursor:default}
+  .xk-login-x{height:35px;padding:0 15px;border-radius:999px;cursor:pointer;
+    background:rgba(0,0,0,.22);border:1px solid var(--line2,rgba(255,246,235,.28));color:var(--mut,#D2CBBD);
+    font:12px/1 var(--sans,sans-serif)}
+  .xk-login-err{min-height:17px;margin-top:9px;font:11.5px/1.5 var(--sans,sans-serif);color:var(--bad,#E8837B)}
+  .xk-login-who{font:11px/1.5 var(--mono,monospace);color:var(--mut,#D2CBBD);margin-top:9px}
   @media (max-width:980px){
     /* ★批次 D（2026-10-16）：窄屏导航已改到头部（头像卡下方），这里必须给同一个 86px ——
        原来写 top:auto 会把 DOCK_CSS 里那条（特异性更低）压掉，实测 dock 会贴到 top=0 并压住头像卡。 */
@@ -89,6 +112,7 @@
     .xk-idcard-av{width:56px;height:56px}
     .xk-idcard-av canvas{width:56px;height:56px}
     .xk-idcard-btn{width:34px;height:34px;font-size:15px}
+    .xk-idcard-col{grid-template-columns:repeat(2,34px);grid-auto-rows:34px}
     .xk-idcap{top:104px}
     .xk-idpanel{left:6px;top:104px}
   }
@@ -128,15 +152,22 @@
     <canvas id="xkIdAvCanvas" width="132" height="132" aria-hidden="true"></canvas>
   </button>
   <span class="xk-idcard-col">
+    <button class="xk-idcard-btn" id="xkLoginBtn" type="button"
+      title="登录（只有站主能登）">👤</button>
+    <button class="xk-idcard-btn" id="xkEmoBtn" type="button"
+      title="情绪：点开选一种，她演出来">◕</button>
+    <button class="xk-idcard-btn" id="xkActBtn" type="button"
+      title="动作：点开选一个（全身画布只在主页）">▶</button>
     <button class="xk-idcard-btn" id="xkSndBtn" type="button" aria-pressed="false"
       title="声音：默认关闭（点一下打开）">🔇</button>
-    <button class="xk-idcard-btn" id="xkLoginBtn" type="button" title="登录（自用模式）" hidden>👤</button>
     <button class="xk-idcard-btn" id="xkLiteBtn" type="button" aria-pressed="false"
       title="场景光束：点一下开/关（只影响背景）">✧</button>
+    <span></span>
   </span>
 </aside>
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
 <div class="xk-idpanel" id="xkIdPanel" role="dialog" aria-label="桐莉栖 · 情绪与动作面板"></div>
+<div class="xk-login" id="xkLogin" role="dialog" aria-modal="true" aria-label="站主登录"></div>
 {{- /* ★批次 ②：主页底部对话输入栏（第 1 期）
      · 落点：主页 `<main id="content" data-xk-ssr="home">` **之外**、与头像卡同层（站主口径）；
      · 只在主页渲染：`body.is-home`（主页 body 上带这个类；五个内容页都没有）；
@@ -323,7 +354,25 @@
      localStorage 里有值只是"有一把待校验的令牌"，**不是**登录态。
      红线：① 令牌只进 `X-User-Token` 请求头，且只在目标是 wb-api 那个来源时才带；
            ② 不进 URL、不进 cookie、不打日志、不进任何产物；③ 本文件里没有任何令牌字面量 ✗。 */
-  var TOKEN_KEY = 'xk-user-token';
+  /* ★★ 2026-10-17 站主口径：登录改成「账号 + 密码」（只有站主能用；不开注册、不做多用户、不考虑别人）
+     ---------------------------------------------------------------------------------------------
+     入口：头像卡上那个 👤 按钮（默认可见 —— 站主原话"显示一下登录按键"）。
+     契约（与后端 SecAgent 的 /api/auth 那一套对齐，实测 401/200 都通）：
+       POST {apiBase}/api/auth/login   {username,password}
+            → 200 {code:200,data:{token,expiresIn,username,role,roleLabel}}
+            → 401 {code:401,message:"账号或密码错误"} ／ 429 限流
+       GET  {apiBase}/api/auth/check   Authorization: Bearer <token>  → 200 才算登录态
+       POST {apiBase}/api/auth/logout  Authorization: Bearer <token>
+     纪律：① 密码只在这一次 POST 的请求体里出现，不落 localStorage、不进 URL、不打日志；
+           ② 只把后端发的 token 存在 localStorage['xk-auth-token']；退出即删；
+           ③ 令牌只发给 meta[name=wb-api] 那个来源（别的域一律不带）。
+     登录后解锁（站主原话"让助手做所有动作和语音，主页的，自己选择"）：
+       · 声音自动打开（只在这一刻自动开一次，之后仍可手动关）；
+       · 情绪/动作面板、主页底部提问栏、以及所有台词与动作都放开（闸门仍是 __xkAdmin.allowed()）。
+     --------------------------------------------------------------------------------------------- */
+  var TOKEN_KEY = 'xk-user-token';    /* 旧「自用令牌」那套（/api/user/*）—— 保留，不动 */
+  var AUTH_KEY = 'xk-auth-token';     /* 新的登录令牌（/api/auth/*） */
+  var USER_KEY = 'xk-auth-user';
   var API_META = document.querySelector('meta[name="wb-api"]');
   function apiBase() { return ((API_META && API_META.getAttribute('content')) || '').replace(/\/+$/, ''); }
   /* 令牌的去向白名单：只有与 wb-api **同源**的 URL 才准带令牌 */
@@ -333,118 +382,195 @@
     catch (e) { return false; }
   }
   function userToken() { var t = lg(TOKEN_KEY); return (t && t.length) ? t : ''; }
-  /* 登录面文案 —— §10.5 五条**逐字**（第 4 条的 N 按 Retry-After 替换） */
+  function authToken() { var t = lg(AUTH_KEY); return (t && t.length) ? t : ''; }
+  function authUser() { return lg(USER_KEY) || ''; }
   var L10N = {
-    notoken:   '自用入口：请粘贴自用令牌（令牌只保存在本机浏览器，不会上传到别处）',
-    invalid:   '令牌无效或已轮换 —— 请向站主要一份新的自用令牌',
-    disabled:  '自用入口当前未启用（服务端未配置令牌）',
+    title:    '站主登录',
+    head:     '账号密码登录后才能用她的全部动作与语音（只有站主有账号）',
+    userLb:   '账号',
+    passLb:   '密码',
+    wrong:    '账号或密码错误',
     throttled: '尝试过于频繁，请 N 秒后再试',
-    soft:      '今日自用调用已达软上限 500 次，仍可继续使用（仅提醒，不限额）',
-    offline:   '连不上服务，请稍后重试',
-    /* ★③b（2026-10-16）：登录成功后的"自用模式"正式文案 —— ③a 阶段明确禁止出现"已登录"字样，③b 解锁。
-       {R}/{M} 由后端 data.conversation 的真实值替换（maxRounds / ttlMinutes），**不写死**。 */
-    ok:        '登录成功 —— 已进入自用模式（自用池：可连续追问，最多 {R} 轮 / {M} 分钟内有效）。'
+    offline:  '连不上服务，请稍后重试',
+    ok:       '登录成功 —— 她的动作和语音都放开了。',
+    bye:      '已退出登录：本机令牌已删除。'
   };
-  /* ★③b：文案表与两个 localStorage/sessionStorage 键挂到共享出口 —— 提问段是**后面的独立 IIFE**，
-     要复用同一份文案（§4：合并两套表，避免漂移）与同一个键名（§6：不要重新定义字符串）。 */
   var CID_KEY = 'xk-conversation-id';
   window.__xkL10N = L10N;
-  window.__xkKeys = { token: TOKEN_KEY, cid: CID_KEY };
-  var XL = window.__xkLogin = { state: 'anon', reason: 'notoken', status: 0, retryAfter: 0, exposedRetryAfter: null,
-    checkedAt: 0, hasToken: false, softLimit: false, quota: null, limits: null, conversation: null, errors: [] };
+  window.__xkKeys = { token: TOKEN_KEY, auth: AUTH_KEY, cid: CID_KEY };
+  var XL = window.__xkLogin = { state: 'anon', reason: 'notoken', status: 0, retryAfter: 0,
+    checkedAt: 0, hasToken: false, role: '', username: '', errors: [], modal: false };
   function paintLogin() {
     var on = (XL.state === 'logged-in');
     D.loggedIn = on;
     login.setAttribute('aria-pressed', on ? 'true' : 'false');
     login.textContent = on ? '🔓' : '👤';
-    login.title = on ? '自用令牌已校验通过（自用池）' : '登录（自用模式）';
+    login.title = on ? ('已登录：' + (XL.username || '站主') + '（点一下退出）') : '登录（只有站主能登）';
   }
-  function probeLogin() {
-    var base = apiBase(), t = userToken();
-    XL.hasToken = !!t; XL.checkedAt = Date.now(); XL.errors.length = 0;
-    if (!base) { XL.state = 'offline'; XL.reason = 'no-api-base'; paintLogin(); return; }
-    if (!t) { XL.state = 'anon'; XL.reason = 'notoken'; XL.status = 0; paintLogin(); return; }
-    fetch(base + '/api/user/status', { headers: { 'X-User-Token': t }, cache: 'no-store', credentials: 'omit' })
+  /* ---------- 登录弹窗（动态建一次，之后复用） ---------- */
+  var lbox = document.getElementById('xkLogin'), lbuilt = false;
+  function buildLogin() {
+    if (lbuilt || !lbox) { return; }
+    lbuilt = true;
+    lbox.innerHTML =
+      '<form class="xk-login-card" id="xkLoginForm" autocomplete="on">' +
+      '<h3>' + L10N.title + '</h3>' +
+      '<p class="xk-login-hd">' + L10N.head + '</p>' +
+      '<label for="xkLoginUser">' + L10N.userLb + '</label>' +
+      '<input id="xkLoginUser" name="username" type="text" autocomplete="username" spellcheck="false" required>' +
+      '<label for="xkLoginPass">' + L10N.passLb + '</label>' +
+      '<input id="xkLoginPass" name="password" type="password" autocomplete="current-password" required>' +
+      '<div class="xk-login-row"><button class="xk-login-sub" id="xkLoginSubmit" type="submit">登录</button>' +
+      '<button class="xk-login-x" id="xkLoginCancel" type="button">取消</button></div>' +
+      '<p class="xk-login-err" id="xkLoginErr" role="alert" aria-live="assertive"></p>' +
+      '<p class="xk-login-who" id="xkLoginWho"></p>' +
+      '</form>';
+    var form = document.getElementById('xkLoginForm');
+    var err = document.getElementById('xkLoginErr');
+    document.getElementById('xkLoginCancel').addEventListener('click', closeLogin);
+    lbox.addEventListener('click', function (ev) { if (ev.target === lbox) { closeLogin(); } });
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      submitLogin(err);
+    });
+  }
+  function who() {
+    var el = document.getElementById('xkLoginWho');
+    if (!el) { return; }
+    el.textContent = XL.state === 'logged-in'
+      ? ('已登录：' + (XL.username || '站主') + (XL.role ? ('（' + XL.role + '）') : ''))
+      : ('接口：' + (apiBase() || '未配置'));
+  }
+  function openLogin() {
+    if (XL.state === 'logged-in') { logout(); return; }
+    buildLogin();
+    XL.modal = true;
+    lbox.classList.add('open');
+    who();
+    var u = document.getElementById('xkLoginUser');
+    if (u) { u.value = authUser(); setTimeout(function () { (u.value ? document.getElementById('xkLoginPass') : u).focus(); }, 30); }
+    var e = document.getElementById('xkLoginErr'); if (e) { e.textContent = ''; }
+  }
+  function closeLogin() {
+    XL.modal = false;
+    if (lbox) { lbox.classList.remove('open'); }
+    try { var p = document.getElementById('xkLoginPass'); if (p) { p.value = ''; } } catch (e) { }
+  }
+  function unlock() {
+    /* 登录后：声音自动开一次（站主的原话是"可以让助手做所有动作和语音"） */
+    try { if (!D.sound) { setSound(true, 'login'); } } catch (e) { }
+    try { if (window.__xkAskBar && window.__xkAskBar.poke) { window.__xkAskBar.poke(); } } catch (e) { }
+    try { openPanel(); } catch (e) { }
+  }
+  function submitLogin(errEl) {
+    var u = (document.getElementById('xkLoginUser') || {}).value || '';
+    var p = (document.getElementById('xkLoginPass') || {}).value || '';
+    u = String(u).replace(/^\s+|\s+$/g, '');
+    var base = apiBase();
+    if (errEl) { errEl.textContent = ''; }
+    if (!base) { if (errEl) { errEl.textContent = L10N.offline; } return; }
+    if (!u || !p) { if (errEl) { errEl.textContent = '账号和密码都要填'; } return; }
+    var btn = document.getElementById('xkLoginSubmit');
+    if (btn) { btn.disabled = true; btn.textContent = '登录中…'; }
+    XL.state = 'checking'; XL.checkedAt = Date.now();
+    fetch(base + '/api/auth/login', {
+      method: 'POST', cache: 'no-store', credentials: 'omit',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    }).then(function (r) {
+      XL.status = r.status;
+      var ra = parseInt(r.headers.get('Retry-After') || 0, 10) || 0;
+      return r.json().catch(function () { return null; }).then(function (b) { return { s: r.status, b: b, ra: ra }; });
+    }).then(function (x) {
+      var b = x.b || {}, d = b.data || {};
+      if (x.s === 200 && d.token) {
+        try { localStorage.setItem(AUTH_KEY, String(d.token)); } catch (e) { }
+        try { localStorage.setItem(USER_KEY, String(d.username || u)); } catch (e) { }
+        XL.state = 'logged-in'; XL.reason = ''; XL.username = d.username || u; XL.role = d.roleLabel || d.role || '';
+        paintLogin(); closeLogin(); unlock();
+        say(L10N.ok); who();
+        return;
+      }
+      if (x.s === 401) {
+        XL.state = 'anon'; XL.reason = 'bad-credentials';
+        if (errEl) { errEl.textContent = (b && b.message) || L10N.wrong; }
+      } else if (x.s === 429) {
+        XL.state = 'anon'; XL.reason = 'throttled'; XL.retryAfter = x.ra || 0;
+        if (errEl) { errEl.textContent = L10N.throttled.replace('N', String(XL.retryAfter || 60)); }
+      } else {
+        XL.state = 'anon'; XL.reason = 'http-' + x.s;
+        if (errEl) { errEl.textContent = '接口返回 HTTP ' + x.s + (b && b.message ? (' —— ' + b.message) : '') + '（没有登录成功）'; }
+      }
+      XL.errors.push(XL.reason);
+      paintLogin();
+    }).catch(function (e) {
+      XL.state = 'anon'; XL.reason = String((e && e.message) || e);
+      XL.errors.push(XL.reason);
+      if (errEl) { errEl.textContent = L10N.offline; }
+      paintLogin();
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+    });
+  }
+  function probeAuth() {
+    var base = apiBase(), t = authToken();
+    XL.hasToken = !!t; XL.checkedAt = Date.now();
+    if (!base || !t) { XL.state = 'anon'; XL.reason = t ? 'no-api-base' : 'notoken'; paintLogin(); return; }
+    XL.username = authUser();
+    fetch(base + '/api/auth/check', { headers: { 'Authorization': 'Bearer ' + t }, cache: 'no-store', credentials: 'omit' })
       .then(function (r) {
         XL.status = r.status;
-        /* ⚠ 实测发现（2026-10-16）：跨域下 `Retry-After` **不是** CORS 安全响应头 ⇒ 后端若不显式回
-           `Access-Control-Expose-Headers: Retry-After`，浏览器里 `r.headers.get()` 恒为 null（探针已复现）。
-           所以 N 做三层兜底：响应头 → body.retryAfter / body.data.retryAfter → 60。 */
-        XL.retryAfter = parseInt(r.headers.get('Retry-After') || 0, 10) || 0;
-        XL.exposedRetryAfter = r.headers.get('Retry-After');
         return r.json().catch(function () { return null; }).then(function (b) { return { s: r.status, b: b }; });
       })
       .then(function (x) {
-        var b = x.b || {}, d = b.data || {};
-        if (!XL.retryAfter) { XL.retryAfter = parseInt(b.retryAfter || d.retryAfter || 0, 10) || 0; }
-        if (x.s === 200 && d.loggedIn === true) {
-          XL.state = 'logged-in'; XL.reason = ''; XL.quota = d.quota || null;
-          XL.softLimit = !!(d.quota && d.quota.softLimitReached);
-          XL.limits = d.limits || null;                 /* ★③b：提问超时按后端 limits.deadlineMs 取，不写死 20s */
-          XL.conversation = d.conversation || null;      /* ★③b：maxRounds / ttlMinutes 的真值来源 */
-          revealLogin('token-verified'); paintLogin();
-          var cv0 = d.conversation || {}, rt0 = String(cv0.maxRounds || 5), tt0 = String(cv0.ttlMinutes || 30);
-          say(L10N.ok.replace('{R}', rt0).replace('{M}', tt0) + (XL.softLimit ? (' ' + L10N.soft) : ''));
-        } else if (x.s === 429) {
-          XL.state = 'throttled'; XL.reason = b.reason || 'LOGIN_RATE_LIMITED';
-          paintLogin();
-          say(L10N.throttled.replace('N', String(XL.retryAfter || 60)));
+        var d = (x.b && x.b.data) || {};
+        if (x.s === 200) {
+          XL.state = 'logged-in'; XL.reason = '';
+          XL.username = d.username || XL.username; XL.role = d.roleLabel || d.role || XL.role;
         } else if (x.s === 401 || x.s === 403) {
-          XL.state = 'bad-token';
-          XL.reason = b.reason || 'TOKEN_INVALID';
-          paintLogin();   /* ⚠ 这里**不删** localStorage：可能只是粘贴出错，让站主重试（§10.2） */
-          say(XL.reason === 'USER_LOGIN_DISABLED' ? L10N.disabled : L10N.invalid);
+          XL.state = 'anon'; XL.reason = 'token-invalid';
+          try { localStorage.removeItem(AUTH_KEY); localStorage.removeItem(USER_KEY); } catch (e) { }
         } else {
-          XL.state = 'error'; XL.reason = 'HTTP ' + x.s;
-          paintLogin(); say(L10N.offline);
+          XL.state = 'anon'; XL.reason = 'HTTP ' + x.s;
         }
+        paintLogin();
       })
       .catch(function (e) {
-        XL.state = 'offline'; XL.reason = String((e && e.message) || e);
-        XL.errors.push(XL.reason); paintLogin(); say(L10N.offline);
+        XL.state = 'anon'; XL.reason = String((e && e.message) || e);
+        XL.errors.push(XL.reason); paintLogin();
       });
   }
-  function revealLogin(why) {
-    if (!login.hidden) { return; }
-    login.hidden = false;
-    D.admin = true; D.revealWhy = why;
-    ss('xk-admin-ui', '1');
-    /* ★批次 ②：隐蔽入口若在**本页加载之后**才被打开（5 次连点头像 / #admin），
-       主页那条底部输入栏要跟着一起出现 ⇒ 让输入栏模块自己再判一次闸门
-       （未登录时它返回 false：栏不出来、一个请求也不发）。 */
-    try { if (window.__xkAskBar && window.__xkAskBar.poke) { window.__xkAskBar.poke(); } } catch (e) { }
-  }
-  login.addEventListener('click', function () {
-    if (XL.state === 'logged-in') {
-      var out = true;
-      try { out = window.confirm('退出登录：只删除本机浏览器里的自用令牌（服务端没有会话可销）。继续？'); } catch (e) { }
-      if (!out) { return; }
-      try { localStorage.removeItem(TOKEN_KEY); } catch (e) { }
-      try { sessionStorage.removeItem(CID_KEY); } catch (e) { }   /* ★③b：多轮会话 id 一并清掉（§6） */
-      XL.state = 'anon'; XL.reason = 'logout'; XL.status = 0; XL.quota = null; XL.softLimit = false;
-      XL.conversation = null; XL.limits = null;
-      paintLogin(); say('已退出自用：本机令牌与多轮会话都已删除。');
-      return;
+  function logout() {
+    var t = authToken(), base = apiBase();
+    if (t && base) {
+      try {
+        fetch(base + '/api/auth/logout', { method: 'POST', cache: 'no-store', credentials: 'omit',
+          headers: { 'Authorization': 'Bearer ' + t } }).catch(function () { });
+      } catch (e) { }
     }
-    if (!userToken()) { say(L10N.notoken); }
-    var v = null;
-    /* ⚠ 令牌**不进 URL**（会进浏览器历史/Referer/日志）——只从这里的粘贴框收 */
-    try { v = window.prompt('粘贴自用令牌（只存在本机 localStorage["' + TOKEN_KEY + '"]，只发给 ' + apiBase() + '）：'); } catch (e) { }
-    if (v == null) { return; }
-    v = String(v).replace(/^\s+|\s+$/g, '');
-    if (!v) { say(L10N.notoken); return; }
-    try { localStorage.setItem(TOKEN_KEY, v); } catch (e) { say(L10N.offline); return; }
-    XL.state = 'checking'; XL.reason = ''; XL.status = 0; paintLogin(); probeLogin();
+    try { localStorage.removeItem(AUTH_KEY); localStorage.removeItem(USER_KEY); } catch (e) { }
+    try { sessionStorage.removeItem(CID_KEY); } catch (e) { }
+    XL.state = 'anon'; XL.reason = 'logout'; XL.status = 0; XL.role = ''; XL.username = '';
+    paintLogin(); say(L10N.bye);
+  }
+  /* 隐深入口保留（?admin=1 / #admin / 连点头像 5 次）—— 现在按钮本来就可见，这里只是把状态位留着，
+     免得旧链接/旧脚本引用 revealLogin 时炸掉。 */
+  function revealLogin(why) { D.admin = true; D.revealWhy = why; }
+  login.addEventListener('click', function () { openLogin(); });
+  var emoBtn = document.getElementById('xkEmoBtn'), actBtn = document.getElementById('xkActBtn');
+  if (emoBtn) { emoBtn.addEventListener('click', function () { openPanel(); markPanel(); }); }
+  if (actBtn) { actBtn.addEventListener('click', function () { openPanel(); }); }
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && XL.modal) { closeLogin(); }
   });
   (function () {
     var q = /(^|[?&])admin=1(&|$)/.test(location.search);
-    var h = /#admin(\.|$|\/|\?)/.test(location.hash) || location.hash === '#admin';
-    if (q || h) { revealLogin(q ? 'url-query' : 'url-hash'); }
-    else if (sg('xk-admin-ui') === '1') { revealLogin('session'); }
-    if (userToken()) { revealLogin('stored-token'); }   /* 有令牌就一直显示按钮（隐蔽入口那条不变） */
+    var hh = /#admin(\.|$|\/|\?)/.test(location.hash) || location.hash === '#admin';
+    if (q || hh) { revealLogin(q ? 'url-query' : 'url-hash'); }
+    if (authToken()) { revealLogin('stored-token'); }
   })();
   paintLogin();
-  probeLogin();
+  probeAuth();
 
   function withToken(h) {
     var o = h || {};
