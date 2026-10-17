@@ -711,7 +711,12 @@
         var tag = '[' + String(a.typeLabel || a.sourceLabel || '告警').replace(/\s*告警$/, '') + ']';
         var text = String(a.title || a.ruleName || '（无规则名）').replace(/\s+/g, ' ').slice(0, 90) +
           ' → ×' + (Number(a.count) || 1) + ' · ' + maskIp(a.srcIp);
-        return { key: String(a.aggId || t + a.title), ts: t, cls: cls, tag: tag, text: text };
+        return { key: String(a.aggId || t + a.title), ts: t, cls: cls, tag: tag, text: text,
+          /* ★A3：这一行的明细（点开行时显示），全部取服务端原值，前端不改写 */
+          d: { agg: String(a.aggId || ''), win: String(a.startTime || '').slice(11, 19) + '~' + String(a.endTime || '').slice(11, 19),
+               n: Number(a.count) || 1, ip: maskIp(a.srcIp), geo: String(a.srcGeo || ''), sev: String(a.severityLabel || ''),
+               typ: String(a.typeLabel || ''), src2: String(a.sourceLabel || ''), rule: String(a.ruleName || ''),
+               st: String(a.status || ''), hit: Number(a.hitCount) || 0, at: String(a.occurredAt || '').replace('T', ' ') } };
       });
     }
     if (window.__xkRenderFeed) window.__xkRenderFeed();

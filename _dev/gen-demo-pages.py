@@ -759,8 +759,48 @@ function feedRow(it){
   const el = document.createElement('div');
   el.className = 'tl lv-' + (it.cls || 'dns');   /* ★R2：行左 2px 级别色条（颜色映射在 CSS 里，复用既有类型色的变量，不新增色值） */
   el.innerHTML = `<span class="ts">${xkEsc(it.ts)}</span> <span class="tg ${it.cls}">${xkEsc(it.tag)}</span> ${xkEsc(it.text)}`;
+  if (it.d) { el.__d = it.d; el.style.cursor = 'pointer'; el.title = '点一下看这条聚合告警的明细'; }
   termFeed.appendChild(el);
 }
+
+/* ★A3（2026-10-17）：点行看明细。只用 /alerts 已经返回的聚合字段，不额外发请求、不补字段。 */
+let fdBox = null;
+function feedDetailBox(){
+  if (fdBox) return fdBox;
+  const host = termFeed.closest('.mod') || termFeed.parentElement;
+  if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  fdBox = document.createElement('div');
+  fdBox.id = 'feedDetail';
+  fdBox.hidden = true;
+  fdBox.style.cssText = 'position:absolute;left:10px;right:12px;bottom:12px;z-index:40;max-height:48%;overflow:auto;'
+    + 'background:rgba(6,10,14,.97);border:1px solid rgba(120,200,255,.38);border-radius:10px;'
+    + 'padding:10px 12px;font:12px/1.7 ui-monospace,Consolas,monospace;color:#cfe9f5;'
+    + 'box-shadow:0 14px 34px rgba(0,0,0,.55)';
+  (host || termFeed).appendChild(fdBox);
+  fdBox.addEventListener('click', function (e) {
+    if (e.target && e.target.dataset && e.target.dataset.close === '1') fdBox.hidden = true;
+    e.stopPropagation();
+  });
+  return fdBox;
+}
+function feedDetailShow(d){
+  const box = feedDetailBox();
+  const line = (k, v) => v ? `<div><span style="color:rgba(255,255,255,.42)">${k}</span> ${xkEsc(v)}</div>` : '';
+  box.innerHTML = '<div style="display:flex;gap:8px;align-items:baseline;margin-bottom:6px">'
+    + '<b style="color:#9fd8e6">聚合告警明细</b>'
+    + '<span style="color:rgba(255,255,255,.4);font-size:11px">/api/public/alerts · 只读</span>'
+    + '<span data-close="1" style="margin-left:auto;cursor:pointer;color:rgba(255,255,255,.5)">关闭 ✕</span></div>'
+    + line('窗口', d.win) + line('命中', '×' + d.n + ' 次' + (d.hit && d.hit !== d.n ? '（hitCount ' + d.hit + '）' : ''))
+    + line('来源', d.ip + (d.geo ? ' · ' + d.geo : ''))
+    + line('严重度', d.sev) + line('类型', d.typ + (d.src2 ? ' · ' + d.src2 : ''))
+    + line('规则', d.rule) + line('状态', d.st) + line('聚合号', d.agg);
+  box.hidden = false;
+}
+termFeed.addEventListener('click', function (e) {
+  const row = e.target && e.target.closest ? e.target.closest('.tl') : null;
+  if (!row || !row.__d) return;
+  feedDetailShow(row.__d);
+});
 function feedTrim(){
   const cap = feedCap();
   while(termFeed.querySelectorAll('.tl').length > cap) termFeed.removeChild(termFeed.querySelector('.tl'));
