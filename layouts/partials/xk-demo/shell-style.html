@@ -334,6 +334,13 @@
   /* stage：按底图比例 cover（manifest scene.cover.css 口径） */
   .stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
     width:max(100vw,177.68vh);height:max(56.28vw,100vh)}
+  /* 窄屏（手机/竖屏）：上面是 1500×844 固定比例的 cover 舞台，<980px 时 CRT 会被裁掉两侧。
+     改为舞台=整屏、CRT 按 92vw 居中，保持 1.32275 电视比例，不拉伸。 */
+  @media (max-width:979px){
+    body .stage{width:min(262.5vw,302.1vh);height:min(147.74vw,169.98vh);
+      left:50%;top:50%;transform:translate(-50%,-50%)}
+    .crt-sub{left:8%;right:8%}
+  }
   .desk{position:absolute;inset:0;width:100%;height:100%;display:block}
 
   /* CRT 容器（bounds 百分比写死，与视口无关） */
