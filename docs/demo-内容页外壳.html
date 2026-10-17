@@ -479,6 +479,16 @@
   padding:3px 9px;font:11.5px var(--mono);color:var(--mut);background:rgba(255,255,255,.03)}
 .attk-tech .tech b{color:var(--acc);font-weight:600}
 .attk-tech .tech i{font-style:normal;color:var(--txt);opacity:.85}
+
+/* ---- 2026-10-17 外部巡检 P0/P1/P2 快速项 ---- */
+@media (max-width:980px){
+  .main{padding-bottom:96px}                 /* P0-2：底部功能条不再压最后一行 */
+  .dock{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}   /* P2-1：窄屏导航不折行 */
+  .dock::-webkit-scrollbar{display:none}
+  body:has(> main[data-xk-ssr]:not([data-xk-ssr="index"])) .phone{display:none}              /* P0-3：内容页窄屏收起角色浮层 */
+}
+.xk-idname{white-space:nowrap}               /* P0-1：名字不换行 */
+.xk-idcard{overflow:visible}
 </style>
 </head>
 <body data-skin="warm" class="is-home">

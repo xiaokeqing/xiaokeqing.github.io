@@ -1,0 +1,269 @@
+{{- /* ============================================================================
+   /api/ = 「公开端点清单」参考页（手写页，不归 _dev/gen-demo-pages.py 管）。
+   ----------------------------------------------------------------------------
+   为什么手写：这一页是**纯静态说明书**，不取数、不跑作战室状态机，因此不需要
+   shell-views.html 里那四屏 section 的任何一条。结构与样式沿用 /what/ 与 /status/
+   同一套类（.screen / .screen-hd / .screen-bd / .mod / .mod-hd / .mod-bd / .led /
+   .t / .sync / .tag），只补本页 .api-* 规则；不引外部字体、CDN、任何外链资源。
+   定位：/status/ 那一页是「现在通不通」（前端实测），这一页是「每个端点是什么」——
+   给想自己敲 curl 的人看：做什么、返回什么、有什么已知缺陷。
+   数据来源口径：demo.xiaokeqing.cn 上 srv1 的只读端点，全部无写操作。
+   导航：本页暂不进 dock（dock 由生成器注入，不由本页决定），直接访问 /api/ 即可；
+   本页只声明 $v="api" 与 data-xk-ssr="api"，与 /what/ 的 $v="what" 同一约定。
+   ============================================================================ */ -}}
+{{- $v := "api" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源；.api-pit 的暖黄同 /status/ 的 .st-warn */
+.api-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.api-back:hover{color:#bfe3d0}
+.api-bd{display:flex;flex-direction:column;gap:14px}
+.api-lead{margin:0;font-size:14px;line-height:1.95;color:rgba(255,255,255,.86)}
+.api-lead b{color:#cfe9f5;font-weight:600}
+.api-lead code,.api-p code,.api-kv code,.api-foot code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.api-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.api-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:960px}
+.api-tbl th,.api-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.api-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.api-tbl code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.api-ep{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#d7e7ef;white-space:nowrap}
+.api-m{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.62);white-space:nowrap}
+.api-m.post{color:#E8B45A}
+.api-use{color:rgba(255,255,255,.82)}
+.api-fld{color:rgba(255,255,255,.7)}
+.api-pit{color:rgba(232,180,90,.92)}
+.api-pit b{color:#f2cc8c;font-weight:600}
+.api-pit i{font-style:normal;color:rgba(255,255,255,.6)}
+.api-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.74)}
+.api-p:last-child{margin-bottom:0}
+.api-p b{color:#eaf6ff;font-weight:600}
+.api-kv{margin:0;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.8)}
+.api-kv b{color:#e8f3f8}
+.api-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
+.api-pre .c{color:rgba(255,255,255,.45)}
+.api-pre:last-child{margin-bottom:0}
+.api-foot{font-size:11.5px;color:rgba(255,255,255,.5);line-height:1.9;margin:10px 0 0}
+.api-foot:first-child{margin-top:0}
+.api-foot a{color:#bfe3d0}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="api">
+<section class="view on" id="v-api">
+  <a class="api-back" href="/what/">← 返回介绍页 /what/</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 公开端点清单 <em class="ops-en">PUBLIC-API</em></span>
+      <span class="sync">● 全部只读 · 除 ask / tts 两处外都是 GET</span>
+    </div>
+    <div class="screen-bd api-bd">
+
+      <p class="api-lead">
+        这张表是给<b>想自己敲命令的人</b>看的：每个端点做什么、返回什么、有什么已知缺陷。
+        基址是 <code>https://demo.xiaokeqing.cn</code>，下面第三块那三条 curl 复制就能跑。
+      </p>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>端点一览 · 做什么 / 返回什么 / 坑在哪<span class="tag">17 个 · 只读</span></div>
+        <div class="mod-bd">
+          <div class="api-scroll">
+            <table class="api-tbl">
+              <thead><tr>
+                <th>端点</th><th>方法</th><th>用途</th><th>关键字段</th><th>已知坑（先看这列）</th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td><span class="api-ep">/api/health</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">进程活着 + 线上跑的是哪个版本</td>
+                  <td class="api-fld"><code>buildSha</code> <code>embeddedGitCommit</code> <code>vectorStore</code> <code>documentVectors</code> <code>uptimeMs</code> <code>status</code></td>
+                  <td class="api-pit">唯一端出构建指纹的端点。<b>它和 <code>deploy.release</code> 对不上，说明前端与进程不是同一次发布</b>；<i>不脱敏，但不含业务数据。</i></td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/home</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">首屏聚合：alerts + geo + honeypot 三合一</td>
+                  <td class="api-fld"><code>alerts.generatedAt</code> <code>alerts.cacheSeconds</code> <code>snapshotAt</code> <code>cacheAgeSeconds</code></td>
+                  <td class="api-pit">响应头是 <code>max-age=45, stale-while-revalidate=90</code>。<b>快 ≠ 新</b>：真实年龄 = <code>cacheAgeSeconds</code> + 响应头 <code>Age</code>，命中边缘缓存时耗时会接近 0ms。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/overview</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">指标总览（stats24h / 六态 / 额度）</td>
+                  <td class="api-fld"><code>stats24h</code> <code>dataSource.wazuhMode</code> <code>degraded</code></td>
+                  <td class="api-pit">看 <code>wazuhMode</code>：<b>只有 <code>REAL</code> 才是真的 Wazuh 在供数</b>，降级会显式写出来 —— 别把降级数据当实时。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/alerts</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">告警聚合（窗口内告警 + 来源 + severity）</td>
+                  <td class="api-fld">窗口计数、来源、<code>severity</code>、<code>stats24h</code></td>
+                  <td class="api-pit">返回的是<b>聚合</b>，不是逐条原始日志；<code>geo.coverage.totalAlerts</code> 是窗口内<b>未去重</b>总量。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/alerts/{aggId}</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">单条告警详情</td>
+                  <td class="api-fld">该 <code>aggId</code> 那一条的完整结构</td>
+                  <td class="api-pit">路径里是<b>聚合 id，不是 IP</b>；<i>想「按 IP 查告警」这个端点做不到，不存在的 id 直接 404。</i></td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/geo</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">来源地理聚合（国家/省/ASN + 24h 趋势）</td>
+                  <td class="api-fld"><code>coverage.totalAlerts</code> <code>withSourceIp</code> <code>geocoded</code> <code>countryCount</code></td>
+                  <td class="api-pit"><b>必须连 <code>coverage</code> 一起看</b>：只有带源 IP 的才进地理统计，<b>不许把子集画成「全量攻击」</b>；离线库只到国家/省，不定位到人。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/latest</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">窗口聚合（只给一个窗口的量）</td>
+                  <td class="api-fld"><code>windowSize</code> <code>windowAlertCount</code></td>
+                  <td class="api-pit">窗口大小会变，<b>别拿它和 <code>geo.coverage.totalAlerts</code> 直接比</b> —— 两个数可能不是同一个窗口。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/honeypot</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">蜜罐战报（连接 / 登录 / 来源 Top / 口令结构 / 时间线）</td>
+                  <td class="api-fld"><code>connections</code> <code>logins</code> <code>total</code> <code>sampled</code></td>
+                  <td class="api-pit"><b><code>total</code> 恒为 10000，那是统计上限哨兵，不是真实累计</b> —— 真实计数看 <code>connections</code>（其次 <code>logins</code>）。口令只给结构，不给原文。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/audit</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">处置审计（护栏拦截 / 封禁留痕 / 理由）</td>
+                  <td class="api-fld"><code>summary.blockedByGuard</code> <code>summary.blockTotal</code></td>
+                  <td class="api-pit">两个数都是<b>累计</b>，不是本周/本日；<code>blockTotal</code> 是留痕条数去重后的地址数。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/stories</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">攻击故事线候选池</td>
+                  <td class="api-fld"><code>sources[]</code> 四段计数 <code>alerts</code> <code>decoyPorts</code> <code>honeypotLogins</code> <code>auditActions</code>，首末时间、最高严重度、<code>gaps</code></td>
+                  <td class="api-pit"><code>auditActions</code> 多轮实测全是 0 —— <i>不是「没有处置动作」，是这一段还没接上数据</i>；<code>/api/public/stories/1</code> 是 404，<b>它没有子资源</b>。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/story?src=</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">单源事件时间线（点了才拉，页面不预取）</td>
+                  <td class="api-fld"><code>events[]</code>（升序、每段 ≤40 条、<code>truncated</code> 如实标注）</td>
+                  <td class="api-pit">缺 <code>src</code> → <b>400 <code>MISSING_SRC</code></b>；<i><code>src</code> 要填候选池返回的真实来源</i>，别拿 IP 段瞎猜。脱敏要连 <code>events[].summary</code> 里的内嵌 IP 一起盖。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/webstats</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">Web 访问统计（访问量 / 来源）</td>
+                  <td class="api-fld">访问量、来源分类</td>
+                  <td class="api-pit"><b>一个 IP 都不给</b>，连打码都不给；也<b>还没有 <code>statusCode</code> 与 7 天日桶字段</b> ⇒ 面板上那两块如实写「读不到」。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/deploy</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">构建与发布信息（可追溯）</td>
+                  <td class="api-fld"><code>build{}</code> <code>runtime{}</code> <code>release{release, totalBytes, source}</code></td>
+                  <td class="api-pit"><b>嵌套结构，不是平铺的</b>；<b>没有 <code>files</code> / <code>history</code> 两个键</b> —— 别按它们写代码。当前线上常见 <code>available:false</code> + <code>RELEASE_INFO_NOT_CONFIGURED</code>。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/eval</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">评测报告（AI 质量那几格）</td>
+                  <td class="api-fld"><code>sampleSize</code> <code>keyPointHitRate</code> <code>refusalRate</code> <code>strictRate</code> <code>citationRate</code> <code>personaCatchphraseRate</code> <code>tabooRate</code> <code>generatedAt</code> + <code>note</code>/<code>caveats</code></td>
+                  <td class="api-pit"><b>比率必须连 <code>sampleSize</code> 一起读</b>：96 份和 4 份不是一个可信度。当前线上常见 <code>available:false</code> + <code>EVAL_REPORT_NOT_CONFIGURED</code>。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/kb?q=</span></td>
+                  <td><span class="api-m">GET</span></td>
+                  <td class="api-use">知识库只读检索</td>
+                  <td class="api-fld"><code>results[]{title, snippet, sourceType, trustLevel, score, publicRule}</code>、<code>hitCount</code> <code>available</code> <code>note</code></td>
+                  <td class="api-pit">20 次/分钟，且<b>每次都有 embedding 成本 ⇒ 禁止轮询</b>。白名单口径：根目录 <code>security-docs</code> / <code>data/kb-approved</code>、来源类型 <code>community</code>、黑名单含 <code>internal</code>、top-k=3、摘要 300 字 —— <b>检索不到是真没有，不是坏了</b>。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/ask</span></td>
+                  <td><span class="api-m post">POST</span></td>
+                  <td class="api-use">公开问答（检索 + 引用 + 六态标注）</td>
+                  <td class="api-fld"><code>state</code>（六态机读值）、引用、<code>ttsTextHash</code></td>
+                  <td class="api-pit">限流压在 <b>6 次/分钟/IP</b> + 公开池 <b>30 次/日</b> + 同 IP 并发 1；<b>429 和「读不到」是两件事</b>，别混着写。它只解释，不做任何处置动作。</td>
+                </tr>
+                <tr>
+                  <td><span class="api-ep">/api/public/tts</span></td>
+                  <td><span class="api-m post">POST</span></td>
+                  <td class="api-use">在线语音合成代理（转发字节流）</td>
+                  <td class="api-fld">关闭态：<code>503</code> + <code>TTS_DISABLED</code></td>
+                  <td class="api-pit"><b>默认关闭</b>（等语音 Key）。就算开了也<b>只收白名单 <code>phraseId</code> / <code>textHash</code></b>，塞自由文本 → <b>400 <code>TEXT_NOT_ALLOWED</code></b>。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="api-foot">「字段」一列只写<b>已经在线下核对过的键</b>，不是照抄设计稿；标了「当前 <code>available:false</code>」的字面意思是：端点通、数据那份文件还没配好，
+            这是<b>如实报告</b>，不是接口坏了。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>同一份数据的 <code>.js</code> 别名<span class="tag">边缘可缓存 · 不吃 20 次/分钟</span></div>
+        <div class="mod-bd">
+          <p class="api-p">上面每个 <code>/api/public/*</code> 都有同名的 <code>.js</code> 别名（<code>/api/public/alerts.js</code> 这样）。它存在的理由是<b>缓存</b>：
+            边缘节点按扩展名决定缓存，无扩展名的路径必然回源（实测 0.94~2.60s），<code>.js</code> 能命中边缘缓存，<b>而命中缓存的请求不到源站，也就不吃公开面每 IP 20 次/分钟的限流</b>。
+            所以静态页大量取数时一律走别名。</p>
+          <p class="api-p">两条纪律：<b>① 别给这些地址加随机 cache-buster</b>（<code>?cb=</code> / <code>?t=</code> / <code>Date.now()</code>）—— 那样每次都是新 URL，100% 回源；
+            <b>② <code>?q=</code> / <code>?src=</code> 这类语义参数是允许的</b>（它换来的是不同内容）。</p>
+          <p class="api-p">至于响应体长什么样，两种记录并存：一份 2026-10-16 的缓存契约写「<b>响应仍是 <code>application/json</code>，照常 <code>JSON.parse</code>，别当脚本执行</b>」，
+            另一处写它是 <code>window.X = …</code> 的脚本形式、可直接 <code>&lt;script src&gt;</code> 引入。<b>本页不替你赌这一条</b>，一条命令就能看出来：</p>
+          <pre class="api-pre"><span class="c"># 开头是 { 就当 JSON 用；开头是 window. 就当脚本用（以响应头的 content-type 为准）</span>
+curl -s https://demo.xiaokeqing.cn/api/public/home.js | head -c 60</pre>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>怎么最快验证一个端点<span class="tag">三条 curl · 只读 · 不写入</span></div>
+        <div class="mod-bd">
+<pre class="api-pre"><span class="c"># ① 活着吗、线上跑的是哪个版本（表格第 1 行）</span>
+curl -s https://demo.xiaokeqing.cn/api/health | head -c 300
+
+<span class="c"># ② 蜜罐：total 恒为 10000 是上限哨兵，真值看 connections（表格第 8 行）</span>
+curl -s https://demo.xiaokeqing.cn/api/public/honeypot.js | head -c 400
+
+<span class="c"># ③ 限流长什么样：连打 3 次 kb（20 次/分钟按 IP 算，打满后就是 429）</span>
+for i in 1 2 3; do curl -s -o /dev/null -w '%{http_code} ' "https://demo.xiaokeqing.cn/api/public/kb?q=rate-limit"; done; echo
+
+<span class="c"># Windows PowerShell 等价写法（本页就是在这台机器上写的）：</span>
+<span class="c">#  Invoke-WebRequest -UseBasicParsing https://demo.xiaokeqing.cn/api/health | % Content</span>
+<span class="c">#  curl.exe -s -o NUL -w "%{http_code} " "https://demo.xiaokeqing.cn/api/public/kb?q=probe"</span></pre>
+          <p class="api-foot">三条都只读，不写库、不改状态、不触发任何处置动作。取不到的时候（断网、429、源站挂了）就是取不到 ——
+            这一页不打算替换成任何「样例值」，<a href="/status/">/status/</a> 那页才是「现在通不通」的实测表。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径与边界<span class="tag">公开面只读</span></div>
+        <div class="mod-bd">
+          <p class="api-kv">
+            <b>① 只读。</b>全站公开端点没有任何写操作；处置动作在受保护的自用面，要管理员令牌 + 人工审批。<br>
+            <b>② 地址打码。</b>页面上看到的来源地址统一是 <code>1.2.3.x</code>；但 <code>curl</code> 拿到的可能是接口原文，
+            <b>显示层掩码与接口原文不一致属于预期</b>，原文只留在 srv1 日志里。<br>
+            <b>③ 失败说失败。</b>取不到就写「未取到 / 读不到」并带原因（<code>available:false</code> + <code>reason</code>），不补 0、不补样例值。<br>
+            <b>④ 不常驻。</b>没有 SSE / WebSocket，一次性返回；要新数据就再敲一次。
+          </p>
+          <p class="api-foot">要复现「现在通不通」的逐端点体检看 <a href="/status/">状态页 /status/</a>；要复现这个站是干什么的看
+            <a href="/what/">介绍页 /what/</a>。口径细节写在笔记里：
+            <a href="/posts/public-api-rate-limit-owner-token/">公开接口防刷</a> ·
+            <a href="/posts/verifiable-deploy-chain/">可验证的发布链</a></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

@@ -8,6 +8,7 @@ Allow: /
 #            且门禁的"五页清单"（_dev/check-ssr-contract.py）仍把它算作第 5 页；
 #            若站主日后要"连页面一起删"，需同时改门禁五页清单与 dock 模板。
 Disallow: /test/
+Disallow: /lab/
 
 # robots.txt（站主第十轮 ⑤）：静态站，没有后台、没有登录、没有用户投稿，整站都可抓。
 # 这里没有引任何第三方 robots/SEO 服务；除 /test/（内部实验台）外没有 Disallow 掉真实内容。
