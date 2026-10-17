@@ -980,6 +980,30 @@ const XK_STATE_LABEL = {
   'no-live-data':['没有实时数据源'], 'no-kb-basis':['知识库无依据']
 };
 function xkAskEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* ★V5（2026-10-17）：[EMO:xxx] 情绪标签协议（后端可选输出，前端必须完全消化）
+   · xkEmoClean：从正文里剥掉所有标签 ⇒ 页面永不出现 "[EMO:" 字样（泄漏率=0 第一道闸）
+   · xkEmoTags ：按出现顺序取 tag 列表 ⇒ 交给 __xkSetEmo 逐句继承
+   · 只认 [EMO:小写字母/下划线]，其它形态原样保留（宁可不解析，也不吃掉正常文本） */
+const XK_EMO_RE = /\[EMO:([a-z_]+)\]/gi;
+function xkEmoClean(s){
+  return String(s==null?'':s).replace(XK_EMO_RE,'').replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+}
+function xkEmoTags(s){
+  const out = [];
+  String(s==null?'':s).replace(XK_EMO_RE, function(_,n){ out.push(String(n).toLowerCase()); return ''; });
+  return out;
+}
+function xkEmoPlay(seq){
+  if(!seq || !seq.length) return;
+  if(typeof window.__xkSetEmo !== 'function') return;
+  let i = 0;
+  (function step(){
+    if(i >= seq.length) return;
+    try{ window.__xkSetEmo(seq[i++]); }catch(e){ return; }
+    if(i < seq.length) setTimeout(step, 900);
+  })();
+}
+window.__xkEmoStat = function(){ return { helper: typeof xkEmoClean === 'function', leaks: (document.body.innerText.match(/\[EMO:/g)||[]).length }; };
 function xkInline(s){
   return s.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
           .replace(/`([^`]+)`/g,'<code>$1</code>')
@@ -1062,12 +1086,15 @@ function xkRenderAnswer(el, d){
   if(d.injection && d.injection.blocked)
     html += '<p>输入命中提示注入护栏（'+xkAskEsc(d.injection.hitCount||0)+' 条规则）；下面是把它当"不可信数据"处理后的结果。</p>';
   if(d.failureReason) html += '<p><b>服务端说明：</b>'+xkAskEsc(d.failureReason)+'</p>';
-  if(d.answer) html += xkMd(d.answer);
+  const _ans = d.answer;
+  const _clean = xkEmoClean(_ans);          /* ★V5：先剥 [EMO:xxx] 再进 markdown，页面零标签 */
+  if(_clean) html += xkMd(_clean);
   else if(!d.failureReason) html += '<p>这次没有返回答案正文（state='+xkAskEsc(st||'—')+'）。</p>';
   html += xkCites(d);
   if(d.clientIpMasked || (d.quota && d.quota.pool))
     html += '<div class="cite">来源 IP（后端已掩码）：'+xkAskEsc(d.clientIpMasked||'—')+(d.quota&&d.quota.pool?' · 额度池 '+xkAskEsc(d.quota.pool):'')+'</div>';
   el.innerHTML = html;
+  xkEmoPlay(xkEmoTags(_ans));               /* ★V5：逐句继承（900ms 一句，最后一句停住） */
   const log = document.getElementById('chatlog'); if(log) log.scrollTop = log.scrollHeight;
 }
 function xkCountdown(el, msg, secs){

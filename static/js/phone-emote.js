@@ -151,6 +151,8 @@
     if (!registry) { return null; }
 
     var player = null, metadata = null, applyMode = function () {}, updateParts = function () {}, speaking = false;
+    /* ★V5（2026-10-17）：表情覆盖位 —— [EMO:xxx] 逐句继承时用它跳过 MODE_LABEL 的 idle/thinking 表 */
+    var exprOverride = null, exprLabels = [];
     var disposed = false, fpsTimer = null;
     var cbs = [];
     function emit() { for (var i = 0; i < cbs.length; i++) { try { cbs[i](inst.status()); } catch (e) {} } }
@@ -168,6 +170,16 @@
         if (st.ready) { applyMode(); } else { emit(); }
         return true;
       },
+      /* ★V5：按 E-mote 的"表情_xxx"标签直接切表情（传 null/'' 复位成按 mode 自动）。
+         未知标签返回 false（调用方自己回落），就绪前调用只记下来，就绪后生效。 */
+      setExpression: function (label) {
+        if (disposed) { return false; }
+        if (label && exprLabels.length && exprLabels.indexOf(label) < 0) { return false; }
+        exprOverride = label || null;
+        if (st.ready) { applyMode(); } else { emit(); }
+        return true;
+      },
+      expressionLabels: function () { return exprLabels.slice(); },
       setModel: function (id) {
         if (disposed || !MODELS[id]) { return false; }        /* 只接受随包模型（当前仅 kurisu_c） */
         if (id === st.model) { return true; }
@@ -269,6 +281,7 @@
         for (var label in out) { player.setVariable(label, out[label], 0); }
       };
       var expressions = player.mainTimelineLabels.filter(function (l) { return l.indexOf('表情_') === 0; });
+      exprLabels = expressions.slice();               /* ★V5：把可选表情表暴露给 setExpression 调用方 */
       function pick(re) { for (var i = 0; i < expressions.length; i++) { if (re.test(expressions[i])) { return expressions[i]; } } return null; }
       /* 表情表是日文（实测 28 个），没有"思考"表情：thinking 用 呆然（退路 困る） */
       var MODE_LABEL = {
@@ -288,7 +301,7 @@
         if (speaking && !document.hidden) { player.setVariable('face_talk', (Math.sin(performance.now() / 120) + 1) * 2.5); }
       };
       applyMode = function () {
-        var label = MODE_LABEL[st.mode];
+        var label = exprOverride || MODE_LABEL[st.mode];   /* ★V5：有情绪覆盖位就优先用表情标签 */
         if (label) { player.diffTimelineSlot1 = ''; player.mainTimelineLabel = label; }
         speaking = st.mode === 'speaking';
         if (!speaking) { player.setVariable('face_talk', 0, 120); }

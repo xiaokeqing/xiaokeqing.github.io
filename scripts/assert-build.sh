@@ -264,6 +264,19 @@ if grep -q 'data-src=/kurisu/scene/subtitle_frame_big.webp' "$PUB/index.html"; t
 # CRT 位置/尺寸必须由 --crt-w/--crt-h 变量驱动（禁写死像素，换视口就错位）
 if grep -q -- '--crt-w' "$PUB/index.html" && grep -q 'width:var(--crt-w)' "$PUB/index.html"; then ok "CRT 尺寸由 --crt-w/--crt-h 驱动（随视口等比）"; else no "CRT 尺寸不是变量驱动（换视口会错位）"; fi
 
+# ---------- ⑤ [EMO] 情绪标签协议（页面永不出现标签 + 逐句继承）----------
+if [ -s "$PUB/ai/index.html" ]; then
+  AI5="$PUB/ai/index.html"
+  if grep -q 'xkEmoClean' "$AI5"; then ok "V5: 答案渲染侧有标签剥离 helper（xkEmoClean）"; else no "V5: 缺 xkEmoClean（[EMO] 标签会直接显示给访客）"; fi
+  if grep -q '__xkSetEmo' "$AI5"; then ok "V5: 有逐句情绪继承入口（__xkSetEmo）"; else no "V5: 缺 __xkSetEmo（标签解析了也不会换情绪）"; fi
+  # 渲染路径必须调用 xkEmoClean（定义 + 至少一处调用 = ≥2 次；minify 后变量名会变，只数函数名）
+  EMO_N=$(grep -o 'xkEmoClean' "$AI5" | wc -l)
+  if [ "$EMO_N" -ge 2 ]; then ok "V5: 渲染路径调用 xkEmoClean（$EMO_N 处）"; else no "V5: 渲染路径没调用 xkEmoClean（只有定义没使用 = 标签仍会上屏）"; fi
+  # 泄漏闸是运行时指标（xkEmoClean 内部的正则字面量本身含 [EMO:，不能用静态 grep 判定）；
+  # 这里只保证页面暴露了自检入口 window.__xkEmoStat()，供 CDP/浏览器验收时量"可见文本里的标签数=0"
+  if grep -q '__xkEmoStat' "$AI5"; then ok "V5: 页面暴露 __xkEmoStat() 自检入口（运行时量泄漏率）"; else no "V5: 缺 __xkEmoStat（无法在浏览器里验收泄漏率）"; fi
+else warn "缺 $PUB/ai/index.html（跳过 V5 断言）"; fi
+
 # ---------- 汇总 ----------
 head1 "汇总"
 echo "  通过 $PASS 项，失败 $FAIL 项"

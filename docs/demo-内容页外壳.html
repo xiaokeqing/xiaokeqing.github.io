@@ -1059,6 +1059,39 @@ const sayEl = document.getElementById('holoSay');
    改成初始 idle：首帧只取 idle 那张（normal.idle.webp 84.7KB，本来就要用）；
    一旦有真台词（下方 `speak()`）或音频播放，`mode` 仍会被置 'speaking'、该图那时才取 —— 三态语义不变。 */
 let emo = 'normal', mode = 'idle', speakTimer = null;
+/* ★V5（2026-10-17）：[EMO:xxx] 情绪标签的唯一入口（渲染侧 xkEmoClean 先剥标签，页面永不出现方括号）。
+   两条腿：① 原 Sprite/手机三态照旧（emo + render）；② 手机已换成 E-mote 时，按表情标签直接切脸。
+   未知情绪回落 normal；异常不影响渲染。 */
+var XK_EMO_EXPR = [
+  [/happy/,            /嬉|笑|喜|楽/],
+  [/sad/,              /悲|泣|哀|しょんぼり/],
+  [/angry/,            /怒|怒り/],
+  [/surprised/,        /驚|吃驚|びっくり/],
+  [/blush/,            /照|恥|赤面/],
+  [/disappointed/,     /困|呆|疲/],
+  [/sided_thinking/,   /呆然|考え/],
+  [/normal/,           /平常/]
+];
+function xkEmoToLabel(n){
+  var em = window.__xkPhoneEmoteInst;
+  if(!em || typeof em.expressionLabels !== 'function'){ return null; }
+  var labels = em.expressionLabels();
+  if(!labels || !labels.length){ return null; }
+  var re = null;
+  for(var i = 0; i < XK_EMO_EXPR.length; i++){ if(XK_EMO_EXPR[i][0].test(n)){ re = XK_EMO_EXPR[i][1]; break; } }
+  if(!re){ re = /平常/; }
+  for(var j = 0; j < labels.length; j++){ if(re.test(labels[j])){ return labels[j]; } }
+  return null;
+}
+window.__xkSetEmo = function(n){
+  if(!n) return;
+  if(!EMOS[n]) n = 'normal';
+  try{ emo = n; setPhone(); render(); }catch(e){}
+  try{
+    var em = window.__xkPhoneEmoteInst, lb = xkEmoToLabel(n);
+    if(em && lb && typeof em.setExpression === 'function'){ em.setExpression(lb); }
+  }catch(e2){}
+};
 function render(){
   const strip = EMOS[emo][mode === 'speaking' ? 'speaking' : 'idle'];
   panelAv.set(strip);
