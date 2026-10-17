@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """把两个 demo 文件"整份搬"成生产页模板（本轮口径，2026-10-14 第四批）。
 
 口径（站主原话）：
@@ -3608,11 +3608,13 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   @media (max-width:980px){
     /* ★批次 D（2026-10-16）：窄屏导航已改到头部（头像卡下方），这里必须给同一个 86px ——
        原来写 top:auto 会把 DOCK_CSS 里那条（特异性更低）压掉，实测 dock 会贴到 top=0 并压住头像卡。 */
-    body.xk-has-idcard .dock{top:86px}
+    body.xk-has-idcard .dock{top:100px}
     .xk-idcard-av{width:56px;height:56px}
     .xk-idcard-av canvas{width:56px;height:56px}
     .xk-idcard-btn{width:34px;height:34px;font-size:15px}
-    .xk-idcard-col{grid-template-columns:repeat(2,34px);grid-auto-rows:34px}
+    /* 窄屏把功能条摊成一行（头像右边）：竖排在手机上会压住导航 */
+    .xk-idcard-col{grid-template-columns:52px repeat(4,34px);grid-auto-rows:34px}
+    .xk-idcard-col #xkLoginBtn{grid-column:auto;width:52px;height:34px;font-size:12.5px}
     .xk-idcap{top:104px}
     .xk-idpanel{left:6px;top:104px}
   }
