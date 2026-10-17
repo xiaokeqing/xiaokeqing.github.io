@@ -2700,6 +2700,17 @@ var XK_SM_JS = (function(){
     if(window.__xkSmVoice && V.voiceLineOf) { /* 宿主语音由页面侧调 host()，这里不重复播 */ }
     return true;
   }
+  /* ★2026-10-17（站主 C 方案）：状态机轮换的质量闸 —— 返回某个**节点**所演剪辑的原生帧宽。
+     为什么需要：38 条剪辑里 33 条是 134×180、idle_closed_eye 168×180，铺到 CRT 要放大 2.4~4.7 倍，
+     是她"糊"的真正原因（画布尺寸不是主因）。轮换只走 ≥268px 的 5 条（idle / speaking_med /
+     speaking_short / thinking_speaking2 / surprise_speaking）；情绪按钮（显式请求）不受限。 */
+  function xkFw(nodeId){
+    try {
+      var n = V.byClip[nodeId];
+      var m = n && XKM.clips && XKM.clips[n.clip];
+      return (m && m.frameWidth) || 0;
+    } catch(e){ return 0; }
+  }
   function entryFor(kind, payload){
     var cand = null;
     if(kind === 'emotion'){
@@ -2716,11 +2727,17 @@ var XK_SM_JS = (function(){
       var avail = [];
       for(var i = 0; i < cand.length; i++){
         var cl = cand[i];
+        /* ★2026-10-17（站主 C 方案）：轮换只从 **原生 ≥268px 宽** 的剪辑里挑 ——
+           38 条里有 33 条是 134×180、另有 idle_closed_eye 168×180，铺到 CRT 上要放大 2.4~4.7 倍
+           ⇒ 那就是"她糊"的根因（不是画布尺寸问题）。情绪按钮走 kind==='emotion' 分支，不受此限。
+           ⚠ 注意：V.byClip[x] 是**状态机节点**（带 .clip），帧宽要看 manifest：XKM.clips[n.clip].frameWidth。 */
+        if(xkFw(cl) && xkFw(cl) < 268) continue;
         if(((V.hostEntries && V.hostEntries.indexOf(cl) >= 0) || V.byClip[cl]) && cl !== V.cur) avail.push(cl);
       }
       if(!avail.length){
         for(var j = 0; j < cand.length; j++){
           var cj = cand[j];
+          if(xkFw(cj) && xkFw(cj) < 268) continue;
           if((V.hostEntries && V.hostEntries.indexOf(cj) >= 0) || V.byClip[cj]) avail.push(cj);
         }
       }
@@ -2759,6 +2776,13 @@ var XK_SM_JS = (function(){
       }
     }
     var pool = pos.length ? pos : self;
+    /* ★2026-10-17（站主 C 方案）：**选边也过质量闸** —— 只要有一条 ≥268px 的出边，就不走低清的边。
+       兜底：全被过滤掉时仍用原 pool（宁可动，也不要冻住）。 */
+    var poolHi = [], _hi;
+    for(_hi = 0; _hi < pool.length; _hi++){
+      if(!(xkFw(pool[_hi].to) && xkFw(pool[_hi].to) < 268)) poolHi.push(pool[_hi]);
+    }
+    if(poolHi.length) pool = poolHi;
     /* 近期访问惩罚：优先选"最近 4 步没到过"的边；全都到过才退回全集
        （此时上面的循环打断与下面的反自环/反卡死仍然生效）。 */
     var recent = V.recent || [];
@@ -3106,12 +3130,25 @@ def xk_sm_patches(script, is_home):
         s = sub1(s,
                  "started = true; lastT = performance.now();\n",
                  "window.__xkSmIsHome = %s;\n"
-                 "function xkSmBoot(){ try{ XK_SM_JS.boot(); }catch(e){} }\n"
-                 "/* ★2026-10-17 站主定：**电视只用立绘那套（full/*）**，状态机（38 条 medium 动作图集）"
-                 "不再接管主页 —— 那套挪去手机面板（作 E-mote 的第二级降级）。\n"
-                 "   保留 xkSmBoot 与 __xkSM 对象（首屏门禁 gate-firstscreen 第 251 行仍读 __xkSM.reasons()），"
-                 "只是**不调用** boot。 */\n"
-                 "if(!window.__xkSmIsHome){ setTimeout(xkSmBoot, 600); }   /* 内容页照旧；主页不启 */\n"
+                 "function xkSmBoot(){ try{ XK_SM_JS.boot(); }catch(e){}\n"
+                 "  /* ★2026-10-17 修时序竞态：接管原本只写在 showHud() 里，而 showHud 可能早于本模块加载\n"
+                 "     （实测有时 __xkSM.cur 一直为 null、她永远是主页自己的 full/* 循环）⇒ 加兜底重试：\n"
+                 "     开场落定（约 7s）后，只要状态机还没开始演，就每秒补调一次 takeOver()，最多 20 次。 */\n"
+                 "  setTimeout(function(){\n"
+                 "    var n = 0;\n"
+                 "    var t = setInterval(function(){\n"
+                 "      try {\n"
+                 "        if(window.__xkSM && window.__xkSM.cur){ clearInterval(t); return; }\n"
+                 "        if(window.XK_SM_JS && XK_SM_JS.takeOver) XK_SM_JS.takeOver();\n"
+                 "        if(++n >= 20) clearInterval(t);\n"
+                 "      } catch(e){ clearInterval(t); }\n"
+                 "    }, 1000);\n"
+                 "  }, 7000);\n"
+                 "}\n"
+                 "/* ★2026-10-17 站主定：**C 方案** —— 开场用立绘那套(full/*)，进站后由状态机演 38 条动作；\n"
+                 "   但状态机的 idle/轮换只从 **≥268px** 的剪辑里挑（entryFor 里过滤），低清的 134/168 剪辑不参与轮换\n"
+                 "   （情绪按钮仍可显式调用）。状态机在主页恢复启动。 */\n"
+                 "setTimeout(xkSmBoot, 600);   /* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/\n"
                  "started = true; lastT = performance.now();\n" % ('true' if is_home else 'false'),
                  'T8: 启动挂钩')
     return s
