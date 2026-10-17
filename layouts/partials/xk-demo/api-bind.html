@@ -1114,26 +1114,38 @@
     return P;
   }
 
+  /* ---- 绘制重试：切屏瞬间 .xk-atkmap-stage 高度可能还是 0，mapLayout() 会返回 false，
+     旧写法直接 return ⇒ canvas 永远停在 300×150、脚注卡在「取数中…」（2026-10-18 线上实测）。
+     这里改成按帧重试（最多 60 次 ≈ 1s），尺寸一落地就画。---------------------------------------- */
+  var mapRetryT = null, mapRetryN = 0;
+  function mapPaintRetry(withData) {
+    if (mapLayout()) { mapRetryN = 0; mapPaint(withData); return; }
+    if (mapRetryN >= 60) { mapMsg('画布尺寸读不到（.xk-atkmap-stage 高度为 0），请切屏后重看'); return; }
+    mapRetryN++;
+    if (mapRetryT) clearTimeout(mapRetryT);
+    mapRetryT = setTimeout(function () { mapRetryT = null; mapPaintRetry(withData); }, 40);
+  }
+
   /* ---- 状态机：底图 / geo / 可用性 三态都落地才画点，否则只写文字 --------------------------- */
   function mapUpdate() {
     mapSrc();
     mapMarks = [];
     if (!mapWorld) { mapMsg(mapWorldErr ? '底图读不到（/data/world-map.json：' + mapWorldErr + '）' : '取数中…'); return; }
-    if (!mapGeoRaw) { mapMsg('取数中…'); mapPaint(false); return; }
+    if (!mapGeoRaw) { mapMsg('取数中…'); mapPaintRetry(false); return; }
     if (!mapGeo) {
       mapMsg('读不到（/geo：' + (mapGeoErr || '本轮未取到') + '）');
-      mapPaint(false);
+      mapPaintRetry(false);
       return;
     }
     if (mapGeo.available === false) {
       mapMsg('读不到（/geo available=false' + (mapGeo.reason ? ' · ' + mapGeo.reason : '') + '）');
-      mapPaint(false);
+      mapPaintRetry(false);
       return;
     }
     var bc = Array.isArray(mapGeo.byCountry) ? mapGeo.byCountry : [];
-    if (!bc.length) { mapMsg('本窗口没有可定位的来源'); mapPaint(false); return; }
+    if (!bc.length) { mapMsg('本窗口没有可定位的来源'); mapPaintRetry(false); return; }
     mapMsg('');
-    mapPaint(true);
+    mapPaintRetry(true);
   }
 
   /* ---- 一次性挂载：按钮 / 懒加载 / 提示 / 重绘 ------------------------------------------- */
@@ -1154,6 +1166,8 @@
       } else {
         mapKick();                              /* 老浏览器：直接取（不阻塞首屏，脚本跑完才到） */
       }
+      /* 兜底：个别容器（content-visibility / display 切换）下 IO 不触发时，1.5s 后再试一次 */
+      setTimeout(function () { if (!mapWorld) mapKick(); }, 1500);
     }
 
     /* ② 度量切换：数据都在同一份 byCountry 里（count / uniqueIps），只重绘不取数 */
@@ -1192,7 +1206,7 @@
     var rt = null;
     function again() {
       if (rt) clearTimeout(rt);
-      rt = setTimeout(function () { rt = null; if (mapGeo) mapPaint(true); else mapUpdate(); }, 160);
+      rt = setTimeout(function () { rt = null; if (mapGeo) mapPaintRetry(true); else mapUpdate(); }, 160);
     }
     window.addEventListener('resize', again);
     if (typeof ResizeObserver === 'function' && cv && cv.parentNode) {
