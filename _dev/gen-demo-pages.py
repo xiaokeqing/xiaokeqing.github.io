@@ -2708,6 +2708,20 @@ var XK_SM_JS = (function(){
       }
       setHost(g.edges, g.host_triggered_entries);
       V.on = true;
+      /* ★2026-10-17 自愈：接管（takeOver → start）可能因页面时机丢失 —— 实测：线上/本地都会偶发
+         （showHud 早于本模块加载时那句 takeOver 就丢了；主页还会等开场，慢链路下更晚）。
+         模块内部兜底：每 1.2s 看一次，只要还没开演就补调 takeOver，直到开演或 30 次为止。 */
+      if(!V._selfHeal){
+        var _shN = 0;
+        V._selfHeal = setInterval(function(){
+          try{
+            if(!V.on) return;
+            if(V.cur){ clearInterval(V._selfHeal); V._selfHeal = null; return; }
+            if(++_shN > 30){ clearInterval(V._selfHeal); V._selfHeal = null; return; }
+            if(document.visibilityState !== 'hidden' && window.__xkSmTakeOver) window.__xkSmTakeOver();
+          }catch(e){ try{ clearInterval(V._selfHeal); }catch(e2){} V._selfHeal = null; }
+        }, 1200);
+      }
       return true;
     }).catch(function(err){
       V.err = String((err && err.message) || err);

@@ -288,15 +288,17 @@
       };
       applyMode();
 
-      /* 帧率实测（1 秒窗口，只采一次，供 status() 读） */
+      /* 帧率实测（1 秒窗口，只采一次，供 status() 读）
+         ★2026-10-17 修（V2b）：原实现在挂载瞬间就开测，窗口正好与模型初始化/纹理上传重叠，
+           报出 2 是计数器口径问题（不是渲染器真的 2fps）。改为挂载后 1.5s 再测，避开初始化抖动。 */
       (function measureFps() {
-        var n = 0, t0 = performance.now();
+        var n = 0, t0 = 0;
         function tick() {
           n++;
           if (performance.now() - t0 < 1000) { requestAnimationFrame(tick); }
           else { st.fps = Math.round(n * 1000 / (performance.now() - t0)); emit(); }
         }
-        requestAnimationFrame(tick);
+        setTimeout(function(){ t0 = performance.now(); requestAnimationFrame(tick); }, 1500);
       })();
 
       setState('ready', { ready: true, loadMs: Math.round(performance.now() - t0), expressions: expressions.length, modeLabels: MODE_LABEL });
