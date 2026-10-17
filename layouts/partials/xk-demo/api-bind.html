@@ -812,6 +812,11 @@
         '<span class="chip">' + esc(chip) + '</span>';
     }
     function hideFrom(i) { for (var j = i; j < rows.length; j++) { rows[j].style.display = 'none'; } }
+    /* ★V4-P4 修（2026-10-17 13:20）：线上实测 /api/public/deploy 的真实形状是
+       {generatedAt, build:{sha,sourceSha,artifactMd5,buildTime,selfReported}, runtime:{startedAt,uptimeSeconds},
+        release:{available,release,commit,totalBytes,source}, available, note}
+       —— release 是**嵌套对象**、buildTime 可能是 "unknown"、**没有 history/files**（后端白名单没透出）。
+       所以：① 读嵌套字段；② 端点没给的就写"端点未提供"，不拿别的数顶替；③ 绝不把对象直接塞 textContent。 */
     if (!d) {
       var why = !p ? '端点在本次取数清单外' : (p.err && p.err.status ? 'HTTP ' + p.err.status : '不可达');
       cell('release', NA); cell('built', NA); cell('files', NA); cell('bytes', NA);
@@ -819,23 +824,35 @@
       txt(note, '读不到（/deploy 未取到：' + why + '）—— 不补数');
       return;
     }
-    cell('release', d.release || NA);
-    cell('built', d.builtAt ? String(d.builtAt).replace('T', ' ').slice(5, 16) : NA);
-    cell('files', fmt(d.files));
-    cell('bytes', d.totalBytes ? (Math.round(d.totalBytes / 1048576 * 10) / 10) + ' MB' : NA);
-    var hist = Array.isArray(d.history) ? d.history.slice(0, rows.length) : [];
-    if (!hist.length) {
-      row(0, '—', '没有发布历史（不是取不到）', ''); hideFrom(1);
-    } else {
-      for (var i = 0; i < hist.length; i++) {
+    var rel = (d.release && typeof d.release === 'object') ? d.release : {};
+    var build = (d.build && typeof d.build === 'object') ? d.build : {};
+    var rt = (d.runtime && typeof d.runtime === 'object') ? d.runtime : {};
+    var relName = rel.release || (typeof d.release === 'string' ? d.release : '');
+    var builtRaw = (build.buildTime && String(build.buildTime) !== 'unknown') ? build.buildTime : (d.generatedAt || '');
+    cell('release', relName || NA);
+    cell('built', builtRaw ? String(builtRaw).replace('T', ' ').slice(5, 16) : NA);
+    cell('files', fmt(d.files || rel.files));
+    cell('bytes', rel.totalBytes ? (Math.round(rel.totalBytes / 1048576 * 10) / 10) + ' MB' : NA);
+
+    var hist = Array.isArray(d.history) ? d.history : (Array.isArray(rel.history) ? rel.history : []);
+    if (hist.length) {
+      for (var i = 0; i < hist.length && i < rows.length; i++) {
         var h = hist[i] || {};
         var when = h.at ? String(h.at).replace('T', ' ').slice(5, 16) : '时间读不到';
         var mb = h.bytes ? (Math.round(h.bytes / 1048576 * 10) / 10) + ' MB' : '体积读不到';
         row(i, when, h.release || NA, mb);
       }
       hideFrom(hist.length);
+      txt(note, '版本时间轴取自 /api/public/deploy 的 history（最近 ' + hist.length + ' 次）；取不到写"读不到 + 原因"，不补样例值。');
+      return;
     }
-    txt(note, '版本时间轴取自 /api/public/deploy 的 history（发布链真实产物，最近 ' + hist.length + ' 次）；取不到写"读不到 + 原因"，不补样例值。');
+    /* 端点没透出 history ⇒ 用真实可得的 build/runtime 事实填三行，并明确说"端点未提供历史"（不编时间轴） */
+    row(0, '构建 sha', build.sha ? String(build.sha).slice(0, 12) : NA, build.artifactMd5 ? 'md5 ' + String(build.artifactMd5).slice(0, 8) : '');
+    row(1, '运行时长', rt.uptimeSeconds ? (Math.round(rt.uptimeSeconds / 360) / 10) + ' 小时' : NA, rt.startedAt ? '起 ' + String(rt.startedAt).replace('T', ' ').slice(5, 16) : '');
+    row(2, '版本来源', rel.source || NA, rel.commit ? String(rel.commit).slice(0, 8) : 'commit 未提供');
+    hideFrom(3);
+    txt(note, '端点只给当前版本（release.* 来自后端 release-info.json，build.* 为容器自述）；' +
+      '**history 未在 /api/public/deploy 的白名单里** ⇒ 这里不编时间轴，等后端透出 history 再补。');
   }
 
   /* ---------------------------------------------------------------- ★V4-P3 处置运维 · 处置动作

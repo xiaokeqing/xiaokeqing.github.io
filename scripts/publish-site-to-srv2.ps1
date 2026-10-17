@@ -402,6 +402,48 @@ if ($CheckUrl) {
     Warn '未给 -CheckUrl，跳过了公网复核（远端回环自检已在接收脚本里做过）'
 }
 
+# ---------- ★V4-P4：把本次发布写进 srv1 的 release-info.json（/api/public/deploy 读它）----------
+# 为什么要这一步：发布链只切 srv2 的站点目录，而后端 /api/public/deploy 读的是 srv1 上的
+# /opt/secagent/data/public-api/release-info.json —— 不同步就会出现"面板显示的是三天前的版本"。
+Step '6.5/6' '同步 release-info.json 到 srv1（部署面板的真实数据源）'
+try {
+    $relHost = 'secagent-srv1'
+    $relPath = '/opt/secagent/data/public-api/release-info.json'
+    $now = (Get-Date).ToString('yyyy-MM-ddTHH:mm:sszzz')
+    $commitSha = ((& git -C $RepoRoot rev-parse HEAD) | Out-String).Trim()
+    $localRel = Join-Path $TempBase 'xk-release-info.json'
+    if (Test-Path -LiteralPath $localRel) { Remove-Item -LiteralPath $localRel -Force }
+    & scp -q "${relHost}:$relPath" $localRel 2>&1 | Out-Null
+    $hist = @()
+    if (Test-Path -LiteralPath $localRel) {
+        try {
+            $old = Get-Content -LiteralPath $localRel -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($old -and $old.history) { $hist = @($old.history) }
+        } catch { $hist = @() }
+    }
+    $entry = [pscustomobject]@{ release = $release; at = $now; files = @($allFiles).Count; bytes = [int64]$totalBytes }
+    $hist = @(@($entry) + @($hist | Where-Object { $_.release -ne $release })) | Select-Object -First 8
+    $relObj = [pscustomobject]@{
+        generatedAt = $now
+        release     = $release
+        commit      = $commitSha
+        builtAt     = $now
+        files       = @($allFiles).Count
+        totalBytes  = [int64]$totalBytes
+        indexSha256 = $indexSha
+        history     = $hist
+    }
+    $relJson = $relObj | ConvertTo-Json -Depth 6
+    [IO.File]::WriteAllText($localRel, $relJson, [Text.UTF8Encoding]::new($false))
+    & scp -q $localRel "${relHost}:/tmp/xk-release-info.json" 2>&1 | Out-Null
+    $syncOut = (& ssh -o BatchMode=yes $relHost "python3 -c 'import json,io;json.load(io.open(\"/tmp/xk-release-info.json\",encoding=\"utf-8\"));print(\"JSON_OK\")' && install -m 644 /tmp/xk-release-info.json $relPath && echo RELINFO_SYNCED" 2>&1 | Out-String).Trim()
+    if ($syncOut -match 'RELINFO_SYNCED') { Ok "release-info.json 已同步：$release（history $($hist.Count) 条）" }
+    else { Warn "release-info.json 同步未确认：$syncOut" }
+} catch {
+    # 同步失败不影响站点发布本身（面板会显示旧版本，但站点是新的）
+    Warn "release-info.json 同步失败：$($_.Exception.Message)"
+}
+
 if (-not $KeepRemoteTarball) {
     # ★2026-10-16：这条是尾部**未包裹**的 ssh 原生命令。EAP=Stop 下它一旦往 stderr 写字就会抛
     # NativeCommandError，从而在 `exit 0` **之前**中止（表现就是"假失败退出码 1"）。
