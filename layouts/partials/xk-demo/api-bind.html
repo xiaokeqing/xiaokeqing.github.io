@@ -1168,6 +1168,26 @@
       }
       /* 兜底：个别容器（content-visibility / display 切换）下 IO 不触发时，1.5s 后再试一次 */
       setTimeout(function () { if (!mapWorld) mapKick(); }, 1500);
+
+      /* ② 切 tab / 改 hash 后重踢（IO 在 display:none→block 的切换里不保证触发；
+         2026-10-18 线上实测：#stats 深链进来 canvas 一直是 300×150，点一下 tab 就画了） */
+      function mapKick2() {
+        var cv2 = mapCanvas();
+        if (!cv2) return;
+        if (!mapWorld) { mapKick(); return; }
+        if (cv2.width <= 300 || !mapView) { mapUpdate(); }
+      }
+      document.addEventListener('click', function (ev) {
+        var t = (ev.target && ev.target.closest) ? ev.target.closest('.ops-tab') : null;
+        if (t) setTimeout(mapKick2, 160);
+      }, true);
+      window.addEventListener('hashchange', function () { setTimeout(mapKick2, 160); });
+      var mapKickT = setInterval(function () {
+        mapKick2();
+        var cv3 = mapCanvas();
+        if (mapView && cv3 && cv3.width > 300) { clearInterval(mapKickT); }
+      }, 900);
+      setTimeout(function () { clearInterval(mapKickT); }, 45000);   /* 最多盯 45s，之后交给 IO/RO */
     }
 
     /* ② 度量切换：数据都在同一份 byCountry 里（count / uniqueIps），只重绘不取数 */
