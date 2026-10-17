@@ -7,36 +7,36 @@
   "hopMs": 10,
   "envelopeFormula": "clamp(RMS(10ms) * 3.75, 0, 1)，首窗保底 0.12，停止发 0（0.08 是播放器侧静音阈值，不写进包络）",
   "lineCount": 162,
-  "totalBytes": 6437638,
+  "totalBytes": 6550423,
   "lines": {
     "greet_first": {
       "id": "greet_first",
       "trigger": "greeting",
       "group": "greeting",
-      "text": "欢迎。这儿讲的全是这台机器上真实发生过的事，慢慢看。",
-      "scene": "首访兜底问候（rev2：short，讲这个站的存在意义）",
-      "emotion": "shy",
-      "source": "synth-rev2",
+      "text": "我是 Amadeus 助手。这个网站是干什么的，从上面四个入口看一圈就明白了。",
+      "scene": "首访短版（rev3：一句话说清这站是什么）",
+      "emotion": "smile",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/greet_first.m4a",
       "envelope": "kurisu/voice/synth/greet_first.envelope.json",
-      "seconds": 6.717,
-      "audioBytes": 41700,
-      "envelopeValues": 672,
+      "seconds": 7.288,
+      "audioBytes": 45176,
+      "envelopeValues": 729,
       "audioSources": {
         "m4a": "kurisu/voice/synth/greet_first.m4a",
         "webm": "kurisu/voice/synth/greet_first.webm"
       },
-      "durationMs": 6717,
+      "durationMs": 7288,
       "sha256": {
-        "m4a": "c6dc181391564619ee0077b7ee11e78634b5018c2c4adcf024aa8d0364b8ffae",
-        "webm": "fcf8d58779977f4a845b1bbac75a97f0a054b38ef6c057fa926d9445a2a662a3"
+        "m4a": "50d1d07ce6f720e309d266655b8e84cd39f3f4fc4ceecba554d8d119e28a0d8a",
+        "webm": "4a624d5b5a55d0dde3036cae3e794d83e52b4b4d0ce822177811fdebab65c32e"
       },
       "bytes": {
-        "m4a": 41700,
-        "webm": 35744
+        "m4a": 45176,
+        "webm": 38234
       },
       "loudness": {
-        "lufs": -16.0,
+        "lufs": -16.09,
         "target": -16.0
       },
       "envelopeSource": "dist/greet_first.m4a"
@@ -45,30 +45,30 @@
       "id": "greet_back",
       "trigger": "greeting",
       "group": "greeting",
-      "text": "又见到你了。数据的口径没变，我说话也没变。",
-      "scene": "回访兜底问候（rev2）",
+      "text": "又见面了。",
+      "scene": "重逢一句（rev3）",
       "emotion": "",
-      "source": "synth-rev2",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/greet_back.m4a",
       "envelope": "kurisu/voice/synth/greet_back.envelope.json",
-      "seconds": 5.187,
-      "audioBytes": 32058,
-      "envelopeValues": 519,
+      "seconds": 1.597,
+      "audioBytes": 10736,
+      "envelopeValues": 160,
       "audioSources": {
         "m4a": "kurisu/voice/synth/greet_back.m4a",
         "webm": "kurisu/voice/synth/greet_back.webm"
       },
-      "durationMs": 5187,
+      "durationMs": 1597,
       "sha256": {
-        "m4a": "dffaf58871075e207a706385e15983b501f2d225b7a28730fc00d8df6b453c75",
-        "webm": "39813a1bc48e2e8ddbedb415532543eeb32366c2051c8c7ba3a0cfc457576d7f"
+        "m4a": "2774aed4f385e940b4f6e48580591df1d4a98388f1eeb866c8b3a88671ed2f6d",
+        "webm": "72fd5325da4637cd0e00ccb7cd43905f84e1ab4cd1d4fe6d86a28cca4c9539d8"
       },
       "bytes": {
-        "m4a": 32058,
-        "webm": 27058
+        "m4a": 10736,
+        "webm": 10204
       },
       "loudness": {
-        "lufs": -16.07,
+        "lufs": -16.04,
         "target": -16.0
       },
       "envelopeSource": "dist/greet_back.m4a"
@@ -77,30 +77,30 @@
       "id": "nav_home",
       "trigger": "page_intro",
       "group": "page_intro",
-      "text": "回到主页了。想从哪块看起？我陪你走。",
-      "scene": "切到主页（rev2：邀请，不讲数据真不真）",
+      "text": "这里是入口：监测中心放真实的告警和拦截记录，AI 问答答安全概念，笔记写这套系统是怎么搭起来的，下面是最近在写的东西。",
+      "scene": "切到主页（rev3：只指路，不吹口号）",
       "emotion": "",
-      "source": "synth-rev2",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/nav_home.m4a",
       "envelope": "kurisu/voice/synth/nav_home.envelope.json",
-      "seconds": 3.575,
-      "audioBytes": 22291,
-      "envelopeValues": 358,
+      "seconds": 12.967,
+      "audioBytes": 79449,
+      "envelopeValues": 1297,
       "audioSources": {
         "m4a": "kurisu/voice/synth/nav_home.m4a",
         "webm": "kurisu/voice/synth/nav_home.webm"
       },
-      "durationMs": 3575,
+      "durationMs": 12967,
       "sha256": {
-        "m4a": "6fab58869adf462cf3de8917698bd9a15e6680b6ad60602365868465c41d8c6a",
-        "webm": "ac7cadc00a601a81e98fc141945af420f4a4e5a1b027c77d1cc963f81672a29e"
+        "m4a": "b1fce0b46a596c98bf3f1b1c92aae1de3354d9725958d5b09ad06a1290375e8a",
+        "webm": "3037a07b86b0f9718faf4a143f4c5978a8308db4b4a8a95e248a0a0105fcf512"
       },
       "bytes": {
-        "m4a": 22291,
-        "webm": 17641
+        "m4a": 79449,
+        "webm": 65444
       },
       "loudness": {
-        "lufs": -15.83,
+        "lufs": -16.34,
         "target": -16.0
       },
       "envelopeSource": "dist/nav_home.m4a"
@@ -109,30 +109,30 @@
       "id": "nav_monitor",
       "trigger": "page_intro",
       "group": "page_intro",
-      "text": "监测中心——实时告警流、攻击来源分布、处置记录都在这屏。数字是后端真读的；读不到我就写读不到。",
-      "scene": "切到监测中心（rev2：这一模块干什么 + 一句取数口径）",
+      "text": "这一屏是监测中心：左边实时告警流，右边威胁等级和攻击来源，下面是 24 小时趋势。数字是后端直接读的，读不到的地方会标出来。",
+      "scene": "切到监测中心（rev3：这屏装了什么）",
       "emotion": "",
-      "source": "synth-rev2",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/nav_monitor.m4a",
       "envelope": "kurisu/voice/synth/nav_monitor.envelope.json",
-      "seconds": 12.911,
-      "audioBytes": 78264,
-      "envelopeValues": 1292,
+      "seconds": 15.23,
+      "audioBytes": 92636,
+      "envelopeValues": 1523,
       "audioSources": {
         "m4a": "kurisu/voice/synth/nav_monitor.m4a",
         "webm": "kurisu/voice/synth/nav_monitor.webm"
       },
-      "durationMs": 12911,
+      "durationMs": 15230,
       "sha256": {
-        "m4a": "ca88fb701ccda31ab0f6f19b7ed30622bfa555c5ad4a21e7db851c2bd2894b0f",
-        "webm": "3d9156652f1225384995ac8f6ab49da1716d8cbbfdb76908fb70a4420b19378e"
+        "m4a": "499872b1bd9b493016ae3a7b2fecb897fdde2c43e14e4d065e81f893e8815a60",
+        "webm": "e76543e8c39c99311139b43b53ee717824ba5110b46aeb3c3ee762b2fb37c29a"
       },
       "bytes": {
-        "m4a": 78264,
-        "webm": 64656
+        "m4a": 92636,
+        "webm": 76974
       },
       "loudness": {
-        "lufs": -16.01,
+        "lufs": -16.12,
         "target": -16.0
       },
       "envelopeSource": "dist/nav_monitor.m4a"
@@ -141,30 +141,30 @@
       "id": "nav_notes",
       "trigger": "page_intro",
       "group": "page_intro",
-      "text": "笔记——工程实践、渗透记录、复盘，新的排在前面。写错了我会改，但不会删。",
-      "scene": "切到笔记（rev2：内容范围 + 排序）",
+      "text": "笔记：这套系统怎么搭、怎么验证、哪里出过问题，都写在这里。每一篇都能被人独立核对。",
+      "scene": "切到笔记（rev3：写的是什么）",
       "emotion": "",
-      "source": "synth-rev2",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/nav_notes.m4a",
       "envelope": "kurisu/voice/synth/nav_notes.envelope.json",
-      "seconds": 10.24,
-      "audioBytes": 62373,
-      "envelopeValues": 1025,
+      "seconds": 12.611,
+      "audioBytes": 76562,
+      "envelopeValues": 1262,
       "audioSources": {
         "m4a": "kurisu/voice/synth/nav_notes.m4a",
         "webm": "kurisu/voice/synth/nav_notes.webm"
       },
-      "durationMs": 10240,
+      "durationMs": 12611,
       "sha256": {
-        "m4a": "92678e26f407325b2edfb4f981d6bd918261262ea822e96859bdceb0e20ef660",
-        "webm": "c1de4ebc7d342e26bed3ccd792e84d1974b7c5c60534d19117759f0feddb7c5c"
+        "m4a": "4a1fcc1d04cef11fcaf78dfa6c9fa62fab876211c418daa29a615a107b07802e",
+        "webm": "6c0e20eff0f8622e21bd9fc23384c07714e7c2c38e70bc4e26b68eff8bd6dc52"
       },
       "bytes": {
-        "m4a": 62373,
-        "webm": 51194
+        "m4a": 76562,
+        "webm": 64369
       },
       "loudness": {
-        "lufs": -16.35,
+        "lufs": -16.25,
         "target": -16.0
       },
       "envelopeSource": "dist/nav_notes.m4a"
@@ -173,30 +173,30 @@
       "id": "nav_ai",
       "trigger": "page_intro",
       "group": "page_intro",
-      "text": "AI 问答——安全概念、防御做法、CVE 复现都能问，答案带引用。答不了我就说答不了，不编。",
-      "scene": "切到 AI 问答（rev2：能答什么、答不了怎么办）",
+      "text": "AI 问答：这里是公开的安全知识问答，回答走真实检索，会附引用和状态标注。只讲公开的概念和防御做法，不读站内的事件数据。",
+      "scene": "切到 AI 问答（rev3：能问什么、怎么答）",
       "emotion": "",
-      "source": "synth-rev2",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/nav_ai.m4a",
       "envelope": "kurisu/voice/synth/nav_ai.envelope.json",
-      "seconds": 13.485,
-      "audioBytes": 81126,
-      "envelopeValues": 1349,
+      "seconds": 15.048,
+      "audioBytes": 92152,
+      "envelopeValues": 1505,
       "audioSources": {
         "m4a": "kurisu/voice/synth/nav_ai.m4a",
         "webm": "kurisu/voice/synth/nav_ai.webm"
       },
-      "durationMs": 13485,
+      "durationMs": 15048,
       "sha256": {
-        "m4a": "4627b74caea2fe3b38d05a50e38a052e7adbb72bc47948d5be769a01f57b7590",
-        "webm": "49c645beeb55b5b7cabe8755d42ebdd2b19e29555da070ea1267376c9b8ba994"
+        "m4a": "e949cd273d38d7fe88d5f2d5a6ba4e1f27903d632106460442613097b7910a7e",
+        "webm": "b9fcc67e3111b434e6ee7c47b02ed1cb22db40c9cfe6d99aa0eed6889fb88544"
       },
       "bytes": {
-        "m4a": 81126,
-        "webm": 68440
+        "m4a": 92152,
+        "webm": 78096
       },
       "loudness": {
-        "lufs": -16.04,
+        "lufs": -16.06,
         "target": -16.0
       },
       "envelopeSource": "dist/nav_ai.m4a"
@@ -5198,30 +5198,30 @@
       "id": "greet_welcome",
       "trigger": "greeting",
       "group": "greeting",
-      "text": "你好，我是桐莉栖。这里是 Amadeus 观测站——左边是实时告警，中间是能对话的终端，右边是我平时记的笔记。想看哪儿就点，读不到的地方我会直说。",
-      "scene": "首访进站（rev2：自我介绍 + 介绍这个站是什么）",
+      "text": "你好，我是 Amadeus 助手。这个网站是站主自己搭的安全运营系统的展示页：他有一套真在跑的服务器监控，告警、攻击来源、自动拦截的记录都在这儿，脱敏之后原样摆出来；搭建过程也写成了手记，包括哪里翻过车。主页四个入口，从哪个进都行。",
+      "scene": "首访进站（rev3：网站是什么 / 系统是什么 / 有什么用）",
       "emotion": "shy",
-      "source": "synth-rev2",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/greet_welcome.m4a",
       "envelope": "kurisu/voice/synth/greet_welcome.envelope.json",
-      "seconds": 20.44,
-      "audioBytes": 123018,
-      "envelopeValues": 2045,
+      "seconds": 27.369,
+      "audioBytes": 166512,
+      "envelopeValues": 2737,
       "audioSources": {
         "m4a": "kurisu/voice/synth/greet_welcome.m4a",
         "webm": "kurisu/voice/synth/greet_welcome.webm"
       },
-      "durationMs": 20440,
+      "durationMs": 27369,
       "sha256": {
-        "m4a": "13e5c8e8e4c55da7a51d059e08755868b64ea18b480f52667ebd37830eccf4c2",
-        "webm": "6a93d46e0eee7c74376837ea774853b0f8a4c5b783d4aedbf0397bbbeb66ad72"
+        "m4a": "2289162be6a470ad38fc381700b65ec5ee7d1827a2f38ffe93b75651e11b5a8d",
+        "webm": "5b105af08dc4ef98ccb406bc304adcb849b12c27e5daa6d53e4820262e3f673e"
       },
       "bytes": {
-        "m4a": 123018,
-        "webm": 102783
+        "m4a": 166512,
+        "webm": 140288
       },
       "loudness": {
-        "lufs": -15.99,
+        "lufs": -16.24,
         "target": -16.0
       },
       "envelopeSource": "dist/greet_welcome.m4a"
@@ -5230,30 +5230,30 @@
       "id": "greet_welcome_back",
       "trigger": "greeting",
       "group": "greeting",
-      "text": "又见面了。系统一直开着，数字也换过一轮了。要从上次那屏接着看吗？",
-      "scene": "回访进站（rev2：不再复述口号，只提状态）",
+      "text": "又来啦。系统一直开着，数据刚换过一轮。想从哪儿看？",
+      "scene": "回访进站（rev3：只报状态，不复述）",
       "emotion": "shy",
-      "source": "synth-rev2",
+      "source": "synth-rev3",
       "audio": "kurisu/voice/synth/greet_welcome_back.m4a",
       "envelope": "kurisu/voice/synth/greet_welcome_back.envelope.json",
-      "seconds": 7.421,
-      "audioBytes": 45585,
-      "envelopeValues": 743,
+      "seconds": 5.778,
+      "audioBytes": 35977,
+      "envelopeValues": 578,
       "audioSources": {
         "m4a": "kurisu/voice/synth/greet_welcome_back.m4a",
         "webm": "kurisu/voice/synth/greet_welcome_back.webm"
       },
-      "durationMs": 7421,
+      "durationMs": 5778,
       "sha256": {
-        "m4a": "3fa7687517f489915c11957bd99c0406e64c00dc932ef227366fccbe4c0bd703",
-        "webm": "974f5626cc243787f3d70f0a4d4c1ff301d47ac56b8b2c09b3e9b902fedb1569"
+        "m4a": "970ff000a93297a1d90cb1517d5a2623be54f0f2d38b155546277acf3ed681a6",
+        "webm": "89ff04322ca6c94727a72e3091d697f2f53941f288c00c424cfe986f500a7013"
       },
       "bytes": {
-        "m4a": 45585,
-        "webm": 38042
+        "m4a": 35977,
+        "webm": 29383
       },
       "loudness": {
-        "lufs": -15.99,
+        "lufs": -16.28,
         "target": -16.0
       },
       "envelopeSource": "dist/greet_welcome_back.m4a"
