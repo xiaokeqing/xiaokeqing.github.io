@@ -203,13 +203,19 @@
    窗口一矮就互相压（他为这个截过图）。这里只做竖直排布，不改任何一块自身样式；
    窄屏（≤980）直接 return，走 CSS 里那套「头像左上 + 导航底部 + 功能钮底部横排」。 */
 (function(){
-  if (window.matchMedia('(max-width:980px)').matches) return;
   function rail(){
     var card = document.querySelector('.xk-idcard'),
         dock = document.querySelector('.dock'),
         col  = document.querySelector('.xk-idcard-col');
     var els = [card, dock, col].filter(Boolean);
     if (!els.length) return;
+    /* ★守卫放进来、并且每次 resize 都清一次内联定位：
+       否则宽屏渲染后被拉窄，三块会带着旧的 top/left 停在屏幕中间压住正文（窄屏实测）。 */
+    if (window.innerWidth <= 980) {
+      els.forEach(function(e){ e.style.top = ''; e.style.left = ''; e.style.right = '';
+        e.style.bottom = ''; e.style.transform = ''; });
+      return;
+    }
     var gap = 10, total = 0, i;
     els.forEach(function(e){ e.style.left = '10px'; e.style.transform = 'none';
       e.style.right = 'auto'; e.style.bottom = 'auto'; e.style.top = '0px'; });
