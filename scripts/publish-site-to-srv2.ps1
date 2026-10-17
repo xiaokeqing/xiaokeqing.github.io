@@ -223,6 +223,15 @@ Push-Location $BuildDir
 try {
     Invoke-Checked $hugo @('--gc', '--minify', '--cleanDestinationDir') 'hugo 构建'
     $PublicDir = Join-Path $BuildDir 'public'
+    # ★缓存：给 /js/*.js / /css/*.css 引用加内容指纹（CF 把 JS 的 Browser TTL 压到 300s，
+    #   加指纹后内容不变 URL 不变 ⇒ 继续吃缓存；内容一变 URL 也变 ⇒ 不会被旧缓存粘住）
+    $assetVer = Join-Path $BuildDir 'scripts/asset-version.py'
+    $py = (Get-Command python -ErrorAction SilentlyContinue).Source
+    if ($py -and (Test-Path -LiteralPath $assetVer)) {
+        & $py '-X' 'utf8' $assetVer $PublicDir
+        if ($LASTEXITCODE -ne 0) { Warn 'asset-version.py 执行失败（继续发布，缓存指纹缺失）' }
+        else { Ok '静态资源已加内容指纹' }
+    } else { Warn '找不到 python 或 asset-version.py ⇒ 跳过资源指纹' }
     if (-not (Test-Path -LiteralPath (Join-Path $PublicDir 'index.html'))) { Die "构建产物里没有 index.html：$PublicDir" }
 } finally { Pop-Location }
 

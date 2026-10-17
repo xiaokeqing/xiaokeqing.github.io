@@ -20,7 +20,7 @@ echo.
 rem 先让 ssh 把端口拉起来，再开浏览器（否则浏览器先打开会报拒绝连接）
 start "" cmd /c "timeout /t 5 >nul & start "" http://127.0.0.1:8081/ & start "" http://127.0.0.1:8082/ & start "" http://127.0.0.1:8083/"
 
-ssh -N -o ExitOnForwardFailure=yes -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8083:127.0.0.1:8083 %HOST%
+ssh -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8083:127.0.0.1:8083 %HOST%
 
 echo.
 echo 隧道已关闭。
