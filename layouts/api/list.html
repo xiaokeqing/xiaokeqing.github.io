@@ -84,28 +84,28 @@
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">进程活着 + 线上跑的是哪个版本</td>
                   <td class="api-fld"><code>buildSha</code> <code>embeddedGitCommit</code> <code>vectorStore</code> <code>documentVectors</code> <code>uptimeMs</code> <code>status</code></td>
-                  <td class="api-pit">唯一端出构建指纹的端点。<b>它和 <code>deploy.release</code> 对不上，说明前端与进程不是同一次发布</b>；<i>不脱敏，但不含业务数据。</i></td>
+                  <td class="api-pit">唯一端出构建指纹的端点：<b>它和 <code>deploy.release</code> 对不上，就说明前端与进程不是同一次发布</b>。<i>无缓存（<code>cf-cache-status: DYNAMIC</code>），每次都要跨境回源 3–4s ⇒ 别塞进首屏必等路径。</i></td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/home</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">首屏聚合：alerts + geo + honeypot 三合一</td>
-                  <td class="api-fld"><code>alerts.generatedAt</code> <code>alerts.cacheSeconds</code> <code>snapshotAt</code> <code>cacheAgeSeconds</code></td>
-                  <td class="api-pit">响应头是 <code>max-age=45, stale-while-revalidate=90</code>。<b>快 ≠ 新</b>：真实年龄 = <code>cacheAgeSeconds</code> + 响应头 <code>Age</code>，命中边缘缓存时耗时会接近 0ms。</td>
+                  <td class="api-fld"><code>alerts</code> <code>geo</code> <code>honeypot</code> <code>ipDisclosure{notice, removalContact}</code> <code>alerts.generatedAt</code> <code>snapshotAt</code> <code>cacheAgeSeconds</code></td>
+                  <td class="api-pit">有缓存（45s，带 <code>stale-while-revalidate=90</code>）。<b>快 ≠ 新</b>：真实年龄 = <code>cacheAgeSeconds</code> + 响应头 <code>Age</code>；体量随 24h 数据长，实测 23–27 KB，<i>别当固定大小的小接口</i>。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/overview</span></td>
                   <td><span class="api-m">GET</span></td>
-                  <td class="api-use">指标总览（stats24h / 六态 / 额度）</td>
-                  <td class="api-fld"><code>stats24h</code> <code>dataSource.wazuhMode</code> <code>degraded</code></td>
-                  <td class="api-pit">看 <code>wazuhMode</code>：<b>只有 <code>REAL</code> 才是真的 Wazuh 在供数</b>，降级会显式写出来 —— 别把降级数据当实时。</td>
+                  <td class="api-use">主机与链路在线 + 告警窗口分布 + 数据源模式</td>
+                  <td class="api-fld"><code>nodes[]{id, label, online}</code> <code>alerts{windowSize, windowCount, bySeverity[], bySource[]}</code> <code>dataSource{wazuhMode, degraded}</code></td>
+                  <td class="api-pit"><b><code>nodes[].detail</code> 里带构建提交号</b>（实测形如 <code>build da9d1dba…</code>）—— <i>渲染只取 <code>id</code>/<code>label</code>/<code>online</code>，别把 detail 整块吐到页面上</i>。另外看 <code>wazuhMode</code>：只有 <code>REAL</code> 才是真 Wazuh 在供数，降级会显式写出来。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/alerts</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">告警聚合（窗口内告警 + 来源 + severity）</td>
-                  <td class="api-fld">窗口计数、来源、<code>severity</code>、<code>stats24h</code></td>
-                  <td class="api-pit">返回的是<b>聚合</b>，不是逐条原始日志；<code>geo.coverage.totalAlerts</code> 是窗口内<b>未去重</b>总量。</td>
+                  <td class="api-fld"><code>windowSize</code> <code>rawTotal</code> <code>total</code> <code>aggregated</code> <code>list[]{aggId, count, startTime, endTime, title, ruleName, srcIp, srcGeo, severity, status, hitCount}</code> <code>stats24h.trend[]</code></td>
+                  <td class="api-pit">给出的是<b>聚合</b>，不是原始日志：同一份响应里 <code>rawTotal</code> 是原始条数、<code>aggregated</code> 才是聚合成几条 —— <i>行数对不上不是 bug，是这两列本来就不同</i>（实测 200 → 26）。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/alerts/{aggId}</span></td>
@@ -118,50 +118,50 @@
                   <td><span class="api-ep">/api/public/geo</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">来源地理聚合（国家/省/ASN + 24h 趋势）</td>
-                  <td class="api-fld"><code>coverage.totalAlerts</code> <code>withSourceIp</code> <code>geocoded</code> <code>countryCount</code></td>
-                  <td class="api-pit"><b>必须连 <code>coverage</code> 一起看</b>：只有带源 IP 的才进地理统计，<b>不许把子集画成「全量攻击」</b>；离线库只到国家/省，不定位到人。</td>
+                  <td class="api-fld"><code>coverage{totalAlerts, withSourceIp, geocoded, excludedSelf, excludedInternal}</code> <code>byCountry[]{country, countryName, count, uniqueIps, sharePercent}</code> <code>byAsnTop[]</code> <code>trend[]</code> <code>geoAttribution</code></td>
+                  <td class="api-pit"><b>必须连 <code>coverage</code> 一起看</b>：只有带源 IP 的才进地理统计，<b>不许把子集画成「全量攻击」</b>（实测 78,130 条里只有 75,127 带 IP、30,263 定位成功）。响应里<b>零 IP</b>；地理库是 DB-IP Lite，署名要带 <code>geoAttribution</code> 那行（CC BY 4.0）。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/latest</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">窗口聚合（只给一个窗口的量）</td>
-                  <td class="api-fld"><code>windowSize</code> <code>windowAlertCount</code></td>
+                  <td class="api-fld"><code>windowSize</code> <code>windowAlertCount</code>（另有版本文档把它记成 <code>latestEvent</code>/<code>latestBlock</code>，字段以实际响应为准）</td>
                   <td class="api-pit">窗口大小会变，<b>别拿它和 <code>geo.coverage.totalAlerts</code> 直接比</b> —— 两个数可能不是同一个窗口。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/honeypot</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">蜜罐战报（连接 / 登录 / 来源 Top / 口令结构 / 时间线）</td>
-                  <td class="api-fld"><code>connections</code> <code>logins</code> <code>total</code> <code>sampled</code></td>
-                  <td class="api-pit"><b><code>total</code> 恒为 10000，那是统计上限哨兵，不是真实累计</b> —— 真实计数看 <code>connections</code>（其次 <code>logins</code>）。口令只给结构，不给原文。</td>
+                  <td class="api-fld"><code>total</code> <code>connections</code> <code>logins</code> <code>loginFails</code> <code>sampled</code> <code>commandsAvailable</code> <code>topCredentials[]{username, passwordLength, passwordCharClasses, weakPassword, count}</code> <code>timeline[]</code></td>
+                  <td class="api-pit"><b><code>total</code> 恒为 10000，那是统计上限哨兵，不是真实累计</b> —— 真实计数看 <code>connections</code>（其次 <code>logins</code>）。<code>connections</code>/<code>logins</code> 随窗口滚动（同一晚 20:00 与 21:53 两次读数就不一样：266/268 → 267/266），<i>对比两次要取同一时刻</i>。口令只给用户名 + 长度 + 字符类别，永不出现原文；<code>commandsAvailable=false</code> 表示「命令序列这段没接数据」，不是编出来的空。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/audit</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">处置审计（护栏拦截 / 封禁留痕 / 理由）</td>
-                  <td class="api-fld"><code>summary.blockedByGuard</code> <code>summary.blockTotal</code></td>
-                  <td class="api-pit">两个数都是<b>累计</b>，不是本周/本日；<code>blockTotal</code> 是留痕条数去重后的地址数。</td>
+                  <td class="api-fld"><code>summary{blockTotal, blockActive, blockedByGuard, executedActions}</code> <code>blocks[]{ip, durationMinutes, actor, auditId, createdAt, expiresAt, unblocked, unblockMode}</code> <code>actions[]{time, actor, action, target, reason, riskLevel, success}</code> <code>readOnly</code></td>
+                  <td class="api-pit">四个数<b>都是累计</b>，不是本周/本日；<b><code>blockedByGuard</code> 不是「封了几个」</b>，是被护栏拦下的<b>动作</b>数 —— 和 <code>blockTotal</code> 放一起比大小是没有意义的。数据来自 <code>data/blocked-ips.json</code> 与 <code>data/response-audit.json</code>，后者不含 detail；<code>blocks[].ip</code> / <code>actions[].target</code> / <code>reason</code> 都可能带 IP 或内网线索，<i>展示前一律过掩码</i>。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/stories</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">攻击故事线候选池</td>
-                  <td class="api-fld"><code>sources[]</code> 四段计数 <code>alerts</code> <code>decoyPorts</code> <code>honeypotLogins</code> <code>auditActions</code>，首末时间、最高严重度、<code>gaps</code></td>
-                  <td class="api-pit"><code>auditActions</code> 多轮实测全是 0 —— <i>不是「没有处置动作」，是这一段还没接上数据</i>；<code>/api/public/stories/1</code> 是 404，<b>它没有子资源</b>。</td>
+                  <td class="api-fld"><code>stageLabels{alerts, decoyPorts, honeypotLogins, auditActions}</code> <code>sources[]{srcIp, stages{}, stagesWithData, firstSeen, lastSeen, severityMax, gaps[]}</code> <code>coverage{stageStatus, stageNotes, audit{actionsReadable, actionRecords, blockRecords}}</code> <code>limits{defaultLimit:10, maxLimit:20, topSources:50}</code></td>
+                  <td class="api-pit"><code>auditActions</code> 多轮实测全 0 —— <i>不是「没有处置动作」，是这一段没读到数据</i>，真要看读没读到去翻 <code>coverage.audit</code>。<code>/api/public/stories/1</code> 是 404，<b>它没有子资源</b>；<code>sources[]</code> 默认只给 10 条（最多 20），<b>不是全量</b>。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/story?src=</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">单源事件时间线（点了才拉，页面不预取）</td>
-                  <td class="api-fld"><code>events[]</code>（升序、每段 ≤40 条、<code>truncated</code> 如实标注）</td>
-                  <td class="api-pit">缺 <code>src</code> → <b>400 <code>MISSING_SRC</code></b>；<i><code>src</code> 要填候选池返回的真实来源</i>，别拿 IP 段瞎猜。脱敏要连 <code>events[].summary</code> 里的内嵌 IP 一起盖。</td>
+                  <td class="api-fld"><code>events[]{ts, stage, stageLabel, kind, severity, outcome, summary}</code>（升序）、<code>eventCount</code>、<code>truncated</code>、<code>coverage{每段的 status/reason/queried/returned}</code>、<code>limits{maxEventsPerStage:40}</code></td>
+                  <td class="api-pit">缺 <code>src</code> → <b>400 <code>MISSING_SRC</code></b>；<i><code>src</code> 要填候选池返回的真实来源</i>，别拿 IP 段瞎猜。每段最多 40 条，被截断时 <code>truncated=true</code> 如实标 —— <b>别把截断后的时间线当完整攻击过程</b>。脱敏要连 <code>events[].summary</code> 里的内嵌 IP 一起盖。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/webstats</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">Web 访问统计（访问量 / 来源）</td>
-                  <td class="api-fld">访问量、来源分类</td>
-                  <td class="api-pit"><b>一个 IP 都不给</b>，连打码都不给；也<b>还没有 <code>statusCode</code> 与 7 天日桶字段</b> ⇒ 面板上那两块如实写「读不到」。</td>
+                  <td class="api-fld"><code>totals{requests, statusClass{}}</code> <code>topCategories[]{category, count, sharePercent}</code> <code>topUas[]{ua, count}</code> <code>heatmap[]{date, hour, count}</code> <code>coverage{}</code> <code>note</code></td>
+                  <td class="api-pit"><b>一个 IP 都不给</b>，连打码都不给；访问路径也只给固定类别、不给原文。<b>日桶 / 状态码这两块在不同版本文档里说法不一</b>（一份列了 <code>byDay[]</code> 与 <code>statusClass</code>，另一份实测说还没上）⇒ <i>渲染前先 curl 一眼，缺的格子如实写「读不到」</i>。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/deploy</span></td>
@@ -181,15 +181,15 @@
                   <td><span class="api-ep">/api/public/kb?q=</span></td>
                   <td><span class="api-m">GET</span></td>
                   <td class="api-use">知识库只读检索</td>
-                  <td class="api-fld"><code>results[]{title, snippet, sourceType, trustLevel, score, publicRule}</code>、<code>hitCount</code> <code>available</code> <code>note</code></td>
-                  <td class="api-pit">20 次/分钟，且<b>每次都有 embedding 成本 ⇒ 禁止轮询</b>。白名单口径：根目录 <code>security-docs</code> / <code>data/kb-approved</code>、来源类型 <code>community</code>、黑名单含 <code>internal</code>、top-k=3、摘要 300 字 —— <b>检索不到是真没有，不是坏了</b>。</td>
+                  <td class="api-fld"><code>rule{allowedRoots, allowedSourceTypes}</code> <code>results[]{title, snippet, sourceType, trustLevel, score, publicRule}</code>、<code>hitCount</code> <code>available</code> <code>note</code></td>
+                  <td class="api-pit">20 次/分钟，且<b>每次都有 embedding 成本 ⇒ 禁止轮询</b>。<b>不带 <code>q</code> 不报错</b>：返回空 <code>results</code> + <code>note</code> 写「未提供查询词（q）」，<i>别把这句当检索失败</i>。白名单口径就在响应的 <code>rule</code> 里：根目录 <code>security-docs</code> / <code>data/kb-approved</code>、来源类型 <code>community</code>、top-k=3、摘要 300 字 —— <b>检索不到是真没有，不是接口坏了</b>。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/ask</span></td>
                   <td><span class="api-m post">POST</span></td>
                   <td class="api-use">公开问答（检索 + 引用 + 六态标注）</td>
-                  <td class="api-fld"><code>state</code>（六态机读值）、引用、<code>ttsTextHash</code></td>
-                  <td class="api-pit">限流压在 <b>6 次/分钟/IP</b> + 公开池 <b>30 次/日</b> + 同 IP 并发 1；<b>429 和「读不到」是两件事</b>，别混着写。它只解释，不做任何处置动作。</td>
+                  <td class="api-fld"><code>answer</code> <code>state</code>/<code>stateLabel</code>（六态机读值）、<code>citations[]{title, snippet, sourceType, trustLevel, score}</code>、<code>quota{pool, limit, used, remaining}</code>、<code>clientIpMasked</code>、<code>outputFindings</code>、<code>ttsTextHash</code>、<code>deadlineMs=20000</code></td>
+                  <td class="api-pit">限流压在 <b>6 次/分钟/IP</b> + 公开池 <b>30 次/日</b> + 同 IP 并发 1，<code>quota</code> 会直接告诉你还剩几次。<b>429 和「读不到」是两件事</b>，别混着写。它只解释、不做任何处置动作；<code>clientIpMasked</code> 已经是打码后的值，<i>别拿它当原始 IP 用</i>。</td>
                 </tr>
                 <tr>
                   <td><span class="api-ep">/api/public/tts</span></td>
@@ -201,8 +201,10 @@
               </tbody>
             </table>
           </div>
-          <p class="api-foot">「字段」一列只写<b>已经在线下核对过的键</b>，不是照抄设计稿；标了「当前 <code>available:false</code>」的字面意思是：端点通、数据那份文件还没配好，
-            这是<b>如实报告</b>，不是接口坏了。</p>
+          <p class="api-foot">「字段」一列只写<b>已经核对过的键</b>，不是照抄设计稿；标了「当前 <code>available:false</code>」的字面意思是：端点通、数据那份文件还没配好，
+            这是<b>如实报告</b>，不是接口坏了。<br>
+            字段名来自两份交接文档交叉核对（10-15 的逐端点 schema 表 + 10-17 的现状表）：<code>/overview</code>、<code>/latest</code>、<code>/webstats</code>
+            三处两边记法有出入，已在「已知坑」里逐条标出 —— <b>写代码前先 curl 一次实际响应</b>，比信这张表稳。</p>
         </div>
       </div>
 
@@ -210,14 +212,17 @@
         <div class="mod-hd"><span class="led"></span>同一份数据的 <code>.js</code> 别名<span class="tag">边缘可缓存 · 不吃 20 次/分钟</span></div>
         <div class="mod-bd">
           <p class="api-p">上面每个 <code>/api/public/*</code> 都有同名的 <code>.js</code> 别名（<code>/api/public/alerts.js</code> 这样）。它存在的理由是<b>缓存</b>：
-            边缘节点按扩展名决定缓存，无扩展名的路径必然回源（实测 0.94~2.60s），<code>.js</code> 能命中边缘缓存，<b>而命中缓存的请求不到源站，也就不吃公开面每 IP 20 次/分钟的限流</b>。
-            所以静态页大量取数时一律走别名。</p>
+            Cloudflare 按扩展名决定要不要缓存，无扩展名的 <code>/api/public/alerts</code> 必然是 <code>cf-cache-status: DYNAMIC</code>、每次都回源（实测 0.94~2.60s）；
+            别名则命中边缘缓存，<b>而命中缓存的请求根本到不了源站，也就不吃公开面每 IP 20 次/分钟的限流</b> ——
+            一个 /alerts/ 页面一加载就并发打 9 个端点，刷两次就超额，站主看到的「读不到」多半是这个原因。
+            缓存时长各端点不同（多数 45 秒，<code>stories</code> 15 秒），响应带 <code>ETag</code>、放行 <code>Age</code>。</p>
           <p class="api-p">两条纪律：<b>① 别给这些地址加随机 cache-buster</b>（<code>?cb=</code> / <code>?t=</code> / <code>Date.now()</code>）—— 那样每次都是新 URL，100% 回源；
             <b>② <code>?q=</code> / <code>?src=</code> 这类语义参数是允许的</b>（它换来的是不同内容）。</p>
-          <p class="api-p">至于响应体长什么样，两种记录并存：一份 2026-10-16 的缓存契约写「<b>响应仍是 <code>application/json</code>，照常 <code>JSON.parse</code>，别当脚本执行</b>」，
-            另一处写它是 <code>window.X = …</code> 的脚本形式、可直接 <code>&lt;script src&gt;</code> 引入。<b>本页不替你赌这一条</b>，一条命令就能看出来：</p>
-          <pre class="api-pre"><span class="c"># 开头是 { 就当 JSON 用；开头是 window. 就当脚本用（以响应头的 content-type 为准）</span>
-curl -s https://demo.xiaokeqing.cn/api/public/home.js | head -c 60</pre>
+          <p class="api-p">响应体是什么：现网前端（<code>api-bind.html</code>，1600 行）对别名一律走 <code>res.json()</code>，注释里写死了这条契约 ——
+            <b>「别名响应仍是 <code>application/json</code>，照常当 JSON 解析，别当脚本执行」</b>。另有旧文档说它是 <code>window.X = …</code> 的脚本形式、可直接
+            <code>&lt;script src&gt;</code> 引入，<i>与上述契约和现网前端口径不符</i>，本页按契约写。一条命令可自证：</p>
+          <pre class="api-pre"><span class="c"># -D - 把响应头一起打出来：看 content-type 是不是 application/json、体开头是不是 {</span>
+curl -s -D - https://demo.xiaokeqing.cn/api/public/home.js | head -c 300</pre>
         </div>
       </div>
 
@@ -245,9 +250,11 @@ for i in 1 2 3; do curl -s -o /dev/null -w '%{http_code} ' "https://demo.xiaokeq
         <div class="mod-hd"><span class="led"></span>口径与边界<span class="tag">公开面只读</span></div>
         <div class="mod-bd">
           <p class="api-kv">
-            <b>① 只读。</b>全站公开端点没有任何写操作；处置动作在受保护的自用面，要管理员令牌 + 人工审批。<br>
-            <b>② 地址打码。</b>页面上看到的来源地址统一是 <code>1.2.3.x</code>；但 <code>curl</code> 拿到的可能是接口原文，
-            <b>显示层掩码与接口原文不一致属于预期</b>，原文只留在 srv1 日志里。<br>
+            <b>① 只读。</b>所有公开端点都没有写操作；<code>ask</code> / <code>tts</code> 虽是 POST，语义仍是「问一句 / 合成一段」，不改任何状态。
+            要处置（封 IP、审批）得走受保护的自用面：管理员令牌 + 人工审批。<br>
+            <b>② 地址不全给。</b><code>geo</code> 与 <code>webstats</code> 的响应里<b>零 IP</b>；<code>alerts</code> / <code>story</code> 会带 IP，
+            但展示层统一掩成 <code>1.2.3.x</code>（<code>ask</code> 干脆自带 <code>clientIpMasked</code>）。<b><code>curl</code> 直取时可能看到未掩码的原文</b> ——
+            显示层掩码与接口原文不一致属于预期，原文只留在 srv1 日志里。<br>
             <b>③ 失败说失败。</b>取不到就写「未取到 / 读不到」并带原因（<code>available:false</code> + <code>reason</code>），不补 0、不补样例值。<br>
             <b>④ 不常驻。</b>没有 SSE / WebSocket，一次性返回；要新数据就再敲一次。
           </p>

@@ -319,6 +319,7 @@ new_page_gate() {
 head1 "⑬ /what/ 与 /lab/ 新页产物契约（存在 + >100000 字节 + data-xk-ssr）"
 new_page_gate what 介绍页
 new_page_gate lab 靶场说明页
+new_page_gate api 公开端点清单页
 new_page_gate status 状态页
 
 # ---------- 汇总 ----------
