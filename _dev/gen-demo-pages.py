@@ -1028,15 +1028,40 @@ function xkMd(src){
   }).join('');
 }
 let xkAsking = false;
+/* 站主已登录 ⇒ 走自用面 POST /api/user/ask（请求头 X-User-Token），**不受公开面「每 IP 6 次/分钟」限制**；
+   未登录/令牌失效 ⇒ 照旧走公开面。两条路的响应字段一致，展示层不用分叉。 */
+function xkOwnerToken(){
+  try {
+    var t = localStorage.getItem('xk-auth-token');
+    var L = window.__xkLogin;
+    if (t && L && L.state === 'ok') return t;
+  } catch(e){}
+  return '';
+}
 function xkAskApi(question){
   const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
   const timer = setTimeout(()=>{ if(ctrl) ctrl.abort(); }, XK_ASK_TIMEOUT);
-  return fetch(XK_ASK_API + '/api/public/ask', {
-    method:'POST', headers:{'Content-Type':'application/json'},
+  const owner = xkOwnerToken();
+  const url = XK_ASK_API + (owner ? '/api/user/ask' : '/api/public/ask');
+  const headers = {'Content-Type':'application/json'};
+  if (owner) headers['X-User-Token'] = owner;
+  return fetch(url, {
+    method:'POST', headers: headers,
     mode:'cors', credentials:'omit', cache:'no-store',
     signal: ctrl ? ctrl.signal : undefined,
     body: JSON.stringify({ question: String(question).slice(0, XK_ASK_MAX) })
   }).then(res=>{ clearTimeout(timer);
+    /* 令牌过期/被撤销：清掉本地态，退回公开面重发一次（用户不会看到一次莫名其妙的白问） */
+    if (owner && (res.status === 401 || res.status === 403)) {
+      try { localStorage.removeItem('xk-auth-token'); localStorage.removeItem('xk-auth-user'); } catch(e){}
+      if (window.__xkLogin) { window.__xkLogin.state = 'anon'; window.__xkLogin.reason = 'token-expired'; }
+      return fetch(XK_ASK_API + '/api/public/ask', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        mode:'cors', credentials:'omit', cache:'no-store',
+        body: JSON.stringify({ question: String(question).slice(0, XK_ASK_MAX) })
+      }).then(r2=>r2.json().catch(()=>null).then(body=>({ status:r2.status, ok:r2.ok, body,
+        retryAfter:r2.headers.get('Retry-After') })));
+    }
     return res.json().catch(()=>null).then(body=>({ status:res.status, ok:res.ok, body,
       retryAfter:res.headers.get('Retry-After') }));
   }).catch(err=>{ clearTimeout(timer);
@@ -1053,6 +1078,14 @@ function xkPush(kind, html){
 function xkBadge(text){ const b = document.querySelector('.chat-hd .badge'); if(b) b.innerHTML = '<span class="dot"></span>' + xkAskEsc(text); }
 function xkQuota(d){
   const q = document.querySelector('.chat-hd .quota'); if(!q) return;
+  const owner = !!xkOwnerToken();
+  if (owner) {
+    const used = (d && d.quota && d.quota.used != null) ? d.quota.used : null;
+    const lim  = (d && d.quota && d.quota.limit != null) ? d.quota.limit : 500;
+    q.textContent = '站主登录：不限次（软限额每日 ' + lim + ' 次，只提醒不硬停）' +
+      (used == null ? '' : ' · 今日已用 ' + used + ' 次');
+    return;
+  }
   q.textContent = (d && d.quota && d.quota.pool)
     ? '额度池 '+d.quota.pool+'：已用 '+(d.quota.used==null?'—':d.quota.used)+' / '+(d.quota.limit==null?'—':d.quota.limit)+' · 每 IP 6 次/分钟'
     : '额度：未返回 · 每 IP 6 次/分钟';
