@@ -297,14 +297,20 @@
        **配色 / 字号 / 边框色一个字节都不动**。 */
     .dock{gap:4px;padding:6px}
     .dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
-    .main{padding:70px 12px 90px 12px;margin:0}
+    /* ★2026-10-17：窄屏 dock 固定在 top:100px（idcard 的 DOCK_CSS），头像卡只让到 76px ⇒ 导航压住正文首行；
+       底部还有左下角功能条（.xk-idcard-col，26px@bottom:14）⇒ 下留白一起加大。 */
+    .main{padding:150px 12px 132px 12px;margin:0}
     /* ★硬伤 2 追加（实测发现的真因）：`.main` 的 padding-top 被 base 里那条特异性更高的
        `body:not(.is-home) .main{padding-top:14px}` 压成 14px ⇒ 上面这条里的 70px **从未生效**，
        正文从 y=14 就开始（这就是"浮层一压就压到字"的第二个原因）。
        收起后的头像泡是 60px 高、放在 top:6px ⇒ 需要一条 ≥66px 的顶部带。
        口径：内容页（也就是有头像泡的那两页）明确留 76px；/ai/ 与主页没有泡，维持原样。 */
-    body:not(.is-home):not(.is-ai) .main{padding-top:76px}
+    body:not(.is-home):not(.is-ai) .main{padding-top:150px}
+    body.is-ai .main{padding-top:150px}   /* ★2026-10-17：/ai/ 原先没让位 ⇒ 固定导航压住聊天头部 */
     .stats{grid-template-columns:repeat(2,1fr)}.grid23,.grid32,.grid22{grid-template-columns:1fr}
+    /* ★2026-10-17：`.ops-live` 是 `1fr 296px`，窄屏没复写过 ⇒ 494 宽下左侧实时流只剩 ~130px，
+       卡片被挤成一条竖字。窄屏改单列。 */
+    .ops-live{grid-template-columns:minmax(0,1fr)}.ops-live>*{min-width:0}
     /* ★窗口 Q（2026-10-16）移动端硬伤 1 修复：`.ai-grid` 是 `1fr 292px`，`1fr` 那列受子内容
        min-content 约束不能收缩 ⇒ 网格最小宽 ≈608px ⇒ 窄屏下整个**布局视口**被撑到 620px，
        而 `#dock{position:fixed;bottom:10px}` 相对布局视口定位 ⇒ used top = 1343-47-10 = 1286，
@@ -552,7 +558,7 @@ html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}
 /* 窄屏（<980px）：不再整块隐藏——默认只出一条**竖直静态立绘**（不加载 E-mote/WebGL），点一下放大。
    理由：手机上 E-mote 要跑 WebGL 模型（内存/耗电），但"完全看不见她"也不符合站点气质。 */
 @media (max-width:980px){
-  .phone{display:block;right:8px;bottom:8px;top:auto;transform:none;width:74px;padding:4px;
+  .phone{display:block;right:8px;bottom:62px;top:auto;transform:none;width:74px;padding:4px;
     border-radius:16px;opacity:.94;transition:width .18s ease,right .18s ease}
   .phone .phone-scr{aspect-ratio:284/600;border-radius:12px;background-size:cover;background-position:center top;background-color:#07090c}
   .phone #phoneCanvas{display:none!important}

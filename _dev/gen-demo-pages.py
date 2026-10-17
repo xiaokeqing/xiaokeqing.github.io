@@ -3550,15 +3550,20 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
 <style>
   /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）
      值只新增这一组，不改任何既有配色/字体/背景（站主点名的"头像卡片"这一处新增） */
-  .xk-idcard{position:fixed;left:0;top:14px;z-index:61;display:flex;align-items:center;gap:5px;
+  .xk-idcard{position:fixed;left:0;top:14px;z-index:61;display:flex;flex-direction:column;align-items:center;gap:4px;
     padding:6px 4px;background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
     border-left:none;border-radius:0 14px 14px 0;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
   .xk-idcard-av{width:48px;height:48px;flex:none;padding:0;cursor:pointer;display:block;
     border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:10px;overflow:hidden;
     background:#E8ECEF;line-height:0}
   .xk-idcard-av canvas{width:48px;height:48px;display:block}
-  .xk-idcard-col{display:grid;grid-template-columns:repeat(2,24px);grid-auto-rows:24px;gap:4px}
-  .xk-idcard-btn{width:24px;height:24px;padding:0;cursor:pointer;font-size:12px;line-height:1;
+  /* ★2026-10-17 站主口径：头像就单纯一个头像，头像下面写名字 */
+  .xk-idname{font:600 9.5px/1 var(--mono,monospace);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--mut,#D2CBBD);user-select:none}
+  /* ★2026-10-17 站主口径：功能文字全写到左下角，做成一行文字钮（不再用认不出的图标） */
+  .xk-idcard-col{position:fixed;left:14px;bottom:14px;z-index:63;display:flex;flex-wrap:wrap;gap:6px;
+    max-width:calc(100vw - 28px)}
+  .xk-idcard-btn{width:auto;min-width:54px;height:26px;padding:0 10px;cursor:pointer;font-size:11.5px;line-height:1;
     display:flex;align-items:center;justify-content:center;
     border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:8px;
     background:rgba(0,0,0,.22);color:var(--txt,#FAF7F0)}
@@ -3566,14 +3571,13 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   .xk-idcard-btn[hidden]{display:none}
   .xk-idcard-btn:hover{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8)}
   /* 登录键单独拉成整行文字钮：站主要"看得见的登录按键"，图标钮认不出来 */
-  .xk-idcard-col #xkLoginBtn{grid-column:1/-1;width:auto;height:22px;font-size:11px;
-    letter-spacing:.04em;border-radius:7px;gap:3px}
+  .xk-idcard-col #xkLoginBtn{height:26px;font-size:11.5px;letter-spacing:.04em;gap:4px}
   .xk-idcard-btn[aria-pressed="true"]{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8);
     background:rgba(57,208,216,.12)}
   .xk-idcard-btn:focus-visible,.xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
   /* 给她让位：既有左侧 dock 下移（仅 >980px；窄屏 dock 在底部，规则在下面那条媒体查询里复位） */
   body.xk-has-idcard .dock{top:88px}
-  .xk-idcap{position:fixed;left:6px;top:88px;z-index:62;max-width:250px;
+  .xk-idcap{position:fixed;left:14px;bottom:52px;top:auto;z-index:62;max-width:min(430px,calc(100vw - 28px));
     font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0);
     background:var(--solid,rgba(48,45,41,.94));border:1px solid var(--line2,rgba(255,246,235,.28));
     border-radius:10px;padding:6px 9px;opacity:0;transition:opacity .2s;pointer-events:none}
@@ -3620,12 +3624,12 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     body.xk-has-idcard .dock{top:100px}
     .xk-idcard-av{width:56px;height:56px}
     .xk-idcard-av canvas{width:56px;height:56px}
-    .xk-idcard-btn{width:34px;height:34px;font-size:15px}
+    .xk-idcard-btn{height:30px;font-size:12px}
     /* 窄屏把功能条摊成一行（头像右边）：竖排在手机上会压住导航 */
-    .xk-idcard-col{grid-template-columns:52px repeat(4,34px);grid-auto-rows:34px}
-    .xk-idcard-col #xkLoginBtn{grid-column:auto;width:52px;height:34px;font-size:12.5px}
-    .xk-idcap{top:104px}
-    .xk-idpanel{left:6px;top:104px}
+    .xk-idcard-col{gap:6px}
+    .xk-idcard-col #xkLoginBtn{width:auto;height:30px;font-size:12px}
+    .xk-idcap{bottom:58px;top:auto}
+    .xk-idpanel{left:6px;bottom:52px;top:auto}
   }
   /* ★批次 ②：主页底部对话输入栏（第 1 期）
      只新增这一组值；沿用既有变量（--solid/--line2/--txt/--mut/--acc/--mono/--sans），不引入新配色。
@@ -3662,20 +3666,21 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">
     <canvas id="xkIdAvCanvas" width="132" height="132" aria-hidden="true"></canvas>
   </button>
-  <span class="xk-idcard-col">
-    <button class="xk-idcard-btn" id="xkLoginBtn" type="button"
-      title="登录（只有站主能登）">👤</button>
-    <button class="xk-idcard-btn" id="xkEmoBtn" type="button"
-      title="情绪：点开选一种，她演出来">◕</button>
-    <button class="xk-idcard-btn" id="xkActBtn" type="button"
-      title="动作：点开选一个（全身画布只在主页）">▶</button>
-    <button class="xk-idcard-btn" id="xkSndBtn" type="button" aria-pressed="false"
-      title="声音：默认关闭（点一下打开）">🔇</button>
-    <button class="xk-idcard-btn" id="xkLiteBtn" type="button" aria-pressed="false"
-      title="场景光束：点一下开/关（只影响背景）">✧</button>
-    <span></span>
-  </span>
+  <span class="xk-idname" aria-hidden="true">Amadeus</span>
 </aside>
+<div class="xk-idcard-col" role="group" aria-label="功能">
+    <button class="xk-idcard-btn" id="xkLoginBtn" type="button"
+      title="登录（只有站主能登）">登录</button>
+    <button class="xk-idcard-btn" id="xkEmoBtn" type="button"
+      title="情绪：点开选一种，她演出来">情绪</button>
+    <button class="xk-idcard-btn" id="xkActBtn" type="button"
+      title="动作：点开选一个（全身画布只在主页）">动作</button>
+    <button class="xk-idcard-btn" id="xkSndBtn" type="button" aria-pressed="false"
+      title="声音：默认关闭（点一下打开）">声音 关</button>
+    <button class="xk-idcard-btn" id="xkLiteBtn" type="button" aria-pressed="false"
+      title="场景光束：点一下开/关（只影响背景）">光束</button>
+    <span></span>
+</div>
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
 <div class="xk-idpanel" id="xkIdPanel" role="dialog" aria-label="桐莉栖 · 情绪与动作面板"></div>
 <div class="xk-login" id="xkLogin" role="dialog" aria-modal="true" aria-label="站主登录"></div>
@@ -3806,7 +3811,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   function speak(id, prefix, force) {
     var zh = LINE_ZH[id] || '';
     var head = prefix ? (prefix + ' —— ') : '';
-    if (!D.sound && !force) { say(head + zh + '（声音默认关：点左上角 🔊 才出声）'); return false; }
+    if (!D.sound && !force) { say(head + zh + '（声音默认关：点左下角「声音」才出声）'); return false; }
     var grp = GROUP_OF[id], ok = false;
     try {
       if (grp && window.KurisuPlayer && typeof window.KurisuPlayer.speakGroup === 'function') {
@@ -3833,7 +3838,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     window.__xkSound = { on: D.sound, set: setSound, toggle: toggleSound };
     /* 开声 = 用户手势 ⇒ 这一刻必须保证统一播放器在位（按需加载那条） */
     if (D.sound) { loadPlayer(); }
-    snd.textContent = D.sound ? '🔊' : '🔇';
+    snd.textContent = D.sound ? '声音 开' : '声音 关';
     snd.setAttribute('aria-pressed', D.sound ? 'true' : 'false');
     snd.setAttribute('title', D.sound ? '声音：已打开（点一下关掉）' : '声音：已关闭（点一下打开）');
     try { window.dispatchEvent(new CustomEvent('xk-sound', { detail: { on: D.sound, why: why || 'btn' } })); } catch (e) { }
@@ -3851,7 +3856,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     ls('xk-lite', D.lite ? '1' : '0');
     try { document.documentElement.classList.toggle('xk-lite', D.lite); } catch (e) { }
     if (lite) {
-      lite.textContent = D.lite ? '✨' : '✧';
+      lite.textContent = D.lite ? '光束 开' : '光束 关';
       lite.setAttribute('aria-pressed', D.lite ? 'true' : 'false');
       lite.setAttribute('title', D.lite ? '场景光束：已打开（点一下关掉）' : '场景光束：已关闭（点一下打开）');
     }
@@ -5556,7 +5561,7 @@ PHONE_CSS = (
     u'/* 窄屏（<980px）：不再整块隐藏——默认只出一条**竖直静态立绘**（不加载 E-mote/WebGL），点一下放大。\n'
     u'   理由：手机上 E-mote 要跑 WebGL 模型（内存/耗电），但"完全看不见她"也不符合站点气质。 */\n'
     u'@media (max-width:980px){\n'
-    u'  .phone{display:block;right:8px;bottom:8px;top:auto;transform:none;width:74px;padding:4px;\n'
+    u'  .phone{display:block;right:8px;bottom:62px;top:auto;transform:none;width:74px;padding:4px;\n'
     u'    border-radius:16px;opacity:.94;transition:width .18s ease,right .18s ease}\n'
     u'  .phone .phone-scr{aspect-ratio:284/600;border-radius:12px;background-size:cover;background-position:center top;background-color:#07090c}\n'
     u'  .phone #phoneCanvas{display:none!important}\n'
