@@ -42,8 +42,13 @@
       <div class="screen-bd">
 
         <!-- 视图 1：实时攻击 -->
-        <div class="ops-tab on" data-pane="live">
-          <div class="ops-live">
+        <div class="ops-hero" id="opsHero" aria-live="polite">
+          <div class="oh-cell"><b id="ohBlocked">—</b><span>累计拦截</span></div>
+          <div class="oh-cell"><b id="ohIps">—</b><span>累计封禁 IP</span></div>
+          <div class="oh-cell"><b id="ohHoney">—</b><span>蜜罐连接</span></div>
+          <div class="oh-line" id="ohLine">战报载入中…</div>
+        </div>
+        <div class="ops-live">
             <div class="term">
               <div class="term-hd"><span>实时攻击流</span><span class="term-path">GET /api/public/alerts · 只读聚合（5 分钟窗口）</span><button class="feed-pause" id="feedPause" type="button" aria-pressed="false" title="暂停/继续追加新行（取数不受影响）">暂停</button><span class="term-live"><i></i>LIVE</span></div>
               <div class="term-bd" id="termFeed"></div>

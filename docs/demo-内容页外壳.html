@@ -442,6 +442,22 @@
   body.is-ai .main{padding-right:24px}
   body.is-ai .holo,body.is-ai .holo-bubble{display:none}
 
+
+/* A1：监测中心英雄数字（真实数据，取不到就写未取到） */
+.ops-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+  background:rgba(0,0,0,.28);border:1px solid rgba(242,233,218,.14);border-radius:12px;
+  overflow:hidden;margin-bottom:14px}
+.oh-cell{padding:13px 14px 12px;background:linear-gradient(180deg,rgba(24,22,19,.55),rgba(14,13,11,.55))}
+.oh-cell b{display:block;font:600 27px/1.1 var(--mono,ui-monospace,monospace);letter-spacing:-.02em;
+  color:#F3EAD9;font-variant-numeric:tabular-nums}
+.oh-cell span{display:block;margin-top:5px;font-size:10.5px;letter-spacing:.13em;color:var(--mut,#D2CBBD)}
+.oh-line{grid-column:1/-1;padding:9px 14px;font-size:12px;line-height:1.55;color:#C9C1B2;
+  background:rgba(0,0,0,.22);border-top:1px solid rgba(242,233,218,.1)}
+@media (max-width:980px){
+  .oh-cell{padding:10px 11px}
+  .oh-cell b{font-size:21px}
+  .oh-line{font-size:11.5px}
+}
 </style>
 </head>
 <body data-skin="warm" class="is-home">
@@ -558,8 +574,13 @@
       <div class="screen-bd">
 
         <!-- 视图 1：实时攻击 -->
-        <div class="ops-tab on" data-pane="live">
-          <div class="ops-live">
+        <div class="ops-hero" id="opsHero" aria-live="polite">
+          <div class="oh-cell"><b id="ohBlocked">—</b><span>累计拦截</span></div>
+          <div class="oh-cell"><b id="ohIps">—</b><span>累计封禁 IP</span></div>
+          <div class="oh-cell"><b id="ohHoney">—</b><span>蜜罐连接</span></div>
+          <div class="oh-line" id="ohLine">战报载入中…</div>
+        </div>
+        <div class="ops-live">
             <div class="term">
               <div class="term-hd"><span>实时攻击流</span><span class="term-path">tail -f /var/log/xk-lab/alerts.log</span><span class="term-live"><i></i>LIVE</span></div>
               <div class="term-bd" id="termFeed"></div>

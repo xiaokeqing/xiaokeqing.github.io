@@ -793,6 +793,34 @@ function renderFeed(){
 }
 window.__xkRenderFeed = renderFeed;
 addEventListener('resize', feedTrim);
+
+/* ★A1/A2 英雄数字 + 今日战报：只读两个端点，取不到就写「未取到」，不补样例值 */
+(function(){
+  const el = id => document.getElementById(id);
+  const hero = el('opsHero');
+  if(!hero) return;
+  const put = (id, v) => { const n = el(id); if(n) n.textContent = v; };
+  const num = v => (typeof v === 'number' && isFinite(v)) ? v.toLocaleString('zh-CN') : '未取到';
+  async function load(){
+    let audit = null, honey = null;
+    try{ audit = (await (await fetch('/api/public/audit',{cache:'no-store'})).json()).data; }catch(_){}
+    try{ honey = (await (await fetch('/api/public/honeypot',{cache:'no-store'})).json()).data; }catch(_){}
+    const s = (audit && audit.summary) || {};
+    put('ohBlocked', num(s.blockedByGuard));
+    put('ohIps', num(s.blockTotal));
+    put('ohHoney', num(honey && honey.total));
+    const top = (honey && honey.topSources && honey.topSources[0]) || null;
+    const at = (audit && audit.generatedAt) || (honey && honey.generatedAt) || '';
+    const parts = [];
+    if(top && top.key) parts.push('今天最凶的来源 ' + top.key + '，' + num(top.count) + ' 次登录尝试');
+    if(s.blockActive != null) parts.push('当前生效封禁 ' + num(s.blockActive) + ' 个');
+    if(at) parts.push('数据时间 ' + at);
+    if(!parts.length) parts.push('两个端点本次都未取到 —— 不补样例值');
+    put('ohLine', parts.join(' · '));
+  }
+  load();
+  setInterval(load, 60000);
+})();
 '''
 
 S_SPARK_NEW = u'''/* 24 小时攻击时序 —— ★第十二批重写：数据改成 /api/public/alerts 的 stats24h.trend
