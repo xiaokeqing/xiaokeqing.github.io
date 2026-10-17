@@ -436,7 +436,7 @@ try {
     $relJson = $relObj | ConvertTo-Json -Depth 6
     [IO.File]::WriteAllText($localRel, $relJson, [Text.UTF8Encoding]::new($false))
     & scp -q $localRel "${relHost}:/tmp/xk-release-info.json" 2>&1 | Out-Null
-    $syncOut = (& ssh -o BatchMode=yes $relHost "python3 -c 'import json,io;json.load(io.open(\"/tmp/xk-release-info.json\",encoding=\"utf-8\"));print(\"JSON_OK\")' && install -m 644 /tmp/xk-release-info.json $relPath && echo RELINFO_SYNCED" 2>&1 | Out-String).Trim()
+        $syncOut = (& ssh -o BatchMode=yes $relHost "python3 -m json.tool /tmp/xk-release-info.json > /dev/null && install -m 644 /tmp/xk-release-info.json $relPath && echo RELINFO_SYNCED" 2>&1 | Out-String).Trim()
     if ($syncOut -match 'RELINFO_SYNCED') { Ok "release-info.json 已同步：$release（history $($hist.Count) 条）" }
     else { Warn "release-info.json 同步未确认：$syncOut" }
 } catch {
