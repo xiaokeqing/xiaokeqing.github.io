@@ -111,3 +111,6 @@ _shots/*
 !_dev/shot-batch-d-nav.mjs
 !_dev/clean-probe-temp.ps1
 eval-out/
+
+# 语音库清理备份不进版本库（会顶爆 160MiB 资产上限）
+static/kurisu/voice/bank.json.bak-*
