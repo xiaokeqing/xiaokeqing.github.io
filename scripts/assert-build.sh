@@ -230,6 +230,40 @@ if [ -f static/js/kurisu-player.js ]; then
     if grep -q "$pat" static/js/kurisu-player.js; then ok "播放器含 $pat"; else no "播放器缺少 $pat（降级/暂停/图集逻辑被删了？）"; fi
   done
 else no "找不到 static/js/kurisu-player.js"; fi
+# ---------- ⑫ 版式/比例硬约束（站主 2026-10-17："把尺寸比例拿捏好，别越做问题越多"）----------
+# 这一组是把"已经修好的比例"钉成断言，防以后被顺手改回去（每条都对应一次真实翻车）。
+head1 "⑫ 版式/比例硬约束（手机面板、E-mote 画布、省流误判、字幕垫板）"
+if [ -s "$PUB/ai/index.html" ]; then
+  AI="$PUB/ai/index.html"
+  # 手机屏幕必须按比例（aspect-ratio 284/600），不能再写死 height:600px 与面板高度打架
+  if grep -q 'aspect-ratio:284/600' "$AI"; then ok "手机屏幕 aspect-ratio:284/600 存在（比例随面板走）"; else no "手机屏幕缺 aspect-ratio:284/600（写死高度会导致面板裁切/变形）"; fi
+  if grep -qE '\.phone-scr\{[^}]*width:284px;height:600px' "$AI"; then no "手机屏幕又写回固定 284x600（与面板高度冲突）"; else ok "手机屏幕没有写死 284x600"; fi
+  # 面板宽度自适应，禁止再出现会压扁面板的 max-height 规则
+  if grep -q 'min(300px,44vh)' "$AI"; then ok "手机面板宽度 min(300px,44vh)（按视口高度自适应）"; else no "手机面板缺 min(300px,44vh)"; fi
+  if grep -q 'max-height:820px){.phone{top:84px' "$AI"; then no "旧的 max-height:820px 压扁规则回来了（面板会裁切）"; else ok "没有旧的 max-height:820px 压扁规则"; fi
+  # E-mote 接管后必须停掉原始帧动画，并把画布内部尺寸对齐 CSS 盒子
+  if grep -q '__xkPhoneAnim=!1\|__xkPhoneAnim=false' "$AI"; then ok "E-mote 接管后停掉原始帧动画"; else no "E-mote 接管后没停原始帧动画（手机里会两套画面打架）"; fi
+  if [ -f "$PUB/js/phone-emote.js" ]; then
+    if grep -q 'clientWidth' "$PUB/js/phone-emote.js" && grep -q 'devicePixelRatio' "$PUB/js/phone-emote.js"; then ok "E-mote 画布按 CSS 盒子×dpr 设定内部尺寸"; else no "E-mote 画布没按盒子尺寸设定（会被拉伸变形）"; fi
+  else no "缺 $PUB/js/phone-emote.js"; fi
+  # 静态立绘兜底（E-mote 不可用时手机不空屏）
+  if grep -q 'idle.poster.webp' "$AI"; then ok "手机屏幕有静态立绘兜底"; else warn "手机屏幕没有静态立绘兜底"; fi
+else no "缺 $PUB/ai/index.html（手机面板页）"; fi
+
+if [ -f "$PUB/js/xk-saver.js" ]; then
+  SAVER="$PUB/js/xk-saver.js"
+  if grep -q 'slow-2g|2g)' "$SAVER"; then ok "省流触发不含 3g（避免正常网速误判）"; else no "省流触发仍包含 3g（正常用户会被误判成弱网）"; fi
+  for pat in 'HTMLImageElement.prototype' 'script' 'requestIdleCallback'; do
+    if grep -q "$pat" "$SAVER"; then ok "省流脚本含 $pat 拦截"; else no "省流脚本缺少 $pat 拦截"; fi
+  done
+else warn "缺 $PUB/js/xk-saver.js（省流模式未上线）"; fi
+
+# 字幕垫板走 data-src 惰性加载（省流时 373KB 不请求；非省流由 xk-saver 补回）
+if grep -q 'data-src=/kurisu/scene/subtitle_frame_big.webp' "$PUB/index.html"; then ok "主页字幕垫板是 data-src 惰性加载"; else warn "主页字幕垫板不是 data-src（省流模式会白取 373KB）"; fi
+
+# CRT 位置/尺寸必须由 --crt-w/--crt-h 变量驱动（禁写死像素，换视口就错位）
+if grep -q -- '--crt-w' "$PUB/index.html" && grep -q 'width:var(--crt-w)' "$PUB/index.html"; then ok "CRT 尺寸由 --crt-w/--crt-h 驱动（随视口等比）"; else no "CRT 尺寸不是变量驱动（换视口会错位）"; fi
+
 # ---------- 汇总 ----------
 head1 "汇总"
 echo "  通过 $PASS 项，失败 $FAIL 项"

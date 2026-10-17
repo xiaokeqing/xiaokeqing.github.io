@@ -240,6 +240,30 @@ $localhostHits = @(Select-String -Path (Join-Path $PublicDir '*.html') -Pattern 
 if ($localhostHits.Count -gt 0) { Warn "产物里出现 localhost（$($localhostHits.Count) 处）—— SEO canonical 可能不对" }
 else { Ok '产物里没有 localhost' }
 
+# ★2026-10-17（站主口径"做好后自己核查一遍"）：把产物硬断言接进发布链。
+#   原来 scripts/assert-build.sh 只靠手工跑，容易忘 ⇒ 现在每次发布都在干净 worktree 里自动执行，
+#   任一条断言红就直接拒绝发布（连 tar 都不打）。
+$assertSh = Join-Path $WorkDir 'scripts/assert-build.sh'
+if (Test-Path -LiteralPath $assertSh) {
+    $bashExe = $null
+    foreach ($cand in @('C:\Program Files\Git\bin\bash.exe', 'C:\Program Files (x86)\Git\bin\bash.exe')) {
+        if (Test-Path -LiteralPath $cand) { $bashExe = $cand; break }
+    }
+    if (-not $bashExe) { $bashExe = (Get-Command bash -ErrorAction SilentlyContinue).Source }
+    if ($bashExe) {
+        Push-Location $WorkDir
+        try {
+            & $bashExe 'scripts/assert-build.sh' $PublicDir
+            if ($LASTEXITCODE -ne 0) { Die 'scripts/assert-build.sh 断言失败 → 拒绝发布（产物不符合硬约束）' }
+            Ok '产物硬断言（scripts/assert-build.sh）全部通过'
+        } finally { Pop-Location }
+    } else {
+        Warn '本机找不到 bash ⇒ 跳过 assert-build.sh（产物特征硬断言未执行）'
+    }
+} else {
+    Warn "worktree 里没有 scripts/assert-build.sh ⇒ 跳过产物硬断言"
+}
+
 # 整树内容哈希（★2026-10-16 窗口 Q：发送侧不再只比 index.html）
 $tree = Get-TreeFiles $PublicDir
 Ok ("本地整树内容 sha256 = {0}…（{1} 个文件；口径与接收侧 tree_hash 逐字节相同：LC_ALL=C 路径字节序）" -f $tree.Hash.Substring(0,16), $tree.Count)
