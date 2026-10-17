@@ -798,13 +798,14 @@ addEventListener('resize', feedTrim);
 (function(){
   const el = id => document.getElementById(id);
   const hero = el('opsHero');
+  const API = ((document.querySelector('meta[name="wb-api"]') || {}).content || '').replace(/\/+$/, '');
   if(!hero) return;
   const put = (id, v) => { const n = el(id); if(n) n.textContent = v; };
   const num = v => (typeof v === 'number' && isFinite(v)) ? v.toLocaleString('zh-CN') : '未取到';
   async function load(){
     let audit = null, honey = null;
-    try{ audit = (await (await fetch('/api/public/audit',{cache:'no-store'})).json()).data; }catch(_){}
-    try{ honey = (await (await fetch('/api/public/honeypot',{cache:'no-store'})).json()).data; }catch(_){}
+    try{ audit = (await (await fetch(API + '/api/public/audit',{cache:'no-store'})).json()).data; }catch(_){}
+    try{ honey = (await (await fetch(API + '/api/public/honeypot',{cache:'no-store'})).json()).data; }catch(_){}
     const s = (audit && audit.summary) || {};
     put('ohBlocked', num(s.blockedByGuard));
     put('ohIps', num(s.blockTotal));
