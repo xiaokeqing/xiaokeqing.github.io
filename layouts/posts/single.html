@@ -1,2 +1,80 @@
-{{/* 文章页：正文由 baseof + partials/views.html（note 路由，ssr 模式）在构建期渲染进 <main> */}}
-{{ define "main" }}{{ end }}
+{{- /* ============================================================================
+   笔记详情 = 与 /posts/ 列表同一个外壳（xk-demo 暖玻璃 + 左侧 dock + 右侧人物面板）
+   ----------------------------------------------------------------------------
+   为什么要有这一版：2026-10-17 站主反馈「一点击笔记就跳到旧白底博客」（科技模式/搜索笔记那套），
+   列表是 demo 外壳、详情却是另一套视觉，来回横跳。这里把正文放回 demo 外壳里：
+   <main class="main" data-xk-ssr="note"> + 一个 .screen 卡片 + 文章排版。
+   契约不变：head-meta / shell-style / shell-chrome / shell-script / api-bind 与列表页一致，
+   所以 dock、右侧人物面板、取数逻辑的行为跟 /posts/ 完全相同。
+   ============================================================================ */ -}}
+{{- $v := "notes" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <title>{{ .Title }} · {{ site.Title }}</title>
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+  <style>
+    /* 正文排版：暖玻璃底上的可读性（字号/行距沿用旧博客，颜色换暖灰） */
+    .xk-article{max-width:78ch;margin:0 auto;padding:26px 30px 30px;color:var(--txt);
+      background:rgba(10,12,16,.40);border:1px solid var(--line);border-radius:14px;
+      backdrop-filter:blur(6px);
+      font:15.5px/1.85 var(--sans);text-shadow:0 1px 10px rgba(10,8,5,.55)}
+    .xk-article h1{font:600 27px/1.35 var(--sans);margin:6px 0 10px;letter-spacing:.01em}
+    .xk-article h2{font:600 21px/1.4 var(--sans);margin:32px 0 12px;padding-bottom:8px;
+      border-bottom:1px solid var(--line)}
+    .xk-article h3{font:600 17px/1.5 var(--sans);margin:24px 0 10px}
+    .xk-article p{margin:14px 0}
+    .xk-article ul,.xk-article ol{margin:14px 0;padding-left:1.35em}
+    .xk-article li{margin:7px 0}
+    .xk-article a{color:#8FD8E6;text-decoration:none;border-bottom:1px solid rgba(143,216,230,.35)}
+    .xk-article a:hover{border-bottom-color:#8FD8E6}
+    .xk-article code{font:13px var(--mono);background:rgba(255,246,235,.10);
+      border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+    .xk-article pre{background:rgba(0,0,0,.42);border:1px solid var(--line);border-radius:10px;
+      padding:13px 15px;overflow:auto;margin:16px 0}
+    .xk-article pre code{background:none;border:0;padding:0;font:12.5px/1.7 var(--mono)}
+    .xk-article blockquote{margin:16px 0;padding:10px 16px;border-left:3px solid var(--acc);
+      background:rgba(255,246,235,.05);border-radius:0 10px 10px 0;color:var(--mut)}
+    .xk-article table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+    .xk-article th,.xk-article td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+    .xk-article th{background:rgba(255,246,235,.06);font-weight:600}
+    .xk-article img{max-width:100%;height:auto;border-radius:10px;border:1px solid var(--line)}
+    .xk-article hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+    .xk-note-back{display:inline-flex;align-items:center;gap:6px;margin:22px 0 0;
+      font:12.5px var(--mono);color:var(--mut);text-decoration:none;
+      border:1px solid var(--line);border-radius:99px;padding:5px 13px}
+    .xk-note-back:hover{color:var(--acc);border-color:var(--acc)}
+    .xk-note-meta{font:12.5px var(--mono);color:var(--mut);letter-spacing:.06em;
+      display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 18px}
+  </style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="note">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span><span class="t">笔记</span>
+      <span class="sub">{{ .File.BaseFileName }}</span>
+    </div>
+    <div class="screen-bd">
+      <article class="xk-article">
+        <h1>{{ .Title }}</h1>
+        <div class="xk-note-meta">
+          {{ with .Date }}<span>{{ .Format "2006-01-02" }}</span>{{ end }}
+          <span>约 {{ .ReadingTime }} 分钟</span>
+          {{ with .Params.categories }}<span>{{ delimit . " · " }}</span>{{ end }}
+        </div>
+        {{ .Content }}
+        <a class="xk-note-back" href="/posts/">← 回到笔记列表</a>
+      </article>
+    </div>
+  </div>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+{{ partial "xk-demo/api-bind.html" . }}
+</body>
+</html>
