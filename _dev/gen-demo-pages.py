@@ -3743,6 +3743,15 @@ DOCK_STATUS_CONTENT = '<a href="/status/" class="{{ if eq $v "status" }}on{{ end
 DOCK_STATUS_HOME = '<a href="/status/">状态</a>\n'
 DOCK_API_CONTENT = '<a href="/api/" class="{{ if eq $v "api" }}on{{ end }}">接口</a>\n'
 DOCK_API_HOME = '<a href="/api/">接口</a>\n'
+# ---- ★TOOLS（站主 2026-10-18「新功能要能被点到」）：dock 加「工具」
+#   为什么：/tools/ 对外零入口时，它下面的 cve/password 也只有彼此互相连；加一个入口 = 一页可达全部工具。
+#   位置：排在「狭场」后面、「状态」前面（状态/接口是站站自身的对外说明，工具是用的东西）。
+DOCK_TOOLS_CONTENT = '<a href="/tools/" class="{{ if eq $v "tools" }}on{{ end }}">工具</a>\n'
+DOCK_TOOLS_HOME = '<a href="/tools/">工具</a>\n'
+chrome = sub1(chrome, DOCK_LAB_CONTENT, DOCK_LAB_CONTENT + '  ' + DOCK_TOOLS_CONTENT,
+              'TOOLS: 外壳 dock 新增「工具」')
+home_body = sub1(home_body, DOCK_LAB_HOME, DOCK_LAB_HOME + '  ' + DOCK_TOOLS_HOME,
+                 'TOOLS: 主页 dock 新增「工具」')
 chrome = sub1(chrome, DOCK_LAB_CONTENT, DOCK_LAB_CONTENT + '  ' + DOCK_STATUS_CONTENT,
               'STATUS: 外壳 dock 新增「状态」')
 chrome = sub1(chrome, DOCK_STATUS_CONTENT, DOCK_STATUS_CONTENT + '  ' + DOCK_API_CONTENT,

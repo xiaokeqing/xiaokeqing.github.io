@@ -25,14 +25,15 @@
 .tps-card:hover{border-color:rgba(160,220,240,.44);background:rgba(0,0,0,.32)}
 .tps-card h3{margin:0;font-size:14.5px;font-weight:600;color:#eaf6ff;letter-spacing:.01em}
 .tps-card .en{margin-left:6px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;letter-spacing:.1em;color:rgba(255,255,255,.38)}
-.tps-card p{margin:0;font-size:12.5px;line-height:1.9;color:rgba(255,255,255,.72)}
+.tps-card p{margin:0;font-size:13px;line-height:1.9;color:rgba(255,255,255,.72)}
 .tps-card .kv{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:2px;font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.46)}
 .tps-card .kv b{color:rgba(255,255,255,.72);font-weight:500}
 .tps-card .go{margin-top:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0}
 .tps-na{color:#E8B45A}
-.tps-note{margin:0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.tps-group{margin:2px 0 -2px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.06em;color:rgba(190,225,240,.62)}
+.tps-note{margin:0;font-size:13px;line-height:1.9;color:rgba(255,255,255,.5)}
 .tps-note b{color:rgba(255,255,255,.72);font-weight:600}
-.tps-list{margin:6px 0 0;padding-left:18px;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.55)}
+.tps-list{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.9;color:rgba(255,255,255,.55)}
 .tps-list li{margin:2px 0}
 @media (max-width:980px){
   .tps-grid{grid-template-columns:1fr}
@@ -47,10 +48,12 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 工具台 <em class="ops-en">TOOLS</em></span>
-      <span class="sync" id="tpsSync">● 两个工具 · 数据各在各的页面取</span>
+      <span class="sync" id="tpsSync">● 9 个工具 · 数据各在各的页面取</span>
     </div>
     <div class="screen-bd tps-bd">
-      <p class="tps-lead">这里放<b>我自己每天会用</b>的两个小工具。它们不是演示：数据要么来自这台机器上真实跑着的东西（蜜罐、CVE 清单），要么来自每天定时抓一次的官方源。每个工具页都会写明<b>数据什么时候抓的</b>、<b>抓不到时是什么样</b>——抓不到就写「读不到」，不补数、不估算。</p>
+      <p class="tps-lead">这里是入口页，<b>9 个工具全在这一页能点到</b>。它们不是演示：数据要么来自这台机器上真实跑着的东西（蜜罐、检测规则、CVE 清单），要么来自每天定时抓一次的官方源。每个工具页都会写明<b>数据什么时候抓的</b>、<b>抓不到时是什么样</b>——抓不到就写「读不到」，不补数、不估算。</p>
+      <p class="tps-note">分三组：<b>每天顺手用</b>（CVE / 密码）、<b>看得见现在的机器</b>（噪音 / 样本 / IP / 弱口令）、<b>攻防演练</b>（红队 / 紫队 / 日报订阅）。</p>
+      <p class="tps-group">① 每天顺手用</p>
       <div class="tps-grid">
 
         <a class="tps-card" href="/tools/cve/">
@@ -77,13 +80,72 @@
         </a>
 
       </div>
+
+      <p class="tps-group">② 看得见这台机器现在什么样</p>
+      <div class="tps-grid">
+
+        <a class="tps-card" href="/noise/">
+          <h3>告警噪音指数<span class="en">NOISE</span></h3>
+          <p>把 7 天 29 万条告警里"其实是自家 agent 心跳"的那部分算出来：当前 <b>94.86%</b> 是噪音。这一页存在的意义不是好看，是回答"这套检测现在有多少是有效信号"。</p>
+          <div class="kv"><span>样本 <b>293,482 条</b></span><span>心跳 sid <b>2013031</b></span><span>刷新 <b>静态快照</b></span></div>
+          <span class="go">进入 → /noise/</span>
+        </a>
+
+        <a class="tps-card" href="/samples/">
+          <h3>样本与行为分析<span class="en">SAMPLES</span></h3>
+          <p>蜜罐抓到的文件样本，以及"抓不到文件但行为可复现"的三条：哪个 IP 打了几千次 SSH、拿什么账号口令、有没有进到执行命令那一步。文件样本 0 条时也照写 0 条。</p>
+          <div class="kv"><span>文件样本 <b>0 条（如实）</b></span><span>行为样本 <b>3 条</b></span><span>留存方案 <b>3 条</b></span></div>
+          <span class="go">进入 → /samples/</span>
+        </a>
+
+        <a class="tps-card" href="/ip/">
+          <h3>IP 情报查询<span class="en">IP-PROFILE</span></h3>
+          <p>输入一个公网 IP，聚合它在告警、蜜罐、封禁留痕里的全部痕迹：首次/最近出现、事件数、端口、口令结构、归属地、是否被拦过，再给一个启发式威胁分（<b>不是概率模型</b>）。</p>
+          <div class="kv"><span>端点 <b>/api/public/ip</b></span><span>口令 <b>只给结构</b></span><span>威胁分 <b>启发式</b></span></div>
+          <span class="go">进入 → /ip/</span>
+        </a>
+
+        <a class="tps-card" href="/passwords/">
+          <h3>弱口令统计<span class="en">PASSWORDS</span></h3>
+          <p>蜜罐收到的爆破口令，按"长度/字符类/账号"统计成表，只给结构与次数，<b>永远不给明文</b>。用来回答：攻击者现在在猜什么形状的密码。</p>
+          <div class="kv"><span>日志 690,971 行</span><span>唯一哈希 6,055</span><span>口径 <b>已脱敏</b></span></div>
+          <span class="go">进入 → /passwords/</span>
+        </a>
+
+      </div>
+
+      <p class="tps-group">③ 攻防演练</p>
+      <div class="tps-grid">
+
+        <a class="tps-card" href="/redteam/">
+          <h3>红队评测<span class="en">REDTEAM</span></h3>
+          <p>27 条固定的攻击/应放行用例，对自家 AI 问答公开面做评测：这轮 25 条执行、13 条拦下、<b>4 条绕过（23.53%）</b>、误报 0/8。也接受提交样本——但只做离线评分，不开放公网实时靶标。</p>
+          <div class="kv"><span>用例 <b>27 条</b></span><span>误报 <b>0/8</b></span><span>提交 <b>只离线评分</b></span></div>
+          <span class="go">进入 → /redteam/</span>
+        </a>
+
+        <a class="tps-card" href="/purpleteam/">
+          <h3>紫队演练<span class="en">PURPLE-TEAM</span></h3>
+          <p>自己打自己：按攻击链复现一次真实入侵路径（扫描→爆破→登录→留痕），记录每步命中了哪条检测规则、哪一步漏了。结论写成笔记，不美化。</p>
+          <div class="kv"><span>攻击链 <b>分段复盘</b></span><span>关联 <b>Wazuh/Suricata</b></span><span>产出 <b>检测缺口</b></span></div>
+          <span class="go">进入 → /purpleteam/</span>
+        </a>
+
+        <a class="tps-card" href="/subscribe/">
+          <h3>日报与订阅<span class="en">DIGEST</span></h3>
+          <p>每天一封摘要：24 小时告警量、Top 来源国、最凶的 IP、蜜罐连接数、封禁与护栏拦截数。未配置邮件时会落盘成 <code>.eml</code> 文件——不假装发出去过。</p>
+          <div class="kv"><span>投放 <b>邮件 / 落盘</b></span><span>语音播报 <b>可选</b></span><span>状态 <b>在 /status/ 看</b></span></div>
+          <span class="go">进入 → /subscribe/</span>
+        </a>
+
+      </div>
       <div class="mod" style="margin-top:2px">
         <div class="mod-hd">
           <span class="t">口径与边界</span>
           <span class="sync">为什么这两个值得放在"工具"里</span>
         </div>
         <div class="mod-bd">
-          <p class="tps-lead" style="font-size:12.5px;color:rgba(255,255,255,.76)">两个工具的共同点是：<b>数据别人没有</b>，或者<b>口径别人不敢写</b>。</p>
+          <p class="tps-lead" style="font-size:13px;color:rgba(255,255,255,.76)">两个工具的共同点是：<b>数据别人没有</b>，或者<b>口径别人不敢写</b>。</p>
           <ul class="tps-list">
             <li><b>CVE 速递</b>用官方清单做唯一事实源，解读只允许搬运字段——宁可写「官方未给出」，也不替官方补版本号和影响范围。</li>
             <li><b>密码自查</b>的独特之处是「这串口令昨晚刚被人用来爆破我的服务器」——公开泄露库给不了这个时间戳；反过来，它也永远不会告诉你"你的密码已泄露"，只告诉你"这个前缀下有多少次真实尝试"。</li>
