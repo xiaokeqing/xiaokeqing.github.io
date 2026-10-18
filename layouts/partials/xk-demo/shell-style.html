@@ -152,6 +152,10 @@
   .ops-tab.on{display:block;animation:opsfade .35s ease}
   @keyframes opsfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .ops-live{display:grid;grid-template-columns:1fr 296px;gap:14px;margin-bottom:14px}
+  /* ★LIVE-HIDE（2026-10-18）：「实时攻击」那一坨（刷流 + 右栏）不属于任何 `.ops-tab`，
+     所以切到攻击图谱/威聑矩阵/数据统计时它照样在页面上摆着，看起来就是“全堆成一页”。
+     有 :has 就用 CSS 隐藏；没有的话 watchTabs 里还有一行 JS 兜底。 */
+  .screen-bd:has(> .ops-tab.on) > .ops-live{display:none}
   .term{background:#12100D;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
   .term-hd{display:flex;gap:10px;align-items:center;padding:8px 13px;border-bottom:1px solid var(--line);
     font:12.5px var(--mono);color:var(--txt)}

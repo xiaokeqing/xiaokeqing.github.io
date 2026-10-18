@@ -1210,6 +1210,8 @@
         if (!mapWorld) { mapKick(); return; }
         if (cv2.width <= 300 || !mapView) { mapUpdate(); }
       }
+      /* ★SUBS：暴露给「数据统计」子标签——切到地图那一页时需要重打一次（display 刚恢复，布尺寸才有） */
+      window.xkMapKick = mapKick2;
       document.addEventListener('click', function (ev) {
         var t = (ev.target && ev.target.closest) ? ev.target.closest('.ops-tab') : null;
         if (t) setTimeout(mapKick2, 160);
@@ -1272,6 +1274,7 @@
     var root = mapRoot();
     if (!root) return;                       /* 别的页没有这张卡 */
     bindMapShell();
+  initStatsSub();
     var raw = null, i;
     for (i = 0; i < (parts || []).length; i++) {
       if (parts[i].path.indexOf('/geo') >= 0) { raw = parts[i]; break; }
@@ -1394,6 +1397,96 @@
       blankRow(rows[0], NA, '', '', '');
       hideFrom(1);
     }
+  }
+
+  /* ---------------------------------------------------------------- ★SUBS 数据统计分页
+     站主 2026-10-18 反馈：「数据统计」把封禁榜/来源地图/访问统计/发布版本全摊在同一页，
+     要"点到那一栏只展示那一栏"。分组在**运行时**做（不改生成器 markup，重生成不会丢）：
+       web = 7×24 访问统计（含 .bars.anim 的那块）
+       map = 攻击来源地图 + 来源 TOP5 / 攻击故事线（.grid32）
+       ban = 处置成果·封禁榜 + 处置运维·处置动作（/audit）
+       ov  = 告警来源分布（donut）+ 接口健康
+       rel = 部署可追溯·版本时间轴（/deploy）
+     隐藏用 display:none 直接写在子块上，不引入新的 CSS 类，避免与既有栅格打架。 */
+  function initStatsSub() {
+    var pane = document.querySelector('.ops-tab[data-pane="stats"]');
+    if (!pane || pane.getAttribute('data-stats-ready') === '1') return;
+    var kids = [].slice.call(pane.children);
+    function mark(el, g) { if (el) { el.setAttribute('data-stats-grp', g); } }
+    var order = [], groups = {};
+    kids.forEach(function (el) {
+      var g = null;
+      if (el.querySelector && el.querySelector('.bars.anim')) { g = 'web'; }
+      else if (el.classList.contains('xk-atkmap-card')) { g = 'map'; }
+      else if (el.classList.contains('grid32')) { g = 'map'; }
+      else if (el.getAttribute('data-xk-block') === 'bans') { g = 'ban'; }
+      else if (el.getAttribute('data-xk-block') === 'ops') { g = 'ban'; }
+      else if (el.getAttribute('data-xk-block') === 'deploy') { g = 'rel'; }
+      else if (el.getAttribute('data-xk-block') === 'apihealth') { g = 'ov'; }
+      else if (el.querySelector && el.querySelector('#donutSvg')) { g = 'ov'; }
+      if (!g) { return; }
+      mark(el, g);
+      if (!groups[g]) { groups[g] = []; order.push(g); }
+      groups[g].push(el);
+    });
+    if (!order.length) { return; }
+    pane.setAttribute('data-stats-ready', '1');
+
+    var LABEL = { ov: '\u6982\u89c8', ban: '\u5c01\u7981\u5904\u7f6e', map: '\u6765\u6e90\u5730\u56fe', web: '\u8bbf\u95ee\u7edf\u8ba1', rel: '\u53d1\u5e03\u7248\u672c' };
+    var SEQ = ['ban', 'map', 'web', 'ov', 'rel'].filter(function (g) { return groups[g]; });
+
+    var bar = document.createElement('nav');
+    bar.className = 'stats-sub';
+    bar.setAttribute('role', 'tablist');
+    bar.setAttribute('aria-label', '\u6570\u636e\u7edf\u8ba1\u5206\u533a');
+    SEQ.forEach(function (g) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'stats-sub-btn';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('data-stats-go', g);
+      b.textContent = LABEL[g] || g;
+      bar.appendChild(b);
+    });
+    /* 必须直接挂到面板顶部：插进某个块的 .mod-hd 里会跟着那个块一起被自己隐藏掉（实测 rect 全 0） */
+    pane.insertBefore(bar, pane.firstChild);
+
+    var sty = document.createElement('style');
+    sty.textContent = '.stats-sub{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}' +
+      '.stats-sub-btn{cursor:pointer;background:rgba(255,255,255,.04);border:1px solid var(--line2,rgba(255,246,235,.18));' +
+      'color:var(--mut,#D2CBBD);font:12px/1 var(--sans,sans-serif);padding:8px 12px;border-radius:999px}' +
+      '.stats-sub-btn:hover{color:var(--txt,#FAF7F0)}' +
+      '.stats-sub-btn.on{background:rgba(127,212,216,.16);border-color:var(--acc,#7FD4D8);color:var(--acc,#7FD4D8);font-weight:600}' +
+      '.stats-sub-btn:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}';
+    document.head.appendChild(sty);
+
+    var cur = null;
+    function show(g) {
+      if (!groups[g]) { g = SEQ[0]; }
+      cur = g;
+      var restore = { grid32: 'grid' };
+      kids.forEach(function (el) {
+        var eg = el.getAttribute('data-stats-grp');
+        if (!eg) { return; }                                   /* \u4e0d\u5c5e\u4e8e\u4efb\u4f55\u5206\u7ec4\u7684\u4e0d\u52a8 */
+        el.style.display = (eg === g) ? (restore[el.className.split(' ')[0]] || '') : 'none';
+        if (eg === g && el.classList.contains('grid32')) { el.style.display = 'grid'; }
+      });
+      [].slice.call(bar.children).forEach(function (b) {
+        var on = b.getAttribute('data-stats-go') === g;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      try { sessionStorage.setItem('xk-stats-sub', g); } catch (e) { /* \u9690\u79c1\u6a21\u5f0f */ }
+      /* \u5207\u5230\u5730\u56fe\u65f6\u753b\u5e03\u53ef\u80fd\u8fd8\u6ca1\u5c3a\u5bf8\uff08display \u5207\u6362\u540e\u624d\u6709\uff09\u21d2 \u91cd\u6253\u4e00\u6b21 */
+      if (g === 'map' && typeof window.xkMapKick === 'function') { setTimeout(window.xkMapKick, 60); }
+    }
+    bar.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-stats-go]');
+      if (b) { show(b.getAttribute('data-stats-go')); }
+    });
+    var saved = null;
+    try { saved = sessionStorage.getItem('xk-stats-sub'); } catch (e) { saved = null; }
+    show(saved && groups[saved] ? saved : SEQ[0]);
   }
 
   /* ---------------------------------------------------------------- ★V4-P4 部署可追溯 · 版本时间轴
@@ -2008,10 +2101,19 @@
     var nav = document.getElementById('opsTabs');
     if (!nav) return;
     var last = activePane(), pending = null;
+    /* ★LIVE-HIDE：切到任何 `[data-pane]` 都把「实时攻击」那坨收起来（CSS :has 的 JS 兜底） */
+    function syncLive() {
+      var live = document.querySelector('.ops-live');
+      if (!live) return;
+      var onPane = !!document.querySelector('.ops-tab.on[data-pane]');
+      live.style.display = onPane ? 'none' : '';
+    }
+    syncLive();
     var obs = new MutationObserver(function () {
       var now = activePane();
       if (now === last) return;
       last = now;
+      syncLive();
       if (pending) clearTimeout(pending);
       pending = setTimeout(function () {
         loadPane(now);
@@ -2024,7 +2126,7 @@
     });
     obs.observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
     /* 深链（/alerts/#stats 之类）在页面脚本里是"点一下 tab"实现的，class 变化可能早于我这里注册 ⇒ 补一次检查 */
-    setTimeout(function () { var now = activePane(); if (now !== last) { last = now; loadPane(now); } }, 400);
+    setTimeout(function () { var now = activePane(); if (now !== last) { last = now; syncLive(); loadPane(now); } }, 400);
   }
   /* ★Q-2：CRT 那一行的 "sync Ns" 靠 bindCrt 往上走 —— 那一行随状态卡一起删了，
      这个 5s 定时器也一并摘掉（主页不再有这块 DOM，留着就是空转）。 */
