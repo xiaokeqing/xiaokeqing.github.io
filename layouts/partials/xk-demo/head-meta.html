@@ -23,6 +23,10 @@
 {{- if or .IsHome (in (slice "alerts" "status" "api") .Type) }}
 <link rel="preconnect" href="{{ $apiBase }}" crossorigin>
 <link rel="dns-prefetch" href="{{ $apiBase }}">
+{{- /* ★巡检（2026-10-18）：首屏就去取的 home 聚合，让请求在解析到 <script>/app.js 之前先开始。
+       crossorigin 必须写：与 preconnect 同理，fetch 是 CORS 模式，不带它会按"非 CORS"再来一次。
+       只给这四个页面加（同一条件块）：文章页/靶场/介绍页不取 home 聚合，加了只会白下一份。 */}}
+<link rel="preload" as="fetch" href="{{ $apiBase }}/api/public/home.js" crossorigin>
 {{- end }}
 <link rel="icon" type="image/png" sizes="128x128" href="/favicon-128.png">
 <link rel="apple-touch-icon" sizes="256x256" href="/favicon-256.png">

@@ -382,6 +382,14 @@
   body.xk-app-ai .main{padding-right:24px}
   body.xk-app-ai .holo,body.xk-app-ai .holo-bubble{display:none}
 
+  /* ★巡检（2026-10-18）：补最后一块 RM —— 上面两块只盖了 .glow / .crt-sub .cursor /
+     .bars.anim i / .attk .cell.fire / .ops-tab.on；这三条持续动画（终端光标 .term-live i、
+     字幕光标 .tcursor、手机波形 .phone.live .phone-live .bars2 i）在 RM 块之后定义，
+     没有任何降级规则命中。放文件最后，同特异性靠后写胜出。 */
+  @media (prefers-reduced-motion:reduce){
+    .term-live i,.tcursor,.phone.live .phone-live .bars2 i{animation:none}
+  }
+
 </style>
 </head>
 <body data-skin="warm" class="xk-app-home">

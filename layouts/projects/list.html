@@ -1,0 +1,89 @@
+{{- /* ============================================================================
+   /projects/ = 项目清单（手写页，**不归** _dev/gen-demo-pages.py 管）。
+   ----------------------------------------------------------------------------
+   为什么手写：这一页是纯静态陈述，不取数、不跑作战室状态机，和 /what/ /lab/
+   /status/ /api/ 同一类手写深色外壳页 —— 结构完全照抄 layouts/what/list.html
+   （head-meta + xk-saver + shell-style + shell-chrome + <main data-xk-ssr> 一屏
+   section + shell-script），所以 section 卡（.mod/.mod-hd/.mod-bd）、小标题字号
+   与间距、圆角、口径说明块样式与那三页逐字同源，不是另起一套。
+   ★巡检（2026-10-18）：之前这页走 layouts/baseof.html + spa-view-about.html 的
+   **浅色 SPA 外壳**（.xk-card/.xk-portal/.xk-md），与 dock 深色外壳是两套设计
+   系统、也没有左侧 dock 与滚动行为 ⇒ 本次改成外壳页，正文仍取 content/ 里的
+   Markdown（.Content），一处改动、不复制文案。
+   正文结构：每个 "## 项目名" 切成一张 .mod 卡（标题进 .mod-hd，正文进 .mod-bd）；
+   末尾"核实口径"段落在 content/projects/_index.md 的 front matter note 里。
+   ============================================================================ */ -}}
+{{- $v := "projects" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：只用外壳已有色板变量（--txt/--mut/--acc/--mono/--line），不加新配色 */
+.proj-bd{display:flex;flex-direction:column;gap:14px}
+.proj-lead{font-size:14px;line-height:1.95;color:rgba(255,255,255,.86);margin:0}
+.proj-lead b,.proj-lead strong{color:#cfe9f5;font-weight:600}
+.proj-md{font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.8)}
+.proj-md ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.proj-md li{position:relative;padding-left:14px}
+.proj-md li::before{content:"";position:absolute;left:2px;top:.72em;width:4px;height:4px;
+  border-radius:50%;background:var(--acc);opacity:.65}
+.proj-md b,.proj-md strong{color:#e8f3f8;font-weight:600}
+.proj-md code{font-family:var(--mono);font-size:11.5px;color:#bfe3d0;
+  background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.proj-md a{color:var(--acc);text-decoration:none;border-bottom:1px solid rgba(127,212,216,.35)}
+.proj-md a:hover{color:#a8e6ea;border-bottom-color:rgba(168,230,234,.7)}
+.proj-md p{margin:0 0 10px}
+.proj-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.74)}
+.proj-p b,.proj-p strong{color:#eaf6ff;font-weight:600}
+.proj-p code{font-family:var(--mono);font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.proj-foot{font-size:11.5px;color:rgba(255,255,255,.5);line-height:1.9;margin:2px 0 0}
+@media (max-width:980px){.proj-lead,.proj-md{font-size:12.5px}}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="projects">
+<section class="view on" id="v-projects">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-PROJECTS // 项目 <em class="ops-en">PROJECTS</em></span>
+      <span class="sync">● 纯静态说明 · 每一条都能在仓库里找到证据</span>
+    </div>
+    <div class="screen-bd proj-bd">
+      {{- $parts := split .Content "<h2" }}
+      {{- if gt (len $parts) 1 }}
+      <p class="proj-lead">{{ index $parts 0 | plainify | strings.TrimSpace }}</p>
+      {{- range after 1 $parts }}
+      {{- $rest := replaceRE "(?s)^[^>]*>.*?</h2>" "" . }}
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>{{ replaceRE "(?s)^[^>]*>(.*?)</h2>.*$" "$1" . | plainify }}
+          <span class="tag">项目记录</span></div>
+        <div class="mod-bd proj-md">{{ $rest | safeHTML }}</div>
+      </div>
+      {{- end }}
+      {{- else }}
+      {{- /* 兜底：Markdown 结构变了也照样出图，不至于空白 */}}
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>项目清单</div>
+        <div class="mod-bd proj-md">{{ .Content }}</div>
+      </div>
+      {{- end }}
+      {{- with .Params.note }}
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>核实口径 · 这页为什么可信<span class="tag">可复核</span></div>
+        <div class="mod-bd"><p class="proj-p">{{ . | markdownify }}</p></div>
+      </div>
+      {{- end }}
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

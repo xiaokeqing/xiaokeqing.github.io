@@ -159,6 +159,10 @@ HEAD_META = u'''{{- /* 不可见契约：Hugo 的 head（标题/描述/canonical
 {{- if or .IsHome (in (slice "alerts" "status" "api") .Type) }}
 <link rel="preconnect" href="{{ $apiBase }}" crossorigin>
 <link rel="dns-prefetch" href="{{ $apiBase }}">
+{{- /* ★巡检（2026-10-18）：首屏就去取的 home 聚合，让请求在解析到 <script>/app.js 之前先开始。
+       crossorigin 必须写：与 preconnect 同理，fetch 是 CORS 模式，不带它会按"非 CORS"再来一次。
+       只给这四个页面加（同一条件块）：文章页/靶场/介绍页不取 home 聚合，加了只会白下一份。 */}}
+<link rel="preload" as="fetch" href="{{ $apiBase }}/api/public/home.js" crossorigin>
 {{- end }}
 <link rel="icon" type="image/png" sizes="128x128" href="/favicon-128.png">
 <link rel="apple-touch-icon" sizes="256x256" href="/favicon-256.png">
@@ -958,6 +962,14 @@ S_ATTK_NEW = u'''/* 告警类型矩阵 —— ★第十二批重写（原来是�
    ★R2（2026-10-16）：每格补 hover/聚焦摘要（占比 + 最近一条真实告警一句话，数据来自
    已在手的 XK_FEED，不发新请求）；格子可聚焦（tabindex）—— 摘要条 CSS 在 shell-style 的 R2 段。 */
 const attkGrid = document.getElementById('attkGrid');
+__TECH_ZH_JS__
+/* ★巡检：技术编号的 hover 说明 = "编号 技术名 · 一句人话"。编号与 label 都是**服务端**给的
+   （api-bind 里的 it.attck），这里只补解释；表里没有的编号只用后端 name —— 不猜、不编。 */
+function techTip(id, name){
+  const t = TECH_ZH[id];
+  if(t) return id + ' ' + t;
+  return (String(id || '') + ' ' + String(name || '')).replace(/ +$/, '');
+}
 function attkTip(label){
   /* 从实时攻击流里找这个类型的最近一条（XK_FEED 新的在前），找不到就只给占比 */
   const items = window.XK_FEED || [];
@@ -1031,7 +1043,7 @@ function renderTech(){
   let html = '<span class="attk-note">ATT&CK 技术编号 · 最近窗口聚合命中：</span>';
   order.forEach(function(id){
     const t = agg[id];
-    html += '<span class="tech" title="' + xkEsc(t.id + ' ' + t.name) + '">' +
+    html += '<span class="tech" title="' + xkEsc(techTip(t.id, t.name)) + '">' +
       '<b>' + xkEsc(t.id) + '</b>' + xkEsc(t.label || t.name || '') +
       '<i>×' + t.n.toLocaleString('en-US') + '</i></span>';
   });
@@ -1040,6 +1052,33 @@ function renderTech(){
 window.__xkRenderTech = renderTech;
 window.__xkRenderTypes = renderTypes;
 '''
+
+# ---- ★巡检小项：ATT&CK 技术编号中文释义表 —— **全站唯一一处** ----
+#   为什么放生成器里：/alerts/ 的矩阵技术行是**运行时**按服务端 it.attck（{id,name,label}）渲染的，
+#   编号由后端给、前端不编映射（口径写在 .attk-note 里）。所以"人话解释"只能在前端补，且只补一次。
+#   title 形态 = "T1110 暴力破解 · 反复试口令/撞库，直到撞出能用的密码"（编号 + 技术名 + 一句人话）。
+#   表里没有的编号 → 只用后端 name（不猜、不编）；编号本身照旧显示，可见文本一个字不动。
+TECH_ZH = {
+    'T1110': ('暴力破解', '反复试口令/撞库，直到撞出能用的密码'),
+    'T1190': ('利用对外应用的公开漏洞', '拿现成漏洞打 Web/中间件，不需要先拿到口令'),
+    'T1021': ('远程服务登录', '用 RDP/SSH/共享这类合法远程通道登进机器'),
+    'T1046': ('网络服务扫描', '扫端口和服务，先摸清下一步能打哪个口子'),
+    'T1505': ('服务端软件植入(WebShell)', '在被攻陷的服务器上留一个能随时回来的后门程序'),
+    'T1071': ('应用层协议通信', '把回连与控制流量藏在 HTTP/DNS 这类正常协议里'),
+}
+
+
+def _jsq(s):
+    return "'" + s.replace('\\', '\\\\').replace("'", "\\'") + "'"
+
+
+TECH_ZH_JS = ('/* ATT&CK 技术编号释义：一处常量表，改这里（生成器 _dev/gen-demo-pages.py），不要散落到别处 */\n'
+              'const TECH_ZH = {\n' +
+              '\n'.join('  ' + _jsq(k) + ': ' + _jsq(v[0] + ' · ' + v[1]) + ','
+                        for k, v in sorted(TECH_ZH.items())) +
+              '\n};')
+S_ATTK_NEW = S_ATTK_NEW.replace('__TECH_ZH_JS__', TECH_ZH_JS)
+assert '__TECH_ZH_JS__' not in S_ATTK_NEW, 'TECH_ZH 注入点没替换上（token 拼错？）'
 
 S_COUNTERS_NEW = u'''let counted = false;
 function runCounters(){
@@ -5814,6 +5853,24 @@ PHONE_CSS = (
 )
 views_out = re.sub(r'\n\s*<!-- 手机里的她.*?</aside>', '', views_out, flags=re.S)          # ① 移出 v-ai，避免重复 id
 shell_style = shell_style + PHONE_CSS                                                       # ④⑤⑥ 定位/宽度/按钮样式
+
+# ---- ★巡检（小项 3 · reduced-motion 兜底审计）：补最后一个 RM 块 ----
+# 审计（_dev/audit-motion.py，逐页比选择器）结论：上面已有 4 个
+#   @media (prefers-reduced-motion:reduce) 块只盖住了 .holo 波形 / .glow / .crt-sub .cursor /
+#   .sk / .bglite；另有 4 个**持续**动画（animation 带 infinite）没有任何 RM 规则命中：
+#     .term-live i                  终端光标闪烁 1.2s
+#     .tcursor                      字幕光标闪烁 1s
+#     .attk .cell.fire              威胁格脉冲 2.2s（cellpulse）
+#     .phone.live .phone-live .bars2 i  手机波形 0.9s
+#   它们都定义在现有 4 个 RM 块**之后** ⇒ 追加在 shell_style 最后，同特异性靠"后写胜出"生效。
+#   animation:none 后元素保持首帧静态外观（光标长亮 / 格子常态底色），不闪、不抖、不位移。
+#   一次性（非持续）动效不动：主页 .dock.dock--wait:not(.dock--in) 的 dockSafety .35s forwards
+#   是一次性入场保险，按"只修持续动画"口径保留。
+shell_style = shell_style + (
+    u'@media (prefers-reduced-motion:reduce){\n'
+    u'  .term-live i,.tcursor,.attk .cell.fire,.phone.live .phone-live .bars2 i{animation:none}\n'
+    u'}\n'
+)
 chrome = sub1(chrome, u'<div class="holo-bubble"', PHONE_MOD + u'<div class="holo-bubble"', 'P0: 手机进页面级右列')
 
 # ⑦ 手机功能按钮（名字已写进 PHONE_MOD；这里接行为）—— **全部复用既有 speak()/setPhone()/render()/emo**，

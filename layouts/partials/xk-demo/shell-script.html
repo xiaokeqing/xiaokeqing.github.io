@@ -307,6 +307,22 @@ function startGraph(){
    ★R2（2026-10-16）：每格补 hover/聚焦摘要（占比 + 最近一条真实告警一句话，数据来自
    已在手的 XK_FEED，不发新请求）；格子可聚焦（tabindex）—— 摘要条 CSS 在 shell-style 的 R2 段。 */
 const attkGrid = document.getElementById('attkGrid');
+/* ATT&CK 技术编号释义：一处常量表，改这里（生成器 _dev/gen-demo-pages.py），不要散落到别处 */
+const TECH_ZH = {
+  'T1021': '远程服务登录 · 用 RDP/SSH/共享这类合法远程通道登进机器',
+  'T1046': '网络服务扫描 · 扫端口和服务，先摸清下一步能打哪个口子',
+  'T1071': '应用层协议通信 · 把回连与控制流量藏在 HTTP/DNS 这类正常协议里',
+  'T1110': '暴力破解 · 反复试口令/撞库，直到撞出能用的密码',
+  'T1190': '利用对外应用的公开漏洞 · 拿现成漏洞打 Web/中间件，不需要先拿到口令',
+  'T1505': '服务端软件植入(WebShell) · 在被攻陷的服务器上留一个能随时回来的后门程序',
+};
+/* ★巡检：技术编号的 hover 说明 = "编号 技术名 · 一句人话"。编号与 label 都是**服务端**给的
+   （api-bind 里的 it.attck），这里只补解释；表里没有的编号只用后端 name —— 不猜、不编。 */
+function techTip(id, name){
+  const t = TECH_ZH[id];
+  if(t) return id + ' ' + t;
+  return (String(id || '') + ' ' + String(name || '')).replace(/ +$/, '');
+}
 function attkTip(label){
   /* 从实时攻击流里找这个类型的最近一条（XK_FEED 新的在前），找不到就只给占比 */
   const items = window.XK_FEED || [];
@@ -380,7 +396,7 @@ function renderTech(){
   let html = '<span class="attk-note">ATT&CK 技术编号 · 最近窗口聚合命中：</span>';
   order.forEach(function(id){
     const t = agg[id];
-    html += '<span class="tech" title="' + xkEsc(t.id + ' ' + t.name) + '">' +
+    html += '<span class="tech" title="' + xkEsc(techTip(t.id, t.name)) + '">' +
       '<b>' + xkEsc(t.id) + '</b>' + xkEsc(t.label || t.name || '') +
       '<i>×' + t.n.toLocaleString('en-US') + '</i></span>';
   });

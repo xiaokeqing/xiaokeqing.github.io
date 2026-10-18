@@ -1,10 +1,11 @@
 ---
-type: page
+type: projects
 title: 项目
 summary: 五个可核实的项目记录：Amadeus 安全观测平台、可复现部署链、公开只读 API、内网靶场、AI 问答层。每项写明是什么、技术栈、地址与负责部分，核实不了的标待补。
 description: 五个可核实的项目记录：Amadeus 安全观测平台、可复现部署链、公开只读 API、内网靶场、AI 问答层。每项写明是什么、技术栈、地址与负责部分，核实不了的标待补。
 date: 2026-10-17
-layout: "single"
+layout: "list"
+note: 以上「是什么 / 技术栈 / 地址」都能在仓库里找到对应文档或脚本；标了「待补」的指仓库里没有证据的项（例如靶场的公网地址）。数字会随线上变化，本页不替代 `/api/public/*` 的实时返回。
 ShowToc: false
 ShowReadingTime: false
 ShowBreadCrumbs: false
@@ -48,7 +49,3 @@ comments: false
 - **技术栈**：Spring Boot + DashScope `text-embedding-v4`（1024 维）+ DeepSeek chat + 内存向量库；检索评测集 28 题，消融口径 28/28、MRR 0.9821（来源：`docs/后端问答能力升级方案-20261015.md` §2.4）。
 - **地址**：[/ai/](https://xiaokeqing.cn/ai/) · 文章：[《为什么公开问答只解释、不取证：两层防御怎么做》](/posts/public-ask-explain-not-forensics/)
 - **我负责**：检索链路、引用与拒答判定、注入护栏接线与评测。
-
----
-
-**核实口径**：以上「是什么 / 技术栈 / 地址」都能在仓库里找到对应文档或脚本；标了「待补」的指仓库里没有证据的项（例如靶场的公网地址）。数字会随线上变化，本页不替代 `/api/public/*` 的实时返回。

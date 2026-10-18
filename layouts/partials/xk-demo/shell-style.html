@@ -687,6 +687,9 @@ html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}
   html.xk-phone-open .phone .phone-bar{display:flex!important}
   html.xk-phone-open .phone .phone-cap,html.xk-phone-open .phone .phone-live{display:block!important}
 }
+@media (prefers-reduced-motion:reduce){
+  .term-live i,.tcursor,.attk .cell.fire,.phone.live .phone-live .bars2 i{animation:none}
+}
 
   /* ★ 生产站差异（唯一一处 CSS 新增，值逐字照抄上面的 .dock button 三条）：
      demo 的导航是 <button data-v=…>（它自己的 JS 切 view），生产页换成 <a href="真路由">，
