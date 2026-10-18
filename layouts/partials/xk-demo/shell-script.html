@@ -138,7 +138,11 @@ addEventListener('resize', feedTrim);
     const s = (audit && audit.summary) || {};
     put('ohBlocked', num(s.blockedByGuard));
     put('ohIps', num(s.blockTotal));
-    put('ohHoney', num(honey && honey.total));
+    /* ★C6（2026-10-18 外部巡检第 6 条）：`total` 是**统计上限哨兵**（恒 10000），不是真值。
+       真值在同一响应的 `connections`（其次 `logins`）；只有拿到哨兵时写「≥10,000（上限）」，绝不把 10000 当累计。 */
+    const hpN = honey && ((typeof honey.connections === 'number' && honey.connections > 0) ? honey.connections
+      : ((typeof honey.logins === 'number' && honey.logins > 0) ? honey.logins : null));
+    put('ohHoney', hpN ? num(hpN) : (honey && honey.total >= 10000 ? '≥10,000（上限）' : num(honey && honey.total)));
     const top = (honey && honey.topSources && honey.topSources[0]) || null;
     const at = (audit && audit.generatedAt) || (honey && honey.generatedAt) || '';
     const parts = [];
@@ -536,7 +540,7 @@ XK_TIER.retry = function(name){
 /* 抽检"她应该在那里"的竖条：返回非透明像素计数（null = 读不到） */
 XK_TIER.sample = function(cv){
   if(!cv || !cv.width || !cv.height) return null;
-  var ctx = null; try { ctx = cv.getContext('2d'); } catch(e){ return null; }
+  var ctx = null; try { ctx = cv.getContext('2d', { willReadFrequently: true }); } catch(e){ return null; }   /* ★C11 */
   if(!ctx) return null;
   var W = cv.width, H = cv.height;
   var x0 = Math.floor(W * 0.20), x1 = Math.floor(W * 0.80);
@@ -953,7 +957,10 @@ function xkMd(src){
       return '<ol>'+lines.map(l=>'<li>'+xkInline(l.replace(/^\d+[.)]\s+/,''))+'</li>').join('')+'</ol>';
     const h = p.match(/^(#{1,4})\s+(.*)$/);
     if(h) return '<p style="font-weight:600;margin:8px 0 2px">'+xkInline(h[2])+'</p>';
-    return '<p>'+lines.map(xkInline).join('<br>')+'</p>';
+    /* ★C8（2026-10-18 外部巡检第 8 条）：模型正文常在**每句末尾硬换行**（非 markdown 段落），
+       以前`<br>` 渲染会把一句话拆成几行（实测：“暴力破解是反复试。”与“密码。”各占一行）。
+       markdown 规范里单个换行 = 软换行（当空格），只有空行才分段；按规范走。 */
+    return '<p>'+lines.map(xkInline).join(' ')+'</p>';
   }).join('');
 }
 let xkAsking = false;
@@ -1586,7 +1593,7 @@ var XKV2_BLOCK = (function(){
     try{
       var t = document.createElement('canvas');
       t.width = 8; t.height = 8;
-      var x = t.getContext('2d');
+      var x = t.getContext('2d', { willReadFrequently: true });   /* ★C11：8×8 离屏回读 */
       x.fillStyle = 'rgb(255,0,255)';
       x.fillRect(0, 0, 8, 8);
       x.drawImage(c.bdcv, 0, 0, c.bdcv.width, c.bdcv.height, 0, 0, 8, 8);
@@ -1797,7 +1804,7 @@ XK_TIER.retry = function(name){
 /* 抽检"她应该在那里"的竖条：返回非透明像素计数（null = 读不到） */
 XK_TIER.sample = function(cv){
   if(!cv || !cv.width || !cv.height) return null;
-  var ctx = null; try { ctx = cv.getContext('2d'); } catch(e){ return null; }
+  var ctx = null; try { ctx = cv.getContext('2d', { willReadFrequently: true }); } catch(e){ return null; }   /* ★C11 */
   if(!ctx) return null;
   var W = cv.width, H = cv.height;
   var x0 = Math.floor(W * 0.20), x1 = Math.floor(W * 0.80);

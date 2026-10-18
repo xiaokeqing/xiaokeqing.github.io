@@ -668,7 +668,7 @@ var XKV2_BLOCK = (function(){
     try{
       var t = document.createElement('canvas');
       t.width = 8; t.height = 8;
-      var x = t.getContext('2d');
+      var x = t.getContext('2d', { willReadFrequently: true });   /* ★C11：8×8 离屏回读 */
       x.fillStyle = 'rgb(255,0,255)';
       x.fillRect(0, 0, 8, 8);
       x.drawImage(c.bdcv, 0, 0, c.bdcv.width, c.bdcv.height, 0, 0, 8, 8);
@@ -889,7 +889,7 @@ XK_TIER.retry = function(name){
 /* 抽检"她应该在那里"的竖条：返回非透明像素计数（null = 读不到） */
 XK_TIER.sample = function(cv){
   if(!cv || !cv.width || !cv.height) return null;
-  var ctx = null; try { ctx = cv.getContext('2d'); } catch(e){ return null; }
+  var ctx = null; try { ctx = cv.getContext('2d', { willReadFrequently: true }); } catch(e){ return null; }   /* ★C11 */
   if(!ctx) return null;
   var W = cv.width, H = cv.height;
   var x0 = Math.floor(W * 0.20), x1 = Math.floor(W * 0.80);
