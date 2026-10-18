@@ -473,9 +473,12 @@ fi
 #   · static/data/geo-hourly.json 存在 + 合法 JSON + 含 available(布尔) / series(数组)
 #     —— 前端就靠这两个字段决定"能播"还是"写读不到"；字段名一改，播放条永远禁用；
 #   · 产物 public/data/geo-hourly.json 在位（复制环节漏了，源码再对也没用）。
-# ★available:false 是【合法状态】：公开接口只给 24h 国家合计 + 逐小时总量，
-#   没有"小时 × 国家"交叉，脚本如实标注 available:false + reason，而不是拿合计按比例编造分布。
-#   所以这里只验结构，不要求 available 为 true。
+# ★两种状态都合法，但含义不同，均按结构验：
+#   · available:false —— 后端 byCountryHour 读不到（HOUR_CROSS_MISSING 等）时如实标注 + reason，
+#     脚本不拿 24h 合计按比例编造分布；
+#   · available:true  —— 后端给了「小时 × 国家」交叉，脚本透传 byCountryHour 并由它推导逐小时系列。
+#     ★2026-10-18 起 available:true 还要求 byCountryHour 结构自洽：24 个 hour 标签、
+#       每行 counts 与 hours 等长（否则前端逐小时国家气泡会缺数/错位，而页面不会报错）。
 head1 "⑯ 回放数据 static/data/geo-hourly.json（存在 + 合法 JSON + available/series）"
 RPL_PY=""
 if command -v python3 >/dev/null 2>&1; then RPL_PY=python3
@@ -498,9 +501,23 @@ else:
     elif not isinstance(d.get('series'), list):
         print('BAD 缺 series（必须是数组）')
     else:
-        print('OK available=%s series=%d hours=%s reason=%s' % (
-            'true' if d['available'] else 'false', len(d['series']),
-            d.get('hours', '-'), (d.get('reason') or '-')[:60]))
+        bch = d.get('byCountryHour')
+        if d['available']:
+            hh = bch.get('hours') if isinstance(bch, dict) else None
+            ss = bch.get('series') if isinstance(bch, dict) else None
+            if isinstance(hh, list) and len(hh) == 24 and isinstance(ss, list) and ss:
+                n = len(hh)
+                if all(isinstance(r, dict) and isinstance(r.get('counts'), list)
+                       and len(r['counts']) == n for r in ss):
+                    print('OK available=true series=%d byCountryHour=%d行×%d小时（等长自洽）' % (
+                        len(d['series']), len(ss), n))
+                else:
+                    print('BAD byCountryHour 有行的 counts 与 hours 不等长')
+            else:
+                print('BAD available=true 但 byCountryHour.hours 不是 24 项或 series 为空')
+        else:
+            print('OK available=false series=%d reason=%s' % (
+                len(d['series']), (d.get('reason') or '-')[:60]))
 PY
 )
     case "$RPOUT" in

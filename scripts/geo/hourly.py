@@ -4,24 +4,29 @@
 
 用法（在仓库根目录）：
   python -X utf8 scripts/geo/hourly.py                          # 自动找本地样本，再退到本机 API
-  python -X utf8 scripts/geo/hourly.py --in _dev/api-samples/geo-live.json
-  python -X utf8 scripts/geo/hourly.py --api http://127.0.0.1:9900/api/public/alerts
+  python -X utf8 scripts/geo/hourly.py --in _dev/api-samples/geo-live-hourly.json
+  python -X utf8 scripts/geo/hourly.py --api http://127.0.0.1:9900/api/public/geo
   python -X utf8 scripts/geo/hourly.py --out static/data/geo-hourly.json
 
+取数优先级（越高越先用，取不到才降级）：
+  1. 后端 /api/public/geo 的 byCountryHour（小时 × 国家交叉，indexer 逐 IP 逐小时聚合而来）；
+  2. 输入里带「每条告警的时间 + 国家」的逐条列表（本地逐条数）；
+  3. 只有 24h 国家合计 + 小时总量 trend —— **不拆**，available:false + reason（不摊分）。
+
 输出（有小时 × 国家时）：
-  {"generatedAt":"2026-10-18T07:00","hours":24,"source":"/api/public/alerts@24h",
+  {"generatedAt":"2026-10-18T07:00","hours":24,"source":"/api/public/geo@24h",
    "series":[{"hour":"2026-10-18T07:00","total":N,"byCountry":{"FR":N,...}}, ...],
+   "byCountryHour":{"available":true,"hours":[...24...],
+                    "series":[{"country":"FR","counts":[...24...]}, ...]},
    "available":true,"notes":"..."}
 取不到分布时（口径见下）：
   {"available":false,"reason":"...", "series":[...24 个小时总量...], ...}
 
 口径（红线，和地图卡一致）：
-  · 只有输入里**真的有**「每条告警的时间 + 国家」时才做小时 × 国家聚合；
-  · 公开接口（/api/public/geo、/api/public/home 的 geo 块、/api/public/alerts）只给
-    24h byCountry 合计 + 小时总量 trend —— 见 docs/design-geo-endpoint.md。
-    这种输入**不拆**：不拿 24h 合计按比例摊到小时（那是编造），直接 available:false + reason；
-    trend 的 24 个小时总量照实写进 series（total 真实、byCountry 留空），方便对账。
-  · 末尾「当前小时」桶不完整（窗口没走完），不计入 24 桶，写在 notes 里。
+  · 只有输入里**真的有**「小时 × 国家」时才 available:true；
+  · series 里的 total 来自同一个交叉表（该小时各国之和），**不从别处借数**，也不做任何摊派；
+  · 末尾「当前小时」桶不完整（窗口没走完），后端已经把它丢掉（byCountryHour.hours 就是 24 个整点）；
+  · 旧字段（trend 只有小时总量）仍兼容，但只能 available:false —— 那正是本脚本要修的病。
 """
 import argparse
 import datetime as _dt
@@ -32,12 +37,15 @@ import urllib.request
 from collections import OrderedDict
 
 HOURS = 24
-DEFAULT_API = 'http://127.0.0.1:9900/api/public/alerts'
+MAX_SERIES_COUNTRIES = 12   # 后端已按 12 国 + OTHER 聚合；这里只做上限校验（超了说明契约变了）
+# 默认先打地理端点：byCountryHour 就在它里面（/alerts 只有逐条告警，没有小时 × 国家交叉）
+DEFAULT_API = 'http://127.0.0.1:9900/api/public/geo'
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_OUT = os.path.join(REPO, 'static', 'data', 'geo-hourly.json')
 
 # 本地样本候选（先仓库内，再任务里提到的工作区路径）
 CANDIDATES = [
+    os.path.join(REPO, '_dev', 'api-samples', 'geo-live-hourly.json'),   # 带 byCountryHour 的 /api/public/geo 快照
     os.path.join(REPO, '_dev', 'api-samples', 'geo-live.json'),
     os.path.join(REPO, '_dev', 'api-samples', 'alerts.json'),
     r'E:\DeepSeek1\work\_dev\api-samples\geo-live.json',
@@ -177,6 +185,46 @@ def agg_per_alert(d):
     return series
 
 
+def by_country_hour(d):
+    """读后端 /api/public/geo 的 byCountryHour（小时 × 国家交叉）。
+
+    返回 (hours, rows) 或 None。rows = [{'country': 'FR', 'counts': [24 个非负整数]}]。
+    结构不合法/available 不是 True → None（当作"没有交叉数据"，绝不猜）。
+    """
+    if not isinstance(d, dict):
+        return None
+    b = d.get('byCountryHour')
+    if not isinstance(b, dict) or b.get('available') is not True:
+        return None
+    hours, series = b.get('hours'), b.get('series')
+    if not isinstance(hours, list) or not hours or len(hours) > HOURS:
+        return None
+    if not isinstance(series, list) or not series:
+        return None
+    labels = []
+    for h in hours:
+        hl = norm_hour(h)
+        if not hl:
+            return None
+        labels.append(hl)
+    rows = []
+    for r in series:
+        if not isinstance(r, dict):
+            return None
+        cc = str(r.get('country') or '').strip().upper()
+        counts = r.get('counts')
+        if not cc or not isinstance(counts, list) or len(counts) != len(labels):
+            return None
+        try:
+            vals = [max(0, int(c or 0)) for c in counts]
+        except (TypeError, ValueError):
+            return None
+        rows.append({'country': cc, 'counts': vals})
+    if len(rows) > MAX_SERIES_COUNTRIES + 1:   # 12 国 + OTHER；多了说明后端契约变了
+        return None
+    return labels, rows
+
+
 def trend_buckets(d):
     """小时总量（没有国家维度）。返回 [(hour, count), ...]，取不到返回 []。"""
     tr = d.get('trend') if isinstance(d, dict) else None
@@ -212,28 +260,66 @@ def trend_buckets(d):
 
 def build_from(data, source):
     """返回最终对象（dict）。available 只在**真的有小时 × 国家**时为 True。"""
-    per_alert = agg_per_alert(data)
     geo_meta = {}
     if isinstance(data, dict):
         for k in ('generatedAt', 'geoSource', 'window', 'coverage', 'thresholds', 'countryCount'):
             if k in data:
                 geo_meta[k] = data[k]
     generated = str(geo_meta.get('generatedAt') or now_str())
+    window = str(geo_meta.get('window') or '24h')
+
+    # ① 首选：后端已经算好的「小时 × 国家」交叉（唯一能直接播的来源）
+    cross = by_country_hour(data)
+    if cross:
+        hours, rows = cross
+        series = []
+        for i, hl in enumerate(hours):
+            bc = OrderedDict()
+            for r in rows:
+                v = r['counts'][i]
+                if v > 0:
+                    bc[r['country']] = bc.get(r['country'], 0) + v
+            bc = OrderedDict(sorted(bc.items(), key=lambda kv: (-kv[1], kv[0])))
+            series.append(OrderedDict([('hour', hl), ('total', sum(bc.values())), ('byCountry', bc)]))
+        return OrderedDict([
+            ('generatedAt', generated),
+            ('hours', len(series)),
+            ('source', source + '@' + window),
+            ('available', True),
+            ('series', series),
+            ('byCountryHour', OrderedDict([
+                ('available', True),
+                ('hours', hours),
+                ('series', [OrderedDict([('country', r['country']), ('counts', r['counts'])]) for r in rows]),
+            ])),
+            ('notes', '小时 × 国家直接来自后端 byCountryHour（indexer 逐 IP 逐小时聚合后按国家归并，'
+                      '未做任何摊派）；hours 已由后端去掉末尾未走完的当前小时。'),
+        ])
+
+    # ② 次选：输入里有逐条告警（时间 + 国家）就逐条数（旧兼容路径）
+    per_alert = agg_per_alert(data)
     if per_alert:
         return OrderedDict([
             ('generatedAt', generated),
             ('hours', len(per_alert)),
-            ('source', source + '@' + str(geo_meta.get('window') or '24h')),
+            ('source', source + '@' + window),
             ('available', True),
             ('series', per_alert),
             ('notes', '逐条告警按「发生时间整点 × 国家码」直接计数（未做任何摊派）。'),
         ])
 
+    # ③ 兜底：只有 24h 合计 + 小时总量 —— 不拆（摊分就是编造）
     buckets = trend_buckets(data)
+    bh = data.get('byCountryHour') if isinstance(data, dict) else None
+    cross_why = ''
+    if isinstance(bh, dict):
+        cross_why = '（后端 byCountryHour.available=%s, reason=%s）' % (
+            bh.get('available'), bh.get('reason') or '-')
     if not buckets:
         return OrderedDict([
             ('available', False),
-            ('reason', '输入里既没有「每条告警的时间 + 国家」，也没有小时总量 trend（%s）' % source),
+            ('reason', '输入里既没有「小时 × 国家」交叉（byCountryHour），也没有逐条告警或小时总量 trend（%s%s）'
+                       % (source, cross_why)),
             ('generatedAt', generated),
             ('hours', 0),
             ('source', source),
@@ -249,16 +335,16 @@ def build_from(data, source):
         keep = buckets[-HOURS - 1:-1]
     series = [OrderedDict([('hour', hl), ('total', c), ('byCountry', OrderedDict())])
               for hl, c in keep]
-    reason = ('公开接口只给 24h 国家合计 + 小时总量（docs/design-geo-endpoint.md），'
-              '没有「小时 × 国家」交叉；按口径不拿合计摊到小时（会变成编造分布），'
-              '因此不回放 —— 需要后端按小时输出 byCountry，或提供带国家字段的逐条告警。')
+    reason = ('输入只有 24h 国家合计 + 小时总量，没有「小时 × 国家」交叉%s；按口径不拿合计摊到小时'
+              '（会变成编造分布），因此不回放 —— 需要后端 /api/public/geo 返回 byCountryHour。'
+              % cross_why)
     note = ('series 里的 total 是真实小时总量（照实保留，byCountry 留空，表示「该小时国家分布读不到」）。')
     if dropped:
         note += ' 末尾 %s 桶是当前小时（窗口未走完），未计入 24 桶。' % dropped[0]
     return OrderedDict([
         ('generatedAt', generated),
         ('hours', len(series)),
-        ('source', source + '@' + str(geo_meta.get('window') or '24h')),
+        ('source', source + '@' + window),
         ('available', False),
         ('reason', reason),
         ('series', series),
