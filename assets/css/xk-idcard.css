@@ -1,7 +1,9 @@
 
   /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）
      值只新增这一组，不改任何既有配色/字体/背景（站主点名的"头像卡片"这一处新增） */
-  .xk-idcard{position:fixed;left:10px;top:14px;z-index:61;display:grid;grid-template-columns:42px minmax(0,1fr);
+  /* ★DESK-RAIL 2026-10-18：桌面端卡片贴左上角（原 left:10px;top:14px，比导航的 top 还低，抬头留一道空）。
+     ≤980px 那套 M1 自己把卡片定在 top:52px;left:10px（见下面 @media(max-width:980px)），手机端不受影响。 */
+  .xk-idcard{position:fixed;left:8px;top:8px;z-index:61;display:grid;grid-template-columns:42px minmax(0,1fr);
     align-items:center;gap:9px;width:146px;padding:8px 10px 7px;
     background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
     border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
@@ -23,8 +25,9 @@
     color:var(--txt,#FAF7F0);user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* ★2026-10-17 站主口径：功能文字全写到左下角，做成一行文字钮（不再用认不出的图标） */
   /* ★2026-10-17 站主口径（m06282）：功能钮跟导航一样**竖着**排，别摊成一横条挤在底部。
-   >980px：左栏三块（头像卡 → 导航 → 功能钮）由 idcard 里的 stackRail() 统一竖排并垂直居中；
-   ≤980px：退回底部横排（手机横向空间比纵向值钱）。 */
+   >980px：左栏是一条从上往下的轨 —— 头像卡（贴左上 left:8/top:8）→ 展开时的功能钮 → 导航，
+           由 idcard 里的 rail() 统一算 top（卡高现读，不写死）；功能钮**默认收起**，跟着卡片上的 ▾ 走。
+   ≤980px：退回底部横排（手机横向空间比纵向值钱），功能钮由 M1 那套 .open 折叠。 */
   .xk-idcard-col{position:fixed;left:10px;bottom:14px;z-index:63;display:flex;flex-direction:column;gap:5px;width:146px}
   .xk-idcard-btn{width:100%;min-width:0;height:23px;padding:0 4px;cursor:pointer;font-size:11px;line-height:1;
     display:flex;align-items:center;justify-content:center;
@@ -38,8 +41,10 @@
   .xk-idcard-btn[aria-pressed="true"]{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8);
     background:rgba(57,208,216,.12)}
   .xk-idcard-btn:focus-visible,.xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
-  /* 给她让位：既有左侧 dock 下移（仅 >980px；窄屏 dock 在底部，规则在下面那条媒体查询里复位） */
-  body.xk-has-idcard .dock{top:88px}
+  /* 给她让位：既有左侧 dock 下移（仅 >980px；窄屏 dock 在底部，规则在下面那条媒体查询里复位）
+     ★DESK-RAIL 2026-10-18：8（贴边）+ 88（卡片实测高度）+ 8（缝）= 104px。原写 88px 只到卡片腰上，
+     导航第一行「XK-LAB」被卡片压住。卡片高度变了要同步这条（rail() 会再按实测高度算一遍）。 */
+  body.xk-has-idcard .dock{top:104px}
   .xk-idcap{position:fixed;left:14px;bottom:52px;top:auto;z-index:62;max-width:min(430px,calc(100vw - 28px));
     font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0);
     background:var(--solid,rgba(48,45,41,.94));border:1px solid var(--line2,rgba(255,246,235,.28));
@@ -194,4 +199,35 @@
     .xk-askbar input{font-size:16px}       /* ≥16px：iOS 聚焦不放大整页 */
     .xk-askbar-count{display:none}         /* 手机上计数让位给输入框（长度仍按 600 截） */
     .xk-askbar button{padding:0 12px}
+  }
+  /* ============================================================
+     ★DESK-RAIL 2026-10-18（站主口述）：桌面左栏收成「头像卡贴左上 + 导航跟在卡片下面 + 功能钮收进卡片折叠」。
+     为什么要收：① 头像卡原来和导航同列、同一个 top ⇒ 卡片压住导航第一行「XK-LAB」；
+                ② 功能钮原来是第 4 块常驻 fixed 竖排（左栏 = 卡 88 + 导航 357 + 钮 140 ≈ 605px），
+                   窗口矮一点的桌面（1920×1000 实测视口 1532×745）三块几乎顶满一屏，还跟正文抢地方。
+     只在 >980px 生效（下面全是 @media (min-width:981px)）；≤980px 走上面 M1 那套「导航贴顶 + 卡上 ▾」，
+     一行不动。展开/收起**复用同一套** .open / aria-expanded 与同一个 #xkIdFold 按钮（toggle 脚本在
+     xk-idcard-toggle.js 里，这里不新增第二套 JS），这里只补桌面要用的显示/定位。 */
+  @media (min-width:981px){
+    /* ① ▾ 桌面也显示：它现在是功能钮唯一的开关（原 .xk-idfold{display:none} 是"桌面用不着"的旧口径）。
+       贴卡片右上角 18×18；.xk-idmeta 让出 16px 右内边距，名字/HOLO-LINK 不会被它压字。 */
+    .xk-idfold{display:flex;position:absolute;right:2px;top:2px;align-items:center;justify-content:center;
+      width:18px;height:18px;padding:0;cursor:pointer;background:transparent;border:0;border-radius:6px;
+      color:var(--mut,#D2CBBD);font:12px/1 var(--mono,monospace);transition:transform .18s ease}
+    .xk-idfold:hover{color:var(--txt,#FAF7F0);background:rgba(255,246,235,.08)}
+    .xk-idcard.open .xk-idfold{transform:rotate(180deg);color:var(--acc,#7FD4D8)}
+    .xk-idmeta{padding-right:16px}
+    /* ② 功能钮桌面不再常驻：收起时 display:none（offsetHeight=0 ⇒ 不占位，导航紧贴卡片） */
+    .xk-idcard-col{display:none}
+    /* ③ 展开 = 卡片正下方的一竖列（与卡片同 x/同宽 146px，比卡片矮一档的毛玻璃），
+          top 由 rail() 按卡片实测高度算（内联 top 压过这里的 auto）；
+          位置在正文左内边距 184px 的左边 ⇒ 不压正文，5 个钮都能点。 */
+    .xk-idcard.open + .xk-idcard-col{
+      display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:4px;
+      position:fixed;left:8px;top:auto;right:auto;bottom:auto;width:146px;
+      padding:5px;border-radius:12px;z-index:80;
+      background:rgba(9,11,14,.94);backdrop-filter:blur(10px);
+      border:1px solid var(--line2,rgba(255,246,235,.22));box-shadow:0 14px 40px rgba(0,0,0,.5)}
+    /* ④ 导航与卡片左对齐（卡片贴 left:8px，导航原来在 left:0 / 由 rail() 写 10px） */
+    body.xk-has-idcard .dock{left:8px}
   }

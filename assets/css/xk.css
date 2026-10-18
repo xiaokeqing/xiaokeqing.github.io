@@ -42,6 +42,11 @@
     display:flex;flex-direction:column;gap:2px;
     background:var(--solid);border:1px solid var(--line2);border-left:none;border-radius:0 14px 14px 0;
     padding:6px 4px 6px 2px;backdrop-filter:blur(4px);box-shadow:0 10px 34px rgba(0,0,0,.45)}
+  /* ★RAIL-FIX 2026-10-18：桌面端头像卡与导航同列且同 top，卡片会盖住「XK-LAB」那一行；有卡片时把导航推到卡片下面。
+     ★DESK-RAIL 2026-10-18：卡片改成贴左上角（left:8px / top:8px，见 xk-demo/idcard.html），实测卡片高 88px
+     ⇒ 导航该排在 8 + 88 + 8 = 104px。原来写 212 是旧口径，和现在 88px 高的卡片对不上（中间会漏一道 100px 的空缝）。 */
+  body.xk-has-idcard .dock{top:104px}
+
     .dock .brand{font:600 11px var(--mono);color:var(--acc);letter-spacing:.08em;text-align:center;
     padding:3px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
   .dock button{display:flex;align-items:center;background:none;border:1px solid transparent;
@@ -103,7 +108,8 @@
   .screen-hd .sub{font:12.5px var(--mono);color:var(--mut)}
   .screen-hd .sync{margin-left:auto;font:12px var(--mono);color:var(--mut);
     background:rgba(255,246,235,.045);border:1px solid var(--line);border-radius:999px;padding:3px 11px}
-  .screen-bd{padding:18px;display:flex;flex-direction:column;gap:16px}
+  .screen-bd table{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+.screen-bd{padding:18px;display:flex;flex-direction:column;gap:16px}
 
   .mod{background:rgba(10,13,17,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;overflow:hidden;
     box-shadow:0 6px 20px rgba(0,0,0,.18)}
@@ -197,7 +203,7 @@
     background:rgba(140,160,180,.18)}   /* ★第十二批：真值由 api-bind 从 /api/public/overview 写 inline conic-gradient */
   .donut::after{content:"";position:absolute;inset:24px;border-radius:50%;background:#12100D}
   .donut-c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;font:12px var(--mono);color:var(--mut)}
-  .proto-lg{list-style:none;font:12.5px var(--sans);color:var(--mut)}
+  .proto-lg{list-style:none;font:13px var(--sans);color:var(--mut)}
   .proto-lg li{margin:5px 0}
   .proto-lg b{color:var(--txt);margin-left:10px;font-family:var(--mono)}
 
@@ -225,7 +231,7 @@
   .chat-ft input::placeholder{color:var(--mut)}
   .chat-ft input:focus{border-color:var(--acc)}
   .chat-ft button{background:var(--acc);border:0;color:#04282b;font-weight:600;padding:0 20px;border-radius:99px;cursor:pointer}
-  .chat-note{text-align:center;font:11px var(--mono);color:var(--mut);padding:6px 0 0}
+  .chat-note{text-align:center;font:13px/1.6 var(--mono);color:var(--mut);padding:6px 0 0}
 
   /* AI 页手机：她活在手机里 */
   .ai-grid{display:grid;grid-template-columns:1fr 292px;gap:20px;max-width:1180px;margin:0 auto;align-items:start}
@@ -432,6 +438,17 @@
 
 @media (min-width:981px){ body.xk-has-idcard .main{padding-left:184px} }
 
+/* ★DESK-RAIL 2026-10-18（站主：/alerts/ /tools/ 这类页右侧一整片空槽，卡片区被挤窄、一屏装不下还要滚）：
+   手机框 .phone 只在 /ai/ 页渲染（其余页 display:none，见 PHONE_CSS 的 ★PHONE-ONLY-AI 那条），
+   但为它留的右侧通道还在 —— 就是这条 .main 的 padding-right:344px（= 旧右侧 .holo 面板 284px + 右 14 + 余量），
+   实测 1920 宽下 /alerts/ 的内容只有 992px、右边界 1368、右边空出 552px。
+   所以按 data-xk-ssr 认页：不是 ai 的页（再排掉主页 is-home，它自己 padding:0/max-width:none）
+   把这条通道收回 24px —— 与 /ai/ 的 padding-right:24px 同口径。/ai/ 自己一行不动（那里真要放手机框）。
+   只对 >980px 生效：窄屏那条 .main{padding:150px 12px …} 在下面，手机端一个像素不受影响。 */
+@media (min-width:981px){
+  body:not(.is-home):has(> main[data-xk-ssr]:not([data-xk-ssr="ai"])) .main{padding-right:24px}
+}
+
 /* ★ban-tl：处置时间线（24h 轴 + 事件点）。数据来自 /api/public/audit 的 blocks[]。 */
 .ban-tl{position:relative;height:46px;margin:2px 0 10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
 .ban-tl .axis{position:absolute;left:10px;right:10px;top:24px;height:1px;background:var(--line2)}
@@ -476,7 +493,7 @@
     border-radius:10px;background:rgba(20,19,17,.35);overflow:hidden}
   .xk-atkmap-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
   .xk-atkmap-msg{position:absolute;inset:0;margin:0;display:flex;align-items:center;justify-content:center;
-    padding:10px 18px;text-align:center;font-size:12.5px;line-height:1.75;color:var(--mut);pointer-events:none}
+    padding:10px 18px;text-align:center;font-size:13px;line-height:1.75;color:var(--mut);pointer-events:none}
   .xk-atkmap-msg[hidden]{display:none}
   .xk-atkmap-tip{position:absolute;left:0;top:0;z-index:3;min-width:132px;max-width:240px;padding:7px 9px;
     border:1px solid var(--line2);border-radius:9px;background:rgba(24,22,20,.96);
@@ -487,7 +504,7 @@
   .xk-atkmap-tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--mut)}
   .xk-atkmap-tip .r b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
   .xk-atkmap-tip .prov{margin-top:5px;padding-top:5px;border-top:1px solid var(--line);font-size:11px;color:var(--mut)}
-  .xk-atkmap-foot{margin:9px 0 0;font-size:11.5px;line-height:1.8;color:var(--mut)}
+  .xk-atkmap-foot{margin:9px 0 0;font-size:13px;line-height:1.8;color:var(--mut)}
   .xk-atkmap-foot b{color:var(--txt);font-weight:600}
   @media (max-width:760px){.xk-atkmap-stage{aspect-ratio:auto;min-height:190px}}
 

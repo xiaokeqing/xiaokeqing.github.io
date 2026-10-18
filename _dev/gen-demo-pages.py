@@ -1532,9 +1532,9 @@ CLIPS_BOOT_OLD = (
     "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor'}")
 CLIPS_BOOT_NEW = (
     "  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24},\n"
-    "  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24},\n"
-    "  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24},\n"
-    "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24}")
+    "  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24},\n"
+    "  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24},\n"
+    "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24}")
 
 XK_TIER_JS = (
     "/* ================= ★P0-①（2026-10-16 站主 P0 修复半）：手机内存兜底 =================\n"
@@ -2395,9 +2395,9 @@ home_script = sub1(home_script,
 # ---- ① 四段原型剪辑补上"视频侧剪辑名"（不是硬编码路径：从图集 src 推导，与图集同源）----
 CLIPS_VID_NEW = (
     "  opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24, vid:'opening'},\n"
-    "  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24, vid:'idle'},\n"
-    "  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24, vid:'speaking_long'},\n"
-    "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24, vid:'thinking_to_key_point'}")
+    "  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24, vid:'idle'},\n"
+    "  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24, vid:'speaking_long'},\n"
+    "  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24, vid:'thinking_to_key_point'}")
 
 # ---- ② 内联模块本体（零依赖、零第三方请求、<video> 不进 DOM）----
 XK_VIDEO_JS = r'''
@@ -3821,7 +3821,9 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
 <style>
   /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）
      值只新增这一组，不改任何既有配色/字体/背景（站主点名的"头像卡片"这一处新增） */
-  .xk-idcard{position:fixed;left:10px;top:14px;z-index:61;display:grid;grid-template-columns:42px minmax(0,1fr);
+  /* ★DESK-RAIL 2026-10-18：桌面端卡片贴左上角（原 left:10px;top:14px，比导航的 top 还低，抬头留一道空）。
+     ≤980px 那套 M1 自己把卡片定在 top:52px;left:10px（见下面 @media(max-width:980px)），手机端不受影响。 */
+  .xk-idcard{position:fixed;left:8px;top:8px;z-index:61;display:grid;grid-template-columns:42px minmax(0,1fr);
     align-items:center;gap:9px;width:146px;padding:8px 10px 7px;
     background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
     border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
@@ -3843,8 +3845,9 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     color:var(--txt,#FAF7F0);user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* ★2026-10-17 站主口径：功能文字全写到左下角，做成一行文字钮（不再用认不出的图标） */
   /* ★2026-10-17 站主口径（m06282）：功能钮跟导航一样**竖着**排，别摊成一横条挤在底部。
-   >980px：左栏三块（头像卡 → 导航 → 功能钮）由 idcard 里的 stackRail() 统一竖排并垂直居中；
-   ≤980px：退回底部横排（手机横向空间比纵向值钱）。 */
+   >980px：左栏是一条从上往下的轨 —— 头像卡（贴左上 left:8/top:8）→ 展开时的功能钮 → 导航，
+           由 idcard 里的 rail() 统一算 top（卡高现读，不写死）；功能钮**默认收起**，跟着卡片上的 ▾ 走。
+   ≤980px：退回底部横排（手机横向空间比纵向值钱），功能钮由 M1 那套 .open 折叠。 */
   .xk-idcard-col{position:fixed;left:10px;bottom:14px;z-index:63;display:flex;flex-direction:column;gap:5px;width:146px}
   .xk-idcard-btn{width:100%;min-width:0;height:23px;padding:0 4px;cursor:pointer;font-size:11px;line-height:1;
     display:flex;align-items:center;justify-content:center;
@@ -3858,8 +3861,10 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   .xk-idcard-btn[aria-pressed="true"]{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8);
     background:rgba(57,208,216,.12)}
   .xk-idcard-btn:focus-visible,.xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
-  /* 给她让位：既有左侧 dock 下移（仅 >980px；窄屏 dock 在底部，规则在下面那条媒体查询里复位） */
-  body.xk-has-idcard .dock{top:88px}
+  /* 给她让位：既有左侧 dock 下移（仅 >980px；窄屏 dock 在底部，规则在下面那条媒体查询里复位）
+     ★DESK-RAIL 2026-10-18：8（贴边）+ 88（卡片实测高度）+ 8（缝）= 104px。原写 88px 只到卡片腰上，
+     导航第一行「XK-LAB」被卡片压住。卡片高度变了要同步这条（rail() 会再按实测高度算一遍）。 */
+  body.xk-has-idcard .dock{top:104px}
   .xk-idcap{position:fixed;left:14px;bottom:52px;top:auto;z-index:62;max-width:min(430px,calc(100vw - 28px));
     font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0);
     background:var(--solid,rgba(48,45,41,.94));border:1px solid var(--line2,rgba(255,246,235,.28));
@@ -4015,10 +4020,42 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     .xk-askbar-count{display:none}         /* 手机上计数让位给输入框（长度仍按 600 截） */
     .xk-askbar button{padding:0 12px}
   }
+  /* ============================================================
+     ★DESK-RAIL 2026-10-18（站主口述）：桌面左栏收成「头像卡贴左上 + 导航跟在卡片下面 + 功能钮收进卡片折叠」。
+     为什么要收：① 头像卡原来和导航同列、同一个 top ⇒ 卡片压住导航第一行「XK-LAB」；
+                ② 功能钮原来是第 4 块常驻 fixed 竖排（左栏 = 卡 88 + 导航 357 + 钮 140 ≈ 605px），
+                   窗口矮一点的桌面（1920×1000 实测视口 1532×745）三块几乎顶满一屏，还跟正文抢地方。
+     只在 >980px 生效（下面全是 @media (min-width:981px)）；≤980px 走上面 M1 那套「导航贴顶 + 卡上 ▾」，
+     一行不动。展开/收起**复用同一套** .open / aria-expanded 与同一个 #xkIdFold 按钮（toggle 脚本在
+     xk-idcard-toggle.js 里，这里不新增第二套 JS），这里只补桌面要用的显示/定位。 */
+  @media (min-width:981px){
+    /* ① ▾ 桌面也显示：它现在是功能钮唯一的开关（原 .xk-idfold{display:none} 是"桌面用不着"的旧口径）。
+       贴卡片右上角 18×18；.xk-idmeta 让出 16px 右内边距，名字/HOLO-LINK 不会被它压字。 */
+    .xk-idfold{display:flex;position:absolute;right:2px;top:2px;align-items:center;justify-content:center;
+      width:18px;height:18px;padding:0;cursor:pointer;background:transparent;border:0;border-radius:6px;
+      color:var(--mut,#D2CBBD);font:12px/1 var(--mono,monospace);transition:transform .18s ease}
+    .xk-idfold:hover{color:var(--txt,#FAF7F0);background:rgba(255,246,235,.08)}
+    .xk-idcard.open .xk-idfold{transform:rotate(180deg);color:var(--acc,#7FD4D8)}
+    .xk-idmeta{padding-right:16px}
+    /* ② 功能钮桌面不再常驻：收起时 display:none（offsetHeight=0 ⇒ 不占位，导航紧贴卡片） */
+    .xk-idcard-col{display:none}
+    /* ③ 展开 = 卡片正下方的一竖列（与卡片同 x/同宽 146px，比卡片矮一档的毛玻璃），
+          top 由 rail() 按卡片实测高度算（内联 top 压过这里的 auto）；
+          位置在正文左内边距 184px 的左边 ⇒ 不压正文，5 个钮都能点。 */
+    .xk-idcard.open + .xk-idcard-col{
+      display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:4px;
+      position:fixed;left:8px;top:auto;right:auto;bottom:auto;width:146px;
+      padding:5px;border-radius:12px;z-index:80;
+      background:rgba(9,11,14,.94);backdrop-filter:blur(10px);
+      border:1px solid var(--line2,rgba(255,246,235,.22));box-shadow:0 14px 40px rgba(0,0,0,.5)}
+    /* ④ 导航与卡片左对齐（卡片贴 left:8px，导航原来在 left:0 / 由 rail() 写 10px） */
+    body.xk-has-idcard .dock{left:8px}
+  }
 </style>
 <aside class="xk-idcard" id="xkIdCard" aria-label="桐莉栖 · 头像卡">
   <!-- ★M1（2026-10-18 站主）：手机上头像卡收起功能栏，展开钮放在头像**左边**。
-       桌面（>980px）不显示它（功能钮本来就在左栏常驻）。 -->
+       ★DESK-RAIL 2026-10-18：桌面上它也在（贴在卡片右上角）—— 桌面功能钮已收进折叠，
+       它是唯一的开关；两端同一套 .open / aria-expanded，不另写 JS。 -->
   <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false"
     aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
   <button class="xk-idcard-av" id="xkIdAv" type="button"
@@ -4052,7 +4089,10 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
 <script>
 /* ★M1（2026-10-18）：手机上点头像或箭头展开/收起功能栏。
    为什么头像在手机上不再“换个情绪说一句”：那个动作在小屏上没有可见反馈（全身画布只在主页），
-   反而会让人以为“点了没反应”。桌面行为不变。 */
+   反而会让人以为“点了没反应”。桌面行为不变。
+   ★DESK-RAIL 2026-10-18：桌面（>980px）现在也走这条路 —— 功能钮收进卡片折叠，
+   ▾ 是同一个按钮、.open 是同一个类；展开/收起后通知第二段脚本的 rail() 把导航挪到新位置
+   （**不新写第二套展开逻辑**，只多这一行）。 */
 (function(){
   var card = document.getElementById('xkIdCard');
   var fold = document.getElementById('xkIdFold');
@@ -4062,6 +4102,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   function setOpen(on){
     card.classList.toggle('open', !!on);
     if(fold) fold.setAttribute('aria-expanded', on ? 'true' : 'false');
+    if(window.__xkRail) window.__xkRail();   /* 桌面：卡片下面那串（功能钮 / 导航）重新落位 */
   }
   if(fold) fold.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); setOpen(!card.classList.contains('open')); });
   if(av) av.addEventListener('click', function(e){
@@ -4079,31 +4120,38 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   }, true);
   window.addEventListener('resize', function(){ if(!isNarrow()) setOpen(false); });
 })();
-/* ★2026-10-17（站主 m06282「位置太挤了…导航栏不行直接放到中间吧」）：
-   宽屏把「头像卡 / 导航 / 功能钮」三块竖排在左边缘并**垂直居中**——原来三块各自 fixed 定位，
-   窗口一矮就互相压（他为这个截过图）。这里只做竖直排布，不改任何一块自身样式；
-   窄屏（≤980）直接 return，走 CSS 里那套「头像左上 + 导航底部 + 功能钮底部横排」。 */
+/* ★2026-10-17（站主 m06282「位置太挤了…导航栏不行直接放到中间吧」）：宽屏把左栏三块竖排。
+   ★DESK-RAIL 2026-10-18 站主口径改了：**不再垂直居中**，改成左边缘一条从上往下的轨 ——
+     头像卡贴左上（CSS 里 left:8px;top:8px）→ 展开时的功能钮 → 导航，每段之间 8px。
+   为什么不再居中：居中那套在 1920×1000（实测视口 1532×745）会把卡片推到屏幕中段（实测 y=198），
+     三块加起来 605px 几乎顶满一屏，导航第一行还和卡片同列打架；收进折叠后左栏只剩「卡 + 导航」两块。
+   这里只写 top/left：高度全部现读 offsetHeight（卡 88 / 钮 ~140 / 导航 ~357 都随系统字体和页面变），不写死。 */
 (function(){
+  var LEFT = 8, GAP = 8;
   function rail(){
     var card = document.querySelector('.xk-idcard'),
         dock = document.querySelector('.dock'),
         col  = document.querySelector('.xk-idcard-col');
-    var els = [card, dock, col].filter(Boolean);
-    if (!els.length) return;
+    if (!card || !dock) return;
     /* ★守卫放进来、并且每次 resize 都清一次内联定位：
        否则宽屏渲染后被拉窄，三块会带着旧的 top/left 停在屏幕中间压住正文（窄屏实测）。 */
     if (window.innerWidth <= 980) {
-      els.forEach(function(e){ e.style.top = ''; e.style.left = ''; e.style.right = '';
+      [card, dock, col].forEach(function(e){ if (!e) return;
+        e.style.top = ''; e.style.left = ''; e.style.right = '';
         e.style.bottom = ''; e.style.transform = ''; });
       return;
     }
-    var gap = 10, total = 0, i;
-    els.forEach(function(e){ e.style.left = '10px'; e.style.transform = 'none';
-      e.style.right = 'auto'; e.style.bottom = 'auto'; e.style.top = '0px'; });
-    els.forEach(function(e){ total += e.offsetHeight + gap; });
-    total -= gap;
-    var y = Math.max(12, Math.round((window.innerHeight - total) / 2));
-    els.forEach(function(e){ e.style.top = y + 'px'; y += e.offsetHeight + gap; });
+    [card, dock, col].forEach(function(e){ if (!e) return;
+      e.style.left = LEFT + 'px'; e.style.right = 'auto';
+      e.style.bottom = 'auto'; e.style.transform = 'none'; });
+    /* 卡片自己的 top 交给 CSS（left:8px;top:8px），这里只从它下沿往下排 */
+    var y = LEFT + card.offsetHeight + GAP;
+    if (col) {
+      col.style.top = y + 'px';
+      /* 收起时 CSS 是 display:none（桌面不再常驻）⇒ offsetHeight=0 ⇒ 不占位，导航紧贴卡片 */
+      if (col.offsetHeight) y += col.offsetHeight + GAP;
+    }
+    dock.style.top = y + 'px';
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', rail);
   else rail();

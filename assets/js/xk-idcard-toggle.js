@@ -1,7 +1,10 @@
 
 /* ★M1（2026-10-18）：手机上点头像或箭头展开/收起功能栏。
    为什么头像在手机上不再“换个情绪说一句”：那个动作在小屏上没有可见反馈（全身画布只在主页），
-   反而会让人以为“点了没反应”。桌面行为不变。 */
+   反而会让人以为“点了没反应”。桌面行为不变。
+   ★DESK-RAIL 2026-10-18：桌面（>980px）现在也走这条路 —— 功能钮收进卡片折叠，
+   ▾ 是同一个按钮、.open 是同一个类；展开/收起后通知第二段脚本的 rail() 把导航挪到新位置
+   （**不新写第二套展开逻辑**，只多这一行）。 */
 (function(){
   var card = document.getElementById('xkIdCard');
   var fold = document.getElementById('xkIdFold');
@@ -11,6 +14,7 @@
   function setOpen(on){
     card.classList.toggle('open', !!on);
     if(fold) fold.setAttribute('aria-expanded', on ? 'true' : 'false');
+    if(window.__xkRail) window.__xkRail();   /* 桌面：卡片下面那串（功能钮 / 导航）重新落位 */
   }
   if(fold) fold.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); setOpen(!card.classList.contains('open')); });
   if(av) av.addEventListener('click', function(e){
@@ -28,31 +32,38 @@
   }, true);
   window.addEventListener('resize', function(){ if(!isNarrow()) setOpen(false); });
 })();
-/* ★2026-10-17（站主 m06282「位置太挤了…导航栏不行直接放到中间吧」）：
-   宽屏把「头像卡 / 导航 / 功能钮」三块竖排在左边缘并**垂直居中**——原来三块各自 fixed 定位，
-   窗口一矮就互相压（他为这个截过图）。这里只做竖直排布，不改任何一块自身样式；
-   窄屏（≤980）直接 return，走 CSS 里那套「头像左上 + 导航底部 + 功能钮底部横排」。 */
+/* ★2026-10-17（站主 m06282「位置太挤了…导航栏不行直接放到中间吧」）：宽屏把左栏三块竖排。
+   ★DESK-RAIL 2026-10-18 站主口径改了：**不再垂直居中**，改成左边缘一条从上往下的轨 ——
+     头像卡贴左上（CSS 里 left:8px;top:8px）→ 展开时的功能钮 → 导航，每段之间 8px。
+   为什么不再居中：居中那套在 1920×1000（实测视口 1532×745）会把卡片推到屏幕中段（实测 y=198），
+     三块加起来 605px 几乎顶满一屏，导航第一行还和卡片同列打架；收进折叠后左栏只剩「卡 + 导航」两块。
+   这里只写 top/left：高度全部现读 offsetHeight（卡 88 / 钮 ~140 / 导航 ~357 都随系统字体和页面变），不写死。 */
 (function(){
+  var LEFT = 8, GAP = 8;
   function rail(){
     var card = document.querySelector('.xk-idcard'),
         dock = document.querySelector('.dock'),
         col  = document.querySelector('.xk-idcard-col');
-    var els = [card, dock, col].filter(Boolean);
-    if (!els.length) return;
+    if (!card || !dock) return;
     /* ★守卫放进来、并且每次 resize 都清一次内联定位：
        否则宽屏渲染后被拉窄，三块会带着旧的 top/left 停在屏幕中间压住正文（窄屏实测）。 */
     if (window.innerWidth <= 980) {
-      els.forEach(function(e){ e.style.top = ''; e.style.left = ''; e.style.right = '';
+      [card, dock, col].forEach(function(e){ if (!e) return;
+        e.style.top = ''; e.style.left = ''; e.style.right = '';
         e.style.bottom = ''; e.style.transform = ''; });
       return;
     }
-    var gap = 10, total = 0, i;
-    els.forEach(function(e){ e.style.left = '10px'; e.style.transform = 'none';
-      e.style.right = 'auto'; e.style.bottom = 'auto'; e.style.top = '0px'; });
-    els.forEach(function(e){ total += e.offsetHeight + gap; });
-    total -= gap;
-    var y = Math.max(12, Math.round((window.innerHeight - total) / 2));
-    els.forEach(function(e){ e.style.top = y + 'px'; y += e.offsetHeight + gap; });
+    [card, dock, col].forEach(function(e){ if (!e) return;
+      e.style.left = LEFT + 'px'; e.style.right = 'auto';
+      e.style.bottom = 'auto'; e.style.transform = 'none'; });
+    /* 卡片自己的 top 交给 CSS（left:8px;top:8px），这里只从它下沿往下排 */
+    var y = LEFT + card.offsetHeight + GAP;
+    if (col) {
+      col.style.top = y + 'px';
+      /* 收起时 CSS 是 display:none（桌面不再常驻）⇒ offsetHeight=0 ⇒ 不占位，导航紧贴卡片 */
+      if (col.offsetHeight) y += col.offsetHeight + GAP;
+    }
+    dock.style.top = y + 'px';
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', rail);
   else rail();

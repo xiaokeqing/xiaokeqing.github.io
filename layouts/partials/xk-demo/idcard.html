@@ -44,7 +44,8 @@
 <link rel="stylesheet" href="{{ (resources.Get "css/xk-idcard.css" | minify | fingerprint).RelPermalink }}">
 <aside class="xk-idcard" id="xkIdCard" aria-label="桐莉栖 · 头像卡">
   <!-- ★M1（2026-10-18 站主）：手机上头像卡收起功能栏，展开钮放在头像**左边**。
-       桌面（>980px）不显示它（功能钮本来就在左栏常驻）。 -->
+       ★DESK-RAIL 2026-10-18：桌面上它也在（贴在卡片右上角）—— 桌面功能钮已收进折叠，
+       它是唯一的开关；两端同一套 .open / aria-expanded，不另写 JS。 -->
   <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false"
     aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
   <button class="xk-idcard-av" id="xkIdAv" type="button"
