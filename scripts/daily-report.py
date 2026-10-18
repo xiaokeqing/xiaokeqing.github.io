@@ -366,6 +366,8 @@ def iter_json_lines(paths):
             close = True
         try:
             for lineno, line in enumerate(fh, 1):
+                if lineno == 1:
+                    line = line.lstrip("\ufeff")  # Windows 记事本/Set-Content 可能在开头加 BOM
                 if not line.strip():
                     continue  # 空行不算坏行，也不计数
                 try:
@@ -577,7 +579,7 @@ def scan_sources(args, tz, today, ys, ye, ts):
     if p:
         try:
             with open(p[0], "r", encoding="utf-8", errors="replace") as fh:
-                ci_data = json.loads(fh.read())
+                ci_data = json.loads(fh.read().lstrip("\ufeff"))
             ci.paths = [p[0]]
             ci.ok = isinstance(ci_data, dict)
             if not ci.ok:
@@ -769,7 +771,7 @@ def build_report(ctx):
             % fmt_num(b.alert_hb))
         add("")
     if not eve_reason and cov_eve:
-        add("> `*半段` 提醒：今日 Suricata 只覆盖 %s。" % cov_eve)
+        add("> `*半段` 提醒：今日 Suricata 只覆盖半段（%s），下面的 Top 榜只算这半段。" % cov_eve)
         add("")
 
     # ---- 3. Top 5 被攻击端口 ----
@@ -894,7 +896,8 @@ def build_report(ctx):
         ("登录尝试", b.login_ok + b.login_fail, y.login_ok + y.login_fail,
          cow_reason, y_cow_reason, cov_cow, y_cov_cow),
     )
-    partial_footnotes = []
+    # 同一段缺口在多个指标上重复出现：按「缺口文本」归并，一行只写一次
+    gap_metrics = []  # [(today_gap, yesterday_gap, [指标名, ...]), ...] 保持首次出现顺序
     for label, tv, yv, tr, yr, tp, yp in rows:
         def day_cell(value, reason, partial_desc):
             if reason:
@@ -913,10 +916,15 @@ def build_report(ctx):
         add("| %s | %s | %s | %s |" % (
             label, day_cell(tv, tr, tp), day_cell(yv, yr, yp), delta_cell()))
         if tp or yp:
-            partial_footnotes.append((label, tp, yp))
-    if partial_footnotes:
+            for gap in gap_metrics:
+                if gap[0] == (tp or None) and gap[1] == (yp or None):
+                    gap[2].append(label)
+                    break
+            else:
+                gap_metrics.append((tp or None, yp or None, [label]))
+    if gap_metrics:
         add("")
-        for label, tp, yp in partial_footnotes:
+        for tp, yp, labels in gap_metrics:
             bits = []
             if tp:
                 bits.append("今日%s" % tp)
@@ -924,7 +932,7 @@ def build_report(ctx):
                 bits.append("昨日%s" % yp)
             add("- `*半段`（%s）：%s。缺口时段里没有任何事件被读到 —— 可能只是没日志，"
                 "也可能确实没攻击；半段数字不等于全天。" % (
-                label, "；".join(bits)))
+                "、".join(labels), "；".join(bits)))
     add("")
 
     # ---- 7. 一句话结论 ----
