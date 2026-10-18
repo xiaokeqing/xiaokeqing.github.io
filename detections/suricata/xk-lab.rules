@@ -1,0 +1,276 @@
+###############################################################################
+# xk-lab.rules —— 小柯实验室「自写」Suricata 规则集
+###############################################################################
+# 作者：xk（本仓库作者本人）
+# 性质：研究/取证用。规则不是抄 ET/PT 现成条目，每一条都先在本实验室真实流量里
+#       找到观测样本（下方注释里的「证据」即 eve.json 原文行），再据此写匹配条件。
+# 基线窗口：srv2 上 /opt/suricata/logs/eve.json
+#           2026-10-11 09:23:07 ~ 2026-10-18 12:00 UTC
+#           共 1,471,376 行；alert 293,482 条 / flow 612,516 条 / http 283,796 条
+#           / ssh 142,926 条 / dns 132,086 条 / tls 6,801 条
+# SID 段：1000101–1000108（本地私有段 1,000,000–1,999,999），不占用 ET 的
+#           2,000,000–2,999,999，也不与 SURICATA 内部 1/2/3 gid 冲突。
+# 状态：本文件【只做语法验证，未在任何生产实例上启用】（见 detections/README.md）。
+#
+# 用法（仅语法检查，不会加载生产实例、不会 reload）：
+#   suricata -T -S detections/suricata/xk-lab.rules
+#
+# 【实验室网段约定】本实验室把诱捕面放在 $HOME_NET 内的单机多端口
+#   （2222=Cowrie SSH，1433/3306/445=Dionaea，21/23/6379/27017/9080=decoy 监听）。
+#   因此「外网 -> $HOME_NET 的某个诱捕端口」既是扫描，也是命中蜜罐。
+#   若部署到非 $HOME_NET 环境，请把 $HOME_NET / $EXTERNAL_NET 改成实际上网的网段。
+###############################################################################
+
+
+# ---------------------------------------------------------------------------
+# 1000101  SSH 客户端指纹：Go 语言 SSH 库（僵尸网络/爆破工具的默认 banner）
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   实验室 14 万条 ssh 事件里，客户端 banner 为 "Go" 的占 75,390 条（52.7%），
+#   而正常运维用的 OpenSSH 客户端只占 134,159 条（93.8%）——两者高度分层。
+#   "Go" banner 意味着对端用的是 golang.org/x/crypto/ssh 或同类库：
+#   没有运维会在生产跳板机上用裸 Go 库连 SSH，但它正是各类 Go 写的扫描/爆破
+#   工具（含 Mirai 变种的 Go 重写）的默认特征。ET 现成规则里只有
+#   “SSH-2.0-Go version string Observed in Network Traffic”（INFO 级、只记不判），
+#   本规则把它提到 attempted-recon 并加 startswith 约束，避免把
+#   "Go-SSH" 之外的单词（如 "Google") 也吃进来。
+# 针对的观测（证据原文）：
+#   {"timestamp":"2026-10-11T09:36:52.024565+0000",...,"event_type":"ssh",
+#    "src_ip":"185.180.141.32","src_port":20740,"dest_ip":"10.0.0.10","dest_port":2222,
+#    "ssh":{"client":{"proto_version":"2.0","software_version":"Go"},
+#           "server":{"proto_version":"2.0","software_version":"OpenSSH_9.2p1"}}}
+#   计数：software_version=Go 75,390；dest_port=2222 的 SSH 会话 Cowrie 侧也记录到
+#   SSH-2.0-Go 1,931 次（cowrie.client.version）。
+# 预期误报：
+#   (a) 自己用 Go 写的蜜罐巡检/资产测绘脚本 —— 本实验室内部扫描器 10.0.0.10 就属于此类，
+#       部署时应加 `!$HOME_NET` 或 suppress 掉内部源；
+#   (b) 某些云厂商/CI 的 Go 客户端健康检查（偶发，量级远低于攻击流量）。
+# ---------------------------------------------------------------------------
+alert ssh $EXTERNAL_NET any -> $HOME_NET any ( \
+    msg:"XK-LAB SSH client fingerprint Go SSH library (botnet/bruteforce toolchain)"; \
+    flow:established,to_server; \
+    ssh.software; content:"Go"; startswith; \
+    classtype:attempted-recon; \
+    metadata:xk_lab evidence_count 75390, confidence high; \
+    sid:1000101; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 1000102  SSH 客户端指纹：libssh / libssh2（自动化爆破框架的默认库）
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   libssh/libssh2 是 metasploit、python-paramiko 之外最常见的一批「库而非客户端」的
+#   SSH 实现，正常用户不会用裸 libssh2 连服务器；而爆破脚本为了省事几乎都用它。
+#   实测分布：suricata ssh 事件里 libssh_0.9.3 = 38,955 条；
+#   Cowrie 侧 libssh2_1.11.1 = 3,275 次（第 2 名，仅次于 OpenSSH）。
+#   ET 没有针对 libssh 客户端 banner 的规则条目，这条是本实验室从自己的分布里补的。
+# 针对的观测（证据原文）：
+#   {"session":"f91a33f69c31","protocol":"ssh","src_ip":"143.198.159.21",
+#    "src_port":48326,"dst_ip":"172.19.0.2","dst_port":2222,"username":"root",
+#    "password":"abc1234","eventid":"cowrie.login.success",...
+#    "timestamp":"2026-10-17T00:00:16.009214Z","message":"login attempt [root/abc1234] succeeded"}
+#   同一源的 client.version：SSH-2.0-libssh2_1.11.1（该 IP 当日 2,587 次会话）。
+# 预期误报：
+#   (a) 用 libssh2 写的备份/发布工具（个别自研运维脚本）；
+#   (b) 安全团队的合规扫描器。两者都可以用 `groupby src_ip + 频次阈值` 降级处理。
+# ---------------------------------------------------------------------------
+alert ssh $EXTERNAL_NET any -> $HOME_NET any ( \
+    msg:"XK-LAB SSH client fingerprint libssh/libssh2 (automated bruteforce toolchain)"; \
+    flow:established,to_server; \
+    ssh.software; content:"libssh"; startswith; nocase; \
+    classtype:attempted-recon; \
+    metadata:xk_lab evidence_count 38955, confidence medium; \
+    sid:1000102; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 1000103  Cowrie 诱捕端口 2222：同一源 5 分钟内 >=10 次连接（刮削/爆破节流前兆）
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   Wazuh 侧原有的「120 秒 5 次登录失败」复合规则（100110）在本实验室【实际 0 次触发】——
+#   因为 2026-10-17 全天 Cowrie 只记到 19 条 login.failed，而 login.success 有 14,061 条：
+#   这些机器人拿的是已泄露口令表，第一发就"成功"了，根本不产生失败事件。
+#   所以「按失败次数报警」在这套蜜罐上是失效的，必须改成按【会话建立速率】报警。
+#   实测基线（2026-10-17，按 src_ip × 5 分钟窗口）：1,448 个窗口，
+#   max=29、p99=27、mean=8.18，其中 >=20 的窗口只有 42 个（2.9%）。
+#   取 10/300s：top 源（195.178.110.218 29 次/5min、45.148.10.161 28 次/5min）必中，
+#   而背景噪声均值 8.18 不会持续过线。
+# 针对的观测（证据原文）：
+#   {"session":"dd34eda1451c","protocol":"ssh","src_ip":"163.5.210.194","src_port":49116,
+#    "dst_ip":"172.19.0.2","dst_port":2222,"eventid":"cowrie.session.connect",
+#    "sensor":"70039aac40ea","timestamp":"2026-10-17T00:00:09.420918Z",
+#    "message":"New connection: 163.5.210.194:49116 (172.19.0.2:2222) [session: dd34eda1451c]"}
+#   当日该源 3,359 次会话；全端口 2222 共 139,987 条 flow。
+# 预期误报：
+#   (a) 实验室自查/凭据轮换脚本会短时打 2222（10.0.0.10 已被 $EXTERNAL_NET 排除）；
+#   (b) 蜜罐重启后的补偿连接。阈值型规则天然对「一次性灌入」敏感，这是设计取舍：
+#       本规则的风险不是误报多，而是【漏报】（把阈值调太低会淹没在背景里）。
+# ---------------------------------------------------------------------------
+alert tcp $EXTERNAL_NET any -> $HOME_NET 2222 ( \
+    msg:"XK-LAB honeypot SSH 2222 connection burst from same source (>=10/300s)"; \
+    flags:S; \
+    threshold: type both, track by_src, count 10, seconds 300; \
+    classtype:attempted-recon; \
+    metadata:xk_lab evidence_count 139987, window_p99 27, confidence high; \
+    sid:1000103; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 1000104  多诱捕端口顺序扫描：同一源 60 秒内 >=3 次 SYN 落到诱捕端口组
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   这是本实验室最"干净"的入侵前兆。把 flow 事件按 (src_ip, 分钟) 聚合后数目的端口：
+#   7 天里有 53 个窗口触及 >=3 个诱捕端口，命中源 275 个（外部源），
+#   典型 47.96.106.187 在 2026-10-13T16:58 一分钟内打了 9 个端口
+#   （21 22 23 80 443 1433 2222 3306 6379 8080 8443 27017 全都要）。
+#   为什么不用 Wazuh 的 100310：那条按「同源 60s 内 6 次连接」计数，
+#   179.63.84.194 单打 1433 一个端口也能刷出 446 条告警（正确但噪音大）；
+#   本规则把「端口维度」放进 Suricata 侧判定，配合 Wazuh 的 100401（端口维度）
+#   形成主/次两层，避免同一条噪声被两处各报一遍。
+# 针对的观测（证据原文，flow 事件）：
+#   {"timestamp":"2026-10-11T09:35:03.502079+0000","flow_id":763443876109377,
+#    "event_type":"flow","src_ip":"185.180.141.34","src_port":36033,
+#    "dest_ip":"10.0.0.10","dest_port":2222,...,
+#    "flow":{"state":"closed","reason":"timeout","alerted":true}}
+#   计数：dest_port=1433 flow 6,760 / 3306 1,887 / 6379 663 / 27017 220 / 23 2,006 / 21 277。
+# 预期误报：
+#   (a) 互联网背景测绘（Censys/Shadowserver 类）会整段扫，属于"已知良性命中"，
+#       建议按 metadata 打标而不是拉黑；
+#   (b) 本机对外端口探测脚本（应被 $EXTERNAL_NET 排除）。
+# ---------------------------------------------------------------------------
+alert tcp $EXTERNAL_NET any -> $HOME_NET [21,22,23,1433,2222,3306,6379,9080,27017] ( \
+    msg:"XK-LAB multi-decoy-port sweep from single source (>=3 hits/60s)"; \
+    flags:S; \
+    threshold: type both, track by_src, count 3, seconds 60; \
+    classtype:attempted-recon; \
+    metadata:xk_lab evidence_count 53, confidence high; \
+    sid:1000104; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 1000105  HTTP 敏感文件探测：.env 家族 / .git/config / web.config
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   实验室 HTTP 探测里最常见的一类就是"找配置/密钥"。7 天统计：
+#   /.env 家族（含 .env.stage/.env.save/.env.prod/.env.dist/.env.backup/
+#   .env.testing/.env.staging/.env.live）合计 262 次；
+#   /.git/config 13 次；/config.json 7 次；/web.config 6 次；
+#   /phpmyadmin/scripts/setup.php 9 次。
+#   恶意侧特征很明确：源高度集中（45.148.10.5 单源 52 次，80.94.95.211 38 次，
+#   213.209.159.154 34 次），UA 伪装成浏览器但重复打同一个隐藏文件。
+#   本规则不去匹配 UA（UA 可随意伪造，见 1000106），只匹配"请求行指向的就是密钥文件"，
+#   这个事实无法伪造。
+# 针对的观测（证据原文）：
+#   {"timestamp":"2026-10-14T14:10:19.987074+0000","event_type":"http",
+#    "src_ip":"130.12.180.117","src_port":28264,"dest_ip":"10.0.0.10","dest_port":80,
+#    "metadata":{"flowbits":["ET.Evil","ET.DROPIP"]},
+#    "http":{"hostname":"www.xiaokeqing.cn","url":"/.env","http_method":"GET",
+#            "http_user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ... Chrome/124",
+#            "status":301,"redirect":"https://www.xiaokeqing.cn/.env","length":162}}
+#   计数：262 次 .env* 探测 / 52 次来自 45.148.10.5。
+# 预期误报：
+#   (a) 站点自己的 CI/部署校验会拉 /.env 做存在性检查（本仓库 Hugo 站点没有这种步骤，
+#       但换成别的栈要注意）；
+#   (b) 合法的安全评估（客户授权渗透）——按源白名单处理，别关规则。
+# ---------------------------------------------------------------------------
+alert http $EXTERNAL_NET any -> $HOME_NET any ( \
+    msg:"XK-LAB HTTP probe for exposed secret file (.env family/.git/config/web.config)"; \
+    flow:established,to_server; \
+    http.method; content:"GET"; \
+    http.uri; pcre:"/^\/(\.env(\.[a-z0-9._-]+)?|\.git\/(config|HEAD)|web\.config|config\.json)$/i"; \
+    classtype:attempted-recon; \
+    metadata:xk_lab evidence_count 262, confidence high; \
+    sid:1000105; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 1000106  已知测绘/渗透工具 UA 指纹（UA 只是线索，故单独成一条低优先级规则）
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   本实验室外部 HTTP 流量里，工具 UA 的分布极其集中且可枚举：
+#   "Go Web Pentest Tool" 155、l9explore/1.2.2 96、zgrab/0.x 72、
+#   CensysInspect 26、Infrawatch 23、Nmap NSE 16、zmap-proxy-probe 6。
+#   ET 里有各自的单条规则（如 ET USER_AGENTS Suspcious LeakIX User-Agent、
+#   ET SCAN Zmap User-Agent），但分散在 7 条里且判级不一；
+#   本规则把它们合成一条「这批固定 UA 就是测绘流量」的判定，便于按 UA 维度统计。
+#   注意：UA 可伪造，所以这条只作为"识别工具链/打标"，不作为封禁依据。
+# 针对的观测（证据原文）：
+#   同一 HTTP 事件里 http.http_user_agent 取值，例如
+#   {"event_type":"http","src_ip":"45.148.10.5",...,"http":{"url":"/.env",
+#    "http_user_agent":"l9explore/1.2.2",...}}
+#   以及针对真实站点 43.143.114.79 的整段扫描（hostname 命中 171 次）。
+# 预期误报：
+#   (a) 安全团队自己的资产测绘（本实验室的 Censys/LeakIX 由外部发起，非内部）；
+#   (b) 第三方监控探针（如 Infrawatch 这类合规监测）——建议 metadata 打标后降级到 INFO。
+# ---------------------------------------------------------------------------
+alert http $EXTERNAL_NET any -> $HOME_NET any ( \
+    msg:"XK-LAB known recon/pentest tool User-Agent"; \
+    flow:established,to_server; \
+    http.user_agent; pcre:"/(Go Web Pentest Tool|l9explore|zgrab|CensysInspect|zmap|Infrawatch|Nmap Scripting Engine|AttackWatch-PoC-Scanner)/i"; \
+    classtype:attempted-recon; \
+    metadata:xk_lab evidence_count 394, confidence low; \
+    sid:1000106; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 1000107  外部源直连数据库端口（实验室对外不提供任何 DB 服务）
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   本实验室的 1433/3306/6379/27017 只由 Dionaea 诱捕，业务上不存在"外部合法连接 DB"。
+#   因此这条规则的误报理论上为 0，可以按最严的方式判。实测：
+#   1433 有 1,628 条 ET 告警（136 个不同外部源）、3306 756 条（230 个源）、
+#   6379 129 个源、27017 67 个源；Dionaea 侧 179.63.84.194 单源 2,752 次 1433 连接。
+#   与 ET 的 ET SCAN Suspicious inbound to MSSQL port 1433 的区别：
+#   ET 那条只覆盖 MSSQL，且判级 Potentially Bad Traffic；本规则把 4 个库端口
+#   合成一组，并按"实验室业务不存在"这一事实定性，便于在 SOC 里直接当处置入口。
+# 针对的观测（证据原文）：
+#   {"timestamp":"2026-10-13T02:20:13.515932+0000","event_type":"alert",
+#    "src_ip":"47.96.106.187","src_port":57240,"dest_ip":"10.0.0.10","dest_port":1433,
+#    "alert":{"signature_id":2010935,"signature":"ET SCAN Suspicious inbound to MSSQL port 1433"},
+#    "direction":"to_server","flow":{"pkts_toserver":1,"pkts_toclient":0}}
+#   计数：1433=1,628 / 3306=756 / 6379 / 27017（见 README 计数表）。
+# 预期误报：
+#   只有当实验室未来真的对外暴露 DB 时才需要收紧；现在的"预期误报"是
+#   云厂商/监控平台的端口探活（极少量，可用 source 白名单排除）。
+# ---------------------------------------------------------------------------
+alert tcp $EXTERNAL_NET any -> $HOME_NET [1433,3306,6379,9200,27017] ( \
+    msg:"XK-LAB inbound connection to database port (lab exposes no public DB)"; \
+    flags:S; \
+    classtype:attempted-recon; \
+    metadata:xk_lab evidence_count 6760, confidence high; \
+    sid:1000107; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 1000108  【抑制型】云监控元数据上报：169.254.0.4:80 的 POST（opt-in，默认不启用）
+# ---------------------------------------------------------------------------
+# 为什么写：
+#   这是本实验室【最大的一条误报源】，不写清楚会淹没一切：
+#   eve.json 全部 293,482 条 alert 里，有 278,405 条（94.9%）是
+#   ET INFO Python-urllib/ Suspicious User Agent，且 100% 来自 10.0.0.10
+#   -> 169.254.0.4:80 的 POST /ca_report.cgi（云主机 agent 的元数据/心跳上报）。
+#   也就是说 1,000 条告警里 949 条是自家 agent。Wazuh 侧同理：18,228 条告警里
+#   7,283 条是这个签名。与其在 Wazuh 里逐条过滤，不如在产生端用 pass 规则止住。
+# 预期误报 / 风险（务必读）：
+#   pass 规则是"物理压制"，写错方向会把真正的出站 C2 一起静音。所以：
+#   1) 只放行 dst 明确等于 169.254.0.4 且 dst_port=80 的出站 TCP；
+#   2) 只放行 $HOME_NET 内的源（不含任何外部源）；
+#   3) 若云厂商换 IP，规则立刻失效（症状：噪声回来）——这是可接受的失败模式
+#      （失效 = 回到现在的噪声状态，不会静默漏报）。
+#   本文件默认【不启用】这条：验证语法时保留，接入时先注释掉再评估。
+# ---------------------------------------------------------------------------
+# pass tcp $HOME_NET any -> 169.254.0.4 80 ( \
+#     msg:"XK-LAB suppress cloud-agent metadata POST to 169.254.0.4:80 (FP baseline)"; \
+#     flow:established,to_server; \
+#     sid:1000108; rev:1; )
+
+
+# ---------------------------------------------------------------------------
+# 【附】为什么本文件不写"DGA/僵尸网络回连"规则
+# ---------------------------------------------------------------------------
+# 因为在本实验室的 132,086 条 dns 事件里，rrname TOP 全部是正常基础设施：
+#   time1..time5.tencentyun.com（各 ~23k，云主机对时）、
+#   update2.agent.tencentyun.com（5,559，agent 升级）、demo.xiaokeqing.cn（9,628，本站）。
+#   没有观测到可归因的 C2 域名样本 —— 没有证据就不写规则，否则就是"看起来在监控"。
+#   若要覆盖回连，正确做法是 DNS 隧道熵值/长标签基线（需另有数据支撑），不是拍脑袋写。
+###############################################################################
