@@ -20,19 +20,19 @@
     "idle": {
       "atlas": {
         "boot": {
-          "bytes": 531854,
-          "decodedBytes": 13312512,
+          "bytes": 854094,
+          "decodedBytes": 29245440,
           "frames": 24,
-          "h": 1296,
+          "h": 1920,
           "url": "kurisu/full/idle.boot.webp",
-          "w": 2568
+          "w": 3808
         },
         "hi": {
-          "bytes": 1316104,
-          "decodedBytes": 35500032,
-          "h": 3456,
+          "bytes": 2133706,
+          "decodedBytes": 77987840,
+          "h": 5120,
           "url": "kurisu/full/idle.hi.webp",
-          "w": 2568
+          "w": 3808
         }
       },
       "columns": 8,
@@ -42,10 +42,10 @@
       "frames": 60,
       "loopMode": "loop",
       "poster": {
-        "bytes": 23114,
-        "h": 432,
+        "bytes": 36718,
+        "h": 640,
         "url": "kurisu/full/idle.poster.webp",
-        "w": 321
+        "w": 476
       },
       "rows": 8,
       "source": {
