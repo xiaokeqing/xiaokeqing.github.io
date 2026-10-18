@@ -25,30 +25,30 @@
 .st-run{background:none;border:1px solid rgba(160,220,240,.35);color:#cfe9f5;border-radius:7px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;padding:3px 10px;cursor:pointer;flex:none}
 .st-run:hover{border-color:rgba(160,220,240,.6);color:#eaf6ff}
 .st-run[disabled]{opacity:.45;cursor:default}
-.st-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:rgba(255,255,255,.66)}
+.st-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:13px;color:rgba(255,255,255,.66)}
 .st-sum b{font-size:16px;letter-spacing:.02em;color:#eaf6ff;font-weight:600}
 .st-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.st-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:780px}
+.st-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:780px}
 .st-tbl th,.st-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
-.st-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.st-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:13px;letter-spacing:.06em;white-space:nowrap}
 .st-tbl td:nth-child(3),.st-tbl td:nth-child(4),.st-tbl td:nth-child(5),.st-tbl td:nth-child(6){white-space:nowrap}
 .st-tbl td:nth-child(2),.st-tbl td:nth-child(7){color:rgba(255,255,255,.72)}
 .st-ep{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#d7e7ef;white-space:nowrap}
-.st-num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.82)}
+.st-num{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:rgba(255,255,255,.82)}
 .st-pass{color:#6FD3A0;font-weight:600}
 .st-fail{color:#E8837B;font-weight:600}
 .st-warn{color:#E8B45A}
 .st-na{color:rgba(255,255,255,.42)}
-.st-kv{width:100%;border-collapse:collapse;font-size:12.5px}
+.st-kv{width:100%;border-collapse:collapse;font-size:13px}
 .st-kv th,.st-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
 .st-kv thead th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
 .st-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap}
-.st-kv td.f{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.45);word-break:break-all}
-.st-kv td.v{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#e8f3f8;word-break:break-all}
+.st-kv td.f{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:rgba(255,255,255,.45);word-break:break-all}
+.st-kv td.v{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#e8f3f8;word-break:break-all}
 .st-hist{margin:4px 0 0;padding-left:16px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.72)}
 .st-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
 .st-pre .c{color:rgba(255,255,255,.45)}
-.st-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.st-note{margin:10px 0 0;font-size:13px;line-height:1.9;color:rgba(255,255,255,.5)}
 .st-note b{color:rgba(255,255,255,.76);font-weight:600}
 .st-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
 </style>
@@ -185,7 +185,30 @@
       </div>
 
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>你也可以自己敲<span class="tag">三条 curl · 只读 · 不写入</span></div>
+        <div class="mod-hd"><span class="led"></span>今日日报 · 生成了没有、数字是多少<span class="tag"><a href="/subscribe/" style="color:inherit">订阅 /subscribe/</a></span> · 每天 08:10 生成（开关默认关）<span class="tag">/api/public/daily.js</span></div>
+        <div class="mod-bd">
+          <div class="st-scroll">
+            <table class="st-kv">
+              <thead><tr><th>项目</th><th>字段（端点）</th><th>值</th></tr></thead>
+              <tbody>
+                <tr><th>日报日期</th><td class="f">daily.js · date</td><td class="v" id="stDailyDate">未取到</td></tr>
+                <tr><th>24h 告警总数</th><td class="f">daily.js · alertTotal ← alerts.stats24h</td><td class="v" id="stDailyTotal">未取到</td></tr>
+                <tr><th>Top1 来源国家</th><td class="f">daily.js · topCountry ← geo.byCountry[0]</td><td class="v" id="stDailyTop">未取到</td></tr>
+                <tr><th>今日最凶来源</th><td class="f">daily.js · worstSource ← honeypot.topSources[0]</td><td class="v" id="stDailyWorst">未取到</td></tr>
+                <tr><th>文字版 HTML</th><td class="f">daily.js · files.html.url</td><td class="v" id="stDailyHtml">未取到</td></tr>
+                <tr><th>语音版（日语口语稿）</th><td class="f">daily.js · files.wav / files.mp3</td><td class="v" id="stDailyAudio"><span id="stDailyAudioNote">未取到</span> <audio id="stDailyAudioEl" controls preload="none" style="width:100%;max-width:320px;min-height:32px;vertical-align:middle;display:none"></audio></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="st-note" id="stDailyNote">
+            正在读今日日报…<b>三种"没有"会写成三句话</b>：接口读不到 = 这一行说读不到；
+            今天没生成 = 「今日日报未生成（不是读不到其它数据）」；生成过但语音合成失败 = 文字版照样给，只缺音频。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>你也可以自己敲<span class="tag">四条 curl · 只读 · 不写入</span></div>
         <div class="mod-bd">
 <pre class="st-pre"><span class="c"># ① 服务是否活着 + 构建 SHA（对应表格第 1 行）</span>
 curl -s https://demo.xiaokeqing.cn/api/health
@@ -194,7 +217,10 @@ curl -s https://demo.xiaokeqing.cn/api/health
 curl -s https://demo.xiaokeqing.cn/api/public/home.js
 
 <span class="c"># ③ 处置审计：护栏 / 封禁留痕（对应表格第 4 行）</span>
-curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
+curl -s https://demo.xiaokeqing.cn/api/public/audit.js
+
+<span class="c"># ④ 今日日报：日期 / 告警总数 / Top1 来源 / 交付物链接（对应上面那张日报卡）</span>
+curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
           <p class="st-note">
             同一时刻在你自己的终端敲，数字应该和上面那几张表对得上；<b>对不上，问题就在这里，不是页面修图</b>。
             取不到的时候（断网、401、429 限流、源站挂了），本页对应行就显示「未取到」并带上原因：
@@ -617,6 +643,119 @@ curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
       });
   }
 
+  /* ---------------------------------------------------------------- 今日日报
+     读 /api/public/daily.js。三种"没有"必须写成三句不同的话：
+       ① 接口读不到          → 行内写「未取到（原因）」，并说明这与"未生成"是两件事；
+       ② 今天没生成          → 「今日日报未生成（不是读不到其它数据）」；
+       ③ 生成了但没音频      → 文字版照给，只有音频那一行缺。
+     数字取不到（null）写「—」，不写 0 —— 0 是"今天没告警"，null 是"没取到"。 */
+  function dailyLink(cell, url, text) {
+    var el = $(cell);
+    if (!el) return;
+    if (!url) { el.textContent = NA; el.className = 'v st-na'; return; }
+    el.innerHTML = '<a href="' + esc(API + url) + '" style="color:#bfe3d0;text-decoration:none">' + esc(text) + '</a>';
+    el.className = 'v';
+  }
+  function renderDaily() {
+    if (!window.fetch) { show('stDailyDate', NA + '（浏览器不支持 fetch）'); return; }
+    fetch(API + '/api/public/daily.js', { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (root) {
+        var d = (root && root.data !== undefined) ? root.data : root;
+        var note = $('stDailyNote');
+        if (!d || typeof d !== 'object') {
+          show('stDailyDate', NA + '（响应不是预期结构）', 'st-warn');
+          if (note) note.textContent = '日报接口返回了无法解析的结构 —— 这与「今日日报未生成」是两件事。';
+          return;
+        }
+        if (d.available === false) {
+          var why = d.note || ('未生成：' + (d.reason || 'not_generated'));
+          show('stDailyDate', (d.date || NA) + ' · ' + why, 'st-warn');
+          show('stDailyTotal', NA, 'st-na');
+          show('stDailyTop', NA, 'st-na');
+          show('stDailyWorst', NA, 'st-na');
+          show('stDailyHtml', NA, 'st-na');
+          var ael = $('stDailyAudioEl'), anote = $('stDailyAudioNote');
+          if (ael) { ael.removeAttribute('src'); ael.style.display = 'none'; }
+          if (anote) { anote.textContent = NA; anote.className = 'st-na'; }
+          if (note) {
+            note.innerHTML = '<b>今日日报未生成（不是读不到其它数据）</b>：接口本身是通的（HTTP 200，'
+              + '<code>available=false / reason=' + esc(d.reason || 'not_generated') + '</code>），'
+              + '只是后端还没跑今天的生成任务。定时任务默认关闭（<code>app.report.enabled=false</code>），'
+              + '所以"没有日报"通常是<b>开关没开</b>，而不是今天没有安全事件。';
+          }
+          return;
+        }
+
+        show('stDailyDate', d.date || NA);
+        var total = num(d.alertTotal);
+        show('stDailyTotal', total === null ? '—（取不到数量）' : (fmtInt(total) + ' 条（过去 24h）'), total === null ? 'st-warn' : '');
+
+        var tc = d.topCountry;
+        if (tc && (tc.code || tc.name)) {
+          var nm = tc.name && tc.name !== tc.code ? (tc.name + '（' + tc.code + '）') : (tc.name || tc.code);
+          var bits = [nm];
+          if (num(tc.count) !== null) bits.push(fmtInt(num(tc.count)) + ' 条');
+          if (num(tc.uniqueIps) !== null) bits.push(fmtInt(num(tc.uniqueIps)) + ' 个来源 IP');
+          show('stDailyTop', bits.join(' · '));
+        } else {
+          show('stDailyTop', '—（geo 没有可用国家数据）', 'st-warn');
+        }
+
+        var w = d.worstSource;
+        if (w && w.ip) {
+          show('stDailyWorst', w.ip + (num(w.attempts) === null ? '' : (' × ' + fmtInt(num(w.attempts)) + ' 次尝试')));
+        } else {
+          show('stDailyWorst', '—（蜜罐窗口里没有来源记录）', 'st-na');
+        }
+
+        var files = (d.files && typeof d.files === 'object') ? d.files : {};
+        dailyLink('stDailyHtml', files.html ? files.html.url : null,
+          files.html ? ('打开 ' + files.html.name) : '');
+        var aud = files.wav || files.mp3;
+        var el = $('stDailyAudioEl'), note = $('stDailyAudioNote');
+        if (el && note) {
+          if (aud && aud.url) {
+            el.src = API + aud.url;
+            el.style.display = '';
+            note.innerHTML = '<a href="' + esc(API + aud.url) + '" style="color:#bfe3d0;text-decoration:none;font-size:11.5px">'
+              + esc(aud.name || '下载音频') + '</a>';
+          } else {
+            el.removeAttribute('src');
+            el.style.display = 'none';
+            note.textContent = '—（文字版已生成；今天的语音合成没成功，音频缺失不影响日报本身）';
+            note.className = 'st-warn';
+          }
+        }
+
+        if (note) {
+          var line = ['日报生成于 ' + esc(d.generatedAt || NA)];
+          if (num(d.speechChars) !== null) line.push('语音稿 ' + fmtInt(num(d.speechChars)) + ' 字（上限 120）');
+          line.push('数字全部来自 <code>/api/public/*</code>，每个都带出处（HTML 里逐行标注）');
+          note.innerHTML = line.join(' · ') + (d.note ? (' · <b class="st-warn">' + esc(d.note) + '</b>') : '');
+        }
+      })
+      .catch(function (e) {
+        var why = (e && e.message) || e;
+        show('stDailyDate', NA + '（daily.js 读不到：' + why + '）', 'st-warn');
+        show('stDailyTotal', NA, 'st-na');
+        show('stDailyTop', NA, 'st-na');
+        show('stDailyWorst', NA, 'st-na');
+        show('stDailyHtml', NA, 'st-na');
+        var ael2 = $('stDailyAudioEl'), anote2 = $('stDailyAudioNote');
+        if (ael2) { ael2.removeAttribute('src'); ael2.style.display = 'none'; }
+        if (anote2) { anote2.textContent = NA; anote2.className = 'st-na'; }
+        var note = $('stDailyNote');
+        if (note) {
+          note.innerHTML = '<b>读不到日报接口</b>（' + esc(why) + '）—— 这与「今日日报未生成」是两件事：'
+            + '前者是接口没通，后者是接口通了但今天还没生成。两种都不填 0。';
+        }
+      });
+  }
+
   function render(list) {
     renderTable(list);
     var i;
@@ -629,6 +768,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
     renderBuild(last.health, last.deploy);
     renderFresh(last.home);
     renderCI();
+    renderDaily();
   }
 
   function run() {

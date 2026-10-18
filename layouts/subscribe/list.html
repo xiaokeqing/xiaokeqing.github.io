@@ -1,0 +1,177 @@
+{{- /* ============================================================================
+   /subscribe/ = 「安全日报订阅」说明页（只说明 + 一条 mailto，不做表单）
+   ----------------------------------------------------------------------------
+   隐私边界（这一页存在的理由）：
+     · 这里**没有 FORM**、没有 <input>、没有 fetch 往任何后端提交邮箱；
+     · 订阅动作只发生在**你自己的邮件客户端**里：点 mailto: 链接，发一封空邮件；
+     · 站点不存订阅名单。所以"谁订阅了"这个数据库不存在，也就没有被拖走的可能。
+   为什么会这样：
+     · 日报本身是公开页面（/status/ 的「今日日报」卡 + /api/public/daily.js），
+       订阅带来的只是"提醒你去看"，不是"把内容偷偷发给你"；
+     · 一旦页面收邮箱，就得存、就得能退订、就得防泄露 —— 一个静态站不该长出这些。
+
+   页面口径（与 /status/ 一致）：
+     · 数字来自后端 /api/public/daily.js；取不到写「取不到（原因）」；
+     · 早上 08:10 生成（cron 0 10 8 * * *，开关 app.report.enabled）；
+     · 语音版是日语口语稿（≤120 字），HTML 版是中文表格（每个数字带出处）。
+   ============================================================================ */ -}}
+{{- $v := "subscribe" -}}
+{{- $mail := site.Params.digestMail | default "daily@xiaokeqing.cn" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页只用外壳既有色板：不加新配色、不引外部字体/CDN/图片 */
+.sub-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.sub-back:hover{color:#bfe3d0}
+.sub-bd{display:flex;flex-direction:column;gap:14px}
+.sub-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.sub-lead b{color:#cfe9f5;font-weight:600}
+.sub-lead code,.sub-note code,.sub-kv code,.sub-steps code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px;word-break:break-all}
+.sub-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 0}
+.sub-cta a{display:inline-block;padding:9px 16px;border:1px solid rgba(160,220,240,.45);border-radius:8px;color:#eaf6ff;font-family:ui-monospace,Consolas,monospace;font-size:13px;text-decoration:none;background:rgba(160,220,240,.08)}
+.sub-cta a:hover{border-color:rgba(160,220,240,.8);background:rgba(160,220,240,.16);color:#fff}
+.sub-cta a.ghost{border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.72);background:none}
+.sub-cta a.ghost:hover{border-color:rgba(255,255,255,.45);color:#eaf6ff}
+.sub-hint{margin:10px 0 0;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.45);word-break:break-all}
+.sub-kv{width:100%;border-collapse:collapse;font-size:13px}
+.sub-kv th,.sub-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.sub-kv thead th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.sub-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap}
+.sub-kv td{color:rgba(255,255,255,.72);line-height:1.85}
+.sub-steps{margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.95;color:rgba(255,255,255,.78)}
+.sub-steps li{margin:4px 0}
+.sub-note{margin:10px 0 0;font-size:13px;line-height:1.9;color:rgba(255,255,255,.5)}
+.sub-note b{color:rgba(255,255,255,.76);font-weight:600}
+.sub-warnbox{margin:0;padding:10px 12px;border:1px solid rgba(232,180,90,.5);border-radius:8px;background:rgba(232,180,90,.09);font-size:13px;line-height:1.9;color:#F0DCB4}
+.sub-warnbox b{color:#F5CE86;font-weight:700}
+.sub-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
+.sub-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:560px){.sub-kv tbody th{white-space:normal}.sub-cta a{width:100%;text-align:center}}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="subscribe">
+<section class="view on" id="v-subscribe">
+  <a class="sub-back" href="/status/">← 状态页 /status/（今日日报在这里）</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 安全日报订阅 <em class="ops-en">DIGEST-SUBSCRIBE</em></span>
+      <span class="sync" id="subSync">● 只说明 · 订阅在你自己邮箱里完成</span>
+    </div>
+    <div class="screen-bd sub-bd">
+
+      <p class="sub-lead">
+        每天早上一份<b>安全日报</b>：过去 24 小时的告警总数与严重度分布、Top 5 来源国家、
+        蜜罐连接与登录尝试、封禁/解封数、当日最凶来源 IP，外加一条「值得注意」。
+        两种形态：<b>语音版</b>（日语口语稿，≤120 字，可以直接听）与
+        <b>HTML 版</b>（中文表格，每个数字后面都写着它出自哪个端点、哪个窗口）。
+      </p>
+
+      <p class="sub-lead">
+        <b>日报是公开页面，订阅只是邮件提醒。</b>
+        内容本身就在 <a href="/status/" style="color:#bfe3d0">/status/</a> 的「今日日报」卡里，
+        任何人随时可以看，不需要订阅、不需要留邮箱。<b>这一页不做表单、不在本站收集邮箱</b> ——
+        订阅动作只发生在你自己的邮件客户端里：
+      </p>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>怎么订阅<span class="tag">mailto: · 不在本站提交任何东西</span></div>
+        <div class="mod-bd">
+          <ol class="sub-steps">
+            <li>点下面的按钮，你的邮件客户端会打开一封<b>收件人已经填好、正文空白</b>的新邮件；</li>
+            <li>直接点发送即可（主题按 <code>subscribe 安全日报</code> 预填）；</li>
+            <li>想退订就发主题为 <code>unsubscribe 安全日报</code> 的邮件，不用解释理由；</li>
+            <li>名单在<b>站主的邮件系统里</b>，不在这个网站上 —— 本页没有任何代码能记录你来过。</li>
+          </ol>
+          <p class="sub-cta">
+            <a href="mailto:{{ $mail }}?subject=subscribe%20%E5%AE%89%E5%85%A8%E6%97%A5%E6%8A%A5&body=%E6%88%91%E6%83%B3%E8%AE%A2%E9%98%85%E6%AF%8F%E6%97%A5%E5%AE%89%E5%85%A8%E6%97%A5%E6%8A%A5%E3%80%82">✉ 订阅（发一封空邮件）</a>
+            <a class="ghost" href="mailto:{{ $mail }}?subject=unsubscribe%20%E5%AE%89%E5%85%A8%E6%97%A5%E6%8A%A5">退订（同一条路）</a>
+            <a class="ghost" href="/status/">先看看今天的日报</a>
+          </p>
+          <p class="sub-hint">
+            链接目标：<code>mailto:{{ $mail }}</code> · 若你的机器没配邮件客户端，把上面这个地址抄到任意邮箱里发同样主题即可。
+          </p>
+          <noscript><p class="sub-noscript">这一页不依赖 JavaScript：上面就是一条普通的 <code>mailto:</code> 链接，
+            关掉脚本照样能点。本页也没有任何脚本会往服务器发东西。</p></noscript>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>隐私边界 · 为什么不做订阅表单<span class="tag">没有名单 = 没有可泄露的名单</span></div>
+        <div class="mod-bd">
+          <p class="sub-lead">
+            收邮箱意味着：要存（存哪、谁有权限）、要能退订（不然是骚扰）、要防拖库（小站最容易被盯上的就是订阅表）。
+            而收益只是"提醒"，所以这里选择<b>让邮件系统去记，让网页保持无账号</b>。
+            具体说，这一页<b>没有</b>：
+          </p>
+          <div class="sub-scroll">
+            <table class="sub-kv">
+              <thead><tr><th>没有的东西</th><th>意味着什么</th></tr></thead>
+              <tbody>
+                <tr><th>表单 / &lt;input&gt;</th><td>页面里没有任何地方能让你输入邮箱 —— 不存在"提交"这个动作。</td></tr>
+                <tr><th>后端订阅接口</th><td>站点是纯静态的（Hugo 产物），没有可写库的接口可打。</td></tr>
+                <tr><th>订阅名单</th><td>本站不存邮箱；名单只在站主的邮件系统里，退订也在那里生效。</td></tr>
+                <tr><th>跟踪像素 / 统计脚本</th><td>邮件正文不放像素、不放唯一链接；日报 HTML 只引内联样式，不引外部资源。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="sub-note">
+            <b>能保证什么、不能保证什么</b>：本页能保证"你没在这台静态站上留下邮箱"；
+            不能保证"邮件在传输途中不经过任何第三方" —— 那取决于你用哪个邮箱发、站主用哪个 SMTP 发。这一点写清楚，比一句"我们重视隐私"有用。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>日报里到底有什么<span class="tag">/api/public/daily.js · 每项都带出处</span></div>
+        <div class="mod-bd">
+          <div class="sub-scroll">
+            <table class="sub-kv">
+              <thead><tr><th>内容</th><th>数据从哪来 / 口径</th></tr></thead>
+              <tbody>
+                <tr><th>告警总数与严重度分布</th><td><code>alerts</code> 的 <code>stats24h</code>（过去 24 小时窗口，CRITICAL/HIGH/MEDIUM/LOW）。</td></tr>
+                <tr><th>Top 5 来源国家与独立 IP 数</th><td><code>geo</code> 的 <code>byCountry</code>（同一 24h 窗口；过内网/保留/本站 IP 已排除，地理库 DB-IP Lite）。</td></tr>
+                <tr><th>蜜罐连接与登录尝试</th><td><code>honeypot</code> 的最近 800 条 Cowrie 告警 —— <b>不是 24h 时间窗</b>，日报里照实写这一点。</td></tr>
+                <tr><th>封禁 / 解封数</th><td>处置留痕全量（不限 24h）；被护栏拦下多少单独一行。</td></tr>
+                <tr><th>今日最凶来源</th><td>蜜罐 <code>topSources</code> 里尝试次数最多的来源 IP 与次数。</td></tr>
+                <tr><th>值得注意的一条</th><td>单一来源 ≥1000 次尝试，或出现新的端口探测器时才写；没触发就写「未触发判定阈值」。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="sub-note">
+            <b>取不到就不编</b>：任何一个数字取不到，日报对应位置写 <code>null</code>，并在最后一节「缺数据」里列出缺的是哪一项、哪个端点没给 ——
+            就像 <a href="/status/" style="color:#bfe3d0">/status/</a> 里那些「未取到」一样，宁可难看，不要假数。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>生成时间与开关<span class="tag">app.report.enabled · 0 10 8 * * *</span></div>
+        <div class="mod-bd">
+          <p class="sub-warnbox">
+            <b>日报不是一直在跑。</b>后端定时任务默认<b>关闭</b>（<code>app.report.enabled=false</code>），
+            打开后每天 <b>08:10</b> 生成一次；没生成的日子，<a href="/status/" style="color:#F5CE86">/status/</a> 的卡片会写
+            「今日日报未生成（不是读不到其它数据）」—— 这两种"没有"必须分得清，否则一次重启会被读成"今天天下太平"。
+          </p>
+          <p class="sub-note">
+            语音版由后端直接调用 TTS 合成（<code>data/reports/daily-YYYY-MM-DD.wav</code>）；
+            合成失败只记日志，不影响文字版 —— 所以偶尔会遇到"有文字、没声音"的一天，那是上游 TTS 的事，不是日报没生成。
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

@@ -27,6 +27,9 @@ hasCJKLanguage = true
 # ---------- 站点参数 ----------
 [params]
   siteName = "xiaokeqing"
+  # 每日安全日报的订阅收件地址：/subscribe/ 的 mailto: 链接读它（layouts/subscribe/list.html）。
+  # ★占位值 —— 换成真实可收信的地址后才真能用；改这一处即可，不用动模板。
+  digestMail = "daily@xiaokeqing.cn"
   author = "小刻晴"
   description = "xiaokeqing 的个人博客 —— 个人网络安全学习实践记录，以及一个正在真实运行的安全运营工作台（告警 / 蜜罐 / 处置审计）。"
   keywords = ["网络安全", "AI 安全", "安全运营", "应急响应", "RAG", "多 Agent", "SOC"]

@@ -124,7 +124,11 @@ head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 # 【2026-10-18 补】password = 口令自查端点（/api/public/password，别名 /password.js）：
 #   只收 sha256 前 5 位 hex，回桶内 hash 后 59 位 + 合计次数；字典索引离线生成，
 #   缺文件时 200 + available:false（不 500、不补数）。页面 /tools/password/ 引用它。
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password"
+# 【2026-10-18 补】daily = 每日安全日报端点（/api/public/daily.js 机读摘要 + /api/public/daily/<name> 交付物）：
+#   后端 DailyReportController 已实现（本仓库外，同批交付）；**这是预登记** —— 本轮不发布、不 push，
+#   线上还没实测过 200。上线后请先 curl 一次 /api/public/daily.js 确认（未生成时也应是 200 + available:false），
+#   再保持它在白名单里。站点 /status/ 的「今日日报」卡引用它；取不到时卡片写「未生成」而非填 0。
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password daily"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
@@ -365,6 +369,9 @@ new_page_gate noise 噪音指数页
 # ★2026-10-18：真实恶意样本分析页（/samples/）。判据同上；data-xk-ssr 用路由名 samples
 #   （手写静态页，正文全在 content/samples/_index.md，抓不到样本就写「未留存」，不补哈希）。
 new_page_gate samples 样本分析页
+# ★2026-10-18：日报订阅说明页（/subscribe/）。数据契约同上；data-xk-ssr 用路由名 subscribe。
+#   这一页**没有表单、没有 input、不提交任何邮箱** —— 只有一条 mailto: 链接（隐私边界写死在页面正文里）。
+new_page_gate subscribe 日报订阅页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
 # 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。

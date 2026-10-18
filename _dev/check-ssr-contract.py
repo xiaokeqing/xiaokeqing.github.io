@@ -35,6 +35,7 @@ PAGES = [
     ('tools/index.html', 'tools'),
     ('noise/index.html', 'noise'),   # 2026-10-18：告警噪音指数页（静态快照，数字全来自 /data/noise-index.json；路由名=noise 与 section 同名，靠目录命中）
     ('samples/index.html', 'samples'),  # 2026-10-18：真实恶意样本分析页（手写静态页，只写抓到的，抓不到写未留存）
+    ('subscribe/index.html', 'subscribe'),  # 2026-10-18：日报订阅说明页（无表单、无 input，只有一条 mailto: 链接）
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)
 RE_SSR = re.compile(r'data-xk-ssr=["\']?([a-z-]+)', re.I)
