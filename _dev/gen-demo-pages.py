@@ -3906,15 +3906,84 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
   /* ⚠ 这条 @media 必须在上面那组 .xk-askbar 规则**之后**（实测踩过：写在前面会被基础规则压掉 ——
      窄屏表现为栏左边缘 -111px、字号仍 13px、与 .dock 重叠）。
      窄屏：输入栏贴底铺满（dock 在左下、她在中下，两者此时不重叠）⇒ margin-left 复位。 */
+  /* ============================================================
+     ★M1（2026-10-18 站主口述）手机顶栏：导航贴顶 + 头像卡一行（箭头在左、名字在头像下）
+     + 功能钮收进头像（默认收起）。桌面一律不受影响：下面所有规则都在 @media (max-width:980px) 里。
+     为什么要收：小屏上“头像卡 + 导航 + 功能条”三块各占一层，首屏正文被压到第二屏（站主截图）。 */
+  .xk-idfold{display:none}
   @media (max-width:980px){
-    /* ≤980px：.dock 是**底部横排**（实测 375 宽时 top 743 / bottom 802）⇒ 输入栏要让到它**上面** */
-    .xk-askbar{left:10px;right:10px;bottom:70px;margin-left:0;padding:6px 6px 6px 10px;gap:6px}
+    /* ① 导航贴顶（原 top:100px）：横排、可横滑、带毛玻璃底 */
+    body.xk-has-idcard .dock{
+      top:0; left:0; right:0; width:auto; height:auto;
+      flex-direction:row; align-items:center; gap:4px;
+      padding:8px 10px; border-radius:0 0 12px 12px;
+      overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;
+      background:linear-gradient(180deg,rgba(9,11,14,.92),rgba(9,11,14,.72));
+      backdrop-filter:blur(10px);
+    }
+    body.xk-has-idcard .dock .brand{display:none}
+    body.xk-has-idcard .dock a{white-space:nowrap;padding:6px 10px;font-size:13px}
+    /* ② 头像卡：一行，箭头在左；名字/状态在头像下方 */
+    .xk-idcard{
+      top:52px; left:10px; right:auto; bottom:auto;
+      /* ★M2：两列 —— 左列箭头（占两行高），右列上面头像、下面名字与状态。
+         用 grid-template-areas 而不靠源码顺序，否则名字会掉到箭头下面。 */
+      display:grid;
+      grid-template-columns:auto 44px;
+      grid-template-areas:"fold av" "fold meta" "fold stat";
+      grid-row-gap:1px; align-items:center; justify-items:start;
+      gap:0 8px; padding:6px 10px 6px 4px;
+      /* ★M3：收到内容宽（原桌面版有固定 146px 左栏宽），并加深底色 ——
+         否则径向发展会把卡片拉到 200px，名字跟头像对不齐；透明底会看到正文从卡片里透出来。 */
+      width:max-content; max-width:calc(100vw - 20px);
+      background:rgba(9,11,14,.92); backdrop-filter:blur(10px);
+      border-radius:14px; border:1px solid var(--line2,rgba(255,246,235,.16));
+    }
+    .xk-idfold{grid-area:fold;align-self:center}
+    .xk-idcard-av{grid-area:av}
+    .xk-idmeta{grid-area:meta}
+    .xk-idstat{grid-area:stat}
+    .xk-idfold{
+      display:flex; align-items:center; justify-content:center;
+      width:22px; height:44px; padding:0; cursor:pointer;
+      background:transparent; border:0; color:var(--mut,#D2CBBD);
+      font:13px/1 var(--mono,monospace); transition:transform .18s ease;
+    }
+    .xk-idcard.open .xk-idfold{transform:rotate(180deg);color:var(--acc,#7FD4D8)}
+    .xk-idcard-av{width:44px;height:44px}
+    .xk-idcard-av canvas{width:44px;height:44px}
+    .xk-idmeta{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+    .xk-idname{font-size:13px}
+    .xk-idsub{font-size:9.5px;letter-spacing:.04em}
+    /* ★M4：小屏上隐藏状态行（“待命 + 五个点”与手机里的 READY/待命 重复），
+       卡片只剩「箭头 + 头像 + 名字」三件，高度从 145px 降到 ~96px，不压正文标题。 */
+    .xk-idstat{display:none}
+    /* ③ 功能栏收起：默认 display:none，展开时贴在头像卡下面 */
+    .xk-idcard-col{display:none}
+    .xk-idcard.open + .xk-idcard-col{
+      display:flex; flex-direction:row; flex-wrap:wrap; gap:6px;
+      position:fixed; left:10px; top:164px; right:auto; bottom:auto;
+      margin-top:0; width:auto; max-width:calc(100vw - 20px);
+      padding:8px; border-radius:12px;
+      background:rgba(9,11,14,.94); backdrop-filter:blur(10px);
+      border:1px solid var(--line2,rgba(255,246,235,.22)); z-index:80;
+    }
+    /* ④ 右上圆形小头像在手机上隐藏（与左上头像卡重复） */
+    .holo-bubble{display:none!important}
+    /* ⑤ 正文让出顶栏（导航 44 + 头像卡 58 + 间距） */
+    body.xk-has-idcard .main{padding-top:112px!important}
+    /* ⑥ 输入栏仍贴底（功能栏已收进头像，底部不再占位） */
+    .xk-askbar{left:10px;right:10px;bottom:16px;margin-left:0;padding:6px 6px 6px 10px;gap:6px}
     .xk-askbar input{font-size:16px}       /* ≥16px：iOS 聚焦不放大整页 */
     .xk-askbar-count{display:none}         /* 手机上计数让位给输入框（长度仍按 600 截） */
     .xk-askbar button{padding:0 12px}
   }
 </style>
 <aside class="xk-idcard" id="xkIdCard" aria-label="桐莉栖 · 头像卡">
+  <!-- ★M1（2026-10-18 站主）：手机上头像卡收起功能栏，展开钮放在头像**左边**。
+       桌面（>980px）不显示它（功能钮本来就在左栏常驻）。 -->
+  <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false"
+    aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
   <button class="xk-idcard-av" id="xkIdAv" type="button"
     title="点一下：换个情绪说一句 · 长按半秒：打开情绪与动作面板"
     aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">
@@ -3929,7 +3998,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     <span class="dots"><i class="on1"></i><i class="on2"></i><i class="on3"></i><i></i><i></i></span>
   </div>
 </aside>
-<div class="xk-idcard-col" role="group" aria-label="功能">
+<div class="xk-idcard-col" id="xkIdCol" role="group" aria-label="功能">
     <button class="xk-idcard-btn" id="xkLoginBtn" type="button"
       title="登录（只有站主能登）">登录</button>
     <button class="xk-idcard-btn" id="xkEmoBtn" type="button"
@@ -3944,6 +4013,35 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
 </div>
 
 <script>
+/* ★M1（2026-10-18）：手机上点头像或箭头展开/收起功能栏。
+   为什么头像在手机上不再“换个情绪说一句”：那个动作在小屏上没有可见反馈（全身画布只在主页），
+   反而会让人以为“点了没反应”。桌面行为不变。 */
+(function(){
+  var card = document.getElementById('xkIdCard');
+  var fold = document.getElementById('xkIdFold');
+  var av   = document.getElementById('xkIdAv');
+  if(!card) return;
+  function isNarrow(){ return window.innerWidth <= 980; }
+  function setOpen(on){
+    card.classList.toggle('open', !!on);
+    if(fold) fold.setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
+  if(fold) fold.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); setOpen(!card.classList.contains('open')); });
+  if(av) av.addEventListener('click', function(e){
+    if(!isNarrow()) return;                 /* 桌面：保留原有“点一下换情绪” */
+    e.preventDefault(); e.stopPropagation();
+    setOpen(!card.classList.contains('open'));
+  }, true);
+  /* 展开后点别处收起（不抓鼠标移出，手机上容易误触） */
+  document.addEventListener('click', function(e){
+    if(!card.classList.contains('open')) return;
+    if(card.contains(e.target)) return;
+    var col = document.getElementById('xkIdCol');
+    if(col && col.contains(e.target)) return;
+    setOpen(false);
+  }, true);
+  window.addEventListener('resize', function(){ if(!isNarrow()) setOpen(false); });
+})();
 /* ★2026-10-17（站主 m06282「位置太挤了…导航栏不行直接放到中间吧」）：
    宽屏把「头像卡 / 导航 / 功能钮」三块竖排在左边缘并**垂直居中**——原来三块各自 fixed 定位，
    窗口一矮就互相压（他为这个截过图）。这里只做竖直排布，不改任何一块自身样式；

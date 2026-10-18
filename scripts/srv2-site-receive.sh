@@ -136,7 +136,15 @@ MEMBERS=$(tar -tzf "$TARBALL")
 if printf '%s\n' "$MEMBERS" | grep -qE '^/|(^|/)\.\.(/|$)'; then
   die "tar 包含绝对路径或 .. 越界成员，拒绝解包"
 fi
-printf '%s\n' "$MEMBERS" | grep -qE '(^|/)index\.html$' || die "tar 包里没有 index.html"
+# ★2026-10-18 修（两次连败的假失败）：这里原先是
+#     printf '%s\n' "$MEMBERS" | grep -qE '(^|/)index\.html$' || die "tar 包里没有 index.html"
+#   在 `set -o pipefail` 下会**误报**：grep -q 一匹配就退出 ⇒ printf 继续写吃 SIGPIPE(141) ⇒
+#   pipefail 把 141 当整条管道退出码 ⇒ 明明有 index.html 却 die。成员越多越容易撞（本次 2531 行）。
+#   改成纯字符串匹配：无管道、无 SIGPIPE、无退出码歧义。
+case $'\n'"$MEMBERS"$'\n' in
+  *$'\n'index.html$'\n'*|*$'\n'*/index.html$'\n'*) : ;;
+  *) die "tar 包里没有 index.html" ;;
+esac
 ok "成员数 $(printf '%s\n' "$MEMBERS" | wc -l)"
 
 log "2/7 解包到暂存目录（还不露面）→ $STAGING"
