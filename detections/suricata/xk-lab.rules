@@ -84,7 +84,17 @@ alert ssh $EXTERNAL_NET any -> $HOME_NET any ( \
 
 
 # ---------------------------------------------------------------------------
-# 1000103  Cowrie 诱捕端口 2222：同一源 5 分钟内 >=10 次连接（刮削/爆破节流前兆）
+# 1000103  Cowrie 诱捕端口 2222：同一源 60 分钟内 >=120 次连接（≈2/min 持续，刮削/爆破）
+# 2026-10-18 调参（依据 srv2 eve.json 自己的 24h flow→2222 事件回放，同一份数据复现规则计数）：
+#   旧阈值 10/300s 在生产上持续刷屏：24h 677 条（15 个源），30 分钟内稳定 11~12 条。
+#   根因不是误报，而是「真实源本来就活在这个节奏上」：163.5.210.194 24h 3,484 次连接，
+#   按 src×300s 窗口 max=15 / median=12 / mean=12.06 —— 只要 count<=14 就每 5 分钟必然过线；
+#   而把 count 提到 15 又会把这个占比最大的源整体漏掉。两条路都不可接受。
+#   所以改成滑窗 1 小时、>=120 次（≈2/min 持续）：同一份 24h 数据回放 = 30 条/24h（-95.6%），
+#   命中的是 3 个真正持续的源（163.5.210.194 每小时 1 条、195.178.110.218、45.148.10.161），
+#   而 5 分钟内 27~29 次的爆发型源（58.19.99.193 / 173.255.221.189 / 45.33.12.122 等）照样命中。
+#   结构性代价（明说）：threshold both 语义下同一源 1 小时最多 1 条 —— 这是收敛噪音的取舍，
+#   不是漏报：持续攻击的源仍然每小时被点名一次，且 Wazuh 侧 100400/100110 另有速率规则。
 # ---------------------------------------------------------------------------
 # 为什么写：
 #   Wazuh 侧原有的「120 秒 5 次登录失败」复合规则（100110）在本实验室【实际 0 次触发】——
@@ -107,12 +117,12 @@ alert ssh $EXTERNAL_NET any -> $HOME_NET any ( \
 #       本规则的风险不是误报多，而是【漏报】（把阈值调太低会淹没在背景里）。
 # ---------------------------------------------------------------------------
 alert tcp $EXTERNAL_NET any -> $HOME_NET 2222 ( \
-    msg:"XK-LAB honeypot SSH 2222 connection burst from same source (>=10/300s)"; \
+    msg:"XK-LAB honeypot SSH 2222 sustained burst from same source (>=120/3600s)"; \
     flags:S; \
-    threshold: type both, track by_src, count 10, seconds 300; \
+    threshold: type both, track by_src, count 120, seconds 3600; \
     classtype:attempted-recon; \
-    metadata:xk_lab evidence_count 139987, window_p99 27, confidence high; \
-    sid:1000103; rev:1; )
+    metadata:xk_lab evidence_count 142979, window_3600s_count 120, old_threshold 10/300s_spam_677per24h, confidence high; \
+    sid:1000103; rev:2; )
 
 
 # ---------------------------------------------------------------------------
