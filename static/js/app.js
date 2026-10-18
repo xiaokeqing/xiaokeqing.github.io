@@ -1669,6 +1669,17 @@
     return out.join('');
   }
 
+  /** 这一趟要不要顺便向服务端要一句日语语音（`speakJa`）。
+   *  【为什么默认不要】多要一句日语改写 = 多一次公开池模型调用（额度 30/天）。
+   *  静音的访客根本不会听，那一次调用就是纯浪费 —— 只有"声音真的开着"才要。
+   *  声音状态由 kurisu-player.js 的 🔊 挂在 window.__xkSpeakJa 上（两支脚本互不依赖文件顺序）。 */
+  function speakJaWanted() {
+    try {
+      if (window.__xkSound && window.__xkSound.on === false) { return false; }
+      return !!(window.__xkSpeakJa && window.__xkSpeakJa.on);
+    } catch (e) { return false; }
+  }
+
   /** POST /api/public/ask —— 返回 {status, ok, body, retryAfter, rlRemaining, rlLimit}，超时抛 .timeout */
   function askApi(question) {
     var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
@@ -1680,7 +1691,7 @@
       credentials: 'omit',
       cache: 'no-store',
       signal: ctrl ? ctrl.signal : undefined,
-      body: JSON.stringify({ question: String(question).slice(0, ASK_MAX_CHARS) })
+      body: JSON.stringify({ question: String(question).slice(0, ASK_MAX_CHARS), speakJa: speakJaWanted() })
     }).then(function (res) {
       clearTimeout(timer);
       return res.json().catch(function () { return null; }).then(function (body) {

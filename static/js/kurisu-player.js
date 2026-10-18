@@ -1129,6 +1129,10 @@
       // 字幕用【真实回答】的开头；拿不到就如实说拿不到，不编
       setSay(text || (data ? '已返回，但这条回答没有可显示的正文（见下方引用卡片）。'
         : '回答体读不到（非流式返回，正文见下方卡片）。'));
+      /* ★T4：声音开 + 已有手势才念那一句日语；任何一环不满足就只留上面这行中文字幕。
+         字幕（setSay）与回答正文、状态码都不受语音成败影响。 */
+      var ja = (data && typeof data.speakJa === 'string') ? data.speakJa : '';
+      if (ja) { speakJaSay(ja); }
       setTimeout(function () {
         self.emotionVariant = 'idle';
         self.setEmotion('normal');
@@ -1425,6 +1429,83 @@
       .then(function (r) { if (!r.ok) { throw new Error('envelope HTTP ' + r.status); } return r.json(); });
   }
 
+  /* ============================================ ★T4 · 自由回答的日语语音线（2026-10-18）
+     背景：后端 `/api/public/ask` 现在按需多给一个 `speakJa`（≤40 字的日语口语，中文字幕不变）。
+     前端只负责"念出来"，并且**宁可不响，也不乱响**：
+       · 声音开关默认关，且**只在访客自己点过 🔊 之后**才可能出第一声（VOICE.unlocked = 手势闸）；
+       · 关声 / 没手势 / 响应里没有 speakJa ⇒ 纯字幕，连 `/tts/say` 都不请求（不花额度、不占带宽）；
+       · 拿到了但 play() 被浏览器拦 ⇒ 静默降级，在字幕旁写「声音被浏览器拦截，点一下再试」，绝不假装在播；
+       · 口型复用现成的 VOICE.speaking（playVoiceNow 播时置真、ended 复位），不新增一套状态。
+     为什么挂 window.__xkSpeakJa：app.js 是另一支脚本，发问前要判断"这趟要不要 speakJa"，
+     两支脚本之间只靠这个全局通信（不依赖加载顺序：两边都是用到时才读）。 */
+  var SPEAK = { on: false };
+  try { global.__xkSpeakJa = SPEAK; } catch (e) { /* 忽略 */ }
+
+  function speakJaWanted() {
+    try {
+      if (global.__xkSound && global.__xkSound.on === false) { return false; }
+      return !!SPEAK.on;
+    } catch (e) { return false; }
+  }
+  /** 🔊 那颗按钮在"开声模式"下由这里独占写状态（aria-pressed = 声音开没开，而不是"解锁没解锁"） */
+  function refreshSpeakButtons() {
+    var btns = qa('[data-xk-kurisu-voice]');
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      if (!b.getAttribute('data-xk-speak-ja')) { continue; }
+      b.setAttribute('aria-pressed', SPEAK.on ? 'true' : 'false');
+      b.setAttribute('title', SPEAK.on
+        ? '声音已开：点一下关声（只留中文字幕）'
+        : '点我开声：之后每题念一句日语（中文字幕照旧）');
+      /* 静态文案写的是"语音（未启用）"（当时确实没接）。现在接上了就必须如实翻面，
+         否则界面在说谎 —— 只改这一个按钮的可见文字，字幕与回答正文一个字都不动。 */
+      b.textContent = SPEAK.on ? '🔊 语音（已开·点我关）' : '🔊 语音（点我开声）';
+    }
+  }
+
+  /** 念一句 speakJa。所有失败都在这里安静收口，返回 { ok, reason }，绝不抛。 */
+  function speakJaSay(ja) {
+    var text = String(ja == null ? '' : ja).replace(/^\s+|\s+$/g, '');
+    if (!text) { return Promise.resolve({ ok: false, reason: 'NO_TEXT' }); }
+    if (!speakJaWanted()) {
+      VOICE.diag.blockedPlays++;
+      return Promise.resolve({ ok: false, reason: 'SOUND_OFF' });
+    }
+    if (!VOICE.unlocked) {
+      /* 没手势：只留字幕。把这句话记下来 —— 访客随后点 🔊 就能补上这一句 */
+      VOICE.pendingSpeak = text;
+      VOICE.diag.subtitleOnly++;
+      voiceNote('声音要在你点一下之后才会出：点 🔊 再试（字幕已在上面）。');
+      return Promise.resolve({ ok: false, reason: 'AUTOPLAY_BLOCKED' });
+    }
+    var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, 12000);
+    return fetch(apiBaseUrl() + '/api/public/tts/say', {
+      method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      signal: ctrl ? ctrl.signal : undefined,
+      body: JSON.stringify({ text: text })
+    }).then(function (r) {
+      clearTimeout(timer);
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.blob();
+    }).then(function (blob) {
+      var url = URL.createObjectURL(blob);
+      if (VOICE.speakJaUrl) { try { URL.revokeObjectURL(VOICE.speakJaUrl); } catch (e) { /* 忽略 */ } }
+      VOICE.speakJaUrl = url;
+      setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) { /* 忽略 */ } }, 30000);
+      VOICE.diag.lastSpeakJa = text;
+      var ok = playVoiceNow({ id: 'speak-ja', url: url, envelope: null },
+        '声音被浏览器拦截，点一下再试。');
+      return { ok: ok, reason: ok ? null : 'PLAY_FAILED', source: 'tts-say', text: text };
+    }).catch(function (err) {
+      clearTimeout(timer);
+      VOICE.diag.errors.push('speak-ja: ' + (err && err.message));
+      VOICE.diag.subtitleOnly++;
+      return { ok: false, reason: 'TTS_FAILED' };
+    });
+  }
+
   function voiceNote(text) {
     VOICE.diag.lastNote = text;
     var els = qa('[data-xk-kurisu-voice-note]');
@@ -1435,6 +1516,8 @@
     var btns = qa('[data-xk-kurisu-voice]');
     for (var i = 0; i < btns.length; i++) {
       var b = btns[i];
+      /* 开声模式的那颗（AI 页右栏 🔊）状态由 refreshSpeakButtons 独占写，这里不碰 */
+      if (b.getAttribute('data-xk-speak-ja')) { continue; }
       b.setAttribute('aria-pressed', VOICE.unlocked ? 'true' : 'false');
       b.setAttribute('title', VOICE.unlocked ? '声音已开：点一下重播最近一句' : '浏览器会拦自动播放：点我开声');
       var lab = q('[data-xk-voice-label]', b);
@@ -1462,7 +1545,7 @@
     voiceNote('浏览器会拦自动播放：点 🔊 或按任意键开声（动画与字幕不受影响）。');
   }
 
-  function playVoiceNow(line) {
+  function playVoiceNow(line, blockedNote) {
     if (!line || !line.url) { return false; }
     try {
       if (VOICE.audio) { try { VOICE.audio.pause(); } catch (e) { /* 忽略 */ } }
@@ -1500,7 +1583,7 @@
           VOICE.diag.errors.push('play: ' + (err && err.name));
           VOICE.diag.blockedPlays++;
           VOICE.pending = line;
-          voiceNote('浏览器拦下了播放：点 🔊 开声。');
+          voiceNote(blockedNote || '浏览器拦下了播放：点 🔊 开声。');
         });
       }
       return true;
@@ -2754,6 +2837,29 @@
     if (!btn || btn.getAttribute('data-xk-voice-wired')) { return; }
     btn.setAttribute('data-xk-voice-wired', '1');
     btn.setAttribute('aria-pressed', 'false');
+    /* ★T4：AI 页右栏（data-xk-kurisu-hook="ask"）那颗 🔊 就是**声音开关**：
+       第一次点既解锁浏览器音频（手势闸），也打开"要不要念日语"；再点一次关声、只留中文字幕。
+       其它地方那颗按钮保持原行为（只如实说"语音未启用"，一次请求都不发）—— 不动已经验收的路径。 */
+    var askRail = null;
+    try { askRail = (btn.closest ? btn.closest('[data-xk-kurisu-hook="ask"]') : null); } catch (e) { askRail = null; }
+    if (askRail) {
+      btn.setAttribute('data-xk-speak-ja', '1');
+      refreshSpeakButtons();
+      btn.addEventListener('click', function () {
+        unlockAudio('🔊 按钮');
+        SPEAK.on = !SPEAK.on;
+        refreshSpeakButtons();
+        voiceNote(SPEAK.on
+          ? '声音已开：之后每题念一句日语（中文字幕照旧）。再点一次就关声。'
+          : '声音已关：只留中文字幕（不请求任何语音）。');
+        if (SPEAK.on && VOICE.pendingSpeak) {
+          var p = VOICE.pendingSpeak;
+          VOICE.pendingSpeak = null;
+          speakJaSay(p);
+        }
+      });
+      return;
+    }
     if (!btn.getAttribute('title')) { btn.setAttribute('title', '语音未启用（本轮只上文本版）'); }
     btn.addEventListener('click', function () {
       speakImpl(null, '', {}).then(function (r) {
