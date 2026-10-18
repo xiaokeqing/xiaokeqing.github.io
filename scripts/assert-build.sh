@@ -425,9 +425,9 @@ done
 head1 "⑮ 排版审计（可选：docs/layout-audit.json）"
 if [ -f "docs/layout-audit.json" ]; then
   if python -X utf8 "scripts/layout-audit.py" --json - --check-only >/dev/null 2>&1; then
-    ok "排版审计通过（docs/layout-audit.json 无 FAIL）"
+    ok "排版审计 · 通过（docs/layout-audit.json 无 FAIL）"
   else
-    no "排版审计有 FAIL：跑 python -X utf8 scripts/layout-audit.py 看 docs/排版检查-20261018.md"
+    no "排版审计 · 有 FAIL：跑 python -X utf8 scripts/layout-audit.py 看 docs/排版检查-20261018.md"
   fi
 else
   printf '  \033[1;33m[SKIP]\033[0m 排版审计（docs/layout-audit.json 不存在，未跑过 layout-audit.py）\n'

@@ -68,6 +68,7 @@ VIEWPORT_HEIGHT = 900
 NAV_TIMEOUT_MS = 20000
 IDLE_TIMEOUT_MS = 4000
 SETTLE_MS = 200  # 布局在 load 后 ~200ms 定型；页面有轮询，等 networkidle 会空耗
+REMEASURE_MS = 400  # 有 FAIL 时再等这么久复测一次，滤掉「脚本替换文案」这类瞬态
 MOBILE_MAX = 420  # <= 这个宽度才算"手机宽度"，点击区检查只在这里做
 
 # 9 项检查的元信息。severity 决定报告里落到「必须修 / 建议修」哪一档。
@@ -91,7 +92,10 @@ CHECKS = [
     {"id": 9, "key": "c9", "name": "对比度", "sev": "P1",
      "rule": "p/li/td 文字色与最近不透明祖先底色的 WCAG 对比度 < 3.0 记 FAIL"},
 ]
-CHECK_BY_ID = {c["id"]: c for c in CHECKS}
+CHECK_BY_ID = {}
+for _c in CHECKS:
+    CHECK_BY_ID[_c["id"]] = _c
+    CHECK_BY_ID[str(_c["id"])] = _c  # checks 字典的键统一是 str，这里两种都认
 
 # --------------------------------------------------------------------------
 # 浏览器内测量：一次 evaluate 把 9 项全部量完，返回纯 JSON。
@@ -146,16 +150,50 @@ MEASURE_JS = r"""
     const hi = Math.max(l1, l2), lo = Math.min(l1, l2);
     return (hi + 0.05) / (lo + 0.05);
   }
+  // 背景判定：这个站的正文压在「整屏照片 + 半透明暗色遮罩」上，遮罩常常不是祖先
+  // （固定定位的场景层 + rgba 半透明卡片各管一层），只看「alpha≥0.9 的祖先」会一路
+  // 走到 body 的浅色底，于是白字被判成 1.03:1 —— 假 FAIL。所以改成：
+  //   1) 从元素往上收集所有 alpha>0.15 的底色层，按 over 合成到最底下的不透明层；
+  //   2) 整页存在「铺满视口的固定背景层」时，且文字自己这一路没有任何填充层
+  //      （等于直接压在照片上）→ 判不了，跳过，不瞎判。
+  function sceneBackdrop() {
+    const out = [];
+    const all = document.querySelectorAll('body *');
+    for (let i = 0; i < all.length && i < 1500; i++) {
+      const el = all[i];
+      const cs = getComputedStyle(el);
+      if (cs.position !== 'fixed') continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < vw * 0.9 || r.height < window.innerHeight * 0.9) continue;
+      const c = parseColor(cs.backgroundColor) || [0, 0, 0, 0];
+      const hasImg = cs.backgroundImage && cs.backgroundImage !== 'none';
+      if (hasImg || c[3] > 0.3) out.push(sel(el));
+    }
+    return out;
+  }
+  const BACKDROP = sceneBackdrop();
   function bgOf(el) {
-    let cur = el, depth = 0;
-    while (cur && cur !== document.documentElement && depth++ < 14) {
-      const c = parseColor(getComputedStyle(cur).backgroundColor);
-      if (c && c[3] >= 0.9) return { color: c, from: sel(cur) };
+    const layersC = [];
+    const names = [];
+    let cur = el, depth = 0, base = null;
+    while (cur && depth++ < 18) {
+      const cs = getComputedStyle(cur);
+      if (cs.backgroundImage && cs.backgroundImage !== 'none') {
+        return { unknown: true, from: 'bgimg@' + sel(cur), layersC: layersC, opaque: false, base: [255, 255, 255] };
+      }
+      const c = parseColor(cs.backgroundColor);
+      if (c && c[3] > 0.15 && c[3] < 0.99) { layersC.push(c); names.push(sel(cur)); }
+      if (c && c[3] >= 0.99) { base = { c: c, from: sel(cur), tag: cur.tagName }; break; }
       cur = cur.parentElement;
     }
-    const b = document.body ? parseColor(getComputedStyle(document.body).backgroundColor) : null;
-    if (b && b[3] >= 0.9) return { color: b, from: 'body' };
-    return { color: [255, 255, 255, 1], from: 'default-white' };
+    // body/html 的底色会被整屏固定背景层盖住，不能当作「真底色」
+    if (!base) {
+      const b = document.body ? parseColor(getComputedStyle(document.body).backgroundColor) : null;
+      base = { c: (b && b[3] > 0.5) ? b : [255, 255, 255, 1], from: 'body', tag: 'BODY' };
+    }
+    const opaque = !(BACKDROP.length && /^(BODY|HTML)$/.test(base.tag || ''));
+    const from = names.length ? names[0] + (names.length > 1 ? "+" + (names.length - 1) + "层" : "") : base.from;
+    return { unknown: false, layersC: layersC, names: names, base: base.c, opaque: opaque, from: from };
   }
 
   const meta = {
@@ -390,6 +428,7 @@ MEASURE_JS = r"""
       deg.push({
         el: el, sel: sel(el), whiteSpace: ws,
         width: Math.round(r.width), height: Math.round(r.height),
+        clientW: el.clientWidth, scrollW: el.scrollWidth,
         overflow: overflow, nowrap: (ws === 'nowrap'),
         text: t.replace(/\s+/g, ' ').trim().slice(0, 40)
       });
@@ -401,7 +440,8 @@ MEASURE_JS = r"""
     fail: degBad.length > 0,
     count: degBad.length,
     samples: degBad.map(function (d) {
-      return { sel: d.sel, whiteSpace: d.whiteSpace, width: d.width, overflow: d.overflow, text: d.text };
+      return { sel: d.sel, whiteSpace: d.whiteSpace, width: d.width, clientW: d.clientW, scrollW: d.scrollW,
+               overflow: d.overflow, nowrap: d.nowrap, text: d.text };
     }).slice(0, 12),
     all: deg.map(function (d) {
       return { sel: d.sel, whiteSpace: d.whiteSpace, width: d.width, text: d.text };
@@ -412,7 +452,7 @@ MEASURE_JS = r"""
   // 这个站的正文文字大量落在 div/span 里（p/li/td 只在少数页有内容），
   // 所以取「叶子文字容器」：有直接文本节点、且子元素都是行内。否则整站这项会全是 NA。
   const low = [];
-  let checked = 0, lowN = 0;
+  let checked = 0, lowN = 0, skipped = 0, backdropSkipped = 0;
   const c9sel = 'p,li,td,th,dd,dt,blockquote,span,div,label,strong,em,b,i,small,a,button,h1,h2,h3,h4';
   Array.prototype.slice.call(document.querySelectorAll(c9sel)).forEach(function (el) {
     if (checked >= 400) return;
@@ -433,20 +473,49 @@ MEASURE_JS = r"""
     const fg = parseColor(st.color);
     if (!fg) return;
     const bg = bgOf(el);
-    const cr = contrast(fg, bg.color);
+    if (bg.unknown) { skipped++; return; }  // 背景是图片：判不了就不判
+    // 合成：把收集到的半透明层按 over 叠到某个底色上
+    function comp(baseRGB) {
+      let rgb = baseRGB.slice(0, 3);
+      for (let i = bg.layersC.length - 1; i >= 0; i--) {
+        const l = bg.layersC[i], a = l[3];
+        rgb = [a * l[0] + (1 - a) * rgb[0], a * l[1] + (1 - a) * rgb[1], a * l[2] + (1 - a) * rgb[2]];
+      }
+      return rgb;
+    }
+    function contrastOn(baseRGB) {
+      const b = comp(baseRGB);
+      const f = fg[3] < 0.99
+        ? [fg[3] * fg[0] + (1 - fg[3]) * b[0], fg[3] * fg[1] + (1 - fg[3]) * b[1], fg[3] * fg[2] + (1 - fg[3]) * b[2]]
+        : [fg[0], fg[1], fg[2]];
+      return { ratio: contrast(f, b), bg: b };
+    }
+    // 有整屏固定背景（照片/遮罩）且文字这一路没有不透明填充时，真实底色在「最暗」和「最亮」
+    // 之间摆动 —— 两个边界都算，只有两边都 < 3.0 才算 FAIL，跨阈值的记「未定」而不是瞎判。
+    const bases = bg.opaque ? [bg.base]
+      : (BACKDROP.length ? [[10, 13, 17], [248, 251, 255]] : [bg.base]);
+    const evals = bases.map(contrastOn);
+    let cr = evals[0], lo = evals[0].ratio, hi = evals[0].ratio, undet = false;
+    evals.forEach(function (v) {
+      if (v.ratio < lo) { lo = v.ratio; cr = v; }
+      if (v.ratio > hi) hi = v.ratio;
+    });
+    if (evals.length > 1 && !(hi < 3.0) && !(lo >= 3.0)) undet = true;
+    if (undet) { backdropSkipped++; return; }
     checked++;
-    if (cr < 3.0) {
+    if (lo < 3.0) {
       lowN++;
       if (low.length < 12) {
         low.push({
           sel: sel(el), fg: st.color,
-          bg: 'rgb(' + bg.color.slice(0, 3).map(function (x) { return Math.round(x); }).join(',') + ')@' + bg.from,
-          ratio: +cr.toFixed(2), text: snippet(el)
+          bg: 'rgb(' + cr.bg.map(function (x) { return Math.round(x); }).join(',') + ')@' + bg.from,
+          ratio: +lo.toFixed(2), text: snippet(el)
         });
       }
     }
   });
-  out.c9 = { checked: checked, fail: lowN > 0, count: lowN, samples: low };
+  out.c9 = { checked: checked, skipped: skipped, backdropSkipped: backdropSkipped,
+             backdrop: BACKDROP.slice(0, 3), fail: lowN > 0, count: lowN, samples: low };
 
   return { meta: meta, checks: out };
 }
@@ -610,7 +679,9 @@ def normalise_checks(raw, width):
         res[4] = {"status": "FAIL",
                   "detail": "%s 个表格需要横向滚动但祖先没有 overflow-x:auto|scroll：%s" % (
                       len(smp), "；".join("%s scrollWidth=%s clientWidth=%s" % (s["sel"], s["scrollW"], s["clientW"]) for s in smp)),
-                  "samples": [s["sel"] for s in smp]}
+                  "samples": ["%s w=%s scrollWidth=%s clientWidth=%s（%s）" % (
+                      s["sel"], s.get("width"), s["scrollW"], s["clientW"],
+                      "表体溢出" if s.get("selfNeed") else "表格宽于视口") for s in smp]}
     else:
         res[4] = {"status": "PASS",
                   "detail": "本页 %s 个表格，需要滚动的都有 overflow-x 祖先（%s）" % (
@@ -668,9 +739,12 @@ def normalise_checks(raw, width):
     elif s8.get("fail"):
         smp = s8.get("samples") or []
         res[8] = {"status": "FAIL",
-                  "detail": "%s 处降级文案 nowrap 或横向溢出；首例 %s white-space=%s width=%s" % (
-                      len(smp), smp[0]["sel"], smp[0]["whiteSpace"], smp[0]["width"]),
-                  "samples": ["%s white-space=%s width=%s overflow=%s" % (s["sel"], s["whiteSpace"], s["width"], s["overflow"]) for s in smp]}
+                  "detail": "%s 处降级文案 nowrap 或横向溢出；首例 %s white-space=%s clientWidth=%s scrollWidth=%s" % (
+                      len(smp), smp[0]["sel"], smp[0]["whiteSpace"],
+                      smp[0].get("clientW"), smp[0].get("scrollW")),
+                  "samples": ["%s white-space=%s clientWidth=%s scrollWidth=%s%s" % (
+                      s["sel"], s["whiteSpace"], s.get("clientW"), s.get("scrollW"),
+                      "（nowrap 不换行）" if s.get("nowrap") else "（文字横向超出，被挤/裁）" if s.get("overflow") else "") for s in smp]}
     else:
         res[8] = {"status": "PASS",
                   "detail": "%s 处降级文案均可换行（%s）" % (
@@ -679,25 +753,79 @@ def normalise_checks(raw, width):
 
     # ⑨ 对比度
     s9 = c.get("c9", {})
+    sk = (s9.get("skipped") or 0) + (s9.get("backdropSkipped") or 0)
+    bits = []
+    if s9.get("skipped"):
+        bits.append("%s 个背景是图片" % s9.get("skipped"))
+    if s9.get("backdropSkipped"):
+        bits.append("%s 个文字直接压在整屏固定背景上（%s）" % (
+            s9.get("backdropSkipped"), "、".join(s9.get("backdrop") or []) or "照片层"))
+    sk_note = "（未评估：%s）" % "；".join(bits) if bits else ""
     if not s9.get("checked"):
-        res[9] = {"status": "NA", "detail": "没有可测的 p/li/td 直接文本", "samples": []}
+        res[9] = {"status": "NA",
+                  "detail": "没有背景可判定的叶子文字容器" + sk_note, "samples": []}
     elif s9.get("fail"):
         smp = s9.get("samples") or []
         res[9] = {"status": "FAIL",
-                  "detail": "%s/%s 个文本节点对比度 < 3.0；首例 %s %s on %s = %s" % (
-                      s9.get("count"), s9.get("checked"), smp[0]["sel"], smp[0]["fg"], smp[0]["bg"], smp[0]["ratio"]),
+                  "detail": "%s/%s 个文本节点对比度 < 3.0；首例 %s %s on %s = %s%s" % (
+                      s9.get("count"), s9.get("checked"), smp[0]["sel"], smp[0]["fg"], smp[0]["bg"],
+                      smp[0]["ratio"], sk_note),
                   "samples": ["%s %s/%s ratio=%s" % (s["sel"], s["fg"], s["bg"], s["ratio"]) for s in smp]}
     else:
-        res[9] = {"status": "PASS", "detail": "%s 个文本节点全部 >= 3.0" % s9.get("checked"), "samples": []}
+        res[9] = {"status": "PASS",
+                  "detail": "%s 个文本节点全部 >= 3.0%s" % (s9.get("checked"), sk_note), "samples": []}
 
     # 键统一成 str：JSON 里 int 键会被悄悄转成 str，md 表格按 str 取，
     # 两边不一致会让表格全变 NA（踩过一次）。
     return {str(k): v for k, v in res.items()}, raw.get("meta", {})
 
 
+def measure(page, js, arg, attempts=3):
+    """量化一次；页面偶尔还在导航（documentElement 为 null）时会炸，重试几次。"""
+    last = None
+    for i in range(attempts):
+        try:
+            return page.evaluate(js, arg)
+        except Exception as e:
+            last = e
+            try:
+                page.wait_for_timeout(300 * (i + 1))
+            except Exception:
+                pass
+    raise last
+
+
+ALIAS_RE = re.compile(r'http-equiv=["\']?refresh["\']?[^>]*?url=([^"\'\s>]+)', re.I)
+
+
+def alias_target(html_text):
+    """Hugo 的 alias 页：243 字节的 <meta http-equiv=refresh> 跳转壳，没有可审计的排版。
+    不识别出来就会被当成真页面：浏览器跟跳后落到外站（或错误页），
+    于是量到 908px 的「横向溢出」，其实是 Chromium 的错误提示页。
+    """
+    m = ALIAS_RE.search(html_text[:2000])
+    return m.group(1) if m else None
+
+
+def scan_aliases(pages, public_dir):
+    out = {}
+    for route, rel in pages:
+        fp = os.path.join(public_dir, rel)
+        try:
+            with io.open(fp, encoding="utf-8", errors="replace") as fh:
+                head = fh.read(2000)
+        except Exception:
+            continue
+        tgt = alias_target(head)
+        if tgt:
+            out[route] = tgt
+    return out
+
+
 def audit_real(pages, base, widths, public_dir):
     from playwright.sync_api import sync_playwright
 
+    aliases = scan_aliases(pages, public_dir)
     results = []
     t0 = time.time()
     with sync_playwright() as p:
@@ -711,6 +839,21 @@ def audit_real(pages, base, widths, public_dir):
         for idx, (route, rel) in enumerate(pages):
             url = url_for(base, route)
             entry = {"path": route, "file": rel, "url": url, "title": "", "status": "PASS", "widths": {}}
+            if route in aliases:
+                # 别名页：只记录跳转目标，9 项全部 NA，不占审计时长
+                entry["status"] = "NA"
+                entry["alias"] = aliases[route]
+                for w in widths:
+                    done += 1
+                    entry["widths"][str(w)] = {"innerWidth": None, "checks": {
+                        str(c["id"]): {"status": "NA",
+                                       "detail": "别名页：<meta refresh> 跳转到 %s，没有独立排版" % aliases[route],
+                                       "samples": []} for c in CHECKS}}
+                    sys.stderr.write("\r  [%d/%d] %-40s %dpx 别名页   " % (done, total, route, w))
+                    sys.stderr.flush()
+                results.append(entry)
+                log("跳过别名页 %s → %s" % (route, aliases[route]))
+                continue
             for w in widths:
                 done += 1
                 page.set_viewport_size({"width": w, "height": VIEWPORT_HEIGHT})
@@ -728,8 +871,19 @@ def audit_real(pages, base, widths, public_dir):
                         page.evaluate("() => Promise.race([document.fonts ? document.fonts.ready : 1, new Promise(function(r){setTimeout(r,800)})]).then(function(){return 1})")
                     except Exception:
                         pass
-                    raw = page.evaluate(MEASURE_JS, {"mobile": min(widths)})
+                    raw = measure(page, MEASURE_JS, {"mobile": min(widths)})
                     checks, meta = normalise_checks(raw, w)
+                    # 有些页（如 /redteam/）首帧的降级文案还在被脚本替换，量到的
+                    # 「文字超出容器」会在 200ms 后自己消失 —— 只有 FAIL 时才复核一次，
+                    # 拿第二次结果覆盖，避免把瞬态当缺陷写进报告。
+                    if any(cv["status"] == "FAIL" for cv in checks.values()):
+                        try:
+                            page.wait_for_timeout(REMEASURE_MS)
+                            raw2 = measure(page, MEASURE_JS, {"mobile": min(widths)})
+                            checks2, meta2 = normalise_checks(raw2, w)
+                            checks, meta = checks2, meta2
+                        except Exception:
+                            pass
                     item["checks"] = checks
                     item["innerWidth"] = meta.get("innerWidth")
                     item["scrollWidth"] = meta.get("scrollWidth")
@@ -741,10 +895,10 @@ def audit_real(pages, base, widths, public_dir):
                 except Exception as e:
                     err = str(e).split("\n")[0][:200]
                     item["error"] = err
-                    for cid in CHECK_BY_ID:
-                        item["checks"][cid] = {"status": "NA",
-                                               "detail": "渲染失败，未测：%s" % err,
-                                               "samples": []}
+                    for cid in [c["id"] for c in CHECKS]:
+                        item["checks"][str(cid)] = {"status": "NA",
+                                                    "detail": "渲染失败，未测：%s" % err,
+                                                    "samples": []}
                     entry["status"] = "FAIL"
                 entry["widths"][str(w)] = item
                 sys.stderr.write("\r  [%d/%d] %-40s %dpx %s   " % (
@@ -866,7 +1020,7 @@ def write_md(path, results, summary, meta, widths, base):
     A("")
     A("> 生成时间：%s　|　脚本：`scripts/layout-audit.py`" % now)
     A("> 渲染模式：**%s**（engine=`%s`）　|　基准地址：`%s`" % (
-        "真实渲染（playwright + 浏览器内核）" if meta["mode"] == "real" else "**未做真实渲染（纯静态分析）**",
+        "真实渲染（playwright + 浏览器内核）" if meta["mode"] == "real" else "⚠ 未做真实渲染（纯静态分析）",
         meta.get("engine", "?"), base))
     A("> 宽度：%s px　|　视口高度：%s px　|　页面：%s 个（%s 个页面在 3 个宽度下都有真实测量数据）" % (
         " / ".join(str(w) for w in widths), VIEWPORT_HEIGHT, summary["pages"], summary["pages_with_data"]))
@@ -892,32 +1046,36 @@ def write_md(path, results, summary, meta, widths, base):
         A("数字：总检查点 %s 个（PASS %s / FAIL %s / NA %s）。" % (
             summary["checks_pass"] + summary["checks_fail"] + summary["checks_na"],
             summary["checks_pass"], summary["checks_fail"], summary["checks_na"]))
+        A("")
     else:
         A("共 %s 条（同一页同一宽度下的同类问题合并为一条）。" % len(summary["p0"]))
         A("")
         for i, f in enumerate(summary["p0"], 1):
             smp = ""
             if f["samples"]:
-                smp = "　样例：`%s`" % "` `".join(md_table_cell(s) for s in f["samples"][:3])
+                smp = "　样例：" + "、".join("`%s`" % md_table_cell(s) for s in f["samples"][:3])
             A("%s. **%s** @ %spx · %s —— %s%s" % (i, f["path"], f["width"], f["name"], md_table_cell(f["detail"]), smp))
         A("")
 
-    # 用户点名要的第三类数字：390px 下字号 < 13px 的页面与元素数
+    # 用户点名要的第三类数字：字号 < 13px 的页面与元素数（三宽度都要）
     small = []
     for e in results:
         for w in widths:
             cv = e["widths"].get(str(w), {}).get("checks", {}).get("6")
             if cv and cv["status"] == "FAIL":
                 small.append((e["path"], w, cv))
-    A("### 1.1 补充数字：字号 < 13px / 行高偏紧的页面（%spx 口径）" % min(widths))
+    A("### 1.1 补充数字：字号 < 13px / 行高偏紧的页面（各宽度）")
     A("")
     if small:
-        A("| 页面 | 宽度 | 命中元素数 | 样例 |")
+        A("| 页面 | 宽度 | 命中情况 | 样例 |")
         A("|---|---|---|---|")
-        for path, w, cv in small[:20]:
-            det = md_table_cell(cv["detail"])[:140]
-            smp = "` `".join(md_table_cell(s)[:60] for s in (cv.get("samples") or [])[:2])
-            A("| `%s` | %s | %s | %s |" % (path, w, det, smp))
+        for pg_path, pg_w, pg_cv in small[:24]:
+            det = md_table_cell(pg_cv["detail"])[:140]
+            smp = "、".join(str(s)[:70] for s in (pg_cv.get("samples") or [])[:2])
+            A("| `%s` | %s | %s | %s |" % (pg_path, pg_w, det, md_table_cell(smp)))
+        if len(small) > 24:
+            A("")
+            A("（只列前 24 行；共 %s 个「页面 × 宽度」点位命中，完整数据见 `docs/layout-audit.json` 的 `c6` 字段。）" % len(small))
         A("")
     else:
         A("无命中（或数据不足，见第四节）。")
@@ -929,12 +1087,22 @@ def write_md(path, results, summary, meta, widths, base):
     A("每页一张表：9 项检查 × %s 个宽度的状态，最后一列是证据（数值或选择器）。" % len(widths))
     A("")
     for e in results:
-        page_status = "FAIL" if e["status"] == "FAIL" else "PASS"
+        if e.get("alias"):
+            page_status = "NA（别名页 → %s）" % e["alias"]
+        else:
+            page_status = "FAIL" if e["status"] == "FAIL" else "PASS"
         per = []
         for w in widths:
             item = e["widths"].get(str(w), {})
             nf = sum(1 for cv in item.get("checks", {}).values() if cv["status"] == "FAIL")
-            per.append("%s:%s" % (w, "FAIL×%s" % nf if nf else "PASS"))
+            nna = sum(1 for cv in item.get("checks", {}).values() if cv["status"] == "NA")
+            nall = len(item.get("checks", {}))
+            if nf:
+                per.append("%s:FAIL×%s" % (w, nf))
+            elif nall and nna == nall:
+                per.append("%s:NA" % w)
+            else:
+                per.append("%s:PASS" % w)
         A("### `%s`　%s（%s）" % (e["path"], page_status, " / ".join(per)))
         A("")
         A("| # | 检查项 | %s | 证据（数值 / 选择器） |" % " | ".join(str(w) for w in widths))
@@ -942,17 +1110,24 @@ def write_md(path, results, summary, meta, widths, base):
         for c in CHECKS:
             cid = c["id"]
             cells = []
-            evid = []
+            groups = []  # [([宽度...], detail)]：同一条证据在多个宽度下重复时折叠成一行
             for w in widths:
                 cv = e["widths"].get(str(w), {}).get("checks", {}).get(str(cid))
                 if cv is None:
                     cells.append("NA")
                     continue
                 cells.append(cv["status"])
-                if w == widths[0] or cv["status"] == "FAIL":
-                    evid.append("%spx %s" % (w, cv["detail"]) if cv["status"] == "FAIL" else None)
-            ev = [x for x in evid if x]
-            if not ev:
+                if cv["status"] != "FAIL":
+                    continue
+                for g in groups:
+                    if g[1] == cv["detail"]:
+                        g[0].append(w)
+                        break
+                else:
+                    groups.append([[w], cv["detail"]])
+            if groups:
+                ev = ["%spx %s" % ("/".join(str(x) for x in g[0]), g[1]) for g in groups]
+            else:
                 first = e["widths"].get(str(widths[0]), {}).get("checks", {}).get(str(cid), {})
                 ev = ["%spx %s" % (widths[0], first.get("detail", ""))]
             A("| %s | %s | %s | %s |" % (cid, c["name"], " | ".join(cells), md_table_cell("；".join(ev)[:400])))
@@ -962,8 +1137,8 @@ def write_md(path, results, summary, meta, widths, base):
         for w in widths:
             for cid, cv in e["widths"].get(str(w), {}).get("checks", {}).items():
                 if cv["status"] == "FAIL" and cv.get("samples"):
-                    fails.append("`%s`@%spx %s：`%s`" % (e["path"], w, CHECK_BY_ID[int(cid)]["name"],
-                                                        "` `".join(str(s)[:70] for s in cv["samples"][:3])))
+                    fails.append("`%s`@%spx %s：%s" % (e["path"], w, CHECK_BY_ID[int(cid)]["name"],
+                                                       "、".join("`%s`" % str(s)[:70] for s in cv["samples"][:3])))
         if fails:
             A("样例：")
             for f in fails[:6]:
@@ -981,7 +1156,7 @@ def write_md(path, results, summary, meta, widths, base):
     else:
         A("- 无。四项 P0 检查在全部页面、全部宽度下都通过（或该页没有可测目标）。")
     A("")
-    A("### 建议修（P1/P2：字号与行高、点击区、降级文案换行、对比度、卡片取值一致性）")
+    A("### 建议修（P1/P2：字号与行高、点击区、降级文案换行、对比度、卡片取值一致性；含「疑似刻意层叠」的重叠项）")
     A("")
     if summary["suggest"]:
         # 同类问题按检查项聚合，避免 90 页逐条铺开
@@ -991,9 +1166,15 @@ def write_md(path, results, summary, meta, widths, base):
             agg.setdefault(k, []).append(f)
         for (cid, name, sev), rows in sorted(agg.items()):
             pages = sorted({r["path"] for r in rows})
-            worst = rows[0]
+            dds = []
+            for r in rows:
+                d = md_table_cell(r["detail"])[:140]
+                if d not in dds:
+                    dds.append(d)
+                if len(dds) >= 2:
+                    break
             A("- **%s**（%s，%s 条命中，涉及 %s 页）：%s" % (
-                name, sev, len(rows), len(pages), md_table_cell(worst["detail"])[:260]))
+                name, sev, len(rows), len(pages), "；另外 ".join(dds)))
             A("  - 命中页：%s" % ("、".join("`%s`" % p for p in pages[:12]) + ("…等 %s 页" % len(pages) if len(pages) > 12 else "")))
     else:
         A("- 无。")
@@ -1020,13 +1201,22 @@ def write_md(path, results, summary, meta, widths, base):
         A("- 有 %s 个「页面×宽度」组合渲染失败（已标 NA，原因逐条列出）：" % len(errs))
         for x in errs[:20]:
             A("  - " + x)
-    A("- 对比度只看 `p/li/td` 的文字与其最近**不透明**祖先背景；半透明背景、渐变底、图片底一律跳过（会漏）。")
+    A("- 对比度取「叶子文字容器」（有直接文本、子元素全为行内）的文字色，与其背景按 `over` 合成后的颜色比较；"
+      "半透明卡片会一层层叠到最底下的不透明层。本站页面底部是「整屏照片 + 暗色遮罩」（`div.xk-bg` 等固定层），"
+      "这类遮罩不是文字的祖先：此时若文字这一路没有不透明填充，就分别按最暗底色和最亮底色各算一次，"
+      "**两边都 < 3.0 才记 FAIL**，跨阈值的记「未评估」而不是判过或判错。背景是图片（`background-image`）时直接记未评估。")
     A("- 元素重叠只比对 `.dock`、`.xk-idcard`、首个 `.screen-hd`、首个 `.mod` 两两之间；正文内部互相压字不在本项范围内。")
     A("- 文字被裁只认 `overflow: hidden|clip` + `scrollWidth > clientWidth+2` + 直接文本节点；用 `text-overflow: ellipsis` 的省略号截断同样算命中（有意为之的省略号需要人工豁免）。")
     A("- 表格窄屏按「table 自身溢出 或 宽于视口」判定；用 transform 缩放出来的表格不会被识别为溢出。")
-    A("- 所有数值来自无头浏览器（%s，视口高度 %spx，device_scale_factor=1）；真机字体渲染可能有 1–2px 差异。" % (
-        VIEWPORT_HEIGHT, VIEWPORT_HEIGHT))
+    A("- 所有数值来自无头浏览器（%s，视口 %spx 高，device_scale_factor=1）；真机字体渲染可能有 1–2px 差异。" % (
+        meta.get("engine") or "?", VIEWPORT_HEIGHT))
+    A("- 重叠判定里，两个 `position:fixed` 装饰层之间 ≤16px 的相交会标注「疑似刻意层叠」，"
+      "不计入必须修（例如顶栏 `.dock` 与下挂头像卡 `.xk-idcard` 固定相差 10px）。")
     A("- 页面清单是 `public/**/index.html` 的 glob 结果（%s 页），不含 `404.html`、不含 RSS/JSON 等非 HTML 产物。" % len(results))
+    al = [(e["path"], e["alias"]) for e in results if e.get("alias")]
+    if al:
+        A("- 其中 %s 个是 Hugo 别名页（`<meta http-equiv=refresh>` 跳转壳），没有独立排版，9 项全 NA、不参与判定：%s" % (
+            len(al), "、".join("`%s` → %s" % (p, t) for p, t in al)))
     A("")
     A("## 五、复现")
     A("")
@@ -1151,7 +1341,8 @@ def main(argv=None):
             return 2
 
     try:
-        if have_playwright():
+        # LAYOUT_AUDIT_FORCE_STATIC=1 可以强制走静态退化路径（用来验证「没有浏览器时」的报告，别装假）
+        if have_playwright() and os.environ.get("LAYOUT_AUDIT_FORCE_STATIC") != "1":
             try:
                 results, meta = audit_real(pages, base, widths, public_dir)
             except Exception as e:
@@ -1183,12 +1374,7 @@ def main(argv=None):
     }
 
     md_path = args.md if args.md != "-" else None
-    if md_path:
-        d = os.path.dirname(os.path.abspath(md_path))
-        if d and not os.path.isdir(d):
-            os.makedirs(d)
-        write_md(md_path, results, summary, meta, widths, base)
-        log("Markdown：%s" % os.path.abspath(md_path))
+    # JSON 先落盘：报告模板出 bug 时，至少测量结果不会白跑（曾经白跑 8 分钟）
     if args.json == "-":
         write_json("-", payload)
     else:
@@ -1197,6 +1383,16 @@ def main(argv=None):
             os.makedirs(d)
         write_json(args.json, payload)
         log("JSON：%s" % os.path.abspath(args.json))
+    if md_path:
+        d = os.path.dirname(os.path.abspath(md_path))
+        if d and not os.path.isdir(d):
+            os.makedirs(d)
+        try:
+            write_md(md_path, results, summary, meta, widths, base)
+            log("Markdown：%s" % os.path.abspath(md_path))
+        except Exception as e:  # 报告模板出错不能掩盖测量结果
+            log("Markdown 生成失败（JSON 已保存）：%s: %s" % (type(e).__name__, e))
+            raise
 
     log("结果：PASS %s / FAIL %s / NA %s（页面 %s，其中 %s 页有 FAIL）" % (
         summary["checks_pass"], summary["checks_fail"], summary["checks_na"],
