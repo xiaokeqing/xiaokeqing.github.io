@@ -121,7 +121,10 @@ head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 #   · /api/public/deploy.js = 部署可追溯（当前 available:false + RELEASE_INFO_NOT_CONFIGURED —— 后端待配 release-info 文件）
 #   · /api/public/eval.js   = AI 质量报告（当前 available:false + EVAL_REPORT_NOT_CONFIGURED —— 后端待配评测报告文件路径）
 #   ★三者都遵守"取不到不编数"：available:false + reason，页面据此如实写"读不到"。
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip"
+# 【2026-10-18 补】password = 口令自查端点（/api/public/password，别名 /password.js）：
+#   只收 sha256 前 5 位 hex，回桶内 hash 后 59 位 + 合计次数；字典索引离线生成，
+#   缺文件时 200 + available:false（不 500、不补数）。页面 /tools/password/ 引用它。
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
@@ -352,6 +355,9 @@ new_page_gate ip IP情报页
 new_page_gate purpleteam 紫队演练页
 new_page_gate passwords 弱口令统计页
 new_page_gate tools/cve CVE每日速递页
+# ★2026-10-18：口令自查页（/tools/password/）。判据同上；data-xk-ssr 用路由名 password
+#   （后端名 /api/public/password 的最后一段），不是目录名，所以两种写法都在 pat 里认。
+new_page_gate tools/password 密码自查页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
 # 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。
@@ -371,7 +377,7 @@ new_page_gate tools/cve CVE每日速递页
 head1 "⑭ 外链共享运行时（HTML 体积上限 / 内容指纹 / 外链文件在位）"
 for pg in index.html alerts/index.html posts/index.html ai/index.html test/index.html \
           what/index.html lab/index.html api/index.html status/index.html redteam/index.html \
-          tools/cve/index.html; do
+          tools/cve/index.html tools/password/index.html; do
   f="$PUB/$pg"
   if [ ! -s "$f" ]; then no "$pg 不存在（外链化后每页仍必须有产物）"; continue; fi
   sz=$(stat -c %s "$f")
@@ -409,6 +415,22 @@ for pg in alerts/index.html what/index.html redteam/index.html; do
     no "$pg 外壳 <script 数变了：$SHELLN 处（其中带 src $SHELLSRC 处），应为 2/2"
   fi
 done
+# ---------- ⑮ 排版审计（可选，2026-10-18 新增）----------
+# 数据源：docs/layout-audit.json，由 scripts/layout-audit.py 真实渲染产出。
+# 判据：脚本以 --check-only 复算 JSON，有 FAIL 就退出码 1。
+# ★可选门禁：JSON 不存在时直接 [SKIP] —— 没有 playwright / 没跑过审计的机器
+#   不能被卡住（审计要真实渲染，属于额外能力，不是发布的必要条件）。
+#   想跑：python -X utf8 scripts/layout-audit.py --widths 390,768,1280
+head1 "⑮ 排版审计（可选：docs/layout-audit.json）"
+if [ -f "docs/layout-audit.json" ]; then
+  if python -X utf8 "scripts/layout-audit.py" --json - --check-only >/dev/null 2>&1; then
+    ok "排版审计通过（docs/layout-audit.json 无 FAIL）"
+  else
+    no "排版审计有 FAIL：跑 python -X utf8 scripts/layout-audit.py 看 docs/排版检查-20261018.md"
+  fi
+else
+  printf '  \033[1;33m[SKIP]\033[0m 排版审计（docs/layout-audit.json 不存在，未跑过 layout-audit.py）\n'
+fi
 
 # ---------- 汇总 ----------
 head1 "汇总"

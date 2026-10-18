@@ -1,0 +1,252 @@
+{{- /* ============================================================================
+   /tools/password/ = 「你的密码在攻击者字典里吗」（k-匿名口令自查）
+   ----------------------------------------------------------------------------
+   这一页只做一件事，而且**口令原文不许离开浏览器**：
+     ① 浏览器本地 crypto.subtle 把口令算成 SHA-256（64 位 hex）；
+     ② 只把**前 5 位**发给 GET /api/public/password?p=<5 hex>（后端见
+        PublicApiController#password，数据来自 PasswordDictionaryService 的离线索引
+        data/password-hashes.json —— 里面只有「sha256 + 次数」，一个明文字符都没有）；
+     ③ 用后端回的 hashes[]（桶内 hash 的后 59 位）在**本地**比对，自己判定命中。
+
+   为什么后端回 hashes[] 而不是只回一个计数：光有「桶内合计次数」判不了命中
+   （5 位前缀下任何口令都会落在同一个桶里，那个数是整桶的合计）。取舍写在后端注释里。
+
+   三条文案铁律：
+     · 不说"你的密码已被泄露"：只能说「这个口令在蜜罐里被攻击者尝试过」——
+       蜜罐里没有真实账号，也就没有"谁的密码"这回事；
+     · 读不到就写「读不到（原因）—— 不补数」，绝不把读不到渲染成"没命中/安全"；
+     · 「不在字典里」≠ 安全：只统计自己蜜罐 24h 内的真实爆破口令 + 公开弱口令榜。
+
+   ★本页逻辑全部在 assets/js/password-check.js（外链，走 Hugo Pipes 带内容指纹），
+     HTML 里**不写任何内联脚本正文** —— 页面本体只有两个字面 script 标签
+     （/js/xk-saver.js 与 password-check 外链），外壳那 2 个由 shell-script.html 提供。
+   ============================================================================ */ -}}
+{{- $v := "password" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：只用外壳已有的色板，不加新配色、不引外部资源 */
+.pwd-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.pwd-back:hover{color:#bfe3d0}
+.pwd-bd{display:flex;flex-direction:column;gap:14px}
+.pwd-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.pwd-lead b{color:#cfe9f5;font-weight:600}
+.pwd-lead code,.pwd-p code,.pwd-note code,.pwd-kv code,.pwd-pre code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px;word-break:break-all}
+.pwd-warnbox{margin:0;padding:10px 12px;border:1px solid rgba(232,131,123,.55);border-radius:8px;background:rgba(232,131,123,.1);font-size:12.5px;line-height:1.9;color:#F3C9C4}
+.pwd-warnbox b{color:#FF9E93;font-weight:700}
+.pwd-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pwd-in{flex:1 1 260px;min-width:220px;background:rgba(0,0,0,.35);border:1px solid rgba(160,220,240,.28);border-radius:7px;color:#eaf6ff;font-family:ui-monospace,Consolas,monospace;font-size:13px;padding:8px 11px;outline:none}
+.pwd-in::placeholder{color:rgba(255,255,255,.32)}
+.pwd-in:focus{border-color:rgba(160,220,240,.62)}
+.pwd-go{background:none;border:1px solid rgba(160,220,240,.4);color:#cfe9f5;border-radius:7px;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:8px 16px;cursor:pointer;flex:none}
+.pwd-go:hover{border-color:rgba(160,220,240,.68);color:#eaf6ff}
+.pwd-go[disabled]{opacity:.45;cursor:default}
+.pwd-hint{margin:9px 0 0;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.45)}
+.pwd-local{margin:8px 0 0;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.8;color:rgba(255,255,255,.5);white-space:pre-wrap;word-break:break-all}
+.pwd-cards{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.pwd-card{flex:1 1 150px;min-width:150px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.22)}
+.pwd-card .k{display:block;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);font-family:ui-monospace,Consolas,monospace}
+.pwd-card .n{display:block;margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:18px;line-height:1.25;color:#eaf6ff;font-weight:600;word-break:break-all}
+.pwd-card .d{display:block;margin-top:3px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.45)}
+.pwd-card.bad .n{color:#E8837B}
+.pwd-card.good .n{color:#6FD3A0}
+.pwd-card.warn .n{color:#E8B45A}
+.pwd-card.na .n{font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);font-weight:500}
+.pwd-kv{width:100%;border-collapse:collapse;font-size:12.5px}
+.pwd-kv th,.pwd-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.pwd-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap;width:150px}
+.pwd-kv td{color:rgba(255,255,255,.8);line-height:1.9}
+.pwd-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.76)}
+.pwd-p:last-child{margin-bottom:0}
+.pwd-p b{color:#eaf6ff;font-weight:600}
+.pwd-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.pwd-note:first-child{margin-top:0}
+.pwd-note b{color:rgba(255,255,255,.76);font-weight:600}
+.pwd-null{color:#E8B45A}
+.pwd-ok{color:#6FD3A0;font-weight:600}
+.pwd-bad{color:#E8837B;font-weight:600}
+.pwd-warn{color:#E8B45A;font-weight:600}
+.pwd-na{color:rgba(255,255,255,.42)}
+.pwd-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
+.pwd-pre .c{color:rgba(255,255,255,.45)}
+.pwd-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
+.pwd-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.55)}
+.pwd-notes li{margin:2px 0}
+.pwd-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:560px){.pwd-kv tbody th{width:auto;white-space:normal}}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="password">
+<section class="view on" id="v-password">
+  <a class="pwd-back" href="/api/">← 公开接口 /api/</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 你的密码在攻击者字典里吗 <em class="ops-en">PASSWORD-CHECK</em></span>
+      <span class="sync" id="pwdSync">● 待检查（本地算 hash，只发 5 位前缀）</span>
+    </div>
+    <div class="screen-bd pwd-bd">
+
+      <p class="pwd-lead">
+        输入一个口令，这一页会<b>在你的浏览器里</b>算出它的 SHA-256，然后<b>只把前 5 位</b>发给我查一下：
+        攻击者在我们蜜罐里试过的口令里，有没有落在这个前缀上的。<b>口令原文一个字节都不会离开这个页面</b> ——
+        不进步请求、不进控制台、不进浏览器存储、不进地址栏。
+      </p>
+
+      <noscript><p class="pwd-noscript">本页要靠浏览器自带的 <code>crypto.subtle</code> 在本地算 SHA-256，
+        关掉 JavaScript 时这里只有一个输入框 —— <b>不会有任何结果</b>，也不会退化成"把口令发到服务器算"。
+        静态部分（口径、数据来源、为什么别输常用口令）照常可读。</p></noscript>
+
+      <!-- ============ ① 醒目警告：别输入常用口令 ============ -->
+      <p class="pwd-warnbox">
+        <b>⚠ 不要在这里输入你的常用密码。</b>
+        这一页虽然只发 5 位前缀，但"<b>把真密码打进任何网页</b>"本身就是个坏习惯：
+        浏览器插件、输入法、屏幕录制、共享屏幕都可能看到它。要试，请拿一个<b>你想验证强度的旧口令 / 示例口令</b>，
+        或者先用密码管理器生成一个再贴进来试。<b>这一页不保存、不上传、不记录你输入的任何内容</b>，
+        但它救不了"你自己把真密码交给一个网页"这件事。
+      </p>
+
+      <!-- ============ ② 检查 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>查一次<span class="tag">本地 SHA-256 · 只发 5 位 hex · 只读 GET</span></div>
+        <div class="mod-bd">
+          <form class="pwd-form" id="pwdForm" method="get" action="" autocomplete="off">
+            <input class="pwd-in" id="pwdQ" name="p" type="password"
+                   autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                   placeholder="要验证的口令（别用你的常用密码）" aria-label="要验证的口令">
+            <button class="pwd-go" id="pwdGo" type="submit">检查</button>
+          </form>
+          <p class="pwd-hint">
+            算式：<code>SHA-256(口令)</code> → 64 位 hex → 取<b>前 5 位</b> → <code>GET /api/public/password?p=&lt;5 位&gt;</code>。
+            后端只回「这个前缀桶里有哪些 hash 的<b>后 59 位</b>」，命中判定在<b>你的浏览器里</b>做完 ——
+            所以后端既拿不到你的口令，也拿不到"你查的是哪个 hash"。算完输入框会立刻被清空。
+          </p>
+          <p class="pwd-local" id="pwdLocal">还没算过。输入口令后点「检查」。</p>
+        </div>
+      </div>
+
+      <!-- ============ ③ 结果 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>结果<span class="tag" id="pwdTag">未检查</span></div>
+        <div class="mod-bd" id="pwdOut">
+          <p class="pwd-p pwd-na" id="pwdEmpty">
+            还没查。上面输入一个口令后点「检查」——
+            结果会告诉你：命中蜜罐真实爆破记录 / 只在公开弱口令榜上 / 这个前缀下没有记录 / 读不到（原因）。
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ④ 口径 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径 · 每个数是怎么来的<span class="tag">先看这块，再看结论</span></div>
+        <div class="mod-bd">
+          <div class="pwd-scroll">
+            <table class="pwd-kv">
+              <tbody>
+                <tr><th>k-匿名：为什么只发 5 位</th><td>
+                  SHA-256 是 64 位 hex、共 <b>2²⁵⁶</b> 种可能；只发前 5 位 = <b>16⁵ = 1,048,576</b> 个桶之一，
+                  每个桶里平均有<b>海量</b>候选口令。后端看到的只是"有人问了 a1b2c 这个桶"，
+                  <b>无法反推</b>你输入的是哪一个 —— 这就是 k-匿名查询的通行做法（同类服务都这么做）。
+                  代价写在明处：后 59 位确实会随响应下发，但那要求对方已经知道你的前缀，与直接猜口令是同一难度。
+                </td></tr>
+                <tr><th>bucketCount</th><td>
+                  这 5 位前缀下<b>所有</b>口令的尝试次数<b>合计</b> —— <b>不是</b>"你这个口令被试了 N 次"。
+                  一个桶里可能有几百个不同口令，页面文案一律写「同前缀桶合计」。
+                </td></tr>
+                <tr><th>命中 / 榜上 / 未命中</th><td>
+                  <b>命中</b>：你的 hash 后 59 位出现在 <code>hashes[]</code> 里 —— 这个口令在<b>蜜罐里被真实攻击者试过</b>。<br>
+                  <b>榜上有名</b>：出现在 <code>listed[]</code> 里 —— 它在我们收录的<b>公开弱口令榜</b>上，但蜜罐<b>还没抓到过</b>它。
+                  这两件事不能混说：前者是"被真实试过"，后者是"字典里有"。<br>
+                  <b>未命中</b>：这个桶里没有它 —— <b>不代表绝对安全</b>（见下面的数据来源）。
+                </td></tr>
+                <tr><th>truncated</th><td>
+                  单个桶最多下发 <b>200</b> 条 hash（<code>limits.maxHashesPerBucket</code>）。桶更大时
+                  <code>truncated:true</code>，页面会明确写「可能被截断，未命中不代表不在字典里」——
+                  绝不把截断后的"没找到"说成"没被尝试过"。
+                </td></tr>
+                <tr><th>限流与缓存</th><td>
+                  每 IP <b>每分钟 30 次</b>（<code>limits.perMinute</code>），超了回 <b>429</b> + 人话原因；
+                  响应带 <code>Cache-Control: public, max-age=300</code>（<code>limits.cacheSeconds</code>），
+                  同一个前缀 5 分钟内不会重复打到后端。限流是防刷，不是限制你检查自己的口令。
+                </td></tr>
+                <tr><th>为什么会有 null</th><td>
+                  字典索引没生成 / 格式坏 / 没配置 → 后端回 <code>available:false</code> +
+                  <code>notes</code> 写清原因，页面写「<b>读不到（原因）—— 不补数</b>」。
+                  <b>读不到 ≠ 没命中 ≠ 安全</b>，这三件事页面分得很开。
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pwd-note"><b>一句话口径</b>：宁可说"读不到"，也不给一个看起来像真的结论。</p>
+        </div>
+      </div>
+
+      <!-- ============ ⑤ 数据从哪来 + 边界 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>数据从哪来 · 边界在哪<span class="tag">公开的是可复核的部分</span></div>
+        <div class="mod-bd">
+          <p class="pwd-p">
+            <b>数据来源（两个）</b>：<br>
+            ① <b>自己蜜罐的真实爆破口令</b>：最近 <b>24 小时</b>的 SSH / Web 登录尝试里，攻击者实际敲进来的那些
+            <code>password</code> 字段 —— 在<b>日志所在的机器上</b>就地被 SHA-256、按前 5 位分桶，
+            只把「hash + 次数 + 最后出现时间」写进索引文件；<b>明文口令一个都不出那台机器</b>，
+            本项目里也<b>不存明文</b>（见后端 <code>scripts/password-dict-build.py</code> 与
+            <code>PasswordDictionaryService</code> 的类注释）。<br>
+            ② <b>公开弱口令榜</b>：业界公开的弱口令清单（rockyou / SecLists 一类），单独标成 <code>listed[]</code>，
+            <b>不混进</b>「被真实尝试过」的计数里。
+          </p>
+          <p class="pwd-p">
+            <b>公开</b>：某个 5 位前缀下有几条 hash、合计被尝试多少次、最后一次是什么时候、数据集生成时间与总量。<br>
+            <b>不公开</b>：任何口令明文（本来就没有）、任何口令的完整 hash、哪个 IP 试过什么、真实账号与口令的对应关系
+            （蜜罐里没有真实账号）。<br>
+            <b>不做的</b>：不记录你查了哪个前缀、不写任何文件、不触发任何处置动作；这个端点是一次纯读。
+          </p>
+          <p class="pwd-note">
+            <b>为什么不能说"你的密码已被泄露"</b>：我们只知道「这个口令字符串被攻击者试过」，
+            不知道它是谁的、也不知道它在哪个站还能用。反过来，「不在字典里」也只说明
+            <b>它不在我们这两份数据里</b> —— 攻击者手里的私有字典比公开的大得多。
+          </p>
+          <p class="pwd-note">
+            同一套诚实口径：<a href="/passwords/" style="color:#bfe3d0">/passwords/</a> 弱口令统计 ·
+            <a href="/ip/" style="color:#bfe3d0">/ip/</a> 这个 IP 干过什么 ·
+            <a href="/api/" style="color:#bfe3d0">/api/</a> 公开端点清单
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ⑥ 自己复核 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>自己复核 · 三条 curl<span class="tag">只读 · 不触发处置</span></div>
+        <div class="mod-bd">
+<pre class="pwd-pre"><span class="c"># ① 查一个前缀（a1b2c 换成你自己算出来的前 5 位）</span>
+curl -s 'https://demo.xiaokeqing.cn/api/public/password?p=a1b2c' | head -c 800
+
+<span class="c"># ② 对照：非法前缀 → 400 + 机读 reason（不是 500，也不是空对象）</span>
+curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/password?p=A1B2C'
+
+<span class="c"># ③ 自己算前 5 位（口令只进本机的 sha256sum，不上网）</span>
+printf '%s' 'example-password' | sha256sum | cut -c1-5</pre>
+          <p class="pwd-note">
+            响应外层统一是 <code>{code, message, data}</code>；<code>data.available</code> 为 <code>false</code> 时
+            <code>bucketCount</code> 是 <b>null</b>（不是 0），原因在 <code>data.notes</code> 里。
+            别名 <code>/api/public/password.js</code> 同一份数据，带 5 分钟缓存与 ETag。
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+  <script src="{{ (resources.Get "js/password-check.js" | minify | fingerprint).RelPermalink }}"></script>
+</body>
+</html>
