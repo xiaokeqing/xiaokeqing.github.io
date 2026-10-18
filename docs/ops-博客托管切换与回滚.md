@@ -1,6 +1,6 @@
 # ops：博客托管切换与回滚（srv2 直连 + CF 隧道备用）
 
-> 最后更新：2026-10-14 22:20 ｜ 执行人：DSH 会话（站主授权）｜ 状态：**✅ 已切换完成**（apex/www → A 43.143.114.79 灰云；4-SAN 证书生效）
+> 最后更新：2026-10-14 22:20 ｜ 执行人：DSH 会话（站主授权）｜ 状态：**✅ 已切换完成**（apex/www → A {公网IP-腾讯云} 灰云；4-SAN 证书生效）
 > 关联脚本：`scripts/publish-site-to-srv2.ps1`、`scripts/srv2-site-receive.sh`、`deploy/srv2-site/**`
 
 ---
@@ -10,7 +10,7 @@
 博客整站已经不在 GitHub Pages 上了：现在跑在 **srv2 的宿主 nginx**（只读静态）上，对外有**两条路**：
 
 ```
-                         ┌── 路径 A（主，快）：Cloudflare DNS → A 记录 43.143.114.79（灰云）→ nginx 10.0.0.10:443
+                         ┌── 路径 A（主，快）：Cloudflare DNS → A 记录 {公网IP-腾讯云}（灰云）→ nginx 10.0.0.10:443
 站主/访客 ── DNS ────────┤
                          └── 路径 B（备）：Cloudflare 橙云 → 命名隧道 secagent-static → nginx 127.0.0.1:18080
 ```
@@ -67,7 +67,7 @@
 
 | 关 | 判据 | 实测 |
 |---|---|---|
-| 关 1 证书是正式 CA | ① `curl -I https://direct.xiaokeqing.cn/ --resolve direct.xiaokeqing.cn:443:43.143.114.79`（**不带 -k**）→ 200；② `openssl s_client -servername xiaokeqing.cn` 的 issuer 是正式 CA | ① **200 / 72,262B / 0.19s / verify=0**；② `issuer=C=US,O=Let's Encrypt,CN=YR1` |
+| 关 1 证书是正式 CA | ① `curl -I https://direct.xiaokeqing.cn/ --resolve direct.xiaokeqing.cn:443:{公网IP-腾讯云}`（**不带 -k**）→ 200；② `openssl s_client -servername xiaokeqing.cn` 的 issuer 是正式 CA | ① **200 / 72,262B / 0.19s / verify=0**；② `issuer=C=US,O=Let's Encrypt,CN=YR1` |
 | 关 2 内容一致 | 本地 `public/` 与 srv2 逐项一致 | **304 文件全量 sha256 零差异**；六路由 200 且 `data-xk-ssr` = home/monitor/notes/range/about/ai |
 
 > ⚠️ 关 1 目前是 **2-SAN**（`direct` + `static`）。主域名切过去**之前**必须补签成 4-SAN
@@ -94,7 +94,7 @@ bash deploy/srv2-site/switch-main-domain.sh --token-file /root/.cf-token --apply
 （该脚本按设计留待 token 到位后落地；DNS-01 在**切之前**就把 4-SAN 签好 ⇒ 用户看不到任何证书警告。）
 
 **路 2（站主点两下，代价是约 1 分钟的自签窗口）—— 2026-10-14 实际走的就是这条**
-1. 站主在 Cloudflare 控制台：`xiaokeqing.cn` 与 `www` 的 A 记录 → `43.143.114.79`，**代理状态 DNS only（灰云）**
+1. 站主在 Cloudflare 控制台：`xiaokeqing.cn` 与 `www` 的 A 记录 → `{公网IP-腾讯云}`，**代理状态 DNS only（灰云）**
 2. 切换后**立刻**（脚本 40 秒内）在 srv2 上执行：
    ```bash
    sudo bash /opt/secagent/scripts/srv2-site-tls-issue.sh \
@@ -107,8 +107,8 @@ bash deploy/srv2-site/switch-main-domain.sh --token-file /root/.cf-token --apply
 
 ```
 21:53  srv2 发布当前产物（304 文件 / 85.74MB / index.html 72,262B，全量 sha256 零差异）
-21:47  站主改 www → A 43.143.114.79（灰云）→ 立刻补签 www+direct+static（certbot rc=0）
-22:0x  站主改 apex → A 43.143.114.79（灰云）→ srv2 本地解析器仍缓存 CF IP，
+21:47  站主改 www → A {公网IP-腾讯云}（灰云）→ 立刻补签 www+direct+static（certbot rc=0）
+22:0x  站主改 apex → A {公网IP-腾讯云}（灰云）→ srv2 本地解析器仍缓存 CF IP，
        但 LE 用公共解析 ⇒ 跳过本地预检、直接补签 4-SAN
 22:08  4-SAN 签发成功（certbot rc=0），hook 同步 + reload
 22:12  切换后复测（下面的原始输出）
@@ -189,8 +189,8 @@ Cloudflare 控制台操作（**站主执行，约 2 分钟生效**）：
 
 | 记录 | 现在（切换后） | 回滚成 |
 |---|---|---|
-| `xiaokeqing.cn`(apex) | 切换后：A `43.143.114.79` + 灰云 | **回滚成：CNAME `xiaokeqing.github.io` + Proxied（橙云）** |
-| `www` | 切换后：A `43.143.114.79` + 灰云 | **回滚成：CNAME `xiaokeqing.github.io` + Proxied（橙云）** |
+| `xiaokeqing.cn`(apex) | 切换后：A `{公网IP-腾讯云}` + 灰云 | **回滚成：CNAME `xiaokeqing.github.io` + Proxied（橙云）** |
+| `www` | 切换后：A `{公网IP-腾讯云}` + 灰云 | **回滚成：CNAME `xiaokeqing.github.io` + Proxied（橙云）** |
 | `static` / `direct` / `demo` | 不动 | 不动 |
 
 > ⚠️ **回滚前必须先把 DNS 原文备份（§5）确认到位**：没有原文就只能靠记忆重建，可能把 www 或 MX 弄错。
@@ -242,18 +242,18 @@ Cloudflare 控制台操作（**站主执行，约 2 分钟生效**）：
 | `xiaokeqing.cn` | 橙云（A/AAAA 由 CF 应答） | 104.21.28.174 / 172.67.146.238 | **Proxied** | 源站 = GitHub Pages（响应头含 `x-github-request-id`、`via: 1.1 varnish`） |
 | `www.xiaokeqing.cn` | 同上 | 同左 | **Proxied** | 源站 = GitHub Pages（`301 → https://xiaokeqing.cn/`，GitHub 自定义域跳转） |
 | `static.xiaokeqing.cn` | 隧道 CNAME（→ `<uuid>.cfargotunnel.com`） | 同左 | **Proxied** | 隧道备用路径，**切换时不动** |
-| `direct.xiaokeqing.cn` | A | **43.143.114.79** | **DNS only** | 2026-10-14 新增，验证用 |
+| `direct.xiaokeqing.cn` | A | **{公网IP-腾讯云}** | **DNS only** | 2026-10-14 新增，验证用 |
 | NS | — | `clay.ns.cloudflare.com`、`gabriella.ns.cloudflare.com` | — | Cloudflare 托管 |
 
 ### 5.1 切换前的**原文**（站主 2026-10-14 从 Cloudflare 面板逐条誊录）
 
 | 类型 | 名称 | 值 | 代理状态 | 本次动作 |
 |---|---|---|---|---|
-| A | `direct.xiaokeqing.cn` | `43.143.114.79` | **DNS only（灰云）** | **不动** |
+| A | `direct.xiaokeqing.cn` | `{公网IP-腾讯云}` | **DNS only（灰云）** | **不动** |
 | Tunnel | `demo.xiaokeqing.cn` | 隧道 `secagent`（**srv1**） | Proxied | **绝对不动**（另一条线的隧道） |
 | Tunnel | `static.xiaokeqing.cn` | 隧道 `secagent-static`（srv2） | Proxied | **不动**（备用路径） |
-| CNAME | `www.xiaokeqing.cn` | `xiaokeqing.github.io` | **Proxied（橙云）** | → 改成 A `43.143.114.79` + 灰云 |
-| CNAME | `xiaokeqing.cn`（apex） | `xiaokeqing.github.io` | **Proxied（橙云）** | → 改成 A `43.143.114.79` + 灰云 |
+| CNAME | `www.xiaokeqing.cn` | `xiaokeqing.github.io` | **Proxied（橙云）** | → 改成 A `{公网IP-腾讯云}` + 灰云 |
+| CNAME | `xiaokeqing.cn`（apex） | `xiaokeqing.github.io` | **Proxied（橙云）** | → 改成 A `{公网IP-腾讯云}` + 灰云 |
 | NS | 整个 zone | `clay.ns.cloudflare.com`、`gabriella.ns.cloudflare.com` | — | 不动 |
 
 **回滚原文（一条也不能错）**：

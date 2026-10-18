@@ -159,7 +159,7 @@ L2 云端：**Fish Audio `$15 / 百万 UTF-8 字节`**（`s2.1-pro`/`s2-pro`；�
 
 ### 5.2 srv2（腾讯云）— 蜜罐检测 + 博客静态托管（**本次新增的角色**）
 ```
-规格：4 vCPU ｜ 3719 MB ｜ **300 GB/月流量包**（2026-11-11 重置）｜ 公网 IP 43.143.114.79（EIP 1:1 NAT 到私网 10.0.0.10）
+规格：4 vCPU ｜ 3719 MB ｜ **300 GB/月流量包**（2026-11-11 重置）｜ 公网 IP {公网IP-腾讯云}（EIP 1:1 NAT 到私网 10.0.0.10）
 职责（原）：**7 个容器** —— cowrie / dionaea / secagent-decoy / suricata / wazuh.dashboard /
           wazuh.indexer / wazuh.manager；蜜罐网段 `cowrie_honeypot 172.19.0.0/16`
 职责（新增）：**博客整站 + 角色素材的静态托管**
@@ -181,9 +181,9 @@ L2 云端：**Fish Audio `$15 / 百万 UTF-8 字节`**（`s2.1-pro`/`s2-pro`；�
 
 ### 5.3 DNS 与 Cloudflare（`xiaokeqing.cn` 区）
 ```
-direct.xiaokeqing.cn  A     43.143.114.79        DNS only（灰云）
-xiaokeqing.cn (apex)  A     43.143.114.79        DNS only（灰云）   ← 2026-10-14 21:47~22:0x 从 CF 代理切过来
-www.xiaokeqing.cn     A     43.143.114.79        DNS only（灰云）
+direct.xiaokeqing.cn  A     {公网IP-腾讯云}        DNS only（灰云）
+xiaokeqing.cn (apex)  A     {公网IP-腾讯云}        DNS only（灰云）   ← 2026-10-14 21:47~22:0x 从 CF 代理切过来
+www.xiaokeqing.cn     A     {公网IP-腾讯云}        DNS only（灰云）
 demo.xiaokeqing.cn    Tunnel secagent            Proxied（橙云，srv1）
 static.xiaokeqing.cn  Tunnel secagent-static     Proxied（橙云，srv2，备用路径）
 Cache Rule：Hostname = static.xiaokeqing.cn 且 Path 以 /kurisu/ 开头 → Eligible for cache

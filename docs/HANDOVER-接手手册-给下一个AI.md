@@ -20,7 +20,7 @@
 ```
 ✅ 已上线（服务 srv2 直连，不经 Cloudflare）：
    · 六页 = 设计原型文档的**整份照搬**：/ · /alerts/ · /posts/ · /labs/ · /about/ · /ai/
-   · 主域名 xiaokeqing.cn / www 已是 A → 43.143.114.79（灰云，直连）；LE 4-SAN 证书 + 自动续期
+   · 主域名 xiaokeqing.cn / www 已是 A → {公网IP-腾讯云}（灰云，直连）；LE 4-SAN 证书 + 自动续期
    · 实测吞吐：直连 271~338 KB/s（对照 GitHub Pages 9.6~17、CF 隧道 0~10.7 KB/s）
 ⏳ 进行中：① 语音（GPT-SoVITS 真音色第一句）② 六页原型缺陷修复（假数字/横幅/叠行/暗块）③ 视频接入
 ❌ 未做：把"真状态机 + 真视频 + 真语音 + 口型"接进六页；P1 尾巴；服务端历史待办
@@ -43,7 +43,7 @@ Amadeus 源码 clone：E:\DeepSeek1\work\_amadeus-src（素材包安装到这里
   · PowerShell **5.1**：没有三元运算符；`if` 不能当表达式；字符串里别套单引号 ✗
   · 用 edit/write 工具改 **.ps1 会丢 UTF-8 BOM** → PS5.1 按 GBK 读会报假语法错 ⇒ 改完必须补 BOM
   · 本机直连本站 443 会**被中间设备按 SNI 重置**（SNI 含 xiaokeqing.cn 就 reset；换 x.cn 就 200）✗
-    → 验证线上请走 srv1（`ssh secagent-srv1 ... curl -k -H "Host: xiaokeqing.cn" https://43.143.114.79/`）
+    → 验证线上请走 srv1（`ssh secagent-srv1 ... curl -k -H "Host: xiaokeqing.cn" https://{公网IP-腾讯云}/`）
   · Clash Verge：**TUN 关、规则模式**；若浏览器打不开本站，切「全局」或加规则 `DOMAIN-SUFFIX,xiaokeqing.cn,<代理组>`
 ```
 
@@ -190,7 +190,7 @@ git pull --ff-only                                                     # 同步
 & node _dev/gate-firstscreen.mjs
 & python _dev/check-ssr-contract.py public
 # 3) 看线上现状（本机直连被重置，走 srv1）
-ssh secagent-srv1 "curl -sS -k -o /dev/null -w '%{http_code} %{size_download}\n' -H 'Host: xiaokeqing.cn' https://43.143.114.79/"
+ssh secagent-srv1 "curl -sS -k -o /dev/null -w '%{http_code} %{size_download}\n' -H 'Host: xiaokeqing.cn' https://{公网IP-腾讯云}/"
 # 4) 决定 §5 那三条在跑的活由谁继续，再动任何文件
 ```
 

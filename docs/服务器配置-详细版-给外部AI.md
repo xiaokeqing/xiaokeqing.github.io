@@ -13,7 +13,7 @@
 
 ```
                       ┌─────────────────────────────┐
-   访客 ── 443/80 ──▶ │ srv2（腾讯云）EIP 43.143.114.79 │  ← **主站真身**（灰云直连）
+   访客 ── 443/80 ──▶ │ srv2（腾讯云）EIP {公网IP-腾讯云} │  ← **主站真身**（灰云直连）
                       │ 私网 10.0.0.10：nginx 只读静态  │
                       │ + 蜜罐 7 容器 + Wazuh 三件套   │
                       └─────────────────────────────┘
@@ -54,7 +54,7 @@
 ```
 系统：Ubuntu（VM-0-10-ubuntu）`[已实测]`
 规格：**4 vCPU ｜ 3719 MB** ｜ 流量包 **300 GB/月（2026-11-11 重置）** `[已实测]`
-公网：**EIP 43.143.114.79**，1:1 NAT 到私网 **10.0.0.10** `[契约]`
+公网：**EIP {公网IP-腾讯云}**，1:1 NAT 到私网 **10.0.0.10** `[契约]`
 SSH：别名 `secagent-srv2`（密钥见 §9）
 ```
 
@@ -120,13 +120,13 @@ ufw：放行 80/443 ✓ ｜ 腾讯云**安全组入站**：TCP 80/443 ✓（22 �
 
 **⚠️ 硬前提：未备案 ⇒ 境内 80/443 被阻断（2026-10-15 实测铁证）**
 ```
-curl -H 'Host: xiaokeqing.cn' http://43.143.114.79/
+curl -H 'Host: xiaokeqing.cn' http://{公网IP-腾讯云}/
   → 302 Location: https://dnspod.qcloud.com/static/webblock.html?d=xiaokeqing.cn
   （443 直接 reset，浏览器显示"连接被重置"）
 ```
 ⇒ **所有"连接被重置/超时"的真因就是这条**（曾经的"本地 SNI 过滤"判断是误判 ✗ 已纠正）。
 ⇒ **现行对外路径 = Cloudflare 隧道**（apex/www 的 DNS 已从 A 记录改为 Tunnel `secagent-static`，`direct.*` 保留 A 记录 DNS-only）。
-⇒ **备案是唯一能回到直连速度的路**（站主机器实测直连 271~338 KB/s vs CF 免费链路 0~10.7 KB/s）；备案办下来后把 apex/www 切回 A 43.143.114.79（灰云）。
+⇒ **备案是唯一能回到直连速度的路**（站主机器实测直连 271~338 KB/s vs CF 免费链路 0~10.7 KB/s）；备案办下来后把 apex/www 切回 A {公网IP-腾讯云}（灰云）。
 ⇒ 顺带记录：srv1（阿里云）出站到 api.fish.audio 被 SNI 重置（同类阻断），TTS 代理的 Fish 上游暂不可达，见总账。
 
 ---
@@ -149,9 +149,9 @@ SAN 四名：**xiaokeqing.cn / www.xiaokeqing.cn / direct.xiaokeqing.cn / static
 
 | 名称 | 类型 | 值 | 代理状态 | 说明 |
 |---|---|---|---|---|
-| `direct.xiaokeqing.cn` | A | 43.143.114.79 | **DNS only（灰云）** | 直连入口，保留 |
-| `xiaokeqing.cn`（apex） | A | 43.143.114.79 | **DNS only（灰云）** | 2026-10-14 21:47 起从 CF 代理切到直连 |
-| `www.xiaokeqing.cn` | A | 43.143.114.79 | **DNS only（灰云）** | 同上 |
+| `direct.xiaokeqing.cn` | A | {公网IP-腾讯云} | **DNS only（灰云）** | 直连入口，保留 |
+| `xiaokeqing.cn`（apex） | A | {公网IP-腾讯云} | **DNS only（灰云）** | 2026-10-14 21:47 起从 CF 代理切到直连 |
+| `www.xiaokeqing.cn` | A | {公网IP-腾讯云} | **DNS only（灰云）** | 同上 |
 | `demo.xiaokeqing.cn` | Tunnel `secagent` | — | Proxied（橙云） | srv1 的演示/备用 |
 | `static.xiaokeqing.cn` | Tunnel `secagent-static` | — | Proxied（橙云） | srv2 的**备份路径**（回源 127.0.0.1:18080） |
 | Cache Rule | — | Hostname = `static.xiaokeqing.cn` **且** Path 以 `/kurisu/` 开头 → Eligible for cache | — | 只对备份路径生效 `[待核对]` 是否也要对主域生效 |

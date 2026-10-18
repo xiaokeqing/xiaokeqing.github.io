@@ -76,11 +76,11 @@
 
 ```
 ① **未备案 = 不能直连**：腾讯云对未备案域名的 80/443 做阻断 —— 铁证：
-   `curl -H 'Host: xiaokeqing.cn' http://43.143.114.79/` → `302 Location: https://dnspod.qcloud.com/static/webblock.html?d=xiaokeqing.cn`
+   `curl -H 'Host: xiaokeqing.cn' http://{公网IP-腾讯云}/` → `302 Location: https://dnspod.qcloud.com/static/webblock.html?d=xiaokeqing.cn`
    443 直接 reset（浏览器显示"连接被重置"）✗ `[已实测]`
    ⇒ **今天所有"连接被重置/超时"的真因就是这条**；我先前写的"本地 SNI 过滤"是误判 ✗ `[已纠正]`
 ② 当前对外路径（2026-10-15 起）：CF 边缘 → **隧道 `secagent-static`（出站）** → srv2 `127.0.0.1:18080` → `/opt/secagent/site`
-   · DNS：`xiaokeqing.cn` 与 `www` 已从 A 记录改为 **Tunnel `secagent-static`** ✓（`direct.*` 仍保留 A 43.143.114.79 / DNS only ✓）
+   · DNS：`xiaokeqing.cn` 与 `www` 已从 A 记录改为 **Tunnel `secagent-static`** ✓（`direct.*` 仍保留 A {公网IP-腾讯云} / DNS only ✓）
    · 四条隧道路由的 Service 均为 `http://127.0.0.1:18080` ✓ `[已实测]`
    · **`static.xiaokeqing.cn` 只服务 `/opt/secagent/static`（248 B 占位页）** ✗ —— 它**不是主站备份**，别拿它当备份用 `[已纠正]`
 ③ **push ≠ 上线** ✗：push 只更新 gh-pages；上线必须再跑 `scripts/publish-site-to-srv2.ps1`（srv2 原子切换）
@@ -293,7 +293,7 @@ E4 文档漂移：`docs/交接-六页整份搬demo-20261014.md:114` 仍写旧断
 ## 11. T11（P3）服务器与运维（补充项）
 
 ```
-· 备案：**这是唯一能回到直连速度的路**（271~338 KB/s）⇒ 建议尽快办；办下来后 apex/www 改回 A 43.143.114.79（灰云）
+· 备案：**这是唯一能回到直连速度的路**（271~338 KB/s）⇒ 建议尽快办；办下来后 apex/www 改回 A {公网IP-腾讯云}（灰云）
 · 证书续期告警（到期前 21/7/1 天三级）+ 续期后自动访问一次 https 校验 ✗ 现在没有
 · srv2 站点可用性**外部探测**（srv2 是整站单点 ✗；现在靠 CF 隧道顶着，路径已变 ⇒ 探测目标应为
   `https://xiaokeqing.cn/`（经 CF）**和** srv1 侧直连 `direct.xiaokeqing.cn`（若开放）两条各测）
@@ -565,7 +565,7 @@ U4【后端线提醒】`/opt/secagent/src` 源码树**落后于运行 jar** ✗�
 ```
 ### 附录-5.7 · H（T11）提的两件待拍板
 ```
-① 备案提交前是否把 apex/www 从「CF 隧道 橙云」切回「A 43.143.114.79 / DNS only 灰云」？
+① 备案提交前是否把 apex/www 从「CF 隧道 橙云」切回「A {公网IP-腾讯云} / DNS only 灰云」？
    ⇒ **提交备案时再切** ✓（切了公网解析才指回境内服务器、接入核验才对得上 ✓）；
      注意副作用：切换期间站点会**短暂不可用或被未备案阻断** ✗ ⇒ 建议作为独立动作、由站主在控制台操作 ✓
 ② 配置备份要不要加 srv2→srv1 异地一份（需要新只读密钥）？

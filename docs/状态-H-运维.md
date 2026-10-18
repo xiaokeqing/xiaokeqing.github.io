@@ -73,11 +73,11 @@ srv2 secagent-cert-expiry.timer（enabled）/ secagent-site-config-backup.timer�
 
 ### E6 · ④ 备案证据（可提交材料）
 ```
-访客视角拦截 [已实测，站主本机 20:31]：http://43.143.114.79/ + Host: xiaokeqing.cn → HTTP/1.1 302 OK
+访客视角拦截 [已实测，站主本机 20:31]：http://{公网IP-腾讯云}/ + Host: xiaokeqing.cn → HTTP/1.1 302 OK
         Location: https://dnspod.qcloud.com/static/webblock.html?d=xiaokeqing.cn ；443 → curl (35) Connection was reset
 服务器视角对照 [已实测]：srv1 → 同 IP/同 Host：80 返回 nginx 301、443 --resolve 返回 200/33,213 B；
         对照假 Host 也 301 ⇒ srv1/srv2 侧不复现拦截（只留现象，机制未定论 ✗ 不编解释）
 实例事实 [已实测，腾讯云元数据]：instance-id ins-mawyt7d7 ｜ instance-name lh-1503609860-lhins-2zqpnb2c（lh- = Lighthouse 轻量）
-        ｜ placement/region ap-shanghai ｜ public-ipv4 43.143.114.79 ｜ local-ipv4 10.0.0.10 ｜ meta-data/eipv4 → 404（未绑 EIP）
+        ｜ placement/region ap-shanghai ｜ public-ipv4 {公网IP-腾讯云} ｜ local-ipv4 10.0.0.10 ｜ meta-data/eipv4 → 404（未绑 EIP）
 官方要求逐条对照 + 咨询问题清单：见 docs/运维-T11-备案材料清单-20261015.md §2/§3
 ```

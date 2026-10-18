@@ -132,9 +132,9 @@ D9 推前必看本地产物+截图；`git add` 只加自己的路径 ✗
 
 ```
 ① **未备案 = 不能直连**：腾讯云对未备案域名 80/443 阻断 —— 铁证：
-   `curl -H 'Host: xiaokeqing.cn' http://43.143.114.79/` → `302 → dnspod.qcloud.com/static/webblock.html?d=xiaokeqing.cn`；443 直接 reset ✗
+   `curl -H 'Host: xiaokeqing.cn' http://{公网IP-腾讯云}/` → `302 → dnspod.qcloud.com/static/webblock.html?d=xiaokeqing.cn`；443 直接 reset ✗
    ⇒ 现行对外路径 = **CF 边缘 → 隧道 `secagent-static` → srv2 127.0.0.1:18080 → /opt/secagent/site**
-   ⇒ `direct.xiaokeqing.cn`（A 43.143.114.79 / DNS only）保留作调试；**备案完成后** apex/www 才切回 A 记录（271~338 KB/s ✓）
+   ⇒ `direct.xiaokeqing.cn`（A {公网IP-腾讯云} / DNS only）保留作调试；**备案完成后** apex/www 才切回 A 记录（271~338 KB/s ✓）
    ⇒ `static.xiaokeqing.cn` **只服务 248B 占位页** ✗，别当主站备份用
 ② **push ≠ 上线** ✗：push 只更新 gh-pages；上线必须再跑 `scripts/publish-site-to-srv2.ps1`（srv2 原子切换 + 自检 ✓）
 ③ 三道门禁：`bash scripts/assert-build.sh ./public`（**16 项**）｜`node _dev/gate-firstscreen.mjs`（6 页 ≤1650KB）｜
