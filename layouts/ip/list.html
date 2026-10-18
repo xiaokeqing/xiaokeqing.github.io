@@ -72,6 +72,24 @@
 .ipp-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
 .ipp-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.55)}
 .ipp-notes li{margin:2px 0}
+/* 威胁分卡：大数字 + band 色条 + 因子表。色板仍只用本页那四个颜色：
+   low=绿 / medium=黄 / high=红 / critical=红+粗边框（同色不新增色值） */
+.ipp-threat{--tc:#6FD3A0;margin:12px 0 0;padding:12px 13px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.26);border-radius:9px}
+.ipp-threat[data-band="medium"]{--tc:#E8B45A}
+.ipp-threat[data-band="high"]{--tc:#E8837B}
+.ipp-threat[data-band="critical"]{--tc:#E8837B;border-color:rgba(232,131,123,.55)}
+.ipp-threat[data-band="na"]{--tc:rgba(255,255,255,.38)}
+.ipp-threat-hd{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+.ipp-threat-hd .k{font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);font-family:ui-monospace,Consolas,monospace}
+.ipp-threat-band{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.04em;color:var(--tc);border:1px solid var(--tc);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.ipp-threat[data-band="critical"] .ipp-threat-band{background:rgba(232,131,123,.16)}
+.ipp-threat-n{margin-top:2px;font-family:ui-monospace,Consolas,monospace;font-size:42px;line-height:1.05;font-weight:600;color:var(--tc);letter-spacing:-.01em}
+.ipp-threat-n .of{font-size:12px;font-weight:400;color:rgba(255,255,255,.45);letter-spacing:0;margin-left:6px}
+.ipp-threat-bar{height:8px;margin-top:7px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.ipp-threat-bar i{display:block;height:100%;background:var(--tc);border-radius:inherit}
+.ipp-threat-meta{margin:7px 0 0;font-size:11.5px;line-height:1.8;color:rgba(255,255,255,.5)}
+.ipp-threat-tbl{min-width:460px;margin-top:8px}
+.ipp-threat-tbl td.w{white-space:nowrap}
 </style>
 </head>
 <body data-skin="warm" data-phone="v1" class="xk-has-idcard">
@@ -139,6 +157,14 @@
                 <tr><th>firstSeen / lastSeen</th><td>
                   窗口内最早 / 最晚的一条记录的<b>时间戳</b>，同样来自索引聚合的 min/max，是精确值。
                   只在这个 IP 的窗口内有记录时才给；没有就 null。
+                </td></tr>
+                <tr><th>威胁分 threat</th><td>
+                  把上面几项按<b>写死的权重</b>加起来：事件量 30 + 来源类型 25（蜜罐命中 9 / 扫描 6 /
+                  成功登录 10）+ 端口扇出 15 + 凭据尝试 15 + 已封禁 10 + 账号多样性 5，
+                  再除以<b>可用权重</b>折成 0–100。<b>启发式加权，不是 ML、不是概率</b>：
+                  没有训练集、没有模型，同样的输入永远同样的分数。没读到的因子<b>从分母里剔除</b>
+                  （分母不低于 45）而不是当 0 参与 —— 所以不同窗口、不同缺字段状态的分数不能直接比较。
+                  公式写死在后端 <code>ThreatScore</code>，页面只渲染，控制器与前端都不自己算分。
                 </td></tr>
                 <tr><th>byKind / ports / credStructure</th><td>
                   <b>只基于最近取回的样本</b>（默认最多 300 条，见结果卡里
@@ -268,6 +294,76 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
       '<span class="d">' + d + '</span></div>';
   }
 
+  /* ============ 威胁分卡（分数由后端 ThreatScore 算好，这里只排版） ============
+     三条不变量：
+       · 分数是"启发式加权"不是概率：页面写死这句，不出现"可信度/概率"字样；
+       · 没读到的因子已经不在分母里（后端剔除 + 重标化），页面把 this 如实写出来；
+       · 后端没给 threat（服务未装配）就只写「读不到 —— 不补数」，绝不自己估一个分。 */
+  var BAND_LABEL = {
+    low: 'low · 低',
+    medium: 'medium · 中',
+    high: 'high · 高',
+    critical: 'critical · 严重'
+  };
+
+  function renderThreat(t, indexerOk) {
+    if (!t || t.score === null || t.score === undefined) {
+      return '<div class="ipp-threat" data-band="na">' +
+        '<div class="ipp-threat-hd"><span class="k">威胁分 THREAT SCORE</span>' +
+        '<span class="ipp-threat-band">读不到</span></div>' +
+        '<div class="ipp-threat-n">—</div>' +
+        '<p class="ipp-threat-meta">' + miss('threat', '后端这次没给这个字段（服务未装配或旧版本）') + '</p>' +
+        '<p class="ipp-note">这一项缺席时页面不自己估一个分 —— 缺就是缺。</p></div>';
+    }
+
+    var band = String(t.band || 'low');
+    if (!BAND_LABEL[band]) band = 'low';
+    var score = Number(t.score);
+    if (!isFinite(score)) score = 0;
+    var pct = Math.max(0, Math.min(100, score));
+    var known = Number(t.knownWeight);
+    var max = Number(t.maxWeight) || 100;
+    var den = Number(t.denominator);
+
+    var rows = '';
+    var fs = t.factors || [];
+    for (var i = 0; i < fs.length; i++) {
+      var f = fs[i];
+      rows += '<tr><td class="k">' + esc(f.name) + '</td>' +
+        '<td class="num w">' + esc(f.weight) + ' / ' + esc(f.maxWeight) + '</td>' +
+        '<td>' + esc(f.detail) + '</td></tr>';
+    }
+    if (!rows) {
+      rows = '<tr><td colspan="3" class="ipp-null">没有任何可用因子（' +
+        '这个 IP 的六类特征一项都没读到）—— 0 分是「不知道」，不是「清白」</td></tr>';
+    }
+
+    var meta = '可用权重 ' + esc(known) + ' / ' + esc(max) + ' · 分母 ' + esc(den) + ' · 口径 ' +
+      esc(t.version || 'heuristic');
+    meta += t.renormalized === true
+      ? '（没读到的因子已从分母剔除并重标化，不当作 0 参与）'
+      : '（六类因子全部读到，未重标化）';
+    if (isFinite(known) && isFinite(den) && den > known + 0.05) {
+      meta += '；可用权重不足 ' + esc(t.minEvidenceWeight) + '，分母按下限算 —— 不把单一弱证据放大成分数';
+    }
+    if (indexerOk === false) {
+      meta += '；<b class="ipp-null">索引这一段读不到</b>：分数只由其余字段重标化得出，不能读成「低威胁」';
+    }
+
+    return '<div class="ipp-threat ipp-threat-card" data-band="' + band + '">' +
+      '<div class="ipp-threat-hd"><span class="k">威胁分 THREAT SCORE</span>' +
+      '<span class="ipp-threat-band">' + esc(BAND_LABEL[band]) + '</span></div>' +
+      '<div class="ipp-threat-n">' + esc(score) + '<span class="of">/ 100</span></div>' +
+      '<div class="ipp-threat-bar" role="img" aria-label="威胁分 ' + esc(score) + ' 分（满分 100）">' +
+      '<i style="width:' + pct + '%"></i></div>' +
+      '<p class="ipp-threat-meta">' + meta + '</p>' +
+      '<div class="ipp-scroll"><table class="ipp-tbl ipp-threat-tbl"><thead><tr>' +
+      '<th>因子</th><th>权重</th><th>依据</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<p class="ipp-note"><b>再强调一次</b>：威胁分是<b>启发式加权，不是概率模型，不同窗口不可直接比较</b>。' +
+      '它只回答「按这张写死的权重表，这个地址在我们这里有多可疑」，不是「有多大概率是攻击者」。</p>' +
+      '</div>';
+  }
+
   function noteList(notes, sourceWhy) {
     var out = [];
     if (notes && notes.length) {
@@ -306,6 +402,9 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
         esc(d.reason || 'DATA_SOURCE_UNAVAILABLE') + '）—— <b>不补数</b>。' +
         '「读不到」不等于「这个 IP 没干过什么」。</p>');
     }
+
+    /* 1.5 威胁分卡：分数、band、因子明细全部来自后端 threat 字段（页面不算分） */
+    html.push(renderThreat(d.threat, d.available === true));
 
     /* 2. 计数卡 */
     var firstSeen = d.available === true ? d.firstSeen : null;
