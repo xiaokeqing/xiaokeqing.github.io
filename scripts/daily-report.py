@@ -610,7 +610,7 @@ def day_status(stat, start, end, tz):
         return {"reason": "文件未覆盖该日（最晚事件 %s，早于窗口起点）" % fmt_local(stat.max_ts, tz),
                 "partial": None}
     if stat.min_ts is not None and stat.min_ts >= end:
-        return {"reason": "文件未覆盖该日（最早事件 %s，晚于窗口终点）" % fmt_local(stat.min_ts, tz),
+        return {"reason": "文件未覆盖该日（最早事件 %s，不早于窗口终点）" % fmt_local(stat.min_ts, tz),
                 "partial": None}
     bits = []
     if stat.min_ts is not None and stat.min_ts > start:
@@ -623,6 +623,28 @@ def day_status(stat, start, end, tz):
 # --------------------------------------------------------------------------
 # 报告
 # --------------------------------------------------------------------------
+def top_source_groups(bucket, limit=10):
+    """Top 来源：按掩码后的前缀聚合（`/24` 或 IPv6 前 4 段）。
+
+    同一段里并列多个原始 IP 时掩码会让表格出现几行完全一样的标签；按段聚合 + 附「原始 IP 数」
+    才读得懂。计数、去重仍用原始 IP；展示用 mask_ip。
+    """
+    groups = {}
+    for ip, cnt in bucket.src.items():
+        key = mask_ip(ip)
+        g = groups.setdefault(key, {"ips": set(), "cnt": 0, "ports": set()})
+        g["ips"].add(ip)
+        g["cnt"] += cnt
+        g["ports"] |= {p for p in bucket.src_ports.get(ip, set()) if p is not None}
+    rows = []
+    for key, g in groups.items():
+        ports = g["ports"]
+        main_port = max(ports) if ports else None
+        rows.append((key, len(g["ips"]), g["cnt"], ports, main_port))
+    rows.sort(key=lambda r: (-r[2], -len(r[3]), r[0]))
+    return rows[:limit]
+
+
 def top_sources(bucket, limit=10):
     rows = []
     for ip, cnt in bucket.src.items():
@@ -726,20 +748,21 @@ def build_report(ctx):
     add("## 2. Top 10 来源（真实告警，已掩码）")
     add("")
     add("> 口径：`eve.json` 里 `event_type=alert` 且**不是**心跳的 `src_ip`，按今日条数排序；"
-        "展示按仓库既有规则「保留前三段 + 末段换 `x`」（`a.b.c.d` → `a.b.c.x`），去重与计数用原始值。")
+        "展示按仓库既有规则「保留前三段 + 末段换 `x`」（`a.b.c.d` → `a.b.c.x`），"
+        "**同一掩码前缀（/24）合并成一行**，并标出其中有多少个不同的原始 IP；去重与计数用原始值。")
     add("")
-    add("| # | 来源 IP（已掩码） | 真实告警 | 独立目标端口 | 主要目标端口 |")
-    add("|---|---|---|---|---|")
+    add("| # | 来源前缀（已掩码） | 真实告警 | 其中原始 IP | 独立目标端口 | 主要目标端口 |")
+    add("|---|---|---|---|---|---|")
     if eve_reason:
-        add("| — | %s | — | — | — |" % v_or(None, eve_reason))
+        add("| — | %s | — | — | — | — |" % v_or(None, eve_reason))
     else:
-        rows = top_sources(b, args.top_sources)
-        for i, (ip, cnt, ports, main_port) in enumerate(rows, 1):
-            add("| %d | `%s` | %s | %d | %s |" % (
-                i, mask_ip(ip), fmt_num(cnt), len(ports),
+        rows = top_source_groups(b, args.top_sources)
+        for i, (key, n_ips, cnt, ports, main_port) in enumerate(rows, 1):
+            add("| %d | `%s` | %s | %d | %d | %s |" % (
+                i, key, fmt_num(cnt), n_ips, len(ports),
                 ("`%s` %s" % (main_port, SERVICES.get(main_port, ""))).strip() if main_port is not None else "—"))
         if not rows:
-            add("| — | 今日真实告警 0 条 | 0 | — | — |")
+            add("| — | 今日真实告警 0 条 | 0 | 0 | — | — |")
     add("")
     if not eve_reason and b.rule_hb:
         add("（心跳自噪声 %s 条按 `--heartbeat-dst` 计为内部链路，不进上表；按 SID 拆开见 §5。）"
@@ -803,7 +826,7 @@ def build_report(ctx):
     add("## 5. 规则命中排行（心跳自噪声 vs 真实告警）")
     add("")
     add("> 为什么要分开：%s。**心跳不是攻击**，把它算进 Top 榜会让「Top 规则」永远是同一条。"
-        "本节把心跳单独列成第一行，真实告警另外排序。" % HB_BASELINE_TEXT)
+        "本节把心跳单独排在最前，真实告警另外排序。" % HB_BASELINE_TEXT)
     add("")
     add("| # | SID | 规则名 | 命中 | 占全部告警 | 分类 |")
     add("|---|---|---|---|---|---|")
@@ -899,7 +922,8 @@ def build_report(ctx):
                 bits.append("今日%s" % tp)
             if yp:
                 bits.append("昨日%s" % yp)
-            add("- `*半段`（%s）：%s。缺口时段里没有事件被读到，半段数字不等于全天。" % (
+            add("- `*半段`（%s）：%s。缺口时段里没有任何事件被读到 —— 可能只是没日志，"
+                "也可能确实没攻击；半段数字不等于全天。" % (
                 label, "；".join(bits)))
     add("")
 
@@ -959,6 +983,8 @@ def build_report(ctx):
         if st.ok:
             span = "%s ~ %s" % (fmt_local(st.min_ts, tz) if st.min_ts else "—",
                                 fmt_local(st.max_ts, tz) if st.max_ts else "—")
+            if st.min_ts is None and st.max_ts is None:
+                span = "不适用（单文件快照）"
             state = "读到"
         else:
             span = "—"
@@ -998,13 +1024,18 @@ def build_report(ctx):
         age = None
         if ci_ts is not None:
             age = (ctx["now_utc"] - ci_ts).total_seconds() / 60.0
+        checks = as_int(ci_data.get("checks"))
+        ok_field = ci_data.get("ok")
         add("| 项 | 值 |")
         add("|---|---|")
-        add("| 运行时间 | %s |" % (fmt_local(ci_ts, tz) if ci_ts else cell(ci_data.get("ts"))))
+        add("| 运行时间 | %s |" % (fmt_local(ci_ts, tz) if ci_ts else "未提供（`ts` 缺失或无法解析）"))
         add("| 结果 | `ok=%s` ｜ `checks=%s` ｜ 失败 %s 项 |" % (
-            ci_data.get("ok"), fmt_num(as_int(ci_data.get("checks"))), fmt_num(len(failed))))
+            "未提供" if ok_field is None else ok_field,
+            fmt_num(checks) if checks is not None else "未提供", fmt_num(len(failed))))
+        integrity = ci_data.get("site_integrity")
         add("| 站点完整性 | `%s` ｜ %s |" % (
-            ci_data.get("site_integrity"), cell(ci_data.get("site_integrity_detail") or "—")))
+            "未提供" if integrity is None else cell(str(integrity)),
+            cell(ci_data.get("site_integrity_detail") or "—")))
         if age is not None:
             if age < 0:
                 add("| 距现在 | —（ts 在未来 %.0f 分钟，时钟不同步） |" % abs(age))
@@ -1013,7 +1044,7 @@ def build_report(ctx):
                     age, "（>20 分钟 ⇒ 巡检可能没在跑）" if age > 20 else ""))
         add("")
         for item in failed[:10]:
-            add("- 失败项：%s" % cell(str(item)))
+            add("- 失败项：%s" % cell(scrub_ips(str(item))))
         if failed:
             add("")
     else:
@@ -1049,10 +1080,10 @@ def build_report(ctx):
     add("- 一致性巡检的 `ts` 距生成时间 >20 分钟 ⇒ 巡检可能没在跑；`ts` 在未来 ⇒ 时钟不同步（§8.1 会标）。")
     add("- Top 榜只覆盖今日文件里的事件；坏行（JSON 坏/时间戳坏）被跳过并计数，坏行不为 0 时数字是下限。")
     add("- 本报告不联网、不调用公开端点、不做任何封禁/处置；生成器只写报告文件（不写目录 index）。")
+    add("- 心跳识别是 SID + 目标地址两条：换过云 agent 链路地址后，旧心跳可能落进真实告警，"
+        "跨月统计别直接拿日报口径拼，改用周报或临时补 `--heartbeat-dst`。")
     add("")
-    add("---")
-    add("")
-    add("*生成器：`scripts/daily-report.py`（python3 标准库，无第三方依赖），只读、不处置、不部署。*")
+    add("> 生成器：`scripts/daily-report.py`（python3 标准库，无第三方依赖），只读、不处置、不部署。")
     add("")
     return "\n".join(add_lines)
 
@@ -1219,7 +1250,7 @@ def main(argv=None):
         if not given:
             sys.stderr.write("[提示] --heartbeat-sids 为空：一条心跳都不会被识别，心跳占比会读成 0。\n")
         elif 2013031 not in given:
-            sys.stderr.write("[提示] --heartbeat-sids 里没有 2013031（已知 94.9% 心跳的 SID）；"
+            sys.stderr.write("[提示] --heartbeat-sids 里没有 2013031（已知 94.9%% 心跳的 SID）；"
                              "心跳占比会偏低。默认值是 %s\n" % HB_SIDS_DEFAULT)
 
     for stream in (sys.stdout, sys.stderr):
