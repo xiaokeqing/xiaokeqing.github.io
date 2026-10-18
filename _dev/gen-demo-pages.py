@@ -3705,6 +3705,23 @@ chrome = sub1(chrome, DOCK_ANCHOR_CONTENT, DOCK_ANCHOR_CONTENT + '  ' + DOCK_LAB
               'LAB: 外壳 dock 新增「靶场」')
 home_body = sub1(home_body, DOCK_ANCHOR_HOME, DOCK_ANCHOR_HOME + '  ' + DOCK_LAB_HOME,
                  'LAB: 主页 dock 新增「靶场」')
+
+# ---- ★STATUS/API（站主 2026-10-18 裁定「那可以加」）：dock 第七、八项「状态」「接口」------
+#   为什么要上导航：这两个页原来**没有任何入口**（/projects/ 里也没链），等于做完就沉底。
+#   代价与处理：窄屏八项会挤 ⇒ 980px 断点下 `.dock` 已是 `flex-wrap:nowrap; overflow-x:auto`，
+#   横滑即可，不新增样式。高亮值 path 直接对应各 layout 里的 `{{ $v := "status" }}` / `"api"`。
+DOCK_STATUS_CONTENT = '<a href="/status/" class="{{ if eq $v "status" }}on{{ end }}">状态</a>\n'
+DOCK_STATUS_HOME = '<a href="/status/">状态</a>\n'
+DOCK_API_CONTENT = '<a href="/api/" class="{{ if eq $v "api" }}on{{ end }}">接口</a>\n'
+DOCK_API_HOME = '<a href="/api/">接口</a>\n'
+chrome = sub1(chrome, DOCK_LAB_CONTENT, DOCK_LAB_CONTENT + '  ' + DOCK_STATUS_CONTENT,
+              'STATUS: 外壳 dock 新增「状态」')
+chrome = sub1(chrome, DOCK_STATUS_CONTENT, DOCK_STATUS_CONTENT + '  ' + DOCK_API_CONTENT,
+              'API: 外壳 dock 新增「接口」')
+home_body = sub1(home_body, DOCK_LAB_HOME, DOCK_LAB_HOME + '  ' + DOCK_STATUS_HOME,
+                 'STATUS: 主页 dock 新增「状态」')
+home_body = sub1(home_body, DOCK_STATUS_HOME, DOCK_STATUS_HOME + '  ' + DOCK_API_HOME,
+                 'API: 主页 dock 新增「接口」')
 # ★P6（站主 2026-10-16 裁定"`/test/` 不要了"）：**从顶部导航摘掉「测试」项**（两处 dock 都摘）。
 #   注意：**只摘导航，不删页面** —— `_dev/check-ssr-contract.py` 的五页清单仍把 `/test/` 当第 5 页，
 #   连页面一起删要先改门禁与 dock 模板（等站主再说）。robots.txt 的 `Disallow: /test/` 由主窗口加。
