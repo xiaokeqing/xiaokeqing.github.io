@@ -6,19 +6,20 @@
   * Suricata eve.json（alert 事件：告警次数、独立 signature_id、目的端口）
   * Cowrie JSON 日志（session.connect / login.success / login.failed）
   * Dionaea SQLite（connections + logins）或 dionaea.json（连接/凭据）
-  * blocked-ips.json（是否曾触发封禁）
+  * blocked-ips.json 或 --ban-ip（是否曾触发封禁）
+  * --self-ip（自有/内部资产，记 0 分自噪声）
 
 计分（满分 100）：
   告警次数 28 + 独立规则 16 + 蜜罐会话 20 + 口令尝试 14 + 端口跨度 12 + 封禁 10
-自噪声（心跳 169.254.0.4 相关，或 RFC1918 内部源）直接 0 分。
+自噪声（心跳 169.254.0.4 相关、RFC1918 内部源，或 --self-ip 指定）直接 0 分。
 
 用法示例：
   python3 scripts/threat-score.py \
     --suricata /opt/suricata/logs/eve.json \
     --cowrie '/opt/cowrie/logs/cowrie.json*' \
     --dionaea-db /opt/dionaea/var/lib/dionaea/dionaea.sqlite \
-    --ban-json /opt/secagent/data/blocked-ips.json \
-    --out-csv reports/threat-score.csv --out-md reports/threat-score.md
+    --ban-ip 198.18.0.9 --self-ip 47.96.106.187 \
+    --out-csv /tmp/threat-score.csv --out-md /tmp/threat-score.md
 
 只写 CSV / Markdown，不改动任何输入数据。
 """
@@ -344,7 +345,9 @@ def load_bans(agg: Agg, path: str | None, extra: list[str]) -> None:
         if ip.strip():
             banned.add(ip.strip())
     for ip in banned:
-        st = agg.get(ip)
+        st = agg.ips.get(ip)
+        if st is None:
+            continue
         st.banned = True
         st.sources.add("blocked")
     agg.stats["banned_ips"] = len(banned)
