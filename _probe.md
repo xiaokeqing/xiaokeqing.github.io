@@ -1,0 +1,134 @@
+# 排版检查报告（20261018）
+
+> 生成时间：2026-10-18 14:58　|　脚本：`scripts/layout-audit.py`
+> 渲染模式：**真实渲染（playwright + 浏览器内核）**（engine=`playwright+msedge`）　|　基准地址：`http://127.0.0.1:8126`
+> 宽度：390 / 768 / 1280 px　|　视口高度：900 px　|　页面：3 个（3 个页面在 3 个宽度下都有真实测量数据）
+
+判定口径：PASS = 该项在本页本宽度下无问题；FAIL = 命中判据；NA = 本页没有可测目标，或环境不支持该项。
+报告只测量、不改样式；任何修复都应在确认数字之后单独进行。
+
+## 一、P0 清单（必须修）
+
+共 9 条（同一页同一宽度下的同类问题合并为一条）。
+
+1. **/** @ 390px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10　样例：`nav#dock.dock.dock--wait.dock--in × aside#xkIdCard.xk-idcard area=900`
+2. **/** @ 390px · 文字被裁 —— 1 处 overflow:hidden 且内容超宽；首例 h1.sr-only scrollWidth=28 clientWidth=1　样例：`h1.sr-only 28/1 «小刻晴 · 一个人的安全实验室»`
+3. **/** @ 768px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10　样例：`nav#dock.dock.dock--wait.dock--in × aside#xkIdCard.xk-idcard area=900`
+4. **/** @ 768px · 文字被裁 —— 1 处 overflow:hidden 且内容超宽；首例 h1.sr-only scrollWidth=28 clientWidth=1　样例：`h1.sr-only 28/1 «小刻晴 · 一个人的安全实验室»`
+5. **/** @ 1280px · 文字被裁 —— 1 处 overflow:hidden 且内容超宽；首例 h1.sr-only scrollWidth=28 clientWidth=1　样例：`h1.sr-only 28/1 «小刻晴 · 一个人的安全实验室»`
+6. **/alerts/** @ 390px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10　样例：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+7. **/alerts/** @ 768px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10　样例：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+8. **/status/** @ 390px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10　样例：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+9. **/status/** @ 768px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10　样例：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+
+## 二、逐页明细
+
+每页一张表：9 项检查 × 3 个宽度的状态，最后一列是证据（数值或选择器）。
+
+### `/alerts/`　FAIL（390:FAIL×2 / 768:FAIL×1 / 1280:PASS）
+
+| # | 检查项 | 390 | 768 | 1280 | 证据（数值 / 选择器） |
+|---|--------|----|----|----|------|
+| 1 | 横向溢出 | NA | NA | NA | 390px  |
+| 2 | 元素重叠 | NA | NA | NA | 390px  |
+| 3 | 文字被裁 | NA | NA | NA | 390px  |
+| 4 | 表格窄屏 | NA | NA | NA | 390px  |
+| 5 | 卡片一致性 | NA | NA | NA | 390px  |
+| 6 | 中英混排行高 | NA | NA | NA | 390px  |
+| 7 | 点击区尺寸 | NA | NA | NA | 390px  |
+| 8 | 空态/降级文案 | NA | NA | NA | 390px  |
+| 9 | 对比度 | NA | NA | NA | 390px  |
+
+样例：
+- `/alerts/`@390px 元素重叠：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+- `/alerts/`@390px 点击区尺寸：`button#feedPause.feed-pause 44x21 «暂停»` `button#xkIdFold.xk-idfold 22x44 «▾»`
+- `/alerts/`@768px 元素重叠：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+
+### `/`　FAIL（390:FAIL×3 / 768:FAIL×2 / 1280:FAIL×1）
+
+| # | 检查项 | 390 | 768 | 1280 | 证据（数值 / 选择器） |
+|---|--------|----|----|----|------|
+| 1 | 横向溢出 | NA | NA | NA | 390px  |
+| 2 | 元素重叠 | NA | NA | NA | 390px  |
+| 3 | 文字被裁 | NA | NA | NA | 390px  |
+| 4 | 表格窄屏 | NA | NA | NA | 390px  |
+| 5 | 卡片一致性 | NA | NA | NA | 390px  |
+| 6 | 中英混排行高 | NA | NA | NA | 390px  |
+| 7 | 点击区尺寸 | NA | NA | NA | 390px  |
+| 8 | 空态/降级文案 | NA | NA | NA | 390px  |
+| 9 | 对比度 | NA | NA | NA | 390px  |
+
+样例：
+- `/`@390px 元素重叠：`nav#dock.dock.dock--wait.dock--in × aside#xkIdCard.xk-idcard area=900`
+- `/`@390px 文字被裁：`h1.sr-only 28/1 «小刻晴 · 一个人的安全实验室»`
+- `/`@390px 点击区尺寸：`button#xkIdFold.xk-idfold 22x44 «▾»`
+- `/`@768px 元素重叠：`nav#dock.dock.dock--wait.dock--in × aside#xkIdCard.xk-idcard area=900`
+- `/`@768px 文字被裁：`h1.sr-only 28/1 «小刻晴 · 一个人的安全实验室»`
+- `/`@1280px 文字被裁：`h1.sr-only 28/1 «小刻晴 · 一个人的安全实验室»`
+
+### `/status/`　FAIL（390:FAIL×3 / 768:FAIL×2 / 1280:FAIL×1）
+
+| # | 检查项 | 390 | 768 | 1280 | 证据（数值 / 选择器） |
+|---|--------|----|----|----|------|
+| 1 | 横向溢出 | NA | NA | NA | 390px  |
+| 2 | 元素重叠 | NA | NA | NA | 390px  |
+| 3 | 文字被裁 | NA | NA | NA | 390px  |
+| 4 | 表格窄屏 | NA | NA | NA | 390px  |
+| 5 | 卡片一致性 | NA | NA | NA | 390px  |
+| 6 | 中英混排行高 | NA | NA | NA | 390px  |
+| 7 | 点击区尺寸 | NA | NA | NA | 390px  |
+| 8 | 空态/降级文案 | NA | NA | NA | 390px  |
+| 9 | 对比度 | NA | NA | NA | 390px  |
+
+样例：
+- `/status/`@390px 元素重叠：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+- `/status/`@390px 中英混排行高：`p.st-sum fs=12 «—等待体检…»` `td.st-na fs=12 «等待体检…（数据全部由前端 fetch »` `p.st-note fs=11.5 «口径：基址来自 <meta name="»`
+- `/status/`@390px 点击区尺寸：`a.st-back 119x20 «← 返回介绍页 /what/»` `button#stRun.st-run 63x23 «体检中…»` `a 63x26 «巡检报告 /reports/»`
+- `/status/`@768px 元素重叠：`nav#dock.dock × aside#xkIdCard.xk-idcard area=900`
+- `/status/`@768px 中英混排行高：`p.st-sum fs=12 «—等待体检…»` `td.st-na fs=12 «等待体检…（数据全部由前端 fetch »` `p.st-note fs=11.5 «口径：基址来自 <meta name="»`
+- `/status/`@1280px 中英混排行高：`p.st-sum fs=12 «—等待体检…»` `td.st-na fs=12 «等待体检…（数据全部由前端 fetch »` `p.st-note fs=11.5 «口径：基址来自 <meta name="»`
+
+## 三、结论（必须修 / 建议修 / 不用管）
+
+### 必须修（P0：横向溢出、元素重叠、文字被裁、表格窄屏）
+
+- `/` @ 390px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10
+- `/` @ 390px · 文字被裁 —— 1 处 overflow:hidden 且内容超宽；首例 h1.sr-only scrollWidth=28 clientWidth=1
+- `/` @ 768px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10
+- `/` @ 768px · 文字被裁 —— 1 处 overflow:hidden 且内容超宽；首例 h1.sr-only scrollWidth=28 clientWidth=1
+- `/` @ 1280px · 文字被裁 —— 1 处 overflow:hidden 且内容超宽；首例 h1.sr-only scrollWidth=28 clientWidth=1
+- `/alerts/` @ 390px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10
+- `/alerts/` @ 768px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10
+- `/status/` @ 390px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10
+- `/status/` @ 768px · 元素重叠 —— 1 处相交；.dock×.xk-idcard 重叠 90x10
+
+### 建议修（P1/P2：字号与行高、点击区、降级文案换行、对比度、卡片取值一致性）
+
+- **中英混排行高**（P1，3 条命中，涉及 1 页）：font-size<13px 49 个
+  - 命中页：`/status/`
+- **点击区尺寸**（P1，3 条命中，涉及 3 页）：1 个 a/button 小于 40×40；首例 button#xkIdFold.xk-idfold 22x44
+  - 命中页：`/`、`/alerts/`、`/status/`
+
+### 不用管
+
+- 卡片一致性里的「取值种类」是抽样统计：`border-radius` / `border` / `background` 各不相同不代表视觉不一致，
+  只有同类取值超过 3 种才记 FAIL，这里没有命中。
+- NA 项不算问题：没有 `<table>`、没有 `.mod`/`.xk-card`、没有降级文案、非手机宽度不做点击区判定，都属于「本页没有这个目标」。
+- 点击区只在 390px 判断（桌面宽度下 24×24 的小按钮不算问题）。
+
+## 四、数据不足 / 已知限制
+
+- 对比度只看 `p/li/td` 直接文本与其最近**不透明**祖先背景；半透明背景、渐变底、图片底一律跳过（会漏）。
+- 元素重叠只比对 `.dock`、`.xk-idcard`、首个 `.screen-hd`、首个 `.mod` 两两之间；正文内部互相压字不在本项范围内。
+- 文字被裁只认 `overflow: hidden|clip` + `scrollWidth > clientWidth+2` + 直接文本节点；用 `text-overflow: ellipsis` 的省略号截断同样算命中（有意为之的省略号需要人工豁免）。
+- 表格窄屏按「table 自身溢出 或 宽于视口」判定；用 transform 缩放出来的表格不会被识别为溢出。
+- 所有数值来自无头浏览器（900，视口高度 900px，device_scale_factor=1）；真机字体渲染可能有 1–2px 差异。
+- 页面清单是 `public/**/index.html` 的 glob 结果（3 页），不含 `404.html`、不含 RSS/JSON 等非 HTML 产物。
+
+## 五、复现
+
+```bash
+cd public && python -m http.server 8126 --bind 127.0.0.1 &   # 或给脚本加 --serve
+python -X utf8 scripts/layout-audit.py --widths 390,768,1280
+```
+

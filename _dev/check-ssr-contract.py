@@ -32,6 +32,7 @@ PAGES = [
     ('ip/index.html', 'ip'), ('purpleteam/index.html', 'purpleteam'), ('passwords/index.html', 'passwords'),
     ('tools/cve/index.html', 'cve'),   # 2026-10-18：CVE 每日速递页（每日快照，四块数据全来自 /data/cve-digest.json）
     ('tools/password/index.html', 'password'),  # 2026-10-18：口令自查页（本地 SHA-256，只发前 5 位）
+    ('tools/index.html', 'tools'),
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)
 RE_SSR = re.compile(r'data-xk-ssr=["\']?([a-z-]+)', re.I)

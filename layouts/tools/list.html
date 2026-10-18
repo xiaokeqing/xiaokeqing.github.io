@@ -1,0 +1,103 @@
+{{- /* ============================================================================
+   /tools/ = 工具台（列表页）
+   ----------------------------------------------------------------------------
+   只有两个入口：CVE 每日速递、密码自查。这一页不做数据聚合——
+   每个工具自己页内取数，这里只放"是什么 / 数据从哪来 / 口径边界"三行，
+   外加一个不承诺的当前状态位（取不到就写读不到，不补数）。
+
+   外壳约定同 /ip/：<script 标签恰好两处（/js/xk-saver.js + 页尾内联），
+   不引外部字体/CDN；类名复用 .screen/.screen-hd/.screen-bd/.mod/.mod-hd/.mod-bd/.t/.led/.sync/.tag。
+   ============================================================================ */ -}}
+{{- $v := "tools" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：只用外壳色板，不引新配色 */
+.tps-bd{display:flex;flex-direction:column;gap:14px}
+.tps-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.tps-lead b{color:#cfe9f5;font-weight:600}
+.tps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.tps-card{display:flex;flex-direction:column;gap:8px;padding:14px 15px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(0,0,0,.24);text-decoration:none;transition:border-color .16s ease,background .16s ease}
+.tps-card:hover{border-color:rgba(160,220,240,.44);background:rgba(0,0,0,.32)}
+.tps-card h3{margin:0;font-size:14.5px;font-weight:600;color:#eaf6ff;letter-spacing:.01em}
+.tps-card .en{margin-left:6px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;letter-spacing:.1em;color:rgba(255,255,255,.38)}
+.tps-card p{margin:0;font-size:12.5px;line-height:1.9;color:rgba(255,255,255,.72)}
+.tps-card .kv{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:2px;font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.46)}
+.tps-card .kv b{color:rgba(255,255,255,.72);font-weight:500}
+.tps-card .go{margin-top:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0}
+.tps-na{color:#E8B45A}
+.tps-note{margin:0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.tps-note b{color:rgba(255,255,255,.72);font-weight:600}
+.tps-list{margin:6px 0 0;padding-left:18px;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.55)}
+.tps-list li{margin:2px 0}
+@media (max-width:980px){
+  .tps-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="tools">
+<section class="view on" id="v-tools">
+  <div class="screen" style="margin-bottom:14px">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 工具台 <em class="ops-en">TOOLS</em></span>
+      <span class="sync" id="tpsSync">● 两个工具 · 数据各在各的页面取</span>
+    </div>
+    <div class="screen-bd tps-bd">
+      <p class="tps-lead">这里放<b>我自己每天会用</b>的两个小工具。它们不是演示：数据要么来自这台机器上真实跑着的东西（蜜罐、CVE 清单），要么来自每天定时抓一次的官方源。每个工具页都会写明<b>数据什么时候抓的</b>、<b>抓不到时是什么样</b>——抓不到就写「读不到」，不补数、不估算。</p>
+      <div class="tps-grid">
+
+        <a class="tps-card" href="/tools/cve/">
+          <h3>CVE 每日速递<span class="en">CVE-DIGEST</span></h3>
+          <p>每天把 CISA KEV（已被在野利用的漏洞清单）和当日高危 CVE 摊开，每条给四行：影响什么软件 / 漏洞是什么 / 在野利用了吗 / 我该做什么。中文解读只照抄官方字段，缺字段就写「官方未给出」。</p>
+          <div class="kv">
+            <span>源 <b>CISA KEV</b></span>
+            <span><b>NVD</b> CVE API 2.0</span>
+            <span>更新 <b>每日快照</b></span>
+            <span>订阅 <b>RSS</b></span>
+          </div>
+          <span class="go">进入 → /tools/cve/</span>
+        </a>
+
+        <a class="tps-card" href="/tools/password/">
+          <h3>你的密码在攻击者字典里吗<span class="en">PASSWORD-CHECK</span></h3>
+          <p>密码不出浏览器：本地算 SHA-256，只把前 5 位十六进制发出去（k-匿名，与 HIBP 同一套隐私标准），后端只回这个前缀下被真实尝试过多少次。数据来自这台机器的蜜罐在过去收到的爆破口令——攻击者此刻正在用的词表。</p>
+          <div class="kv">
+            <span>隐私 <b>只发 5 位前缀</b></span>
+            <span>数据 <b>自家蜜罐口令结构</b></span>
+            <span>口径 <b>不回收明文</b></span>
+          </div>
+          <span class="go">进入 → /tools/password/</span>
+        </a>
+
+      </div>
+      <div class="mod" style="margin-top:2px">
+        <div class="mod-hd">
+          <span class="t">口径与边界</span>
+          <span class="sync">为什么这两个值得放在"工具"里</span>
+        </div>
+        <div class="mod-bd">
+          <p class="tps-lead" style="font-size:12.5px;color:rgba(255,255,255,.76)">两个工具的共同点是：<b>数据别人没有</b>，或者<b>口径别人不敢写</b>。</p>
+          <ul class="tps-list">
+            <li><b>CVE 速递</b>用官方清单做唯一事实源，解读只允许搬运字段——宁可写「官方未给出」，也不替官方补版本号和影响范围。</li>
+            <li><b>密码自查</b>的独特之处是「这串口令昨晚刚被人用来爆破我的服务器」——公开泄露库给不了这个时间戳；反过来，它也永远不会告诉你"你的密码已泄露"，只告诉你"这个前缀下有多少次真实尝试"。</li>
+            <li>两个页面都不读内部事件数据、不返回明文口令、不引第三方脚本；取不到数据时统一显示「读不到（原因）—— 不补数」。</li>
+          </ul>
+          <p class="tps-note" id="tpsStatus" style="margin-top:10px">● 状态位：数据由各工具页自己取，这里不做二次聚合，所以不会出现"仪表盘很好看但数字是假的"。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

@@ -357,6 +357,7 @@ new_page_gate passwords 弱口令统计页
 new_page_gate tools/cve CVE每日速递页
 # ★2026-10-18：口令自查页（/tools/password/）。判据同上；data-xk-ssr 用路由名 password
 #   （后端名 /api/public/password 的最后一段），不是目录名，所以两种写法都在 pat 里认。
+new_page_gate tools 工具台
 new_page_gate tools/password 密码自查页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------

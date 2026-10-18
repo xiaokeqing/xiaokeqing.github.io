@@ -1,0 +1,911 @@
+{
+  "schema": "layout-audit/1",
+  "generated_at": "2026-10-18T15:00:26",
+  "mode": "real",
+  "engine": "playwright+msedge",
+  "base_url": "http://127.0.0.1:8126",
+  "widths": [
+    390,
+    1280
+  ],
+  "viewport_height": 900,
+  "mobile_max_width": 420,
+  "checks": [
+    {
+      "id": 1,
+      "name": "横向溢出",
+      "severity": "P0",
+      "rule": "documentElement.scrollWidth > innerWidth + 1"
+    },
+    {
+      "id": 2,
+      "name": "元素重叠",
+      "severity": "P0",
+      "rule": ".dock / .xk-idcard / 首个 .screen-hd|.mod 的 getBoundingClientRect 相交（>1px）"
+    },
+    {
+      "id": 3,
+      "name": "文字被裁",
+      "severity": "P0",
+      "rule": "overflow 含 hidden|clip 且 scrollWidth > clientWidth+2 且含非空文本节点"
+    },
+    {
+      "id": 4,
+      "name": "表格窄屏",
+      "severity": "P0",
+      "rule": "table 自身溢出或宽于视口时，祖先必须有 overflow-x: auto|scroll"
+    },
+    {
+      "id": 5,
+      "name": "卡片一致性",
+      "severity": "P2",
+      "rule": ".mod（缺则退化为 .xk-card）的 border-radius / border / background 取值种类，任一 > 3 种记 FAIL"
+    },
+    {
+      "id": 6,
+      "name": "中英混排行高",
+      "severity": "P1",
+      "rule": "p/li/td 的 font-size < 13px，或 line-height/font-size < 1.4"
+    },
+    {
+      "id": 7,
+      "name": "点击区尺寸",
+      "severity": "P1",
+      "rule": "手机宽度下 a/button 的 height < 40 或 width < 40（仅 <=420px 宽度适用）"
+    },
+    {
+      "id": 8,
+      "name": "空态/降级文案",
+      "severity": "P1",
+      "rule": "含「读不到/不补数/取数中」的元素必须 white-space: normal 且不横向溢出"
+    },
+    {
+      "id": 9,
+      "name": "对比度",
+      "severity": "P1",
+      "rule": "p/li/td 文字色与最近不透明祖先底色的 WCAG 对比度 < 3.0 记 FAIL"
+    }
+  ],
+  "page_count": 4,
+  "pages": [
+    {
+      "path": "/ai/",
+      "file": "ai/index.html",
+      "url": "http://127.0.0.1:8126/ai/",
+      "title": "AI 安全 · xiaokeqing",
+      "status": "FAIL",
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=390 innerWidth=390（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "FAIL",
+              "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+              "samples": [
+                "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+              ],
+              "tier": "建议修"
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "NA",
+              "detail": "本页没有 <table>",
+              "samples": []
+            },
+            "5": {
+              "status": "PASS",
+              "detail": ".mod × 15 张：border-radius 1 种 / border 1 种 / background 1 种",
+              "samples": [
+                "radius=14px 14px 14px 14px×15",
+                "bg=rgba(10, 13, 17, 0.74)×15"
+              ]
+            },
+            "6": {
+              "status": "FAIL",
+              "detail": "font-size<13px 2 个",
+              "samples": [
+                "p.chat-note fs=11 «回答非流式传输（一次性返回 + 前端渐进»",
+                "p.chat-note fs=11 «手机立绘使用 E-mote 模型素材（C»"
+              ]
+            },
+            "7": {
+              "status": "FAIL",
+              "detail": "5 个 a/button 小于 40×40；首例 a 158x38",
+              "samples": [
+                "a 158x38 «什么是暴力破解？怎么防»",
+                "a 158x38 «蜜罐是怎么抓到攻击者的»",
+                "a 146x38 «SQL 注入的原理与防御»",
+                "a 110x38 «提示注入是什么»",
+                "button#xkIdFold.xk-idfold 22x44 «▾»"
+              ]
+            },
+            "8": {
+              "status": "PASS",
+              "detail": "43 处降级文案均可换行（normal）",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "20 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 390,
+          "elementCount": 664
+        },
+        "1280": {
+          "innerWidth": 1280,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=1280 innerWidth=1280（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "PASS",
+              "detail": "测了 nav#dock.dock / aside#xkIdCard.xk-idcard，两两不相交",
+              "samples": []
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "NA",
+              "detail": "本页没有 <table>",
+              "samples": []
+            },
+            "5": {
+              "status": "PASS",
+              "detail": ".mod × 15 张：border-radius 1 种 / border 1 种 / background 1 种",
+              "samples": [
+                "radius=14px 14px 14px 14px×15",
+                "bg=rgba(10, 13, 17, 0.74)×15"
+              ]
+            },
+            "6": {
+              "status": "FAIL",
+              "detail": "font-size<13px 2 个",
+              "samples": [
+                "p.chat-note fs=11 «回答非流式传输（一次性返回 + 前端渐进»",
+                "p.chat-note fs=11 «手机立绘使用 E-mote 模型素材（C»"
+              ]
+            },
+            "7": {
+              "status": "NA",
+              "detail": "点击区只在手机宽度（<=420px）判定，本宽度不适用",
+              "samples": []
+            },
+            "8": {
+              "status": "PASS",
+              "detail": "43 处降级文案均可换行（normal）",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "36 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 1280,
+          "elementCount": 664
+        }
+      }
+    },
+    {
+      "path": "/alerts/",
+      "file": "alerts/index.html",
+      "url": "http://127.0.0.1:8126/alerts/",
+      "title": "监测中心 · xiaokeqing",
+      "status": "FAIL",
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=390 innerWidth=390（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "FAIL",
+              "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+              "samples": [
+                "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+              ],
+              "tier": "建议修"
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "NA",
+              "detail": "本页没有 <table>",
+              "samples": []
+            },
+            "5": {
+              "status": "PASS",
+              "detail": ".mod × 15 张：border-radius 1 种 / border 1 种 / background 1 种",
+              "samples": [
+                "radius=14px 14px 14px 14px×15",
+                "bg=rgba(10, 13, 17, 0.74)×15"
+              ]
+            },
+            "6": {
+              "status": "PASS",
+              "detail": "p/li/td 没有 font-size<13px，也没有行高比<1.4",
+              "samples": []
+            },
+            "7": {
+              "status": "FAIL",
+              "detail": "2 个 a/button 小于 40×40；首例 button#feedPause.feed-pause 44x21",
+              "samples": [
+                "button#feedPause.feed-pause 44x21 «暂停»",
+                "button#xkIdFold.xk-idfold 22x44 «▾»"
+              ]
+            },
+            "8": {
+              "status": "PASS",
+              "detail": "44 处降级文案均可换行（normal）",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "27 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 390,
+          "elementCount": 652
+        },
+        "1280": {
+          "innerWidth": 1280,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=1280 innerWidth=1280（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "PASS",
+              "detail": "测了 nav#dock.dock / aside#xkIdCard.xk-idcard / div.screen-hd / div.mod，两两不相交",
+              "samples": []
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "NA",
+              "detail": "本页没有 <table>",
+              "samples": []
+            },
+            "5": {
+              "status": "PASS",
+              "detail": ".mod × 15 张：border-radius 1 种 / border 1 种 / background 1 种",
+              "samples": [
+                "radius=14px 14px 14px 14px×15",
+                "bg=rgba(10, 13, 17, 0.74)×15"
+              ]
+            },
+            "6": {
+              "status": "PASS",
+              "detail": "p/li/td 没有 font-size<13px，也没有行高比<1.4",
+              "samples": []
+            },
+            "7": {
+              "status": "NA",
+              "detail": "点击区只在手机宽度（<=420px）判定，本宽度不适用",
+              "samples": []
+            },
+            "8": {
+              "status": "PASS",
+              "detail": "44 处降级文案均可换行（normal）",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "35 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 1280,
+          "elementCount": 652
+        }
+      }
+    },
+    {
+      "path": "/",
+      "file": "index.html",
+      "url": "http://127.0.0.1:8126/",
+      "title": "xiaokeqing · 个人博客与安全运营工作台",
+      "status": "FAIL",
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=390 innerWidth=390（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "PASS",
+              "detail": "测了 aside#xkIdCard.xk-idcard，两两不相交",
+              "samples": []
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "NA",
+              "detail": "本页没有 <table>",
+              "samples": []
+            },
+            "5": {
+              "status": "NA",
+              "detail": "本页既没有 .mod 也没有 .xk-card",
+              "samples": []
+            },
+            "6": {
+              "status": "PASS",
+              "detail": "p/li/td 没有 font-size<13px，也没有行高比<1.4",
+              "samples": []
+            },
+            "7": {
+              "status": "FAIL",
+              "detail": "1 个 a/button 小于 40×40；首例 button#xkIdFold.xk-idfold 22x44",
+              "samples": [
+                "button#xkIdFold.xk-idfold 22x44 «▾»"
+              ]
+            },
+            "8": {
+              "status": "NA",
+              "detail": "本页没有「读不到 / 不补数 / 取数中」文案",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "11 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 390,
+          "elementCount": 90
+        },
+        "1280": {
+          "innerWidth": 1280,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=1280 innerWidth=1280（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "PASS",
+              "detail": "测了 aside#xkIdCard.xk-idcard，两两不相交",
+              "samples": []
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "NA",
+              "detail": "本页没有 <table>",
+              "samples": []
+            },
+            "5": {
+              "status": "NA",
+              "detail": "本页既没有 .mod 也没有 .xk-card",
+              "samples": []
+            },
+            "6": {
+              "status": "PASS",
+              "detail": "p/li/td 没有 font-size<13px，也没有行高比<1.4",
+              "samples": []
+            },
+            "7": {
+              "status": "NA",
+              "detail": "点击区只在手机宽度（<=420px）判定，本宽度不适用",
+              "samples": []
+            },
+            "8": {
+              "status": "NA",
+              "detail": "本页没有「读不到 / 不补数 / 取数中」文案",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "17 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 1280,
+          "elementCount": 90
+        }
+      }
+    },
+    {
+      "path": "/status/",
+      "file": "status/index.html",
+      "url": "http://127.0.0.1:8126/status/",
+      "title": "状态页 · 现在能不能用、数据是不是真的 · xiaokeqing",
+      "status": "FAIL",
+      "widths": {
+        "390": {
+          "innerWidth": 390,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=390 innerWidth=390（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "FAIL",
+              "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+              "samples": [
+                "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+              ],
+              "tier": "建议修"
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "PASS",
+              "detail": "本页 4 个表格，需要滚动的都有 overflow-x 祖先（div.st-scroll）",
+              "samples": []
+            },
+            "5": {
+              "status": "PASS",
+              "detail": ".mod × 5 张：border-radius 1 种 / border 1 种 / background 1 种",
+              "samples": [
+                "radius=14px 14px 14px 14px×5",
+                "bg=rgba(10, 13, 17, 0.74)×5"
+              ]
+            },
+            "6": {
+              "status": "FAIL",
+              "detail": "font-size<13px 49 个",
+              "samples": [
+                "p.st-sum fs=12 «—等待体检…»",
+                "td.st-na fs=12 «等待体检…（数据全部由前端 fetch »",
+                "p.st-note fs=11.5 «口径：基址来自 <meta name=\"»",
+                "td.f fs=11 «/api/health · buildS»",
+                "td#stSha.v fs=12 «未取到»",
+                "td.f fs=11 «/api/health · uptime»",
+                "td#stUptime.v fs=12 «未取到»",
+                "td.f fs=11 «/api/health · status»",
+                "td#stHealth.v fs=12 «未取到»",
+                "td.f fs=11 «deploy.js · data.rel»",
+                "td#stRelease.v fs=12 «未取到»",
+                "td.f fs=11 «deploy.js · release.»"
+              ]
+            },
+            "7": {
+              "status": "FAIL",
+              "detail": "4 个 a/button 小于 40×40；首例 a.st-back 119x20",
+              "samples": [
+                "a.st-back 119x20 «← 返回介绍页 /what/»",
+                "button#stRun.st-run 63x23 «体检中…»",
+                "a 63x26 «巡检报告 /reports/»",
+                "button#xkIdFold.xk-idfold 22x44 «▾»"
+              ]
+            },
+            "8": {
+              "status": "PASS",
+              "detail": "2 处降级文案均可换行（normal）",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "120 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 390,
+          "elementCount": 333
+        },
+        "1280": {
+          "innerWidth": 1280,
+          "checks": {
+            "1": {
+              "status": "PASS",
+              "detail": "scrollWidth=1280 innerWidth=1280（无越界）",
+              "samples": []
+            },
+            "2": {
+              "status": "PASS",
+              "detail": "测了 nav#dock.dock / aside#xkIdCard.xk-idcard / div.screen-hd / div.mod，两两不相交",
+              "samples": []
+            },
+            "3": {
+              "status": "PASS",
+              "detail": "没有「overflow 裁剪 + 内容超宽 + 有文本」的元素",
+              "samples": []
+            },
+            "4": {
+              "status": "PASS",
+              "detail": "本页 4 个表格，需要滚动的都有 overflow-x 祖先（div.st-scroll）",
+              "samples": []
+            },
+            "5": {
+              "status": "PASS",
+              "detail": ".mod × 5 张：border-radius 1 种 / border 1 种 / background 1 种",
+              "samples": [
+                "radius=14px 14px 14px 14px×5",
+                "bg=rgba(10, 13, 17, 0.74)×5"
+              ]
+            },
+            "6": {
+              "status": "FAIL",
+              "detail": "font-size<13px 49 个",
+              "samples": [
+                "p.st-sum fs=12 «—等待体检…»",
+                "td.st-na fs=12 «等待体检…（数据全部由前端 fetch »",
+                "p.st-note fs=11.5 «口径：基址来自 <meta name=\"»",
+                "td.f fs=11 «/api/health · buildS»",
+                "td#stSha.v fs=12 «未取到»",
+                "td.f fs=11 «/api/health · uptime»",
+                "td#stUptime.v fs=12 «未取到»",
+                "td.f fs=11 «/api/health · status»",
+                "td#stHealth.v fs=12 «未取到»",
+                "td.f fs=11 «deploy.js · data.rel»",
+                "td#stRelease.v fs=12 «未取到»",
+                "td.f fs=11 «deploy.js · release.»"
+              ]
+            },
+            "7": {
+              "status": "NA",
+              "detail": "点击区只在手机宽度（<=420px）判定，本宽度不适用",
+              "samples": []
+            },
+            "8": {
+              "status": "PASS",
+              "detail": "2 处降级文案均可换行（normal）",
+              "samples": []
+            },
+            "9": {
+              "status": "PASS",
+              "detail": "127 个文本节点全部 >= 3.0",
+              "samples": []
+            }
+          },
+          "scrollWidth": 1280,
+          "elementCount": 333
+        }
+      }
+    }
+  ],
+  "summary": {
+    "checks_pass": 47,
+    "checks_fail": 11,
+    "checks_na": 14,
+    "pages": 4,
+    "pages_fail": 4,
+    "pages_with_data": 4,
+    "p0": [],
+    "p0_all": [
+      {
+        "path": "/ai/",
+        "width": 390,
+        "check": 2,
+        "name": "元素重叠",
+        "sev": "P0",
+        "tier": "建议修",
+        "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+        "samples": [
+          "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+        ]
+      },
+      {
+        "path": "/alerts/",
+        "width": 390,
+        "check": 2,
+        "name": "元素重叠",
+        "sev": "P0",
+        "tier": "建议修",
+        "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+        "samples": [
+          "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 390,
+        "check": 2,
+        "name": "元素重叠",
+        "sev": "P0",
+        "tier": "建议修",
+        "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+        "samples": [
+          "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+        ]
+      }
+    ],
+    "p1": [
+      {
+        "path": "/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "1 个 a/button 小于 40×40；首例 button#xkIdFold.xk-idfold 22x44",
+        "samples": [
+          "button#xkIdFold.xk-idfold 22x44 «▾»"
+        ]
+      },
+      {
+        "path": "/ai/",
+        "width": 390,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 2 个",
+        "samples": [
+          "p.chat-note fs=11 «回答非流式传输（一次性返回 + 前端渐进»",
+          "p.chat-note fs=11 «手机立绘使用 E-mote 模型素材（C»"
+        ]
+      },
+      {
+        "path": "/ai/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "5 个 a/button 小于 40×40；首例 a 158x38",
+        "samples": [
+          "a 158x38 «什么是暴力破解？怎么防»",
+          "a 158x38 «蜜罐是怎么抓到攻击者的»",
+          "a 146x38 «SQL 注入的原理与防御»",
+          "a 110x38 «提示注入是什么»"
+        ]
+      },
+      {
+        "path": "/ai/",
+        "width": 1280,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 2 个",
+        "samples": [
+          "p.chat-note fs=11 «回答非流式传输（一次性返回 + 前端渐进»",
+          "p.chat-note fs=11 «手机立绘使用 E-mote 模型素材（C»"
+        ]
+      },
+      {
+        "path": "/alerts/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "2 个 a/button 小于 40×40；首例 button#feedPause.feed-pause 44x21",
+        "samples": [
+          "button#feedPause.feed-pause 44x21 «暂停»",
+          "button#xkIdFold.xk-idfold 22x44 «▾»"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 390,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 49 个",
+        "samples": [
+          "p.st-sum fs=12 «—等待体检…»",
+          "td.st-na fs=12 «等待体检…（数据全部由前端 fetch »",
+          "p.st-note fs=11.5 «口径：基址来自 <meta name=\"»",
+          "td.f fs=11 «/api/health · buildS»"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "4 个 a/button 小于 40×40；首例 a.st-back 119x20",
+        "samples": [
+          "a.st-back 119x20 «← 返回介绍页 /what/»",
+          "button#stRun.st-run 63x23 «体检中…»",
+          "a 63x26 «巡检报告 /reports/»",
+          "button#xkIdFold.xk-idfold 22x44 «▾»"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 1280,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 49 个",
+        "samples": [
+          "p.st-sum fs=12 «—等待体检…»",
+          "td.st-na fs=12 «等待体检…（数据全部由前端 fetch »",
+          "p.st-note fs=11.5 «口径：基址来自 <meta name=\"»",
+          "td.f fs=11 «/api/health · buildS»"
+        ]
+      }
+    ],
+    "p2": [],
+    "must_fix": [],
+    "suggest": [
+      {
+        "path": "/ai/",
+        "width": 390,
+        "check": 2,
+        "name": "元素重叠",
+        "sev": "P0",
+        "tier": "建议修",
+        "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+        "samples": [
+          "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+        ]
+      },
+      {
+        "path": "/alerts/",
+        "width": 390,
+        "check": 2,
+        "name": "元素重叠",
+        "sev": "P0",
+        "tier": "建议修",
+        "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+        "samples": [
+          "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 390,
+        "check": 2,
+        "name": "元素重叠",
+        "sev": "P0",
+        "tier": "建议修",
+        "detail": "1 处相交；.dock×.xk-idcard 重叠 90x10（两者都是 position:fixed 的固定装饰，重叠 ≤16px：疑似刻意层叠，需人工确认是否要修）",
+        "samples": [
+          "nav#dock.dock × aside#xkIdCard.xk-idcard area=900"
+        ]
+      },
+      {
+        "path": "/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "1 个 a/button 小于 40×40；首例 button#xkIdFold.xk-idfold 22x44",
+        "samples": [
+          "button#xkIdFold.xk-idfold 22x44 «▾»"
+        ]
+      },
+      {
+        "path": "/ai/",
+        "width": 390,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 2 个",
+        "samples": [
+          "p.chat-note fs=11 «回答非流式传输（一次性返回 + 前端渐进»",
+          "p.chat-note fs=11 «手机立绘使用 E-mote 模型素材（C»"
+        ]
+      },
+      {
+        "path": "/ai/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "5 个 a/button 小于 40×40；首例 a 158x38",
+        "samples": [
+          "a 158x38 «什么是暴力破解？怎么防»",
+          "a 158x38 «蜜罐是怎么抓到攻击者的»",
+          "a 146x38 «SQL 注入的原理与防御»",
+          "a 110x38 «提示注入是什么»"
+        ]
+      },
+      {
+        "path": "/ai/",
+        "width": 1280,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 2 个",
+        "samples": [
+          "p.chat-note fs=11 «回答非流式传输（一次性返回 + 前端渐进»",
+          "p.chat-note fs=11 «手机立绘使用 E-mote 模型素材（C»"
+        ]
+      },
+      {
+        "path": "/alerts/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "2 个 a/button 小于 40×40；首例 button#feedPause.feed-pause 44x21",
+        "samples": [
+          "button#feedPause.feed-pause 44x21 «暂停»",
+          "button#xkIdFold.xk-idfold 22x44 «▾»"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 390,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 49 个",
+        "samples": [
+          "p.st-sum fs=12 «—等待体检…»",
+          "td.st-na fs=12 «等待体检…（数据全部由前端 fetch »",
+          "p.st-note fs=11.5 «口径：基址来自 <meta name=\"»",
+          "td.f fs=11 «/api/health · buildS»"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 390,
+        "check": 7,
+        "name": "点击区尺寸",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "4 个 a/button 小于 40×40；首例 a.st-back 119x20",
+        "samples": [
+          "a.st-back 119x20 «← 返回介绍页 /what/»",
+          "button#stRun.st-run 63x23 «体检中…»",
+          "a 63x26 «巡检报告 /reports/»",
+          "button#xkIdFold.xk-idfold 22x44 «▾»"
+        ]
+      },
+      {
+        "path": "/status/",
+        "width": 1280,
+        "check": 6,
+        "name": "中英混排行高",
+        "sev": "P1",
+        "tier": "建议修",
+        "detail": "font-size<13px 49 个",
+        "samples": [
+          "p.st-sum fs=12 «—等待体检…»",
+          "td.st-na fs=12 «等待体检…（数据全部由前端 fetch »",
+          "p.st-note fs=11.5 «口径：基址来自 <meta name=\"»",
+          "td.f fs=11 «/api/health · buildS»"
+        ]
+      }
+    ],
+    "ignore": []
+  }
+}
