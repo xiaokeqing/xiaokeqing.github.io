@@ -2853,7 +2853,9 @@
   function shouldPlayIntro() {
     // 取证/调试用：?xk_intro=always 强制每次都播（默认每个浏览器会话只播一次）
     if (/(^|[?&])xk_intro=always(&|$)/.test(global.location.search)) { return true; }
-    try { return global.sessionStorage.getItem(INTRO_KEY) !== '1'; } catch (e) { return true; }
+    /* ★ 2026-10-18 站主反馈：一进来是半身贴脸图、然后硬切成全身站定，看着像“闪了一下”。
+       开场序列直接关掉（保留 ?xk_intro=always 作为取证开关）：默认直接起 idle 全身。 */
+    return false;
   }
   function markIntroPlayed() {
     try { global.sessionStorage.setItem(INTRO_KEY, '1'); } catch (e) { /* 隐私模式忽略 */ }

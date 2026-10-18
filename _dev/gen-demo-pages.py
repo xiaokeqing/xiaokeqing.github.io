@@ -3922,6 +3922,10 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       backdrop-filter:blur(10px);
     }
     body.xk-has-idcard .dock .brand{display:none}
+    /* ★M5：子项不允许被压缩（原来 flex 默认 shrink:1→文字被挤成两行、项与项重叠），
+       容器改为 nowrap + 横滑；父容器的 flex-wrap 也要归零，否则宽屏断点传下来的 wrap:wrap 会生效。 */
+    body.xk-has-idcard .dock{flex-wrap:nowrap}
+    body.xk-has-idcard .dock > *{flex:0 0 auto}
     body.xk-has-idcard .dock a{white-space:nowrap;padding:6px 10px;font-size:13px}
     /* ② 头像卡：一行，箭头在左；名字/状态在头像下方 */
     .xk-idcard{
@@ -3929,8 +3933,8 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       /* ★M2：两列 —— 左列箭头（占两行高），右列上面头像、下面名字与状态。
          用 grid-template-areas 而不靠源码顺序，否则名字会掉到箭头下面。 */
       display:grid;
-      grid-template-columns:auto 44px;
-      grid-template-areas:"fold av" "fold meta" "fold stat";
+      grid-template-columns:44px auto;
+      grid-template-areas:"av fold" "meta fold" "stat fold";
       grid-row-gap:1px; align-items:center; justify-items:start;
       gap:0 8px; padding:6px 10px 6px 4px;
       /* ★M3：收到内容宽（原桌面版有固定 146px 左栏宽），并加深底色 ——
@@ -3939,7 +3943,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
       background:rgba(9,11,14,.92); backdrop-filter:blur(10px);
       border-radius:14px; border:1px solid var(--line2,rgba(255,246,235,.16));
     }
-    .xk-idfold{grid-area:fold;align-self:center}
+    .xk-idfold{grid-area:fold;align-self:center;justify-self:end}
     .xk-idcard-av{grid-area:av}
     .xk-idmeta{grid-area:meta}
     .xk-idstat{grid-area:stat}
@@ -3960,10 +3964,12 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     .xk-idstat{display:none}
     /* ③ 功能栏收起：默认 display:none，展开时贴在头像卡下面 */
     .xk-idcard-col{display:none}
+    /* ★M6：展开栏**竖排**、紧贴头像卡下沿（卡片 top:52 + 高度 ~96 → 148）。
+       原来是横排且 top:164，与卡片之间漏出一道空隙，看上去像漂在正文上。 */
     .xk-idcard.open + .xk-idcard-col{
-      display:flex; flex-direction:row; flex-wrap:wrap; gap:6px;
-      position:fixed; left:10px; top:164px; right:auto; bottom:auto;
-      margin-top:0; width:auto; max-width:calc(100vw - 20px);
+      display:flex; flex-direction:column; align-items:stretch; flex-wrap:nowrap; gap:4px;
+      position:fixed; left:10px; top:148px; right:auto; bottom:auto;
+      margin-top:0; width:auto; min-width:132px; max-width:calc(100vw - 20px);
       padding:8px; border-radius:12px;
       background:rgba(9,11,14,.94); backdrop-filter:blur(10px);
       border:1px solid var(--line2,rgba(255,246,235,.22)); z-index:80;
@@ -3971,7 +3977,7 @@ IDCARD_PARTIAL = u'''{{- /* ★批次 A-①（2026-10-16 站主 UI 指令）· �
     /* ④ 右上圆形小头像在手机上隐藏（与左上头像卡重复） */
     .holo-bubble{display:none!important}
     /* ⑤ 正文让出顶栏（导航 44 + 头像卡 58 + 间距） */
-    body.xk-has-idcard .main{padding-top:112px!important}
+    body.xk-has-idcard .main{padding-top:156px!important}
     /* ⑥ 输入栏仍贴底（功能栏已收进头像，底部不再占位） */
     .xk-askbar{left:10px;right:10px;bottom:16px;margin-left:0;padding:6px 6px 6px 10px;gap:6px}
     .xk-askbar input{font-size:16px}       /* ≥16px：iOS 聚焦不放大整页 */
