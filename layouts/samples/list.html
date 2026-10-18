@@ -1,0 +1,139 @@
+{{- /* ============================================================================
+   /samples/ = 真实恶意样本分析（手写页，**不归** _dev/gen-demo-pages.py 管）。
+   ----------------------------------------------------------------------------
+   为什么手写：这一页是纯静态陈述（不取数、不轮询、无后端契约），所以照
+   layouts/ip/list.html 的外壳（head-meta + xk-saver + shell-style + shell-chrome +
+   <main data-xk-ssr> 一屏 section + shell-script）与 layouts/projects/list.html 的
+   .Content 驱动方式写：正文全在 content/samples/_index.md，每个 "## 样本名" 切成
+   一张 .mod 卡（标题进 .mod-hd，正文进 .mod-bd），一处改动、不复制文案。
+   ★内联 script 标签恰好两处：/js/xk-saver.js + 页尾内联（页内索引，纯 DOM、不取数）。
+   ★口径：本页只写仓库里能查到证据的东西。没有文件样本就没有哈希、没有大小、
+     没有文件类型 —— 一律写「未留存」，不补样例值（见 _index.md 的 note）。
+   ============================================================================ */ -}}
+{{- $v := "samples" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：只用外壳已有色板变量（--txt/--mut/--acc/--mono/--line），不加新配色、不引外部资源 */
+.smp-bd{display:flex;flex-direction:column;gap:14px;min-width:0}
+.smp-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.smp-lead b,.smp-lead strong{color:#cfe9f5;font-weight:600}
+.smp-lead code{font-family:var(--mono);font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+/* 页内索引：默认 hidden，内联脚本建完才显示（无 JS 时正文照常可读） */
+.smp-toc[hidden]{display:none}
+.smp-toc-l{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.smp-toc-l li{min-width:0;max-width:100%}
+.smp-toc-l a{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.55;padding:4px 10px;
+  border:1px solid rgba(160,220,240,.26);border-radius:999px;color:#cfe9f5;text-decoration:none}
+.smp-toc-l a:hover{border-color:rgba(160,220,240,.6);color:#eaf6ff}
+/* 正文（Markdown 渲染结果）：字段是 <li>，来源标记是 <blockquote> */
+.smp-md{font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.8);min-width:0;overflow-wrap:anywhere}
+.smp-md p{margin:0 0 10px}
+.smp-md p:last-child{margin-bottom:0}
+.smp-md b,.smp-md strong{color:#e8f3f8;font-weight:600}
+.smp-md code{font-family:var(--mono);font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.smp-md ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.smp-md li{position:relative;padding-left:14px;min-width:0}
+.smp-md li::before{content:"";position:absolute;left:2px;top:.72em;width:4px;height:4px;
+  border-radius:50%;background:var(--acc);opacity:.65}
+.smp-md li li::before{opacity:.4}
+.smp-md ul ul{margin:6px 0 2px;padding-left:12px;gap:5px}
+.smp-md blockquote{margin:0 0 10px;padding:6px 10px;border-left:2px solid rgba(232,180,90,.55);
+  background:rgba(232,180,90,.07);border-radius:0 6px 6px 0;font-family:var(--mono);
+  font-size:11.5px;line-height:1.8;color:#E8B45A;overflow-wrap:anywhere}
+.smp-md blockquote p{margin:0}
+.smp-note-p{margin:0 0 8px;font-size:12px;line-height:1.95;color:rgba(255,255,255,.72)}
+.smp-note-p:last-child{margin-bottom:0}
+.smp-note-p b,.smp-note-p strong{color:#eaf6ff;font-weight:600}
+.smp-note-p code{font-family:var(--mono);font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+@media (max-width:980px){.smp-lead,.smp-md{font-size:12.5px}}
+@media (max-width:520px){
+  .smp-lead{font-size:12px}
+  .smp-md li{padding-left:12px}
+  .smp-md ul ul{padding-left:8px}
+}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="samples">
+<section class="view on" id="v-samples">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 真实恶意样本分析 <em class="ops-en">MALWARE SAMPLES</em></span>
+      <span class="sync">● 只写抓到的 · 抓不到就写未留存 · 不编样本、不编哈希</span>
+    </div>
+    <div class="screen-bd smp-bd">
+      {{- $parts := split .Content "<h2" }}
+      {{- if gt (len $parts) 1 }}
+      <p class="smp-lead">{{ index $parts 0 | plainify | strings.TrimSpace }}</p>
+      <div class="mod smp-toc" id="smpToc" hidden>
+        <div class="mod-hd"><span class="led"></span>页内索引<span class="tag">样本在前、缺口在后</span></div>
+        <div class="mod-bd"><ul class="smp-toc-l"></ul></div>
+      </div>
+      {{- range after 1 $parts }}
+      {{- $rest := replaceRE "(?s)^[^>]*>.*?</h2>" "" . }}
+      {{- $title := replaceRE "(?s)^[^>]*>(.*?)</h2>.*$" "$1" . | plainify }}
+      {{- $tag := cond (strings.Contains $title "下载事件") "缺口 · 怎么留住" "文件本体未留存" }}
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>{{ $title }}<span class="tag">{{ $tag }}</span></div>
+        <div class="mod-bd smp-md">{{ $rest | safeHTML }}</div>
+      </div>
+      {{- end }}
+      {{- else }}
+      {{- /* 兜底：Markdown 结构变了也照样出图，不至于空白 */}}
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>样本分析</div>
+        <div class="mod-bd smp-md">{{ .Content }}</div>
+      </div>
+      {{- end }}
+      {{- with .Params.note }}
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>核实口径 · 这一页为什么可信<span class="tag">可复核</span></div>
+        <div class="mod-bd"><div class="smp-note-p">{{ . | markdownify }}</div></div>
+      </div>
+      {{- end }}
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+<script>
+(function () {
+  'use strict';
+  /* 只做一件事：给正文里每张 .mod 卡生成页内索引（这页四块都很长，滚起来找不到头）。
+     不取数、不发请求、不改正文；没有 JS 时索引块保持 hidden，正文照常可读。 */
+  var bd = document.querySelector('.smp-bd');
+  var box = document.getElementById('smpToc');
+  if (!bd || !box) return;
+  var list = box.querySelector('ul');
+  if (!list) return;
+  var cards = bd.querySelectorAll('.mod'), i, n = 0, hd, a, li;
+  for (i = 0; i < cards.length; i++) {
+    if (cards[i] === box) continue;
+    hd = cards[i].querySelector('.mod-hd');
+    if (!hd) continue;
+    var label = (hd.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!label) continue;
+    n += 1;
+    cards[i].id = 'smp-' + n;
+    li = document.createElement('li');
+    a = document.createElement('a');
+    a.href = '#smp-' + n;
+    a.textContent = label;
+    li.appendChild(a);
+    list.appendChild(li);
+  }
+  if (n > 0) box.hidden = false;
+})();
+</script>
+</body>
+</html>

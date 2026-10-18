@@ -359,6 +359,9 @@ new_page_gate tools/cve CVE每日速递页
 #   （后端名 /api/public/password 的最后一段），不是目录名，所以两种写法都在 pat 里认。
 new_page_gate tools 工具台
 new_page_gate tools/password 密码自查页
+# ★2026-10-18：真实恶意样本分析页（/samples/）。判据同上；data-xk-ssr 用路由名 samples
+#   （手写静态页，正文全在 content/samples/_index.md，抓不到样本就写「未留存」，不补哈希）。
+new_page_gate samples 样本分析页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
 # 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。
