@@ -308,6 +308,10 @@ MEASURE_JS = r"""
     const r = rect(t);
     const viewportNeed = r.width > vw + 1;
     let anc = t.parentElement, guard = 0, wrapper = null;
+    // table itself is the scroll container (.screen-bd table{display:block;overflow-x:auto})
+    // user can scroll to see all columns, equivalent to a scrollable ancestor -> not FAIL
+    const tst = getComputedStyle(t);
+    if (/(auto|scroll)/.test(tst.overflowX)) { wrapper = sel(t) + ' (self)'; }
     while (anc && guard++ < 24 && anc !== document.body) {
       const s = getComputedStyle(anc);
       if (/(auto|scroll)/.test(s.overflowX)) { wrapper = sel(anc); break; }

@@ -76,6 +76,25 @@
         这不是接口挂了，是这一页本来就靠它取数。</p></noscript>
 
       <div class="mod">
+        <div class="mod-hd"><span class="led"></span>站点存活 · 每 5 分钟<span class="tag">srv1 cron · /data/uptime.json</span></div>
+        <div class="mod-bd">
+          <div class="st-scroll">
+            <table class="st-kv">
+              <thead><tr><th>项目</th><th>字段（来源）</th><th>值</th></tr></thead>
+              <tbody>
+                <tr><th>最近一次探测</th><td class="f">uptime.json · ts</td><td class="v" id="stUpTs">未取到</td></tr>
+                <tr><th>站点 xiaokeqing.cn</th><td class="f">uptime.json · site_status / site_ms</td><td class="v" id="stUpSite">未取到</td></tr>
+                <tr><th>API /api/public/home.js</th><td class="f">uptime.json · api_status / api_ms</td><td class="v" id="stUpApi">未取到</td></tr>
+                <tr><th>连续失败次数</th><td class="f">uptime.json · consecutive_failures</td><td class="v" id="stUpFail">未取到</td></tr>
+                <tr><th>上次正常</th><td class="f">uptime.json · last_ok_at</td><td class="v" id="stUpOk">未取到</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="st-note" id="stUpNote">正在读 /data/uptime.json…</p>
+        </div>
+      </div>
+
+      <div class="mod">
         <div class="mod-hd"><span class="led"></span>端点体检 · 逐个 fetch 实测<span class="tag">8 个端点 · GET · 只读</span></div>
         <div class="mod-bd">
           <p class="st-sum"><b id="stPass">—</b><span id="stSumTxt">等待体检…</span></p>
@@ -756,6 +775,65 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
       });
   }
 
+  /* ---------------------------------------------------------------- 站点存活
+     读同源 /data/uptime.json（srv1 上 uptime-probe.sh 每 5 分钟探一次，
+     scp 到 srv2 当前 release 的 data/ 目录，nginx 直接当静态文件发）。
+     状态码 0 = curl 没拿到状态码（连不上 / 超时），照实写「无响应」，不填 0 分。
+     读不到就整卡写「未取到（/data/uptime.json 读不到：原因）—— 不补数」。 */
+  function upCode(n) {
+    var c = num(n);
+    if (c === null) return NA;
+    if (c === 0) return '无响应';
+    return (c >= 200 && c < 300) ? String(c) : ('HTTP ' + c);
+  }
+  function upIs2xx(n) { var c = num(n); return c !== null && c >= 200 && c < 300; }
+  function upMs(n) { var v = num(n); return v === null ? '—' : (v + ' ms'); }
+  function renderUptime() {
+    if (!window.fetch) {
+      show('stUpTs', NA + '（浏览器不支持 fetch）', 'st-warn');
+      return;
+    }
+    fetch('/data/uptime.json', { method: 'GET', credentials: 'omit', cache: 'no-cache' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (j) {
+        var site = num(j.site_status), api = num(j.api_status);
+        var fail = num(j.consecutive_failures);
+        var allOk = upIs2xx(site) && upIs2xx(api);
+        show('stUpTs', j.ts ? ciWhen(j.ts) : (NA + '（响应里没有 ts）'), allOk ? '' : 'st-warn');
+        show('stUpSite', upCode(site) + ' · ' + upMs(j.site_ms), upIs2xx(site) ? 'st-pass' : 'st-fail');
+        show('stUpApi', upCode(api) + ' · ' + upMs(j.api_ms), upIs2xx(api) ? 'st-pass' : 'st-fail');
+        show('stUpFail', fail === null ? NA : (fail + ' 次' + (fail >= 3 ? '（≥3，srv1 已写告警日志）' : '')),
+          (fail !== null && fail >= 3) ? 'st-warn' : '');
+        show('stUpOk', j.last_ok_at ? ciWhen(j.last_ok_at) : '—（部署以来还没成功过一次）', j.last_ok_at ? '' : 'st-na');
+        var note = $('stUpNote');
+        if (note) {
+          note.innerHTML = '<b>口径</b>：srv1 上 <code>uptime-probe.sh</code> 每 5 分钟各探一次，'
+            + '两侧都 2xx 才算一次成功；任一侧非 2xx（curl 超时/连不上 → 状态码 0）就记一次失败，成功立刻归零。'
+            + '连续 ≥3 次失败由脚本自己写 <code>/var/log/xk-uptime-alert.log</code>'
+            + '（<code>.env</code> 里有 <code>APP_ALERT_WEBHOOK</code> 时才另外 POST 一条）。'
+            + '本页只是把 <code>/opt/secagent/data/uptime.json</code> 原样读出来：读不到就是读不到，不补数。'
+            + '（每次发布切到新 release 目录后，最多 5 分钟 cron 会把它重新铺回去。）';
+        }
+      })
+      .catch(function (e) {
+        var why = (e && e.message) || e;
+        show('stUpTs', NA + '（/data/uptime.json 读不到：' + why + '）', 'st-warn');
+        show('stUpSite', NA, 'st-na');
+        show('stUpApi', NA, 'st-na');
+        show('stUpFail', NA, 'st-na');
+        show('stUpOk', NA, 'st-na');
+        var note = $('stUpNote');
+        if (note) {
+          note.innerHTML = '<b>未取到（/data/uptime.json 读不到：' + esc(why) + '）—— 不补数</b>。'
+            + '这张卡只读 srv1 探活脚本落盘的那一份 JSON：拿不到就说拿不到，'
+            + '不拿上一次的数顶上，也不填 0 假装正常。';
+        }
+      });
+  }
+
   function render(list) {
     renderTable(list);
     var i;
@@ -776,6 +854,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
     if (btn) { btn.disabled = true; btn.textContent = '体检中…'; }
     var sync = $('stSync');
     if (sync) sync.textContent = '● 体检中：逐个 fetch 8 个端点…';
+    renderUptime();
     var all = [];
     for (var i = 0; i < EPS.length; i++) all.push(probe(EPS[i]));
     Promise.all(all).then(function (list) {

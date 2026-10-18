@@ -195,7 +195,7 @@ html[data-xk-crt-on="1"] .xk-veil {
   border-radius: 999px;
   background: rgba(8, 12, 18, .72);
   color: #D6EFDC;
-  font-size: clamp(8px, 0.72vw, 13px);
+  font-size: 13px; /* ★T-c6：clamp(8px,0.72vw,13px) 在 1280 下只有 9.2px、390 下 8px → p 字号下限 13px */
   line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
@@ -311,7 +311,7 @@ html[data-xk-crt-on="1"] .xk-veil {
   box-shadow: 0 0 0 1px var(--xk-blue) inset;
   color: var(--xk-title);
 }
-.xk-kurisu__emo-hd { margin: 12px 0 0; font-size: 11.5px; color: var(--xk-muted); }
+.xk-kurisu__emo-hd { margin: 12px 0 0; font-size: 13px; color: var(--xk-muted); } /* ★T-c6：11.5px → 13px */
 
 /* 🔊 语音入口：本轮是空实现（语音线另派）。按钮必须在、可聚焦、有焦点态、aria-pressed。 */
 .xk-kurisu__voice {
@@ -330,7 +330,7 @@ html[data-xk-crt-on="1"] .xk-veil {
   cursor: pointer;
 }
 .xk-kurisu__voice[aria-pressed="true"] { border-color: var(--xk-blue); color: var(--xk-link); }
-.xk-kurisu__note { margin: 6px 0 0; font-size: 11px; color: var(--xk-muted); min-height: 1.2em; }
+.xk-kurisu__note { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--xk-muted); min-height: 1.2em; } /* ★T-c6：11px → 13px */
 
 /* ---------------------------------------------------------------------------
    5. 角落点缀（非主页/非 AI 页）：一个小头像，纯装饰

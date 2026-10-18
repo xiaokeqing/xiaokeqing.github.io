@@ -5,9 +5,9 @@
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CLIPS = {
   opening:  {src:'/kurisu/full/opening.hi.webp',  frames:84, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:'/kurisu/full/opening.boot.webp',  bootFrames:24, vid:'opening'},
-  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24, vid:'idle'},
-  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24, vid:'speaking_long'},
-  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:90, interval:34,    cols:8, cw:321, ch:432, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24, vid:'thinking_to_key_point'}
+  idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24, vid:'idle'},
+  speaking: {src:'/kurisu/full/speaking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24, vid:'speaking_long'},
+  thinking: {src:'/kurisu/full/thinking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24, vid:'thinking_to_key_point'}
 };
 /* 角色落位（scene.character 源码公式）：scale=min(w*0.64/764,h*0.90/1028), x=0.52w, y=bottom-h*0.012, anchor=(0.5,1) */
 const CHAR_BOX = {w:764, h:1028, maxW:0.64, maxH:0.90, xRatio:0.52, footRatio:0.012};

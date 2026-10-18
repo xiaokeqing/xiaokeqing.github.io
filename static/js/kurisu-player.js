@@ -690,8 +690,8 @@
     this.ctx.imageSmoothingQuality = 'high';
     this.ctx.drawImage(img, col * fw, row * fh, fw, fh, r.x, r.y, r.w, r.h);
     if (!this._firstPaintAt) { this._firstPaintAt = Date.now(); }
-    /* 叠闭嘴层：帧下标按"该剪辑自己的源帧序号"给（clips.speaking 是 stride=2 抽帧，
-       所以源帧号 = 图集帧号 × 2；状态机的 medium/hi 是 stride=1，直接就是图集帧号）。 */
+    /* 叠闭嘴层：帧下标按"该剪辑自己的源帧序号"给（clips.speaking/thinking 是 stride=4 抽帧，
+       所以源帧号 = 图集帧号 × 4；状态机的 medium/hi 是 stride=1，直接就是图集帧号）。 */
     var mouthClip = cur.clipName || cur.clip;
     var srcIdx = local * (MOUTH_STRIDE[cur.clip] || 1);
     this.drawMouth(r, srcIdx, mouthClip);
@@ -2542,8 +2542,10 @@
     'sad_speaking', 'shy_speaking1', 'shy_speaking2', 'surprise_speaking', 'angry_speaking'];
   /* manifest 里的 4 段主推剪辑没有自己的口型 profile，借用上游的对应关系 */
   var MOUTH_ALIAS = { speaking: 'speaking_loop1', thinking: 'thinking_speaking1' };
-  /* 图集帧号 → 源帧号的抽帧倍率（只有 manifest 的 clips.* 那 4 段是 stride 2） */
-  var MOUTH_STRIDE = { speaking: 2, thinking: 2 };
+  /* 图集帧号 → 源帧号的抽帧倍率（manifest 的 clips.* 按 manifest.clips.*.source.stride 走）：
+     idle 不叠嘴罩（无 alias）；speaking / thinking 2026-10-18 提到 640 档时抽帧改成 1/4
+     （90 帧 → 45 帧，帧 476x640），所以这里必须是 4，否则嘴罩会按源帧号的一半取锚点。 */
+  var MOUTH_STRIDE = { speaking: 4, thinking: 4 };
 
   Player.prototype.mouthLabelFor = function (clipName) {
     if (!clipName) { return null; }

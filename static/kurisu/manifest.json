@@ -12,8 +12,8 @@
     "mediumTotalBytes": 50492702,
     "note": "首屏 = 开场 boot 图集 + idle boot 图集 + 静帧 + 头像静帧；hi 图集首屏渲染完成后后台补",
     "warnings": [
-      "speaking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）",
-      "thinking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）"
+      "speaking.hi.webp 像素数 14622720（>1200 万：仅桌面端会载入，窄屏走头像静帧）",
+      "thinking.hi.webp 像素数 14622720（>1200 万：仅桌面端会载入，窄屏走头像静帧）"
     ]
   },
   "clips": {
@@ -107,79 +107,79 @@
     "speaking": {
       "atlas": {
         "boot": {
-          "bytes": 444430,
-          "decodedBytes": 13312512,
+          "bytes": 750030,
+          "decodedBytes": 29245440,
           "frames": 24,
-          "h": 1296,
+          "h": 1920,
           "url": "kurisu/full/speaking.boot.webp",
-          "w": 2568
+          "w": 3808
         },
         "hi": {
-          "bytes": 1592000,
-          "decodedBytes": 53250048,
-          "h": 5184,
+          "bytes": 1387808,
+          "decodedBytes": 58490880,
+          "h": 3840,
           "url": "kurisu/full/speaking.hi.webp",
-          "w": 2568
+          "w": 3808
         }
       },
       "columns": 8,
-      "frameHeight": 432,
-      "frameIntervalMs": 34,
-      "frameWidth": 321,
-      "frames": 90,
+      "frameHeight": 640,
+      "frameIntervalMs": 68,
+      "frameWidth": 476,
+      "frames": 45,
       "intro": null,
       "loopMode": "loop",
       "poster": {
-        "bytes": 22106,
-        "h": 432,
+        "bytes": 35206,
+        "h": 640,
         "url": "kurisu/full/speaking.poster.webp",
-        "w": 321
+        "w": 476
       },
-      "rows": 12,
+      "rows": 6,
       "source": {
         "clip": "speaking_loop1",
         "frameIntervalMs": 17,
         "frames": 180,
-        "stride": 2
+        "stride": 4
       }
     },
     "thinking": {
       "atlas": {
         "boot": {
-          "bytes": 475680,
-          "decodedBytes": 13312512,
+          "bytes": 817354,
+          "decodedBytes": 29245440,
           "frames": 24,
-          "h": 1296,
+          "h": 1920,
           "url": "kurisu/full/thinking.boot.webp",
-          "w": 2568
+          "w": 3808
         },
         "hi": {
-          "bytes": 1703650,
-          "decodedBytes": 53250048,
-          "h": 5184,
+          "bytes": 1490694,
+          "decodedBytes": 58490880,
+          "h": 3840,
           "url": "kurisu/full/thinking.hi.webp",
-          "w": 2568
+          "w": 3808
         }
       },
       "columns": 8,
-      "frameHeight": 432,
-      "frameIntervalMs": 34,
-      "frameWidth": 321,
-      "frames": 90,
+      "frameHeight": 640,
+      "frameIntervalMs": 68,
+      "frameWidth": 476,
+      "frames": 45,
       "intro": null,
       "loopMode": "loop",
       "poster": {
-        "bytes": 23552,
-        "h": 432,
+        "bytes": 37524,
+        "h": 640,
         "url": "kurisu/full/thinking.poster.webp",
-        "w": 321
+        "w": 476
       },
-      "rows": 12,
+      "rows": 6,
       "source": {
         "clip": "thinking_speaking1",
         "frameIntervalMs": 17,
         "frames": 180,
-        "stride": 2
+        "stride": 4
       }
     }
   },
