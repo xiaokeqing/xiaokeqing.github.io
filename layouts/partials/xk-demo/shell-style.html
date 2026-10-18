@@ -644,6 +644,8 @@
 /* ★P8-A（站主 2026-10-16）：内容页右列 = 手机（替掉 .holo）；主页无手机 */
 #holo{display:none !important}                 /* 只隐藏，不删：holoFold/holoBubble 的 JS 仍在跑 */
 body.is-home .phone{display:none}
+/* ★PHONE-ONLY-AI 2026-10-18：右侧手机框人物大卡只在 /ai/ 保留，其余页面一律不渲染（腾出的横向空间还给数据区，正文才能提到 13px） */
+body:has(> main[data-xk-ssr]:not([data-xk-ssr="ai"])) .phone{display:none}
 .phone{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:55;
   width:min(300px,44vh);height:auto;padding:8px;border-radius:34px;
   background:linear-gradient(160deg,#2b3138,#0c0f13 55%,#23272d);
