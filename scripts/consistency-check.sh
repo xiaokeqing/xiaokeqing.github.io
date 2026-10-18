@@ -8,8 +8,9 @@
 # 四类检查（任一失败 exit 1；全通过 exit 0）：
 #   ① 公开页面：7 个页面 HTTP 200 且字节数 > MIN_BYTES（默认 100000）
 #   ② 公开端点：8 个端点 HTTP 200 且 body 能被 json.load 解析
-#   ③ 站点完整性：/opt/secagent/releases/ 下最新目录 index.html 的 sha256
-#                  与同目录清单里记录的 sha256 是否一致（**探不到清单就 skipped，不臆造字段**）
+#   ③ 站点完整性：/opt/secagent/releases/ 下最新发布目录 **实测**（文件数 / 总字节 / 整树内容哈希 /
+#                  index.html 的 sha256），与同目录 manifest.json 里记的值逐项比对：
+#                  对得上写 ok、对不上写 mismatch；**只有连清单都没有**才写 skipped（绝不臆造字段）
 #   ④ 后端版本：/api/health 的 buildSha 与 /api/public/deploy 里 build.sha 是否一致
 #                  （对不上写 unverified，**不报红** —— 见下方「为什么 ④ 不判失败」）
 #
@@ -128,16 +129,20 @@ ep_job() { # $1 = 序号  $2 = 主路径  $3 = 兜底裸路径
 }
 
 # ---------- ③ 站点完整性（只取事实，判定在 python） ----------
-# 真实现状（2026-10-17 从发布链源码核实）：
-#   · srv2 的 /opt/secagent/releases/site-<stamp>/ 里放的是**Hugo 产物本身**，
-#     接收脚本 scripts/srv2-site-receive.sh 只解包 + 校验 + 原子切换，**从不写清单文件**；
-#   · 带 indexSha256 / commit 的 release-info.json 在 **srv1** 的
-#     /opt/secagent/data/public-api/release-info.json（由 publish-site-to-srv2.ps1 第 6.5 步写入），
-#     后端再通过 /api/public/deploy 暴露出来。
-#   所以这里按「候选清单」顺序探测：探到就比对，探不到就如实写 skipped —— 绝不编字段。
+# 2026-10-18 起的现状（改前：srv2 侧**从不写清单**，唯一带 indexSha256 的 release-info.json 在 srv1，
+# 跨机器对不到 ⇒ 这一项常年只能 skipped）：
+#   · scripts/srv2-site-receive.sh 现在会在**原子切换之前**往每个 release 目录写 manifest.json
+#     （count / totalBytes / sha256=整树内容哈希 / indexSha256=index.html 单文件哈希 / generatedAt），
+#     清单随产物一起 mv 就位，所以「已切换」的版本一定自带指纹；
+#   · 本脚本再把目录**实测**一遍（文件数 / 总字节 / 整树哈希 / index.html 哈希）跟清单比 ⇒ ok / mismatch；
+#   · 老版发布目录（清单改动之前切上去的）没有 manifest.json，仍按候选顺序找 srv1 的 release-info.json，
+#     那种清单只有 indexSha256，就只比 index.html 的哈希；
+#   · 什么清单都找不到才写 skipped，并在 detail 里说清原因 —— 绝不编字段。
 manifest_candidates() { # $1 = 最新 release 目录（空则只探站点级/外部清单）
   local dir=$1
   if [[ -n $dir ]]; then
+    # 首选发布链自己写的每版指纹清单（与产物同一棵被切换的树）
+    printf '%s\n' "$dir/manifest.json"
     printf '%s\n' "$dir/release-info.json" "$dir/.release-info.json"
   fi
   printf '%s\n' \
@@ -145,10 +150,19 @@ manifest_candidates() { # $1 = 最新 release 目录（空则只探站点级/外
     "$MANIFEST_EXTRA"
 }
 # 注意：故意**不**把 release 目录里的 index.json 当清单 —— 那是 Hugo 的 /index.json 产物页面
-# （且有 generatedAt，每次构建都变，接收脚本的整树哈希都特意把它排除），不是发布清单。
+# （且有 generatedAt，每次构建都变，发布链的整树哈希都特意把它排除），不是发布清单。
+
+# 整树内容哈希：口径必须与发布链**逐字节同源**，否则本地算的永远对不上远端算的。
+#   同源三处：scripts/srv2-site-receive.sh 的 tree_hash()、scripts/publish-site-to-srv2.ps1 的 Get-TreeFiles、
+#   以及这里。排除项也是同一份：./index.json（Hugo 产物，带构建时刻）与 ./manifest.json（清单自身，自指）。
+tree_hash_dir() { # $1 = release 目录
+  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f \
+      ! -path './index.json' ! -path './manifest.json' -print0 \
+    | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+}
 
 collect_site_facts() {
-  local rel_dir="" sha="" manifest="" live=""
+  local rel_dir="" sha="" manifest="" live="" act_count="" act_bytes="" act_hash=""
   # 「最新目录」= 修改时间最新的 site-*；.staging-* 不在 glob 里，天然排除
   rel_dir=$(ls -1dt "$RELEASES_DIR"/site-* 2>/dev/null | head -n 1 || true)
   if [[ -n $rel_dir && -f $rel_dir/index.html ]]; then
@@ -161,7 +175,18 @@ collect_site_facts() {
     break
   done < <(manifest_candidates "${rel_dir:-}")
   live=$(readlink -f "$SITE_LINK" 2>/dev/null || true)
-  printf '%s\t%s\t%s\t%s\n' "${rel_dir:-}" "${sha:-}" "${manifest:-}" "${live:-}" > "$TMPD/site.tsv"
+  if [[ -n $rel_dir ]]; then
+    # 实测事实：目录里**全部普通文件**（只排除 ./manifest.json 自身，与清单 count/totalBytes 同口径）。
+    # 算不出来就留空，python 侧会如实写 mismatch / 说清原因，不会假装通过。
+    act_count=$(LC_ALL=C find "$rel_dir" -type f ! -path "$rel_dir/manifest.json" 2>/dev/null \
+      | wc -l | tr -d '[:space:]' || true)
+    act_bytes=$(LC_ALL=C find "$rel_dir" -type f ! -path "$rel_dir/manifest.json" -printf '%s\n' 2>/dev/null \
+      | awk '{s+=$1} END{printf "%d", s+0}' || true)
+    act_hash=$(tree_hash_dir "$rel_dir" || true)
+  fi
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "${rel_dir:-}" "${sha:-}" "${manifest:-}" "${live:-}" \
+    "${act_count:-}" "${act_bytes:-}" "${act_hash:-}" > "$TMPD/site.tsv"
 }
 
 # ---------- 计划清单落盘（给 python 读，保证两边顺序一一对应） ----------
@@ -271,21 +296,42 @@ for i, line in enumerate(open(os.path.join(tmpd, "plan_eps"), encoding="utf-8").
              "" if ok else ("(" + ("HTTP " + code if code != "200" else why) + ")")),
           file=sys.stderr)
 
-# ---------- ③ 站点完整性 ----------
-rel_dir, index_sha, manifest, live_target = (
-    [c.strip() for c in read_line("site.tsv").split("\t")] + [""] * 4)[:4]
+# ---------- ③ 站点完整性（有清单就实测比对：ok / mismatch；连清单都没有才 skipped） ----------
+# 口径说明（写进报告，免得下一个人以为两个哈希是一回事）：
+#   · sha256（整树内容哈希）= 发布链 tree_hash 的口径：LC_ALL=C 路径字节序 + 逐文件 sha256 +
+#     对整段 "<per-file sha256>  ./rel\n" 文本再 sha256；排除 ./index.json 与 ./manifest.json。
+#   · indexSha256 = **index.html 单文件**哈希，与 srv1 release-info.json 的同名字段同值，
+#     只用来查截断；它**不是**整树哈希。两条都实测都比，报告里用 site_integrity_hash_scope 说明差异。
+rel_dir, index_sha, manifest, live_target, act_count, act_bytes, act_hash = (
+    [c.strip() for c in read_line("site.tsv").split("\t")] + [""] * 7)[:7]
 site_integrity = "skipped"
 integrity_detail = ""
 recorded_in = ""
 manifest_keys = []
+manifest_kind = ""
+expected = {}
+actual = {}
+
+
+def _int_or_none(v):
+    try:
+        return int(str(v).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+if rel_dir:
+    actual = {"count": _int_or_none(act_count), "totalBytes": _int_or_none(act_bytes),
+              "sha256": (act_hash or "").strip().lower()}
+
 if not rel_dir:
     integrity_detail = "在 %s 下没找到 site-* 发布目录" % os.environ.get("RELEASES_DIR", "/opt/secagent/releases")
 elif not index_sha:
     integrity_detail = "%s/index.html 算不出 sha256（文件不在或不可读）" % rel_dir
 elif not manifest:
-    integrity_detail = ("release 目录里没有清单文件（srv2 侧本来就不写清单）；"
-                        "唯一带 indexSha256 的 release-info.json 在 srv1 的 "
-                        "/opt/secagent/data/public-api/release-info.json")
+    integrity_detail = ("%s 里没有任何清单（manifest.json 不在，老式 release-info.json 也找不到）⇒ "
+                        "无从核对，如实写 skipped；发布链下一次发布（或重发一次）会写出 manifest.json"
+                        % rel_dir)
 else:
     try:
         with open(manifest, "r", encoding="utf-8", errors="replace") as f:
@@ -295,54 +341,102 @@ else:
         man = None
         integrity_detail = "清单解析失败 %s：%s" % (manifest, exc)
 
+    if man is not None and not isinstance(man, dict):
+        integrity_detail = "清单 %s 不是 JSON 对象（顶层是 %s）" % (manifest, type(man).__name__)
+        man = None
+
     if man is not None:
-        found = []
+        _base = os.path.basename(manifest)
+        manifest_kind = ("manifest.json（发布链在切换前写入的每版指纹）" if _base == "manifest.json"
+                         else "%s（老式清单，只带 index.html 的哈希）" % _base)
+        reasons = []
 
-        def walk(node, path="$", depth=0):
-            if depth > 4:
-                return
-            if isinstance(node, dict):
-                for k, v in node.items():
-                    walk(v, "%s.%s" % (path, k), depth + 1)
-            elif isinstance(node, list):
-                for n, v in enumerate(node[:20]):
-                    walk(v, "%s[%d]" % (path, n), depth + 1)
-            elif isinstance(node, str):
-                if len(node.strip()) == 64 and all(c in "0123456789abcdefABCDEF" for c in node.strip()):
-                    found.append((path, node.strip().lower()))
+        exp_sha = man.get("sha256")
+        exp_sha = exp_sha.strip().lower() if isinstance(exp_sha, str) and exp_sha.strip() else None
+        exp_count = _int_or_none(man.get("count"))
+        exp_bytes = _int_or_none(man.get("totalBytes"))
+        expected = {"count": exp_count, "totalBytes": exp_bytes, "sha256": exp_sha}
 
-        walk(man)
-        # 先按**已核实的真实字段名**找（publish-site-to-srv2.ps1:444 写的是 indexSha256）
-        recorded = None
-        rec_key = ""
-        for key in ("indexSha256", "index_sha256", "indexSHA256"):
-            if isinstance(man, dict) and isinstance(man.get(key), str):
-                recorded, rec_key = man[key].strip().lower(), key
-                break
-        if recorded is None and found:
-            # 字段名没见过：从「值」侧认——哪个 64 位十六进制串等于本机算出来的 sha，就是它
-            for path, val in found:
-                if val == index_sha.lower():
-                    recorded, rec_key = val, path
-                    break
-            if recorded is None:
-                recorded, rec_key = found[0][1], found[0][0]
-        if recorded is None:
-            integrity_detail = "清单 %s 里没有任何 64 位 sha256 值（顶层键：%s）" % (
-                manifest, ", ".join(manifest_keys) or "无")
-        else:
-            recorded_in = rec_key
-            if recorded == index_sha.lower():
-                site_integrity = "pass"
-                integrity_detail = "index.html sha256 与清单 %s 一致" % rec_key
+        if exp_sha:
+            # —— 新式清单（manifest.json）：整树内容哈希 + 文件数 + 总字节，逐个实测比 ——
+            recorded_in = _base + ":sha256"
+            actual_sha = actual.get("sha256") or ""
+            if not actual_sha:
+                reasons.append("实际整树哈希算不出来（find/sha256sum 失败或目录不可读）")
+            elif actual_sha != exp_sha:
+                reasons.append("整树哈希不符（清单 %s… / 实测 %s…）" % (exp_sha[:16], actual_sha[:16]))
+            if exp_count is None:
+                reasons.append("清单没有可用的 count（%r）" % (man.get("count"),))
+            elif actual.get("count") is None:
+                reasons.append("实际文件数算不出来")
+            elif actual["count"] != exp_count:
+                reasons.append("文件数不符（清单 %d / 实测 %d）" % (exp_count, actual["count"]))
+            if exp_bytes is not None and actual.get("totalBytes") is not None \
+                    and actual["totalBytes"] != exp_bytes:
+                reasons.append("总字节数不符（清单 %d / 实测 %d）" % (exp_bytes, actual["totalBytes"]))
+            exp_index = man.get("indexSha256")
+            if isinstance(exp_index, str) and exp_index.strip() and exp_index.strip().lower() != index_sha.lower():
+                reasons.append("index.html 的 sha256 与清单 indexSha256 不符（清单 %s… / 实测 %s…）"
+                               % (exp_index.strip().lower()[:16], index_sha[:16]))
+            if not reasons:
+                site_integrity = "ok"
+                integrity_detail = ("实测与清单一致：%d 个文件 / %d B / 整树 %s…"
+                                    % (actual["count"], actual.get("totalBytes") or 0, exp_sha[:16]))
             else:
-                site_integrity = "fail"
-                integrity_detail = "index.html sha256 与清单 %s 不一致" % rec_key
-                failed.append("site_integrity -> sha256 不一致（index.html=%s / %s=%s）"
-                              % (index_sha, rec_key, recorded))
-print("[%s] site integrity=%s %s" % ("OK" if site_integrity == "pass" else
-                                    ("--" if site_integrity == "skipped" else "!!"),
-                                    site_integrity, integrity_detail), file=sys.stderr)
+                site_integrity = "mismatch"
+                integrity_detail = "；".join(reasons)
+                failed.append("site_integrity -> mismatch（%s）：%s" % (manifest, integrity_detail))
+        else:
+            # —— 老式清单（srv1 release-info.json 那套）：只有 index.html 单文件哈希可比 ——
+            found = []
+
+            def walk(node, path="$", depth=0):
+                if depth > 4:
+                    return
+                if isinstance(node, dict):
+                    for k, v in node.items():
+                        walk(v, "%s.%s" % (path, k), depth + 1)
+                elif isinstance(node, list):
+                    for n, v in enumerate(node[:20]):
+                        walk(v, "%s[%d]" % (path, n), depth + 1)
+                elif isinstance(node, str):
+                    if len(node.strip()) == 64 and all(c in "0123456789abcdefABCDEF" for c in node.strip()):
+                        found.append((path, node.strip().lower()))
+
+            walk(man)
+            # 先按**已核实的真实字段名**找（publish-site-to-srv2.ps1 写的是 indexSha256）
+            recorded = None
+            rec_key = ""
+            for key in ("indexSha256", "index_sha256", "indexSHA256"):
+                if isinstance(man.get(key), str):
+                    recorded, rec_key = man[key].strip().lower(), key
+                    break
+            if recorded is None and found:
+                # 字段名没见过：从「值」侧认——哪个 64 位十六进制串等于本机算出来的 sha，就是它
+                for path, val in found:
+                    if val == index_sha.lower():
+                        recorded, rec_key = val, path
+                        break
+                if recorded is None:
+                    recorded, rec_key = found[0][1], found[0][0]
+            if recorded is None:
+                integrity_detail = "清单 %s 里没有任何 64 位 sha256 值（顶层键：%s）" % (
+                    manifest, ", ".join(manifest_keys) or "无")
+            else:
+                recorded_in = rec_key
+                expected = {"indexSha256": recorded, "count": exp_count, "sha256": None}
+                actual["indexSha256"] = index_sha.lower()
+                if recorded == index_sha.lower():
+                    site_integrity = "ok"
+                    integrity_detail = "index.html 的 sha256 与清单 %s 一致（老式清单，只有单文件哈希可比）" % rec_key
+                else:
+                    site_integrity = "mismatch"
+                    integrity_detail = "index.html 的 sha256 与清单 %s 不一致（老式清单，只有单文件哈希可比）" % rec_key
+                    failed.append("site_integrity -> mismatch：index.html sha256 不一致（实测=%s / %s=%s）"
+                                  % (index_sha, rec_key, recorded))
+print("[%s] site integrity=%s %s"
+      % ({"ok": "OK", "mismatch": "!!", "skipped": "--"}.get(site_integrity, "--"),
+         site_integrity, integrity_detail), file=sys.stderr)
 
 # ---------- ④ 后端版本（佐证，永不判红） ----------
 health = next((e for e in eps if e["name"] == "health"), None)
@@ -412,7 +506,14 @@ report = {
     "site_integrity": site_integrity,
     "site_integrity_detail": integrity_detail,
     "site_integrity_manifest": manifest,
+    "site_integrity_manifest_kind": manifest_kind,
     "site_integrity_recorded_in": recorded_in,
+    # 两个哈希不是一回事，写进报告让读的人一眼分清（也回应「口径一致或显式说明差异」）
+    "site_integrity_hash_scope": (
+        "sha256=整树内容哈希（逐文件 sha256 后对全量文本再 sha256；排除 ./index.json 与 ./manifest.json）；"
+        "indexSha256=index.html 单文件哈希（与 srv1 release-info.json 同名字段同值，非整树）"),
+    "site_integrity_expected": expected,
+    "site_integrity_actual": actual,
     "site_index_sha256": index_sha,
     "release_dir": rel_dir,
     "live_target": live_target,

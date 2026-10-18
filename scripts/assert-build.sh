@@ -348,6 +348,7 @@ new_page_gate status 状态页
 new_page_gate redteam 红队评测页
 new_page_gate ip IP情报页
 new_page_gate purpleteam 紫队演练页
+new_page_gate passwords 弱口令统计页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
 # 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。

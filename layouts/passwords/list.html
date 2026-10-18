@@ -1,0 +1,296 @@
+{{- /* ============================================================================
+   /passwords/ = 「100 个最常用密码」趣味页（但只给结构，不给明文）
+   ----------------------------------------------------------------------------
+   这一页只做一件事：把**我们自己的蜜罐真实收到的**口令尝试，按「结构类别 / 长度桶 /
+   次数」摊开，让人看见一台 SSH 爆破机器人手里那本字典长什么样。
+   它不取数、不连任何接口，数字全部写死在模板里，出处见页内「每一行数字的出处」块：
+     · 窗口 A → content/posts/ssh-bruteforce-163.5.210.194.md（单源 163.5.210.194，一周）
+     · 窗口 B → docs/样本分析-20261018.md §4（单源 168.144.28.221，2h28m）
+
+   三条硬约束（写进页面，不做美化）：
+     ① 只给结构：长度 + 字符类别 + 次数；「口令原文」这一列的每一格都写「已脱敏·只给结构」；
+     ② 不合并、不相加：A/B 是两个不同窗口、不同源，"结构名次"和"口令次数"不是同一批数据；
+     ③ 不编数字：全站能给出确切次数的行一共就 20 行，所以「Top 100」只落得住 8 个口令条目，
+        剩下 92 个槽位明写「不补数」，绝不用公开字典_top100_去填。
+
+   外壳约定同 /what/：两个 <script>（/js/xk-saver.js + shell-script 里的两段），
+   类名复用 .screen/.screen-hd/.screen-bd/.mod/.tag/.led，只补本页 .pw-* 规则。
+   ============================================================================ */ -}}
+{{- $v := "passwords" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：只用外壳已有的色板，不加新配色、不引外部资源 */
+.pw-bd{display:flex;flex-direction:column;gap:14px}
+.pw-lead{margin:0;font-size:13.5px;line-height:1.95;color:rgba(255,255,255,.84)}
+.pw-lead b{color:#cfe9f5;font-weight:600}
+.pw-lead code,.pw-p code,.pw-note code,.pw-tbl code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.pw-cards{display:flex;flex-wrap:wrap;gap:10px}
+.pw-card{flex:1 1 150px;min-width:148px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.22)}
+.pw-card .k{display:block;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);font-family:ui-monospace,Consolas,monospace}
+.pw-card .n{display:block;margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:20px;line-height:1.2;color:#eaf6ff;font-weight:600;word-break:break-all}
+.pw-card .d{display:block;margin-top:3px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.45)}
+.pw-card.hot .n{color:#E8837B}
+.pw-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pw-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+.pw-tbl th,.pw-tbl td{text-align:left;padding:6px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top;line-height:1.75}
+.pw-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.pw-tbl td.num,.pw-tbl th.num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;white-space:nowrap;text-align:right}
+.pw-tbl td.rk{font-family:ui-monospace,Consolas,monospace;color:rgba(255,255,255,.42);white-space:nowrap}
+.pw-tbl td.st{color:#d7e7ef}
+.pw-tbl td.mask{color:#E8B45A;font-size:11.5px}
+.pw-tbl tr.top1 td.rk{color:#E8837B}
+.pw-cat{color:rgba(255,255,255,.5)}
+.pw-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.76)}
+.pw-p:last-child{margin-bottom:0}
+.pw-p b{color:#eaf6ff;font-weight:600}
+.pw-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.pw-note:first-child{margin-top:0}
+.pw-note b{color:rgba(255,255,255,.76);font-weight:600}
+.pw-gap{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 0}
+.pw-slot{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.3);border:1px dashed rgba(255,255,255,.14);border-radius:5px;padding:3px 7px}
+.pw-foot{font-size:11.5px;color:rgba(255,255,255,.5);line-height:1.9;margin:2px 0 0}
+.pw-foot a{color:#bfe3d0}
+.pw-safe{color:#6FD3A0;font-weight:600}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="passwords">
+<section class="view on" id="v-passwords">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 高频弱口令 · 只给结构 <em class="ops-en">WEAK-PASSWORDS</em></span>
+      <span class="sync">● 纯静态页 · 不取数 · 数字全部写死且可指回出处</span>
+    </div>
+    <div class="screen-bd pw-bd">
+
+      <p class="pw-lead">
+        「100 个最常用密码」这种榜单，网上到处是转载，数字互相抄，谁也说不清它测的是哪一年、
+        哪一家的库。这页反过来做：<b>只写我们自己蜜罐真的收到的</b>，而且<b>只写结构</b>——
+        长度几位、哪些字符类、出现了多少次。「口令原文」那一列，每一格都是
+        <span class="pw-safe">已脱敏 · 只给结构</span>。
+      </p>
+
+      <div class="pw-cards">
+        <div class="pw-card hot">
+          <span class="k">窗口 A · 最大单一结构</span>
+          <span class="n">2,260 次</span>
+          <span class="d">6 位纯数字，占该源 6,931 次成功登录的 32.6%</span>
+        </div>
+        <div class="pw-card hot">
+          <span class="k">窗口 A · 最常撞的账号</span>
+          <span class="n">root 963 次</span>
+          <span class="d">占 6,931 次的 13.9%，其余是设备默认账号</span>
+        </div>
+        <div class="pw-card">
+          <span class="k">窗口 B · 前 8 个口令合计</span>
+          <span class="n">1,073 次</span>
+          <span class="d">占同期 4,242 次建连的 25.3%</span>
+        </div>
+        <div class="pw-card">
+          <span class="k">本页能落数的行</span>
+          <span class="n">20 行</span>
+          <span class="d">其中「口令条目」只有 8 个 → 100 个槽位填不满，见下</span>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>结构榜 · 窗口 A（单源 163.5.210.194，一周）<span class="tag">口径：成功登录 6,931 次</span></div>
+        <div class="mod-bd">
+          <div class="pw-scroll">
+            <table class="pw-tbl">
+              <thead><tr><th class="num">#</th><th>结构（长度 · 字符类别）</th><th>口令原文</th><th class="num">次数</th><th class="num">占 6,931</th></tr></thead>
+              <tbody>
+                <tr class="top1"><td class="rk num">1</td><td class="st">6 位 · 纯数字</td><td class="mask">已脱敏 · 只给结构</td><td class="num">2,260</td><td class="num">32.6%</td></tr>
+                <tr><td class="rk num">2</td><td class="st">3 位 · 纯数字</td><td class="mask">已脱敏 · 只给结构</td><td class="num"><span class="pw-cat">次数未记录</span></td><td class="num"><span class="pw-cat">—</span></td></tr>
+                <tr><td class="rk num">3</td><td class="st">6 位 · 纯数字 · 同一字符重复</td><td class="mask">已脱敏 · 只给结构</td><td class="num"><span class="pw-cat">次数未记录</span></td><td class="num"><span class="pw-cat">—</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pw-note">
+            <b>只有第一名有确切次数。</b>原始记录里第 2、3 名只排了序、没记次数，这里就空着写「次数未记录」，
+            不给它补一个看起来很像的数字。第三名原文的记法是「6 位全 1」——那等于把口令念出来，
+            所以这页把它写成结构「同一字符重复」，信息量不变，字符串不给。
+          </p>
+          <p class="pw-foot">出处：<code>content/posts/ssh-bruteforce-163.5.210.194.md</code> 第 59 行（该篇同时给出 6,956 会话 / 6,931 成功 / 6 失败、0 条命令）。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口令条目 · 窗口 B（单源 168.144.28.221，2 小时 28 分）<span class="tag">这才是「Top 8」</span></div>
+        <div class="mod-bd">
+          <div class="pw-scroll">
+            <table class="pw-tbl">
+              <thead><tr><th class="num">#</th><th>结构（长度 · 字符类别）</th><th>口令原文</th><th class="num">次数</th><th class="num">占 4,242 建连</th></tr></thead>
+              <tbody>
+                <tr class="top1"><td class="rk num">1</td><td class="st">6 位 · 纯数字</td><td class="mask">已脱敏 · 只给结构</td><td class="num">471</td><td class="num">11.1%</td></tr>
+                <tr><td class="rk num">2</td><td class="st">3 位 · 纯数字</td><td class="mask">已脱敏 · 只给结构</td><td class="num">184</td><td class="num">4.3%</td></tr>
+                <tr><td class="rk num">3</td><td class="st">1 位 · 纯数字</td><td class="mask">已脱敏 · 只给结构</td><td class="num">99</td><td class="num">2.3%</td></tr>
+                <tr><td class="rk num">4</td><td class="st">6 位 · 纯数字 · 同一字符重复</td><td class="mask">已脱敏 · 只给结构</td><td class="num">81</td><td class="num">1.9%</td></tr>
+                <tr><td class="rk num">5</td><td class="st">8 位 · 字母 + 数字 + 符号</td><td class="mask">已脱敏 · 只给结构</td><td class="num">80</td><td class="num">1.9%</td></tr>
+                <tr><td class="rk num">6</td><td class="st">3 位 · 纯符号</td><td class="mask">已脱敏 · 只给结构</td><td class="num">77</td><td class="num">1.8%</td></tr>
+                <tr><td class="rk num">7</td><td class="st">4 位 · 纯数字</td><td class="mask">已脱敏 · 只给结构</td><td class="num">46</td><td class="num">1.1%</td></tr>
+                <tr><td class="rk num">8</td><td class="st">8 位 · 纯小写字母</td><td class="mask">已脱敏 · 只给结构</td><td class="num">35</td><td class="num">0.8%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pw-note">
+            <b>8 行就是 8 个不同的口令条目</b>，次数逐条取自同一份分析报告，没有相加、没有重排；
+            「结构」是拿原文现算出来的两个属性（长度、字符类别），算完原文就不进页面。
+            第 5 条是键盘序那一类（原文的报告里就这么标的），这种口令长度够、也有符号，
+            过「复杂度口令策略」一点问题都没有 —— 它本来就该出现在「常见」名单里。
+          </p>
+          <p class="pw-foot">出处：<code>docs/样本分析-20261018.md</code> 第 69 行「口令字典（Top 8）」；同窗口 4,239 次登录成功、2 次失败、客户端 banner 固定 <code>SSH-2.0-Go</code>（4,241 次）。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>把上面 8 行折成桶 · 现算<span class="tag">分母 = 1,073</span></div>
+        <div class="mod-bd">
+          <div class="pw-scroll">
+            <table class="pw-tbl">
+              <thead><tr><th>维度</th><th>桶</th><th class="num">次数</th><th class="num">占比</th></tr></thead>
+              <tbody>
+                <tr><td class="st">长度</td><td>≤ 6 位</td><td class="num">958</td><td class="num">89.3%</td></tr>
+                <tr><td class="st">长度</td><td>7 – 9 位</td><td class="num">115</td><td class="num">10.7%</td></tr>
+                <tr><td class="st">长度</td><td>≥ 10 位</td><td class="num">0</td><td class="num">0.0%</td></tr>
+                <tr><td class="st">字符类</td><td>纯数字</td><td class="num">881</td><td class="num">82.1%</td></tr>
+                <tr><td class="st">字符类</td><td>纯符号</td><td class="num">77</td><td class="num">7.2%</td></tr>
+                <tr><td class="st">字符类</td><td>字母 + 数字 + 符号</td><td class="num">80</td><td class="num">7.5%</td></tr>
+                <tr><td class="st">字符类</td><td>纯小写字母</td><td class="num">35</td><td class="num">3.3%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pw-note">
+            这张表是<b>拿上面 8 行现算的</b>，不是另一次观测：长度桶口径 ≤6 / 7–9 / ≥10 沿站内既有口径，
+            字符类口径同日报 §4.4（纯数字 / 纯字母 / 字母+数字 / 含符号……）。分母只有 1,073，
+            <b>不要拿它去代表"攻击者的字典"整体</b>——它只代表这 2 小时 28 分里出现过的前 8 名。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>账号维度 · 两个窗口<span class="tag">撞的是账号，不是人</span></div>
+        <div class="mod-bd">
+          <div class="pw-scroll">
+            <table class="pw-tbl">
+              <thead><tr><th>窗口</th><th>账号（用户名）</th><th class="num">次数</th><th>性质</th></tr></thead>
+              <tbody>
+                <tr><td class="st">A</td><td><code>root</code></td><td class="num">963</td><td>占该窗口 6,931 次的 13.9%</td></tr>
+                <tr><td class="st">B</td><td><code>root</code></td><td class="num">704</td><td>该窗口 Top 10 第 1 名</td></tr>
+                <tr><td class="st">B</td><td><code>ubuntu</code></td><td class="num">133</td><td>云镜像默认账号</td></tr>
+                <tr><td class="st">B</td><td><code>user</code></td><td class="num">119</td><td>设备默认账号</td></tr>
+                <tr><td class="st">B</td><td><code>test</code></td><td class="num">40</td><td>设备默认账号</td></tr>
+                <tr><td class="st">B</td><td><code>admin</code></td><td class="num">39</td><td>设备默认账号</td></tr>
+                <tr><td class="st">B</td><td><code>git</code></td><td class="num">37</td><td>CI / 代码托管</td></tr>
+                <tr><td class="st">B</td><td><code>postgres</code></td><td class="num">31</td><td>数据库</td></tr>
+                <tr><td class="st">B</td><td><code>jenkins</code></td><td class="num">30</td><td>CI</td></tr>
+                <tr><td class="st">B</td><td><code>oracle</code></td><td class="num">30</td><td>数据库</td></tr>
+                <tr><td class="st">B</td><td><code>deploy</code></td><td class="num">28</td><td>运维 / 发布</td></tr>
+                <tr><td class="st">A</td><td><code>dell</code> / <code>user</code> / <code>admin</code> / <code>test</code> / <code>ubuntu</code></td><td class="num"><span class="pw-cat">次数未记录</span></td><td>笔记只列了名字，没记次数</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pw-note">
+            账号名不是口令，照原样给 —— 它本来就是「admin / root / ubuntu」这种公开的默认假设。
+            两个窗口的 <code>root</code> 不能相加（6 个半小时 vs 一周、两个不同源）。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>为什么这页只有 8 个条目，不是 100 个<span class="tag">不补数</span></div>
+        <div class="mod-bd">
+          <p class="pw-p">
+            标题写「Top 100」，是因为这个说法本身已经是公共常识了。<b>但我们手上没有 100 个带次数的条目</b>：
+            真正逐条记了次数的，只有窗口 B 的那 8 个口令，加上窗口 A 的 1 个结构名次。
+            网上那些「Top 100 弱口令」表我们不是没有，是<b>不能拿它冒充自己的捕获结果</b>——
+            一旦贴上去，这页就从「我观测到了什么」变成「我抄了一份列表」，而且读者没法分辨哪一行是真的。
+          </p>
+          <p class="pw-p">
+            所以剩下 92 个槽位就空着，明写不补数：
+          </p>
+          <div class="pw-gap">
+            <span class="pw-slot">#9 不补数</span>
+            <span class="pw-slot">#10 不补数</span>
+            <span class="pw-slot">#11 不补数</span>
+            <span class="pw-slot">#12 不补数</span>
+            <span class="pw-slot">#13 不补数</span>
+            <span class="pw-slot">#14 不补数</span>
+            <span class="pw-slot">#15 不补数</span>
+            <span class="pw-slot">…</span>
+            <span class="pw-slot">#100 不补数</span>
+          </div>
+          <p class="pw-note">
+            顺带一句：真的把这 100 个补满，也不该公开。这份榜单等于一份<b>现成的可用字典</b>——
+            谁拿到都能直接往自己的爆破脚本里喂。公开面只解释「弱口令长什么样」，不做「字典分发」。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径边界（读数字之前先读这块）<span class="tag">两个窗口，不能相加</span></div>
+        <div class="mod-bd">
+          <div class="pw-scroll">
+            <table class="pw-tbl">
+              <thead><tr><th>项</th><th>窗口 A</th><th>窗口 B</th></tr></thead>
+              <tbody>
+                <tr><td class="st">时间窗</td><td>2026-10-15 ~ 2026-10-18 04:28 UTC</td><td>2026-10-15 13:42:30Z ~ 16:10:51Z（2h28m）</td></tr>
+                <tr><td class="st">来源</td><td>单源 <code>163.5.210.194</code>，只打 2222</td><td>单源 <code>168.144.28.221</code>，打 2222（外带 1433/3306 各 1 次）</td></tr>
+                <tr><td class="st">样本量</td><td>6,956 会话 / 6,931 成功 / 6 失败</td><td>4,242 建连 / 4,239 成功 / 2 失败</td></tr>
+                <tr><td class="st">原始数据</td><td>Cowrie <code>cowrie.json*</code>、Suricata <code>eve.json</code></td><td>同左（srv2 上的 Cowrie / Suricata / Dionaea）</td></tr>
+                <tr><td class="st">数据时刻</td><td>文章成稿 2026-10-18；处置留痕 <code>audit.js</code> <code>generatedAt</code> <code>2026-10-18 12:25:47</code>（原文只给到这个字符串，未标时区）</td><td>报告编号 <code>SA-20261018-01</code>，分析日期 2026-10-18（UTC），窗口结束即取数</td></tr>
+                <tr><td class="st">数字来自</td><td>站内文章第 59 行</td><td>仓库内分析报告第 69 行</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pw-note">
+            <b>① 两列不可相加、不可比较大小。</b>时间窗差 6 倍多，源也不同，A 的 2,260 和 B 的 471 是两回事。<br>
+            <b>② 「登录成功」≠ 口令有效。</b>蜜罐按策略放行了绝大多数尝试，成功数只说明<b>字典的覆盖面</b>，
+            不能推出「真实主机用这个口令能登进去」。<br>
+            <b>③ 「次数未记录」就是没记。</b>不是 0，也不是「大概几十次」。<br>
+            <b>④ 明文不在这一页，也不在任何接口里。</b>公开端点 <code>/api/public/honeypot</code> 的
+            <code>topCredentials[]</code> 只给 <code>passwordLength</code> / <code>passwordCharClasses</code> /
+            <code>weakPassword</code> 三个结构字段；原始 <code>password</code> 只在统计进程的内存里
+            算一次「结构 + 是否等于用户名 + 是否命中内置弱口令小表」，写完即丢。<br>
+            <b>⑤ 这是静态页。</b>浏览器里不发起任何请求，数字改了要重新构建；页脚给出改哪一行。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>每一行数字的出处<span class="tag">可回查</span></div>
+        <div class="mod-bd">
+          <p class="pw-p">
+            <b>窗口 A：</b><a href="/posts/ssh-bruteforce-163.5.210.194/">一条零失败率的 SSH 爆破链（2026-10-15 ~ 10-18）</a>
+            —— 该篇第 59 行同时写了「6 位纯数字 2,260/6,931（32.6%）」「root 963 次（13.9%）」，
+            以及第二名 / 第三名只有名字没有次数这件事。<br>
+            <b>窗口 B：</b><code>docs/样本分析-20261018.md</code> §4「协议层特征」表 ——
+            「口令字典（Top 8）」「账号字典（Top 10）」两行，次数逐条照抄。<br>
+            <b>口径：</b><code>docs/日报-20261018.md</code> §4.4「口令结构分布（只写结构，不写明文）」，
+            类别定义与「明文只活在内存里」那条铁律就在那儿。
+          </p>
+          <p class="pw-foot">
+            改数只改本文件（<code>layouts/passwords/list.html</code>）里对应的两个表格，并把上面的「数据时刻」一起改掉；
+            数字一旦没有出处，就从页面删掉，而不是留在那儿让它慢慢过期。<br>
+            相关页面：<a href="/ip/">查一个 IP 干过什么</a> · <a href="/what/">这个站在干什么</a> ·
+            <a href="/posts/honeypot-visibility/">公开面为什么只给口令结构</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

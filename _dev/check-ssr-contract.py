@@ -29,7 +29,7 @@ PAGES = [
     ('status/index.html', 'status'),
     ('api/index.html', 'api'),
     ('redteam/index.html', 'redteam'),
-    ('ip/index.html', 'ip'), ('purpleteam/index.html', 'purpleteam'),
+    ('ip/index.html', 'ip'), ('purpleteam/index.html', 'purpleteam'), ('passwords/index.html', 'passwords'),
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)
 RE_SSR = re.compile(r'data-xk-ssr=["\']?([a-z-]+)', re.I)

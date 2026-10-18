@@ -121,6 +121,11 @@ function Get-TreeFiles {
         #   （它带构建时刻 generatedAt，两次构建必然不同；不排除则两侧哈希永不相等、RESULT=no-change 不可达）。
         #   注意：仍留在 $map 里供逐文件差异分类使用（那一层由 $TreeNondet 忽略它）。
         if ($rel -eq './index.json') { continue }
+        # ★2026-10-18：再排除顶层 ./manifest.json —— 接收脚本（srv2-site-receive.sh 的 write_manifest）
+        #   在切换前把每版指纹清单写进 release 目录，本地产物里**没有**这个文件；若计入整树哈希，
+        #   线上树永远比本地多一行 ⇒ 哈希永不相等（同 index.json 的那套理由，且这里是"单侧存在"）。
+        #   同样仍留在 $map 里，由 $TreeNondet 在逐文件差异分类时忽略。
+        if ($rel -eq './manifest.json') { continue }
         $key = -join ([Text.Encoding]::UTF8.GetBytes($rel) | ForEach-Object { $_.ToString('x2') })
         [void]$rows.Add([pscustomobject]@{ Key = $key; Line = ($h + '  ' + $rel) })
     }
@@ -135,8 +140,8 @@ function Get-TreeFiles {
 function Get-RemoteTreeFiles {
     # 只读：不需要 sudo（/opt/secagent/site 是 a+rX）。取不到就返回 $null（不当作失败）。
     # 返回 @{ Hash = 整树哈希; Files = @{ './rel' = 'sha256' }; Count }
-    $cmdList = "cd /opt/secagent/site && LC_ALL=C find . -type f ! -path './index.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum"
-    $cmdHash = "cd /opt/secagent/site && LC_ALL=C find . -type f ! -path './index.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1"
+    $cmdList = "cd /opt/secagent/site && LC_ALL=C find . -type f ! -path './index.json' ! -path './manifest.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum"
+    $cmdHash = "cd /opt/secagent/site && LC_ALL=C find . -type f ! -path './index.json' ! -path './manifest.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1"
     $eap = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
@@ -152,11 +157,12 @@ function Get-RemoteTreeFiles {
     return @{ Hash = $hash; Files = $map; Count = $map.Count }
 }
 
-# 已知"每次构建都不同"的文件（整树比对时忽略，否则永远不会走「无变化」分支）：
-#   ./index.json ← layouts/index.json 模板里带 generatedAt（构建时刻），两次构建必然不同
-$TreeNondet = @('./index.json')
+# 已知"每次构建都不同"或"只在远端存在"的文件（整树比对时忽略，否则永远不会走「无变化」分支）：
+#   ./index.json    ← layouts/index.json 模板里带 generatedAt（构建时刻），两次构建必然不同
+#   ./manifest.json ← ★2026-10-18：接收脚本切换前写进 release 目录的指纹清单，本地产物里没有它
+$TreeNondet = @('./index.json', './manifest.json')
 
-# 逐文件差异分类（忽略 $TreeNondet）
+# 逐文件差异分类（忽略 $TreeNondet；两侧都要忽略，否则"只在远端存在"会被误报成"多/少传文件"）
 function Compare-TreeFiles {
     param($Local, $Remote)
     $changed = @(); $added = @(); $removed = @(); $nondetHit = @()
@@ -165,9 +171,13 @@ function Compare-TreeFiles {
             if ($Remote.Files[$k] -ne $Local.Files[$k]) {
                 if ($TreeNondet -contains $k) { $nondetHit += $k } else { $changed += $k }
             }
-        } else { $added += $k }
+        } elseif ($TreeNondet -contains $k) { $nondetHit += $k } else { $added += $k }
     }
-    foreach ($k in $Remote.Files.Keys) { if (-not $Local.Files.ContainsKey($k)) { $removed += $k } }
+    foreach ($k in $Remote.Files.Keys) {
+        if (-not $Local.Files.ContainsKey($k)) {
+            if ($TreeNondet -contains $k) { $nondetHit += $k } else { $removed += $k }
+        }
+    }
     return @{ Changed = $changed; Added = $added; Removed = $removed; Nondet = $nondetHit }
 }
 
@@ -371,6 +381,11 @@ if ($incomingHash -and $onlineBeforeHash) {
     if ($incomingHash -eq $onlineBeforeHash) { Ok "接收侧判定：整树内容与线上一致（$($incomingHash.Substring(0,16))…）⇒ 未切换" }
     else { Ok "接收侧判定：整树内容不同（线上 $($onlineBeforeHash.Substring(0,16))… → 本次 $($incomingHash.Substring(0,16))…）" }
 }
+# ★2026-10-18：接收脚本切换前写进 release 目录的 manifest.json（一致性 CI 的 site_integrity 就靠它）
+$manSha = ''
+if ($remoteText -match 'MANIFEST_SHA=([0-9a-f]{64})') { $manSha = $Matches[1] }
+$manCount = ''
+if ($remoteText -match 'MANIFEST_COUNT=(\d+)') { $manCount = $Matches[1] }
 if ($release) {
     Ok "线上版本目录：$release"
     $remoteSha = (& ssh -o BatchMode=yes $SshHost "sudo -n sha256sum '$release/index.html' | cut -d' ' -f1") -join ''
@@ -396,6 +411,21 @@ if ($release) {
         }
     } else {
         Ok "线上整树内容哈希与本地一致（$($remoteTreeNow.Hash.Substring(0,16))…，$($tree.Count) 个文件）"
+    }
+    # ★2026-10-18：接收侧写下的 manifest.json 也要当场对上——一致性 CI 以后就信这份清单，
+    #   这里对不上就没人能证明"CI 报的 ok 是真的"。
+    if ($manSha) {
+        if ($manSha -ne $tree.Hash) {
+            $msg3 = "接收侧 manifest.json 的整树哈希（$($manSha.Substring(0,16))…）与本地（$($tree.Hash.Substring(0,16))…）不一致 —— 两侧 tree_hash 口径不同版本，或文件没传全"
+            if ($FromRef) { Die $msg3 } else { Warn "$msg3（未给 -FromRef，按工作区构建环境问题处理）" }
+        } elseif ($manCount -and [int]$manCount -ne $tree.Count) {
+            $msg3 = "接收侧 manifest.json 的文件数（$manCount）与本地（$($tree.Count)）不一致"
+            if ($FromRef) { Die $msg3 } else { Warn "$msg3（未给 -FromRef，按工作区构建环境问题处理）" }
+        } else {
+            Ok "接收侧 manifest.json 与本地整树口径一致（$($manSha.Substring(0,16))…，$manCount 个文件）"
+        }
+    } else {
+        Warn '接收侧没有回报 MANIFEST_SHA（接收脚本可能是旧版：manifest 是 2026-10-18 加的；下次发布前会重传接收脚本）'
     }
 }
 

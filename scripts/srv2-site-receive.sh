@@ -16,6 +16,11 @@
 # 失败即回滚：解包/校验/切换后自检（回环 HTTP 200 且字节数与本地 index.html 一致）
 #   任何一步失败 → 恢复到上一版并 exit 非 0。
 #
+# 每版指纹：切换前在每个 release 目录里写一份 manifest.json（文件数 / 字节数 / 整树内容哈希 /
+#   index.html 哈希 / 生成时刻），供 scripts/consistency-check.sh 的 ③ 站点完整性**实测**核对。
+#   以前 srv2 侧不写任何清单，唯一带 indexSha256 的 release-info.json 在 srv1，跨机器对不到
+#   ⇒ 那一项只能如实写 skipped。现在清单跟着产物一起被原子切换上去（见下方 write_manifest）。
+#
 # 纪律：不动 nginx 配置、不开端口、不打印凭据；产物目录内容 root:root 只读（a+rX）。
 # ============================================================
 set -euo pipefail
@@ -24,6 +29,9 @@ SITE_LINK=/opt/secagent/site
 RELEASES=/opt/secagent/releases
 PREV_FILE=$RELEASES/.previous
 KEEP=4                     # 保留最近 4 个版本（含当前）
+MANIFEST_NAME=manifest.json  # ★每版一份指纹清单（一致性 CI 的 site_integrity 靠它；见下方 write_manifest）
+MANIFEST_SHA=""            # write_manifest 成功后回填（供 RESULT 机器行输出）
+MANIFEST_COUNT=""
 MIN_INDEX_BYTES=4096      # 产物基本特征：index.html 必须 > 4 KB（新主页是 demo 整份，约 9.5KB）
 HOST_FOR_CHECK=xiaokeqing.cn
 CHECK_URL=http://127.0.0.1:18080/
@@ -99,6 +107,15 @@ case "${1:-}" in
     echo "上一版：$(cat "$PREV_FILE" 2>/dev/null || echo '(无记录)')"
     echo "现有版本："
     ls -1dt "$RELEASES"/site-* 2>/dev/null | sed 's/^/  /'
+    _cur=$(current_target)
+    if [[ -n $_cur ]]; then
+      if [[ -f $_cur/$MANIFEST_NAME ]]; then
+        echo "线上清单：$_cur/$MANIFEST_NAME"
+        sed 's/^/  /' "$_cur/$MANIFEST_NAME"
+      else
+        echo "线上清单：没有 $_cur/$MANIFEST_NAME（这版早于清单改动 ⇒ CI 会写 skipped；重发一次即可补写）"
+      fi
+    fi
     curl -s -o /dev/null -w '  回环 GET / -> HTTP %{http_code} size=%{size_download}\n' -H "Host: $HOST_FOR_CHECK" "$CHECK_URL"
     exit 0
     ;;
@@ -189,13 +206,60 @@ ok "index.html=$INDEX_SZ B；文件数 $(find "$STAGING" -type f | wc -l)"
 #   `RESULT=no-change` 分支**实际不可达**、每次发布都白切换一次（发送侧那句
 #   "接收侧会跳过切换"因此是**误导**）。两边口径一致后，"无变化"才真正可达。
 #   只排除**顶层** `./index.json`（Hugo 的分节/分页产物也可能叫 index.json，那些必须照算）。
+# ★2026-10-18：口径再排除 `./manifest.json` —— 清单本身写进被切换的那棵树里，
+#   若把它算进哈希，下一次发布的"待发布树"永远没有它 ⇒ 整树哈希永不相等 ⇒ RESULT=no-change 再次不可达。
+#   它是**元数据**，不是产物；发送侧 scripts/publish-site-to-srv2.ps1 的 $TreeNondet 同步加了它。
 tree_hash() { # $1 = 产物根目录
-  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f ! -path './index.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f ! -path './index.json' ! -path './manifest.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
 }
 # 供发送侧核对用：把两个哈希打成机器可读行（纯追加，不影响上面的人类可读日志）
 emit_hashes() { # $1 = 线上树哈希  $2 = 待发布树哈希
   echo "TREE_HASH_ONLINE=${1:-}"
   echo "TREE_HASH_INCOMING=${2:-}"
+}
+
+# ★2026-10-18（site_integrity 从 skipped → ok）：每个 release 目录写一份 manifest.json
+#   为什么以前只能 skipped：srv2 的 release 目录里**没有任何清单**，唯一带 indexSha256 的
+#   release-info.json 在 srv1（publish-site-to-srv2.ps1 第 6.5 步写），跨机器对不到 ⇒ CI 如实写 skipped。
+#   现在发布链自己把指纹留在**被原子切换的那棵树里**（先写进 staging，随 mv 一起就位）。
+#   字段与口径（与 scripts/consistency-check.sh 的 collect_site_facts() 逐字节同源）：
+#     count / totalBytes  目录内**全部普通文件**，只排除 ./manifest.json 自身
+#                         （清单自指：写它之前算不出它自己的字节数；除它以外一个不少）
+#     sha256              整树内容哈希 = 上面 tree_hash() 的口径（LC_ALL=C 路径字节序 +
+#                         逐文件 sha256 + 对整段文本再 sha256），排除 ./index.json 与 ./manifest.json。
+#                         **与 srv1 release-info.json 的 indexSha256 不是一回事**：后者是
+#                         index.html 单文件哈希（只用来查截断）。所以这里另写 indexSha256，
+#                         与 srv1 字段同名同值，两边可以直接比、不用换算。
+#     generatedAt         UTC，ISO8601 秒级
+#     hashExcludes        哈希口径自描述，免得下次有人以为 count 和 sha256 同口径
+#   注：manifest.json 落在站点根 ⇒ 会随站点被 nginx 提供（内容只有文件数/字节数/哈希，无凭据）。
+write_manifest() { # $1 = 产物根目录；成功后回填 MANIFEST_SHA / MANIFEST_COUNT
+  local d=$1 tmp count bytes hash isha now
+  tmp="$d/.manifest.json.tmp"
+  count=$( cd "$d" && LC_ALL=C find . -type f ! -path './manifest.json' | wc -l | tr -d '[:space:]' )
+  bytes=$( cd "$d" && LC_ALL=C find . -type f ! -path './manifest.json' -printf '%s\n' | awk '{s+=$1} END{printf "%d", s+0}' )
+  hash=$(tree_hash "$d")
+  [[ -n $hash ]] || { warn "整树哈希算不出来（tree_hash 返回空）"; return 1; }
+  isha=$(sha256sum "$d/index.html" | cut -d' ' -f1)
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  {
+    printf '{\n'
+    printf '  "count": %s,\n' "$count"
+    printf '  "totalBytes": %s,\n' "$bytes"
+    printf '  "sha256": "%s",\n' "$hash"
+    printf '  "indexSha256": "%s",\n' "$isha"
+    printf '  "generatedAt": "%s",\n' "$now"
+    printf '  "hashExcludes": ["./index.json", "./manifest.json"]\n'
+    printf '}\n'
+  } > "$tmp"
+  chown root:root "$tmp" 2>/dev/null || true
+  chmod 0644 "$tmp" || true
+  # 自检：别写出坏 JSON（python3 是这套 CI 的既有依赖；解析失败只 Warn，不阻断发布）
+  python3 -m json.tool "$tmp" >/dev/null 2>&1 || warn "$MANIFEST_NAME 自检未通过（python3 -m json.tool 解析失败）"
+  mv -f "$tmp" "$d/$MANIFEST_NAME"
+  MANIFEST_SHA=$hash
+  MANIFEST_COUNT=$count
+  ok "$MANIFEST_NAME：$count 个文件 / $bytes B / 整树 ${hash:0:16}… / index ${isha:0:16}…"
 }
 
 log "4/7 幂等检查（与线上**整树内容**同 hash 才跳过）"
@@ -207,15 +271,33 @@ if [[ -n $CUR && -f $CUR/index.html ]]; then
   if [[ -n $CUR_HASH && "$CUR_HASH" == "$NEW_HASH" ]]; then
     warn "整树内容与线上完全一致（${CUR_HASH:0:16}…）→ 跳过切换（部署视为成功）"
     emit_hashes "$CUR_HASH" "$NEW_HASH"
+    # ★2026-10-18：线上这版可能是在"写 manifest"之前切上去的（老版本）⇒ 就地补一份，
+    #   否则一致性 CI 会一直因为"这棵树里没清单"写 skipped。只写清单，不动任何产物文件；
+    #   补写失败只 Warn（站点本身是好的，CI 会如实退回 skipped，不臆造 ok）。
+    if write_manifest "$CUR"; then
+      ok "线上目录的清单已补写（未改动任何产物文件）"
+    else
+      warn "线上目录补写 $MANIFEST_NAME 失败（不影响本次发布；CI 会如实退回 skipped）"
+      MANIFEST_SHA=""
+      MANIFEST_COUNT=""
+    fi
     rm -rf -- "$STAGING"
     echo "RESULT=no-change"
+    echo "MANIFEST_SHA=${MANIFEST_SHA:-}"
+    echo "MANIFEST_COUNT=${MANIFEST_COUNT:-}"
     exit 0
   fi
   ok "整树内容与线上不同（线上 ${CUR_HASH:0:16}… / 本次 ${NEW_HASH:0:16}…）⇒ 继续切换"
 fi
 emit_hashes "$CUR_HASH" "$NEW_HASH"
 
-log "5/7 就位为新版本 $NEW + 原子切换"
+log "5/7 就位为新版本 $NEW（先写指纹清单，再原子切换）"
+# 写进 **STAGING** 再 mv ⇒ 清单与产物同时露面，不存在"站点已切换但指纹还没写"的窗口。
+# 写失败就放弃本次发布（线上未动）：没有清单的版本会让 CI 退回 skipped，等于白切一次。
+if ! write_manifest "$STAGING"; then
+  rm -rf -- "$STAGING"
+  die "写 $MANIFEST_NAME 失败 → 放弃本次发布（线上未动）"
+fi
 mv "$STAGING" "$NEW"
 switch_to "$NEW"
 
@@ -249,4 +331,8 @@ echo "INDEX_BYTES=$INDEX_SZ"
 echo "TAR_SHA256=$INCOMING_SHA"
 echo "FILES=$(find "$(readlink "$SITE_LINK")" -type f | wc -l)"
 echo "TOTAL_BYTES=$(du -sb "$(readlink "$SITE_LINK")" | cut -f1)"
+# ★2026-10-18：把本版清单的整树哈希/文件数报给发送侧，让"接收侧算的"与"本地算的"
+#   在上传前后都能当场对上（发送侧 publish-site-to-srv2.ps1 解析这两行）。
+echo "MANIFEST_SHA=${MANIFEST_SHA:-}"
+echo "MANIFEST_COUNT=${MANIFEST_COUNT:-}"
 ok "发布完成"

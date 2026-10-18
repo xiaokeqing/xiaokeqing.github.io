@@ -1299,6 +1299,10 @@
       if (el.classList) el.classList.remove('sk');  /* ★R2：摘骨架条 */
     });
     var note = box.querySelector('[data-ban-note]');
+    /* 站主 2026-10-18：「封禁榜脚注要写清 60 分钟到期、解封后留痕仍在」。
+       封禁是到期解封（markUnblocked 只改状态、不删记录），所以榜上留痕会一直在；
+       空态与有数态都要带这句，否则清干净以后这句就消失了。 */
+    var BAN_TTL_NOTE = '封禁默认 60 分钟到期，解封后留痕仍在';
     var rows = box.querySelectorAll('[data-ban-list] .row');
     function blankRow(row, k, mid, chip, cls) {
       row.style.display = '';
@@ -1358,11 +1362,11 @@
           un ? ('已解封' + (b.unblockMode ? '（' + b.unblockMode + '）' : '')) : '生效中', un ? 'warn' : 'ok');
       }
       renderBanTimeline(blocks);
-      if (sum) txt(note, '最近 ' + blocks.length + ' 条封禁留痕（原值分组、显示打码）· 触发方/处置者/留痕号来自 /audit；' +
-        '护栏拦下 = blockedByGuard（是"动作数"，不是封禁数）');
+      if (sum) txt(note, '最近 ' + blocks.length + ' 条封禁留痕（原值分组、显示打码）· ' + BAN_TTL_NOTE +
+        ' · 触发方/处置者/留痕号来自 /audit；护栏拦下 = blockedByGuard（是"动作数"，不是封禁数）');
     } else if (blocks) {
       renderBanTimeline(blocks);
-      txt(note, '本窗口没有封禁记录（不是取不到，是真的没有）');
+      txt(note, '本窗口没有封禁记录（不是取不到，是真的没有）· ' + BAN_TTL_NOTE);
       blankRow(rows[0], '—', '', '', '');
       hideFrom(1);
     } else {
