@@ -1,2567 +1,2567 @@
 {
- "budgets": {
-  "firstScreenBudgetBytes": 1500000,
-  "firstScreenBytes": 927562,
-  "firstScreenFiles": {
-   "avatar/normal.idle.webp": 86696,
-   "avatar/normal.static.webp": 4234,
-   "full/idle.boot.webp": 531854,
-   "full/idle.poster.webp": 23114,
-   "full/opening.boot.webp": 281664
-  },
-  "mediumTotalBytes": 50492702,
-  "note": "首屏 = 开场 boot 图集 + idle boot 图集 + 静帧 + 头像静帧；hi 图集首屏渲染完成后后台补",
-  "warnings": [
-   "speaking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）",
-   "thinking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）"
-  ]
- },
- "clips": {
-  "idle": {
-   "atlas": {
-    "boot": {
-     "bytes": 531854,
-     "decodedBytes": 13312512,
-     "frames": 24,
-     "h": 1296,
-     "url": "kurisu/full/idle.boot.webp",
-     "w": 2568
+  "budgets": {
+    "firstScreenBudgetBytes": 1500000,
+    "firstScreenBytes": 927562,
+    "firstScreenFiles": {
+      "avatar/normal.idle.webp": 86696,
+      "avatar/normal.static.webp": 4234,
+      "full/idle.boot.webp": 531854,
+      "full/idle.poster.webp": 23114,
+      "full/opening.boot.webp": 281664
     },
-    "hi": {
-     "bytes": 1316104,
-     "decodedBytes": 35500032,
-     "h": 3456,
-     "url": "kurisu/full/idle.hi.webp",
-     "w": 2568
-    }
-   },
-   "columns": 8,
-   "frameHeight": 432,
-   "frameIntervalMs": 42,
-   "frameWidth": 321,
-   "frames": 60,
-   "loopMode": "loop",
-   "poster": {
-    "bytes": 23114,
-    "h": 432,
-    "url": "kurisu/full/idle.poster.webp",
-    "w": 321
-   },
-   "rows": 8,
-   "source": {
-    "clip": "idle",
-    "frameIntervalMs": 21,
-    "frames": 120,
-    "stride": 2
-   }
+    "mediumTotalBytes": 50492702,
+    "note": "首屏 = 开场 boot 图集 + idle boot 图集 + 静帧 + 头像静帧；hi 图集首屏渲染完成后后台补",
+    "warnings": [
+      "speaking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）",
+      "thinking.hi.webp 像素数 13312512（>1200 万：仅桌面端会载入，窄屏走头像静帧）"
+    ]
   },
-  "opening": {
-   "atlas": {
-    "boot": {
-     "bytes": 281664,
-     "frames": 24,
-     "h": 870,
-     "url": "kurisu/full/opening.boot.webp",
-     "w": 3040
-    },
-    "hi": {
-     "bytes": 1027750,
-     "decodedBytes": 38790400,
-     "frames": 84,
-     "h": 3190,
-     "url": "kurisu/full/opening.hi.webp",
-     "w": 3040
-    }
-   },
-   "columns": 8,
-   "fit": "crt_screen",
-   "frameHeight": 290,
-   "frameIntervalMs": 33.333333333333336,
-   "frameWidth": 380,
-   "frames": 84,
-   "loopMode": "once_then_hold",
-   "next": "empty",
-   "poster": {
-    "bytes": 15244,
-    "h": 290,
-    "url": "kurisu/full/opening.poster.webp",
-    "w": 380
-   },
-   "role": "intro",
-   "source": {
-    "bundle": "amadeus-visual-runtime-2026-09-26.zip",
-    "clip": "look_at_CRT_loop",
-    "cropNorm": [
-     0.08082975679542204,
-     0.10577777777777778,
-     0.9263233190271817,
-     0.9075555555555556
-    ],
-    "note": "原包 look_at_CRT_loop 的真序列（180 帧 @30fps）。逐帧 stride=1，所以第 38–43 帧那一次真眨眼在图集里是帧对齐的（实测闭眼 39–42）。拼装时间线里特写在 ≈2.0s 被交叉淡入到空房间，故只发前 84 帧。",
-    "shippedFrames": 84,
-    "sourceFps": 30.0,
-    "sourceFrames": 180,
-    "stride": 1
-   }
-  },
-  "speaking": {
-   "atlas": {
-    "boot": {
-     "bytes": 444430,
-     "decodedBytes": 13312512,
-     "frames": 24,
-     "h": 1296,
-     "url": "kurisu/full/speaking.boot.webp",
-     "w": 2568
-    },
-    "hi": {
-     "bytes": 1592000,
-     "decodedBytes": 53250048,
-     "h": 5184,
-     "url": "kurisu/full/speaking.hi.webp",
-     "w": 2568
-    }
-   },
-   "columns": 8,
-   "frameHeight": 432,
-   "frameIntervalMs": 34,
-   "frameWidth": 321,
-   "frames": 90,
-   "intro": null,
-   "loopMode": "loop",
-   "poster": {
-    "bytes": 22106,
-    "h": 432,
-    "url": "kurisu/full/speaking.poster.webp",
-    "w": 321
-   },
-   "rows": 12,
-   "source": {
-    "clip": "speaking_loop1",
-    "frameIntervalMs": 17,
-    "frames": 180,
-    "stride": 2
-   }
-  },
-  "thinking": {
-   "atlas": {
-    "boot": {
-     "bytes": 475680,
-     "decodedBytes": 13312512,
-     "frames": 24,
-     "h": 1296,
-     "url": "kurisu/full/thinking.boot.webp",
-     "w": 2568
-    },
-    "hi": {
-     "bytes": 1703650,
-     "decodedBytes": 53250048,
-     "h": 5184,
-     "url": "kurisu/full/thinking.hi.webp",
-     "w": 2568
-    }
-   },
-   "columns": 8,
-   "frameHeight": 432,
-   "frameIntervalMs": 34,
-   "frameWidth": 321,
-   "frames": 90,
-   "intro": null,
-   "loopMode": "loop",
-   "poster": {
-    "bytes": 23552,
-    "h": 432,
-    "url": "kurisu/full/thinking.poster.webp",
-    "w": 321
-   },
-   "rows": 12,
-   "source": {
-    "clip": "thinking_speaking1",
-    "frameIntervalMs": 17,
-    "frames": 180,
-    "stride": 2
-   }
-  }
- },
- "clipsMedium": {
   "clips": {
-   "angry_speaking": {
-    "atlas": {
-     "medium": {
-      "bytes": 1262542,
-      "pages": [
-       {
-        "bytes": 1262542,
-        "cols": 8,
-        "file": "angry_speaking.atlas.webp",
-        "first_frame": 1,
+    "idle": {
+      "atlas": {
+        "boot": {
+          "bytes": 531854,
+          "decodedBytes": 13312512,
+          "frames": 24,
+          "h": 1296,
+          "url": "kurisu/full/idle.boot.webp",
+          "w": 2568
+        },
+        "hi": {
+          "bytes": 1316104,
+          "decodedBytes": 35500032,
+          "h": 3456,
+          "url": "kurisu/full/idle.hi.webp",
+          "w": 2568
+        }
+      },
+      "columns": 8,
+      "frameHeight": 640,
+      "frameIntervalMs": 42,
+      "frameWidth": 476,
+      "frames": 60,
+      "loopMode": "loop",
+      "poster": {
+        "bytes": 23114,
+        "h": 432,
+        "url": "kurisu/full/idle.poster.webp",
+        "w": 321
+      },
+      "rows": 8,
+      "source": {
+        "clip": "idle",
+        "frameIntervalMs": 21,
+        "frames": 120,
+        "stride": 2
+      }
+    },
+    "opening": {
+      "atlas": {
+        "boot": {
+          "bytes": 281664,
+          "frames": 24,
+          "h": 870,
+          "url": "kurisu/full/opening.boot.webp",
+          "w": 3040
+        },
+        "hi": {
+          "bytes": 1027750,
+          "decodedBytes": 38790400,
+          "frames": 84,
+          "h": 3190,
+          "url": "kurisu/full/opening.hi.webp",
+          "w": 3040
+        }
+      },
+      "columns": 8,
+      "fit": "crt_screen",
+      "frameHeight": 290,
+      "frameIntervalMs": 33.333333333333336,
+      "frameWidth": 380,
+      "frames": 84,
+      "loopMode": "once_then_hold",
+      "next": "empty",
+      "poster": {
+        "bytes": 15244,
+        "h": 290,
+        "url": "kurisu/full/opening.poster.webp",
+        "w": 380
+      },
+      "role": "intro",
+      "source": {
+        "bundle": "amadeus-visual-runtime-2026-09-26.zip",
+        "clip": "look_at_CRT_loop",
+        "cropNorm": [
+          0.08082975679542204,
+          0.10577777777777778,
+          0.9263233190271817,
+          0.9075555555555556
+        ],
+        "note": "原包 look_at_CRT_loop 的真序列（180 帧 @30fps）。逐帧 stride=1，所以第 38–43 帧那一次真眨眼在图集里是帧对齐的（实测闭眼 39–42）。拼装时间线里特写在 ≈2.0s 被交叉淡入到空房间，故只发前 84 帧。",
+        "shippedFrames": 84,
+        "sourceFps": 30.0,
+        "sourceFrames": 180,
+        "stride": 1
+      }
+    },
+    "speaking": {
+      "atlas": {
+        "boot": {
+          "bytes": 444430,
+          "decodedBytes": 13312512,
+          "frames": 24,
+          "h": 1296,
+          "url": "kurisu/full/speaking.boot.webp",
+          "w": 2568
+        },
+        "hi": {
+          "bytes": 1592000,
+          "decodedBytes": 53250048,
+          "h": 5184,
+          "url": "kurisu/full/speaking.hi.webp",
+          "w": 2568
+        }
+      },
+      "columns": 8,
+      "frameHeight": 432,
+      "frameIntervalMs": 34,
+      "frameWidth": 321,
+      "frames": 90,
+      "intro": null,
+      "loopMode": "loop",
+      "poster": {
+        "bytes": 22106,
+        "h": 432,
+        "url": "kurisu/full/speaking.poster.webp",
+        "w": 321
+      },
+      "rows": 12,
+      "source": {
+        "clip": "speaking_loop1",
+        "frameIntervalMs": 17,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/angry_speaking.atlas.webp"
-       }
-      ]
-     }
+        "stride": 2
+      }
     },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 11,
-     "file": "angry_speaking.patch.webp",
-     "overlay_entry": "textures/angry_trans/loop/kurisu_angry_trans0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "angry_trans": {
-    "atlas": {
-     "medium": {
-      "bytes": 436630,
-      "pages": [
-       {
-        "bytes": 436630,
-        "cols": 8,
-        "file": "angry_trans.atlas.webp",
-        "first_frame": 1,
+    "thinking": {
+      "atlas": {
+        "boot": {
+          "bytes": 475680,
+          "decodedBytes": 13312512,
+          "frames": 24,
+          "h": 1296,
+          "url": "kurisu/full/thinking.boot.webp",
+          "w": 2568
+        },
+        "hi": {
+          "bytes": 1703650,
+          "decodedBytes": 53250048,
+          "h": 5184,
+          "url": "kurisu/full/thinking.hi.webp",
+          "w": 2568
+        }
+      },
+      "columns": 8,
+      "frameHeight": 432,
+      "frameIntervalMs": 34,
+      "frameWidth": 321,
+      "frames": 90,
+      "intro": null,
+      "loopMode": "loop",
+      "poster": {
+        "bytes": 23552,
+        "h": 432,
+        "url": "kurisu/full/thinking.poster.webp",
+        "w": 321
+      },
+      "rows": 12,
+      "source": {
+        "clip": "thinking_speaking1",
+        "frameIntervalMs": 17,
+        "frames": 180,
+        "stride": 2
+      }
+    }
+  },
+  "clipsMedium": {
+    "clips": {
+      "angry_speaking": {
+        "atlas": {
+          "medium": {
+            "bytes": 1262542,
+            "pages": [
+              {
+                "bytes": 1262542,
+                "cols": 8,
+                "file": "angry_speaking.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/angry_speaking.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
+        "frames": 180,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 11,
+          "file": "angry_speaking.patch.webp",
+          "overlay_entry": "textures/angry_trans/loop/kurisu_angry_trans0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "angry_trans": {
+        "atlas": {
+          "medium": {
+            "bytes": 436630,
+            "pages": [
+              {
+                "bytes": 436630,
+                "cols": 8,
+                "file": "angry_trans.atlas.webp",
+                "first_frame": 1,
+                "frames": 60,
+                "last_frame": 60,
+                "pixels": [
+                  1072,
+                  1440
+                ],
+                "rows": 8,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/angry_trans.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 60,
-        "last_frame": 60,
-        "pixels": [
-         1072,
-         1440
-        ],
-        "rows": 8,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/angry_trans.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 60,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "closed_eye_trans": {
-    "atlas": {
-     "medium": {
-      "bytes": 983250,
-      "pages": [
-       {
-        "bytes": 983250,
-        "cols": 8,
-        "file": "closed_eye_trans.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "closed_eye_trans": {
+        "atlas": {
+          "medium": {
+            "bytes": 983250,
+            "pages": [
+              {
+                "bytes": 983250,
+                "cols": 8,
+                "file": "closed_eye_trans.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/closed_eye_trans.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/closed_eye_trans.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "idle": {
-    "atlas": {
-     "hi": {
-      "bytes": 2312750,
-      "pages": [
-       {
-        "bytes": 2312750,
-        "cols": 8,
-        "file": "idle.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "idle": {
+        "atlas": {
+          "hi": {
+            "bytes": 2312750,
+            "pages": [
+              {
+                "bytes": 2312750,
+                "cols": 8,
+                "file": "idle.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  2144,
+                  5400
+                ],
+                "rows": 15,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/idle.atlas.webp"
+              }
+            ]
+          },
+          "medium": {
+            "bytes": 777400,
+            "pages": [
+              {
+                "bytes": 777400,
+                "cols": 8,
+                "file": "idle.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 360,
+        "frameIntervalMs": 21,
+        "frameWidth": 268,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         2144,
-         5400
-        ],
-        "rows": 15,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/idle.atlas.webp"
-       }
-      ]
-     },
-     "medium": {
-      "bytes": 777400,
-      "pages": [
-       {
-        "bytes": 777400,
-        "cols": 8,
-        "file": "idle.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "hi"
+      },
+      "idle1": {
+        "atlas": {
+          "hi": {
+            "bytes": 2311002,
+            "pages": [
+              {
+                "bytes": 2311002,
+                "cols": 8,
+                "file": "idle1.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  2144,
+                  5400
+                ],
+                "rows": 15,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/idle1.atlas.webp"
+              }
+            ]
+          },
+          "medium": {
+            "bytes": 914710,
+            "pages": [
+              {
+                "bytes": 914710,
+                "cols": 8,
+                "file": "idle1.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle1.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 360,
+        "frameIntervalMs": 21,
+        "frameWidth": 268,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 360,
-    "frameIntervalMs": 21,
-    "frameWidth": 268,
-    "frames": 120,
-    "loopMode": "loop",
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "hi"
-   },
-   "idle1": {
-    "atlas": {
-     "hi": {
-      "bytes": 2311002,
-      "pages": [
-       {
-        "bytes": 2311002,
-        "cols": 8,
-        "file": "idle1.atlas.webp",
-        "first_frame": 1,
-        "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         2144,
-         5400
-        ],
-        "rows": 15,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/idle1.atlas.webp"
-       }
-      ]
-     },
-     "medium": {
-      "bytes": 914710,
-      "pages": [
-       {
-        "bytes": 914710,
-        "cols": 8,
-        "file": "idle1.atlas.webp",
-        "first_frame": 1,
-        "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle1.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 360,
-    "frameIntervalMs": 21,
-    "frameWidth": 268,
-    "frames": 120,
-    "loopMode": "loop",
-    "source": "statemachine.json / copied",
-    "tier": "hi"
-   },
-   "idle2": {
-    "atlas": {
-     "medium": {
-      "bytes": 1968196,
-      "pages": [
-       {
-        "bytes": 1363112,
-        "cols": 8,
-        "file": "idle2.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle2.atlas.webp"
-       },
-       {
-        "bytes": 605084,
-        "cols": 8,
-        "file": "idle2.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 90,
-        "last_frame": 290,
-        "pixels": [
-         1072,
-         2160
-        ],
-        "rows": 12,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle2.atlas.p01.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 21,
-    "frameWidth": 134,
-    "frames": 290,
-    "loopMode": "loop",
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "medium"
-   },
-   "idle_closed_eye": {
-    "atlas": {
-     "medium": {
-      "bytes": 4899836,
-      "pages": [
-       {
-        "bytes": 1367032,
-        "cols": 8,
-        "file": "idle_closed_eye.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1344,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 168,
-        "url": "kurisu/medium/idle_closed_eye.atlas.webp"
-       },
-       {
-        "bytes": 1242000,
-        "cols": 8,
-        "file": "idle_closed_eye.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 200,
-        "last_frame": 400,
-        "pixels": [
-         1344,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 168,
-        "url": "kurisu/medium/idle_closed_eye.atlas.p01.webp"
-       },
-       {
-        "bytes": 1534260,
-        "cols": 8,
-        "file": "idle_closed_eye.atlas.p02.webp",
-        "first_frame": 401,
-        "frames": 200,
-        "last_frame": 600,
-        "pixels": [
-         1344,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 168,
-        "url": "kurisu/medium/idle_closed_eye.atlas.p02.webp"
-       },
-       {
-        "bytes": 756544,
-        "cols": 8,
-        "file": "idle_closed_eye.atlas.p03.webp",
-        "first_frame": 601,
-        "frames": 138,
-        "last_frame": 738,
-        "pixels": [
-         1344,
-         3240
-        ],
-        "rows": 18,
-        "tile_h": 180,
-        "tile_w": 168,
-        "url": "kurisu/medium/idle_closed_eye.atlas.p03.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 168,
-    "frames": 738,
-    "loopMode": "loop",
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "medium"
-   },
-   "idle_mic_wind": {
-    "atlas": {
-     "medium": {
-      "bytes": 1484378,
-      "pages": [
-       {
-        "bytes": 1484378,
-        "cols": 8,
-        "file": "idle_mic_wind.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "source": "statemachine.json / copied",
+        "tier": "hi"
+      },
+      "idle2": {
+        "atlas": {
+          "medium": {
+            "bytes": 1968196,
+            "pages": [
+              {
+                "bytes": 1363112,
+                "cols": 8,
+                "file": "idle2.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle2.atlas.webp"
+              },
+              {
+                "bytes": 605084,
+                "cols": 8,
+                "file": "idle2.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 90,
+                "last_frame": 290,
+                "pixels": [
+                  1072,
+                  2160
+                ],
+                "rows": 12,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle2.atlas.p01.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 21,
+        "frameWidth": 134,
+        "frames": 290,
+        "loopMode": "loop",
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "medium"
+      },
+      "idle_closed_eye": {
+        "atlas": {
+          "medium": {
+            "bytes": 4899836,
+            "pages": [
+              {
+                "bytes": 1367032,
+                "cols": 8,
+                "file": "idle_closed_eye.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1344,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 168,
+                "url": "kurisu/medium/idle_closed_eye.atlas.webp"
+              },
+              {
+                "bytes": 1242000,
+                "cols": 8,
+                "file": "idle_closed_eye.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 200,
+                "last_frame": 400,
+                "pixels": [
+                  1344,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 168,
+                "url": "kurisu/medium/idle_closed_eye.atlas.p01.webp"
+              },
+              {
+                "bytes": 1534260,
+                "cols": 8,
+                "file": "idle_closed_eye.atlas.p02.webp",
+                "first_frame": 401,
+                "frames": 200,
+                "last_frame": 600,
+                "pixels": [
+                  1344,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 168,
+                "url": "kurisu/medium/idle_closed_eye.atlas.p02.webp"
+              },
+              {
+                "bytes": 756544,
+                "cols": 8,
+                "file": "idle_closed_eye.atlas.p03.webp",
+                "first_frame": 601,
+                "frames": 138,
+                "last_frame": 738,
+                "pixels": [
+                  1344,
+                  3240
+                ],
+                "rows": 18,
+                "tile_h": 180,
+                "tile_w": 168,
+                "url": "kurisu/medium/idle_closed_eye.atlas.p03.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 168,
+        "frames": 738,
+        "loopMode": "loop",
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "medium"
+      },
+      "idle_mic_wind": {
+        "atlas": {
+          "medium": {
+            "bytes": 1484378,
+            "pages": [
+              {
+                "bytes": 1484378,
+                "cols": 8,
+                "file": "idle_mic_wind.atlas.webp",
+                "first_frame": 1,
+                "frames": 194,
+                "last_frame": 194,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle_mic_wind.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 21,
+        "frameWidth": 134,
         "frames": 194,
-        "last_frame": 194,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle_mic_wind.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 21,
-    "frameWidth": 134,
-    "frames": 194,
-    "loopMode": "loop",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "idle_side_butterfly": {
-    "atlas": {
-     "medium": {
-      "bytes": 4462158,
-      "pages": [
-       {
-        "bytes": 1496590,
-        "cols": 8,
-        "file": "idle_side_butterfly.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle_side_butterfly.atlas.webp"
-       },
-       {
-        "bytes": 1563310,
-        "cols": 8,
-        "file": "idle_side_butterfly.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 200,
-        "last_frame": 400,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle_side_butterfly.atlas.p01.webp"
-       },
-       {
-        "bytes": 1402258,
-        "cols": 8,
-        "file": "idle_side_butterfly.atlas.p02.webp",
-        "first_frame": 401,
-        "frames": 200,
-        "last_frame": 600,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle_side_butterfly.atlas.p02.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 600,
-    "loopMode": "loop",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "idle_side_soft_wind": {
-    "atlas": {
-     "medium": {
-      "bytes": 1087574,
-      "pages": [
-       {
-        "bytes": 1087574,
-        "cols": 8,
-        "file": "idle_side_soft_wind.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "idle_side_butterfly": {
+        "atlas": {
+          "medium": {
+            "bytes": 4462158,
+            "pages": [
+              {
+                "bytes": 1496590,
+                "cols": 8,
+                "file": "idle_side_butterfly.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle_side_butterfly.atlas.webp"
+              },
+              {
+                "bytes": 1563310,
+                "cols": 8,
+                "file": "idle_side_butterfly.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 200,
+                "last_frame": 400,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle_side_butterfly.atlas.p01.webp"
+              },
+              {
+                "bytes": 1402258,
+                "cols": 8,
+                "file": "idle_side_butterfly.atlas.p02.webp",
+                "first_frame": 401,
+                "frames": 200,
+                "last_frame": 600,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle_side_butterfly.atlas.p02.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
+        "frames": 600,
+        "loopMode": "loop",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "idle_side_soft_wind": {
+        "atlas": {
+          "medium": {
+            "bytes": 1087574,
+            "pages": [
+              {
+                "bytes": 1087574,
+                "cols": 8,
+                "file": "idle_side_soft_wind.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle_side_soft_wind.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle_side_soft_wind.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "medium"
-   },
-   "idle_side_wind": {
-    "atlas": {
-     "medium": {
-      "bytes": 1211630,
-      "pages": [
-       {
-        "bytes": 1211630,
-        "cols": 8,
-        "file": "idle_side_wind.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "medium"
+      },
+      "idle_side_wind": {
+        "atlas": {
+          "medium": {
+            "bytes": 1211630,
+            "pages": [
+              {
+                "bytes": 1211630,
+                "cols": 8,
+                "file": "idle_side_wind.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle_side_wind.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle_side_wind.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "idle_str_wind": {
-    "atlas": {
-     "medium": {
-      "bytes": 1590472,
-      "pages": [
-       {
-        "bytes": 1590472,
-        "cols": 8,
-        "file": "idle_str_wind.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "idle_str_wind": {
+        "atlas": {
+          "medium": {
+            "bytes": 1590472,
+            "pages": [
+              {
+                "bytes": 1590472,
+                "cols": 8,
+                "file": "idle_str_wind.atlas.webp",
+                "first_frame": 1,
+                "frames": 194,
+                "last_frame": 194,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/idle_str_wind.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 21,
+        "frameWidth": 134,
         "frames": 194,
-        "last_frame": 194,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/idle_str_wind.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 21,
-    "frameWidth": 134,
-    "frames": 194,
-    "loopMode": "loop",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "key_point_speaking": {
-    "atlas": {
-     "medium": {
-      "bytes": 1313844,
-      "pages": [
-       {
-        "bytes": 1313844,
-        "cols": 8,
-        "file": "key_point_speaking.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "key_point_speaking": {
+        "atlas": {
+          "medium": {
+            "bytes": 1313844,
+            "pages": [
+              {
+                "bytes": 1313844,
+                "cols": 8,
+                "file": "key_point_speaking.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/key_point_speaking.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/key_point_speaking.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 154,
-     "file": "key_point_speaking.patch.webp",
-     "overlay_entry": "textures/key_point_speaking/loop/kurisu_speaking_loop0155.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "key_point_to_thinking": {
-    "atlas": {
-     "medium": {
-      "bytes": 910014,
-      "pages": [
-       {
-        "bytes": 910014,
-        "cols": 8,
-        "file": "thinking_to_key_point.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 154,
+          "file": "key_point_speaking.patch.webp",
+          "overlay_entry": "textures/key_point_speaking/loop/kurisu_speaking_loop0155.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "key_point_to_thinking": {
+        "atlas": {
+          "medium": {
+            "bytes": 910014,
+            "pages": [
+              {
+                "bytes": 910014,
+                "cols": 8,
+                "file": "thinking_to_key_point.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/thinking_to_key_point.atlas.webp"
+              }
+            ]
+          }
+        },
+        "atlas_clip": "thinking_to_key_point",
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/thinking_to_key_point.atlas.webp"
-       }
-      ]
-     }
-    },
-    "atlas_clip": "thinking_to_key_point",
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "reverse": true,
-    "source": "statemachine.json / copied(thinking_to_key_point)",
-    "tier": "medium"
-   },
-   "sad_speaking": {
-    "atlas": {
-     "medium": {
-      "bytes": 851770,
-      "pages": [
-       {
-        "bytes": 851770,
-        "cols": 8,
-        "file": "sad_speaking.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "reverse": true,
+        "source": "statemachine.json / copied(thinking_to_key_point)",
+        "tier": "medium"
+      },
+      "sad_speaking": {
+        "atlas": {
+          "medium": {
+            "bytes": 851770,
+            "pages": [
+              {
+                "bytes": 851770,
+                "cols": 8,
+                "file": "sad_speaking.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/sad_speaking.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/sad_speaking.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "sad_speaking.patch.webp",
-     "overlay_entry": "textures/sad_speaking/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "sad_trans": {
-    "atlas": {
-     "medium": {
-      "bytes": 426166,
-      "pages": [
-       {
-        "bytes": 426166,
-        "cols": 8,
-        "file": "sad_trans.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "sad_speaking.patch.webp",
+          "overlay_entry": "textures/sad_speaking/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "sad_trans": {
+        "atlas": {
+          "medium": {
+            "bytes": 426166,
+            "pages": [
+              {
+                "bytes": 426166,
+                "cols": 8,
+                "file": "sad_trans.atlas.webp",
+                "first_frame": 1,
+                "frames": 60,
+                "last_frame": 60,
+                "pixels": [
+                  1072,
+                  1440
+                ],
+                "rows": 8,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/sad_trans.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 60,
-        "last_frame": 60,
-        "pixels": [
-         1072,
-         1440
-        ],
-        "rows": 8,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/sad_trans.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 60,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "serious_to_thinking": {
-    "atlas": {
-     "medium": {
-      "bytes": 847326,
-      "pages": [
-       {
-        "bytes": 847326,
-        "cols": 8,
-        "file": "serious_to_thinking.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "serious_to_thinking": {
+        "atlas": {
+          "medium": {
+            "bytes": 847326,
+            "pages": [
+              {
+                "bytes": 847326,
+                "cols": 8,
+                "file": "serious_to_thinking.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/serious_to_thinking.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/serious_to_thinking.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "shy_speaking1": {
-    "atlas": {
-     "medium": {
-      "bytes": 1221814,
-      "pages": [
-       {
-        "bytes": 1221814,
-        "cols": 8,
-        "file": "shy_speaking1.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "shy_speaking1": {
+        "atlas": {
+          "medium": {
+            "bytes": 1221814,
+            "pages": [
+              {
+                "bytes": 1221814,
+                "cols": 8,
+                "file": "shy_speaking1.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/shy_speaking1.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/shy_speaking1.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 32,
-     "file": "shy_speaking1.patch.webp",
-     "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "shy_speaking2": {
-    "atlas": {
-     "medium": {
-      "bytes": 2142730,
-      "pages": [
-       {
-        "bytes": 1459012,
-        "cols": 8,
-        "file": "shy_speaking2.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/shy_speaking2.atlas.webp"
-       },
-       {
-        "bytes": 683718,
-        "cols": 8,
-        "file": "shy_speaking2.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 100,
-        "last_frame": 300,
-        "pixels": [
-         1072,
-         2340
-        ],
-        "rows": 13,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/shy_speaking2.atlas.p01.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 300,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 299,
-     "file": "shy_speaking2.patch.webp",
-     "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "shy_trans": {
-    "atlas": {
-     "medium": {
-      "bytes": 409876,
-      "pages": [
-       {
-        "bytes": 409876,
-        "cols": 8,
-        "file": "shy_trans.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 32,
+          "file": "shy_speaking1.patch.webp",
+          "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "shy_speaking2": {
+        "atlas": {
+          "medium": {
+            "bytes": 2142730,
+            "pages": [
+              {
+                "bytes": 1459012,
+                "cols": 8,
+                "file": "shy_speaking2.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/shy_speaking2.atlas.webp"
+              },
+              {
+                "bytes": 683718,
+                "cols": 8,
+                "file": "shy_speaking2.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 100,
+                "last_frame": 300,
+                "pixels": [
+                  1072,
+                  2340
+                ],
+                "rows": 13,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/shy_speaking2.atlas.p01.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
+        "frames": 300,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 299,
+          "file": "shy_speaking2.patch.webp",
+          "overlay_entry": "textures/shy_trans/loop/kurisu_shy_trans0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "shy_trans": {
+        "atlas": {
+          "medium": {
+            "bytes": 409876,
+            "pages": [
+              {
+                "bytes": 409876,
+                "cols": 8,
+                "file": "shy_trans.atlas.webp",
+                "first_frame": 1,
+                "frames": 60,
+                "last_frame": 60,
+                "pixels": [
+                  1072,
+                  1440
+                ],
+                "rows": 8,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/shy_trans.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 60,
-        "last_frame": 60,
-        "pixels": [
-         1072,
-         1440
-        ],
-        "rows": 8,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/shy_trans.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 60,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "smile_speaking": {
-    "atlas": {
-     "medium": {
-      "bytes": 1272766,
-      "pages": [
-       {
-        "bytes": 1272766,
-        "cols": 8,
-        "file": "smile_speaking.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "smile_speaking": {
+        "atlas": {
+          "medium": {
+            "bytes": 1272766,
+            "pages": [
+              {
+                "bytes": 1272766,
+                "cols": 8,
+                "file": "smile_speaking.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/smile_speaking.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/smile_speaking.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "smile_speaking.patch.webp",
-     "overlay_entry": "textures/smile_speaking/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "speaking_closed_eye_1": {
-    "atlas": {
-     "medium": {
-      "bytes": 1246618,
-      "pages": [
-       {
-        "bytes": 1246618,
-        "cols": 8,
-        "file": "speaking_closed_eye_1.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "smile_speaking.patch.webp",
+          "overlay_entry": "textures/smile_speaking/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "speaking_closed_eye_1": {
+        "atlas": {
+          "medium": {
+            "bytes": 1246618,
+            "pages": [
+              {
+                "bytes": 1246618,
+                "cols": 8,
+                "file": "speaking_closed_eye_1.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_closed_eye_1.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_closed_eye_1.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "speaking_closed_eye_1.patch.webp",
-     "overlay_entry": "textures/speaking_closed_eye_1/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "speaking_closed_eye_2": {
-    "atlas": {
-     "medium": {
-      "bytes": 2105618,
-      "pages": [
-       {
-        "bytes": 1423396,
-        "cols": 8,
-        "file": "speaking_closed_eye_2.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_closed_eye_2.atlas.webp"
-       },
-       {
-        "bytes": 682222,
-        "cols": 8,
-        "file": "speaking_closed_eye_2.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 100,
-        "last_frame": 300,
-        "pixels": [
-         1072,
-         2340
-        ],
-        "rows": 13,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_closed_eye_2.atlas.p01.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 300,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "speaking_closed_eye_2.patch.webp",
-     "overlay_entry": "textures/speaking_closed_eye_2/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "speaking_long": {
-    "atlas": {
-     "medium": {
-      "bytes": 2488704,
-      "pages": [
-       {
-        "bytes": 1390990,
-        "cols": 8,
-        "file": "speaking_long.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_long.atlas.webp"
-       },
-       {
-        "bytes": 1097714,
-        "cols": 8,
-        "file": "speaking_long.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 160,
-        "last_frame": 360,
-        "pixels": [
-         1072,
-         3600
-        ],
-        "rows": 20,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_long.atlas.p01.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 360,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "speaking_long.patch.webp",
-     "overlay_entry": "textures/speaking_long/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "speaking_loop1": {
-    "atlas": {
-     "medium": {
-      "bytes": 979366,
-      "pages": [
-       {
-        "bytes": 979366,
-        "cols": 8,
-        "file": "speaking_loop1.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "speaking_closed_eye_1.patch.webp",
+          "overlay_entry": "textures/speaking_closed_eye_1/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "speaking_closed_eye_2": {
+        "atlas": {
+          "medium": {
+            "bytes": 2105618,
+            "pages": [
+              {
+                "bytes": 1423396,
+                "cols": 8,
+                "file": "speaking_closed_eye_2.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_closed_eye_2.atlas.webp"
+              },
+              {
+                "bytes": 682222,
+                "cols": 8,
+                "file": "speaking_closed_eye_2.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 100,
+                "last_frame": 300,
+                "pixels": [
+                  1072,
+                  2340
+                ],
+                "rows": 13,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_closed_eye_2.atlas.p01.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
+        "frames": 300,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "speaking_closed_eye_2.patch.webp",
+          "overlay_entry": "textures/speaking_closed_eye_2/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "speaking_long": {
+        "atlas": {
+          "medium": {
+            "bytes": 2488704,
+            "pages": [
+              {
+                "bytes": 1390990,
+                "cols": 8,
+                "file": "speaking_long.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_long.atlas.webp"
+              },
+              {
+                "bytes": 1097714,
+                "cols": 8,
+                "file": "speaking_long.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 160,
+                "last_frame": 360,
+                "pixels": [
+                  1072,
+                  3600
+                ],
+                "rows": 20,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_long.atlas.p01.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
+        "frames": 360,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "speaking_long.patch.webp",
+          "overlay_entry": "textures/speaking_long/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "speaking_loop1": {
+        "atlas": {
+          "medium": {
+            "bytes": 979366,
+            "pages": [
+              {
+                "bytes": 979366,
+                "cols": 8,
+                "file": "speaking_loop1.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_loop1.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_loop1.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "speaking_loop1.patch.webp",
-     "overlay_entry": "textures/speaking_loop1/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "medium"
-   },
-   "speaking_loop2": {
-    "atlas": {
-     "medium": {
-      "bytes": 1602576,
-      "pages": [
-       {
-        "bytes": 1347582,
-        "cols": 8,
-        "file": "speaking_loop2.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_loop2.atlas.webp"
-       },
-       {
-        "bytes": 254994,
-        "cols": 8,
-        "file": "speaking_loop2.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 40,
-        "last_frame": 240,
-        "pixels": [
-         1072,
-         900
-        ],
-        "rows": 5,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_loop2.atlas.p01.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 240,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "speaking_loop2.patch.webp",
-     "overlay_entry": "textures/speaking_loop2/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "speaking_med": {
-    "atlas": {
-     "hi": {
-      "bytes": 4667624,
-      "pages": [
-       {
-        "bytes": 3919742,
-        "cols": 8,
-        "file": "speaking_med.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         2144,
-         9000
-        ],
-        "rows": 25,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/speaking_med.atlas.webp"
-       },
-       {
-        "bytes": 747882,
-        "cols": 8,
-        "file": "speaking_med.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 40,
-        "last_frame": 240,
-        "pixels": [
-         2144,
-         1800
-        ],
-        "rows": 5,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/speaking_med.atlas.p01.webp"
-       }
-      ]
-     },
-     "medium": {
-      "bytes": 1445306,
-      "pages": [
-       {
-        "bytes": 1219136,
-        "cols": 8,
-        "file": "speaking_med.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_med.atlas.webp"
-       },
-       {
-        "bytes": 226170,
-        "cols": 8,
-        "file": "speaking_med.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 40,
-        "last_frame": 240,
-        "pixels": [
-         1072,
-         900
-        ],
-        "rows": 5,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_med.atlas.p01.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 360,
-    "frameIntervalMs": 17,
-    "frameWidth": 268,
-    "frames": 240,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "speaking_med.patch.webp",
-     "overlay_entry": "textures/speaking_med/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "hi"
-   },
-   "speaking_short": {
-    "atlas": {
-     "hi": {
-      "bytes": 2091890,
-      "pages": [
-       {
-        "bytes": 2091890,
-        "cols": 8,
-        "file": "speaking_short.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "speaking_loop1.patch.webp",
+          "overlay_entry": "textures/speaking_loop1/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "medium"
+      },
+      "speaking_loop2": {
+        "atlas": {
+          "medium": {
+            "bytes": 1602576,
+            "pages": [
+              {
+                "bytes": 1347582,
+                "cols": 8,
+                "file": "speaking_loop2.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_loop2.atlas.webp"
+              },
+              {
+                "bytes": 254994,
+                "cols": 8,
+                "file": "speaking_loop2.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 40,
+                "last_frame": 240,
+                "pixels": [
+                  1072,
+                  900
+                ],
+                "rows": 5,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_loop2.atlas.p01.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
+        "frames": 240,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "speaking_loop2.patch.webp",
+          "overlay_entry": "textures/speaking_loop2/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "speaking_med": {
+        "atlas": {
+          "hi": {
+            "bytes": 4667624,
+            "pages": [
+              {
+                "bytes": 3919742,
+                "cols": 8,
+                "file": "speaking_med.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  2144,
+                  9000
+                ],
+                "rows": 25,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/speaking_med.atlas.webp"
+              },
+              {
+                "bytes": 747882,
+                "cols": 8,
+                "file": "speaking_med.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 40,
+                "last_frame": 240,
+                "pixels": [
+                  2144,
+                  1800
+                ],
+                "rows": 5,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/speaking_med.atlas.p01.webp"
+              }
+            ]
+          },
+          "medium": {
+            "bytes": 1445306,
+            "pages": [
+              {
+                "bytes": 1219136,
+                "cols": 8,
+                "file": "speaking_med.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_med.atlas.webp"
+              },
+              {
+                "bytes": 226170,
+                "cols": 8,
+                "file": "speaking_med.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 40,
+                "last_frame": 240,
+                "pixels": [
+                  1072,
+                  900
+                ],
+                "rows": 5,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_med.atlas.p01.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 360,
+        "frameIntervalMs": 17,
+        "frameWidth": 268,
+        "frames": 240,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "speaking_med.patch.webp",
+          "overlay_entry": "textures/speaking_med/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "hi"
+      },
+      "speaking_short": {
+        "atlas": {
+          "hi": {
+            "bytes": 2091890,
+            "pages": [
+              {
+                "bytes": 2091890,
+                "cols": 8,
+                "file": "speaking_short.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  2144,
+                  5400
+                ],
+                "rows": 15,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/speaking_short.atlas.webp"
+              }
+            ]
+          },
+          "medium": {
+            "bytes": 818112,
+            "pages": [
+              {
+                "bytes": 818112,
+                "cols": 8,
+                "file": "speaking_short.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_short.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 360,
+        "frameIntervalMs": 17,
+        "frameWidth": 268,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         2144,
-         5400
-        ],
-        "rows": 15,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/speaking_short.atlas.webp"
-       }
-      ]
-     },
-     "medium": {
-      "bytes": 818112,
-      "pages": [
-       {
-        "bytes": 818112,
-        "cols": 8,
-        "file": "speaking_short.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "speaking_short.patch.webp",
+          "overlay_entry": "textures/speaking_short/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "hi"
+      },
+      "speaking_trans": {
+        "atlas": {
+          "medium": {
+            "bytes": 793910,
+            "pages": [
+              {
+                "bytes": 793910,
+                "cols": 8,
+                "file": "speaking_trans.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/speaking_trans.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_short.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 360,
-    "frameIntervalMs": 17,
-    "frameWidth": 268,
-    "frames": 120,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "speaking_short.patch.webp",
-     "overlay_entry": "textures/speaking_short/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "hi"
-   },
-   "speaking_trans": {
-    "atlas": {
-     "medium": {
-      "bytes": 793910,
-      "pages": [
-       {
-        "bytes": 793910,
-        "cols": 8,
-        "file": "speaking_trans.atlas.webp",
-        "first_frame": 1,
-        "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/speaking_trans.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "medium"
-   },
-   "surprise_speaking": {
-    "atlas": {
-     "hi": {
-      "bytes": 3406538,
-      "pages": [
-       {
-        "bytes": 3406538,
-        "cols": 8,
-        "file": "surprise_speaking.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "medium"
+      },
+      "surprise_speaking": {
+        "atlas": {
+          "hi": {
+            "bytes": 3406538,
+            "pages": [
+              {
+                "bytes": 3406538,
+                "cols": 8,
+                "file": "surprise_speaking.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  2144,
+                  8280
+                ],
+                "rows": 23,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/surprise_speaking.atlas.webp"
+              }
+            ]
+          },
+          "medium": {
+            "bytes": 1222136,
+            "pages": [
+              {
+                "bytes": 1222136,
+                "cols": 8,
+                "file": "surprise_speaking.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/surprise_speaking.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 360,
+        "frameIntervalMs": 17,
+        "frameWidth": 268,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         2144,
-         8280
-        ],
-        "rows": 23,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/surprise_speaking.atlas.webp"
-       }
-      ]
-     },
-     "medium": {
-      "bytes": 1222136,
-      "pages": [
-       {
-        "bytes": 1222136,
-        "cols": 8,
-        "file": "surprise_speaking.atlas.webp",
-        "first_frame": 1,
-        "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/surprise_speaking.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 360,
-    "frameIntervalMs": 17,
-    "frameWidth": 268,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 5,
-     "file": "surprise_speaking.patch.webp",
-     "overlay_entry": "textures/surprise_trans/loop/kurisu_surprise_trans0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "hi"
-   },
-   "surprise_trans": {
-    "atlas": {
-     "medium": {
-      "bytes": 395228,
-      "pages": [
-       {
-        "bytes": 395228,
-        "cols": 8,
-        "file": "surprise_trans.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 5,
+          "file": "surprise_speaking.patch.webp",
+          "overlay_entry": "textures/surprise_trans/loop/kurisu_surprise_trans0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "hi"
+      },
+      "surprise_trans": {
+        "atlas": {
+          "medium": {
+            "bytes": 395228,
+            "pages": [
+              {
+                "bytes": 395228,
+                "cols": 8,
+                "file": "surprise_trans.atlas.webp",
+                "first_frame": 1,
+                "frames": 60,
+                "last_frame": 60,
+                "pixels": [
+                  1072,
+                  1440
+                ],
+                "rows": 8,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/surprise_trans.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 60,
-        "last_frame": 60,
-        "pixels": [
-         1072,
-         1440
-        ],
-        "rows": 8,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/surprise_trans.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 60,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "thinking_speaking1": {
-    "atlas": {
-     "medium": {
-      "bytes": 1030518,
-      "pages": [
-       {
-        "bytes": 1030518,
-        "cols": 8,
-        "file": "thinking_speaking1.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "thinking_speaking1": {
+        "atlas": {
+          "medium": {
+            "bytes": 1030518,
+            "pages": [
+              {
+                "bytes": 1030518,
+                "cols": 8,
+                "file": "thinking_speaking1.atlas.webp",
+                "first_frame": 1,
+                "frames": 180,
+                "last_frame": 180,
+                "pixels": [
+                  1072,
+                  4140
+                ],
+                "rows": 23,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/thinking_speaking1.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 17,
+        "frameWidth": 134,
         "frames": 180,
-        "last_frame": 180,
-        "pixels": [
-         1072,
-         4140
-        ],
-        "rows": 23,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/thinking_speaking1.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 17,
-    "frameWidth": 134,
-    "frames": 180,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "thinking_speaking1.patch.webp",
-     "overlay_entry": "textures/thinking_speaking1/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "medium"
-   },
-   "thinking_speaking2": {
-    "atlas": {
-     "hi": {
-      "bytes": 5778906,
-      "pages": [
-       {
-        "bytes": 3882952,
-        "cols": 8,
-        "file": "thinking_speaking2.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         2144,
-         9000
-        ],
-        "rows": 25,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/thinking_speaking2.atlas.webp"
-       },
-       {
-        "bytes": 1895954,
-        "cols": 8,
-        "file": "thinking_speaking2.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 100,
-        "last_frame": 300,
-        "pixels": [
-         2144,
-         4680
-        ],
-        "rows": 13,
-        "tile_h": 360,
-        "tile_w": 268,
-        "url": "kurisu/hi/thinking_speaking2.atlas.p01.webp"
-       }
-      ]
-     },
-     "medium": {
-      "bytes": 2026196,
-      "pages": [
-       {
-        "bytes": 1365130,
-        "cols": 8,
-        "file": "thinking_speaking2.atlas.webp",
-        "first_frame": 1,
-        "frames": 200,
-        "last_frame": 200,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/thinking_speaking2.atlas.webp"
-       },
-       {
-        "bytes": 661066,
-        "cols": 8,
-        "file": "thinking_speaking2.atlas.p01.webp",
-        "first_frame": 201,
-        "frames": 100,
-        "last_frame": 300,
-        "pixels": [
-         1072,
-         2340
-        ],
-        "rows": 13,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/thinking_speaking2.atlas.p01.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 360,
-    "frameIntervalMs": 17,
-    "frameWidth": 268,
-    "frames": 300,
-    "loopMode": "loop",
-    "mouthPatch": {
-     "closed_frame_idx": 0,
-     "file": "thinking_speaking2.patch.webp",
-     "overlay_entry": "textures/thinking_speaking2/loop/kurisu_speaking_loop0001.ktx2",
-     "size": [
-      34,
-      18
-     ]
-    },
-    "source": "statemachine.json / copied",
-    "tier": "hi"
-   },
-   "thinking_to_key_point": {
-    "atlas": {
-     "medium": {
-      "bytes": 910014,
-      "pages": [
-       {
-        "bytes": 910014,
-        "cols": 8,
-        "file": "thinking_to_key_point.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "thinking_speaking1.patch.webp",
+          "overlay_entry": "textures/thinking_speaking1/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "medium"
+      },
+      "thinking_speaking2": {
+        "atlas": {
+          "hi": {
+            "bytes": 5778906,
+            "pages": [
+              {
+                "bytes": 3882952,
+                "cols": 8,
+                "file": "thinking_speaking2.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  2144,
+                  9000
+                ],
+                "rows": 25,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/thinking_speaking2.atlas.webp"
+              },
+              {
+                "bytes": 1895954,
+                "cols": 8,
+                "file": "thinking_speaking2.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 100,
+                "last_frame": 300,
+                "pixels": [
+                  2144,
+                  4680
+                ],
+                "rows": 13,
+                "tile_h": 360,
+                "tile_w": 268,
+                "url": "kurisu/hi/thinking_speaking2.atlas.p01.webp"
+              }
+            ]
+          },
+          "medium": {
+            "bytes": 2026196,
+            "pages": [
+              {
+                "bytes": 1365130,
+                "cols": 8,
+                "file": "thinking_speaking2.atlas.webp",
+                "first_frame": 1,
+                "frames": 200,
+                "last_frame": 200,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/thinking_speaking2.atlas.webp"
+              },
+              {
+                "bytes": 661066,
+                "cols": 8,
+                "file": "thinking_speaking2.atlas.p01.webp",
+                "first_frame": 201,
+                "frames": 100,
+                "last_frame": 300,
+                "pixels": [
+                  1072,
+                  2340
+                ],
+                "rows": 13,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/thinking_speaking2.atlas.p01.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 360,
+        "frameIntervalMs": 17,
+        "frameWidth": 268,
+        "frames": 300,
+        "loopMode": "loop",
+        "mouthPatch": {
+          "closed_frame_idx": 0,
+          "file": "thinking_speaking2.patch.webp",
+          "overlay_entry": "textures/thinking_speaking2/loop/kurisu_speaking_loop0001.ktx2",
+          "size": [
+            34,
+            18
+          ]
+        },
+        "source": "statemachine.json / copied",
+        "tier": "hi"
+      },
+      "thinking_to_key_point": {
+        "atlas": {
+          "medium": {
+            "bytes": 910014,
+            "pages": [
+              {
+                "bytes": 910014,
+                "cols": 8,
+                "file": "thinking_to_key_point.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/thinking_to_key_point.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/thinking_to_key_point.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "thinking_to_serious": {
-    "atlas": {
-     "medium": {
-      "bytes": 888204,
-      "pages": [
-       {
-        "bytes": 888204,
-        "cols": 8,
-        "file": "thinking_to_serious.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "thinking_to_serious": {
+        "atlas": {
+          "medium": {
+            "bytes": 888204,
+            "pages": [
+              {
+                "bytes": 888204,
+                "cols": 8,
+                "file": "thinking_to_serious.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/thinking_to_serious.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/thinking_to_serious.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "thinking_trans": {
-    "atlas": {
-     "medium": {
-      "bytes": 899690,
-      "pages": [
-       {
-        "bytes": 899690,
-        "cols": 8,
-        "file": "thinking_trans.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "thinking_trans": {
+        "atlas": {
+          "medium": {
+            "bytes": 899690,
+            "pages": [
+              {
+                "bytes": 899690,
+                "cols": 8,
+                "file": "thinking_trans.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/thinking_trans.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 8,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/thinking_trans.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 8,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "trans_smile": {
-    "atlas": {
-     "medium": {
-      "bytes": 883450,
-      "pages": [
-       {
-        "bytes": 883450,
-        "cols": 8,
-        "file": "trans_smile.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "trans_smile": {
+        "atlas": {
+          "medium": {
+            "bytes": 883450,
+            "pages": [
+              {
+                "bytes": 883450,
+                "cols": 8,
+                "file": "trans_smile.atlas.webp",
+                "first_frame": 1,
+                "frames": 120,
+                "last_frame": 120,
+                "pixels": [
+                  1072,
+                  2700
+                ],
+                "rows": 15,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/trans_smile.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 5,
+        "frameWidth": 134,
         "frames": 120,
-        "last_frame": 120,
-        "pixels": [
-         1072,
-         2700
-        ],
-        "rows": 15,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/trans_smile.atlas.webp"
-       }
-      ]
-     }
-    },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 5,
-    "frameWidth": 134,
-    "frames": 120,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / copied",
-    "tier": "medium"
-   },
-   "trans_standby": {
-    "atlas": {
-     "medium": {
-      "bytes": 1191988,
-      "pages": [
-       {
-        "bytes": 1191988,
-        "cols": 8,
-        "file": "trans_standby.atlas.webp",
-        "first_frame": 1,
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / copied",
+        "tier": "medium"
+      },
+      "trans_standby": {
+        "atlas": {
+          "medium": {
+            "bytes": 1191988,
+            "pages": [
+              {
+                "bytes": 1191988,
+                "cols": 8,
+                "file": "trans_standby.atlas.webp",
+                "first_frame": 1,
+                "frames": 196,
+                "last_frame": 196,
+                "pixels": [
+                  1072,
+                  4500
+                ],
+                "rows": 25,
+                "tile_h": 180,
+                "tile_w": 134,
+                "url": "kurisu/medium/trans_standby.atlas.webp"
+              }
+            ]
+          }
+        },
+        "columns": 8,
+        "frameHeight": 180,
+        "frameIntervalMs": 21,
+        "frameWidth": 134,
         "frames": 196,
-        "last_frame": 196,
-        "pixels": [
-         1072,
-         4500
-        ],
-        "rows": 25,
-        "tile_h": 180,
-        "tile_w": 134,
-        "url": "kurisu/medium/trans_standby.atlas.webp"
-       }
-      ]
-     }
+        "loopMode": "once_then_hold",
+        "source": "statemachine.json / generated(0.5x q=72)",
+        "tier": "medium"
+      }
     },
-    "columns": 8,
-    "frameHeight": 180,
-    "frameIntervalMs": 21,
-    "frameWidth": 134,
-    "frames": 196,
-    "loopMode": "once_then_hold",
-    "source": "statemachine.json / generated(0.5x q=72)",
-    "tier": "medium"
-   }
+    "count": 38,
+    "hiTotalBytes": 20568710,
+    "mediumTotalBytes": 50492702,
+    "note": "38 个\"图内剪辑\"的 medium 档（其中 6 段另有 hi 档）。由 _dev/build_statemachine_manifest.py 从 docs/amadeus-research/data/statemachine.json 一次生成，与 static/kurisu/statemachine.json 同源，不会漂移。clips.* 那 4 段（idle/speaking/thinking/opening）仍是既有 hi+boot 契约，未改动；本段是新增的第二档。其中 key_point_to_thinking 是 0.17.0α 的返回过渡：atlas_clip + reverse 表示它复用 thinking_to_key_point 的同一张图集、播放时倒放，没有新增任何素材字节。"
   },
-  "count": 38,
-  "hiTotalBytes": 20568710,
-  "mediumTotalBytes": 50492702,
-  "note": "38 个\"图内剪辑\"的 medium 档（其中 6 段另有 hi 档）。由 _dev/build_statemachine_manifest.py 从 docs/amadeus-research/data/statemachine.json 一次生成，与 static/kurisu/statemachine.json 同源，不会漂移。clips.* 那 4 段（idle/speaking/thinking/opening）仍是既有 hi+boot 契约，未改动；本段是新增的第二档。其中 key_point_to_thinking 是 0.17.0α 的返回过渡：atlas_clip + reverse 表示它复用 thinking_to_key_point 的同一张图集、播放时倒放，没有新增任何素材字节。"
- },
- "emotions": {
-  "angry": {
-   "idle": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 12280,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/angry.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 660,
-    "atlasW": 1056,
-    "bytes": 150980,
-    "columns": 8,
-    "decodedBytes": 2787840,
-    "durationMs": 1517,
-    "frameIntervalMs": 41,
-    "frameSize": 132,
-    "frames": 37,
-    "sourceFrames": 74,
-    "stride": 2,
-    "url": "kurisu/avatar/angry.speaking.webp"
-   },
-   "static": {
-    "bytes": 4224,
-    "frameSize": 132,
-    "url": "kurisu/avatar/angry.static.webp"
-   }
+  "emotions": {
+    "angry": {
+      "idle": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 12280,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/angry.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 660,
+        "atlasW": 1056,
+        "bytes": 150980,
+        "columns": 8,
+        "decodedBytes": 2787840,
+        "durationMs": 1517,
+        "frameIntervalMs": 41,
+        "frameSize": 132,
+        "frames": 37,
+        "sourceFrames": 74,
+        "stride": 2,
+        "url": "kurisu/avatar/angry.speaking.webp"
+      },
+      "static": {
+        "bytes": 4224,
+        "frameSize": 132,
+        "url": "kurisu/avatar/angry.static.webp"
+      }
+    },
+    "blush": {
+      "idle": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 12322,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/blush.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 1056,
+        "atlasW": 1056,
+        "bytes": 258912,
+        "columns": 8,
+        "decodedBytes": 4460544,
+        "durationMs": 2542,
+        "frameIntervalMs": 41,
+        "frameSize": 132,
+        "frames": 62,
+        "sourceFrames": 123,
+        "stride": 2,
+        "url": "kurisu/avatar/blush.speaking.webp"
+      },
+      "static": {
+        "bytes": 4194,
+        "frameSize": 132,
+        "url": "kurisu/avatar/blush.static.webp"
+      }
+    },
+    "disappointed": {
+      "idle": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 10850,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/disappointed.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 10864,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/disappointed.speaking.webp"
+      },
+      "static": {
+        "bytes": 3926,
+        "frameSize": 132,
+        "url": "kurisu/avatar/disappointed.static.webp"
+      }
+    },
+    "happy": {
+      "idle": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 11358,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/happy.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 660,
+        "atlasW": 1056,
+        "bytes": 149744,
+        "columns": 8,
+        "decodedBytes": 2787840,
+        "durationMs": 1517,
+        "frameIntervalMs": 41,
+        "frameSize": 132,
+        "frames": 37,
+        "sourceFrames": 74,
+        "stride": 2,
+        "url": "kurisu/avatar/happy.speaking.webp"
+      },
+      "static": {
+        "bytes": 4226,
+        "frameSize": 132,
+        "url": "kurisu/avatar/happy.static.webp"
+      }
+    },
+    "normal": {
+      "idle": {
+        "atlasH": 396,
+        "atlasW": 1056,
+        "bytes": 86696,
+        "columns": 8,
+        "decodedBytes": 1672704,
+        "durationMs": 2520,
+        "frameIntervalMs": 120,
+        "frameSize": 132,
+        "frames": 21,
+        "sourceFrames": 21,
+        "stride": 1,
+        "url": "kurisu/avatar/normal.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 924,
+        "atlasW": 1056,
+        "bytes": 189358,
+        "columns": 8,
+        "decodedBytes": 3902976,
+        "durationMs": 2058,
+        "frameIntervalMs": 42,
+        "frameSize": 132,
+        "frames": 49,
+        "sourceFrames": 49,
+        "stride": 1,
+        "url": "kurisu/avatar/normal.speaking.webp"
+      },
+      "static": {
+        "bytes": 4234,
+        "frameSize": 132,
+        "url": "kurisu/avatar/normal.static.webp"
+      }
+    },
+    "sad": {
+      "idle": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 11466,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/sad.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 924,
+        "atlasW": 1056,
+        "bytes": 203032,
+        "columns": 8,
+        "decodedBytes": 3902976,
+        "durationMs": 2058,
+        "frameIntervalMs": 42,
+        "frameSize": 132,
+        "frames": 49,
+        "sourceFrames": 49,
+        "stride": 1,
+        "url": "kurisu/avatar/sad.speaking.webp"
+      },
+      "static": {
+        "bytes": 4244,
+        "frameSize": 132,
+        "url": "kurisu/avatar/sad.static.webp"
+      }
+    },
+    "sided_surprised": {
+      "idle": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 12480,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/sided_surprised.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 660,
+        "atlasW": 1056,
+        "bytes": 148130,
+        "columns": 8,
+        "decodedBytes": 2787840,
+        "durationMs": 1517,
+        "frameIntervalMs": 41,
+        "frameSize": 132,
+        "frames": 37,
+        "sourceFrames": 74,
+        "stride": 2,
+        "url": "kurisu/avatar/sided_surprised.speaking.webp"
+      },
+      "static": {
+        "bytes": 4240,
+        "frameSize": 132,
+        "url": "kurisu/avatar/sided_surprised.static.webp"
+      }
+    },
+    "sided_thinking": {
+      "idle": {
+        "atlasH": 132,
+        "atlasW": 1056,
+        "bytes": 11016,
+        "columns": 8,
+        "decodedBytes": 557568,
+        "durationMs": 510,
+        "frameIntervalMs": 170,
+        "frameSize": 132,
+        "frames": 3,
+        "sourceFrames": 3,
+        "stride": 1,
+        "url": "kurisu/avatar/sided_thinking.idle.webp"
+      },
+      "speaking": {
+        "atlasH": 1056,
+        "atlasW": 1056,
+        "bytes": 299302,
+        "columns": 8,
+        "decodedBytes": 4460544,
+        "durationMs": 2542,
+        "frameIntervalMs": 41,
+        "frameSize": 132,
+        "frames": 62,
+        "sourceFrames": 123,
+        "stride": 2,
+        "url": "kurisu/avatar/sided_thinking.speaking.webp"
+      },
+      "static": {
+        "bytes": 4068,
+        "frameSize": 132,
+        "url": "kurisu/avatar/sided_thinking.static.webp"
+      }
+    }
   },
-  "blush": {
-   "idle": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 12322,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/blush.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 1056,
-    "atlasW": 1056,
-    "bytes": 258912,
-    "columns": 8,
-    "decodedBytes": 4460544,
-    "durationMs": 2542,
-    "frameIntervalMs": 41,
-    "frameSize": 132,
-    "frames": 62,
-    "sourceFrames": 123,
-    "stride": 2,
-    "url": "kurisu/avatar/blush.speaking.webp"
-   },
-   "static": {
-    "bytes": 4194,
-    "frameSize": 132,
-    "url": "kurisu/avatar/blush.static.webp"
-   }
+  "format": "xiaokeqing.kurisu.v2",
+  "generator": {
+    "builtAt": "2026-10-14T08:13:02",
+    "ktx": "ktx.exe",
+    "script": "scripts/kurisu/build_kurisu_assets.py",
+    "sourceManifestSha256": "259DFC10E3FF1453848295F87340948F99F1F2E4254C30201334757EBE210EBB",
+    "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514"
   },
-  "disappointed": {
-   "idle": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 10850,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/disappointed.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 10864,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/disappointed.speaking.webp"
-   },
-   "static": {
-    "bytes": 3926,
-    "frameSize": 132,
-    "url": "kurisu/avatar/disappointed.static.webp"
-   }
+  "scene": {
+    "character": {
+      "canvasSize": {
+        "h": 1028,
+        "w": 764
+      },
+      "footRatio": 0.012,
+      "formula": "scale = min(bounds.w*0.64/canvasW, bounds.h*0.90/canvasH); x = bounds.x + bounds.w*0.52; y = bounds.bottom - max(3, bounds.h*0.012); anchor=(0.5,1.0)",
+      "maxHeightRatio": 0.9,
+      "maxWidthRatio": 0.64,
+      "source": "render/web/renderer.js:797-825",
+      "xRatio": 0.52
+    },
+    "compose": {
+      "bgBright": 1.3,
+      "bgSaturate": 1.1,
+      "bgZoom": 1.45,
+      "note": "bgZoom/bgBright/bgSaturate 是底图烘焙时的历史参数；角色落位已改用 scene.character 的源码公式，不再用估计值"
+    },
+    "cover": {
+      "css": {
+        "height": "max(56.28vw, 100vh)",
+        "width": "max(100vw, 177.68vh)"
+      },
+      "formula": "scale = max(screenW/imgW, screenH/imgH); t.x = (screenW - imgW*scale)/2; t.y = (screenH - imgH*scale)/2; stage 元素按底图比例 cover 铺满 → 底图 px 坐标映射到 stage 只是 x/1672、y/941，与视口无关，所以百分比可写死",
+      "imgH": 941,
+      "imgW": 1672,
+      "note": "★ 2026-10-14 返工：删掉上一版 1.386 倍的『取景放大』。实测站主录屏第 2 秒 = 原图 1.00 倍 cover（masked NCC 0.965，屏宽 35.0% vs 预测 35.05%），所以正解就是原版的 cover，不加任何倍率。"
+    },
+    "crtBounds": {
+      "aspect": 1.322799,
+      "note": "多边形包围盒；角色落位与场景图拉伸都以它为基准（原版 bounds）",
+      "pctOfStage": {
+        "h": 47.0776,
+        "w": 35.0478,
+        "x": 32.8947,
+        "y": 20.7226
+      },
+      "px": {
+        "bottom": 638,
+        "h": 443,
+        "right": 1136,
+        "w": 586,
+        "x": 550,
+        "y": 195
+      }
+    },
+    "crtPolygon": {
+      "cornersApprox": [
+        [
+          556,
+          629
+        ],
+        [
+          560,
+          199
+        ],
+        [
+          1127,
+          204
+        ],
+        [
+          1132,
+          630
+        ]
+      ],
+      "note": "原版手写的 14 点 CRT 屏幕多边形（不是矩形）。CSS 里用 clip-path: polygon() 套在 .xk-crt__screen 上，顶点就是 pointsPctOfBounds。",
+      "points": [
+        [
+          560,
+          205
+        ],
+        [
+          676,
+          197
+        ],
+        [
+          844,
+          195
+        ],
+        [
+          1014,
+          198
+        ],
+        [
+          1127,
+          209
+        ],
+        [
+          1134,
+          343
+        ],
+        [
+          1136,
+          496
+        ],
+        [
+          1130,
+          628
+        ],
+        [
+          1012,
+          636
+        ],
+        [
+          846,
+          638
+        ],
+        [
+          676,
+          634
+        ],
+        [
+          556,
+          626
+        ],
+        [
+          550,
+          494
+        ],
+        [
+          552,
+          342
+        ]
+      ],
+      "pointsNorm": [
+        [
+          0.334928,
+          0.217853
+        ],
+        [
+          0.404306,
+          0.209352
+        ],
+        [
+          0.504785,
+          0.207226
+        ],
+        [
+          0.606459,
+          0.210414
+        ],
+        [
+          0.674043,
+          0.222104
+        ],
+        [
+          0.67823,
+          0.364506
+        ],
+        [
+          0.679426,
+          0.527099
+        ],
+        [
+          0.675837,
+          0.667375
+        ],
+        [
+          0.605263,
+          0.675877
+        ],
+        [
+          0.505981,
+          0.678002
+        ],
+        [
+          0.404306,
+          0.673751
+        ],
+        [
+          0.332536,
+          0.66525
+        ],
+        [
+          0.328947,
+          0.524973
+        ],
+        [
+          0.330144,
+          0.363443
+        ]
+      ],
+      "pointsPctOfBounds": [
+        [
+          1.7065,
+          2.2573
+        ],
+        [
+          21.5017,
+          0.4515
+        ],
+        [
+          50.1706,
+          0.0
+        ],
+        [
+          79.1809,
+          0.6772
+        ],
+        [
+          98.4642,
+          3.1603
+        ],
+        [
+          99.6587,
+          33.4086
+        ],
+        [
+          100.0,
+          67.9458
+        ],
+        [
+          98.9761,
+          97.7427
+        ],
+        [
+          78.8396,
+          99.5485
+        ],
+        [
+          50.5119,
+          100.0
+        ],
+        [
+          21.5017,
+          99.0971
+        ],
+        [
+          1.0239,
+          97.2912
+        ],
+        [
+          0.0,
+          67.4944
+        ],
+        [
+          0.3413,
+          33.1828
+        ]
+      ],
+      "provenance": "source-checkout:E:\\DeepSeek1\\work\\_amadeus-src\\wallpaper\\crt_config.json",
+      "units": "底图 px（1672x941）"
+    },
+    "images": {
+      "desk": {
+        "bytes": 77608,
+        "url": "images/crt/desk.webp",
+        "w": 1672
+      },
+      "desk1024": {
+        "bytes": 38542,
+        "url": "images/crt/desk-1024.webp",
+        "w": 1024
+      },
+      "deskMobile": {
+        "bytes": 32048,
+        "url": "images/crt/desk-mobile.webp",
+        "w": 435
+      },
+      "lab": {
+        "bytes": 59950,
+        "h": 750,
+        "url": "images/crt/lab.webp",
+        "w": 912
+      },
+      "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514"
+    },
+    "source": {
+      "h": 941,
+      "note": "实拍桌面大图（原版 amadeus_desktop_wallpaper.png）",
+      "w": 1672
+    },
+    "sourceCrop": {
+      "norm": [
+        0.08083,
+        0.105778,
+        0.845494,
+        0.801778
+      ],
+      "note": "场景图/特写帧先按这个框裁掉外圈玻璃，再拉伸进 crtBounds（placementMode=crt_screen）",
+      "px": {
+        "h": 902,
+        "w": 1182,
+        "x0": 113,
+        "y0": 119
+      },
+      "source": "wallpaper/scene_assets.py:62-67"
+    },
+    "subtitlePlate": {
+      "aspect": 5.9628,
+      "formula": "w = clamp(bounds.w*0.72, 180, bounds.w-24); h = clamp(w/aspect, 34, bounds.h*0.16); x = bounds.x + (bounds.w-w)/2; y = bounds.bottom - h",
+      "source": "render/web/wallpaper_scene.js:176-196",
+      "srcH": 430,
+      "srcW": 2564
+    }
   },
-  "happy": {
-   "idle": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 11358,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/happy.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 660,
-    "atlasW": 1056,
-    "bytes": 149744,
-    "columns": 8,
-    "decodedBytes": 2787840,
-    "durationMs": 1517,
-    "frameIntervalMs": 41,
-    "frameSize": 132,
-    "frames": 37,
-    "sourceFrames": 74,
-    "stride": 2,
-    "url": "kurisu/avatar/happy.speaking.webp"
-   },
-   "static": {
-    "bytes": 4226,
-    "frameSize": 132,
-    "url": "kurisu/avatar/happy.static.webp"
-   }
-  },
-  "normal": {
-   "idle": {
-    "atlasH": 396,
-    "atlasW": 1056,
-    "bytes": 86696,
-    "columns": 8,
-    "decodedBytes": 1672704,
-    "durationMs": 2520,
-    "frameIntervalMs": 120,
-    "frameSize": 132,
-    "frames": 21,
-    "sourceFrames": 21,
-    "stride": 1,
-    "url": "kurisu/avatar/normal.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 924,
-    "atlasW": 1056,
-    "bytes": 189358,
-    "columns": 8,
-    "decodedBytes": 3902976,
-    "durationMs": 2058,
-    "frameIntervalMs": 42,
-    "frameSize": 132,
-    "frames": 49,
-    "sourceFrames": 49,
-    "stride": 1,
-    "url": "kurisu/avatar/normal.speaking.webp"
-   },
-   "static": {
-    "bytes": 4234,
-    "frameSize": 132,
-    "url": "kurisu/avatar/normal.static.webp"
-   }
-  },
-  "sad": {
-   "idle": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 11466,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/sad.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 924,
-    "atlasW": 1056,
-    "bytes": 203032,
-    "columns": 8,
-    "decodedBytes": 3902976,
-    "durationMs": 2058,
-    "frameIntervalMs": 42,
-    "frameSize": 132,
-    "frames": 49,
-    "sourceFrames": 49,
-    "stride": 1,
-    "url": "kurisu/avatar/sad.speaking.webp"
-   },
-   "static": {
-    "bytes": 4244,
-    "frameSize": 132,
-    "url": "kurisu/avatar/sad.static.webp"
-   }
-  },
-  "sided_surprised": {
-   "idle": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 12480,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/sided_surprised.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 660,
-    "atlasW": 1056,
-    "bytes": 148130,
-    "columns": 8,
-    "decodedBytes": 2787840,
-    "durationMs": 1517,
-    "frameIntervalMs": 41,
-    "frameSize": 132,
-    "frames": 37,
-    "sourceFrames": 74,
-    "stride": 2,
-    "url": "kurisu/avatar/sided_surprised.speaking.webp"
-   },
-   "static": {
-    "bytes": 4240,
-    "frameSize": 132,
-    "url": "kurisu/avatar/sided_surprised.static.webp"
-   }
-  },
-  "sided_thinking": {
-   "idle": {
-    "atlasH": 132,
-    "atlasW": 1056,
-    "bytes": 11016,
-    "columns": 8,
-    "decodedBytes": 557568,
-    "durationMs": 510,
-    "frameIntervalMs": 170,
-    "frameSize": 132,
-    "frames": 3,
-    "sourceFrames": 3,
-    "stride": 1,
-    "url": "kurisu/avatar/sided_thinking.idle.webp"
-   },
-   "speaking": {
-    "atlasH": 1056,
-    "atlasW": 1056,
-    "bytes": 299302,
-    "columns": 8,
-    "decodedBytes": 4460544,
-    "durationMs": 2542,
-    "frameIntervalMs": 41,
-    "frameSize": 132,
-    "frames": 62,
-    "sourceFrames": 123,
-    "stride": 2,
-    "url": "kurisu/avatar/sided_thinking.speaking.webp"
-   },
-   "static": {
-    "bytes": 4068,
-    "frameSize": 132,
-    "url": "kurisu/avatar/sided_thinking.static.webp"
-   }
+  "stateMachine": {
+    "atlasDir": "kurisu/medium/",
+    "auto": true,
+    "builtBy": "_dev/build_statemachine_manifest.py",
+    "edgeCount": 92,
+    "hiAtlasDir": "kurisu/hi/",
+    "hiClips": [
+      "idle",
+      "idle1",
+      "speaking_short",
+      "speaking_med",
+      "thinking_speaking2",
+      "surprise_speaking"
+    ],
+    "hiTotalBytes": 20568710,
+    "hostTriggeredEntries": [
+      "angry_trans",
+      "closed_eye_trans",
+      "sad_trans",
+      "shy_trans",
+      "speaking_short",
+      "speaking_trans",
+      "surprise_trans",
+      "thinking_trans",
+      "trans_smile"
+    ],
+    "maxWalkBytes": 6291456,
+    "nodeCount": 38,
+    "notShipped": [
+      "37 个剪辑各自的 *.boot.webp / *.poster.webp（源在 web/boot、web/poster，合计 8.2MB）——会顶穿闸门⑨的 80MB 上限，故不发；首帧直接用图集第 1 帧",
+      "speaking_long 的 hi 档（6.12MB / 2 页）——加上它总资产会到 83.7MB > 80MB 上限，故只发 medium；要发请把上限提到 85MB 或先重编码"
+    ],
+    "note": "★ 运行时取状态机只读这一个文件（docs/ 下的原始副本不进产物）。38 个节点全部带 medium 档图集分页几何与真实字节数；medium 档合计 48.15MB（见 _dev/medium-volume-table.md）。clips.* 仍是 4 段主推剪辑的既有契约（hi/boot 两档），状态机里另外 34 段只发 medium 一档。",
+    "source": "docs/amadeus-research/data/statemachine.json",
+    "url": "kurisu/statemachine.json"
   }
- },
- "format": "xiaokeqing.kurisu.v2",
- "generator": {
-  "builtAt": "2026-10-14T08:13:02",
-  "ktx": "ktx.exe",
-  "script": "scripts/kurisu/build_kurisu_assets.py",
-  "sourceManifestSha256": "259DFC10E3FF1453848295F87340948F99F1F2E4254C30201334757EBE210EBB",
-  "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514"
- },
- "scene": {
-  "character": {
-   "canvasSize": {
-    "h": 1028,
-    "w": 764
-   },
-   "footRatio": 0.012,
-   "formula": "scale = min(bounds.w*0.64/canvasW, bounds.h*0.90/canvasH); x = bounds.x + bounds.w*0.52; y = bounds.bottom - max(3, bounds.h*0.012); anchor=(0.5,1.0)",
-   "maxHeightRatio": 0.9,
-   "maxWidthRatio": 0.64,
-   "source": "render/web/renderer.js:797-825",
-   "xRatio": 0.52
-  },
-  "compose": {
-   "bgBright": 1.3,
-   "bgSaturate": 1.1,
-   "bgZoom": 1.45,
-   "note": "bgZoom/bgBright/bgSaturate 是底图烘焙时的历史参数；角色落位已改用 scene.character 的源码公式，不再用估计值"
-  },
-  "cover": {
-   "css": {
-    "height": "max(56.28vw, 100vh)",
-    "width": "max(100vw, 177.68vh)"
-   },
-   "formula": "scale = max(screenW/imgW, screenH/imgH); t.x = (screenW - imgW*scale)/2; t.y = (screenH - imgH*scale)/2; stage 元素按底图比例 cover 铺满 → 底图 px 坐标映射到 stage 只是 x/1672、y/941，与视口无关，所以百分比可写死",
-   "imgH": 941,
-   "imgW": 1672,
-   "note": "★ 2026-10-14 返工：删掉上一版 1.386 倍的『取景放大』。实测站主录屏第 2 秒 = 原图 1.00 倍 cover（masked NCC 0.965，屏宽 35.0% vs 预测 35.05%），所以正解就是原版的 cover，不加任何倍率。"
-  },
-  "crtBounds": {
-   "aspect": 1.322799,
-   "note": "多边形包围盒；角色落位与场景图拉伸都以它为基准（原版 bounds）",
-   "pctOfStage": {
-    "h": 47.0776,
-    "w": 35.0478,
-    "x": 32.8947,
-    "y": 20.7226
-   },
-   "px": {
-    "bottom": 638,
-    "h": 443,
-    "right": 1136,
-    "w": 586,
-    "x": 550,
-    "y": 195
-   }
-  },
-  "crtPolygon": {
-   "cornersApprox": [
-    [
-     556,
-     629
-    ],
-    [
-     560,
-     199
-    ],
-    [
-     1127,
-     204
-    ],
-    [
-     1132,
-     630
-    ]
-   ],
-   "note": "原版手写的 14 点 CRT 屏幕多边形（不是矩形）。CSS 里用 clip-path: polygon() 套在 .xk-crt__screen 上，顶点就是 pointsPctOfBounds。",
-   "points": [
-    [
-     560,
-     205
-    ],
-    [
-     676,
-     197
-    ],
-    [
-     844,
-     195
-    ],
-    [
-     1014,
-     198
-    ],
-    [
-     1127,
-     209
-    ],
-    [
-     1134,
-     343
-    ],
-    [
-     1136,
-     496
-    ],
-    [
-     1130,
-     628
-    ],
-    [
-     1012,
-     636
-    ],
-    [
-     846,
-     638
-    ],
-    [
-     676,
-     634
-    ],
-    [
-     556,
-     626
-    ],
-    [
-     550,
-     494
-    ],
-    [
-     552,
-     342
-    ]
-   ],
-   "pointsNorm": [
-    [
-     0.334928,
-     0.217853
-    ],
-    [
-     0.404306,
-     0.209352
-    ],
-    [
-     0.504785,
-     0.207226
-    ],
-    [
-     0.606459,
-     0.210414
-    ],
-    [
-     0.674043,
-     0.222104
-    ],
-    [
-     0.67823,
-     0.364506
-    ],
-    [
-     0.679426,
-     0.527099
-    ],
-    [
-     0.675837,
-     0.667375
-    ],
-    [
-     0.605263,
-     0.675877
-    ],
-    [
-     0.505981,
-     0.678002
-    ],
-    [
-     0.404306,
-     0.673751
-    ],
-    [
-     0.332536,
-     0.66525
-    ],
-    [
-     0.328947,
-     0.524973
-    ],
-    [
-     0.330144,
-     0.363443
-    ]
-   ],
-   "pointsPctOfBounds": [
-    [
-     1.7065,
-     2.2573
-    ],
-    [
-     21.5017,
-     0.4515
-    ],
-    [
-     50.1706,
-     0.0
-    ],
-    [
-     79.1809,
-     0.6772
-    ],
-    [
-     98.4642,
-     3.1603
-    ],
-    [
-     99.6587,
-     33.4086
-    ],
-    [
-     100.0,
-     67.9458
-    ],
-    [
-     98.9761,
-     97.7427
-    ],
-    [
-     78.8396,
-     99.5485
-    ],
-    [
-     50.5119,
-     100.0
-    ],
-    [
-     21.5017,
-     99.0971
-    ],
-    [
-     1.0239,
-     97.2912
-    ],
-    [
-     0.0,
-     67.4944
-    ],
-    [
-     0.3413,
-     33.1828
-    ]
-   ],
-   "provenance": "source-checkout:E:\\DeepSeek1\\work\\_amadeus-src\\wallpaper\\crt_config.json",
-   "units": "底图 px（1672x941）"
-  },
-  "images": {
-   "desk": {
-    "bytes": 77608,
-    "url": "images/crt/desk.webp",
-    "w": 1672
-   },
-   "desk1024": {
-    "bytes": 38542,
-    "url": "images/crt/desk-1024.webp",
-    "w": 1024
-   },
-   "deskMobile": {
-    "bytes": 32048,
-    "url": "images/crt/desk-mobile.webp",
-    "w": 435
-   },
-   "lab": {
-    "bytes": 59950,
-    "h": 750,
-    "url": "images/crt/lab.webp",
-    "w": 912
-   },
-   "wallpaperSha256": "EB7B9EEF20B06BECDE6DB2D89D9FF5EF74BD5EEB105D515561846F8F34794514"
-  },
-  "source": {
-   "h": 941,
-   "note": "实拍桌面大图（原版 amadeus_desktop_wallpaper.png）",
-   "w": 1672
-  },
-  "sourceCrop": {
-   "norm": [
-    0.08083,
-    0.105778,
-    0.845494,
-    0.801778
-   ],
-   "note": "场景图/特写帧先按这个框裁掉外圈玻璃，再拉伸进 crtBounds（placementMode=crt_screen）",
-   "px": {
-    "h": 902,
-    "w": 1182,
-    "x0": 113,
-    "y0": 119
-   },
-   "source": "wallpaper/scene_assets.py:62-67"
-  },
-  "subtitlePlate": {
-   "aspect": 5.9628,
-   "formula": "w = clamp(bounds.w*0.72, 180, bounds.w-24); h = clamp(w/aspect, 34, bounds.h*0.16); x = bounds.x + (bounds.w-w)/2; y = bounds.bottom - h",
-   "source": "render/web/wallpaper_scene.js:176-196",
-   "srcH": 430,
-   "srcW": 2564
-  }
- },
- "stateMachine": {
-  "atlasDir": "kurisu/medium/",
-  "auto": true,
-  "builtBy": "_dev/build_statemachine_manifest.py",
-  "edgeCount": 92,
-  "hiAtlasDir": "kurisu/hi/",
-  "hiClips": [
-   "idle",
-   "idle1",
-   "speaking_short",
-   "speaking_med",
-   "thinking_speaking2",
-   "surprise_speaking"
-  ],
-  "hiTotalBytes": 20568710,
-  "hostTriggeredEntries": [
-   "angry_trans",
-   "closed_eye_trans",
-   "sad_trans",
-   "shy_trans",
-   "speaking_short",
-   "speaking_trans",
-   "surprise_trans",
-   "thinking_trans",
-   "trans_smile"
-  ],
-  "maxWalkBytes": 6291456,
-  "nodeCount": 38,
-  "notShipped": [
-   "37 个剪辑各自的 *.boot.webp / *.poster.webp（源在 web/boot、web/poster，合计 8.2MB）——会顶穿闸门⑨的 80MB 上限，故不发；首帧直接用图集第 1 帧",
-   "speaking_long 的 hi 档（6.12MB / 2 页）——加上它总资产会到 83.7MB > 80MB 上限，故只发 medium；要发请把上限提到 85MB 或先重编码"
-  ],
-  "note": "★ 运行时取状态机只读这一个文件（docs/ 下的原始副本不进产物）。38 个节点全部带 medium 档图集分页几何与真实字节数；medium 档合计 48.15MB（见 _dev/medium-volume-table.md）。clips.* 仍是 4 段主推剪辑的既有契约（hi/boot 两档），状态机里另外 34 段只发 medium 一档。",
-  "source": "docs/amadeus-research/data/statemachine.json",
-  "url": "kurisu/statemachine.json"
- }
 }
