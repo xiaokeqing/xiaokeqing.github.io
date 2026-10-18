@@ -157,7 +157,7 @@ manifest_candidates() { # $1 = 最新 release 目录（空则只探站点级/外
 #   以及这里。排除项也是同一份：./index.json（Hugo 产物，带构建时刻）与 ./manifest.json（清单自身，自指）。
 tree_hash_dir() { # $1 = release 目录
   ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f \
-      ! -path './index.json' ! -path './manifest.json' -print0 \
+      ! -path './index.json' ! -path './manifest.json' ! -path './data/uptime.json' -print0 \
     | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
 }
 

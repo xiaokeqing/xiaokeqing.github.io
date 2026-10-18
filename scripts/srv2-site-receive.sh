@@ -210,7 +210,7 @@ ok "index.html=$INDEX_SZ B；文件数 $(find "$STAGING" -type f | wc -l)"
 #   若把它算进哈希，下一次发布的"待发布树"永远没有它 ⇒ 整树哈希永不相等 ⇒ RESULT=no-change 再次不可达。
 #   它是**元数据**，不是产物；发送侧 scripts/publish-site-to-srv2.ps1 的 $TreeNondet 同步加了它。
 tree_hash() { # $1 = 产物根目录
-  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f ! -path './index.json' ! -path './manifest.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
+  ( cd "$1" 2>/dev/null && LC_ALL=C find . -type f ! -path './index.json' ! -path './manifest.json' ! -path './data/uptime.json' -print0 | LC_ALL=C sort -z | LC_ALL=C xargs -0 sha256sum | sha256sum | cut -d' ' -f1 )
 }
 # 供发送侧核对用：把两个哈希打成机器可读行（纯追加，不影响上面的人类可读日志）
 emit_hashes() { # $1 = 线上树哈希  $2 = 待发布树哈希
@@ -236,8 +236,8 @@ emit_hashes() { # $1 = 线上树哈希  $2 = 待发布树哈希
 write_manifest() { # $1 = 产物根目录；成功后回填 MANIFEST_SHA / MANIFEST_COUNT
   local d=$1 tmp count bytes hash isha now
   tmp="$d/.manifest.json.tmp"
-  count=$( cd "$d" && LC_ALL=C find . -type f ! -path './manifest.json' | wc -l | tr -d '[:space:]' )
-  bytes=$( cd "$d" && LC_ALL=C find . -type f ! -path './manifest.json' -printf '%s\n' | awk '{s+=$1} END{printf "%d", s+0}' )
+  count=$( cd "$d" && LC_ALL=C find . -type f ! -path './manifest.json' ! -path './data/uptime.json' | wc -l | tr -d '[:space:]' )
+  bytes=$( cd "$d" && LC_ALL=C find . -type f ! -path './manifest.json' ! -path './data/uptime.json' -printf '%s\n' | awk '{s+=$1} END{printf "%d", s+0}' )
   hash=$(tree_hash "$d")
   [[ -n $hash ]] || { warn "整树哈希算不出来（tree_hash 返回空）"; return 1; }
   isha=$(sha256sum "$d/index.html" | cut -d' ' -f1)
@@ -249,7 +249,7 @@ write_manifest() { # $1 = 产物根目录；成功后回填 MANIFEST_SHA / MANIF
     printf '  "sha256": "%s",\n' "$hash"
     printf '  "indexSha256": "%s",\n' "$isha"
     printf '  "generatedAt": "%s",\n' "$now"
-    printf '  "hashExcludes": ["./index.json", "./manifest.json"]\n'
+    printf '  "hashExcludes": ["./index.json", "./manifest.json", "./data/uptime.json"]\n'
     printf '}\n'
   } > "$tmp"
   chown root:root "$tmp" 2>/dev/null || true
