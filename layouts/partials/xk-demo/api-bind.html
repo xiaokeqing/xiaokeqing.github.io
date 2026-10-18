@@ -1869,7 +1869,16 @@
   function deferAudit() {
     if (partCache[apiPath('audit')]) return;
     setTimeout(function () {
-      if (!partCache[apiPath('audit')] && Date.now() >= rateHoldUntil) runJobs(['audit']);
+      if (partCache[apiPath('audit')] || Date.now() < rateHoldUntil) return;
+      /* ★H7：home 聚合还没结算时**别单独发** —— 它多半就带 audit 回来（后端 642244a 起五块），
+         此时再拉一次 /audit 等于在最慢的链路上白等一个请求（实测 8s+）。等它结算，缺了再补。 */
+      if (homePending) {
+        var wait = homePending;
+        wait.then(function () { if (!partCache[apiPath('audit')]) runJobs(['audit']); },
+          function () { if (!partCache[apiPath('audit')]) runJobs(['audit']); });
+        return;
+      }
+      runJobs(['audit']);
     }, 1200);
   }
   function load() {
