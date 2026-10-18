@@ -321,6 +321,7 @@ new_page_gate what 介绍页
 new_page_gate lab 靶场说明页
 new_page_gate api 公开端点清单页
 new_page_gate status 状态页
+new_page_gate redteam 红队评测页
 
 # ---------- 汇总 ----------
 head1 "汇总"
