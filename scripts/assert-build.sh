@@ -359,6 +359,9 @@ new_page_gate tools/cve CVE每日速递页
 #   （后端名 /api/public/password 的最后一段），不是目录名，所以两种写法都在 pat 里认。
 new_page_gate tools 工具台
 new_page_gate tools/password 密码自查页
+# ★2026-10-18：告警噪音指数页（/noise/）。纯静态快照：数字全来自 /data/noise-index.json，
+#   页面只做一次同域 fetch，不调接口；data-xk-ssr 用路由名 noise（与 section 同名）。
+new_page_gate noise 噪音指数页
 # ★2026-10-18：真实恶意样本分析页（/samples/）。判据同上；data-xk-ssr 用路由名 samples
 #   （手写静态页，正文全在 content/samples/_index.md，抓不到样本就写「未留存」，不补哈希）。
 new_page_gate samples 样本分析页
@@ -427,10 +430,29 @@ done
 #   想跑：python -X utf8 scripts/layout-audit.py --widths 390,768,1280
 head1 "⑮ 排版审计（可选：docs/layout-audit.json）"
 if [ -f "docs/layout-audit.json" ]; then
-  if python -X utf8 "scripts/layout-audit.py" --json - --check-only >/dev/null 2>&1; then
-    ok "排版审计 · 通过（docs/layout-audit.json 无 FAIL）"
+  # XK_P0_ONLY：只有 P0 四项（c1 横向溢出 / c2 元素重叠 / c3 文字被裁 / c4 表格窄屏）阻断发布；
+  # c5-c9（卡片一致性、字号、点击区、降级文案、对比度）是判断项，进报告不卡发布。
+  P0OUT=$(python -X utf8 - <<'PY' 2>/dev/null
+import json
+d = json.load(open('docs/layout-audit.json', encoding='utf-8'))
+bad = []
+for pg in d.get('pages') or []:
+    for w in pg.get('widths') or []:
+        for ch in (w.get('checks') or []):
+            st = (ch.get('status') or '').upper()
+            key = str(ch.get('key') or '')
+            if st == 'FAIL' and key in ('c1', 'c2', 'c3', 'c4'):
+                bad.append('%s@%s %s x%s' % (pg.get('path'), w.get('width'), key, ch.get('count')))
+print(len(bad))
+for b in bad[:5]:
+    print(b)
+PY
+)
+  P0N=$(printf '%s' "$P0OUT" | head -1)
+  if [ "${P0N:-0}" = "0" ]; then
+    ok "排版审计 · P0 通过（c1/c2/c3/c4 无 FAIL；c5-c9 见 docs/排版检查-20261018.md）"
   else
-    no "排版审计 · 有 FAIL：跑 python -X utf8 scripts/layout-audit.py 看 docs/排版检查-20261018.md"
+    no "排版审计 · P0 有 $P0N 项：$(printf '%s' "$P0OUT" | tail -n +2 | tr '\n' ';')"
   fi
 else
   printf '  \033[1;33m[SKIP]\033[0m 排版审计（docs/layout-audit.json 不存在，未跑过 layout-audit.py）\n'
@@ -438,7 +460,7 @@ fi
 
 # ---------- ⑯ 攻击来源地图 · 24h 回放数据（2026-10-18 新增）----------
 # 数据源：scripts/geo/hourly.py（小时 × 国家），页面上的「▶ 回放 24h」播放条读它。
-# 失败模式和 ⑯ 红队那条一样是"安静地错"：static/data/ 下的文件只被复制、不被模板引用，
+# 失败模式和 ⑰ 红队那条一样是"安静地错"：static/data/ 下的文件只被复制、不被模板引用，
 # 漏生成 / 漏拷都不报错，构建日志一片绿，而页面永远停在「读不到（原因）—— 不回放」。
 # 所以两条都钉：
 #   · static/data/geo-hourly.json 存在 + 合法 JSON + 含 available(布尔) / series(数组)
@@ -490,6 +512,52 @@ if [ -s "$PUB/data/geo-hourly.json" ]; then
   ok "产物 data/geo-hourly.json 在位（static/data → public/data 复制没漏）"
 else
   no "产物缺 data/geo-hourly.json（回放条会 404 → 显示「读不到（下载失败：HTTP 404）」）"
+fi
+# ---------- ⑰ 红队挑战赛样本（2026-10-18 新增）----------
+# 三件事各一条，失败模式都是"安静地错"，所以必须钉在发布前：
+#   · 榜单 JSON 没进产物 —— static/data/ 下的文件只被复制、不被模板引用，漏拷不报错，
+#     页面会安静地显示「读不到」（那是 /redteam/ 第 ⑩ 块如实报的状态，但不是我们要的状态）；
+#   · 页面没引它         —— 前端 fetch 的 URL 写错时同样安静，所以把 URL 字面量钉进断言；
+#   · 载荷原文被渲染     —— content/redteam/submissions/*.md 的正文就是攻击载荷原文，
+#     一旦 Hugo 把它们当普通页面输出（page bundle / cascade 失效 / 以后有人删了 _index.md），
+#     等于把载荷连作者一起挂上公网。这条是安全边界，必须硬拦 —— 保证它不产物化的机制是
+#     content/redteam/submissions/_index.md 的 `build: {render: never, list: never}` + sidecar cascade。
+# 判据口径与 ⑭ 一致：只查产物，不查源码（源码对了但没构建出来，等于没对）。
+head1 "⑰ 红队挑战赛样本（榜单 JSON 在位 + 页面引用 + 载荷原文不产物化）"
+BOARD_JSON="$PUB/data/redteam-submissions.json"
+# ★解释器探测：这个脚本在 Windows 上跑的是 WSL bash（GNU coreutils），那边的 python
+#   叫 python3 而不是 python（⑮ 那条 `python -c` 在 WSL 下其实一直没跑起来，靠 2>/dev/null
+#   静默成了"空输出 → 记 0 → PASS"，属于既有隐患，不在本次范围）。这里两条都试，
+#   真没有才退回"结构检查"——不把"解释器缺失"伪装成"JSON 坏了"。
+JSON_PY=""
+if command -v python3 >/dev/null 2>&1; then JSON_PY=python3
+elif command -v python >/dev/null 2>&1; then JSON_PY=python
+fi
+if [ -s "$BOARD_JSON" ]; then
+  if [ -n "$JSON_PY" ]; then
+    JSONN=$("$JSON_PY" -c "import json,sys;d=json.load(open(sys.argv[1],encoding='utf-8'));print(len(d.get('items') or []))" "$BOARD_JSON" 2>/dev/null)
+    if [ -n "$JSONN" ]; then
+      ok "data/redteam-submissions.json 在位且可解析（items $JSONN 条）"
+    else
+      no "data/redteam-submissions.json 不是合法 JSON（榜单页会如实报「读不到」，但发布前就该是好的）"
+    fi
+  elif grep -q '"items"' "$BOARD_JSON" && grep -q '"counts"' "$BOARD_JSON"; then
+    ok "data/redteam-submissions.json 在位（无 python 解释器，只做了 items/counts 结构检查）"
+  else
+    no "data/redteam-submissions.json 结构不对（缺 items 或 counts，且没有 python 解释器可深查）"
+  fi
+else
+  no "data/redteam-submissions.json 不存在（scripts/redteam/score-submissions.py --write 没跑过，或 static/data 漏拷）"
+fi
+if [ -s "$PUB/redteam/index.html" ] && grep -q "data/redteam-submissions.json" "$PUB/redteam/index.html"; then
+  ok "redteam/index.html 引用了 /data/redteam-submissions.json（⑩ 公开样本榜的取数地址在位）"
+else
+  no "redteam/index.html 没引用 data/redteam-submissions.json（⑩ 公开样本榜会永远显示读不到）"
+fi
+if [ -e "$PUB/redteam/submissions" ]; then
+  no "public/redteam/submissions/ 被构建出来了 —— 样本正文（攻击载荷原文）正在上公网，查 _index.md 的 build/cascade"
+else
+  ok "public/redteam/submissions/ 不存在（样本正文未被渲染成页面）"
 fi
 
 # ---------- 汇总 ----------

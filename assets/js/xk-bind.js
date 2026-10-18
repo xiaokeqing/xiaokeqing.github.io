@@ -804,6 +804,7 @@
   }
   function mapKick() {                    /* 只在"看得见"时被动取底图（首屏不做无谓请求） */
     if (!mapVisible()) return;
+    mapReplayInit();                      /* ★REPLAY：播放条建在这里；小时数据在这里只取一次 */
     if (mapWorld) { mapUpdate(); return; }
     mapLoad().then(function () { mapUpdate(); });
   }
@@ -833,7 +834,11 @@
     if (mapWorld.micro && mapWorld.micro[cc]) return mapWorld.micro[cc];   /* 51 个微型国家兜底 */
     return null;
   }
-  function mapVal(c) { return mapMetric === 'ip' ? (Number(c.uniqueIps) || 0) : (Number(c.count) || 0); }
+  function mapVal(c) {
+    /* ★REPLAY：小时分布只有告警次数（没有逐小时独立 IP）⇒ 回放时度量固定为次数，不拿 0 冒充 */
+    if (c && c.hourly) return Number(c.count) || 0;
+    return mapMetric === 'ip' ? (Number(c.uniqueIps) || 0) : (Number(c.count) || 0);
+  }
   function mapName(c) { var nm = c.countryName || ''; return (!nm || nm === c.country) ? '' : nm; }
 
   /* ---- 配色：读运行期 CSS 令牌（--acc → --warn → --bad），不在 canvas 里写死色号 ---------- */
@@ -929,6 +934,16 @@
     if (!withData) { mapSrc(); return; }
 
     var bc = (mapGeo && Array.isArray(mapGeo.byCountry)) ? mapGeo.byCountry : [];
+    /* ★REPLAY：回放态用「该小时」的国家分布（形状同 byCountry：country/count），静态态一行不动 */
+    if (mapHour >= 0 && mapHourly && Array.isArray(mapHourly.series) && mapHourly.series[mapHour]) {
+      var hs = mapHourly.series[mapHour], hb = hs.byCountry || {}, hk;
+      bc = [];
+      for (hk in hb) {
+        if (!Object.prototype.hasOwnProperty.call(hb, hk)) continue;
+        var hn = Number(hb[hk]);
+        if (hn > 0) bc.push({ country: hk, count: hn, uniqueIps: null, hourly: true, hour: hs.hour, hourTotal: hs.total });
+      }
+    }
     var pts = [], V = 0, c, v, at, j;
     for (j = 0; j < bc.length; j++) {
       c = bc[j] || {};
@@ -994,6 +1009,7 @@
       ctx.beginPath(); ctx.arc(P.X, P.Y, Math.max(1.1, r * .22), 0, 6.2832); ctx.fill();
     }
     mapMarks = pts;
+    if (window.__xkReplay) { window.__xkReplay.marks = pts.length; window.__xkReplay.hour = mapHour; }
 
     /* 国家代码标签：只给大泡，撞了就让位，四个候选位都放不下就不画（宁缺不糊） */
     ctx.font = '600 11px ui-monospace,Consolas,monospace';
@@ -1047,6 +1063,21 @@
   function mapSrc() {
     var el = mapNode('[data-xk-atkmap-src]');
     if (!el) return;
+    /* ★REPLAY：回放态脚注换成「这一小时」的实况，静态态完全保持原样 */
+    if (mapHour >= 0 && mapHourly && Array.isArray(mapHourly.series) && mapHourly.series[mapHour]) {
+      var hr = mapHourly.series[mapHour];
+      var hh = String(hr.hour || '').replace('T', ' ').slice(5, 16);
+      var bits2 = [
+        '回放 ' + (hh || '时间读不到') + ' · 该小时 ' + (fmt(hr.total) || '读不到') + ' 次',
+        '小时×国家：/data/geo-hourly.json' + (mapHourly.source ? '（' + mapHourly.source + '）' : ''),
+        '回放度量固定「告警次数」（小时数据不含独立 IP）',
+        '画了 ' + mapMarks.length + ' 个气泡'
+      ];
+      if (mapMerged) bits2.push(mapMerged + ' 处近邻已合并（数字是合计）');
+      if (mapSkipped) bits2.push(mapSkipped + ' 国缺质心坐标未画');
+      el.textContent = bits2.join(' · ');
+      return;
+    }
     if (!mapGeo) {
       el.textContent = '读不到（/geo ' + (mapGeoRaw ? ('本轮未取到' + (mapGeoErr ? ' · ' + mapGeoErr : '')) : '还没到') + '）';
       return;
@@ -1074,6 +1105,18 @@
       h += '<div class="prov">' + P.items.map(function (x) { return esc(String(x.country || '')); }).join(' · ') + '</div>';
     } else {
       c = P.items[0];
+      /* ★REPLAY：小时分布没有独立 IP / 省份，别写「0」冒充 —— 只写该小时告警数 */
+      if (c.hourly) {
+        var ht = String(c.hour || '').replace('T', ' ').slice(5, 16);
+        h += '<div class="cc">' + esc(P.cc || '') + ' · 小时分布</div>';
+        h += '<div class="r"><span>该小时告警</span><b>' + esc(fmt(c.count) || '0') + '</b></div>';
+        if (c.hourTotal !== null && c.hourTotal !== undefined) {
+          h += '<div class="r"><span>该小时合计</span><b>' + esc(fmt(c.hourTotal) || '读不到') + '</b></div>';
+        }
+        h += '<div class="prov">回放 ' + esc(ht || '时间读不到') + '</div>';
+        h += '<div class="prov">落点是该国质心，不是攻击者真实坐标</div>';
+        return h;
+      }
       cnt = Number(c.count) || 0; ips = Number(c.uniqueIps) || 0;
       h += '<div class="cc">' + esc(P.cc || '') + ' · ' + esc(P.nm || '名称读不到') + '</div>';
       h += '<div class="r"><span>告警次数</span><b>' + esc(fmt(c.count) || '0') + '</b></div>';
@@ -1152,6 +1195,226 @@
     if (!bc.length) { mapMsg('本窗口没有可定位的来源'); mapPaintRetry(false); return; }
     mapMsg('');
     mapPaintRetry(true);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     ★REPLAY（2026-10-18）：攻击来源地图 · 24h 逐小时回放
+     · 数据：`/data/geo-hourly.json`（scripts/geo/hourly.py 产出：小时 × 国家）
+       **只加载一次**；播放/拖滑块只在内存里换小时，不再发任何请求。
+     · 诚实口径：`available:false` / 没有 byCountry ⇒ 播放条禁用，写「读不到（原因）—— 不回放」；
+       **绝不**拿 24h 国家合计按比例拆到小时（那是编造分布）。
+     · 样式：运行时注入一条 <style data-xk-replay>。理由：外壳 CSS（assets/css/xk.css）与
+       shell-views.html 都由 _dev/gen-demo-pages.py 从 docs/demo-内容页外壳.html 生成，
+       本轮只允许改前端脚本 ⇒ 不去动生成物，避免下次 regen 被抹掉 / 混进别人的未提交改动。
+     ════════════════════════════════════════════════════════════════════════════ */
+  var HOURLY_URL = '/data/geo-hourly.json';
+  var mapHourly = null, mapHourlyReq = null, mapHourlyErr = '';
+  var mapHour = -1;                                  /* -1 = 静态视图（现在的 4 气泡）；>=0 = 回放小时 */
+  var mapPlayT = null, mapPlayOn = false, mapReplayBound = false;
+  var REPLAY_CSS = [
+    '.xk-atkmap-replay{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 8px}',
+    '.xk-atkmap-replay button{min-height:34px;min-width:34px;padding:5px 10px;font:12px/1.4 var(--mono);',
+    '  color:var(--mut);background:rgba(255,246,235,.05);border:1px solid var(--line);border-radius:6px;cursor:pointer}',
+    '.xk-atkmap-replay button:hover:not([disabled]){color:var(--txt);border-color:var(--line2)}',
+    '.xk-atkmap-replay button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}',
+    '.xk-atkmap-replay button.on{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.10)}',
+    '.xk-atkmap-replay button[disabled]{opacity:.45;cursor:not-allowed}',
+    '.xk-atkmap-replay .hour{flex:1 1 auto;min-width:0;font:12px/1.6 var(--mono);color:var(--mut);',
+    '  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}',
+    '.xk-atkmap-replay .hour b{color:var(--txt);font-weight:600}',
+    '.xk-atkmap-replay input[type=range]{flex:1 1 140px;min-width:96px;max-width:100%;height:34px;',
+    '  accent-color:var(--acc);background:transparent}',
+    '@media (max-width:980px){',
+    '  .xk-atkmap-replay{gap:6px}',
+    '  .xk-atkmap-replay button{min-height:40px;min-width:40px;padding:7px 12px}',
+    '  .xk-atkmap-replay input[type=range]{flex:1 1 100%;order:2;height:40px;min-width:0}',
+    '  .xk-atkmap-replay .hour{flex:1 1 100%;order:3;font-size:11.5px}',
+    '}'
+  ].join('\n');
+
+  function mapReplayCss() {
+    if (document.querySelector('style[data-xk-replay]')) return;
+    var st = document.createElement('style');
+    st.setAttribute('data-xk-replay', '');
+    st.textContent = REPLAY_CSS;
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function mapReplayEl(sel) {
+    var box = mapNode('[data-xk-replay]');
+    return box ? box.querySelector(sel) : null;
+  }
+  function mapHourlyReady() {
+    return !!(mapHourly && mapHourly.available !== false &&
+              Array.isArray(mapHourly.series) && mapHourly.series.length);
+  }
+  function mapHourlyWhy() {
+    if (mapHourlyErr) return '下载失败：' + mapHourlyErr;
+    if (!mapHourly) return '/data/geo-hourly.json 还没到';
+    if (mapHourly.available === false) return String(mapHourly.reason || 'available=false');
+    if (!Array.isArray(mapHourly.series) || !mapHourly.series.length) return 'series 为空';
+    return '没有可用的小时桶';
+  }
+  function mapHourText(s) {
+    var t = String((s && s.hour) || '').replace('T', ' ').slice(5, 16);
+    var tot = s ? fmt(s.total) : null;
+    return (t || '时间读不到') + ' · 该小时 ' + (tot || '读不到') + ' 次';
+  }
+
+  /* ---- 播放条（一进地图卡就建；数据只在这里取一次） ------------------------------------- */
+  function mapReplayInit() {
+    if (mapReplayBound) return;
+    var root = mapRoot();
+    if (!root) return;
+    var bar = root.querySelector('.xk-atkmap-bar');
+    if (!bar) return;
+    mapReplayBound = true;
+    mapReplayCss();
+    var box = document.createElement('div');
+    box.className = 'xk-atkmap-replay';
+    box.setAttribute('data-xk-replay', '');
+    box.setAttribute('role', 'group');
+    box.setAttribute('aria-label', '24 小时回放');
+    box.innerHTML =
+      '<button type="button" data-xk-replay-play disabled aria-label="回放 24 小时">▶ 回放 24h</button>' +
+      '<input type="range" min="0" max="23" step="1" value="0" data-xk-replay-seek aria-label="回放小时" disabled>' +
+      '<span class="hour" data-xk-replay-hour>静态 · 24h 汇总</span>' +
+      '<button type="button" data-xk-replay-pause disabled aria-label="暂停回放">⏸ 暂停</button>';
+    bar.parentNode.insertBefore(box, bar.nextSibling);
+
+    var play = box.querySelector('[data-xk-replay-play]');
+    var pause = box.querySelector('[data-xk-replay-pause]');
+    var seek = box.querySelector('[data-xk-replay-seek]');
+    if (play) play.addEventListener('click', function () { if (mapPlayOn) mapReplayPause(); else mapReplayPlay(); });
+    if (pause) pause.addEventListener('click', mapReplayPause);
+    if (seek) seek.addEventListener('input', function () {
+      if (mapPlayOn) mapReplayPause();
+      mapReplaySetHour(Number(seek.value) || 0);
+    });
+    mapReplaySync();
+    mapHourlyLoad();
+  }
+
+  function mapHourlyLoad() {
+    if (mapHourly || mapHourlyReq) { mapReplaySync(); return; }
+    mapHourlyReq = fetch(HOURLY_URL, { credentials: 'omit' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      mapHourly = (j && typeof j === 'object') ? j : null;
+      mapHourlyErr = ''; mapHourlyReq = null;
+      mapReplaySync();
+    })['catch'](function (e) {
+      mapHourly = null; mapHourlyErr = (e && e.message) || '不可达'; mapHourlyReq = null;
+      mapReplaySync();
+    });
+  }
+
+  /* ---- 禁用态 / 可用态：文字与按钮状态都在这一个地方落地 ------------------------------- */
+  function mapReplaySync() {
+    var play = mapReplayEl('[data-xk-replay-play]');
+    var pause = mapReplayEl('[data-xk-replay-pause]');
+    var seek = mapReplayEl('[data-xk-replay-seek]');
+    var lab = mapReplayEl('[data-xk-replay-hour]');
+    if (!play || !lab) return;
+    if (!mapHourlyReady()) {
+      if (mapPlayT) { clearInterval(mapPlayT); mapPlayT = null; }
+      mapPlayOn = false; mapHour = -1;
+      play.disabled = true; play.classList.remove('on'); play.innerHTML = '▶ 回放 24h';
+      if (pause) { pause.disabled = true; }
+      if (seek) { seek.disabled = true; seek.value = '0'; seek.max = '23'; }
+      var why = mapHourlyWhy();
+      var brief = why.length > 110 ? why.slice(0, 110) + '…' : why;
+      lab.textContent = '读不到（' + brief + '）—— 不回放';
+      lab.setAttribute('title', why);
+      window.__xkReplay = { available: false, reason: why, hours: 0, hour: -1, playing: false, marks: 0 };
+      return;
+    }
+    var n = mapHourly.series.length;
+    play.disabled = false;
+    if (pause) pause.disabled = !mapPlayOn;
+    if (seek) { seek.disabled = false; seek.max = String(Math.max(0, n - 1)); }
+    if (mapHour < 0) {
+      lab.textContent = '静态 · 24h 汇总';
+      lab.removeAttribute('title');
+      if (seek) seek.value = '0';
+    }
+    window.__xkReplay = { available: true, hours: n, hour: mapHour, playing: mapPlayOn, marks: mapMarks.length };
+  }
+
+  function mapReplayPaint() {
+    if (!mapHourlyReady()) return;
+    if (mapHour < 0) { mapUpdate(); return; }
+    var s = mapHourly.series[mapHour];
+    var bc = (s && s.byCountry) || {};
+    var k, n = 0;
+    for (k in bc) { if (Object.prototype.hasOwnProperty.call(bc, k) && Number(bc[k]) > 0) n++; }
+    if (!n) {
+      mapMsg('该小时没有可定位的国家分布（byCountry 为空）');
+      mapMarks = [];
+      mapPaintRetry(false);
+      mapSrc();
+      if (window.__xkReplay) window.__xkReplay.marks = 0;
+      return;
+    }
+    mapMsg('');
+    mapPaintRetry(true);
+  }
+
+  function mapReplaySetHour(h) {
+    if (!mapHourlyReady()) return;
+    var n = mapHourly.series.length;
+    h = Math.max(0, Math.min(n - 1, Math.round(Number(h) || 0)));
+    mapHour = h;
+    var lab = mapReplayEl('[data-xk-replay-hour]');
+    var seek = mapReplayEl('[data-xk-replay-seek]');
+    if (lab) lab.textContent = mapHourText(mapHourly.series[h]);
+    if (seek) seek.value = String(h);
+    mapReplayPaint();
+  }
+
+  function mapReplayStop(toStatic) {
+    if (mapPlayT) { clearInterval(mapPlayT); mapPlayT = null; }
+    mapPlayOn = false;
+    var play = mapReplayEl('[data-xk-replay-play]');
+    var pause = mapReplayEl('[data-xk-replay-pause]');
+    if (play) { play.classList.remove('on'); play.innerHTML = '▶ 回放 24h'; }
+    if (pause) pause.disabled = true;
+    if (!toStatic) return;
+    mapHour = -1;
+    var lab = mapReplayEl('[data-xk-replay-hour]');
+    var seek = mapReplayEl('[data-xk-replay-seek]');
+    if (lab) { lab.textContent = '静态 · 24h 汇总'; lab.removeAttribute('title'); }
+    if (seek) seek.value = '0';
+    if (window.__xkReplay) window.__xkReplay = { available: true, hours: mapHourly.series.length, hour: -1, playing: false, marks: 0 };
+    mapUpdate();                                  /* 回放结束：自动回到静态视图（现在的 4 气泡） */
+  }
+
+  function mapReplayPlay() {
+    if (!mapHourlyReady()) return;
+    if (mapPlayT) { clearInterval(mapPlayT); mapPlayT = null; }
+    mapPlayOn = true;
+    var play = mapReplayEl('[data-xk-replay-play]');
+    var pause = mapReplayEl('[data-xk-replay-pause]');
+    if (play) { play.classList.add('on'); play.innerHTML = '▶ 回放中'; }
+    if (pause) pause.disabled = false;
+    if (window.__xkReplay) window.__xkReplay.playing = true;
+    var n = mapHourly.series.length;
+    mapReplaySetHour(mapHour >= 0 && mapHour < n - 1 ? mapHour : 0);
+    mapPlayT = setInterval(function () {
+      if (!mapPlayOn) return;
+      if (mapHour >= n - 1) { mapReplayStop(true); return; }
+      mapReplaySetHour(mapHour + 1);
+    }, 700);
+  }
+
+  function mapReplayPause() {
+    if (!mapPlayOn) return;
+    mapReplayStop(false);
+    var lab = mapReplayEl('[data-xk-replay-hour]');
+    if (lab && mapHour >= 0 && mapHourly && mapHourly.series[mapHour]) {
+      lab.textContent = '⏸ 已暂停 · ' + mapHourText(mapHourly.series[mapHour]);
+    }
+    if (window.__xkReplay) window.__xkReplay.playing = false;
   }
 
   /* ---- 一次性挂载：按钮 / 懒加载 / 提示 / 重绘 ------------------------------------------- */

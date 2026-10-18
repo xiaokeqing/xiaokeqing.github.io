@@ -1,0 +1,130 @@
+{
+ "generatedAt": "2026-10-17 22:46:14",
+ "hours": 24,
+ "source": "_dev/api-samples/geo-live.json@24h",
+ "available": false,
+ "reason": "公开接口只给 24h 国家合计 + 小时总量（docs/design-geo-endpoint.md），没有「小时 × 国家」交叉；按口径不拿合计摊到小时（会变成编造分布），因此不回放 —— 需要后端按小时输出 byCountry，或提供带国家字段的逐条告警。",
+ "series": [
+  {
+   "hour": "2026-10-16T22:00",
+   "total": 547,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-16T23:00",
+   "total": 2424,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T00:00",
+   "total": 2451,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T01:00",
+   "total": 2587,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T02:00",
+   "total": 2657,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T03:00",
+   "total": 2638,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T04:00",
+   "total": 2681,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T05:00",
+   "total": 2945,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T06:00",
+   "total": 3748,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T07:00",
+   "total": 4031,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T08:00",
+   "total": 3623,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T09:00",
+   "total": 2972,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T10:00",
+   "total": 3248,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T11:00",
+   "total": 3393,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T12:00",
+   "total": 3422,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T13:00",
+   "total": 3381,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T14:00",
+   "total": 3422,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T15:00",
+   "total": 3223,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T16:00",
+   "total": 3112,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T17:00",
+   "total": 3077,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T18:00",
+   "total": 3845,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T19:00",
+   "total": 3499,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T20:00",
+   "total": 3379,
+   "byCountry": {}
+  },
+  {
+   "hour": "2026-10-17T21:00",
+   "total": 3209,
+   "byCountry": {}
+  }
+ ],
+ "notes": "series 里的 total 是真实小时总量（照实保留，byCountry 留空，表示「该小时国家分布读不到」）。 末尾 2026-10-17T22:00 桶是当前小时（窗口未走完），未计入 24 桶。"
+}
