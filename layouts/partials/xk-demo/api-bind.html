@@ -118,7 +118,40 @@
     } catch (e) { return null; }
   }
   function saveGood(path, d) {
-    try { sessionStorage.setItem(LG_PREFIX + path, JSON.stringify({ at: Date.now(), d: d })); } catch (e) { }
+    var rec = JSON.stringify({ at: Date.now(), d: d });
+    try { sessionStorage.setItem(LG_PREFIX + path, rec); } catch (e) { }
+    /* ★L1（2026-10-18）：同一个 payload 再写一份 localStorage。
+       为什么要两份：sessionStorage 只管同一个 tab 的一次会话（刷新也算新会话），
+       而"第二次打开网站"才是站主说的"面试官点进来那一下"——那时 sessionStorage 是空的，
+       首屏只能等网络（实测 0.9~8 秒）。localStorage 让第二次打开**立刻**有数字可看。 */
+    try { localStorage.setItem(LG_PREFIX + path, rec); } catch (e) { }
+  }
+  /* ★L1：把 localStorage 里上次成功的数据预装成"stale part"（喂给已有的三态/卡角机制，不新增口径）。
+     超过 30 分钟的直接丢弃（太久的数据宁可不显示，也不拿它冒充"最近"）。
+     预装后 pend() 对这些端点返回 false ⇒ 卡片直接画上次的值 + 卡角「上次数据·hh:mm」，
+     等 home 聚合到了再整屏覆盖（render 用的是同一套 unionParts，不新增渲染路径）。 */
+  function loadGoodLs(path) {
+    try {
+      var raw = localStorage.getItem(LG_PREFIX + path);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (!o || !o.at || !o.d) return null;
+      if (Date.now() - o.at > 30 * 60 * 1000) return null;
+      return o;
+    } catch (e) { return null; }
+  }
+  function preloadGoodLs(names) {
+    var n = 0;
+    (names || []).forEach(function (name) {
+      var pth = apiPath(name);
+      if (partCache[pth]) return;
+      var o = loadGoodLs(pth);
+      if (!o) return;
+      partCache[pth] = { path: pth, ok: false, d: null, err: null, stale: true, staleAt: o.at,
+        staleD: o.d, fresh: null, rate: null, viaOld: false, fromLs: true };
+      n++;
+    });
+    return n;
   }
   /* 只读：本次值优先 → 上次值兜底（并记账）→ 都没有就 null（调用方照旧写"读不到"） */
   function okOrStale(p) {
@@ -1712,6 +1745,8 @@
        在"每请求几十秒"的链路上这是纯浪费。证据：`_dev/probe-slownet.mjs` 的 home-* 场景（请求数 0 + 两档视口整屏截图 +
        确定性可见真值子集：计数器／CRT 状态行／HOLO 文案／导航项／布局盒，与改前基线逐项一致）。 */
   var BASE_JOBS = SSR === 'monitor' ? ['home'] : [];   /* ★P9：首屏 3 请求 → 1（home 聚合；失败由 load() 回落三个单独端点） */
+  /* ★L1：监测中心首页打开时先预装哪些端点（顺序无关；只影响"第一帧有没有数字可看"） */
+  var PRELOAD_LS = SSR === 'monitor' ? ['alerts', 'geo', 'honeypot', 'audit'] : [];
   var PANE_EXTRA = { live: [], graph: ['audit'], matrix: [], stats: ['audit', 'webstats', 'overview', 'stories', 'deploy'] };
   function activePane() {
     var t = document.querySelector('.ops-tab.on[data-pane]');
@@ -1791,6 +1826,11 @@
   function settleHome() {
     return get(apiPath('home')).then(function (r) {
       var env = (r && r.d) || {}, names = ['alerts', 'geo', 'honeypot'], parts = [];
+      /* ★H5（2026-10-18）：后端已把 audit 并进聚合（home.data.audit 与 /audit 的 data 逐字段相同），
+         英雄数字里的「累计封禁 / 护栏拦截」不再需要单独一次请求。
+         audit 是**可选块**：前端与后端不同版时（老后端没有它）**不许**因此判整体失败——
+         否则一次版本错位就让首屏从 1 个请求退化成 4 个，比没有 audit 更糟。缺了就交给 deferAudit() 补一次。 */
+      if (env.audit !== undefined && env.audit !== null) names.push('audit');
       for (var i = 0; i < names.length; i++) {
         var n = names[i], d = env[n];
         if (d === undefined || d === null) { return { ok: false, err: { message: '聚合缺字段 ' + n }, status: 0 }; }
@@ -1850,9 +1890,9 @@
       return settleHome().then(function (res) {
         if (res.ok) {
           res.parts.forEach(function (p) { partCache[p.path] = p; });
-          ['home', 'alerts', 'geo', 'honeypot'].forEach(function (n) { delete pendingJobs[n]; });
+          ['home', 'alerts', 'geo', 'honeypot', 'audit'].forEach(function (n) { delete pendingJobs[n]; });
           render(unionParts([]));
-          deferAudit();
+          if (!partCache[apiPath('audit')]) deferAudit();   /* ★H5：聚合里带了就不再补拉 */
           var retry = res.parts.filter(degraded);
           if (retry.length) scheduleRetry(retry);
           return res.parts;
@@ -2092,6 +2132,9 @@
     show('chat');
   }
   if (BASE_JOBS.length) {
+    /* ★L1：先画上次的数据（标「上次数据·hh:mm」），再发请求；请求回来整屏覆盖。
+       顺序不能反：pend() 在 partCache 有值时返回 false，所以先预装就不会把卡片锁在"取数中…"。 */
+    if (PRELOAD_LS.length) { if (preloadGoodLs(PRELOAD_LS)) { render(unionParts([])); } }
     load();
     setInterval(load, REFRESH);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });

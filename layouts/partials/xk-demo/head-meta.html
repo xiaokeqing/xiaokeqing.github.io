@@ -14,6 +14,16 @@
 <meta name="color-scheme" content="dark">
 {{ hugo.Generator }}
 <meta name="wb-api" content="{{ site.Params.wbApiBase | default "https://demo.xiaokeqing.cn" }}">
+{{- /* ★P（2026-10-18）：只给"真的会打 demo API"的页面做 preconnect —— 首页/监测中心/状态页/接口页。
+       其余页面（文章、靶场、介绍）一次都不会连 demo.xiaokeqing.cn，给它们 preconnect 只是白付一次 TLS 握手。
+       crossorigin 必须写：API 请求是 CORS 模式，不带它的 preconnect 会另开一条"非 CORS"连接，等于没做。
+       ⚠ 这一份 HEAD_META 是 layouts/partials/xk-demo/head-meta.html 的**源头**：
+       直接改那个 partial 会在下次跑 gen-demo-pages.py 时被覆盖（2026-10-18 踩过）。 */ -}}
+{{- $apiBase := site.Params.wbApiBase | default "https://demo.xiaokeqing.cn" -}}
+{{- if or .IsHome (in (slice "alerts" "status" "api") .Type) }}
+<link rel="preconnect" href="{{ $apiBase }}" crossorigin>
+<link rel="dns-prefetch" href="{{ $apiBase }}">
+{{- end }}
 <link rel="icon" type="image/png" sizes="128x128" href="/favicon-128.png">
 <link rel="apple-touch-icon" sizes="256x256" href="/favicon-256.png">
 <link rel="canonical" href="{{ .Permalink }}">
