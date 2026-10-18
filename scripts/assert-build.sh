@@ -121,7 +121,7 @@ head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 #   · /api/public/deploy.js = 部署可追溯（当前 available:false + RELEASE_INFO_NOT_CONFIGURED —— 后端待配 release-info 文件）
 #   · /api/public/eval.js   = AI 质量报告（当前 available:false + EVAL_REPORT_NOT_CONFIGURED —— 后端待配评测报告文件路径）
 #   ★三者都遵守"取不到不编数"：available:false + reason，页面据此如实写"读不到"。
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval"
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
@@ -233,9 +233,22 @@ if [ -f static/js/kurisu-player.js ]; then
 else no "找不到 static/js/kurisu-player.js"; fi
 # ---------- ⑫ 版式/比例硬约束（站主 2026-10-17："把尺寸比例拿捏好，别越做问题越多"）----------
 # 这一组是把"已经修好的比例"钉成断言，防以后被顺手改回去（每条都对应一次真实翻车）。
+# ★2026-10-18 外链化改口径：外壳 CSS/JS 不再内联在页面里，改成 /css/*.css 与 /js/*.js（带内容指纹）。
+#   下面每条判据的语义、条数、报错文案一字不改，只把"检索面"从「ai/index.html 这一个文件」
+#   换成「ai/index.html + 该页 <link>/<script> 真正引用的外链资产」——否则代码一搬进外链就假红，
+#   而假红会逼人把内联写法加回去（这才是真的退化）。代码丢了照样红，判据没变松。
+asset_corpus() {   # $1=页面产物 $2=语料输出文件；口径=HTML 全文 + 页面引用到的每个 /css/、/js/ 文件
+  local page=$1 out=$2 ref
+  if [ -f "$page" ]; then cat "$page" > "$out"; else : > "$out"; fi
+  grep -oE '/(css|js)/[A-Za-z0-9._/-]+' "$page" 2>/dev/null | sort -u | while read -r ref; do
+    [ -f "$PUB$ref" ] && cat "$PUB$ref" >> "$out"
+  done
+}
 head1 "⑫ 版式/比例硬约束（手机面板、E-mote 画布、省流误判、字幕垫板）"
+AICORPUS="${TMPDIR:-/tmp}/xk-ai-corpus.$$"
+asset_corpus "$PUB/ai/index.html" "$AICORPUS"
 if [ -s "$PUB/ai/index.html" ]; then
-  AI="$PUB/ai/index.html"
+  AI="$AICORPUS"
   # 手机屏幕必须按比例（aspect-ratio 284/600），不能再写死 height:600px 与面板高度打架
   if grep -q 'aspect-ratio:284/600' "$AI"; then ok "手机屏幕 aspect-ratio:284/600 存在（比例随面板走）"; else no "手机屏幕缺 aspect-ratio:284/600（写死高度会导致面板裁切/变形）"; fi
   if grep -qE '\.phone-scr\{[^}]*width:284px;height:600px' "$AI"; then no "手机屏幕又写回固定 284x600（与面板高度冲突）"; else ok "手机屏幕没有写死 284x600"; fi
@@ -270,7 +283,7 @@ if grep -q -- '--crt-w' "$PUB/index.html" && grep -q 'width:var(--crt-w)' "$PUB/
 
 # ---------- ⑤ [EMO] 情绪标签协议（页面永不出现标签 + 逐句继承）----------
 if [ -s "$PUB/ai/index.html" ]; then
-  AI5="$PUB/ai/index.html"
+  AI5="$AICORPUS"   # 同上：检索面 = HTML ∪ 外链资产
   if grep -q 'xkEmoClean' "$AI5"; then ok "V5: 答案渲染侧有标签剥离 helper（xkEmoClean）"; else no "V5: 缺 xkEmoClean（[EMO] 标签会直接显示给访客）"; fi
   if grep -q '__xkSetEmo' "$AI5"; then ok "V5: 有逐句情绪继承入口（__xkSetEmo）"; else no "V5: 缺 __xkSetEmo（标签解析了也不会换情绪）"; fi
   # 渲染路径必须调用 xkEmoClean（定义 + 至少一处调用 = ≥2 次；minify 后变量名会变，只数函数名）
@@ -295,33 +308,101 @@ if [ -s "$PUB/ai/index.html" ] && grep -q 'CC BY-NC-SA' "$PUB/ai/index.html"; th
 # ---------- ⑬ 新页产物契约：/what/ 介绍页 与 /lab/ 靶场页（2026-10-17 新增）----------
 # 这两页是本轮新写的独立页面，失败方式与"漏构建"同性质，所以要在发布前硬拦截：
 #   · 产物不存在     —— Hugo "构建成功"也可能没生成（layout 漏了 / draft / 输出路径错）
-#   · 字节数太小     —— 模板没吃到内容只剩骨架（两页真实产物约 15.5 万字节，阈值取 100000）
 #   · 缺 data-xk-ssr —— SPA 换页靠 <main> 上的路由名，缺了夹层视图直接空白
-# 口径与 _dev/check-ssr-contract.py 的 PAGES 清单一致（那边 7 页全查，这里把两个新页
+#   · 只剩骨架       —— 模板没吃到内容（判据见下）
+# ★2026-10-18 判据修订（原判据是"字节数 > 100000"）：
+#   100000 这个数当初只是"真实产物约 15.5 万字节"的侧写，它成立的前提是外壳 CSS/JS
+#   内联在每页里（光它们就 15 万字节以上）。外壳改外链后同一页只剩自身内容
+#   （实测 what 14075 / lab 17296 / api 28447 / status 32280 / redteam 38926 字节），
+#   旧阈值必然假红——而真红灯"模板没吃到内容"依旧要用体积抓，所以换成两个更准的判据：
+#     · 骨架下限 8000 字节 —— 只剩骨架（head-meta + 空 <main> + 一堆外链标签）约 4–6KB，
+#       真实内容页最小 14075 字节；取 8000 既能抓住"渲染成空壳"，又不会被正常删减误伤；
+#     · 共享运行时确实外链 —— 页面里有 /css/xk*.css 与 /js/xk*.js 引用，说明 layout 链
+#       (shell-style/shell-script/api-bind) 没退回到"整段内联"或干脆没渲染。
+# 口径与 _dev/check-ssr-contract.py 的 PAGES 清单一致（那边 10 页全查，这里把五个新页
 # 变成发布前硬拦截：它们是本轮新加的，还没经过多轮发布验证）。
 # ★引号口径：产物被 minify 成 <main ... data-xk-ssr=what>（属性没引号），
 #   所以判据用 ["']? 宽匹配，不写死带引号的字面量（写死会假红）。
 # $1=路由名（=URL 段） $2=中文页名
 new_page_gate() {
-  local route=$1 name=$2 f="$PUB/$1/index.html" sz pat
+  local route=$1 name=$2 f="$PUB/$1/index.html" sz pat ext_css ext_js
   pat="data-xk-ssr=[\"']?${route}([^a-z-]|$)"
   if [ ! -f "$f" ]; then
     no "$route/index.html 不存在（$name 没被构建进产物）"
     return
   fi
   sz=$(stat -c %s "$f")
-  if [ "$sz" -gt 100000 ] && grep -qE "$pat" "$f"; then
-    ok "$route/index.html $sz 字节 > 100000，且含 data-xk-ssr=$route（$name）"
+  ext_css=$(grep -coE '/css/xk[^"> ]*\.css' "$f")
+  ext_js=$(grep -coE '/js/xk[^"> ]*\.js' "$f")
+  if [ "$sz" -gt 8000 ] && grep -qE "$pat" "$f" && [ "${ext_css:-0}" -ge 2 ] && [ "${ext_js:-0}" -ge 2 ]; then
+    ok "$route/index.html $sz 字节 > 8000（非骨架），data-xk-ssr=$route 在位，外链 $ext_css CSS / $ext_js JS（$name）"
   else
-    no "$route/index.html 不合格：$sz 字节（需 >100000）；data-xk-ssr=$route $(grep -qE "$pat" "$f" && echo 在位 || echo 缺失)（$name）"
+    no "$route/index.html 不合格：$sz 字节（需 >8000 非骨架）；data-xk-ssr=$route $(grep -qE "$pat" "$f" && echo 在位 || echo 缺失)；外链 $ext_css CSS / $ext_js JS（各需 ≥2）（$name）"
   fi
 }
-head1 "⑬ /what/ 与 /lab/ 新页产物契约（存在 + >100000 字节 + data-xk-ssr）"
+head1 "⑬ 新页产物契约（存在 + >8000 字节非骨架 + data-xk-ssr + 共享运行时外链）"
 new_page_gate what 介绍页
 new_page_gate lab 靶场说明页
 new_page_gate api 公开端点清单页
 new_page_gate status 状态页
 new_page_gate redteam 红队评测页
+new_page_gate ip IP情报页
+
+# ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
+# 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。
+# 现在外壳/头像卡/绑定层统一走 /css/xk*.css 与 /js/xk-*.js，文件名带内容指纹
+# （Hugo `fingerprint` = sha256 全 64 位 hex），页面只剩自身内容（14–62KB）。
+# 这一组用来钉住"别又改回整段内联"，三个失败模式各一条：
+#   · 内联回来了   —— HTML 体积上限 90000（改后最大 index 61606，留 ~28KB 余量给正文增长）
+#   · 少了指纹     —— 外链名必须含 .min.<64 hex>.css|js；没指纹时改内容不改 URL，
+#                     浏览器缓存的旧文件永远刷不掉（比内联更糟）
+#   · 外链断了     —— resources.Get 路径写错时 Hugo 不报错、只吐空引用，这里按产物里的
+#                     实际引用逐个 stat，缺文件直接红
+# 手写静态文件（static/ 下的 xk-saver.js / xk-realtime.js / xk-app.js / phone-emote.js）不在
+# 内容管道里，历史上也没指纹，明确列进白名单；其余一律要求带指纹。
+# ★外壳内联 <script 数量判据：外壳（shell-script.html）必须仍然只产 2 个 <script 标签
+#   （shell 运行时 + scene-js），2026-10-18 起两个都带 src（正文进 /js/xk-shell.js、
+#   /js/xk-scene.js），id="scene-js" 保留（_dev/audit-shell.mjs 靠它定位）。见 ⑭ 末尾那条。
+head1 "⑭ 外链共享运行时（HTML 体积上限 / 内容指纹 / 外链文件在位）"
+for pg in index.html alerts/index.html posts/index.html ai/index.html test/index.html \
+          what/index.html lab/index.html api/index.html status/index.html redteam/index.html; do
+  f="$PUB/$pg"
+  if [ ! -s "$f" ]; then no "$pg 不存在（外链化后每页仍必须有产物）"; continue; fi
+  sz=$(stat -c %s "$f")
+  if [ "$sz" -le 90000 ]; then
+    ok "$pg HTML $sz 字节 ≤ 90000（外壳运行时已外链）"
+  else
+    no "$pg HTML $sz 字节 > 90000（内联运行时又回来了？）"
+  fi
+  REFS=$(grep -oE '/(css|js)/[A-Za-z0-9._/-]+' "$f" | sort -u)
+  if [ -z "$REFS" ]; then no "$pg 没有任何 /css 或 /js 外链（模板可能退回整段内联）"; continue; fi
+  BAD=""; N=0
+  for ref in $REFS; do
+    N=$((N + 1))
+    if [ ! -f "$PUB$ref" ]; then BAD="$BAD 缺文件:$ref"; continue; fi
+    case "$ref" in
+      /js/xk-saver.js|/js/xk-realtime.js|/js/xk-app.js|/js/phone-emote.js|/js/kurisu-player.js) : ;;
+      *) printf '%s' "$ref" | grep -qE '\.min\.[0-9a-f]{64}\.(css|js)$' || BAD="$BAD 无指纹:$ref" ;;
+    esac
+  done
+  if [ -z "$BAD" ]; then
+    ok "$pg 外链 $N 个：文件名带内容指纹且产物中在位"
+  else
+    no "$pg 外链不合格（$N 个）：$BAD"
+  fi
+done
+# 外壳 <script 标签数 = 2（运行时 + scene-js），都必须是外链 src（正文不再内联）
+for pg in alerts/index.html what/index.html redteam/index.html; do
+  f="$PUB/$pg"
+  [ -s "$f" ] || { no "$pg 不存在（外壳脚本数断言）"; continue; }
+  SHELLN=$(grep -oE '<script[^>]*/(js/xk-shell|js/xk-scene)[^>]*>' "$f" | wc -l)
+  SHELLSRC=$(grep -oE '<script[^>]*/(js/xk-shell|js/xk-scene)[^>]*>' "$f" | grep -c 'src=')
+  if [ "$SHELLN" -eq 2 ] && [ "$SHELLSRC" -eq 2 ]; then
+    ok "$pg 外壳 <script 恰好 2 处且都是外链 src（运行时 + scene-js）"
+  else
+    no "$pg 外壳 <script 数变了：$SHELLN 处（其中带 src $SHELLSRC 处），应为 2/2"
+  fi
+done
 
 # ---------- 汇总 ----------
 head1 "汇总"

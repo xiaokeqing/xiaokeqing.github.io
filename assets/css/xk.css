@@ -1,0 +1,717 @@
+
+  :root{
+    --shade:.08;
+    /* 暖烟灰玻璃：取色自背景实验室（暖灰棕调），非白非黑 */
+    --panel:rgba(54,51,46,.24);
+    --panel2:rgba(42,40,36,.13);
+    --line:rgba(255,246,235,.15);
+    --line2:rgba(255,246,235,.28);
+    --txt:#FAF7F0; --mut:#D2CBBD;
+    --acc:#7FD4D8; --acc2:#B0A0E8;
+    --ok:#6FD3A0; --warn:#E8B45A; --bad:#E8837B;
+    --solid:rgba(48,45,41,.82);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif; --r:12px;
+  }
+  body[data-skin="light"]{
+    --panel:rgba(255,255,255,.55);
+    --panel2:rgba(255,255,255,.40);
+    --line:rgba(30,45,60,.20);
+    --line2:rgba(30,45,60,.34);
+    --txt:#22354A; --mut:#5A6B7C;
+    --acc:#0E7490; --acc2:#6D5BD0;
+    --ok:#16A34A; --warn:#B45309; --bad:#DC2626;
+    --solid:rgba(255,255,255,.9);
+  }
+  body[data-skin="dark"]{
+    --panel:rgba(15,19,25,.58);
+    --panel2:rgba(12,15,20,.42);
+    --line:rgba(255,255,255,.16);
+    --line2:rgba(255,255,255,.28);
+    --txt:#EDEAE4; --mut:#9AA7B0;
+    --acc:#39D0D8; --acc2:#A78BFA;
+    --ok:#3ECF8E; --warn:#F5A623; --bad:#F16A6A;
+    --solid:rgba(10,13,17,.85);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;color:var(--txt);font:15px/1.75 var(--sans);background:#0A0D11;
+    text-shadow:0 1px 10px rgba(10,8,5,.55),0 0 2px rgba(10,8,5,.35)}
+
+  /* 左侧竖排导航 dock */
+  .dock{position:fixed;left:0;top:14px;z-index:60;
+    display:flex;flex-direction:column;gap:2px;
+    background:var(--solid);border:1px solid var(--line2);border-left:none;border-radius:0 14px 14px 0;
+    padding:6px 4px 6px 2px;backdrop-filter:blur(4px);box-shadow:0 10px 34px rgba(0,0,0,.45)}
+    .dock .brand{font:600 11px var(--mono);color:var(--acc);letter-spacing:.08em;text-align:center;
+    padding:3px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .dock button{display:flex;align-items:center;background:none;border:1px solid transparent;
+    color:var(--mut);font:13px var(--sans);padding:7px 10px 7px 8px;border-radius:0 9px 9px 0;cursor:pointer;
+    text-align:left;white-space:nowrap}
+  .dock button.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}
+  .dock button:hover{color:var(--txt)}
+
+  /* HOLO 人物面板：左上角（站主指定） */
+  .holo{position:fixed;right:14px;top:14px;z-index:55;width:284px;
+    background:var(--panel);border:1px solid var(--line2);border-radius:14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.45);overflow:hidden;backdrop-filter:blur(4px)}
+  .holo-hd{display:flex;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .holo-av{width:72px;height:72px;flex:none;border-radius:10px;overflow:hidden;
+    border:1px solid var(--line2);background:#E8ECEF;line-height:0}
+    .holo-av canvas{width:72px;height:72px;display:block}
+  .holo-name{font-size:15px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .holo-name .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+  .holo-sub{font:10.5px var(--mono);color:var(--mut);margin-top:3px;letter-spacing:.07em}
+  .holo-fold{margin-left:auto;background:none;border:1px solid var(--line);color:var(--mut);
+    width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:11px;flex:none}
+  .holo-say{padding:10px 12px;font-size:12.5px;min-height:52px;line-height:1.55;transition:opacity .15s}
+  .holo-say .qk{color:var(--acc)}
+  .holo-wf{display:flex;align-items:center;gap:10px;padding:0 12px 10px}
+  .holo-wf .bars2{display:flex;align-items:flex-end;gap:2.5px;height:18px}
+  .holo-wf .bars2 i{width:3px;background:var(--acc);border-radius:2px;height:5px}
+  .holo.live .holo-wf .bars2 i{animation:wf .9s ease-in-out infinite}
+  .holo.live .holo-wf .bars2 i:nth-child(2){animation-delay:.12s}
+  .holo.live .holo-wf .bars2 i:nth-child(3){animation-delay:.24s}
+  .holo.live .holo-wf .bars2 i:nth-child(4){animation-delay:.36s}
+  .holo.live .holo-wf .bars2 i:nth-child(5){animation-delay:.48s}
+  @keyframes wf{0%,100%{height:4px}50%{height:16px}}
+  .holo-state{font:11px var(--mono);color:var(--acc);letter-spacing:.12em}
+  .holo-ft{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--mut)}
+  .holo-bubble{display:none;position:fixed;right:14px;top:14px;z-index:55;width:60px;height:60px;
+    border-radius:50%;overflow:hidden;border:2px solid var(--acc);cursor:pointer;
+    background:#E8ECEF;box-shadow:0 8px 24px rgba(0,0,0,.5);line-height:0}
+  .holo-bubble canvas{width:60px;height:60px;display:block}
+  body.holo-min .holo{display:none}
+  body.holo-min .holo-bubble{display:block}
+
+
+  /* 主区 */
+  .main{margin:0 auto;padding:22px 344px 64px 88px;max-width:1520px}
+  body:not(.is-home) .main{padding-top:14px}
+  .pgtitle{font:600 21px var(--sans);letter-spacing:.01em}
+  .pglead{color:var(--mut);font-size:13px;margin:4px 0 16px}
+  .pglead .sync{font:11px var(--mono);color:var(--ok);margin-left:10px}
+  .view{display:none}.view.on{display:block}
+
+  /* 监测中心：一整块大屏幕 */
+  .screen{background:var(--panel);border:1px solid var(--line2);border-radius:16px;overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+  .screen-hd{display:flex;align-items:center;gap:12px;padding:13px 20px;flex-wrap:wrap;
+    background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
+  .screen-hd .led{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+  .screen-hd .t{font:600 13.5px var(--mono);letter-spacing:.12em}
+  .screen-hd .sub{font:12.5px var(--mono);color:var(--mut)}
+  .screen-hd .sync{margin-left:auto;font:12px var(--mono);color:var(--mut);
+    background:rgba(255,246,235,.045);border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+  .screen-bd{padding:18px;display:flex;flex-direction:column;gap:16px}
+
+  .mod{background:rgba(10,13,17,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .mod-hd{display:flex;align-items:center;gap:8px;padding:9px 15px;border-bottom:1px solid var(--line);
+    font:12.5px var(--mono);color:var(--mut);letter-spacing:.1em}
+  .mod-hd .led{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+  .mod-hd .tag{margin-left:auto;font-size:10.5px;color:var(--acc)}
+  .mod-bd{padding:14px 15px}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.025)}
+  body[data-skin="light"] .stat{background:rgba(255,255,255,.6)}
+  .stat .n{font:600 25px var(--mono);color:var(--acc)}
+  .stat .n em{font-style:normal;font-size:12px;color:var(--mut);margin-left:4px}
+  .stat .l{font-size:13px;color:var(--mut);margin-top:2px}
+  .grid23{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+  .grid32{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+  .grid22{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  /* 数字列等宽：同一列的 9,171 / 4,265 不再左右跳 */
+  .stat .n,.row .v,.num{font-variant-numeric:tabular-nums}
+
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .row:last-child{border-bottom:0}
+  .row .k{color:var(--mut);font-family:var(--mono);font-size:12px}
+  .chip{display:inline-block;font:11px var(--mono);padding:1px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--acc)}
+  .chip.bad{color:var(--bad);border-color:currentColor}
+  .chip.warn{color:var(--warn);border-color:currentColor}
+  .chip.ok{color:var(--ok);border-color:currentColor}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:64px;margin-top:6px}
+  .bars i{flex:1;background:rgba(57,208,216,.55);border-radius:2px 2px 0 0;min-height:3px}
+  .geo{list-style:none}
+  .geo li{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px}
+  .geo .cc{font:12px var(--mono);color:var(--acc);width:34px}
+  .geo .bar{flex:1;height:6px;border-radius:3px;background:rgba(140,160,180,.18);overflow:hidden}
+  .geo .bar i{display:block;height:100%;background:var(--acc2)}
+
+  /* OPS-ROOM 作战室 */
+  .ops-en{font-style:normal;color:var(--acc);opacity:.8;font-size:11px;margin-left:6px}
+  .ops-tabs{display:flex;gap:4px;margin:0 auto;flex-wrap:wrap}
+  .ops-tabs button{background:none;border:1px solid transparent;color:var(--mut);
+    font:12.5px var(--mono);padding:5px 13px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .ops-tabs button.on{color:var(--acc);border-color:var(--line2);background:rgba(127,212,216,.09)}
+  .ops-tabs button:hover{color:var(--txt)}
+  .ops-tab{display:none}
+  .ops-tab.on{display:block;animation:opsfade .35s ease}
+  @keyframes opsfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .ops-live{display:grid;grid-template-columns:1fr 296px;gap:14px;margin-bottom:14px}
+  /* ★LIVE-HIDE（2026-10-18）：「实时攻击」那一坨（刷流 + 右栏）不属于任何 `.ops-tab`，
+     所以切到攻击图谱/威聑矩阵/数据统计时它照样在页面上摆着，看起来就是“全堆成一页”。
+     有 :has 就用 CSS 隐藏；没有的话 watchTabs 里还有一行 JS 兜底。 */
+  .screen-bd:has(> .ops-tab.on) > .ops-live{display:none}
+  .term{background:#12100D;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+  .term-hd{display:flex;gap:10px;align-items:center;padding:8px 13px;border-bottom:1px solid var(--line);
+    font:12.5px var(--mono);color:var(--txt)}
+  .term-path{color:var(--mut);font-size:11px}
+  .term-live{margin-left:auto;color:var(--ok);display:flex;align-items:center;gap:6px;font-size:11px}
+  .term-live i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:blink 1.2s infinite}
+  .term-bd{height:314px;overflow:hidden;padding:10px 13px;font:12px/1.9 var(--mono)}
+  .tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tl .ts{color:#8A8478}
+  .tl .tg{font-weight:700;margin:0 2px}
+  .tl .ssh{color:var(--bad)} .tl .scan{color:var(--warn)} .tl .web{color:var(--ok)}
+  .tl .iot{color:var(--acc2)} .tl .smb{color:var(--acc2)} .tl .dns{color:var(--mut)}
+  .tcursor{display:inline-block;width:7px;height:12px;background:var(--acc);animation:blink 1s steps(1) infinite;vertical-align:-1px}
+  @keyframes blink{50%{opacity:.12}}
+  .ops-rail{display:flex;flex-direction:column;gap:14px}
+  .threat{display:flex;align-items:baseline;gap:12px}
+  .threat .lv{font:700 22px var(--mono);color:var(--warn);white-space:nowrap}   /* ★第十二批：等级字不许被旁边的口径挤成两行 */
+  .threat .trend{font:11px var(--mono);color:var(--bad)}
+  .spark24{width:100%;height:56px;display:block}
+  .graphwrap{position:relative}
+  #atkGraph{width:100%;height:340px;display:block}
+  .graph-legend{position:absolute;right:12px;top:8px;display:flex;gap:14px;font:11px var(--mono);color:var(--mut)}
+  .lg{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .lg.red{background:var(--bad)} .lg.teal{background:var(--acc)} .lg.warn{background:var(--warn)}
+  .lg.purp{background:var(--acc2)} .lg.ok{background:var(--ok)} .lg.dot{background:var(--warn)}
+  .attk{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .attk .cell{border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-height:76px;background:var(--panel2)}
+  .attk .cell b{display:block;font:11px var(--sans);color:var(--mut);font-weight:400;margin-bottom:3px}
+  .attk .cell .taid{font:9.5px var(--mono);color:#8A8478}
+  .attk .cell .num{font:700 19px var(--mono);color:var(--txt);margin-top:4px}
+  .attk .cell.hot{border-color:var(--line2)} .attk .cell.hot .num{color:var(--warn)}
+  .attk .cell.fire .num{color:var(--bad)}
+  .attk .cell.fire{animation:cellpulse 2.2s infinite}
+  @keyframes cellpulse{50%{background:rgba(232,131,123,.12)}}
+  .attk-note{margin-top:10px;font-size:13px;color:var(--mut)}
+  .bars.anim i{animation:barGrow .7s cubic-bezier(.2,.8,.3,1) backwards;animation-delay:calc(var(--i)*30ms)}
+  @keyframes barGrow{from{height:0}}
+  .proto{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .donut{width:118px;height:118px;border-radius:50%;flex:none;position:relative;
+    background:rgba(140,160,180,.18)}   /* ★第十二批：真值由 api-bind 从 /api/public/overview 写 inline conic-gradient */
+  .donut::after{content:"";position:absolute;inset:24px;border-radius:50%;background:#12100D}
+  .donut-c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;font:12px var(--mono);color:var(--mut)}
+  .proto-lg{list-style:none;font:12.5px var(--sans);color:var(--mut)}
+  .proto-lg li{margin:5px 0}
+  .proto-lg b{color:var(--txt);margin-left:10px;font-family:var(--mono)}
+
+  /* AI 问答：纯对话 */
+  .chatwrap{max-width:860px;margin:0 auto}
+  .chat{background:var(--panel);border:1px solid var(--line2);border-radius:16px;overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(4px);
+    display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:420px}
+  .chat-hd{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .chat-hd .badge{font:12px var(--mono);color:var(--mut);display:flex;align-items:center;gap:6px}
+  .chat-hd .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .chat-hd .quota{margin-left:auto;font:11px var(--mono);color:var(--mut)}
+  .chatlog{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:18px}
+  .msg{max-width:82%;padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.65}
+  .msg.ai{align-self:flex-start;background:rgba(57,208,216,.08);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.me{align-self:flex-end;background:rgba(167,139,250,.13);border:1px solid rgba(167,139,250,.35);border-bottom-right-radius:4px}
+  body[data-skin="light"] .msg.me{background:rgba(109,91,208,.1)}
+  .msg .who{font:11px var(--mono);color:var(--mut);margin-bottom:5px}
+  .msg .who .st{color:var(--acc)}
+  .cite{margin-top:9px;border-left:2px solid var(--acc);padding:4px 10px;font-size:12px;color:var(--mut)}
+  .chat-ft{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:var(--panel2)}
+  .chat-ft input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line2);border-radius:99px;
+    color:var(--txt);padding:10px 16px;font-size:13.5px;outline:none}
+  body[data-skin="light"] .chat-ft input{background:#fff}
+  .chat-ft input::placeholder{color:var(--mut)}
+  .chat-ft input:focus{border-color:var(--acc)}
+  .chat-ft button{background:var(--acc);border:0;color:#04282b;font-weight:600;padding:0 20px;border-radius:99px;cursor:pointer}
+  .chat-note{text-align:center;font:11px var(--mono);color:var(--mut);padding:6px 0 0}
+
+  /* AI 页手机：她活在手机里 */
+  .ai-grid{display:grid;grid-template-columns:1fr 292px;gap:20px;max-width:1180px;margin:0 auto;align-items:start}
+  .phone{width:292px;background:#0A0C0F;border:1px solid var(--line2);border-radius:38px;padding:12px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55)}
+  .phone-scr{position:relative;border-radius:28px;overflow:hidden;background:
+    radial-gradient(120% 60% at 50% 0%, #1B232E 0%, #12161D 70%);aspect-ratio:9/16.5}
+  .phone-scr canvas{position:absolute;left:0;right:0;bottom:0;width:100%;height:auto;aspect-ratio:321/432}
+  .phone-line .qk{color:var(--acc)}
+  .phone-status{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;
+    padding:7px 14px;font:10.5px var(--mono);color:rgba(230,240,245,.85);
+    background:linear-gradient(180deg,rgba(8,10,14,.55),transparent)}
+  .phone-line{position:absolute;left:0;right:0;bottom:34px;z-index:2;padding:0 14px;font-size:12px;line-height:1.5;
+    color:#EAF3F8;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+  .phone-live{position:absolute;left:0;right:0;bottom:10px;z-index:2;display:flex;align-items:center;justify-content:center;
+    gap:7px;font:10px var(--mono);letter-spacing:.12em;color:var(--acc)}
+  .phone-live .bars2{display:flex;align-items:flex-end;gap:2px;height:12px}
+  .phone-live .bars2 i{width:2.5px;background:var(--acc);border-radius:2px;height:4px}
+  .phone.live .phone-live .bars2 i{animation:wf .9s ease-in-out infinite}
+  .phone.live .phone-live .bars2 i:nth-child(2){animation-delay:.12s}
+  .phone.live .phone-live .bars2 i:nth-child(3){animation-delay:.24s}
+  .phone.live .phone-live .bars2 i:nth-child(4){animation-delay:.36s}
+  .phone.live .phone-live .bars2 i:nth-child(5){animation-delay:.48s}
+  .phone-hint{margin-top:10px;text-align:center;font:11px var(--mono);color:var(--mut)}
+
+  /* 手机样式四版（右下角选择器切换） */
+  body[data-phone="v2"] .phone{background:#E8E4DC;border-color:rgba(60,55,48,.4)}
+  body[data-phone="v2"] .phone-scr{border-radius:24px}
+  body[data-phone="v3"] .phone{background:rgba(20,24,30,.35);border-color:rgba(127,212,216,.55);
+    box-shadow:0 0 0 1px rgba(127,212,216,.25),0 24px 70px rgba(0,0,0,.45)}
+  body[data-phone="v3"] .phone-scr{background:radial-gradient(120% 60% at 50% 0%, rgba(30,40,52,.85) 0%, rgba(14,18,24,.9) 70%)}
+  body[data-phone="v4"] .phone{border-radius:12px;padding:8px}
+  body[data-phone="v4"] .phone-scr{border-radius:6px;aspect-ratio:9/15}
+
+
+
+  /* 笔记 / 靶场 / 关于 */
+  .card{background:var(--panel);border:1px solid var(--line2);border-radius:14px;margin-bottom:16px;overflow:hidden;
+    box-shadow:0 14px 44px rgba(0,0,0,.35);backdrop-filter:blur(4px)}
+  .card-hd{display:flex;align-items:center;gap:8px;padding:9px 15px;border-bottom:1px solid var(--line);
+    font:12.5px var(--mono);color:var(--mut);letter-spacing:.09em;background:var(--panel2)}
+  .card-hd .led{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .card-bd{padding:14px 15px}
+  .card-lead{padding:12px 15px 0;font-size:13px;color:var(--mut)}
+  .card-lead b{color:var(--txt)}
+  .note{display:flex;gap:14px;padding:13px 15px;border-bottom:1px dashed var(--line);cursor:pointer}
+  .note:hover{background:rgba(57,208,216,.06)}
+  .note .dt{font:11px var(--mono);color:var(--mut);width:86px;flex:none;padding-top:3px}
+  .note .tt{font-size:14px;font-weight:500}
+  .note .ds{font-size:12px;color:var(--mut);margin-top:2px}
+  .verdict{border:1px solid var(--line2);border-radius:10px;padding:10px 14px;margin:12px 15px;
+    display:flex;align-items:center;gap:10px;font-size:13px;background:rgba(245,166,35,.07)}
+  .comp{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 15px 10px;font-size:13px;background:rgba(255,255,255,.03)}
+  body[data-skin="light"] .comp{background:rgba(255,255,255,.55)}
+  .comp .hd{display:flex;align-items:center;gap:8px;font:12px var(--mono);color:var(--mut)}
+  .comp .hd .sev{width:8px;height:8px;border-radius:50%}
+  .comp p{color:var(--mut);font-size:12.5px;margin-top:5px}
+  .anchor-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+  .anchor-row a{font-size:12px;color:var(--mut);text-decoration:none;border:1px solid var(--line);
+    padding:4px 12px;border-radius:99px;background:var(--panel)}
+  .anchor-row a:hover{color:var(--acc)}
+  ul.bl{list-style:none;padding:0 15px 14px}
+  ul.bl li{padding:5px 0 5px 16px;position:relative;font-size:13px;color:var(--mut)}
+  ul.bl li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;
+    border-radius:1px;background:var(--acc);opacity:.7}
+  ul.bl li b{color:var(--txt)}
+  code.k{font:12px var(--mono);color:var(--acc);background:rgba(57,208,216,.1);padding:0 5px;border-radius:4px}
+
+  @media (prefers-reduced-motion:reduce){.holo.live .holo-wf .bars2 i{animation:none}}
+  @media (max-width:980px){
+    .dock{left:8px;top:auto;bottom:10px;transform:none;flex-direction:row;max-width:calc(100vw - 16px);overflow-x:auto}
+    .dock .brand{display:none}
+    /* ★窗口 Q（2026-10-16）移动端硬伤 3 修复：`.dock button` 原值 padding 7px + font 13px，
+       实测触控目标最小边 **33px**（375/390/414 三视口 × 四页全部一模一样），低于站主定的最小 44px。
+       只抬高/加宽**命中区**（min-height/min-width:44px + 垂直内边距 13px ⇒ 实测 44~46px），
+       **配色 / 字号 / 边框色一个字节都不动**。 */
+    .dock{gap:4px;padding:6px}
+    .dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
+    /* ★2026-10-17：窄屏 dock 固定在 top:100px（idcard 的 DOCK_CSS），头像卡只让到 76px ⇒ 导航压住正文首行；
+       底部还有左下角功能条（.xk-idcard-col，26px@bottom:14）⇒ 下留白一起加大。 */
+    .main{padding:150px 12px 132px 12px;margin:0}
+    /* ★硬伤 2 追加（实测发现的真因）：`.main` 的 padding-top 被 base 里那条特异性更高的
+       `body:not(.is-home) .main{padding-top:14px}` 压成 14px ⇒ 上面这条里的 70px **从未生效**，
+       正文从 y=14 就开始（这就是"浮层一压就压到字"的第二个原因）。
+       收起后的头像泡是 60px 高、放在 top:6px ⇒ 需要一条 ≥66px 的顶部带。
+       口径：内容页（也就是有头像泡的那两页）明确留 76px；/ai/ 与主页没有泡，维持原样。 */
+    body:not(.is-home):not(.is-ai) .main{padding-top:150px}
+    body.is-ai .main{padding-top:150px}   /* ★2026-10-17：/ai/ 原先没让位 ⇒ 固定导航压住聊天头部 */
+    .stats{grid-template-columns:repeat(2,1fr)}.grid23,.grid32,.grid22{grid-template-columns:1fr}
+    /* ★2026-10-17：`.ops-live` 是 `1fr 296px`，窄屏没复写过 ⇒ 494 宽下左侧实时流只剩 ~130px，
+       卡片被挤成一条竖字。窄屏改单列。 */
+    .ops-live{grid-template-columns:minmax(0,1fr)}.ops-live>*{min-width:0}
+    /* ★2026-10-17 美化 v2（窄屏）：屏头原来把 标题/OPS-ROOM/胶囊/tabs/sync 各占一行，
+       白白吃掉 ~180px 纵向空间。窄屏口径：藏副标题、sync 压成单行小字、tabs 不换行、胶囊间距收紧。 */
+    .screen-hd{padding:10px 13px;gap:8px}
+    .screen-hd .sub{display:none}
+    .screen-hd .sync{margin-left:0;flex-basis:100%;font-size:11px;padding:2px 9px;line-height:1.5}
+    .ops-tabs{margin:0;gap:2px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .ops-tabs button{padding:5px 9px;font-size:12px;white-space:nowrap}
+    .screen-bd{padding:13px;gap:13px}
+    .mod-hd{padding:8px 12px}
+    .mod-bd{padding:12px}
+    /* ★美化 v3（窄屏）：终端面板固定 314px 高，单列下等于把一屏占掉一半；窄屏压到 40vh。 */
+    .term-bd{height:min(314px,40vh)}
+    /* ★窗口 Q（2026-10-16）移动端硬伤 1 修复：`.ai-grid` 是 `1fr 292px`，`1fr` 那列受子内容
+       min-content 约束不能收缩 ⇒ 网格最小宽 ≈608px ⇒ 窄屏下整个**布局视口**被撑到 620px，
+       而 `#dock{position:fixed;bottom:10px}` 相对布局视口定位 ⇒ used top = 1343-47-10 = 1286，
+       落在 812 高的**视觉视口之外**：手机上导航"看不到也点不到"（实测 375/390/414 三视口都复现）。
+       口径：判溢出一律用 visualViewport.width，不许用 innerWidth（窄屏下后者会被内容撑宽）。 */
+    .ai-grid{grid-template-columns:1fr;gap:14px}
+    .ai-grid>*{min-width:0}
+    /* ★窗口 Q（2026-10-16）移动端硬伤 2 修复：`.holo` 是 `position:fixed` 浮层，窄屏被拉成
+       左10/右10 的整幅面板（实测 355×219 / 370×219 / 394×219，与 `.main` 重叠 355×219 等），
+       正好压住正文顶部 ⇒ 手机上看不到正文。
+       口径（站主给的选项）：**窄屏收起** —— 复用既有 `.holo-min`（隐藏面板、显示头像泡），
+       由脚本在 ≤980px 启动时挂上；展开态也限高+内部滚动，不盖住底部 dock。
+       头像泡挪进 `.main` 的 70px 上内边距带里（top:6px + 60px 高 = 底 66px < 70px）⇒ 不压正文。 */
+    .holo{left:10px;right:10px;top:52px;width:auto;max-height:calc(100vh - 150px);overflow:auto}
+    .holo-bubble{left:auto;right:8px;top:6px}
+    .chat{height:calc(100vh - 240px)}
+  }
+
+  :root{
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    /* —— 来自 static/kurisu/manifest.json scene.*（底图 1672×941） —— */
+    --crt-x:32.8947%; --crt-y:20.7226%; --crt-w:35.0478%; --crt-h:47.0776%;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  /* stage：按底图比例 cover（manifest scene.cover.css 口径） */
+  .stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:max(100vw,177.68vh);height:max(56.28vw,100vh)}
+  .desk{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  /* CRT 容器（bounds 百分比写死，与视口无关） */
+  .crt{position:absolute;left:var(--crt-x);top:var(--crt-y);width:var(--crt-w);height:var(--crt-h)}
+  .crt-clip{position:absolute;inset:0;
+    clip-path:polygon(1.7065% 2.2573%,21.5017% 0.4515%,50.1706% 0%,79.1809% 0.6772%,98.4642% 3.1603%,
+      99.6587% 33.4086%,100% 67.9458%,98.9761% 97.7427%,78.8396% 99.5485%,50.5119% 100%,
+      21.5017% 99.0971%,1.0239% 97.2912%,0% 67.4944%,0.3413% 33.1828%)}
+  .crt-clip>*{position:absolute;inset:0;width:100%;height:100%}
+  .backplate{object-fit:cover}
+  .charcanvas{display:block}
+  /* ★ 第十二批修正（站主：CRT 内景顶部有一块发暗的矩形）：demo 的 .plate 末尾写着
+     `inset:auto`，它把同一条规则前面的 left/bottom 全部抵消 → 垫板被当成"四边 auto"的
+     绝对定位元素，落在 CRT 左上角（就是那块暗色矩形）。删掉 inset:auto 即回到作者意图：
+     垫板贴在屏幕底部、宽 72%（字幕条就压在它上面）。 */
+  .plate{position:absolute;left:14%;right:14%;top:auto;bottom:2.5%;width:72%;height:auto;
+    aspect-ratio:2564/430;object-fit:fill}
+  .scan{background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);pointer-events:none}
+  .vig{background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.42) 100%);pointer-events:none}
+  .glow{mix-blend-mode:screen;opacity:.5;pointer-events:none;animation:breathe 7s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.42}50%{opacity:.58}}
+
+  /* 屏内 DOM：状态行 / 字幕条（垫板 + 浅字，对比度实测口径 ≥4.5:1） */
+  .crt-status{position:absolute;top:4.5%;right:5%;z-index:5;text-align:right;
+    font:11px/1.7 var(--mono);color:#DFF3FF;background:rgba(8,14,20,.55);
+    padding:4px 9px;border-radius:6px;letter-spacing:.04em;white-space:nowrap}
+  .crt-status .ok{color:#3ECF8E}
+  .crt-sub{position:absolute;left:14%;right:14%;bottom:5.2%;z-index:5;text-align:center;background:rgba(6,10,14,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);padding:7px 12px;border-radius:10px;
+    font:13.5px/1.5 var(--sans);color:#E8F4FF;text-shadow:0 1px 2px rgba(0,0,0,.8);
+    min-height:2.6em;display:flex;align-items:center;justify-content:center}
+  .crt-sub .cursor{display:inline-block;width:.5em;height:1em;background:#39D0D8;margin-left:2px;
+    vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* 屏外：导航浮条 */
+
+  /* 开场遮罩（避免底图未载时露白） */
+  .bootveil{position:fixed;inset:0;background:#0B1118;z-index:80;transition:opacity .4s}
+  .fallback{display:none;position:fixed;inset:0;z-index:70;background:#0B1118;color:#8CA3B8;
+    font:13px var(--mono);place-items:center;text-align:center;padding:20px}
+
+  @media (prefers-reduced-motion:reduce){
+    .glow,.crt-sub .cursor{animation:none}
+  }
+
+  /* 主页视图：全屏场景，隐藏内容页浮件 */
+  body.is-home{overflow:hidden}
+  body.is-home .holo,body.is-home .holo-bubble{display:none}
+  body.is-home .main{padding:0;max-width:none}
+  body.is-ai .main{padding-right:24px}
+  body.is-ai .holo,body.is-ai .holo-bubble{display:none}
+
+
+/* A1：监测中心英雄数字（真实数据，取不到就写未取到） */
+.ops-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+  background:rgba(0,0,0,.28);border:1px solid rgba(242,233,218,.14);border-radius:12px;
+  overflow:hidden;margin-bottom:14px}
+.oh-cell{padding:13px 14px 12px;background:linear-gradient(180deg,rgba(24,22,19,.55),rgba(14,13,11,.55))}
+.oh-cell b{display:block;font:600 27px/1.1 var(--mono,ui-monospace,monospace);letter-spacing:-.02em;
+  color:#F3EAD9;font-variant-numeric:tabular-nums}
+.oh-cell span{display:block;margin-top:5px;font-size:10.5px;letter-spacing:.13em;color:var(--mut,#D2CBBD)}
+.oh-line{grid-column:1/-1;padding:9px 14px;font-size:12px;line-height:1.55;color:#C9C1B2;
+  background:rgba(0,0,0,.22);border-top:1px solid rgba(242,233,218,.1)}
+@media (max-width:980px){
+  .oh-cell{padding:10px 11px}
+  .oh-cell b{font-size:21px}
+  .oh-line{font-size:11.5px}
+}
+
+@media (max-width:980px){ .screen-bd{padding-bottom:76px} .ops-hero{margin-bottom:12px} }
+
+@media (min-width:981px){ body.xk-has-idcard .main{padding-left:184px} }
+
+/* ★ban-tl：处置时间线（24h 轴 + 事件点）。数据来自 /api/public/audit 的 blocks[]。 */
+.ban-tl{position:relative;height:46px;margin:2px 0 10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.ban-tl .axis{position:absolute;left:10px;right:10px;top:24px;height:1px;background:var(--line2)}
+.ban-tl .tick{position:absolute;top:28px;font:10px var(--mono);color:var(--mut);transform:translateX(-50%);white-space:nowrap}
+.ban-tl .ev{position:absolute;top:18px;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);cursor:pointer;
+  background:var(--acc);box-shadow:0 0 0 3px rgba(120,230,225,.14)}
+.ban-tl .ev.warn{background:#E8B45A;box-shadow:0 0 0 3px rgba(232,180,90,.16)}
+.ban-tl .ev:hover{outline:1px solid var(--txt)}
+.ban-tl .tl-note{position:absolute;left:10px;top:5px;font:11px var(--sans);color:var(--mut)}
+
+/* ★attk-tech：ATT&CK 技术编号行（跟随类型矩阵，取最近窗口聚合） */
+.attk-tech{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.attk-tech .tech{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:99px;
+  padding:3px 9px;font:11.5px var(--mono);color:var(--mut);background:rgba(255,255,255,.03)}
+.attk-tech .tech b{color:var(--acc);font-weight:600}
+.attk-tech .tech i{font-style:normal;color:var(--txt);opacity:.85}
+
+/* ---- 2026-10-17 外部巡检 P0/P1/P2 快速项 ---- */
+@media (max-width:980px){
+  .main{padding-bottom:96px}                 /* P0-2：底部功能条不再压最后一行 */
+  .dock{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}   /* P2-1：窄屏导航不折行 */
+  .dock::-webkit-scrollbar{display:none}
+  body:has(> main[data-xk-ssr]:not([data-xk-ssr="index"])) .phone{display:none}              /* P0-3：内容页窄屏收起角色浮层 */
+}
+.xk-idname{white-space:nowrap}               /* P0-1：名字不换行 */
+.xk-idcard{overflow:visible}
+  /* ---- ★攻击来源地图（点阵底图 + 国家气泡）：底图 /data/world-map.json 只在画布首次可见时取一次；
+     气泡落点 = 国家质心，不是攻击者真实坐标（GeoIP 只到国家/省）。零第三方脚本，canvas 自己画。 ---- */
+  .xk-atkmap-card{grid-column:1/-1}
+  .xk-atkmap-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:0 0 8px}
+  .xk-atkmap-metrics{display:flex;gap:6px;flex-wrap:wrap}
+  .xk-atkmap-metrics button{font:12px/1.5 var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
+    border:1px solid var(--line);border-radius:99px;padding:3px 11px;cursor:pointer;
+    transition:color .16s,border-color .16s,background .16s}
+  .xk-atkmap-metrics button:hover{color:var(--txt);border-color:var(--line2)}
+  .xk-atkmap-metrics button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .xk-atkmap-metrics button.on{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.10)}
+  .xk-atkmap-scale{font-size:11px;color:var(--mut);white-space:nowrap}
+  .xk-atkmap-scale i{display:inline-block;width:9px;height:9px;margin:0 4px 0 2px;border-radius:50%;
+    border:1px solid var(--acc);background:rgba(127,212,216,.30);vertical-align:middle}
+  .xk-atkmap-stage{position:relative;aspect-ratio:360/142;min-height:150px;border:1px solid var(--line);
+    border-radius:10px;background:rgba(20,19,17,.35);overflow:hidden}
+  .xk-atkmap-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .xk-atkmap-msg{position:absolute;inset:0;margin:0;display:flex;align-items:center;justify-content:center;
+    padding:10px 18px;text-align:center;font-size:12.5px;line-height:1.75;color:var(--mut);pointer-events:none}
+  .xk-atkmap-msg[hidden]{display:none}
+  .xk-atkmap-tip{position:absolute;left:0;top:0;z-index:3;min-width:132px;max-width:240px;padding:7px 9px;
+    border:1px solid var(--line2);border-radius:9px;background:rgba(24,22,20,.96);
+    box-shadow:0 10px 26px rgba(0,0,0,.38);font-size:11.5px;line-height:1.65;color:var(--txt);
+    pointer-events:none;opacity:0;transform:translate(-50%,0);transition:opacity .12s}
+  .xk-atkmap-tip.on{opacity:1}
+  .xk-atkmap-tip .cc{font:600 12px/1.4 var(--mono);color:var(--acc);margin:0 0 3px}
+  .xk-atkmap-tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--mut)}
+  .xk-atkmap-tip .r b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+  .xk-atkmap-tip .prov{margin-top:5px;padding-top:5px;border-top:1px solid var(--line);font-size:11px;color:var(--mut)}
+  .xk-atkmap-foot{margin:9px 0 0;font-size:11.5px;line-height:1.8;color:var(--mut)}
+  .xk-atkmap-foot b{color:var(--txt);font-weight:600}
+  @media (max-width:760px){.xk-atkmap-stage{aspect-ratio:auto;min-height:190px}}
+
+  /* ---- ★批次 R2（2026-10-16 前端优化批）：骨架/焦点 + 作战室交互层（配色字体零改动） ---- */
+  /* 骨架条：占位「—」取数回来前的呼吸条；api-bind 写实值时摘掉 .sk。颜色只用既有 --line/--line2 令牌 */
+  .sk{color:transparent !important;border-radius:6px;display:inline-block;min-width:2.6em;
+    background:linear-gradient(90deg,var(--line) 25%,var(--line2) 50%,var(--line) 75%);
+    background-size:200% 100%;animation:skp 1.4s ease-in-out infinite}
+  .chip.sk{min-width:2.2em}
+  .stat .n.sk{min-width:2.4em;border-radius:8px}
+  @keyframes skp{0%{background-position:180% 0}100%{background-position:-20% 0}}
+  @media (prefers-reduced-motion:reduce){.sk{animation:none}}
+  /* 焦点态：描边用既有 --acc */
+  .dock a:focus-visible,.ops-tabs button:focus-visible,.chat-ft button:focus-visible,.chat-ft input:focus-visible,
+  #kbInput:focus-visible,#kbBtn:focus-visible,.anchor-row a:focus-visible,.cat-row a:focus-visible,
+  .note a:focus-visible,.holo-fold:focus-visible,.holo-bubble:focus-visible,.feed-pause:focus-visible{
+    outline:2px solid var(--acc);outline-offset:2px}
+  /* 实时攻击流：行左 2px 级别色条（色值 = .tl 既有类型色的同一组变量） */
+  .term-bd .tl{border-left:2px solid transparent;padding-left:8px}
+  .term-bd .tl.lv-ssh{border-left-color:var(--bad)}
+  .term-bd .tl.lv-scan{border-left-color:var(--warn)}
+  .term-bd .tl.lv-web{border-left-color:var(--ok)}
+  .term-bd .tl.lv-iot,.term-bd .tl.lv-smb{border-left-color:var(--acc2)}
+  .term-bd .tl.lv-dns{border-left-color:var(--mut)}
+  /* term 暂停按钮（放进 term-hd 既有 flex 行；窄屏把端点路径文案让位给它） */
+  .feed-pause{background:none;border:1px solid var(--line2);color:var(--mut);font:11px var(--mono);
+    padding:2px 10px;border-radius:99px;cursor:pointer;margin-left:auto;flex:none}
+  .feed-pause:hover{color:var(--acc);border-color:var(--acc)}
+  .feed-pause.on{color:var(--warn);border-color:var(--warn)}
+  .term-hd .term-live{margin-left:8px}
+  @media (max-width:980px){.term-hd .term-path{display:none}}
+  /* ★R2 收敛（2026-10-16 站主批）：威胁矩阵的 hover 摘要**收敛成图例那一行**，不再用浮层。
+     理由：浮层会盖住相邻格子、窄屏还会溢出，而且它需要".mod 放开 overflow"这种 hack；
+     摘要写进同一行后信息一分不减、遮挡归零、hack 一起撤掉。 */
+  .attk .cell{position:relative;cursor:default}
+  .attk-lg{display:flex;gap:14px;flex-wrap:wrap;font:11px var(--mono);color:var(--mut);margin-top:10px}
+  .attk-lg .tt-cur{color:var(--acc)}
+  /* 告警来源分布：donut SVG 分段（hover 高亮 + <title> 可访问）；真值由 api-bind 写段
+     （r=48 / sw=14 落在 118 viewBox 内；::after 旧镂空盖会挡分段 hover ⇒ SVG 化后摘掉） */
+  .donut.donut-svg::after{display:none}
+  .donut svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+  .donut svg .seg{fill:none;stroke-width:14;transition:opacity .15s ease}
+  .donut svg .seg.dim{opacity:.3}
+  .donut .donut-c{pointer-events:none}   /* 中心字不挡分段 hover */
+  /* AI 引用卡组：命中数标题行 + <details> 展开核验（零 JS） */
+  .citebox{margin-top:9px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.02)}
+  body[data-skin="light"] .citebox{background:rgba(255,255,255,.5)}
+  .citebox-hd{padding:6px 10px;font:11px var(--mono);color:var(--acc);border-bottom:1px solid var(--line)}
+  .citebox .cite{border-left:0;border-bottom:1px dashed var(--line);margin:0;padding:7px 10px}
+  .citebox .cite:last-child{border-bottom:0}
+  .citebox summary{cursor:pointer;list-style:none}
+  .citebox summary::-webkit-details-marker{display:none}
+  .citebox summary:hover{color:var(--acc)}
+  .citebox .snip{margin-top:5px;opacity:.85}
+  /* 状态徽标分档（既有 ok/warn/bad 状态色） */
+  .msg .who .st.st-ok{color:var(--ok)}
+  .msg .who .st.st-warn{color:var(--warn)}
+  .msg .who .st.st-bad{color:var(--bad)}
+  /* 示例问题 chips（复用 anchor-row 胶囊外观，贴合 chat-ft 上边距） */
+  .ask-ex{padding:10px 14px;margin:0;border-top:1px solid var(--line);background:var(--panel2)}
+  /* 笔记分类 chips（外观对齐 anchor-row/dock 的 .on 口径） */
+  .cat-row{display:flex;gap:8px;flex-wrap:wrap;padding:12px 15px 0}
+  .cat-row a{font-size:12px;color:var(--mut);text-decoration:none;border:1px solid var(--line);
+    padding:4px 12px;border-radius:99px;background:var(--panel2);cursor:pointer}
+  .cat-row a:hover{color:var(--acc)}
+  .cat-row a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1)}
+
+  /* 数据统计 · 子分区（一屏一主题；零新增配色，全部吃既有变量） */
+  .sst-nav{display:flex;gap:6px;margin:0;padding-left:10px;border-left:1px solid var(--line);
+    flex-wrap:wrap;align-items:center}
+  .sst-nav button{font:12px var(--mono);color:var(--mut);background:rgba(255,246,235,.05);
+    border:1px solid var(--line);border-radius:99px;padding:3px 11px;cursor:pointer;
+    transition:color .16s,border-color .16s,background .16s}
+  .sst-nav button:hover{color:var(--txt);border-color:rgba(255,246,235,.30)}
+  .sst-nav button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .sst-nav button.on{color:var(--acc);border-color:var(--acc);background:rgba(255,246,235,.10)}
+  .sst-pane{display:none}
+  .sst-pane.on{display:grid;gap:14px;align-items:start}
+  .sst-pane.on[data-sst="ov"],.sst-pane.on[data-sst="act"],.sst-pane.on[data-sst="sys"]{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  /* 概览：前两张并排、第三张（来源与故事整体）占满一整行 */
+  .sst-pane.on[data-sst="ov"]>*:nth-child(3){grid-column:1/-1}
+  .sst-pane.on>*{min-width:0}
+  @media (max-width:1100px){
+    .sst-pane.on[data-sst="ov"],.sst-pane.on[data-sst="act"],.sst-pane.on[data-sst="sys"]{
+      grid-template-columns:minmax(0,1fr)}
+  }
+
+    /* ★R3（2026-10-17）笔记索引：搜索框 + 分类计数 + 摘要卡。原来只有「日期 + 标题 + 阅读约 N min」，
+       站主原话「根本找不到笔记在哪里」；判据是：不点进正文也能判断这篇讲什么。 */
+    .notes-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 15px;border-bottom:1px solid var(--line)}
+    .notes-q{flex:1 1 240px;min-width:150px;background:rgba(12,14,18,.55);border:1px solid var(--line2);
+      border-radius:10px;padding:8px 12px;color:var(--txt);font:13px var(--sans);outline:none}
+    .notes-q:focus{border-color:var(--acc)}
+    .notes-q::placeholder{color:var(--mut)}
+    .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:15px}
+    .note-card{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--line);
+      border-radius:12px;background:rgba(20,22,26,.42);text-decoration:none;color:inherit;
+      transition:border-color .18s ease,transform .18s ease}
+    .note-card:hover{border-color:var(--line2);transform:translateY(-1px)}
+    .nc-top{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut)}
+    .nc-cat{color:var(--acc);border:1px solid rgba(57,208,216,.35);border-radius:20px;padding:1px 8px;
+      font-size:10.5px;letter-spacing:.06em;white-space:nowrap}
+    .nc-tt{font:600 15px/1.45 var(--sans);color:var(--txt)}
+    .nc-ds{font-size:12.5px;line-height:1.75;color:var(--mut);
+      display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .nc-ft{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:auto;font-size:11px;color:var(--mut)}
+    .nc-tag{border:1px solid var(--line);border-radius:20px;padding:1px 7px;font-size:10.5px}
+    .nc-rt{margin-left:auto;font-variant-numeric:tabular-nums}
+    .notes-empty{padding:28px 15px;text-align:center;color:var(--mut);font-size:13px}
+    @media (max-width:980px){.notes-grid{grid-template-columns:minmax(0,1fr);padding:12px}}
+
+  /* ★R3 布局补丁（2026-10-16 外部审查）—— 以下全部只在 ≤980px 生效 */
+  @media (max-width:980px){
+    /* ① 交互件命中区补齐到 44px（只动命中区，配色/字号/边框色一个字节不改） */
+    .ops-tabs button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+    .holo-fold{width:34px;height:34px;flex:none}
+    .anchor-row a{min-height:38px;display:inline-flex;align-items:center}
+    .chat-ft button{min-height:44px}
+    .chat-ft input{min-height:44px}
+    /* ② holo 收起（.holo-min）后主区不再白留 310px */
+    body.holo-min .main{padding-right:12px}
+    /* ③ 攻击矩阵七格 → 窄屏四格，避免每格被压到 50px 以下 */
+    .attk{grid-template-columns:repeat(4,1fr)}
+    .attk .cell{min-height:64px}
+    /* ④ 展开态 holo 限高并给正文让位 */
+    .holo{max-height:calc(100dvh - 210px);max-height:calc(100vh - 210px)}
+  }
+  @media (max-width:520px){
+    /* ⑤ 极窄屏：统计卡单列；聊天区改动态高度，避开 667px 矮屏溢出 */
+    .stats{grid-template-columns:1fr}
+    .attk{grid-template-columns:repeat(3,1fr)}
+    .chat{height:auto;max-height:calc(100vh - 150px);min-height:320px}
+  }
+
+  /* ★底图两层（逐字照 docs/demo-内容页外壳.html:45-47/:417）—— 内容页的暖玻璃面板需要照片底 */
+  /*   ★2026-10-16 站主口径②：**不要 10 张背景切换器**；背景只放"人物不在的电视/书桌图"（desk.webp），
+      人物在手机面板里（主页的她在 CRT 里）；光束保留、做成左上角头像旁的小按钮；配色切换器不要（用现有暖色）。 */
+  .bg{position:fixed;inset:0;z-index:-3;background:#0A0D11 center/cover no-repeat;background-image:url(/kurisu/scene/bg/room_clean.webp);transform:scale(1.06)}
+  /*   ★2026-10-17 站主口径（再改）：换干净房间底图 room_clean.webp（无显示器外框，任意分辨率都不露边）。
+      来源 = screen_empty.webp（原图 1094×653，CRT 屏内画面、天然不带外框），2× Lanczos 上采样 + 轻锐化到 2188×1306，
+      quality=88 转 webp（158KB）。room_empty.webp 自带一圈 CRT 外框，cover 放大后两侧露深色边框 = 站主说的"雾"。
+      transform 1.1 → 1.06（干净图不需要靠放大遮边）。 */
+  /*   ★2026-10-17 站主口径（改）：背景照旧演示文件 `docs/demo-内容页外壳.html` 的默认值 room_empty（空实验室），
+      不要 desk.webp —— 书桌图留给主页（主页的她在 CRT 里），内容页用"人物不在的房间"才是旧演示的观感。*/
+  /*  光束层：默认关，`<html class="xk-lite">` 时淡入（左上角 ✨ 按钮切，localStorage 记忆） */
+  .bglite{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:0;transition:opacity .45s ease;background:center/cover no-repeat url(/kurisu/scene/bg/light_high.webp)}
+  html.xk-lite .bglite{opacity:.5}
+  @media (prefers-reduced-motion:reduce){.bglite{transition:none}}
+  .bgshade{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}
+  body.is-home .bg,body.is-home .bgshade,body.is-home .bglite{display:none}
+
+/* ★P8-A（站主 2026-10-16）：内容页右列 = 手机（替掉 .holo）；主页无手机 */
+#holo{display:none !important}                 /* 只隐藏，不删：holoFold/holoBubble 的 JS 仍在跑 */
+body.is-home .phone{display:none}
+/* ★PHONE-ONLY-AI 2026-10-18：右侧手机框人物大卡只在 /ai/ 保留，其余页面一律不渲染（腾出的横向空间还给数据区，正文才能提到 13px） */
+body:has(> main[data-xk-ssr]:not([data-xk-ssr="ai"])) .phone{display:none}
+.phone{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:55;
+  width:min(300px,44vh);height:auto;padding:8px;border-radius:34px;
+  background:linear-gradient(160deg,#2b3138,#0c0f13 55%,#23272d);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 3px 12px rgba(0,0,0,.65),0 18px 44px rgba(0,0,0,.5)}
+.phone-scr{position:relative;width:100%;aspect-ratio:284/600;border-radius:26px;overflow:hidden;
+  background:#07090c url(/kurisu/full/idle.poster.webp) center bottom/contain no-repeat}
+/* 默认（Sprite 降级）：**以宽为准**保比例 + 底部锚点（脚底距屏底 150px，给字幕/按钮让位）。不用 height:100% 的原因：帧 321×432 ⇒ 高 600 时宽会变 446 > 屏 284，两侧会被裁。 */
+#phoneCanvas{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:100%;height:auto;display:block}
+html.xk-phone-emote #phoneCanvas{left:0;top:0;bottom:auto;transform:none;width:100%;height:100%}
+/* E-mote 接管后必须撤掉静态立绘垫底，否则会和 E-mote 人物叠成两个（线上实际出现过：上 E-mote、下 poster）；
+   但**只在 ready 之后**撤：加载期还靠这张垫底撑画面，否则手机是空屏 */
+html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}
+/* 灵动岛 / 状态栏 / 斜向反光 / Home 条 */
+.phone-island{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:88px;height:24px;border-radius:14px;background:#000;z-index:5}
+.phone-bar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;
+  font:10.5px var(--mono);color:var(--mut);padding:10px 14px 0;z-index:6}
+.phone-bar #phoneName{color:var(--acc);letter-spacing:.04em}
+.phone-glare{position:absolute;inset:0;pointer-events:none;z-index:4;
+  background:linear-gradient(115deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 38%)}
+.phone-home{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:104px;height:4px;border-radius:2px;background:rgba(255,255,255,.35);z-index:6}
+/* 屏底两行字幕（半透明黑底白字） */
+.phone-cap{position:absolute;left:0;right:0;bottom:108px;padding:0 14px;z-index:6}
+.phone-cap span{display:block;font:12.5px/1.5 var(--sans);color:#fff;background:rgba(0,0,0,.55);
+  border-radius:8px;padding:4px 8px;max-height:3em;overflow:hidden}
+.phone-live{position:absolute;left:0;right:0;bottom:86px;display:flex;align-items:center;gap:8px;
+  justify-content:center;z-index:6;font:10.5px var(--mono);color:var(--mut)}
+/* 屏底玻璃胶囊按钮行（4×44 圆） */
+.phone-btns{position:absolute;left:0;right:0;bottom:16px;display:flex;gap:8px;justify-content:center;z-index:7}
+.phone-btns button{width:44px;height:44px;border-radius:50%;font:17px var(--sans);color:var(--txt);cursor:pointer;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
+.phone-btns button:hover,.phone-btns button:active{color:var(--acc);border-color:var(--acc);background:rgba(127,212,216,.14)}
+.phone-btns button.off{opacity:.45}
+.phone-btns button.lit{box-shadow:0 0 12px rgba(127,212,216,.65);border-color:var(--acc)}
+/* 窄屏（<980px）：不再整块隐藏——默认只出一条**竖直静态立绘**（不加载 E-mote/WebGL），点一下放大。
+   理由：手机上 E-mote 要跑 WebGL 模型（内存/耗电），但"完全看不见她"也不符合站点气质。 */
+@media (max-width:980px){
+  .phone{display:block;right:8px;bottom:62px;top:auto;transform:none;width:74px;padding:4px;
+    border-radius:16px;opacity:.94;transition:width .18s ease,right .18s ease}
+  .phone .phone-scr{aspect-ratio:284/600;border-radius:12px;background-size:cover;background-position:center top;background-color:#07090c}
+  .phone #phoneCanvas{display:none!important}
+  .phone .phone-bar,.phone .phone-island,.phone .phone-cap,.phone .phone-live,.phone .phone-btns,.phone .phone-home{display:none!important}
+  html.xk-phone-open .phone{right:50%;bottom:50%;transform:translate(50%,50%);width:min(76vw,38vh);z-index:80;
+    border-radius:30px;padding:8px;opacity:1;box-shadow:0 0 0 100vmax rgba(4,7,10,.74),0 24px 64px rgba(0,0,0,.6)}
+  html.xk-phone-open .phone .phone-bar{display:flex!important}
+  html.xk-phone-open .phone .phone-cap,html.xk-phone-open .phone .phone-live{display:block!important}
+}
+@media (prefers-reduced-motion:reduce){
+  .term-live i,.tcursor,.attk .cell.fire,.phone.live .phone-live .bars2 i{animation:none}
+}
+
+  /* ★ 生产站差异（唯一一处 CSS 新增，值逐字照抄上面的 .dock button 三条）：
+     demo 的导航是 <button data-v=…>（它自己的 JS 切 view），生产页换成 <a href="真路由">，
+     所以要给 .dock a 一组同样的外观值。demo 自己的元素渲染结果零变化。 */
+  .dock a{display:flex;align-items:center;background:none;border:1px solid transparent;
+    color:var(--mut);font:13px var(--sans);padding:7px 10px 7px 8px;border-radius:0 9px 9px 0;cursor:pointer;
+    text-align:left;white-space:nowrap;text-decoration:none}
+  .dock a.on{color:var(--acc);border-color:var(--line2);background:rgba(57,208,216,.1);font-weight:500}
+  .dock a:hover{color:var(--txt)}
+  /* ★窗口 Q（2026-10-16）移动端硬伤 3（配对修复）：demo 那份 980px 加高规则写在
+     `.dock button` 上，生产页的元素是 <a> ⇒ 选择器不命中，必须给同一组值。
+     值 = demo 的 `.dock button{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}`。 */
+  @media (max-width:980px){
+    /* ★批次 D（2026-10-16 站主：“导航栏放到头上面好”）：≤980px 导航改到头部
+       （头像卡下方一行）；桌面（>980px）左侧竖排一字不动。配色/字体零改动。 */
+    .dock{left:0;right:0;top:86px;bottom:auto;transform:none;flex-direction:row;max-width:none;
+      overflow-x:auto;border-radius:0 0 14px 0}
+    .dock{gap:4px;padding:6px}
+    .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
+  }

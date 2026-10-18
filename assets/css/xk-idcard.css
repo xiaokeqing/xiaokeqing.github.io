@@ -1,0 +1,197 @@
+
+  /* 左上角：她的头像卡片（圆角方形卡片头 + 两个小按钮竖排）
+     值只新增这一组，不改任何既有配色/字体/背景（站主点名的"头像卡片"这一处新增） */
+  .xk-idcard{position:fixed;left:10px;top:14px;z-index:61;display:grid;grid-template-columns:42px minmax(0,1fr);
+    align-items:center;gap:9px;width:146px;padding:8px 10px 7px;
+    background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+  .xk-idmeta{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .xk-idsub{font:8.5px/1 var(--mono,monospace);letter-spacing:.05em;text-transform:uppercase;color:var(--mut,#D2CBBD);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .xk-idstat{grid-column:1/-1;display:flex;align-items:center;gap:6px;padding-top:6px;margin-top:1px;
+    border-top:1px solid var(--line,rgba(255,246,235,.15));font:10.5px/1.2 var(--sans,sans-serif);color:var(--mut,#D2CBBD)}
+  .xk-idstat .dots{margin-left:auto;display:flex;gap:3px;flex:none}
+  .xk-idstat .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,246,235,.22);display:block}
+  .xk-idstat .dots i.on1{background:#F2A6B0}.xk-idstat .dots i.on2{background:#9FD8E6}
+  .xk-idstat .dots i.on3{background:#E8B45A}
+  .xk-idcard-av{width:42px;height:42px;flex:none;padding:0;cursor:pointer;display:block;
+    border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:10px;overflow:hidden;
+    background:#E8ECEF;line-height:0}
+  .xk-idcard-av canvas{width:42px;height:42px;display:block}
+  /* ★2026-10-17 站主口径：头像就单纯一个头像，头像下面写名字 */
+  .xk-idname{font:600 12.5px/1.15 var(--sans,sans-serif);letter-spacing:.02em;
+    color:var(--txt,#FAF7F0);user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* ★2026-10-17 站主口径：功能文字全写到左下角，做成一行文字钮（不再用认不出的图标） */
+  /* ★2026-10-17 站主口径（m06282）：功能钮跟导航一样**竖着**排，别摊成一横条挤在底部。
+   >980px：左栏三块（头像卡 → 导航 → 功能钮）由 idcard 里的 stackRail() 统一竖排并垂直居中；
+   ≤980px：退回底部横排（手机横向空间比纵向值钱）。 */
+  .xk-idcard-col{position:fixed;left:10px;bottom:14px;z-index:63;display:flex;flex-direction:column;gap:5px;width:146px}
+  .xk-idcard-btn{width:100%;min-width:0;height:23px;padding:0 4px;cursor:pointer;font-size:11px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:8px;
+    background:rgba(0,0,0,.22);color:var(--txt,#FAF7F0)}
+  /* ★必须留着这一条：上面的 display:flex 会盖掉浏览器对 [hidden] 的 display:none ⇒ 登录按钮会对访客露出来 */
+  .xk-idcard-btn[hidden]{display:none}
+  .xk-idcard-btn:hover{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8)}
+  /* 登录键单独拉成整行文字钮：站主要"看得见的登录按键"，图标钮认不出来 */
+  .xk-idcard-col #xkLoginBtn{height:23px;font-size:11px;letter-spacing:.02em;gap:4px}
+  .xk-idcard-btn[aria-pressed="true"]{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8);
+    background:rgba(57,208,216,.12)}
+  .xk-idcard-btn:focus-visible,.xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
+  /* 给她让位：既有左侧 dock 下移（仅 >980px；窄屏 dock 在底部，规则在下面那条媒体查询里复位） */
+  body.xk-has-idcard .dock{top:88px}
+  .xk-idcap{position:fixed;left:14px;bottom:52px;top:auto;z-index:62;max-width:min(430px,calc(100vw - 28px));
+    font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0);
+    background:var(--solid,rgba(48,45,41,.94));border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:10px;padding:6px 9px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .xk-idcap.on{opacity:1}
+  .xk-idpanel{position:fixed;left:96px;top:88px;z-index:63;width:252px;display:none;
+    background:var(--solid,rgba(48,45,41,.96));border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:12px;padding:10px 11px;box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(4px);
+    font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0)}
+  .xk-idpanel.open{display:block}
+  .xk-idpanel h4{font:600 12px/1.4 var(--sans,sans-serif);margin-bottom:6px}
+  .xk-idpanel .xk-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .xk-idpanel .xk-chip{font:11px/1.4 var(--sans,sans-serif);padding:3px 8px;border-radius:99px;cursor:pointer;
+    border:1px solid var(--line2,rgba(255,246,235,.28));background:rgba(0,0,0,.2);color:var(--mut,#D2CBBD)}
+  .xk-idpanel .xk-chip:hover,.xk-idpanel .xk-chip.on{color:var(--acc,#7FD4D8);border-color:var(--acc,#7FD4D8)}
+  .xk-idpanel .xk-note{font:10.5px/1.5 var(--mono,monospace);color:var(--mut,#D2CBBD);margin-top:2px}
+  .xk-idpanel .xk-close{position:absolute;right:7px;top:5px;background:none;border:0;cursor:pointer;
+    color:var(--mut,#D2CBBD);font-size:13px;line-height:1;padding:2px}
+  /* ★2026-10-17 站主口径：账号 + 密码登录（只有站主能用，不开注册、不做多用户） */
+  .xk-login{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;
+    background:rgba(4,7,10,.62);backdrop-filter:blur(3px)}
+  .xk-login.open{display:flex}
+  .xk-login-card{width:min(348px,calc(100vw - 36px));padding:18px 18px 14px;border-radius:14px;
+    background:var(--solid,rgba(48,45,41,.97));border:1px solid var(--line2,rgba(255,246,235,.28));
+    box-shadow:0 24px 70px rgba(0,0,0,.6);color:var(--txt,#FAF7F0);font:13px/1.6 var(--sans,sans-serif)}
+  .xk-login-card h3{font:600 14.5px/1.4 var(--sans,sans-serif);margin-bottom:3px}
+  .xk-login-hd{font:11.5px/1.55 var(--mono,monospace);color:var(--mut,#D2CBBD);margin-bottom:13px}
+  .xk-login-card label{display:block;font:11.5px/1.5 var(--sans,sans-serif);color:var(--mut,#D2CBBD);margin:0 0 4px}
+  .xk-login-card input{width:100%;box-sizing:border-box;margin:0 0 10px;padding:9px 11px;border-radius:9px;
+    background:rgba(0,0,0,.26);border:1px solid var(--line2,rgba(255,246,235,.28));color:var(--txt,#FAF7F0);
+    font:13px/1.5 var(--sans,sans-serif);outline:none}
+  .xk-login-card input:focus-visible{border-color:var(--acc,#7FD4D8);outline:2px solid var(--acc,#7FD4D8);outline-offset:1px}
+  .xk-login-row{display:flex;gap:8px;align-items:center;margin-top:3px}
+  .xk-login-sub{flex:1;height:35px;border:0;border-radius:999px;cursor:pointer;
+    font:600 13px/1 var(--sans,sans-serif);background:var(--acc,#7FD4D8);color:#04282b}
+  .xk-login-sub[disabled]{opacity:.55;cursor:default}
+  .xk-login-x{height:35px;padding:0 15px;border-radius:999px;cursor:pointer;
+    background:rgba(0,0,0,.22);border:1px solid var(--line2,rgba(255,246,235,.28));color:var(--mut,#D2CBBD);
+    font:12px/1 var(--sans,sans-serif)}
+  .xk-login-err{min-height:17px;margin-top:9px;font:11.5px/1.5 var(--sans,sans-serif);color:var(--bad,#E8837B)}
+  .xk-login-who{font:11px/1.5 var(--mono,monospace);color:var(--mut,#D2CBBD);margin-top:9px}
+  @media (max-width:980px){
+    /* ★批次 D（2026-10-16）：窄屏导航已改到头部（头像卡下方），这里必须给同一个 86px ——
+       原来写 top:auto 会把 DOCK_CSS 里那条（特异性更低）压掉，实测 dock 会贴到 top=0 并压住头像卡。 */
+    body.xk-has-idcard .dock{top:100px}
+    .xk-idcard-av{width:56px;height:56px}
+    .xk-idcard-av canvas{width:56px;height:56px}
+    .xk-idcard-btn{height:30px;font-size:12px}
+    /* 窄屏把功能条摊成一行（头像右边）：竖排在手机上会压住导航 */
+    .xk-idcard-col{flex-direction:row;width:auto;max-width:calc(100vw - 28px);left:14px;bottom:14px;gap:6px}
+.crt-sub{bottom:calc(env(safe-area-inset-bottom,0px) + 54px)}
+  .xk-idcard-btn{width:auto;min-width:54px;height:26px;padding:0 10px;font-size:11.5px}
+    .xk-idcard-col #xkLoginBtn{width:auto;height:30px;font-size:12px}
+    .xk-idcap{bottom:58px;top:auto}
+    .xk-idpanel{left:6px;bottom:52px;top:auto}
+  }
+  /* ★批次 ②：主页底部对话输入栏（第 1 期）
+     只新增这一组值；沿用既有变量（--solid/--line2/--txt/--mut/--acc/--mono/--sans），不引入新配色。
+     SSR 一律带 [hidden]（服务端不判断登录态）⇒ 由脚本在 `__xkAdmin.allowed()` 为真时摘掉；[hidden] 规则必须留住。 */
+  .xk-askbar{position:fixed;bottom:14px;z-index:59;display:flex;align-items:center;gap:8px;
+    width:min(640px,calc(100vw - 132px));margin-left:calc(-0.5 * min(640px,calc(100vw - 132px)));
+    min-height:44px;padding:7px 8px 7px 12px;background:var(--solid,rgba(48,45,41,.9));
+    border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:999px;
+    box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+  .xk-askbar[hidden]{display:none}
+  .xk-askbar input{flex:1;min-width:0;background:rgba(0,0,0,.22);border:1px solid var(--line2,rgba(255,246,235,.28));
+    border-radius:999px;color:var(--txt,#FAF7F0);font:13px/1.5 var(--sans,sans-serif);padding:8px 13px;outline:none}
+  .xk-askbar input::placeholder{color:var(--mut,#D2CBBD)}
+  .xk-askbar input:focus-visible{border-color:var(--acc,#7FD4D8)}
+  .xk-askbar-count{flex:none;font:11px var(--mono,monospace);color:var(--mut,#D2CBBD)}
+  .xk-askbar button{flex:none;background:var(--acc,#7FD4D8);border:0;color:#04282b;font-weight:600;
+    font:600 13px/1 var(--sans,sans-serif);padding:0 16px;height:34px;border-radius:999px;cursor:pointer}
+  .xk-askbar button:hover{filter:brightness(1.08)}
+  .xk-askbar button:focus-visible,.xk-askbar input:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
+  /* ⚠ 这条 @media 必须在上面那组 .xk-askbar 规则**之后**（实测踩过：写在前面会被基础规则压掉 ——
+     窄屏表现为栏左边缘 -111px、字号仍 13px、与 .dock 重叠）。
+     窄屏：输入栏贴底铺满（dock 在左下、她在中下，两者此时不重叠）⇒ margin-left 复位。 */
+  /* ============================================================
+     ★M1（2026-10-18 站主口述）手机顶栏：导航贴顶 + 头像卡一行（箭头在左、名字在头像下）
+     + 功能钮收进头像（默认收起）。桌面一律不受影响：下面所有规则都在 @media (max-width:980px) 里。
+     为什么要收：小屏上“头像卡 + 导航 + 功能条”三块各占一层，首屏正文被压到第二屏（站主截图）。 */
+  .xk-idfold{display:none}
+  @media (max-width:980px){
+    /* ① 导航贴顶（原 top:100px）：横排、可横滑、带毛玻璃底 */
+    body.xk-has-idcard .dock{
+      top:0; left:0; right:0; width:auto; height:auto;
+      flex-direction:row; align-items:center; gap:4px;
+      padding:8px 10px; border-radius:0 0 12px 12px;
+      overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;
+      background:linear-gradient(180deg,rgba(9,11,14,.92),rgba(9,11,14,.72));
+      backdrop-filter:blur(10px);
+    }
+    body.xk-has-idcard .dock .brand{display:none}
+    /* ★M5：子项不允许被压缩（原来 flex 默认 shrink:1→文字被挤成两行、项与项重叠），
+       容器改为 nowrap + 横滑；父容器的 flex-wrap 也要归零，否则宽屏断点传下来的 wrap:wrap 会生效。 */
+    body.xk-has-idcard .dock{flex-wrap:nowrap}
+    body.xk-has-idcard .dock > *{flex:0 0 auto}
+    body.xk-has-idcard .dock a{white-space:nowrap;padding:6px 10px;font-size:13px}
+    /* ② 头像卡：一行，箭头在左；名字/状态在头像下方 */
+    .xk-idcard{
+      top:52px; left:10px; right:auto; bottom:auto;
+      /* ★M2：两列 —— 左列箭头（占两行高），右列上面头像、下面名字与状态。
+         用 grid-template-areas 而不靠源码顺序，否则名字会掉到箭头下面。 */
+      display:grid;
+      grid-template-columns:44px auto;
+      grid-template-areas:"av fold" "meta fold" "stat fold";
+      grid-row-gap:1px; align-items:center; justify-items:start;
+      gap:0 8px; padding:6px 10px 6px 4px;
+      /* ★M3：收到内容宽（原桌面版有固定 146px 左栏宽），并加深底色 ——
+         否则径向发展会把卡片拉到 200px，名字跟头像对不齐；透明底会看到正文从卡片里透出来。 */
+      width:max-content; max-width:calc(100vw - 20px);
+      background:rgba(9,11,14,.92); backdrop-filter:blur(10px);
+      border-radius:14px; border:1px solid var(--line2,rgba(255,246,235,.16));
+    }
+    .xk-idfold{grid-area:fold;align-self:center;justify-self:end}
+    .xk-idcard-av{grid-area:av}
+    .xk-idmeta{grid-area:meta}
+    .xk-idstat{grid-area:stat}
+    .xk-idfold{
+      display:flex; align-items:center; justify-content:center;
+      width:22px; height:44px; padding:0; cursor:pointer;
+      background:transparent; border:0; color:var(--mut,#D2CBBD);
+      font:13px/1 var(--mono,monospace); transition:transform .18s ease;
+    }
+    .xk-idcard.open .xk-idfold{transform:rotate(180deg);color:var(--acc,#7FD4D8)}
+    .xk-idcard-av{width:44px;height:44px}
+    .xk-idcard-av canvas{width:44px;height:44px}
+    .xk-idmeta{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+    .xk-idname{font-size:13px}
+    .xk-idsub{font-size:9.5px;letter-spacing:.04em}
+    /* ★M4：小屏上隐藏状态行（“待命 + 五个点”与手机里的 READY/待命 重复），
+       卡片只剩「箭头 + 头像 + 名字」三件，高度从 145px 降到 ~96px，不压正文标题。 */
+    .xk-idstat{display:none}
+    /* ③ 功能栏收起：默认 display:none，展开时贴在头像卡下面 */
+    .xk-idcard-col{display:none}
+    /* ★M6：展开栏**竖排**、紧贴头像卡下沿（卡片 top:52 + 高度 ~96 → 148）。
+       原来是横排且 top:164，与卡片之间漏出一道空隙，看上去像漂在正文上。 */
+    .xk-idcard.open + .xk-idcard-col{
+      display:flex; flex-direction:column; align-items:stretch; flex-wrap:nowrap; gap:4px;
+      position:fixed; left:10px; top:148px; right:auto; bottom:auto;
+      margin-top:0; width:auto; min-width:132px; max-width:calc(100vw - 20px);
+      padding:8px; border-radius:12px;
+      background:rgba(9,11,14,.94); backdrop-filter:blur(10px);
+      border:1px solid var(--line2,rgba(255,246,235,.22)); z-index:80;
+    }
+    /* ④ 右上圆形小头像在手机上隐藏（与左上头像卡重复） */
+    .holo-bubble{display:none!important}
+    /* ⑤ 正文让出顶栏（导航 44 + 头像卡 58 + 间距） */
+    body.xk-has-idcard .main{padding-top:156px!important}
+    /* ⑥ 输入栏仍贴底（功能栏已收进头像，底部不再占位） */
+    .xk-askbar{left:10px;right:10px;bottom:16px;margin-left:0;padding:6px 6px 6px 10px;gap:6px}
+    .xk-askbar input{font-size:16px}       /* ≥16px：iOS 聚焦不放大整页 */
+    .xk-askbar-count{display:none}         /* 手机上计数让位给输入框（长度仍按 600 截） */
+    .xk-askbar button{padding:0 12px}
+  }

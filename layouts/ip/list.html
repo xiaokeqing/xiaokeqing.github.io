@@ -1,0 +1,503 @@
+{{- /* ============================================================================
+   /ip/ = 「这个 IP 干过什么」（个人版 AbuseIPDB）
+   ----------------------------------------------------------------------------
+   这一页只有一个功能：输入一个 IPv4，把**我们自己的日志**里跟它有关的记录摊开。
+   数据只有一个来源：GET /api/public/ip?q=<ip>（后端 PublicIpProfileService 聚合
+   告警 + 蜜罐会话 + 处置留痕 + GeoIP）。
+
+   三条口径直接写进页面，不做美化：
+     · 取不到就写「读不到（原因）—— 不补数」：缺失项一律 null，不写 0、不估、不猜；
+     · 只回答这一个 IP：不按网段/ASN 扩张，也不把别人的记录混进来；
+     · 口令只给结构（"6 位·纯数字·弱口令"），原文一个字都不出现。
+
+   外壳约定同 /redteam/：<script 标签恰好两处（/js/xk-saver.js + 页尾内联），
+   不引外部字体/CDN；类名复用 .screen/.screen-hd/.screen-bd/.mod/.mod-hd/.mod-bd/.t/.led/.sync/.tag，
+   只补本页 .ipp-* 规则。
+   ============================================================================ */ -}}
+{{- $v := "ip" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源 */
+.ipp-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.ipp-back:hover{color:#bfe3d0}
+.ipp-bd{display:flex;flex-direction:column;gap:14px}
+.ipp-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.ipp-lead b{color:#cfe9f5;font-weight:600}
+.ipp-lead code,.ipp-p code,.ipp-note code,.ipp-kv code,.ipp-tbl code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.ipp-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ipp-in{flex:1 1 260px;min-width:220px;background:rgba(0,0,0,.35);border:1px solid rgba(160,220,240,.28);border-radius:7px;color:#eaf6ff;font-family:ui-monospace,Consolas,monospace;font-size:13px;padding:8px 11px;outline:none}
+.ipp-in::placeholder{color:rgba(255,255,255,.32)}
+.ipp-in:focus{border-color:rgba(160,220,240,.62)}
+.ipp-go{background:none;border:1px solid rgba(160,220,240,.4);color:#cfe9f5;border-radius:7px;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:8px 16px;cursor:pointer;flex:none}
+.ipp-go:hover{border-color:rgba(160,220,240,.68);color:#eaf6ff}
+.ipp-go[disabled]{opacity:.45;cursor:default}
+.ipp-hint{margin:9px 0 0;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.45)}
+.ipp-cards{display:flex;flex-wrap:wrap;gap:10px}
+.ipp-card{flex:1 1 150px;min-width:150px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.22)}
+.ipp-card .k{display:block;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);font-family:ui-monospace,Consolas,monospace}
+.ipp-card .n{display:block;margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:20px;line-height:1.2;color:#eaf6ff;font-weight:600;word-break:break-all}
+.ipp-card .d{display:block;margin-top:3px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.45)}
+.ipp-card.bad .n{color:#E8837B}
+.ipp-card.good .n{color:#6FD3A0}
+.ipp-card.warn .n{color:#E8B45A}
+.ipp-card.na .n{font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);font-weight:500}
+.ipp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ipp-kv{width:100%;border-collapse:collapse;font-size:12.5px}
+.ipp-kv th,.ipp-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.ipp-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap;width:132px}
+.ipp-kv td{color:rgba(255,255,255,.8);line-height:1.9}
+.ipp-kv td.f{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#e8f3f8}
+.ipp-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:520px}
+.ipp-tbl th,.ipp-tbl td{text-align:left;padding:6px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.ipp-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.ipp-tbl td.k{color:#d7e7ef}
+.ipp-tbl td.num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.82);white-space:nowrap}
+.ipp-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.76)}
+.ipp-p:last-child{margin-bottom:0}
+.ipp-p b{color:#eaf6ff;font-weight:600}
+.ipp-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.ipp-note:first-child{margin-top:0}
+.ipp-note b{color:rgba(255,255,255,.76);font-weight:600}
+.ipp-null{color:#E8B45A}
+.ipp-ok{color:#6FD3A0;font-weight:600}
+.ipp-bad{color:#E8837B;font-weight:600}
+.ipp-na{color:rgba(255,255,255,.42)}
+.ipp-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
+.ipp-pre .c{color:rgba(255,255,255,.45)}
+.ipp-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
+.ipp-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.55)}
+.ipp-notes li{margin:2px 0}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="ip">
+<section class="view on" id="v-ip">
+  <a class="ipp-back" href="/api/">← 公开接口 /api/</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 这个 IP 干过什么 <em class="ops-en">IP-PROFILE</em></span>
+      <span class="sync" id="ippSync">● 待查询（数据来自本机日志，取不到就写读不到）</span>
+    </div>
+    <div class="screen-bd ipp-bd">
+
+      <p class="ipp-lead">
+        输入一个 <b>IPv4 地址</b>，把<b>我们自己的告警 / 蜜罐 / 处置留痕</b>里跟它有关的记录摊开：
+        首末出现时间、事件数、行为类型、碰过哪些蜜罐端口、试过的口令<b>结构</b>、GeoIP 与封禁状态。
+        它<b>不是</b>全网情报库 —— 只回答「这个地址在这台机器上留下了什么」；
+        任何一项读不到就写 <b>读不到（原因）—— 不补数</b>，不按网段或 ASN 猜。
+      </p>
+      <noscript><p class="ipp-noscript">本页要发一次 GET 请求才能出结果，关掉 JavaScript 时只有一个输入框 ——
+        不会有任何数字。静态部分（口径、边界、复现命令）照常可读。</p></noscript>
+
+      <!-- ============ ① 查询 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>查一个地址<span class="tag">只读 · GET · 不封禁、不写任何东西</span></div>
+        <div class="mod-bd">
+          <form class="ipp-form" id="ippForm" method="get" action="">
+            <input class="ipp-in" id="ippQ" name="q" type="text" inputmode="numeric"
+                   autocomplete="off" spellcheck="false"
+                   placeholder="例如 45.155.205.233" aria-label="要查询的 IPv4 地址">
+            <button class="ipp-go" id="ippGo" type="submit">查询</button>
+          </form>
+          <p class="ipp-hint">
+            只接受 IPv4 字面量（四段十进制，每段 0–255）。IPv6 / 域名 / 带端口 / 网段写法一律不查 ——
+            后端会直接 400，页面也不替它"猜一个最像的"。内网与保留地址同样拒答（原因见最后一块）。
+            查询会写进地址栏的 <code>?q=</code>，可以直接把这一页的链接发给别人复核。
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ② 结果 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>结果 · 这个地址在本机的足迹<span class="tag" id="ippTag">未查询</span></div>
+        <div class="mod-bd" id="ippOut">
+          <p class="ipp-p ipp-na" id="ippEmpty">
+            还没查。上面输入一个 IPv4 后回车（或点「查询」）——
+            结果卡会逐项标出哪个数读到了、哪个读不到、以及读不到的原因。
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ③ 口径 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径 · 每个数从哪来、哪些只是样本<span class="tag">先看这块，再看数字</span></div>
+        <div class="mod-bd">
+          <div class="ipp-scroll">
+            <table class="ipp-kv">
+              <tbody>
+                <tr><th>事件数 events</th><td>
+                  <b>精确值</b>，来自索引聚合（<code>track_total_hits</code>），窗口默认 <b>最近 168 小时（7 天）</b>。
+                  更早的记录这个端点<b>读不到</b>（不是"没发生"）—— 窗口外的历史不会出现在任何一项里。
+                </td></tr>
+                <tr><th>firstSeen / lastSeen</th><td>
+                  窗口内最早 / 最晚的一条记录的<b>时间戳</b>，同样来自索引聚合的 min/max，是精确值。
+                  只在这个 IP 的窗口内有记录时才给；没有就 null。
+                </td></tr>
+                <tr><th>byKind / ports / credStructure</th><td>
+                  <b>只基于最近取回的样本</b>（默认最多 300 条，见结果卡里
+                  <code>sources.indexer.sampled</code>）。样本被截断时
+                  <code>sources.indexer.truncated=true</code>，页面会把"这只是样本"写在卡片上 ——
+                  样本里的条数<b>不是</b>总量，别拿它跟 events 对齐。
+                </td></tr>
+                <tr><th>credStructure</th><td>
+                  只给<b>结构</b>："6 位·纯数字·弱口令"这种。后端从蜜罐日志里抽出
+                  <code>用户名 / 口令</code> 之后<b>立刻</b>换成结构描述，
+                  <b>原文字符一个都不进响应体</b>（出关闸门还会再隐一遍，双重保险）。
+                </td></tr>
+                <tr><th>geo</th><td>
+                  GeoIP 库的查询结果（国家 ISO2 + ASN + AS 组织）。库里查不到、或只有 ASN 没有国家，
+                  就写 <b>null</b> 并在 notes 里说明 —— <b>不按网段或经验补一个国家</b>。
+                </td></tr>
+                <tr><th>banned</th><td>
+                  应用侧处置留痕（<code>data/blocked-ips.json</code>）：封过几次、最后一次是什么时候、
+                  现在还封着没有。留痕文件读不到时 <code>banned=null</code>，而<b>不是</b>
+                  <code>count=0</code> —— "读不到"与"没封过"是两件事。
+                </td></tr>
+                <tr><th>为什么会有 null</th><td>
+                  三类：数据源没接入（<code>NOT_WIRED</code>）、接入但这次读失败（<code>QUERY_FAILED</code> /
+                  <code>UNREADABLE</code>）、源里确实没有这个地址的记录（<code>NOT_FOUND</code>）。
+                  三种都会写进 <code>notes[]</code> 与 <code>sources.*.status</code>，页面逐条贴出来。
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ipp-note"><b>一句话口径</b>：宁可少给一个数，也不给一个看起来像真的数。
+            缺失一律 null + 原因；有数字就说明它是精确值还是样本。</p>
+        </div>
+      </div>
+
+      <!-- ============ ④ 边界 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>边界 · 不公开什么、拒答什么<span class="tag">公开的是可复核的部分</span></div>
+        <div class="mod-bd">
+          <p class="ipp-p">
+            <b>公开</b>：这个 IP 的首末时间、事件总数、行为类型计数、碰过的端口、口令<b>结构</b>、
+            GeoIP、封禁计数与状态、以及每个源接没接上。<br>
+            <b>不公开</b>：任何口令原文、应用侧日志原文、防护规则的正则与阈值、别的来源 IP 的数据
+            （同一个响应里<b>只有 q 这一个地址</b>的记录）。<br>
+            <b>拒答</b>：非 IPv4 字面量；内网 / 保留 / 链路地址（<code>10/8</code>、<code>192.168/16</code>、
+            <code>172.16/12</code>、<code>127/8</code>、<code>169.254/16</code>、<code>100.64/10</code> 等）。
+            后者在公开口径里统一写作「内网/未知」，多个不同的内网地址会共用同一个输入 ——
+            按 IP 查只会给出误导性的答案，所以直接 400。<br>
+            <b>不做的</b>：不封禁、不触发任何处置动作、不写任何文件；这个端点是一次纯读。
+          </p>
+          <p class="ipp-note">
+            同一套口径问「现在有什么告警」看 <a href="/alerts/" style="color:#bfe3d0">/alerts/</a>；
+            看「哪个来源的故事完整」看 <a href="/status/" style="color:#bfe3d0">/status/</a>；
+            端点清单看 <a href="/api/" style="color:#bfe3d0">/api/</a>。
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ⑤ 复现 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>自己复核 · 三条 curl<span class="tag">只读 · 不触发处置</span></div>
+        <div class="mod-bd">
+<pre class="ipp-pre"><span class="c"># ① 查一个有记录的地址（把 45.155.205.233 换成你想查的）</span>
+curl -s 'https://demo.xiaokeqing.cn/api/public/ip?q=45.155.205.233' | head -c 600
+
+<span class="c"># ② 对照：非法 IPv4 → 400 + 机读 reason（不是 500，也不是空对象）</span>
+curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/ip?q=999.1.1.1'
+
+<span class="c"># ③ 对照：内网地址同样 400（不拿它去查内网主机的活动）</span>
+curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/ip?q=10.0.0.1'</pre>
+          <p class="ipp-note">
+            响应外层统一是 <code>{code, message, data}</code>；缺失项的 <code>data.*</code> 是 null，
+            原因在 <code>data.notes[]</code> 里逐条写着 —— 页面上的「读不到（原因）」就是它的原文。
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+<script>
+(function () {
+  'use strict';
+  /* 只做一件事：把 GET /api/public/ip?q=<ip> 的结果摊开。
+     口径三条（与后端一致，任何一条不满足就不写数字）：
+       1. 取不到就写「读不到（原因）—— 不补数」，绝不写 0 或"约"；
+       2. 只展示 q 这一个地址的数据，不做任何扩张；
+       3. 口令只渲染结构（backend 已经换成结构，页面原样显示，不再拼原文）。 */
+  var TIMEOUT = 12000;
+  var RE_V4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  var meta = document.querySelector('meta[name="wb-api"]');
+  var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  function pad2(n) { return ('0' + n).slice(-2); }
+  function clock(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+  function isV4(s) {
+    var m = RE_V4.exec(String(s || '').trim());
+    if (!m) return false;
+    for (var i = 1; i <= 4; i++) {
+      if (Number(m[i]) > 255) return false;
+    }
+    return true;
+  }
+  /* 读不到的统一渲染：说清是哪一项 + 原因 + 「不补数」 */
+  function miss(what, why) {
+    return '<b class="ipp-null">读不到</b>' +
+      (why ? '<span class="ipp-na">（' + esc(why) + '）</span>' : '') +
+      ' <span class="ipp-na">—— 不补数</span>';
+  }
+  function val(v, what, why) {
+    if (v === null || v === undefined || v === '') return miss(what, why);
+    return esc(v);
+  }
+  function card(k, n, d, cls) {
+    return '<div class="ipp-card' + (cls ? ' ' + cls : '') + '">' +
+      '<span class="k">' + esc(k) + '</span>' +
+      '<span class="n">' + n + '</span>' +
+      '<span class="d">' + d + '</span></div>';
+  }
+
+  function noteList(notes, sourceWhy) {
+    var out = [];
+    if (notes && notes.length) {
+      for (var i = 0; i < notes.length; i++) out.push('<li>' + esc(notes[i]) + '</li>');
+    }
+    if (!out.length && sourceWhy) out.push('<li>' + esc(sourceWhy) + '</li>');
+    return out.length ? '<ul class="ipp-notes">' + out.join('') + '</ul>' : '';
+  }
+
+  function renderError(status, json, raw) {
+    var reason = json && json.reason ? json.reason : ('HTTP ' + status);
+    var msg = json && json.message ? json.message : '';
+    var head = '<div class="ipp-cards">' +
+      card('查询结果', '<b class="ipp-bad">读不到</b>', '原因：' + esc(reason), 'na') +
+      '</div>';
+    return head +
+      '<p class="ipp-p" style="margin-top:12px"><b>读不到（' + esc(reason) + '）—— 不补数。</b> ' +
+      esc(msg || '服务端拒绝了这个查询') + '</p>' +
+      (msg ? '' : '<p class="ipp-note">原始响应片段：<code>' + esc(String(raw || '').slice(0, 200)) + '</code></p>');
+  }
+
+  function renderOk(d) {
+    var src = (d && d.sources) || {};
+    var idx = src.indexer || {}, aud = src.audit || {}, geo = src.geoip || {};
+    var idxWhy = idx.status && idx.status !== 'OK'
+      ? ('数据源状态 ' + idx.status) : null;
+    var html = [];
+
+    /* 1. 结论卡 */
+    if (d.available === true) {
+      html.push('<p class="ipp-p"><b>读到了</b>：这个地址在最近 ' + esc(d.window || '') +
+        ' 窗口内留下了 <b>' + esc(d.events) + '</b> 条记录。' +
+        '<span class="ipp-na">（窗口外更早的记录读不到 —— 不补数）</span></p>');
+    } else {
+      html.push('<p class="ipp-p"><b class="ipp-null">这次读不到索引数据</b>（' +
+        esc(d.reason || 'DATA_SOURCE_UNAVAILABLE') + '）—— <b>不补数</b>。' +
+        '「读不到」不等于「这个 IP 没干过什么」。</p>');
+    }
+
+    /* 2. 计数卡 */
+    var firstSeen = d.available === true ? d.firstSeen : null;
+    var lastSeen = d.available === true ? d.lastSeen : null;
+    var eventsN = d.available === true && d.events !== null && d.events !== undefined
+      ? esc(d.events) : miss('events', idxWhy);
+    html.push('<div class="ipp-cards">');
+    html.push(card('首见 firstSeen', val(firstSeen, 'firstSeen', idxWhy), '窗口内最早一条'));
+    html.push(card('末见 lastSeen', val(lastSeen, 'lastSeen', idxWhy), '窗口内最晚一条'));
+    html.push(card('事件总数 events', eventsN, d.window ? ('窗口 ' + esc(d.window) + ' · 精确值') : '精确值'));
+    html.push('</div>');
+
+    /* 3. 行为类型 / 端口 / 口令结构 */
+    var byKindRows = '';
+    if (d.byKind && Object.keys(d.byKind).length) {
+      Object.keys(d.byKind).forEach(function (k) {
+        byKindRows += '<tr><td class="k">' + esc(k) + '</td><td class="num">' +
+          esc(d.byKind[k]) + '</td></tr>';
+      });
+    }
+    var portRows = '';
+    if (d.ports && d.ports.length) {
+      for (var i = 0; i < d.ports.length; i++) {
+        portRows += '<tr><td class="k">' + esc(d.ports[i].port) + '</td><td class="num">' +
+          esc(d.ports[i].count) + '</td></tr>';
+      }
+    }
+    var credRows = '';
+    if (d.credStructure && d.credStructure.length) {
+      for (var j = 0; j < d.credStructure.length; j++) {
+        var c = d.credStructure[j];
+        credRows += '<tr><td class="k">' + esc(c.username || '（未解析出用户名）') + '</td><td>' +
+          esc(c.key || '') + '</td><td class="num">' + esc(c.count) + '</td></tr>';
+      }
+    }
+    html.push('<div class="ipp-scroll" style="margin-top:12px"><table class="ipp-tbl"><thead><tr>' +
+      '<th>byKind · 行为类型</th><th>条数</th></tr></thead><tbody>' +
+      (byKindRows || '<tr><td colspan="2" class="ipp-null">读不到 —— 不补数</td></tr>') +
+      '</tbody></table></div>');
+    html.push('<div class="ipp-scroll" style="margin-top:10px"><table class="ipp-tbl"><thead><tr>' +
+      '<th>ports · 碰过的端口</th><th>条数</th></tr></thead><tbody>' +
+      (portRows || '<tr><td colspan="2" class="ipp-null">读不到 —— 不补数</td></tr>') +
+      '</tbody></table></div>');
+    html.push('<div class="ipp-scroll" style="margin-top:10px"><table class="ipp-tbl"><thead><tr>' +
+      '<th>credStructure · 用户名</th><th>口令结构（原文永不出现）</th><th>次数</th></tr></thead><tbody>' +
+      (credRows || '<tr><td colspan="3" class="ipp-null">读不到 —— 不补数</td></tr>') +
+      '</tbody></table></div>');
+    html.push('<p class="ipp-note">上面三张表<b>只基于最近取回的样本</b>' +
+      (idx.sampled !== null && idx.sampled !== undefined ? ('（<code>sampled=' + esc(idx.sampled) + '</code>）') : '') +
+      (idx.truncated === true ? '，而且这次<b>被截断了</b>（<code>truncated=true</code>）—— 表中的数只是样本，不是总量。'
+                              : '。') + '</p>');
+
+    /* 4. geo / banned */
+    var geoRows = '';
+    if (d.geo) {
+      geoRows += '<tr><th>国家 country</th><td class="f">' + val(d.geo.country, 'country', 'GeoIP 只有 ASN、没有国家') + '</td></tr>';
+      geoRows += '<tr><th>ASN</th><td class="f">' + val(d.geo.asn, 'asn', 'GeoIP 里没有这个地址的 ASN') + '</td></tr>';
+      geoRows += '<tr><th>AS 组织</th><td>' + val(d.geo.asnOrg, 'asnOrg', '') + '</td></tr>';
+    } else {
+      geoRows = '<tr><td colspan="2">' + miss('geo', geo.status || geoWhy(geo)) + '</td></tr>';
+    }
+    var banRows = '';
+    if (d.banned) {
+      banRows += '<tr><th>封过几次 count</th><td class="f">' + val(d.banned.count, 'count', '') + '</td></tr>';
+      banRows += '<tr><th>最后一次 lastBannedAt</th><td class="f">' + val(d.banned.lastBannedAt, 'lastBannedAt', '留痕里没有可解析的时间') + '</td></tr>';
+      banRows += '<tr><th>现在还封着 active</th><td>' +
+        (d.banned.active === true ? '<b class="ipp-bad">是</b>'
+          : d.banned.active === false ? '<b class="ipp-ok">否（已解封或已到期）</b>'
+            : miss('active', '到期时间解析不出来，不猜是否还封着')) + '</td></tr>';
+    } else {
+      banRows = '<tr><td colspan="2">' + miss('banned', aud.status || '留痕读不到') + '</td></tr>';
+    }
+    html.push('<div class="ipp-scroll" style="margin-top:10px"><table class="ipp-kv"><tbody>' +
+      geoRows + '</tbody></table></div>');
+    html.push('<div class="ipp-scroll" style="margin-top:10px"><table class="ipp-kv"><tbody>' +
+      banRows + '</tbody></table></div>');
+
+    /* 5. notes + sources */
+    html.push('<p class="ipp-p" style="margin-top:12px"><b>notes[] · 每个 null 的原因</b></p>');
+    html.push(noteList(d.notes, null) || '<p class="ipp-note ipp-ok">没有缺失项：这个响应里所有字段都读到了。</p>');
+    html.push('<div class="ipp-scroll" style="margin-top:10px"><table class="ipp-tbl"><thead><tr>' +
+      '<th>源</th><th>状态</th><th>说明</th></tr></thead><tbody>' +
+      '<tr><td class="k">indexer 告警/蜜罐</td><td class="num">' + esc(idx.status || '-') + '</td><td>' +
+      esc(idx.source || '') + '</td></tr>' +
+      '<tr><td class="k">audit 处置留痕</td><td class="num">' + esc(aud.status || '-') + '</td><td>' +
+      esc(aud.source || '') + '</td></tr>' +
+      '<tr><td class="k">geoip 位置</td><td class="num">' + esc(geo.status || '-') + '</td><td>' +
+      esc(geo.source || '') + '</td></tr>' +
+      '</tbody></table></div>');
+
+    return html.join('');
+  }
+  function geoWhy(geo) {
+    if (geo && geo.status === 'NOT_WIRED') return 'GeoIP 库未装配';
+    if (geo && geo.status === 'NOT_FOUND') return '库里查不到这个地址';
+    if (geo && geo.status === 'LOOKUP_FAILED') return '查询异常';
+    return '未知原因';
+  }
+
+  function setSync(txt) { var s = $('ippSync'); if (s) s.textContent = '● ' + txt; }
+  function setTag(txt) { var t = $('ippTag'); if (t) t.textContent = txt; }
+
+  function run(q) {
+    var out = $('ippOut'), btn = $('ippGo');
+    if (!out) return;
+    if (!isV4(q)) {
+      out.innerHTML = '<p class="ipp-p"><b class="ipp-bad">不是 IPv4 字面量</b>：' + esc(q) +
+        ' —— 不猜、不发请求。' +
+        '<span class="ipp-na">（四段十进制，每段 0–255；IPv6 / 域名 / 带端口 / 网段都不接受）</span></p>';
+      setSync('拒绝查询：输入不是 IPv4 字面量 · ' + clock(new Date()));
+      setTag('输入非法');
+      return;
+    }
+    if (btn) { btn.disabled = true; }
+    setSync('正在查 ' + q + ' …');
+    setTag('查询中');
+
+    var init = { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store',
+                 headers: { 'Accept': 'application/json' } };
+    var ctrl = null, timer = null, t0 = Date.now();
+    if (window.AbortController) {
+      ctrl = new AbortController();
+      init.signal = ctrl.signal;
+      timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT);
+    }
+    var url = API + '/api/public/ip.js?q=' + encodeURIComponent(q);
+    fetch(url, init).then(function (res) {
+      return res.text().then(function (text) {
+        var json = null;
+        try { json = JSON.parse(text); } catch (e) { json = null; }
+        if (!res.ok) {
+          out.innerHTML = renderError(res.status, json, text);
+          setSync('读不到（HTTP ' + res.status + '）· 不补数 · ' + clock(new Date()));
+          setTag('读不到');
+          return;
+        }
+        if (!json || json.code !== 200 || !json.data) {
+          out.innerHTML = renderError(res.status, json, text);
+          setSync('读不到（响应不是约定的 {code,message,data}）· 不补数 · ' + clock(new Date()));
+          setTag('读不到');
+          return;
+        }
+        var d = json.data;
+        out.innerHTML = renderOk(d);
+        var ms = Date.now() - t0;
+        setSync('已查 ' + esc(d.query || q) + ' · ' + (d.available === true ? '读到索引数据' : '索引读不到') +
+                ' · ' + clock(new Date()) + ' · ' + ms + ' ms');
+        setTag(d.available === true ? (d.events + ' 条事件') : '读不到');
+      });
+    }).catch(function (e) {
+      var why = (e && e.name === 'AbortError')
+        ? ('超时 ' + Math.round(TIMEOUT / 1000) + 's 未返回')
+        : ('请求没到源站或被浏览器拦下：' + ((e && e.message) || e));
+      out.innerHTML = '<p class="ipp-p"><b class="ipp-bad">读不到</b>（' + esc(why) +
+        '）—— <b>不补数</b>。</p><p class="ipp-note">这一页不会用任何本地估算值填空。</p>';
+      setSync('读不到（' + why + '）· 不补数 · ' + clock(new Date()));
+      setTag('读不到');
+    }).then(function () {
+      if (timer) clearTimeout(timer);
+      if (btn) { btn.disabled = false; }
+    });
+  }
+
+  function currentQ() {
+    try {
+      var m = /[?&]q=([^&#]*)/.exec(location.search || '');
+      return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
+    } catch (e) { return ''; }
+  }
+
+  var form = $('ippForm');
+  if (form) {
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var q = ($('ippQ') && $('ippQ').value ? $('ippQ').value : '').trim();
+      try {
+        var u = new URL(location.href);
+        if (q) { u.searchParams.set('q', q); } else { u.searchParams.delete('q'); }
+        history.replaceState(null, '', u.toString());
+      } catch (e) { /* 老浏览器不支持就只查，不改地址栏 */ }
+      run(q);
+    }, false);
+  }
+  var q0 = currentQ();
+  if (q0) {
+    var box = $('ippQ');
+    if (box) box.value = q0;
+    run(q0);
+  } else {
+    setSync('待查询（数据来自本机日志，取不到就写读不到）');
+  }
+})();
+</script>
+</body>
+</html>

@@ -22,6 +22,28 @@ DEMO_HOME = os.path.join(ROOT, 'docs', 'demo-主页.html')
 DEMO_SHELL = os.path.join(ROOT, 'docs', 'demo-内容页外壳.html')
 PART = os.path.join(ROOT, 'layouts', 'partials', 'xk-demo')
 
+# ---------------------------------------------------------------- 外链资产（2026-10-18）
+# 口径：外壳里「与页面内容无关的共享运行时」（外壳 CSS / 头像卡 CSS+JS / 外壳两段 script / api-bind）
+#     从 HTML 内联搬到 assets/ 下的独立文件，页面里只留 <link> / <script src>。
+#     · 走 Hugo Pipes（resources.Get | minify | fingerprint）而不是 static/：
+#       static/ 是原样透传 = 既不压缩、也没有内容指纹；Pipes 的产物是 /css/xk.min.<sha40>.css，
+#       **文件名自带内容哈希**（改一个字节就换 URL，缓存永不错配），压缩口径与 `hugo --minify` 同一套。
+#     · ★每条外链严格落在被替换的那段内联块的**原位置**，一律不加 defer/async：
+#       执行点、执行顺序、与 DOM 的先后关系逐条不变（合并或提前都会踩 DOM 时序，见下面几处注释）。
+ASSET_JS = os.path.join(ROOT, 'assets', 'js')
+ASSET_CSS = os.path.join(ROOT, 'assets', 'css')
+
+
+def pipe_url(rel):
+    """Hugo Pipes 表达式：assets/<rel> 压缩 + 内容指纹，返回产物 URL（写进 partial 里用）。"""
+    return '{{ (resources.Get "%s" | minify | fingerprint).RelPermalink }}' % rel
+
+
+def _script_body(s):
+    """把「带 <script>/</script> 标签的整段」削成纯脚本正文。"""
+    s = re.sub(r'^\s*<script[^>]*>', '', s)
+    return re.sub(r'</script>\s*$', '', s)
+
 
 def read(p):
     with io.open(p, encoding='utf-8') as f:
@@ -5754,8 +5776,24 @@ print('场景机：A=空实验室+动态的她 / B=6 场景静帧（dwell 45~60s
 # 1) 共享头
 write(os.path.join(PART, 'head-meta.html'), HEAD_META)
 
-# 1b) ★批次 A-①：左上角头像卡（五页共用一份；自带 <style> + <script>）
-write(os.path.join(PART, 'idcard.html'), IDCARD_PARTIAL)
+# 1b) ★批次 A-①：左上角头像卡（五页共用一份；自带 <style> + 两段 <script>）
+# ★2026-10-18 外链化：<style> → assets/css/xk-idcard.css；两段 <script> → assets/js/xk-idcard-toggle.js
+#   + assets/js/xk-idcard.js。★两段**不许合并**：中间夹着 #xkIdCap / #xkIdPanel / #xkLogin 三个空容器，
+#   第二段是在解析到它们之后才执行的（合并 = 执行点提前到容器还不存在的时候，面板/登录框会拿不到节点）。
+_idc_style = block(IDCARD_PARTIAL, r'<style>(.*?)</style>', 'idcard style')
+_idc_scripts = re.findall(r'<script[^>]*>(.*?)</script>', IDCARD_PARTIAL, re.S)
+if len(_idc_scripts) != 2:
+    raise SystemExit('idcard 里的 <script> 数量变了：%d' % len(_idc_scripts))
+write(os.path.join(ASSET_CSS, 'xk-idcard.css'), _idc_style)
+write(os.path.join(ASSET_JS, 'xk-idcard-toggle.js'), _idc_scripts[0])
+write(os.path.join(ASSET_JS, 'xk-idcard.js'), _idc_scripts[1])
+_idc = re.sub(r'<style>.*?</style>',
+              '<link rel="stylesheet" href="%s">' % pipe_url('css/xk-idcard.css'),
+              IDCARD_PARTIAL, count=1, flags=re.S)
+_idc_tags = iter([u'<script src="%s"></script>' % pipe_url('js/xk-idcard-toggle.js'),
+                  u'<script src="%s"></script>' % pipe_url('js/xk-idcard.js')])
+_idc = re.sub(r'<script[^>]*>.*?</script>', lambda m: next(_idc_tags), _idc, flags=re.S)
+write(os.path.join(PART, 'idcard.html'), _idc)
 
 # 2) 主页（整份）
 write(os.path.join(ROOT, 'layouts', 'index.html'), u'''{{- /* ============================================================================
@@ -6038,9 +6076,14 @@ shell_scripts[0] = sub1(shell_scripts[0], u'if(cur && frames > 1 && !RM && t - l
                         'P0: 手机动画开关（渲染循环认它）')
 
 # 3) 外壳共享片段
+# ★2026-10-18 外链化：外壳 CSS 与外壳两段 JS 都搬进 assets/，partial 里只留 <link> / <script src>。
+#   位置一律不变（<style> 原来在 <head>、两段 <script> 原来在 idcard 之后），不加 defer。
+write(os.path.join(ASSET_CSS, 'xk.css'), shell_style + DOCK_A_CSS)
 write(os.path.join(PART, 'shell-style.html'),
-      u'{{- /* docs/demo-内容页外壳.html 的 <style> 逐字（第 7–398 行）+ 一条 <a> 伴随规则 */ -}}\n'
-      u'<style>%s%s</style>\n' % (shell_style, DOCK_A_CSS))
+      u'{{- /* 外壳共享样式 = docs/demo-内容页外壳.html 的 <style> 逐字（第 7–398 行）+ 一条 <a> 伴随规则。\n'
+      u'      ★2026-10-18：正文已搬到 assets/css/xk.css（由本生成器逐字写出），这里只留 <link>；\n'
+      u'      Hugo Pipes 压缩 + 内容指纹 → /css/xk.min.<sha40>.css。位置＝原 <style> 所在的 <head> 位置。 */ -}}\n'
+      u'<link rel="stylesheet" href="%s">\n' % pipe_url('css/xk.css'))
 write(os.path.join(PART, 'shell-chrome.html'),
       u'{{- /* 外壳常驻件（逐字）：底图两层 / demo 标识条 / 左侧 .dock / HOLO 面板 / 背景选择器。\n'
       u'      唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。\n'
@@ -6049,13 +6092,20 @@ write(os.path.join(PART, 'shell-chrome.html'),
 write(os.path.join(PART, 'shell-views.html'),
       u'{{- /* 四屏 <section class="view"> 逐字（★T27：靶场/关于两屏已删）；只有哪一屏带 .on 由参数 v 决定 */ -}}\n'
       u'{{- $v := .v -}}\n%s' % views_out)
-_script_header = (u'{{- /* 外壳的两段内联 <script> 逐字（切 view / 作战室 / 聊天 / 靶场演示 / 雪碧条播放器 / CRT 场景）。\n'
+_script_header = (u'{{- /* 外壳的两段 JS（切 view / 作战室 / 聊天 / 靶场演示 / 雪碧条播放器 / CRT 场景）。\n'
+                  u'      ★2026-10-18：两段正文已搬到 assets/js/xk-shell.js 与 assets/js/xk-scene.js（本生成器逐字写出），\n'
+                  u'      这里只留两个 <script src>。★仍是**两个文件、两个标签、原位置、无 defer**：\n'
+                  u'      第二段（scene-js，带 id）依赖「解析到它之前才出现」的 DOM，合并或提前都会改变执行点。\n'
                   u'      改动只有两类：① 素材路径 ② 站主第四批口径③允许的"行为级懒加载"（只改加载时机）。\n'
                   u'      ↓ 懒加载的逐条说明（Hugo 注释，不进产物；**别把它写成 JS 注释留在 <script> 外面** ——\n'
                   u'        那样会被当正文渲染出来，本轮踩过：像素差从 0.44% 弹到 3.59%）：'
                   + LAZY_NOTE.replace(u'*/', u'* /') + u' */ -}}\n')
+write(os.path.join(ASSET_JS, 'xk-shell.js'), _script_body(shell_scripts[0]) + u'\n')
+write(os.path.join(ASSET_JS, 'xk-scene.js'), _script_body(shell_scripts[1]) + u'\n')
 write(os.path.join(PART, 'shell-script.html'),
-      _script_header + shell_scripts[0] + u'\n' + shell_scripts[1] + u'\n')
+      _script_header
+      + u'<script src="%s"></script>\n' % pipe_url('js/xk-shell.js')
+      + u'<script id="scene-js" src="%s"></script>\n' % pipe_url('js/xk-scene.js'))
 
 # 4) 五个内容页 layout
 PAGES = [
