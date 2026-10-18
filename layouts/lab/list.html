@@ -61,8 +61,8 @@
       <div class="mod lab-hero">
         <span class="lab-dot off"></span>
         <div>
-          <p class="t2">六台靶场 · 内网在线（公网入口已撤）</p>
-          <p class="s2">Pikachu、DVWA、OWASP Juice Shop、WebGoat、DVNA、DSVW 跑在独立的内网网络 <code>labnet</code> 里：禁出网、单独 IP、各自限内存限核；
+          <p class="t2">七台靶场 · 内网在线（公网入口已撤）</p>
+          <p class="s2">Pikachu、DVWA、OWASP Juice Shop、WebGoat、WebWolf、DVNA、DSVW 跑在独立的内网网络 <code>labnet</code> 里：禁出网、单独 IP、各自限内存限核；
             公网已经没有入口——要用只能从我这边开一条 SSH 隧道进去。</p>
         </div>
         <div class="lab-cta">
@@ -104,6 +104,14 @@
           </div>
         </div>
         <div class="mod lab-card">
+          <h3>WebWolf<span class="p">:8087</span></h3>
+          <p>和 WebGoat 是<b>一套东西</b>，跑在同一个容器里：<b>WebGoat 负责学，WebWolf 负责收</b> —— 给靶场收邮件、托管你自己写的伪造页面、看外部请求回连到了没有。练「盲打」那类洞（邮件找回、SSRF 回连、XSS 外带数据）没有它就只能干看着。入口 <code>127.0.0.1:8087</code>，账号同 WebGoat <code>webgoat-user</code> / <code>webgoat</code>。</p>
+          <div class="lab-vulns">
+            <span>收信服务器</span><span>伪造邮件</span><span>SSRF 回连</span>
+            <span>XSS 外带</span><span>页面托管</span><span>请求日志</span>
+          </div>
+        </div>
+        <div class="mod lab-card">
           <h3>DVNA<span class="p">:8085</span></h3>
           <p>Node/Express 全栈靶场，服务端逻辑占比高，适合看<b>同一套代码</b>里前台与 API 两侧的洞。登录 <code>admin</code> / <code>admin123</code>。</p>
           <div class="lab-vulns">
@@ -124,15 +132,17 @@
       <div class="mod" id="how">
         <div class="mod-hd"><span class="led"></span>怎么进去<span class="tag">只有我能开</span></div>
         <div class="mod-bd">
-          <p class="lab-kv">六个靶场只监听服务器自己的 <code>127.0.0.1</code>，公网没有任何路径能到它们。要练的时候我在这边做一条隧道：</p>
-          <pre class="lab-pre"><span class="c"># 在我本机执行（六个端口一次全带出来）</span>
+          <p class="lab-kv">七个靶场只监听服务器自己的 <code>127.0.0.1</code>，公网没有任何路径能到它们。要练的时候我在这边做一条隧道：</p>
+          <pre class="lab-pre"><span class="c"># 在我本机执行（七个端口一次全带出来）</span>
 ssh -N -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8083:127.0.0.1:8083 \
-       -L 8084:127.0.0.1:8084 -L 8085:127.0.0.1:8085 -L 8086:127.0.0.1:8086 secagent-srv2
+       -L 8084:127.0.0.1:8084 -L 8085:127.0.0.1:8085 -L 8086:127.0.0.1:8086 \
+       -L 8087:127.0.0.1:8087 secagent-srv2
 <span class="c"># 然后浏览器打开</span>
 http://127.0.0.1:8081/   <span class="c"># Pikachu</span>
 http://127.0.0.1:8082/   <span class="c"># DVWA（首次进要点 Create/Reset Database）</span>
 http://127.0.0.1:8083/   <span class="c"># Juice Shop</span>
 http://127.0.0.1:8084/   <span class="c"># WebGoat（webgoat-user / webgoat）</span>
+http://127.0.0.1:8087/   <span class="c"># WebWolf（同一套账号；会自动跳到 /WebWolf/）</span>
 http://127.0.0.1:8085/   <span class="c"># DVNA（admin / admin123）</span>
 http://127.0.0.1:8086/   <span class="c"># DSVW（无认证）</span></pre>
           <p class="lab-foot">关掉 ssh 就断，不留常开入口；容器本身也出不了网，打穿它拿不到任何东西。</p>
@@ -152,7 +162,7 @@ http://127.0.0.1:8086/   <span class="c"># DSVW（无认证）</span></pre>
           <h3>边界怎么定的</h3>
           <p class="lab-kv">
             <b>网络：</b>容器在 <code>labnet</code>（<code>--internal</code>）里，没有默认网关，容器内 <code>wget</code> 外网直接失败；<br>
-            <b>入口：</b>nginx 只监听 <code>127.0.0.1:8081~8086</code>，Cloudflare 隧道里已没有 lab 这条 ingress；<br>
+            <b>入口：</b>nginx 只监听 <code>127.0.0.1:8081~8087</code>，Cloudflare 隧道里已没有 lab 这条 ingress；<br>
             <b>资源：</b>各自 <code>--memory</code> 限额 + <code>--cpus 1</code>，挂 <code>unless-stopped</code>，跑挂了只影响它自己。
           </p>
         </div>
@@ -161,14 +171,14 @@ http://127.0.0.1:8086/   <span class="c"># DSVW（无认证）</span></pre>
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>你也想练怎么办<span class="tag">不用来敲我这台</span></div>
         <div class="mod-bd">
-          <p class="lab-kv">六行命令在你自己机器上起同款（装了 Docker 就行）：</p>
+          <p class="lab-kv">六条命令在你自己机器上起同款（装了 Docker 就行；WebWolf 和 WebGoat 是同一个镜像里的两套应用，一条命令带两个端口）：</p>
           <pre class="lab-pre">docker run -d --name pikachu  -p 8081:80   area39/pikachu:latest
 docker run -d --name dvwa     -p 8082:80   vulnerables/web-dvwa:latest
 docker run -d --name juice    -p 8083:3000 bkimminich/juice-shop:latest
-docker run -d --name webgoat  -p 8084:8080 webgoat/webgoat:latest
+docker run -d --name webgoat  -p 8084:8080 -p 8087:9090 webgoat/webgoat:latest
 docker run -d --name dvna     -p 8085:9090 appsecco/dvna:sqlite
 docker run -d --name dsvw     -p 8086:8000 appsecco/dsvw:latest
-<span class="c"># 然后开 http://127.0.0.1:8081 ~ :8086</span></pre>
+<span class="c"># 然后开 http://127.0.0.1:8081 ~ :8087（8087 = WebWolf，要等 WebGoat 容器起来后约 30 秒）</span></pre>
           <p class="lab-foot">这一页已经把能看的部分都写出来了；真要动手，自己起一台更安全——我这台不对公网开放。</p>
         </div>
       </div>
