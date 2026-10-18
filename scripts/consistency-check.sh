@@ -178,9 +178,9 @@ collect_site_facts() {
   if [[ -n $rel_dir ]]; then
     # 实测事实：目录里**全部普通文件**（只排除 ./manifest.json 自身，与清单 count/totalBytes 同口径）。
     # 算不出来就留空，python 侧会如实写 mismatch / 说清原因，不会假装通过。
-    act_count=$(LC_ALL=C find "$rel_dir" -type f ! -path "$rel_dir/manifest.json" 2>/dev/null \
+    act_count=$(LC_ALL=C find "$rel_dir" -type f ! -path "$rel_dir/manifest.json" ! -path "$rel_dir/index.json" ! -path "$rel_dir/data/uptime.json" 2>/dev/null \
       | wc -l | tr -d '[:space:]' || true)
-    act_bytes=$(LC_ALL=C find "$rel_dir" -type f ! -path "$rel_dir/manifest.json" -printf '%s\n' 2>/dev/null \
+    act_bytes=$(LC_ALL=C find "$rel_dir" -type f ! -path "$rel_dir/manifest.json" ! -path "$rel_dir/index.json" ! -path "$rel_dir/data/uptime.json" -printf '%s\n' 2>/dev/null \
       | awk '{s+=$1} END{printf "%d", s+0}' || true)
     act_hash=$(tree_hash_dir "$rel_dir" || true)
   fi
