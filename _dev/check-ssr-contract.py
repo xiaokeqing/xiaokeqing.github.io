@@ -30,6 +30,7 @@ PAGES = [
     ('api/index.html', 'api'),
     ('redteam/index.html', 'redteam'),
     ('ip/index.html', 'ip'), ('purpleteam/index.html', 'purpleteam'), ('passwords/index.html', 'passwords'),
+    ('tools/cve/index.html', 'cve'),   # 2026-10-18：CVE 每日速递页（每日快照，四块数据全来自 /data/cve-digest.json）
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)
 RE_SSR = re.compile(r'data-xk-ssr=["\']?([a-z-]+)', re.I)

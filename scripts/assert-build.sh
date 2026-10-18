@@ -326,7 +326,9 @@ if [ -s "$PUB/ai/index.html" ] && grep -q 'CC BY-NC-SA' "$PUB/ai/index.html"; th
 # $1=路由名（=URL 段） $2=中文页名
 new_page_gate() {
   local route=$1 name=$2 f="$PUB/$1/index.html" sz pat ext_css ext_js
-  pat="data-xk-ssr=[\"']?${route}([^a-z-]|$)"
+  # $route 是 URL 段（可能带斜杠，如 tools/cve），而 data-xk-ssr 用的是 app.js 的 VIEW_TPL
+  # 路由名（嵌套页取最后一段，如 cve）。两种写法都认，单段路由（what/lab/...）行为不变。
+  pat="data-xk-ssr=[\"']?(${route}|${route##*/})([^a-z-]|$)"
   if [ ! -f "$f" ]; then
     no "$route/index.html 不存在（$name 没被构建进产物）"
     return
@@ -335,9 +337,9 @@ new_page_gate() {
   ext_css=$(grep -coE '/css/xk[^"> ]*\.css' "$f")
   ext_js=$(grep -coE '/js/xk[^"> ]*\.js' "$f")
   if [ "$sz" -gt 8000 ] && grep -qE "$pat" "$f" && [ "${ext_css:-0}" -ge 2 ] && [ "${ext_js:-0}" -ge 2 ]; then
-    ok "$route/index.html $sz 字节 > 8000（非骨架），data-xk-ssr=$route 在位，外链 $ext_css CSS / $ext_js JS（$name）"
+    ok "$route/index.html $sz 字节 > 8000（非骨架），data-xk-ssr=${route##*/} 在位，外链 $ext_css CSS / $ext_js JS（$name）"
   else
-    no "$route/index.html 不合格：$sz 字节（需 >8000 非骨架）；data-xk-ssr=$route $(grep -qE "$pat" "$f" && echo 在位 || echo 缺失)；外链 $ext_css CSS / $ext_js JS（各需 ≥2）（$name）"
+    no "$route/index.html 不合格：$sz 字节（需 >8000 非骨架）；data-xk-ssr=${route##*/} $(grep -qE "$pat" "$f" && echo 在位 || echo 缺失)；外链 $ext_css CSS / $ext_js JS（各需 ≥2）（$name）"
   fi
 }
 head1 "⑬ 新页产物契约（存在 + >8000 字节非骨架 + data-xk-ssr + 共享运行时外链）"
@@ -349,6 +351,7 @@ new_page_gate redteam 红队评测页
 new_page_gate ip IP情报页
 new_page_gate purpleteam 紫队演练页
 new_page_gate passwords 弱口令统计页
+new_page_gate tools/cve CVE每日速递页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
 # 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。
@@ -367,7 +370,8 @@ new_page_gate passwords 弱口令统计页
 #   /js/xk-scene.js），id="scene-js" 保留（_dev/audit-shell.mjs 靠它定位）。见 ⑭ 末尾那条。
 head1 "⑭ 外链共享运行时（HTML 体积上限 / 内容指纹 / 外链文件在位）"
 for pg in index.html alerts/index.html posts/index.html ai/index.html test/index.html \
-          what/index.html lab/index.html api/index.html status/index.html redteam/index.html; do
+          what/index.html lab/index.html api/index.html status/index.html redteam/index.html \
+          tools/cve/index.html; do
   f="$PUB/$pg"
   if [ ! -s "$f" ]; then no "$pg 不存在（外链化后每页仍必须有产物）"; continue; fi
   sz=$(stat -c %s "$f")

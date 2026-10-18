@@ -1,0 +1,205 @@
+{{- /* ============================================================================
+   /tools/cve/ = 「CVE 每日速递」（每日快照，不是实时）
+   ----------------------------------------------------------------------------
+   这一页只做一件事：把 scripts/cve/fetch-cve.py 抓下来的 static/data/cve-digest.json
+   摊开成四块，页面**不发任何第三方请求**（数据是同域静态文件 /data/cve-digest.json）。
+
+   四块：
+     ① 今日新增 KEV        —— 一条一张卡，四行：影响什么 / 漏洞 / 在野状态 / 我要做什么
+     ② 最近 7 天 KEV       —— 紧凑表格（CVE / 产品 / 加入日期 / 勒索利用）
+     ③ 今日高危（NVD）      —— 三列表格；NVD 抓不到时整块写「读不到（NVD API：<原因>）—— 不补数」
+     ④ 数据源与口径        —— 两个 URL、抓取时刻、限速说明、为什么不是实时
+
+   三条口径（与 /ip/、/passwords/ 同一条铁律）：
+     · 只照抄 JSON 字段：缺字段就写「官方未给出」，**不推测版本、不推测影响范围**；
+     · 读不到就写「读不到（原因）—— 不补数」，绝不把读不到渲染成 0 条；
+     · 抓取时刻 generatedAt 读不到就写「读不到」，不拿浏览器当前时间冒充。
+
+   外壳约定同 /ip/：类名复用 .screen/.screen-hd/.screen-bd/.mod/.mod-hd/.tag/.led/.sync，
+   只补本页 .cve-* 规则；不引外部字体/CDN。
+   ★本页逻辑全部在 assets/js/cve-digest.js（外链，走 Hugo Pipes 带内容指纹），
+     HTML 里不写任何内联 <script> 正文 —— 页面本体只有两个字面 <script 标签
+     （/js/xk-saver.js 与 cve-digest 外链），外壳那 2 个由 shell-script.html 提供。
+   ============================================================================ */ -}}
+{{- $v := "cve" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：只用外壳已有的色板，不加新配色、不引外部资源 */
+.cve-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.cve-back:hover{color:#bfe3d0}
+.cve-bd{display:flex;flex-direction:column;gap:14px}
+.cve-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.cve-lead b{color:#cfe9f5;font-weight:600}
+.cve-lead code,.cve-p code,.cve-note code,.cve-kv code,.cve-tbl code,.cve-src code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px;word-break:break-all}
+.cve-stamp{display:flex;flex-wrap:wrap;gap:10px}
+.cve-stamp .c{flex:1 1 150px;min-width:150px;padding:9px 11px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.22)}
+.cve-stamp .k{display:block;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);font-family:ui-monospace,Consolas,monospace}
+.cve-stamp .n{display:block;margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:16px;line-height:1.3;color:#eaf6ff;font-weight:600;word-break:break-all}
+.cve-stamp .n.na{font-size:13px;line-height:1.5;color:#E8B45A;font-weight:500}
+.cve-stamp .d{display:block;margin-top:3px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.45)}
+.cve-tip{margin:0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.cve-tip b{color:rgba(255,255,255,.76);font-weight:600}
+.cve-cards{display:flex;flex-direction:column;gap:10px}
+.cve-card{border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.22);padding:11px 13px}
+.cve-card-hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:0 0 8px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.08)}
+.cve-id{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#bfe3d0;text-decoration:none;font-weight:600}
+.cve-id:hover{color:#eaf6ff;text-decoration:underline}
+.cve-date{margin-left:auto;font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.45)}
+.cve-kv{display:grid;grid-template-columns:88px 1fr;gap:6px 10px;margin:0;font-size:12.5px;line-height:1.85}
+.cve-kv dt{color:rgba(255,255,255,.5);font-size:11.5px;letter-spacing:.04em}
+.cve-kv dd{margin:0;color:rgba(255,255,255,.82);word-break:break-word}
+.cve-kv dd.name{color:#cfe9f5;font-weight:600}
+.cve-kv dd.act{color:#d7e7ef}
+.cve-miss{color:#E8B45A}
+.cve-ok{color:#6FD3A0;font-weight:600}
+.cve-bad{color:#E8837B;font-weight:600}
+.cve-na{color:rgba(255,255,255,.42)}
+.cve-ransom{color:#E8837B;font-weight:600}
+.cve-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cve-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+.cve-tbl th,.cve-tbl td{text-align:left;padding:6px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top;line-height:1.8}
+.cve-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.cve-tbl td.mono{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#e8f3f8;white-space:nowrap}
+.cve-tbl td.dim{color:rgba(255,255,255,.55);font-size:11.5px}
+.cve-tbl td.wrap{color:#d7e7ef}
+.cve-tbl a{color:#bfe3d0;text-decoration:none}
+.cve-tbl a:hover{text-decoration:underline;color:#eaf6ff}
+.cve-tbl tr.hot td.mono{color:#E8B45A}
+.cve-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.76)}
+.cve-p:last-child{margin-bottom:0}
+.cve-p b{color:#eaf6ff;font-weight:600}
+.cve-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.cve-note:first-child{margin-top:0}
+.cve-note b{color:rgba(255,255,255,.76);font-weight:600}
+.cve-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.55)}
+.cve-notes li{margin:2px 0}
+.cve-srctbl{table-layout:fixed;min-width:680px}
+.cve-srctbl th:nth-child(1),.cve-srctbl td:nth-child(1){width:132px}
+.cve-srctbl td.mono{white-space:normal}
+.cve-srctbl th:nth-child(3),.cve-srctbl td:nth-child(3){width:250px}
+.cve-src{font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.55);margin:10px 0 0}
+.cve-src b{color:rgba(255,255,255,.76);font-weight:600}
+.cve-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
+@media (max-width:560px){.cve-kv{grid-template-columns:1fr;gap:2px 0}.cve-kv dt{margin-top:6px}}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="cve">
+<section class="view on" id="v-cve">
+  <a class="cve-back" href="/">← 回主页</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // CVE 每日速递 <em class="ops-en">CVE-DIGEST</em></span>
+      <span class="sync" id="cveSync">● 每日快照（不是实时）· 读不到就写读不到</span>
+    </div>
+    <div class="screen-bd cve-bd">
+
+      <p class="cve-lead">
+        这是<b>每日快照</b>，<b>不是实时</b>：抓取时刻 <b id="cveGenTop">读不到</b>。
+        数据只有两个来源，页面自己<b>不编也不补</b> —— CISA KEV（在野已被利用的漏洞清单）+ NVD（当日 CVSSv3 HIGH）。
+        每张卡里的文字都是<b>官方字段原样照抄</b>：缺字段就写「官方未给出」，<b>不推测版本、不推测影响范围</b>；
+        某个源这次没抓到，那一块就整块写「读不到（原因）—— 不补数」，<b>不会</b>把它渲染成「今天没有」。
+      </p>
+
+      <div class="cve-stamp" id="cveStamp">
+        <div class="c"><span class="k">抓取时刻 generatedAt</span><span class="n na" id="cveGenCell">读不到</span><span class="d">快照时间，不是实时</span></div>
+        <div class="c"><span class="k">快照目标日 targetDay</span><span class="n na" id="cveDayCell">读不到</span><span class="d">KEV 的「今日」按这一天的 dateAdded 算</span></div>
+        <div class="c"><span class="k">今日新增 KEV</span><span class="n" id="cveNewCell">读取中</span><span class="d">dateAdded == targetDay</span></div>
+        <div class="c"><span class="k">近 7 天 KEV / 今日 NVD HIGH</span><span class="n" id="cveCntCell">读取中</span><span class="d">近 7 天最多 40 条；NVD 最多 1 页 50 条</span></div>
+      </div>
+
+      <noscript><p class="cve-noscript">本页要发一次同域请求读 <code>/data/cve-digest.json</code> 才有卡片和表格，
+        关掉 JavaScript 时这里只剩口径与数据源说明 —— <b>不会有任何数字</b>，也不会替你补。</p></noscript>
+
+      <!-- ============ ① 今日新增 KEV ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>今日新增 KEV<span class="tag" id="cveNewTag">读取中</span></div>
+        <div class="mod-bd" id="cveNew">
+          <p class="cve-p cve-na">正在读 <code>/data/cve-digest.json</code> …</p>
+        </div>
+      </div>
+
+      <!-- ============ ② 最近 7 天 KEV ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>最近 7 天 KEV<span class="tag" id="cveRecentTag">读取中</span></div>
+        <div class="mod-bd" id="cveRecent">
+          <p class="cve-p cve-na">正在读 <code>/data/cve-digest.json</code> …</p>
+        </div>
+      </div>
+
+      <!-- ============ ③ 今日高危（NVD） ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>今日高危（NVD）<span class="tag" id="cveNvdTag">读取中</span></div>
+        <div class="mod-bd" id="cveNvd">
+          <p class="cve-p cve-na">正在读 <code>/data/cve-digest.json</code> …</p>
+        </div>
+      </div>
+
+      <!-- ============ ④ 数据源与口径 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>数据源与口径<span class="tag">先看这块，再看数字</span></div>
+        <div class="mod-bd">
+          <div class="cve-scroll">
+            <table class="cve-tbl cve-srctbl">
+              <thead><tr><th>数据源</th><th>URL（官方原始地址）</th><th>这次的状态</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="wrap">CISA KEV<br><span class="cve-na">在野已被利用的漏洞清单</span></td>
+                  <td class="mono"><code>https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json</code></td>
+                  <td class="wrap" id="cveHealthKev">读取中</td>
+                </tr>
+                <tr>
+                  <td class="wrap">NVD CVE API 2.0<br><span class="cve-na">当日 CVSSv3 HIGH</span></td>
+                  <td class="mono"><code>https://services.nvd.nist.gov/rest/json/cves/2.0</code></td>
+                  <td class="wrap" id="cveHealthNvd">读取中</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ul class="cve-notes">
+            <li><b>抓取时刻</b>：<span id="cveGenFoot">读不到</span> —— 就是快照里 <code>generatedAt</code> 的原文（+08:00）。
+              读不到时这里写「读不到」，<b>不拿你打开这一页的时间冒充</b>。</li>
+            <li><b>限速</b>：NVD 在没有 API key 时按 <b>5 次 / 30 秒</b> 限流，所以脚本只发 <b>1 次</b>请求、
+              取 <code>resultsPerPage=50</code> 的一页；遇到 429/503 最多等 7 秒重试 1 次，仍失败就记 <code>ok:false</code>
+              并照抄错误原文。CISA KEV 是一个整包 JSON（这次 <span id="cveKevCount">-</span> 条），一次取完。</li>
+            <li><b>为什么不是实时</b>：这是<b>静态站</b>。抓取发生在构建前，页面打开读的是<b>同一份</b>
+              <code>/data/cve-digest.json</code>；要更新得重跑 <code>scripts/cve/fetch-cve.py</code> 再重新构建发布。
+              所以「今日」指的是<b>快照那一天</b>（<span id="cveDayFoot">读不到</span>），不是你刷新页面的此刻。</li>
+            <li><b>KEV 口径</b>：<code>kevNew</code> = <code>dateAdded</code> 等于快照目标日的条目；
+              <code>kevRecent7d</code> = 目标日往前 7 天（含当天）、按 <code>dateAdded</code> 倒序、最多 40 条。
+              KEV 官方多在美东工作日更新，<b>周末/节假日没有新增是正常的「没有」</b>，与「抓取失败」是两件事。</li>
+            <li><b>NVD 口径</b>：<code>pubStartDate</code> = 当天 00:00Z、<code>pubEndDate</code> = 抓取时刻，
+              只保留 <code>cvssV3Severity=HIGH</code> 的一页。它是<b>当日新增且被打到 HIGH 的那部分</b>，
+              不是「全网高危全量」，也不是 CVSS 排行榜。</li>
+            <li><b>字段口径</b>：卡片与表格只照抄 JSON 里有的字段；<code>shortDescription</code> 在抓取时截到
+              <b>240 字符</b>，所以描述可能被截断 —— 要看全文，点 CVE 号去 NVD。</li>
+          </ul>
+          <p class="cve-src">
+            产物：<code>static/data/cve-digest.json</code> ← <code>scripts/cve/fetch-cve.py</code>
+            （Python 3 stdlib，无第三方依赖）· 抓取器支持
+            <code>--dry-run</code> / <code>--date YYYY-MM-DD</code>（补跑）/ <code>--out</code> / <code>--timeout</code>。<br>
+            相关页面：<a href="/" style="color:#bfe3d0">主页</a> ·
+            <a href="/what/" style="color:#bfe3d0">这个站在干什么</a> ·
+            <a href="/api/" style="color:#bfe3d0">公开端点清单</a> ·
+            <a href="/status/" style="color:#bfe3d0">状态页</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+  <script src="{{ (resources.Get "js/cve-digest.js" | minify | fingerprint).RelPermalink }}"></script>
+</body>
+</html>
