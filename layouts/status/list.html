@@ -128,6 +128,34 @@
       </div>
 
       <div class="mod">
+        <div class="mod-hd"><span class="led"></span>一致性 CI<span class="tag"><a href="/reports/" style="color:inherit">巡检报告 /reports/</a></span> · srv2 上每 15 分钟自己跑一遍<span class="tag">/reports/ci/latest.json</span></div>
+        <div class="mod-bd">
+          <div class="st-scroll">
+            <table class="st-kv">
+              <thead><tr><th>项目</th><th>字段（来源）</th><th>值</th></tr></thead>
+              <tbody>
+                <tr><th>最近一次巡检</th><td class="f">latest.json · ts</td><td class="v" id="stCiTs">未取到</td></tr>
+                <tr><th>巡检结果</th><td class="f">latest.json · ok / checks / failed</td><td class="v" id="stCiOk">未取到</td></tr>
+                <tr><th>验证了什么</th><td class="f">7 个页面 + 8 个只读端点 + 后端 commit 比对</td><td class="v" id="stCiScope">未取到</td></tr>
+                <tr><th>线上版本对得上吗</th><td class="f">latest.json · live_vs_api_release</td><td class="v" id="stCiRel">未取到</td></tr>
+                <tr><th>发布目录</th><td class="f">latest.json · release_dir</td><td class="v" id="stCiDir">未取到</td></tr>
+                <tr><th>站点内容完整性</th><td class="f">latest.json · site_integrity / site_index_sha256</td><td class="v" id="stCiInteg">未取到</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="st-note">
+            这张表不在浏览器里算，而是把 <b>srv2 上那个 timer 实际跑出来的结果</b>原样读出来：
+            <code>consistency-check.timer</code> 每 15 分钟跑一次，结果落在
+            <code>/opt/secagent/reports/ci/latest.json</code>（通过 <code>/reports/</code> 具名开放）。
+            <b>为什么不在页面里直接跑</b>：那些检查要 ssh 到服务器看文件与容器，浏览器做不到；
+            页面能做的是把自己能握的 8 个端点当场再打一遍（上面那张表），两者互相印证。
+            <code>site_integrity</code> 常年显示 <code>skipped</code>：srv2 发布目录里不写清单，唯一带 <code>indexSha256</code> 的
+            <code>release-info.json</code> 在 srv1，跨机器对不到就如实说对不到。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
         <div class="mod-hd"><span class="led"></span>数据新鲜度 · 看到的是几秒前的世界<span class="tag">/api/public/home.js</span></div>
         <div class="mod-bd">
           <div class="st-scroll">
@@ -501,6 +529,75 @@ curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
     }
   }
 
+  /* ---------------------------------------------------------------- 一致性 CI
+     同源读 /reports/ci/latest.json（nginx alias，不需 CORS）。读不到就写「未取到 + 原因」，不编造。 */
+  function ciWhen(ts) {
+    var t = parseIso(ts);
+    if (t === null) return ts || NA;
+    var d = new Date(t), diff = Math.round((Date.now() - t) / 1000);
+    var ago = diff < 0 ? ('本机时钟比它慢 ' + (-diff) + ' 秒')
+      : (diff < 60 ? (diff + ' 秒前') : (diff < 3600 ? (Math.round(diff / 60) + ' 分钟前') : (Math.round(diff / 3600) + ' 小时前')));
+    return ts + '（' + ago + '）';
+  }
+  function renderCI() {
+    if (!window.fetch) { show('stCiTs', NA + '（浏览器不支持 fetch）'); return; }
+    fetch('/reports/ci/latest.json', { method: 'GET', credentials: 'omit', cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) { throw new Error('HTTP ' + res.status); }
+        return res.json();
+      })
+      .then(function (j) {
+        show('stCiTs', ciWhen(j.ts));
+        var failed = Array.isArray(j.failed) ? j.failed : [];
+        if (j.ok === true) {
+          show('stCiOk', j.checks + ' 项全部通过（failed 为空）', 'st-pass');
+        } else if (j.ok === false) {
+          show('stCiOk', (j.checks === undefined ? '?' : j.checks) + ' 项中 ' + failed.length + ' 项失败：' + failed.join('、'), 'st-fail');
+        } else {
+          show('stCiOk', NA + '（响应里没有 ok 字段）', 'st-warn');
+        }
+        var pages = Array.isArray(j.pages) ? j.pages.length : null;
+        var eps = Array.isArray(j.endpoints) ? j.endpoints.length : null;
+        var scope = [];
+        if (pages !== null) scope.push('页面 ' + pages + ' 条');
+        if (eps !== null) scope.push('端点 ' + eps + ' 条');
+        if (j.backend_commit) scope.push('后端 commit ' + String(j.backend_commit).slice(0, 10));
+        if (!scope.length) scope.push('巡检记录里没有逐条明细，只有总数 ' + (j.checks === undefined ? '?' : j.checks));
+        show('stCiScope', scope.join(' · '));
+
+        var rel = j.live_vs_api_release;
+        if (rel === 'match') show('stCiRel', '一致（线上目录与 API 自述同一次发布）', 'st-pass');
+        else if (rel) show('stCiRel', '不一致：' + rel, 'st-fail');
+        else show('stCiRel', NA + '（latest.json 没有 live_vs_api_release）', 'st-warn');
+
+        show('stCiDir', j.release_dir || (NA + '（没有 release_dir）'));
+
+        var integ = j.site_integrity;
+        var sha = j.site_index_sha256;
+        if (integ === 'skipped') {
+          show('stCiInteg', '跳过（' + (j.site_integrity_detail || 'srv2 发布目录里没有清单文件') + '）'
+            + (sha ? ' · index sha ' + String(sha).slice(0, 12) : ''), 'st-warn');
+        } else if (integ === 'ok') {
+          show('stCiInteg', '一致 · index sha ' + String(sha || '').slice(0, 12), 'st-pass');
+        } else if (integ === 'fail') {
+          show('stCiInteg', '不一致 · index sha ' + String(sha || '').slice(0, 12), 'st-fail');
+        } else if (integ) {
+          show('stCiInteg', String(integ) + (sha ? ' · index sha ' + String(sha).slice(0, 12) : ''));
+        } else {
+          show('stCiInteg', NA + '（latest.json 没有 site_integrity）', 'st-warn');
+        }
+      })
+      .catch(function (e) {
+        var why = (e && e.message) || e;
+        show('stCiTs', NA + '（/reports/ci/latest.json 读不到：' + why + '）', 'st-warn');
+        show('stCiOk', NA + '（同上）', 'st-warn');
+        show('stCiScope', NA, 'st-warn');
+        show('stCiRel', NA, 'st-warn');
+        show('stCiDir', NA, 'st-warn');
+        show('stCiInteg', NA, 'st-warn');
+      });
+  }
+
   function render(list) {
     renderTable(list);
     var i;
@@ -512,6 +609,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
     }
     renderBuild(last.health, last.deploy);
     renderFresh(last.home);
+    renderCI();
   }
 
   function run() {

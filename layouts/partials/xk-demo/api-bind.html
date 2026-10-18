@@ -2173,7 +2173,11 @@
       var s = vals.slice().sort(function (a, b) { return a - b; });
       var p50 = s.length ? s[Math.floor((s.length - 1) / 2)] : null;
       /* ★P1（站主口径：4 张 KPI 卡）—— 与延迟条**同一份 measure() 结果**，不新增任何请求 */
-      kpi('health', healthTxt ? healthTxt : (settled ? '读不到' : '取数中…'));
+      /* ★HL：三种事分开写 —— ok / 服务端自报降级 ≠ 这次没取到。
+         旧写法把两者都写成一个状态词，外部审查看到“degraded”就以为端点挂了（其实只是后端自评）。 */
+      kpi('health', healthTxt
+        ? (String(healthTxt).toLowerCase() === 'ok' ? 'ok' : String(healthTxt) + '（服务端自报）')
+        : (settled ? '这次没取到' : '取数中…'));
       kpi('count', vals.length + '/' + NAMES.length);
       kpi('p50', p50 != null ? p50 + ' ms' : '—');
       kpi('max', s.length ? s[s.length - 1] + ' ms' : '—');
@@ -2181,7 +2185,13 @@
         var parts = ['本次实测 ' + vals.length + '/' + NAMES.length + ' 个内容端点'];
         if (p50 != null) { parts.push('中位 ' + p50 + ' ms'); }
         if (s.length) { parts.push('最慢 ' + s[s.length - 1] + ' ms'); }
-        if (healthTxt) { parts.push('后端 /api/health ' + healthTxt); }
+        if (healthTxt) {
+          parts.push(String(healthTxt).toLowerCase() === 'ok'
+            ? '后端 /api/health 自报 ok'
+            : '后端 /api/health 自报 ' + healthTxt + '（自评降级，不等于下面哪个端点没取到）');
+        } else if (settled) {
+          parts.push('后端 /api/health 这次没取到（跨域只放行站点域名，本地预览读不到属正常）');
+        }
         parts.push('数字来自本页真实请求的 resource timing');
         parts.push('标"本次未发起"的是按 tab 懒加载的端点（切到对应面板才会请求）');
         note.textContent = parts.join(' · ');
