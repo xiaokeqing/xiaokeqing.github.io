@@ -33,6 +33,7 @@ PAGES = [
     ('tools/cve/index.html', 'cve'),   # 2026-10-18：CVE 每日速递页（每日快照，四块数据全来自 /data/cve-digest.json）
     ('tools/password/index.html', 'password'),  # 2026-10-18：口令自查页（本地 SHA-256，只发前 5 位）
     ('tools/index.html', 'tools'),
+    ('noise/index.html', 'noise'),   # 2026-10-18：告警噪音指数页（静态快照，数字全来自 /data/noise-index.json；路由名=noise 与 section 同名，靠目录命中）
     ('samples/index.html', 'samples'),  # 2026-10-18：真实恶意样本分析页（手写静态页，只写抓到的，抓不到写未留存）
 ]
 RE_MAIN = re.compile(r'<main\b[^>]*>', re.I)

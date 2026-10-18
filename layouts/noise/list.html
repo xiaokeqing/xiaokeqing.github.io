@@ -1,0 +1,224 @@
+{{- /* ============================================================================
+   /noise/ = 「告警噪音指数」——把"告警里有多少是噪声"量化出来
+   ----------------------------------------------------------------------------
+   这一页只回答一句话：**告警面板里 94.9% 是自家 agent 的心跳**，剩下 5.1% 才是要看的。
+   数据只有一个来源：/data/noise-index.json（产物源 static/data/noise-index.json，
+   由 scripts/noise/build-noise.py 生成；页面打开时 fetch 同域静态文件，不碰任何接口）。
+
+   三条口径（与站内其它公开页同一套，写在页面上而不是只写在注释里）：
+     · 取不到就写「读不到（原因）—— 不补数」：数字一律留空/写读不到，不写 0、不估；
+     · 占比只能由 条数 ÷ alert 总数 现算 —— 页面上摆着分子分母，谁都能自己除一遍；
+     · 「噪音 / 信号」按规则分，不按"感觉像攻击"分；命中 0 不等于没攻击（见检测缺口那块）。
+
+   外壳约定同 /ip/、/tools/cve/：<script 标签恰好两处（/js/xk-saver.js + 页尾外链
+   /js/noise.js），逻辑一行都不内联；类名复用 .screen/.screen-hd/.screen-bd/.mod/.mod-hd/
+   .mod-bd/.led/.sync/.tag，宽表格直接吃外壳既有的 .screen-bd table 滚动样式，只补 .nx-*。
+   ============================================================================ */ -}}
+{{- $v := "noise" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源 */
+.nx-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.nx-back:hover{color:#bfe3d0}
+.nx-bd{display:flex;flex-direction:column;gap:14px}
+.nx-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.76)}
+.nx-p:last-child{margin-bottom:0}
+.nx-p b{color:#eaf6ff;font-weight:600}
+.nx-p code,.nx-note code,.nx-lead code,.nx-tbl code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px;word-break:break-all}
+/* ① 一句结论 */
+.nx-lead{margin:0;font-size:19px;line-height:1.75;color:#eaf6ff;font-weight:600;letter-spacing:.01em}
+.nx-lead em{font-style:normal;color:#E8B45A}
+.nx-lead .sig{color:#6FD3A0}
+.nx-leadsub{margin:9px 0 0;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.62)}
+.nx-leadsub b{color:#cfe9f5;font-weight:600}
+/* ② 占比条（纯 CSS，不用图表库） */
+.nx-bar{display:flex;width:100%;height:30px;border:1px solid rgba(255,255,255,.14);border-radius:7px;overflow:hidden;background:rgba(0,0,0,.4)}
+.nx-seg{display:flex;align-items:center;justify-content:center;height:100%;min-width:0;overflow:hidden;
+  font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.04em;white-space:nowrap}
+.nx-seg.noise{background:linear-gradient(180deg,rgba(232,180,90,.62),rgba(232,180,90,.34));color:#2a1d05;font-weight:700;transition:width .55s ease-out}
+.nx-seg.sig{background:linear-gradient(180deg,rgba(111,211,160,.62),rgba(111,211,160,.3));color:#06251a;font-weight:700;transition:width .55s ease-out}
+.nx-legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:10px 0 0;padding:0;list-style:none;font-size:11.5px;line-height:1.8;color:rgba(255,255,255,.6)}
+.nx-legend .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.nx-legend .sw.noise{background:#E8B45A}
+.nx-legend .sw.sig{background:#6FD3A0}
+.nx-legend b{font-family:ui-monospace,Consolas,monospace;color:#eaf6ff;font-weight:600}
+.nx-legend .m{font-family:ui-monospace,Consolas,monospace;color:rgba(255,255,255,.45)}
+/* ③ 按规则表：滚动容器 + min-width 照抄 /status/ 的 .st-scroll/.st-tbl 写法
+   （外壳 .screen-bd table 已给 display:block+overflow-x:auto，但表自己变宽会被 .mod
+    的 overflow:hidden 裁掉，所以外面再套一层滚动容器，min-width 落在表上） */
+.nx-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.nx-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:640px}
+.nx-tbl th,.nx-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top;line-height:1.75}
+.nx-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.nx-tbl td.sid{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#e8f3f8;white-space:nowrap}
+.nx-tbl td.msg{color:#d7e7ef;word-break:break-word}
+.nx-tbl td.num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:right}
+.nx-tbl td.pct{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:right}
+.nx-tbl td.cls{white-space:nowrap}
+.nx-tbl tr:last-child td{border-bottom:0}
+.nx-tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10.5px;letter-spacing:.04em;font-family:ui-monospace,Consolas,monospace}
+.nx-tag.noise{color:#f7e3bd;background:rgba(232,180,90,.16);border:1px solid rgba(232,180,90,.34)}
+.nx-tag.signal{color:#d3f3e2;background:rgba(111,211,160,.14);border:1px solid rgba(111,211,160,.32)}
+.nx-tag.na{color:rgba(255,255,255,.5);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+/* 检测缺口 */
+.nx-gap{margin:12px 0 0;padding:10px 12px;border-left:2px solid #E8B45A;background:rgba(232,180,90,.06);border-radius:0 7px 7px 0}
+.nx-gap .h{margin:0 0 6px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.05em;color:#E8B45A}
+.nx-gap p{margin:0;font-size:12px;line-height:1.95;color:rgba(255,255,255,.72)}
+.nx-gap b{color:#f7e3bd;font-weight:600}
+.nx-gap a{color:#bfe3d0;text-decoration:none}
+.nx-gap a:hover{text-decoration:underline}
+.nx-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.nx-note:first-child{margin-top:0}
+.nx-note b{color:rgba(255,255,255,.76);font-weight:600}
+.nx-note a{color:#bfe3d0;text-decoration:none}
+.nx-note a:hover{text-decoration:underline}
+.nx-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.55)}
+.nx-notes li{margin:3px 0}
+.nx-miss{color:#E8B45A}
+.nx-na{color:rgba(255,255,255,.42)}
+.nx-ok{color:#6FD3A0;font-weight:600}
+.nx-bad{color:#E8837B;font-weight:600}
+.nx-noscript{margin:0 0 4px;font-size:12px;line-height:1.9;color:#E8B45A}
+.nx-kv{width:100%;border-collapse:collapse;font-size:12.5px}
+.nx-kv th,.nx-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.nx-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap;width:118px}
+.nx-kv td{color:rgba(255,255,255,.8);line-height:1.9}
+@media (max-width:520px){
+  .nx-lead{font-size:16px;line-height:1.8}
+  .nx-kv tbody th{width:auto}
+  .nx-legend{gap:6px 14px}
+}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="noise">
+<section class="view on" id="v-noise">
+  <a class="nx-back" href="/status/">← 状态页 /status/</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 告警噪音指数 <em class="ops-en">ALERT-NOISE</em></span>
+      <span class="sync" id="nxSync">● 待读 /data/noise-index.json（读不到就写读不到）</span>
+    </div>
+    <div class="screen-bd nx-bd">
+
+      <noscript><p class="nx-noscript">数字要读一次同域的 <code>/data/noise-index.json</code> 才会出现；
+        关掉 JavaScript 时这一页只有文字，<b>不会有任何数字</b>（也不会替它编一个）。</p></noscript>
+
+      <!-- ============ ① 一句结论 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>一句话<span class="tag" id="nxWin">窗口待读</span></div>
+        <div class="mod-bd">
+          <p class="nx-lead" id="nxConc">
+            你的告警面板里 <em id="nxConcNum">—</em> 是自家 agent 的心跳。
+          </p>
+          <p class="nx-leadsub" id="nxConcSub">
+            分母与分子都在 JSON 里，可以自己除一遍：<b>心跳条数 ÷ alert 总条数</b>。
+            剩下的部分是信号 —— <b>但这不等于"剩下的都是攻击"</b>（见下面的检测缺口）。
+          </p>
+          <p class="nx-note">口径：只统计 <code>event_type = alert</code> 的事件；flow / http / ssh 这些
+            流量事件不进分母 —— 它们本来就不是"告警"，混进来会把噪音比例稀释成假数字。</p>
+        </div>
+      </div>
+
+      <!-- ============ ② 噪音 vs 信号 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>噪音 vs 信号<span class="tag">按占比画，不用图表库</span></div>
+        <div class="mod-bd">
+          <div class="nx-bar" id="nxBar" role="img" aria-label="噪音与信号占比条（数字读不到时为空）">
+            <div class="nx-seg noise" id="nxSegNoise" style="width:0"></div>
+            <div class="nx-seg sig" id="nxSegSig" style="width:100%"></div>
+          </div>
+          <ul class="nx-legend" id="nxLegend">
+            <li><span class="sw noise"></span>噪音（心跳）<b id="nxLegNoise">—</b>
+              <span class="m" id="nxLegNoiseSub">条 · 占比—</span></li>
+            <li><span class="sw sig"></span>信号（其余告警）<b id="nxLegSig">—</b>
+              <span class="m" id="nxLegSigSub">条 · 占比—</span></li>
+          </ul>
+          <p class="nx-note" id="nxBarNote">条数与占比从同一份 JSON 现算：
+            <b>占比 = 条数 ÷ alert 总数</b>。读不到就整块留空 —— 不补数。</p>
+        </div>
+      </div>
+
+      <!-- ============ ③ 按规则 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>按规则拆开<span class="tag" id="nxRuleTag">规则待读</span></div>
+        <div class="mod-bd">
+          <div class="nx-scroll">
+          <table class="nx-tbl" id="nxTbl">
+            <thead>
+              <tr><th>SID</th><th>规则 / 描述</th><th>条数</th><th>占比</th><th>归类</th></tr>
+            </thead>
+            <tbody id="nxTblBody">
+              <tr><td class="sid">—</td><td class="msg nx-na">待读 /data/noise-index.json</td>
+                <td class="num">—</td><td class="pct">—</td><td class="cls"><span class="nx-tag na">待读</span></td></tr>
+            </tbody>
+          </table>
+          </div>
+
+          <div class="nx-gap" id="nxGap">
+            <p class="h">检测缺口 · 规则 100110</p>
+            <p id="nxGapNote">
+              规则 <code>100110</code>（120 秒内 5 次登录失败）在这个窗口命中 <b id="nxGapHits">0</b> 次。
+              <b>0 不代表没有攻击</b> —— <span id="nxGapWhy">机器人拿泄露口令表，一枪就中是常态，
+              「失败 5 次」这个条件在这套蜜罐上永远凑不齐。</span>详见
+              <a href="/posts/purple-team-self-attack-20261018/">攻击链复盘笔记</a>。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ ④ 口径与出处 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径 · 这些数从哪来<span class="tag">先看这块，再看数字</span></div>
+        <div class="mod-bd">
+          <table class="nx-kv">
+            <tbody>
+              <tr><th>数据来源</th><td>srv2 的 Suricata <code>eve.json</code>，窗口
+                <b id="nxKvWin">—</b>。本页是<b>当日分析出来的快照</b>，不是实时取数：
+                产物里 <code>source</code> 字段写明它是「已核实摘要」还是「现场统计」。</td></tr>
+              <tr><th>为什么心跳算噪音</th><td>
+                <code>sid 2013031</code> 是腾讯云 agent 每 5 分钟往
+                <code>169.254.0.4:80</code> 发一次 <code>POST /ca_report.cgi</code> ——
+                固定的源、固定的目的、固定的语义，<b>里面没有一个字节是攻击</b>。
+                它占满了告警列表，把真正要看的那几条挤到看不见。</td></tr>
+              <tr><th>蜜罐侧量级</th><td>
+                同一个窗口里 Cowrie 单日 <b>14,147 个会话</b>（<code>login.success</code> 14,061 /
+                <code>login.failed</code> 19），<code>:2222</code> 的 flow <b>139,987</b> 条。
+                会话数比"单包告警"更硬 —— 那才是真的有人在连。</td></tr>
+              <tr><th>不做的</th><td>
+                不调任何接口、不写任何东西、不看服务器；这一页只是一次同域静态文件读取。
+                数字读不到就整页留空写「读不到（原因）—— 不补数」。</td></tr>
+            </tbody>
+          </table>
+          <p class="nx-note" id="nxSrcNote">产物：<code>static/data/noise-index.json</code> ←
+            <code>scripts/noise/build-noise.py</code>（Python 3 stdlib，无第三方依赖；
+            <code>--from-written</code> = 已核实摘要，<code>--in</code> = 现场数 eve.json）。</p>
+          <ul class="nx-notes" id="nxNotes">
+            <li class="nx-na">待读产物里的 notes[]（每一条缺失项的原因都写在那里）。</li>
+          </ul>
+          <p class="nx-note" id="nxStamp">产物生成时间：<b id="nxGen">—</b>
+            <span id="nxSrcTag"></span></p>
+          <p class="nx-note">相关页面：<a href="/status/">状态页</a> ·
+            <a href="/alerts/">当前告警</a> ·
+            <a href="/api/">公开端点清单</a> ·
+            <a href="/posts/purple-team-self-attack-20261018/">紫队自测（攻击链复盘）</a></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+  <script src="{{ (resources.Get "js/noise.js" | minify | fingerprint).RelPermalink }}"></script>
+</body>
+</html>
