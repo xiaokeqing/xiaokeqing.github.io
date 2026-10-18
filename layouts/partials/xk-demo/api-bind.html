@@ -1747,6 +1747,7 @@
   var BASE_JOBS = SSR === 'monitor' ? ['home'] : [];   /* ★P9：首屏 3 请求 → 1（home 聚合；失败由 load() 回落三个单独端点） */
   /* ★L1：监测中心首页打开时先预装哪些端点（顺序无关；只影响"第一帧有没有数字可看"） */
   var PRELOAD_LS = SSR === 'monitor' ? ['alerts', 'geo', 'honeypot', 'audit'] : [];
+  var homePending = null;   /* ★H6：home 聚合在飞时，切 tab 的补取要等它结算，避免重复拉 audit/honeypot */
   var PANE_EXTRA = { live: [], graph: ['audit'], matrix: [], stats: ['audit', 'webstats', 'overview', 'stories', 'deploy'] };
   function activePane() {
     var t = document.querySelector('.ops-tab.on[data-pane]');
@@ -1887,7 +1888,7 @@
     /* ★P9：监测中心首屏 = **1 个请求**（home 聚合）⇒ 扇出成三个 part（每个模块自己的三态照旧）。
        pending 仍然**按模块**置位（上面那行），所以三块各自显示"取数中"，不是"整页一起等"。 */
     if (SSR === 'monitor' && jobs.indexOf('home') >= 0) {
-      return settleHome().then(function (res) {
+      homePending = settleHome().then(function (res) {
         if (res.ok) {
           res.parts.forEach(function (p) { partCache[p.path] = p; });
           ['home', 'alerts', 'geo', 'honeypot', 'audit'].forEach(function (n) { delete pendingJobs[n]; });
@@ -1933,6 +1934,13 @@
      而每多取一次在慢链路上就是几秒~几十秒的等待；省下来的请求额度留给真正的新数据。 */
   function loadPane(pane) {
     if (!BASE_JOBS.length || document.hidden) return Promise.resolve();
+    /* ★H6：home 在飞时先等它 —— 否则这里会算错"缺哪些端点"，把 home 已经带回来的
+       audit/honeypot 又拉一遍（实测：慢链路上多了两个请求，还各等几秒）。*/
+    if (homePending) {
+      var wait = homePending;
+      return wait.then(function () { homePending = null; return loadPane(pane); },
+        function () { homePending = null; return loadPane(pane); });
+    }
     var jobs = missingJobs(PANE_EXTRA[pane] || []);
     if (!jobs.length) { render(unionParts([])); return Promise.resolve(); }
     if (Date.now() < rateHoldUntil) {
