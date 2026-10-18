@@ -470,6 +470,35 @@ Write-Host " index.html：$indexLen B（sha256 $($indexSha.Substring(0,16))…�
 Write-Host " 入口：https://xiaokeqing.cn/（切域名前可用 Host 头/回环或 staging 域名验证）" -ForegroundColor DarkGray
 Write-Host '========================================' -ForegroundColor Green
 
+
+# ★2026-10-18 CF purge：发布成功后清 Cloudflare 边缘缓存。
+# 为什么需要：HTML 走 DYNAMIC 不缓存，但 /api/public/*.js 与带 ?v=<8位sha> 的静态资源会被边缘缓存；
+#   换了版本后若不 purge，边缘可能继续拿旧响应（表现为"已发布却看到旧数"）。
+# 为什么失败不算发布失败：purge 只是让新内容更早生效的优化，不是正确性前提；凭据缺失/网络抖动
+#   都不该让一次已经原子切换成功的发布被记成失败。所以一律 Warn，不 throw。
+function Invoke-CfPurge {
+    try {
+        $tokFile  = Join-Path $BlogDir '_dev\.cf-token'
+        $zoneFile = Join-Path $BlogDir '_dev\.cf-zone'
+        if (-not (Test-Path $tokFile) -or -not (Test-Path $zoneFile)) {
+            Warn '  CF purge 跳过（缺 _dev/.cf-token 或 _dev/.cf-zone）'
+            return
+        }
+        $tok  = (Get-Content -Raw -LiteralPath $tokFile).Trim()
+        $zone = (Get-Content -Raw -LiteralPath $zoneFile).Trim()
+        if (-not $tok -or -not $zone) { Warn '  CF purge 跳过（凭据为空）'; return }
+        $resp = Invoke-RestMethod -Method Post -TimeoutSec 30 `
+            -Uri "https://api.cloudflare.com/client/v4/zones/$zone/purge_cache" `
+            -Headers @{ Authorization = "Bearer $tok"; 'Content-Type' = 'application/json' } `
+            -Body '{"purge_everything":true}'
+        if ($resp.success) { Ok '  CF 边缘缓存已清（purge_everything）' }
+        else { Warn "  CF purge 返回失败：$((($resp.errors | ForEach-Object { $_.code.ToString() + ':' + $_.message }) -join '; '))" }
+    } catch {
+        Warn "  CF purge 失败（不影响发布）：$($_.Exception.Message)"
+    }
+}
+Invoke-CfPurge
+
 Invoke-PublishCleanup
 
 # ★2026-10-16「假失败退出码 1」的完整口径（接手窗口实测，写在这里备查）：
