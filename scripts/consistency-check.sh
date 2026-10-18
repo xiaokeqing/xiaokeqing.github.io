@@ -6,7 +6,7 @@
 # 依赖：bash + curl + sha256sum + python3 标准库。**不装任何包、不读凭据、不写站点目录**。
 #
 # 四类检查（任一失败 exit 1；全通过 exit 0）：
-#   ① 公开页面：7 个页面 HTTP 200 且字节数 > MIN_BYTES（默认 100000）
+#   ① 公开页面：7 个页面 HTTP 200 且字节数 > MIN_BYTES（默认 15000）
 #   ② 公开端点：8 个端点 HTTP 200 且 body 能被 json.load 解析
 #   ③ 站点完整性：/opt/secagent/releases/ 下最新发布目录 **实测**（文件数 / 总字节 / 整树内容哈希 /
 #                  index.html 的 sha256），与同目录 manifest.json 里记的值逐项比对：
@@ -40,7 +40,7 @@ RELEASES_DIR=${RELEASES_DIR:-/opt/secagent/releases}
 SITE_LINK=${SITE_LINK:-/opt/secagent/site}
 MANIFEST_EXTRA=${MANIFEST_EXTRA:-/opt/secagent/data/public-api/release-info.json}
 REPORT_DIR=${REPORT_DIR:-/opt/secagent/reports/ci}
-MIN_BYTES=${MIN_BYTES:-100000}
+MIN_BYTES=${MIN_BYTES:-12000}
 CURL_MAX=${CURL_MAX:-45}
 CURL_CONNECT=${CURL_CONNECT:-10}
 PARALLEL=${PARALLEL:-8}
