@@ -139,7 +139,7 @@
                 <tr><th>验证了什么</th><td class="f">7 个页面 + 8 个只读端点 + 后端 commit 比对</td><td class="v" id="stCiScope">未取到</td></tr>
                 <tr><th>线上版本对得上吗</th><td class="f">latest.json · live_vs_api_release</td><td class="v" id="stCiRel">未取到</td></tr>
                 <tr><th>发布目录</th><td class="f">latest.json · release_dir</td><td class="v" id="stCiDir">未取到</td></tr>
-                <tr><th>站点内容完整性</th><td class="f">latest.json · site_integrity / site_index_sha256</td><td class="v" id="stCiInteg">未取到</td></tr>
+                <tr><th>站点内容完整性</th><td class="f">latest.json · site_integrity / site_integrity_actual</td><td class="v" id="stCiInteg">未取到</td></tr>
               </tbody>
             </table>
           </div>
@@ -149,8 +149,11 @@
             <code>/opt/secagent/reports/ci/latest.json</code>（通过 <code>/reports/</code> 具名开放）。
             <b>为什么不在页面里直接跑</b>：那些检查要 ssh 到服务器看文件与容器，浏览器做不到；
             页面能做的是把自己能握的 8 个端点当场再打一遍（上面那张表），两者互相印证。
-            <code>site_integrity</code> 常年显示 <code>skipped</code>：srv2 发布目录里不写清单，唯一带 <code>indexSha256</code> 的
-            <code>release-info.json</code> 在 srv1，跨机器对不到就如实说对不到。
+            <code>site_integrity</code> 现在是**实测**：发布链在原子切换前往每个 release 目录写一份
+            <code>manifest.json</code>（文件数 / 总字节 / 整树内容哈希 / <code>index.html</code> 哈希），
+            巡检再把目录自己算一遍跟它比 —— 对得上 <code>ok</code>、对不上 <code>mismatch</code>；
+            只有清单改动之前切上去的老版本（目录里没有 <code>manifest.json</code>）才会显示 <code>skipped</code>，
+            重发一次即可补写。
           </p>
         </div>
       </div>
@@ -562,6 +565,10 @@ curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
         if (pages !== null) scope.push('页面 ' + pages + ' 条');
         if (eps !== null) scope.push('端点 ' + eps + ' 条');
         if (j.backend_commit) scope.push('后端 commit ' + String(j.backend_commit).slice(0, 10));
+        if (j.site_integrity && j.site_integrity !== 'skipped') {
+          var actC = (j.site_integrity_actual || {}).count;
+          scope.push('站点完整性' + (actC != null ? '（' + actC + ' 个文件整树哈希）' : ''));
+        }
         if (!scope.length) scope.push('巡检记录里没有逐条明细，只有总数 ' + (j.checks === undefined ? '?' : j.checks));
         show('stCiScope', scope.join(' · '));
 
@@ -574,15 +581,27 @@ curl -s https://demo.xiaokeqing.cn/api/public/audit.js</pre>
 
         var integ = j.site_integrity;
         var sha = j.site_index_sha256;
-        if (integ === 'skipped') {
-          show('stCiInteg', '跳过（' + (j.site_integrity_detail || 'srv2 发布目录里没有清单文件') + '）'
-            + (sha ? ' · index sha ' + String(sha).slice(0, 12) : ''), 'st-warn');
-        } else if (integ === 'ok') {
-          show('stCiInteg', '一致 · index sha ' + String(sha || '').slice(0, 12), 'st-pass');
+        var act = j.site_integrity_actual || {};
+        var exp = j.site_integrity_expected || {};
+        var treeTail = '';
+        if (act.sha256) {
+          treeTail = ' · 整树 ' + String(act.sha256).slice(0, 12) + (act.count != null ? ' / ' + act.count + ' 个文件' : '');
+        } else if (sha) {
+          treeTail = ' · index sha ' + String(sha).slice(0, 12);
+        }
+        if (integ === 'ok') {
+          show('stCiInteg', '实测一致' + treeTail, 'st-pass');
+        } else if (integ === 'mismatch') {
+          var why = j.site_integrity_detail
+            || (exp.sha256 && act.sha256 ? '清单 ' + String(exp.sha256).slice(0, 12) + ' / 实测 ' + String(act.sha256).slice(0, 12) : '见 site_integrity_detail');
+          show('stCiInteg', '对不上 · ' + why, 'st-fail');
         } else if (integ === 'fail') {
+          // 旧报告（2026-10-18 之前）用的取值，留着兼容已落盘的 latest.json
           show('stCiInteg', '不一致 · index sha ' + String(sha || '').slice(0, 12), 'st-fail');
+        } else if (integ === 'skipped') {
+          show('stCiInteg', '跳过（' + (j.site_integrity_detail || '发布目录里没有清单文件') + '）' + treeTail, 'st-warn');
         } else if (integ) {
-          show('stCiInteg', String(integ) + (sha ? ' · index sha ' + String(sha).slice(0, 12) : ''));
+          show('stCiInteg', String(integ) + treeTail);
         } else {
           show('stCiInteg', NA + '（latest.json 没有 site_integrity）', 'st-warn');
         }

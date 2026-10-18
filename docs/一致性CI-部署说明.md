@@ -68,26 +68,48 @@
 脚本的做法：每个端点先试 `/api/public/<name>`，**只有不是 200 才**退到裸路径 `<name>`；
 `latest.json` 里 `endpoints[].path` 记的是**实际用上的那条**。这样既符合现状，又能感知"哪天开始裸路径也能用了"。
 
-### 坑 2：srv2 的 release 目录里**没有** `release-info.json`
+### 坑 2：srv2 的 release 目录里的清单 —— 从"根本没有"到 `manifest.json`
 
-从发布链源码核实（`scripts/srv2-site-receive.sh`，srv2 侧接收脚本）：它只做「解包 → 校验 → `mv` 原子切换
-`/opt/secagent/site` → 留 4 个 release」，**从不写任何清单文件**。带 `indexSha256` 的 `release-info.json` 是
-`scripts/publish-site-to-srv2.ps1`（第 6.5 步）写到 **srv1** 的
-`/opt/secagent/data/public-api/release-info.json`，再由后端通过 `/api/public/deploy` 暴露。
+**2026-10-18 之前（历史）**：`scripts/srv2-site-receive.sh`（srv2 侧接收脚本）只做「解包 → 校验 → `mv`
+原子切换 `/opt/secagent/site` → 留 4 个 release」，**从不写任何清单文件**；带 `indexSha256` 的
+`release-info.json` 是 `scripts/publish-site-to-srv2.ps1`（第 6.5 步）写到 **srv1** 的
+`/opt/secagent/data/public-api/release-info.json`，再由后端通过 `/api/public/deploy` 暴露。跨机器对不到，
+`③` 只能如实写 `skipped`。
 
-另外那个接收脚本的整树哈希特意 `! -path './index.json'` —— 说明 release 目录里的 `index.json` 是 **Hugo 的
-`/index.json` 产物页**（带每次都变的 `generatedAt`），**不是**发布清单。所以脚本**绝不**把 `index.json` 当清单。
+**现在**：接收脚本在切换前给每个 release 目录写一份 `manifest.json`（切换与回滚都带着它走）：
+
+| 字段 | 含义 |
+|---|---|
+| `count` | 目录内普通文件数（**不含** `manifest.json` 自身） |
+| `totalBytes` | 上面这批文件的字节数和 |
+| `sha256` | **整树内容哈希**：逐文件 sha256 → 按路径 `LC_ALL=C sort` → 把 `"<sha>  ./<rel>\n"` 全量文本再 sha256 |
+| `indexSha256` | `index.html` 单文件 sha256（**与 srv1 `release-info.json` 同名字段同值**，只用来查截断） |
+| `generatedAt` | 生成时刻（UTC，`Z` 结尾） |
+| `hashExcludes` | 恒为 `["./index.json","./manifest.json"]` |
+
+**哈希口径差异（重要，别拿两个 `sha256` 直接比）**：`manifest.sha256` 是**整树**哈希，`indexSha256` 是
+**单文件**哈希，srv1 `release-info.json` 的 `indexSha256` 对应后者。`latest.json` 用
+`site_integrity_hash_scope` 一句话写明这层区别。
+
+那个整树哈希特意 `! -path './index.json'` —— 说明 release 目录里的 `index.json` 是 **Hugo 的
+`/index.json` 产物页**（带每次都变的 `generatedAt`），**不是**发布清单，所以整树哈希排除它；
+`index.html` **参与**整树哈希（它是首页本体）。清单自身 `./manifest.json` 也被排除，否则
+"下一版待发布的树"里没有它，幂等比较会永远不相等。
 
 因此 `③` 按顺序探测候选清单，探到哪个就用哪个（`site_integrity_recorded_in`/`site_integrity_manifest` 记来源）：
 
-1. `<最新 release 目录>/release-info.json`
-2. `<最新 release 目录>/.release-info.json`
-3. `/opt/secagent/releases/.release-info.json`
-4. `/opt/secagent/data/public-api/release-info.json`
-5. `$MANIFEST_EXTRA`（可留空；想在别处放清单就指过去）
+1. `<最新 release 目录>/manifest.json`（**首选**，新式清单，能核整树）
+2. `<最新 release 目录>/release-info.json`
+3. `<最新 release 目录>/.release-info.json`
+4. `/opt/secagent/releases/.release-info.json`
+5. `/opt/secagent/data/public-api/release-info.json`
+6. `$MANIFEST_EXTRA`（可留空；想在别处放清单就指过去）
 
-**一个都探不到就如实写 `"site_integrity":"skipped"`，并把原因写在 `site_integrity_detail` 里，绝不臆造字段。**
-在 srv2 上这条大概率就是 `skipped`（因为本地确实没有清单）—— 这是**如实记录**，不是缺陷。
+拿到新式清单就**实测复算**：在目录里重新数文件、重新算整树哈希，与 `count`/`totalBytes`/`sha256` 逐项比
+（清单里有 `indexSha256` 时再比一次 `index.html`）。全对写 `"site_integrity":"ok"`，任一项不符写
+`"site_integrity":"mismatch"` 并把差写进 `failed`。**只有连一份清单都探不到**（清单改动之前切上去的
+老版本）才写 `"skipped"`，原因写在 `site_integrity_detail` 里 —— 绝不臆造字段。老式清单（只有
+`indexSha256`）仍能比，只是 detail 会注明"老式清单，只有单文件哈希可比"。想让老版本补写清单：**重发一次**即可。
 
 字段名也是先探测再认：先按已核实的真名 `indexSha256`，再试 `index_sha256` / `indexSHA256`，
 最后才做"值侧兜底"（清单里任何**值**是 64 位十六进制且等于 `index.html` 的 sha256 就算对上）。
@@ -199,9 +221,12 @@ journalctl -u consistency-check.service -n 40 --no-pager
 | `ok` | `failed` 为空即 `true` |
 | `failed` | 失败短语列表，**每项自带原因**，例如 `page /lab/ -> HTTP 500`、`endpoint geo (https://demo.xiaokeqing.cn/api/public/geo) -> HTTP 502` |
 | `checks` | 参与判定的项数（15 或 16） |
-| `site_integrity` | `pass` / `fail` / `skipped` |
-| `site_integrity_detail` | 人读的原因；`skipped`/`fail` 时**一定**看这里 |
+| `site_integrity` | `ok` / `mismatch` / `skipped`（`pass`/`fail` 是 2026-10-18 之前的旧取值，只为读老报告保留在状态页兼容分支里） |
+| `site_integrity_detail` | 人读的原因；`skipped`/`mismatch` 时**一定**看这里 |
 | `site_integrity_manifest` / `site_integrity_recorded_in` | 用的是哪个清单文件、其中哪个字段/路径被认为是记录值（`path@文件` 形式），空串表示没有 |
+| `site_integrity_manifest_kind` | 清单种类：新式 `manifest.json`（能核整树）/ 老式 `release-info.json`（只能核 `index.html`） |
+| `site_integrity_hash_scope` | 一句话解释 `sha256`（整树）与 `indexSha256`（单文件）的区别，防止误比 |
+| `site_integrity_expected` / `site_integrity_actual` | 清单记录的 / 目录实测的 `{count,totalBytes,sha256}`，`mismatch` 时逐项对照 |
 | `site_index_sha256` | 本机算出的 `index.html` sha256 |
 | `release_dir` / `live_target` | 最新 release 目录 / `/opt/secagent/site` 解析出的真实目标 |
 | `live_vs_api_release` / `api_release_path` | 上面的佐证对比（`match`/`mismatch`/`unknown`）与 deploy 记录的路径 |
@@ -244,18 +269,17 @@ systemctl list-timers consistency-check.timer --all
 | `page /x/ -> N B（要求 > 100000）` | 拿全了但太小（或只拿到部分） | 产物是否完整、是否被 CDN/WAF 截断 |
 | `endpoint x (...) -> JSON 解析失败` | 200 但 body 不是 JSON（多半是反代返回 HTML 错误页） | `curl -i` 看真身 |
 | `endpoint x (...) -> HTTP 502` | 上游服务坏了 | 后端进程/容器、`/api/health` 是否 200 |
-| `site_integrity -> sha256 不一致` | release 内容与清单不符（发布未完成 / 清单旧 / 被手改） | 两边时间戳，见下行 |
+| `site_integrity -> mismatch（…）` | release 内容与清单不一致（发布未完成 / 清单旧 / 有人在服务器上手改了文件） | 见下 2 |
 
 常见现象与动作：
 
-1. **`site_integrity: skipped`，detail 说"没有清单文件"** —— srv2 上本来就**没有**清单（见 §2 坑 2）。
-   想让这一项真跑起来，二选一：
-   - 在 srv2 上放一份：`sudo install -m 0644 <某个可信来源>/release-info.json /opt/secagent/data/public-api/release-info.json`
-     （路径会被 `manifest_candidates` 第 4 顺位探到）；
-   - 或者跑的时候指出来：`MANIFEST_EXTRA=/path/to/release-info.json sudo -E bash /opt/secagent/tools/consistency-check.sh`。
+1. **`site_integrity: skipped`，detail 说"没有任何清单"** —— 这个 release 目录是**清单改动之前**切上去的
+   老版本（目录里没有 `manifest.json`），或者接收脚本还是旧版。**最省事：重发一次站点**，新脚本会在切换前
+   写好清单。想临时指一份清单：`MANIFEST_EXTRA=/path/to/release-info.json sudo -E bash /opt/secagent/tools/consistency-check.sh`。
    **不要**把 release 目录里的 `index.json` 指过来 —— 那是 Hugo 产物页，sha 永远对不上。
-2. **`site_integrity: fail`** —— 先看 `site_index_sha256` 与 `site_integrity_detail` 里清单记录值的差，
-   再比两边 `stat` 时间：目录旧 / 清单旧 / 有人在服务器上手改了文件。
+2. **`site_integrity: mismatch`** —— 先看 `site_integrity_expected` 与 `site_integrity_actual` 的
+   `sha256`/`count`/`totalBytes` 差在哪：整树哈希变了说明**内容**被改过；只有 `totalBytes` 变说明大小变了；
+   只有 `count` 变说明多/少了文件。再比两边 `stat` 时间：目录旧 / 清单旧 / 有人在服务器上手改了文件。
    注意 `release_dir` 取的是 **mtime 最新的 `site-*`**；`.staging-*` 不在 glob 里，天然排除。
 3. **`live_vs_api_release: mismatch`** —— deploy 的 `release.release` 与 `/opt/secagent/site` 指向不一致。
    多半是 srv1 上的 `release-info.json` 滞后（它由发布脚本第 6.5 步写）。**不红**，但值得看一眼是不是发布只完成了一半。
@@ -322,9 +346,9 @@ sudo rm -rf /opt/secagent/reports/ci
 
 1. **`bash -n` 语法检查通过**（`C:\Program Files\Git\bin\bash.exe -n scripts/consistency-check.sh` → exit 0）。
 2. **离线端到端跑通 6 个场景**（用假 `curl` + 假 `releases/` 目录 + 真 `python3` 标准库，不联网）：
-   - 全绿：`exit 0`、`ok=true`、`checks=16`（含完整性 1 项）、`site_integrity=pass`；
+   - 全绿：`exit 0`、`ok=true`、`checks=16`（含完整性 1 项）、`site_integrity=pass`（当时取值；2026-10-18 起为 `ok`）；
    - 4 项失败（页面 500 + 端点 502 + 非 JSON + 404）：`exit 1`、`failed` 4 条、逐条带原因；
-   - 把清单里的 `indexSha256` 改成全 0：`site_integrity=fail`、`exit 1`、`failed` 里出现 sha 两边值；
+   - 把清单里的 `indexSha256` 改成全 0：`site_integrity=fail`（当时取值；现在为 `mismatch`）、`exit 1`、`failed` 里出现 sha 两边值；
    - 删掉清单：`site_integrity=skipped`、`exit 0`、`checks=15`（**skipped 不判红**）；
    - `RELEASES_DIR` 指向不存在的目录：`skipped` + detail「在 … 下没找到 site-* 发布目录」、`exit 0`；
    - `PATH` 里没有 `python3`：`exit 2` + `[X] 缺 python3（Ubuntu 22.04 自带 3.10）`；
@@ -341,6 +365,21 @@ sudo rm -rf /opt/secagent/reports/ci
 6. `date +%Y-%m-%dT%H:%M:%S%:z` 与 `sha256sum`、`mktemp -d`、`readlink -f`、`wait -n`（bash≥5.0）在 Git bash 下行为正确
    （Ubuntu 22.04 的 coreutils 与 bash 5.1 同样支持这些）。
 
+### ✅ 2026-10-18 追加验证（`manifest.json` + 实测完整性，本机 Windows + Git bash 5.3.9，不联网）
+
+1. **`bash -n` 两个 .sh 通过**（`consistency-check.sh`、`srv2-site-receive.sh` → exit 0）；
+   **`publish-site-to-srv2.ps1` 用 PowerShell 官方解析器过**：`[System.Management.Automation.Language.Parser]::ParseFile` 无错，
+   `[scriptblock]::Create` 也成功；**BOM 未丢**（首 3 字节仍为 `EF BB BF`，PS 5.1 靠它把文件当 UTF-8 读）。
+2. **跨实现哈希同源**：把 ps1 里真实的 `Get-TreeFiles`（AST 抽出）与 bash 的 `tree_hash_dir` 跑在同一份夹具上，
+   整树哈希逐字节相等（`fc03dc3f…8f82`，3 个文件），`manifest.json` 与 `index.json` 两边都排除。
+3. **离线端到端 3 场景**（假 `curl` + 假 `releases/` + 真 python 3.9 标准库；清单由接收脚本里的**真实**
+   `write_manifest()` 函数文本生成）：
+   - 一致：`exit 0`、`ok=true`、`checks=16`、`site_integrity=ok`、detail「实测与清单一致：5 个文件 / 13154 B / 整树 …」；
+   - 多放一个 `extra.txt`：`exit 1`、`site_integrity=mismatch`、`failed` 同时报整树哈希 / 文件数 5 vs 6 / 总字节 13154 vs 13160；
+   - 删掉 `manifest.json`：`exit 0`、`checks=15`、`site_integrity=skipped` + 原因（**skipped 不判红**）。
+4. **`Compare-TreeFiles` 不再把远端多出的清单当"多传文件"**：本地树（无 `manifest.json`）vs 远端树（有）
+   ⇒ `changed=0 added=0 removed=0 nondet=1`。
+
 ### ❓ 未验证（本次明确不做 / 无法在本机做）
 
 1. **srv2 上从未安装过、从未运行过**（`TimeoutStartSec`、root 权限、`/opt/secagent/releases` 的实际内容、
@@ -352,8 +391,8 @@ sudo rm -rf /opt/secagent/reports/ci
    但**没有在 3.10 上实际执行过**（本机跑的是 3.13 系列的 Windows 构建）。唯一的兼容风险点是 f-string 之外的语法——当前脚本里没用到。
 4. **`live_vs_api_release` 在 srv2 上是否 `match`**：离线夹具里因为 Windows 路径形态（`E:/…` vs `/e/…`）显示 `mismatch`，
    属测试夹具假象；真机上两边都是真路径，预期 `match`。该字段**不参与判定**。
-5. **`site_integrity` 在 srv2 上最可能的结果是 `skipped`**（srv2 无清单）——这需要装完跑一次才能确认；
-   如果你们另有把 `release-info.json` 落到 srv2 的流程，请把路径加到 `MANIFEST_EXTRA`（见 §7 第 1 条）。
+5. **`site_integrity` 在 srv2 上应当是 `ok`**（2026-10-18 起接收脚本在切换前写 `manifest.json`），
+   这需要真发一次版才能确认；**清单改动之前切上去的老版本目录仍是 `skipped`**，重发一次即可补写（见 §7 第 1 条）。
 6. **没有接入任何告警/日报**：`latest.json` 只落盘，没有人会因此被通知。
 7. **没有跑 hugo、没有 `git add/commit/push`、没有 scp 上传、没有动 srv1/srv2** —— 按任务约束。
 
@@ -364,3 +403,4 @@ sudo rm -rf /opt/secagent/reports/ci
 | 日期 | 变更 |
 |---|---|
 | 2026-10-17 | 初版三件套：`scripts/consistency-check.sh`（四类检查、并发 8、退出码 0/1/2、JSON 摘要）、`consistency-check.service`（oneshot，300 s）、`consistency-check.timer`（`*:0/15`，`Persistent=true`）。本机离线 6 场景验证通过；**尚未在 srv2 安装**。 |
+| 2026-10-18 | 让 `site_integrity` 从「只能 skipped」变成「实测 ok/mismatch」：<br>① `scripts/srv2-site-receive.sh` 在原子切换**前**给 release 目录写 `manifest.json`（`count`/`totalBytes`/`sha256`=整树哈希/`indexSha256`=index.html 单文件/`generatedAt`/`hashExcludes`），no-change 时给当前版本补写；<br>② 整树哈希口径统一排除 `./index.json`（Hugo 产物页）与 `./manifest.json`（清单自指），`index.html` **必须**参与；<br>③ `scripts/consistency-check.sh` 的 `③` 改为：首选 `<release>/manifest.json`，实测复算后写 `ok`/`mismatch`，只有探不到任何清单才 `skipped`；新增 `site_integrity_manifest_kind`/`site_integrity_hash_scope`/`site_integrity_expected`/`site_integrity_actual`；<br>④ `scripts/publish-site-to-srv2.ps1` 三处同步（本地/远端整树哈希排除 `./manifest.json`、`$TreeNondet` 加入它、解析接收侧 `MANIFEST_SHA`/`MANIFEST_COUNT` 与本地整树口径交叉核对）；<br>⑤ `layouts/status/list.html` 加 `mismatch` 分支并去掉「常年 skipped」的旧说明。<br>本机验证：`bash -n`、PS 解析器、跨实现哈希同源、离线 3 场景（ok/mismatch/skipped）全过；**尚未在 srv2 真发版验证**。 |
