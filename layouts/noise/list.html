@@ -34,7 +34,7 @@
 .nx-lead{margin:0;font-size:19px;line-height:1.75;color:#eaf6ff;font-weight:600;letter-spacing:.01em}
 .nx-lead em{font-style:normal;color:#E8B45A}
 .nx-lead .sig{color:#6FD3A0}
-.nx-leadsub{margin:9px 0 0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.62)}
+.nx-leadsub{margin:9px 0 0;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.62)}
 .nx-leadsub b{color:#cfe9f5;font-weight:600}
 /* ② 占比条（纯 CSS，不用图表库） */
 .nx-bar{display:flex;width:100%;height:30px;border:1px solid rgba(255,255,255,.14);border-radius:7px;overflow:hidden;background:rgba(0,0,0,.4)}
@@ -42,7 +42,7 @@
   font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.04em;white-space:nowrap}
 .nx-seg.noise{background:linear-gradient(180deg,rgba(232,180,90,.62),rgba(232,180,90,.34));color:#2a1d05;font-weight:700;transition:width .55s ease-out}
 .nx-seg.sig{background:linear-gradient(180deg,rgba(111,211,160,.62),rgba(111,211,160,.3));color:#06251a;font-weight:700;transition:width .55s ease-out}
-.nx-legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:10px 0 0;padding:0;list-style:none;font-size:13px;line-height:1.8;color:rgba(255,255,255,.6)}
+.nx-legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:10px 0 0;padding:0;list-style:none;font-size:11.5px;line-height:1.8;color:rgba(255,255,255,.6)}
 .nx-legend .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
 .nx-legend .sw.noise{background:#E8B45A}
 .nx-legend .sw.sig{background:#6FD3A0}
@@ -52,13 +52,13 @@
    （外壳 .screen-bd table 已给 display:block+overflow-x:auto，但表自己变宽会被 .mod
     的 overflow:hidden 裁掉，所以外面再套一层滚动容器，min-width 落在表上） */
 .nx-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.nx-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.nx-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:640px}
 .nx-tbl th,.nx-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top;line-height:1.75}
-.nx-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:13px;letter-spacing:.06em;white-space:nowrap}
-.nx-tbl td.sid{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#e8f3f8;white-space:nowrap}
+.nx-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.nx-tbl td.sid{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#e8f3f8;white-space:nowrap}
 .nx-tbl td.msg{color:#d7e7ef;word-break:break-word}
-.nx-tbl td.num{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:right}
-.nx-tbl td.pct{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:right}
+.nx-tbl td.num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:right}
+.nx-tbl td.pct{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:right}
 .nx-tbl td.cls{white-space:nowrap}
 .nx-tbl tr:last-child td{border-bottom:0}
 .nx-tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10.5px;letter-spacing:.04em;font-family:ui-monospace,Consolas,monospace}
@@ -67,24 +67,24 @@
 .nx-tag.na{color:rgba(255,255,255,.5);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
 /* 检测缺口 */
 .nx-gap{margin:12px 0 0;padding:10px 12px;border-left:2px solid #E8B45A;background:rgba(232,180,90,.06);border-radius:0 7px 7px 0}
-.nx-gap .h{margin:0 0 6px;font-family:ui-monospace,Consolas,monospace;font-size:13px;letter-spacing:.05em;color:#E8B45A}
-.nx-gap p{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.72)}
+.nx-gap .h{margin:0 0 6px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.05em;color:#E8B45A}
+.nx-gap p{margin:0;font-size:12px;line-height:1.95;color:rgba(255,255,255,.72)}
 .nx-gap b{color:#f7e3bd;font-weight:600}
 .nx-gap a{color:#bfe3d0;text-decoration:none}
 .nx-gap a:hover{text-decoration:underline}
-.nx-note{margin:10px 0 0;font-size:13px;line-height:1.9;color:rgba(255,255,255,.5)}
+.nx-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
 .nx-note:first-child{margin-top:0}
 .nx-note b{color:rgba(255,255,255,.76);font-weight:600}
 .nx-note a{color:#bfe3d0;text-decoration:none}
 .nx-note a:hover{text-decoration:underline}
-.nx-notes{margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.9;color:rgba(255,255,255,.55)}
+.nx-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.55)}
 .nx-notes li{margin:3px 0}
 .nx-miss{color:#E8B45A}
 .nx-na{color:rgba(255,255,255,.42)}
 .nx-ok{color:#6FD3A0;font-weight:600}
 .nx-bad{color:#E8837B;font-weight:600}
 .nx-noscript{margin:0 0 4px;font-size:12px;line-height:1.9;color:#E8B45A}
-.nx-kv{width:100%;border-collapse:collapse;font-size:13px}
+.nx-kv{width:100%;border-collapse:collapse;font-size:12.5px}
 .nx-kv th,.nx-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
 .nx-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap;width:118px}
 .nx-kv td{color:rgba(255,255,255,.8);line-height:1.9}

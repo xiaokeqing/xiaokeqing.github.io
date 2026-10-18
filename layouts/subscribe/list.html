@@ -1,15 +1,9 @@
 {{- /* ============================================================================
-   /subscribe/ = 「安全日报订阅」说明页（只说明；不收邮箱、不做表单）
-
-   ★2026-10-18 改口径：digestMail 的占位值（daily@xiaokeqing.cn，一个不存在的邮箱）已删。
-   · 配了真实地址 → 渲染 mailto: 链接（订阅/退订按钮 + 「链接目标：mailto:…」提示）；
-   · 没配（当前状态）→ **一个 mailto: 链接都不渲染**，页面上如实写
-     「未配置（配好 SMTP 与 TO 即发；当前只落盘 data/reports/outbox/*.eml）」。
-     理由：给访客一个点开就退信的地址，比承认没配好更糟。
+   /subscribe/ = 「安全日报订阅」说明页（只说明 + 一条 mailto，不做表单）
    ----------------------------------------------------------------------------
    隐私边界（这一页存在的理由）：
      · 这里**没有 FORM**、没有 <input>、没有 fetch 往任何后端提交邮箱；
-     · 订阅动作只发生在**你自己的邮件客户端**里（配好地址后才会出现这一步）；
+     · 订阅动作只发生在**你自己的邮件客户端**里：点 mailto: 链接，发一封空邮件；
      · 站点不存订阅名单。所以"谁订阅了"这个数据库不存在，也就没有被拖走的可能。
    为什么会这样：
      · 日报本身是公开页面（/status/ 的「今日日报」卡 + /api/public/daily.js），
@@ -22,8 +16,7 @@
      · 语音版是日语口语稿（≤120 字），HTML 版是中文表格（每个数字带出处）。
    ============================================================================ */ -}}
 {{- $v := "subscribe" -}}
-{{- $mail := site.Params.digestMail | default "" -}}
-{{- $mailUnset := "未配置（配好 SMTP 与 TO 即发；当前只落盘 data/reports/outbox/*.eml）" -}}
+{{- $mail := site.Params.digestMail | default "daily@xiaokeqing.cn" -}}
 <!DOCTYPE html>
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
 <head>
@@ -43,7 +36,7 @@
 .sub-cta a:hover{border-color:rgba(160,220,240,.8);background:rgba(160,220,240,.16);color:#fff}
 .sub-cta a.ghost{border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.72);background:none}
 .sub-cta a.ghost:hover{border-color:rgba(255,255,255,.45);color:#eaf6ff}
-.sub-hint{margin:10px 0 0;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.7;color:rgba(255,255,255,.45);word-break:break-all}
+.sub-hint{margin:10px 0 0;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.45);word-break:break-all}
 .sub-kv{width:100%;border-collapse:collapse;font-size:13px}
 .sub-kv th,.sub-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
 .sub-kv thead th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
@@ -84,13 +77,12 @@
         <b>日报是公开页面，订阅只是邮件提醒。</b>
         内容本身就在 <a href="/status/" style="color:#bfe3d0">/status/</a> 的「今日日报」卡里，
         任何人随时可以看，不需要订阅、不需要留邮箱。<b>这一页不做表单、不在本站收集邮箱</b> ——
-        订阅动作只发生在你自己的邮件客户端里{{ if not $mail }}（<b>当前订阅地址未配置</b>，下面如实写明，不画一个点开会退信的按钮）{{ end }}：
+        订阅动作只发生在你自己的邮件客户端里：
       </p>
 
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>怎么订阅<span class="tag">{{ with $mail }}mailto: · 不在本站提交任何东西{{ else }}订阅地址未配置 · 不给假的 mailto{{ end }}</span></div>
+        <div class="mod-hd"><span class="led"></span>怎么订阅<span class="tag">mailto: · 不在本站提交任何东西</span></div>
         <div class="mod-bd">
-          {{- if $mail }}
           <ol class="sub-steps">
             <li>点下面的按钮，你的邮件客户端会打开一封<b>收件人已经填好、正文空白</b>的新邮件；</li>
             <li>直接点发送即可（主题按 <code>subscribe 安全日报</code> 预填）；</li>
@@ -107,19 +99,6 @@
           </p>
           <noscript><p class="sub-noscript">这一页不依赖 JavaScript：上面就是一条普通的 <code>mailto:</code> 链接，
             关掉脚本照样能点。本页也没有任何脚本会往服务器发东西。</p></noscript>
-          {{- else }}
-          <p class="sub-hint">订阅地址：{{ $mailUnset }}</p>
-          <p class="sub-note">
-            <b>所以这里没有「点一下发信」的按钮</b>：不渲染一个看着能用、点开却退信的 <code>mailto:</code> 链接。
-            日报本身照常是公开页面 —— 直接看 <a href="/status/" style="color:#bfe3d0">/status/</a> 的「今日日报」卡就行；
-            等站主把 SMTP 与 TO 配好，再来这里订阅。
-          </p>
-          <p class="sub-hint">当前状态：日报会落盘到 <code>data/reports/outbox/*.eml</code>，邮件只是没发出去。</p>
-          <p class="sub-cta">
-            <a class="ghost" href="/status/">先看看今天的日报</a>
-          </p>
-          <noscript><p class="sub-noscript">这一页不依赖 JavaScript：上面没有任何提交动作，也没有要跑脚本才看得到的内容。</p></noscript>
-          {{- end }}
         </div>
       </div>
 

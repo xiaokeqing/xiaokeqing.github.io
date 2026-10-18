@@ -422,7 +422,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 /* 标题下一行：极简副标题（只列栏目，不写说明文字），后面可以紧跟同步状态 */
 .xk-page__lead {
   margin-top: 3px;
-  font-size: 13px; /* ★T-c6：12.5px → 13px（p/li/td 字号下限 13px） */
+  font-size: 12.5px;
   line-height: 1.6;
   color: #3F5064;
   text-shadow: 0 1px 2px rgba(255, 255, 255, .85);
@@ -623,7 +623,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 
 /* 辅助文字统一 12.5px（站主第九轮 ⑥） */
 .xk-hint { font-size: 12.5px; color: var(--xk-muted); }
-.xk-note { margin-top: 10px; font-size: 13px; line-height: 1.62; color: var(--xk-muted); } /* ★T-c6：12.5px → 13px */
+.xk-note { margin-top: 10px; font-size: 12.5px; line-height: 1.62; color: var(--xk-muted); }
 .xk-note code, .xk-hint code { background: rgba(15, 42, 80, .05); border-radius: 4px; padding: 1px 4px; }
 .xk-sync { font-size: 12.5px; color: var(--xk-muted); }
 .xk-mono { font-family: var(--xk-mono); }
@@ -698,7 +698,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 .xk-tag--warn { background: rgba(245, 158, 11, .14); color: #B45309; }
 .xk-tag--bad { background: rgba(239, 68, 68, .12); color: var(--xk-red); }
 
-.xk-meta { display: flex; flex-direction: column; gap: 8px; font-size: 13px; /* ★T-c6：12.5px → 13px（全站 <ul class=xk-meta><li> 的 655 条小字根因） */ }
+.xk-meta { display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; }
 .xk-meta > li { display: flex; align-items: baseline; gap: 10px; }
 .xk-meta > li > span { color: var(--xk-muted); flex: none; }
 .xk-meta > li > b, .xk-meta > li > .xk-meta__v { margin-left: auto; text-align: right; color: var(--xk-title); font-weight: 600; word-break: break-all; }
@@ -989,7 +989,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   overflow: auto;
   padding-right: 6px;
 }
-.xk-read__toc-title { font-size: 13px; font-weight: 600; letter-spacing: .1em; color: var(--xk-muted); text-transform: uppercase; margin-bottom: 8px; } /* ★T-c6：11.5px → 13px */
+.xk-read__toc-title { font-size: 11.5px; font-weight: 600; letter-spacing: .1em; color: var(--xk-muted); text-transform: uppercase; margin-bottom: 8px; }
 .xk-toc { display: flex; flex-direction: column; gap: 2px; border-left: 1px solid var(--xk-line-2); }
 .xk-toc a {
   display: block;
@@ -1018,7 +1018,7 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
 }
 .xk-read__hd { padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--xk-line); }
 .xk-read__title { font-size: 28px; line-height: 1.3; letter-spacing: -.01em; }
-.xk-read__meta { margin-top: 10px; font-size: 13px; color: var(--xk-muted); display: flex; gap: 8px; flex-wrap: wrap; } /* ★T-c6：12.5px → 13px */
+.xk-read__meta { margin-top: 10px; font-size: 12.5px; color: var(--xk-muted); display: flex; gap: 8px; flex-wrap: wrap; }
 .xk-read__nav { display: flex; gap: 18px; justify-content: space-between; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--xk-line); font-size: 13px; }
 .xk-read__nav a { max-width: 46%; }
 
@@ -1789,21 +1789,6 @@ html[data-xk-theme="tech"] .xk-md blockquote {
   background: rgba(10, 22, 38, .34);
   color: var(--xk-t-text);
 }
-/* ★T-c9：tech（深玻璃）主题下这三处漏了深色适配，正文压在浅底/浅字压在深底上：
-   ① .xk-read__main 仍是浅色 --xk-card（实测复合 rgb(252,253,255)），而正文继承 tech 的
-      #E8F1FF → 1.12:1（/posts/ 两篇 × 3 宽度，c9 FAIL 42 单元）；
-   ② .xk-md strong 用浅色主题的 --xk-title(#081727) 压在深卡上 → 1.05:1（/demo/）；
-   ③ .xk-ep__k small 用 --xk-muted(#3A4A5E) 压在 #636974 上 → 1.64:1（/demo/）。
-   旁证：同段的 .xk-md* / .xk-read__hd / .xk-read__nav / .xk-crumb 都已做 tech 适配，仅漏这三处。 */
-html[data-xk-theme="tech"] .xk-read__main {
-  background: var(--xk-t-card);
-  border-color: var(--xk-t-card-line);
-}
-html[data-xk-theme="tech"] .xk-md strong { color: var(--xk-t-title); }
-html[data-xk-theme="tech"] .xk-ep__k small { color: var(--xk-t-muted); }
-/* ★T-c9（补）：.xk-read__meta 的日期/分类/阅读时长小字仍用浅色 --xk-muted(#3A4A5E)，
-   tech 深卡上实测 1.64:1（/posts/ 两篇 × 3 宽度，4 个 span/页）。 */
-html[data-xk-theme="tech"] .xk-read__meta { color: var(--xk-t-muted); }
 html[data-xk-theme="tech"] .xk-md hr { border-color: rgba(140, 200, 255, .16); }
 html[data-xk-theme="tech"] .xk-read__hd { border-bottom-color: rgba(140, 200, 255, .16); }
 html[data-xk-theme="tech"] .xk-read__nav { border-top-color: rgba(140, 200, 255, .16); }
@@ -2246,15 +2231,10 @@ html[data-xk-theme="tech"] .xk-svg__bar { fill: rgba(94, 200, 255, .82); }
 }
 .xk-cats__item:hover { text-decoration: none; transform: translateY(-2px); border-color: rgba(47, 122, 239, .45); box-shadow: 0 10px 26px rgba(31, 78, 140, .12); }
 .xk-cats__name { font-size: 16px; font-weight: 700; color: var(--xk-title); }
-.xk-cats__n { font-family: var(--xk-mono); font-size: 13px; color: var(--xk-muted); }
-.xk-cats__sample { margin-top: 6px; font-size: 13px; color: var(--xk-muted); }
+.xk-cats__n { font-family: var(--xk-mono); font-size: 12.5px; color: var(--xk-muted); }
+.xk-cats__sample { margin-top: 6px; font-size: 12.5px; color: var(--xk-muted); }
 html[data-xk-theme="tech"] .xk-cats__item { background: rgba(10, 22, 38, .42); }
 html[data-xk-theme="tech"] .xk-cats__name { color: var(--xk-t-title); }
-/* ★T-c9：分类卡在 tech（深玻璃）主题下底变暗，但次级文字还留在浅色主题的 --xk-muted
-   (#3A4A5E)，实测 #3A4A5E on 复合底 rgb(62,70,83) = 1.05:1（c9 FAIL，61 页 ×2 条）。
-   与同卡 .xk-cats__name 的处理保持一致，改用 tech 主题的次级色 #A9BFD8（约 6.7:1）。 */
-html[data-xk-theme="tech"] .xk-cats__n,
-html[data-xk-theme="tech"] .xk-cats__sample { color: var(--xk-t-muted); }
 
 /* ---------- 20.9 404 ---------- */
 .xk-nf { text-align: center; padding: 40px 20px 60px; }
