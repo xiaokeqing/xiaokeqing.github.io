@@ -22,6 +22,11 @@
 /* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源；.api-pit 的暖黄同 /status/ 的 .st-warn */
 .api-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
 .api-back:hover{color:#bfe3d0}
+/* 顶部链接区：不占视觉效果，只把"机器可读"那条路摆在表格前面 */
+.api-openapi{margin:0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.55)}
+.api-openapi b{color:rgba(255,255,255,.8);font-weight:600}
+.api-openapi a{color:#bfe3d0;text-decoration:none;border-bottom:1px dotted rgba(191,227,208,.5)}
+.api-openapi a:hover{border-bottom-color:#bfe3d0}
 .api-bd{display:flex;flex-direction:column;gap:14px}
 .api-lead{margin:0;font-size:14px;line-height:1.95;color:rgba(255,255,255,.86)}
 .api-lead b{color:#cfe9f5;font-weight:600}
@@ -61,9 +66,17 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 公开端点清单 <em class="ops-en">PUBLIC-API</em></span>
-      <span class="sync">● 全部只读 · 除 ask / tts 两处外都是 GET</span>
+      <span class="sync">● 全部只读 · 除 ask / tts / tts-say 三处外都是 GET</span>
     </div>
     <div class="screen-bd api-bd">
+
+      <p class="api-openapi">
+        <b>机器可读：</b><a href="https://demo.xiaokeqing.cn/api/openapi.json">/api/openapi.json</a>（OpenAPI 3.0，后端 <code>OpenApiSpec</code> 生成）
+        · <b>别名：</b><code>*.js</code>（每个 GET 都有同名 <code>.js</code>，响应体与不带后缀完全一致）
+        <br>
+        这份清单由<b>后端生成</b>，下面表格是<b>手写说明</b>，<b>两者不一致以 openapi.json 为准</b>；
+        手写表还没跟上的三条（<code>/api/public/ip</code>、<code>/password</code>、<code>/tts/say</code>）在清单里有。
+      </p>
 
       <p class="api-lead">
         这张表是给<b>想自己敲命令的人</b>看的：每个端点做什么、返回什么、有什么已知缺陷。

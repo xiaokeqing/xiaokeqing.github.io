@@ -436,6 +436,62 @@ else
   printf '  \033[1;33m[SKIP]\033[0m 排版审计（docs/layout-audit.json 不存在，未跑过 layout-audit.py）\n'
 fi
 
+# ---------- ⑯ 攻击来源地图 · 24h 回放数据（2026-10-18 新增）----------
+# 数据源：scripts/geo/hourly.py（小时 × 国家），页面上的「▶ 回放 24h」播放条读它。
+# 失败模式和 ⑯ 红队那条一样是"安静地错"：static/data/ 下的文件只被复制、不被模板引用，
+# 漏生成 / 漏拷都不报错，构建日志一片绿，而页面永远停在「读不到（原因）—— 不回放」。
+# 所以两条都钉：
+#   · static/data/geo-hourly.json 存在 + 合法 JSON + 含 available(布尔) / series(数组)
+#     —— 前端就靠这两个字段决定"能播"还是"写读不到"；字段名一改，播放条永远禁用；
+#   · 产物 public/data/geo-hourly.json 在位（复制环节漏了，源码再对也没用）。
+# ★available:false 是【合法状态】：公开接口只给 24h 国家合计 + 逐小时总量，
+#   没有"小时 × 国家"交叉，脚本如实标注 available:false + reason，而不是拿合计按比例编造分布。
+#   所以这里只验结构，不要求 available 为 true。
+head1 "⑯ 回放数据 static/data/geo-hourly.json（存在 + 合法 JSON + available/series）"
+RPL_PY=""
+if command -v python3 >/dev/null 2>&1; then RPL_PY=python3
+elif command -v python >/dev/null 2>&1; then RPL_PY=python
+fi
+RPL_JSON="static/data/geo-hourly.json"
+if [ -s "$RPL_JSON" ]; then
+  if [ -n "$RPL_PY" ]; then
+    RPOUT=$("$RPL_PY" -X utf8 - "$RPL_JSON" <<'PY' 2>/dev/null
+import json, sys
+try:
+    d = json.load(open(sys.argv[1], encoding='utf-8'))
+except Exception as e:
+    print('BAD 不是合法 JSON：%s' % e)
+else:
+    if not isinstance(d, dict):
+        print('BAD 顶层不是对象')
+    elif not isinstance(d.get('available'), bool):
+        print('BAD 缺 available（必须是 true/false 布尔）')
+    elif not isinstance(d.get('series'), list):
+        print('BAD 缺 series（必须是数组）')
+    else:
+        print('OK available=%s series=%d hours=%s reason=%s' % (
+            'true' if d['available'] else 'false', len(d['series']),
+            d.get('hours', '-'), (d.get('reason') or '-')[:60]))
+PY
+)
+    case "$RPOUT" in
+      OK*) ok "回放数据合法：${RPOUT#OK }" ;;
+      *)   no "回放数据不合规：${RPOUT#BAD }" ;;
+    esac
+  elif grep -q '"series"' "$RPL_JSON" && grep -qE '"available"[[:space:]]*:[[:space:]]*(true|false)' "$RPL_JSON"; then
+    ok "回放数据在位（无 python 解释器，只做了 available/series 结构检查）"
+  else
+    no "回放数据结构不对（缺 available 布尔或 series 数组，且没有 python 解释器可深查）"
+  fi
+else
+  no "缺 static/data/geo-hourly.json —— 跑 python -X utf8 scripts/geo/hourly.py（前端会一直停在「读不到」）"
+fi
+if [ -s "$PUB/data/geo-hourly.json" ]; then
+  ok "产物 data/geo-hourly.json 在位（static/data → public/data 复制没漏）"
+else
+  no "产物缺 data/geo-hourly.json（回放条会 404 → 显示「读不到（下载失败：HTTP 404）」）"
+fi
+
 # ---------- 汇总 ----------
 head1 "汇总"
 echo "  通过 $PASS 项，失败 $FAIL 项"
