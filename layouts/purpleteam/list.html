@@ -1,0 +1,315 @@
+{{- /* ============================================================================
+   /purpleteam/ = 紫队演练页（手写页，不归 _dev/gen-demo-pages.py 管）。
+   ----------------------------------------------------------------------------
+   这一页回答一个问题：**我打的攻击，我的平台能看见吗。**
+   它不贴战报，贴的是「自测设计 + 待填的对账表」：
+     · 三条可测攻击（SSH 爆破 / 端口扫描 / Web 探测）各给出一条发起命令；
+     · 每条指定它**应当**命中哪条规则（Suricata SID 1000101–1000108，Wazuh 100400–100402）；
+     · 每条给出验证方法（eve.json / alerts.json 的 grep），以及"该响没响 / 不该响却响"两种判据。
+
+   数字从哪来（本页没有一个新编的数）：
+     · 规则阈值与依据计数 —— detections/README.md（其 §0 侦察表 + §1/§2 规则表）；
+     · 基线分母 —— srv2 /opt/suricata/logs/eve.json，2026-10-11 09:23 ~ 2026-10-18 12:00 UTC
+       共 1,471,376 行（alert 293,482 / flow 612,516 / http 283,796 / ssh 142,926 / dns 132,086 / tls 6,801）。
+
+   ⚠ 规则**未部署**（两份文件仍在 detections/ 旁路目录，没进生产规则目录、没 reload）。
+   所以「实测命中」一栏本页统一写「未验证」—— grep 返回 0 只能证明没加载，不能证明没命中，
+   这两件事含义相反，混着写就是假战报。这一页不替谁把 0 说成「没命中」。
+
+   外壳约定同 /redteam/：类名复用 .screen/.screen-hd/.screen-bd/.mod/.mod-hd/.mod-bd/.t/.led/.sync/.tag，
+   只补本页 .pt-* 规则；不引外部字体/CDN，不加新配色。
+   ============================================================================ */ -}}
+{{- $v := "purpleteam" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源 */
+.pt-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
+.pt-back:hover{color:#bfe3d0}
+.pt-bd{display:flex;flex-direction:column;gap:14px}
+.pt-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.pt-lead b{color:#cfe9f5;font-weight:600}
+.pt-lead code,.pt-note code,.pt-tbl code,.pt-kv code,.pt-p code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.pt-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
+.pt-tbl th,.pt-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.pt-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.pt-tbl td.sid{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#eaf6ff;white-space:nowrap;font-weight:600}
+.pt-tbl td.num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:rgba(255,255,255,.82);white-space:nowrap}
+.pt-tbl td.why{color:rgba(255,255,255,.72)}
+.pt-kv{width:100%;border-collapse:collapse;font-size:12.5px}
+.pt-kv th,.pt-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.pt-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap;width:132px}
+.pt-kv td{color:rgba(255,255,255,.8);line-height:1.9}
+.pt-kv td.f{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#e8f3f8}
+.pt-p{margin:0 0 10px;font-size:12.5px;line-height:1.95;color:rgba(255,255,255,.76)}
+.pt-p:last-child{margin-bottom:0}
+.pt-p b{color:#eaf6ff;font-weight:600}
+.pt-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
+.pt-pre .c{color:rgba(255,255,255,.45)}
+.pt-pre:last-child{margin-bottom:0}
+.pt-note{margin:10px 0 0;font-size:11.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.pt-note:first-child{margin-top:0}
+.pt-note b{color:rgba(255,255,255,.76);font-weight:600}
+.pt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pt-yes{color:#6FD3A0;font-weight:600}
+.pt-no{color:#E8837B;font-weight:600}
+.pt-open{color:#E8B45A;font-weight:600}
+.pt-na{color:rgba(255,255,255,.42)}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="purpleteam">
+<section class="view on" id="v-purpleteam">
+  <a class="pt-back" href="/posts/purple-team-self-attack-20261018/">← 配套笔记：一次可复现的紫队自测设计</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 紫队演练 <em class="ops-en">PURPLE-TEAM</em></span>
+      <span class="sync">● 设计稿 · 2026-10-18 · 规则未部署</span>
+    </div>
+    <div class="screen-bd pt-bd">
+
+      <p class="pt-lead">
+        红队问「能不能打进去」，蓝队问「有没有看见」，紫队问的是<b>两者对不对得上</b>：
+        我打出去的这一下，<b>是不是恰好那一条规则该响</b>；打完之后<b>日志里到底有没有它</b>。
+        这一页把这件事做成一张可执行的设计稿 —— 三条攻击、每条一个明确的预期 SID、一套 grep 验证方法，
+        再把<b>还没验的部分写成「未验证」</b>，而不是写成「命中 0」。
+      </p>
+
+      <!-- ============ ① 口径 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径 · 数字从哪来、什么算验过<span class="tag">先看这块，再看数字</span></div>
+        <div class="mod-bd">
+          <div class="pt-scroll">
+            <table class="pt-kv">
+              <tbody>
+                <tr><th>规则在哪</th><td>
+                  <code>detections/suricata/xk-lab.rules</code>（7 条生效 + 1 条抑制型默认注释，SID <code>1000101–1000108</code>）、
+                  <code>detections/wazuh/xk-lab_rules.xml</code>（3 条，<code>100400/100401/100402</code>）。
+                  两份都<b>只做了语法验证</b>：一次性 <code>--rm</code> 容器里 <code>suricata -T</code> 与
+                  <code>wazuh-analysisd -t</code>，都是 exit 0，生产影响为零。
+                </td></tr>
+                <tr><th>基线分母</th><td class="f">
+                  srv2 <code>/opt/suricata/logs/eve.json</code>，2026-10-11 09:23 ~ 2026-10-18 12:00 UTC，
+                  共 <b>1,471,376</b> 行：alert 293,482 / flow 612,516 / http 283,796 / ssh 142,926 / dns 132,086 / tls 6,801。
+                  <div style="font-family:inherit;font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">
+                    阈值全部是从这份基线里统计出来的窗口分布，不是拍脑袋定的；改阈值前先重跑计数。
+                  </div>
+                </td></tr>
+                <tr><th>什么算「验过」</th><td>
+                  一次自测只算成立，必须同时满足三件事：①规则文件<b>真的在生产规则目录里且被加载</b>；
+                  ②发起攻击后 <code>grep</code> 到对应 <code>signature_id</code> / <code>rule.id</code>；
+                  ③<b>负样本对照不报</b>（只打单端口的源不该触发「多端口」规则）。
+                  缺第①条，<code>grep</code> 返回 0 说明的是<b>没加载</b>，不是<b>没命中</b> —— 这两种结论完全相反。
+                </td></tr>
+                <tr><th>本篇不引什么</th><td>
+                  <code>docs/Amadeus-项目总文档-20261017.md</code> 的 §19 记的是 2026-10-18 的站点改动
+                  （首屏聚合五块 / 发布链假失败 / 手机顶栏），<b>里面没有任何 SID 与检测口径</b>，
+                  所以本页的数字一律不引它，只引 <code>detections/README.md</code> 与它引用的 eve.json 计数。
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pt-note"><b>一句话口径</b>：紫队自测的产物不是「拦住了多少」，而是
+            <b>「哪条规则该响 / 实际响没响 / 没响是因为规则没加载还是真的没匹配上」</b>这三件事分开记录。</p>
+        </div>
+      </div>
+
+      <!-- ============ ② 三条可测攻击 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>三条可测攻击 · 各一条发起命令<span class="tag">靶场自打 · 走内网</span></div>
+        <div class="mod-bd">
+          <p class="pt-p">
+            靶场的公网入口已整体撤下，SSH 面是蜜罐 <code>:2222</code>，所以要<b>先 SSH 隧道进去或用内网机器发起</b>。
+            这三条选的是「行为维度」而不是「载荷维度」—— 因为真实攻击里对方最爱伪装的东西（banner、UA）最不可靠。
+          </p>
+          <div class="pt-scroll">
+            <table class="pt-tbl">
+              <thead><tr><th>#</th><th>攻击</th><th>发起命令（示例）</th><th>预期命中</th><th>为什么是它</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="num">1</td>
+                  <td class="sid">SSH 爆破</td>
+                  <td class="why"><code>for i in $(seq 1 10); do ssh -p 2222 test@10.0.0.10 true; sleep 25; done</code></td>
+                  <td class="num pt-yes">1000103</td>
+                  <td class="why">判据是<b>会话速率</b>（同源 300s 内 ≥10 次 SYN 到 :2222），匀速十次/五分钟就够；不是失败次数</td>
+                </tr>
+                <tr>
+                  <td class="num">2</td>
+                  <td class="sid">端口扫描</td>
+                  <td class="why"><code>nmap -sS -Pn -n -p 21,22,23,2222,3306 10.0.0.10</code></td>
+                  <td class="num pt-yes">1000104<br>1000107</td>
+                  <td class="why">判据是<b>端口要不同</b>（60s 内 ≥3 个诱捕端口）；打 DB 口再叠一条外部源直连规则</td>
+                </tr>
+                <tr>
+                  <td class="num">3</td>
+                  <td class="sid">Web 探测</td>
+                  <td class="why"><code>for u in /.env /.git/config /config.json; do curl -s -o /dev/null "http://10.0.0.10:8081$u"; done</code><br>再换 UA：<code>curl -A 'zgrab/0.x' …</code></td>
+                  <td class="num pt-yes">1000105<br>1000106</td>
+                  <td class="why">路径一条就够（意图明确），UA 那条<b>只打标不封禁</b>（UA 可伪造）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pt-note"><b>负样本必须一起跑</b>：只打单端口、打几千次也不该触发 1000104 / 100401。
+            真实对照就在基线里 —— <code>179.63.84.194</code> 的 2,752 次全落在 1433 一个口上，规则设计上它不该被「多端口」规则报出来。
+            只测「该响的响了」是自欺，还要测「不该响的没响」。</p>
+        </div>
+      </div>
+
+      <!-- ============ ③ 规则 → 预期命中 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>规则 → 预期命中 · SID 1000101–1000108 + Wazuh 100400–100402<span class="tag">依据计数取自 detections/README.md</span></div>
+        <div class="mod-bd">
+          <div class="pt-scroll">
+            <table class="pt-tbl">
+              <thead><tr><th>规则</th><th>什么条件下该响</th><th>基线里的依据（真实计数）</th><th>已知误报</th></tr></thead>
+              <tbody>
+                <tr><td class="sid">1000101</td><td class="why">SSH 客户端 banner 以 <code>Go</code> 开头</td><td class="why">ssh 事件 142,926 中 <code>software_version:"Go"</code> 75,390 条（52.7%）</td><td class="why">自研 Go 巡检脚本 / CI 健康检查</td></tr>
+                <tr><td class="sid">1000102</td><td class="why">banner 以 <code>libssh</code>/<code>libssh2</code> 开头</td><td class="why"><code>libssh_0.9.3</code> 38,955 条；Cowrie 侧 <code>SSH-2.0-libssh2_1.11.1</code> 3,275 次</td><td class="why">备份/发布脚本、授权扫描器</td></tr>
+                <tr><td class="sid">1000103</td><td class="why">同源 300s 内 ≥10 次 SYN 到 :2222</td><td class="why">1,448 个 (源,300s) 窗口：max 29 / p99 27 / mean 8.18；≥20 只有 42 个（2.9%）</td><td class="why">内部自查脚本（<code>$EXTERNAL_NET</code> 已排除）、蜜罐重启补偿连接</td></tr>
+                <tr><td class="sid">1000104</td><td class="why">同源 60s 内 ≥3 个诱捕端口（21/22/23/1433/2222/3306/6379/9080/27017）</td><td class="why">53 个 (源,分钟) 窗口、275 个外部源；<code>47.96.106.187</code> 一分钟 9 个端口</td><td class="why">背景测绘（Censys/Shadowserver 类），建议打标不封禁</td></tr>
+                <tr><td class="sid">1000105</td><td class="why">HTTP GET <code>.env</code> 家族 / <code>.git/config</code> / <code>.git/HEAD</code> / <code>web.config</code> / <code>config.json</code></td><td class="why"><code>.env*</code> 262 次；<code>/.git/config</code> 13；<code>/config.json</code> 7；<code>/web.config</code> 6；<code>/phpmyadmin/scripts/setup.php</code> 9</td><td class="why">CI 拉 <code>.env</code> 做存在性校验；客户授权渗透</td></tr>
+                <tr><td class="sid">1000106</td><td class="why">UA 命中 <code>Go Web Pentest Tool / l9explore / zgrab / CensysInspect / zmap / Infrawatch / Nmap NSE / AttackWatch-PoC-Scanner</code></td><td class="why">155 / 96 / 72 / 26 / 6 / 23 / 16 / 10 次</td><td class="why">资产测绘、第三方合规探针；<b>只打标，不作封禁依据</b></td></tr>
+                <tr><td class="sid">1000107</td><td class="why">外部源 SYN 直连 <code>1433/3306/6379/9200/27017</code></td><td class="why">1433 告警 1,628 条 / 136 源；3306 756 / 230 源；6379 129 源；27017 67 源</td><td class="why">云厂商端口探活（量极小，白名单排除）</td></tr>
+                <tr><td class="sid">1000108</td><td class="why"><b>抑制型</b>：<code>$HOME_NET → 169.254.0.4:80 established</code> 走 <code>pass</code>（默认注释、opt-in）</td><td class="why">293,482 条 alert 里 278,405 条（94.9%）是这一条出站 POST <code>/ca_report.cgi</code></td><td class="why"><b>写错方向会把真实 C2 一起静音</b>，故默认不启用</td></tr>
+                <tr><td class="sid">100400</td><td class="why">同源 300s 内 ≥20 次 <code>cowrie.session.connect</code></td><td class="why">2026-10-17 单日 14,147 会话；窗口 max 29 / p99 27；≥20 仅 42 窗（2.9%），top <code>195.178.110.218</code>(29)、<code>45.148.10.161</code>(28)</td><td class="why">内部自查脚本；10.0.0.10 需白名单</td></tr>
+                <tr><td class="sid">100401</td><td class="why">同源 60s 内触及 <b>≥3 个不同</b>蜜罐端口</td><td class="why">flow 侧 53 个 (源,分钟) 窗口、275 个外部源；对照组 <code>179.63.84.194</code> 2,752 次全单端口 1433（<b>本条不该误报它</b>）</td><td class="why">背景测绘；docker 网关 172.19.0.1</td></tr>
+                <tr><td class="sid">100402</td><td class="why">蜜罐 MSSQL 收到<b>凭据</b>（<code>credentials</code> 键存在，已进认证阶段）</td><td class="why"><code>credentials</code> 事件 2,753 条（mssqld 2,750 / mysqld 3），其中 2,750 条来自 <code>179.63.84.194</code></td><td class="why">蜜罐连通性自测（带假凭据），需排除</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pt-note">
+            <b>为什么 1000103 是 10/300s 而不是 20/300s</b>：20 抓的是脉冲型源（29 次/5min 那种），
+            10 抓的是「稳、慢、持久」的源。真实源里 ≥20 的窗口只占 2.9%，用 20 会把大部分慢速爆破漏掉 ——
+            这不是阈值写错，是<b>精度与覆盖率的分层取舍</b>，自测时要按你想验的那一层选阈值。
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ④ 怎么验证 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>怎么验证 · grep eve.json 与 alerts.json<span class="tag">先确认加载，再数告警</span></div>
+        <div class="mod-bd">
+          <p class="pt-p"><b>第一步永远是确认规则被加载</b>（否则后面的 0 没有意义）：</p>
+<pre class="pt-pre"><span class="c"># 语法验证（一次性容器，等价且不碰生产；README §3 记的就是这条）</span>
+docker run --rm --network none --pull=never -v /tmp/xkrules:/rules:ro \
+  --entrypoint suricata jasonish/suricata:latest -T -S /rules/xk-lab.rules
+<span class="c"># 结果：Suricata version 8.0.7 / Configuration provided was successfully loaded / exit 0</span>
+<span class="c"># 再看规则文件在不在生产目录（不在 ⇒ 后面 grep 出 0 是「没部署」）</span>
+ls -l /opt/suricata/rules/ ; ls -l /var/ossec/etc/rules/</pre>
+          <p class="pt-p"><b>第二步才是对账</b>（Suricata 看 <code>signature_id</code>，Wazuh 看 <code>rule.id</code>）：</p>
+<pre class="pt-pre"><span class="c"># Suricata：先数条数，再只看自己这台源，避免被别人的扫描混进来</span>
+grep -c '"signature_id":1000103' /opt/suricata/logs/eve.json
+grep '"signature_id":1000103' /opt/suricata/logs/eve.json | grep '"src_ip":"10.0.0.20"'
+grep '"signature_id":1000104' /opt/suricata/logs/eve.json | tail -n 5
+
+<span class="c"># 1000103 的输入证据在 flow 面：会话速率</span>
+grep '"dest_port":2222' /opt/suricata/logs/eve.json | grep '"event_type":"flow"' | tail -n 50
+
+<span class="c"># Wazuh：alerts.json 一行一个 JSON</span>
+grep '"id":"100400"' /var/ossec/logs/alerts/alerts.json | tail -n 3
+grep -c '"id":"100401"' /var/ossec/logs/alerts/alerts.json</pre>
+          <p class="pt-note">
+            <b>判读规则</b>：<code>grep -c</code> 非 0 且 <code>src_ip</code> 是自己 → 规则真的响了；
+            为 0 但规则已加载 → 规则没匹配上（要去看阈值和方向）；
+            为 0 且规则没加载 → <b>未验证</b>，不是「没命中」。
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ⑤ 实测台账 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>实测台账 · 命中 / 未命中的如实记录<span class="tag">本次：未部署 ⇒ 全部未验证</span></div>
+        <div class="mod-bd">
+          <div class="pt-scroll">
+            <table class="pt-tbl">
+              <thead><tr><th>规则</th><th>部署状态</th><th>发起过的攻击</th><th>grep 结果</th><th>结论</th></tr></thead>
+              <tbody>
+                <tr><td class="sid">1000101 / 1000102</td><td class="pt-no">未部署</td><td class="why">未发起</td><td class="pt-na">—</td><td class="pt-open">未验证（不能写成「没命中」）</td></tr>
+                <tr><td class="sid">1000103</td><td class="pt-no">未部署</td><td class="why">未发起</td><td class="pt-na">—</td><td class="pt-open">未验证</td></tr>
+                <tr><td class="sid">1000104 / 1000107</td><td class="pt-no">未部署</td><td class="why">未发起</td><td class="pt-na">—</td><td class="pt-open">未验证</td></tr>
+                <tr><td class="sid">1000105 / 1000106</td><td class="pt-no">未部署</td><td class="why">未发起</td><td class="pt-na">—</td><td class="pt-open">未验证</td></tr>
+                <tr><td class="sid">1000108</td><td class="pt-no">默认注释、未启用</td><td class="why">不需要发起（抑制型）</td><td class="pt-na">—</td><td class="pt-open">未验证（opt-in）</td></tr>
+                <tr><td class="sid">100400 / 100401 / 100402</td><td class="pt-no">未部署</td><td class="why">未发起</td><td class="pt-na">—</td><td class="pt-open">未验证</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pt-p" style="margin-top:12px">
+            <b>所以答案是：看不见。</b> 不是平台没看见我，是<b>还没把眼睛装上去</b> ——
+            两份规则文件仍在 <code>detections/</code> 旁路目录，没进 <code>/var/ossec/etc/rules/</code> 与
+            <code>/opt/suricata/rules/</code>，也没 reload 过 suricata / wazuh-analysisd。
+            这一栏留白不是偷懒，是<b>此刻唯一诚实的写法</b>：没有非 0 的 grep，就没有「命中」这个词。
+          </p>
+          <p class="pt-note">
+            填这一栏的顺序：①部署两份文件 → ②<code>suricata -T</code> / <code>wazuh-analysisd -t</code> 通过后 reload →
+            ③按上面三条打 → ④grep 记数（含负样本对照）→ ⑤只把有 grep 支撑的行改成「命中」或「没命中」。
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ ⑥ 三个已踩的坑 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>三个已踩的坑 · 自测前先记住<span class="tag">都是实测撞出来的，不是推的</span></div>
+        <div class="mod-bd">
+          <div class="pt-scroll">
+            <table class="pt-kv">
+              <tbody>
+                <tr><th>失败次数型规则会空转</th><td>
+                  已部署的 <code>100110</code>（120s 内 5 次登录失败）在 2026-10-17 全天 Cowrie 只有
+                  <b>19 条 <code>login.failed</code> 对 14,061 条 <code>login.success</code></b>，
+                  <code>alerts.json</code> 里 <code>"id":"100110"</code> 计数 <b>0</b>。
+                  机器人拿泄露口令表，一枪就中 —— 新规则才改成按会话速率判（<code>100400</code>）。
+                  <b>自测时只发错误口令，测的其实是这条空转规则。</b>
+                </td></tr>
+                <tr><th>94.9% 的告警是自家的</th><td>
+                  293,482 条 alert 里 278,405 条是 <code>10.0.0.10 → 169.254.0.4:80 POST /ca_report.cgi</code>。
+                  自测前先想清楚：你 grep 出来的「命中」可能全是云主机心跳；
+                  <code>1000108</code> 就是为消掉它写的，但它是 opt-in，写错方向会把真实 C2 一起静音。
+                </td></tr>
+                <tr><th>Wazuh XML 的三种写法</th><td>
+                  ① JSON 解码事件<b>不能用 <code>&lt;same_source_ip/&gt;</code></b>（内部 <code>srcip</code> 为空，规则永不触发）
+                  → 用 <code>&lt;same_field&gt;src_ip&lt;/same_field&gt;</code>；
+                  ② <code>&lt;if_matched_group&gt;</code> 不写尾随逗号、<code>&lt;group&gt;</code> 要写；
+                  ③ 同一 rule 里 <code>&lt;decoded_as&gt;</code> 与 <code>&lt;regex&gt;</code> 不能共存
+                  （<code>Syntax error on tag 'regex'</code> 会让 analysisd 拒绝启动）。
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ ⑦ 边界 ============ -->
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>边界 · 这一页公开什么、不公开什么<span class="tag">公开的是可复核的部分</span></div>
+        <div class="mod-bd">
+          <p class="pt-p">
+            <b>公开</b>：规则 id、判据（窗口 / 阈值 / 端口组）、每条规则背后的<b>真实计数与窗口分布</b>、
+            发起命令的形状、验证用的 grep、以及「未部署 ⇒ 未验证」这个结论本身。<br>
+            <b>不公开</b>：生产环境的完整规则文件内容、真实服务器地址之外的内部拓扑、蜜罐真实口令与凭据、
+            以及任何还没部署就宣称「已生效」的说法 —— 最后这条不是安全问题，是诚信问题。
+          </p>
+          <p class="pt-note">
+            数字出处：<code>detections/README.md</code>（§0 侦察表、§1/§2 规则表、§3 语法验证、§4 边界）
+            与它引用的 <code>/opt/suricata/logs/eve.json</code> 统计。
+            规则本体在 <code>detections/suricata/xk-lab.rules</code> 与 <code>detections/wazuh/xk-lab_rules.xml</code>。
+            配套笔记见 <a href="/posts/purple-team-self-attack-20261018/" style="color:#bfe3d0">《我打的攻击，我的平台能看见吗》</a>。
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>
