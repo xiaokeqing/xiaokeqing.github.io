@@ -725,7 +725,18 @@ function makeBodyPlayer(canvas){
   const CW = 321, CH = 432, COLS = 8;
   const cache = {};
   let cur = null, frames = 0, fi = 0, last = 0, iv = 42;
-  function img(src){ if(!cache[src]){ const im = new Image(); im.src = src; cache[src] = im; } return cache[src]; }
+  /* ★2026-10-19（加载速度）：手机面板收起时 canvas 布局尺寸是 0×0，而 BODY.idle 就是
+     /kurisu/full/idle.hi.webp（2083KB）—— 以前 setPhone() 一上来就 new Image 把它拉下来，
+     整页白下 2MB、一个像素都没画。现在：**面板没有布局尺寸就不建 Image、不缓存、不发请求**；
+     draw() 每帧都会重新问一次 img(cur)，面板一旦展开自然就把 hi 取回来。 */
+  function stageVisible(){ return !!(canvas.clientWidth > 0 && canvas.clientHeight > 0); }
+  function img(src){
+    if(!cache[src]){
+      if(!stageVisible()){ return { complete: false, naturalWidth: 0, naturalHeight: 0 }; }
+      const im = new Image(); im.src = src; cache[src] = im;
+    }
+    return cache[src];
+  }
   function set(clip){
     if(cur === clip.src) return;
     cur = clip.src; frames = clip.frames; iv = clip.interval; fi = 0;

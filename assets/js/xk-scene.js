@@ -627,6 +627,21 @@ function xkClipIm(name){
   }
   return {im:img(c.src), c:c};
 }
+/* ★2026-10-19（加载速度）：**舞台不可见就不取 hi 图集**。
+   实测：/posts/ 这类内容页的角色 canvas 布局尺寸为 0（人物面板收起），
+   但 boot 就绪 1.7 s 后 late() 仍把 idle.hi.webp（2.03 MB）拉了下来 ——
+   一页白下 2 MB，而这一页上根本没有任何像素用到它。
+   面板打开 / 切回首页会重新 play()，那时 stage 有了布局尺寸，自然会取 hi。 */
+function xkStageVisible(){
+  try{
+    const cvs = document.querySelectorAll('[data-xk-kurisu-canvas],.xk-scene,.charcanvas');
+    for(let i = 0; i < cvs.length; i++){
+      const el = cvs[i];
+      if(el.clientWidth > 0 && el.clientHeight > 0) return true;
+    }
+  }catch(e){}
+  return false;
+}
 function play(name){
   const c = CLIPS[name];
   cur = name; fi = 0; acc = 0;
@@ -634,8 +649,9 @@ function play(name){
      越过首屏门禁的 1.5s 窗口，入户字节才真的降下来。boot 加载失败则立刻回退 hi。 */
   if(c.bootSrc){
     const bt = img(c.bootSrc);
-    /* ★P0-①：手机/已降档的角色**不上 hi 档**（hi 单张解码 34~53MB，iOS 会把它丢掉） */
-    const late = ()=>{ if(!XK_TIER.hiAllowed(name)) return; setTimeout(()=>{ img(c.src); }, 1700); };
+    /* ★P0-①：手机/已降档的角色**不上 hi 档**（hi 单张解码 34~53MB，iOS 会把它丢掉）
+       ★2026-10-19：舞台没有布局尺寸（内容页人物面板收起）时同样不取，省下整张 hi。 */
+    const late = ()=>{ if(!XK_TIER.hiAllowed(name)) return; if(!xkStageVisible()) return; setTimeout(()=>{ img(c.src); }, 1700); };
     if(bt.complete && bt.naturalWidth){ late(); }
     else { bt.addEventListener('load', late, {once:true});
            bt.addEventListener('error', function(){ if(!XK_TIER.hiAllowed(name)){ XK_TIER.degrade(name, 'boot 中档取图失败（error）'); } else { img(c.src); } }, {once:true}); }

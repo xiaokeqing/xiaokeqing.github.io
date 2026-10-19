@@ -781,6 +781,39 @@
     });
   };
 
+  /* ★2026-10-19（加载速度）：**舞台没有布局尺寸就不取 hi 档**。
+     实测 /posts/ 这类内容页的角色 canvas 是 0×0（人物面板收起），
+     首帧 3 秒后 loadHi 仍然把 /kurisu/full/idle.hi.webp（2083KB）拉了下来 ——
+     整页 3.3MB 里有 2.0MB 是给一个看不见的画布。面板打开/回到首页会重新走
+     这条路径，那时 canvas 有尺寸，hi 照常补上，画质不受影响。 */
+  Player.prototype.stageVisible = function () {
+    try {
+      if (this.canvas && this.canvas.clientWidth > 0 && this.canvas.clientHeight > 0) { return true; }
+      var m = this.mount;
+      if (m && m.clientWidth > 0 && m.clientHeight > 0) {
+        // mount 有尺寸但 canvas 被藏起来（display:none / 0 高度）时仍算不可见
+        var cs = (window.getComputedStyle && window.getComputedStyle(this.canvas)) || null;
+        return !!(cs && cs.visibility !== 'hidden' && cs.display !== 'none');
+      }
+    } catch (err) { /* 忽略 */ }
+    return false;
+  };
+
+  /* 舞台此刻不可见时，等它第一次有了布局尺寸再补 hi（面板被展开的情形）。 */
+  Player.prototype._watchStage = function (name) {
+    var self = this;
+    if (this._stageWatch || typeof ResizeObserver === 'undefined' || !this.canvas) { return; }
+    try {
+      this._stageWatch = new ResizeObserver(function () {
+        if (!self.stageVisible()) { return; }
+        try { self._stageWatch.disconnect(); } catch (err) { /* 忽略 */ }
+        self._stageWatch = null;
+        self.loadHi(name);
+      });
+      this._stageWatch.observe(this.canvas);
+    } catch (err) { /* 忽略 */ }
+  };
+
   Player.prototype.loadHi = function (name) {
     var self = this;
     var e = this.atlases[name];
@@ -789,6 +822,7 @@
     var spec = this.manifest.clips[name] || {};
     var px = ((spec.atlas || {}).hi || {}).w * (((spec.atlas || {}).hi || {}).h || 0);
     if (this.staticOnly || px > MAX_ATLAS_PIXELS * 2) { return; }
+    if (!this.stageVisible()) { this._watchStage(name); return; }
     e.hiLoading = true;
     /* ★ 2026-10-14 改（首屏字节门禁）：hi 档**不许进首屏**。
        老实现是"首帧画完 + 一次空闲"就补（约 200~400ms），于是 idle.hi(1285KB) 落进 1.5s 窗口。
