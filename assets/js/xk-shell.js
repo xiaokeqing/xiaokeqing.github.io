@@ -1188,8 +1188,12 @@ setTimeout(()=>{ xkvLoad().then(()=>xkvPlay(xkvPageLine())); }, 1800);
 try{
   addEventListener('xk-sound', function(ev){
     const on = !!(ev && ev.detail && ev.detail.on === true);
+    const why = (ev && ev.detail && ev.detail.why) || '';
     if(!on){ xkvStop(); XKV.pending = null; return; }
-    XKV.unlocked = true;
+    /* "恢复上次状态"那次不是手势：不能把 unlocked 直接置真，否则 1.8s 那次 play() 会被浏览器
+       自动播放策略拒掉，而 pending 又没记 ⇒ 老访客（上次开着）反而一声不响。留给他们下一次
+       点击/按键（下面的 pointerdown/keydown 一次性监听）来解锁，再补播 pending。 */
+    if(why !== 'restore'){ XKV.unlocked = true; }
     const id = XKV.pending;
     XKV.pending = null;
     if(id){ xkvPlay(id); }
