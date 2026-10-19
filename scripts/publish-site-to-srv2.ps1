@@ -472,6 +472,14 @@ try {
             if ($old -and $old.history) { $hist = @($old.history) }
         } catch { $hist = @() }
     }
+    if (-not $release) {
+        # ★2026-10-19：接收侧判「无变化」时不建新 release 目录、也不打 RELEASE=，
+        # 于是这里会把 release-info.json 的 release 写成空串（面板显示空白版本）。
+        # 只在写面板数据时回捞线上目录；上面的整树核对仍跳过（它的口径含服务端才有的 data/uptime.json）。
+        $liveLink = (& ssh -o BatchMode=yes $SshHost "readlink -f /opt/secagent/site" 2>&1 | Out-String).Trim()
+        if ($liveLink -match '^/opt/secagent/releases/site-') { $release = $liveLink; Ok "本次无变化，沿用线上版本目录：$release" }
+        else { Warn "回捞线上版本目录失败：$liveLink" }
+    }
     $entry = [pscustomobject]@{ release = $release; at = $now; files = @($allFiles).Count; bytes = [int64]$totalBytes }
     $hist = @(@($entry) + @($hist | Where-Object { $_.release -ne $release })) | Select-Object -First 8
     $relObj = [pscustomobject]@{
