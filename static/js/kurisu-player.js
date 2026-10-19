@@ -1368,6 +1368,34 @@
     }
   };
 
+  /* ★2026-10-19 站主：「关掉声音开关」要**立刻静音** —— 以前关掉只是不再开新的，正在播的那句会一直念完。
+     这里把音频停掉并清干净待播队列（说话中/待播状态一并归零，口型由 voiceMouthTick 的
+     `audio.paused` 分支自动回默认帧）。 */
+  function stopVoice() {
+    var a = VOICE.audio;
+    if (a) {
+      try { a.pause(); } catch (e) { /* 忽略 */ }
+      try { a.currentTime = 0; } catch (e) { /* 忽略 */ }
+      try { a.src = ''; } catch (e) { /* 忽略 */ }
+    }
+    VOICE.audio = null;
+    VOICE.speaking = false;
+    VOICE.mouthValue = 0;
+    VOICE.pending = null;
+    VOICE.pendingSpeak = null;
+    VOICE.line = null;
+    VOICE.envelope = null;
+  }
+  try {
+    global.addEventListener('xk-sound', function (e) {
+      if (e && e.detail && e.detail.on === false) {
+        stopVoice();
+        /* 头像卡那颗开关关掉 ⇒ 页内「念日语」那颗也一起闭嘴（同一件事只有一个状态）。 */
+        try { SPEAK.on = false; refreshSpeakButtons(); } catch (err) { /* 忽略 */ }
+      }
+    });
+  } catch (e) { /* 忽略 */ }
+
   function voiceBankUrl(basePath) {
     return joinUrl(basePath || '/', 'kurisu/voice/bank.json');
   }
@@ -1443,7 +1471,8 @@
 
   function speakJaWanted() {
     try {
-      if (global.__xkSound && global.__xkSound.on === false) { return false; }
+      /* ★2026-10-19 站主：同 app.js 的口径 —— 读不到开关就按"关"算。 */
+      if (!(global.__xkSound && global.__xkSound.on === true)) { return false; }
       return !!SPEAK.on;
     } catch (e) { return false; }
   }
@@ -1547,6 +1576,12 @@
 
   function playVoiceNow(line, blockedNote) {
     if (!line || !line.url) { return false; }
+    /* ★2026-10-19：真播之前再判一次开关（playLine 已判过，但 pending 补播、各页自己的入口都从这里过）。
+       开关没明确打开 ⇒ 一个字节都不播，只留字幕。 */
+    if (!(global.__xkSound && global.__xkSound.on === true)) {
+      VOICE.diag.subtitleOnly = (VOICE.diag.subtitleOnly || 0) + 1;
+      return false;
+    }
     try {
       if (VOICE.audio) { try { VOICE.audio.pause(); } catch (e) { /* 忽略 */ } }
       var a = new global.Audio(line.url);
@@ -1796,7 +1831,9 @@
     /* ★批次A（2026-10-16 站主）：全站**唯一的声音闸门**是左上角头像卡那颗 🔊, 默认关。
        关着的时候：一不出声、二**连 bank.json / 索引都不取**（既省首屏字节，也保证"没开声就不播"这条
        口径只有一个落点）。开关打开那一刻由头像卡派发 `xk-sound` 事件，各页自己把压下的那一句补播。 */
-    if (global.__xkSound && !global.__xkSound.on) {
+    /* ★2026-10-19 站主：默认关是硬口径。原来写 `__xkSound && !on` —— 读不到开关（本页没加载头像卡、
+       或脚本还没跑）时**放行**，于是"没开过声却响了"。现在只有明确 `on === true` 才播。 */
+    if (!(global.__xkSound && global.__xkSound.on === true)) {
       VOICE.diag.blockedPlays = (VOICE.diag.blockedPlays || 0) + 1;
       return Promise.resolve({ ok: false, reason: 'SOUND_OFF', id: id,
                                detail: '声音开关默认关（左上角 🔊 打开）' });
@@ -2851,6 +2888,13 @@
         unlockAudio('🔊 按钮');
         SPEAK.on = !SPEAK.on;
         refreshSpeakButtons();
+        /* ★2026-10-19 站主：这颗 🔊 也是"声音开关"，必须与左上角那颗**同一个真值源** ——
+           以前它只翻 SPEAK.on，于是关掉头像卡的开关她还在念日语（两套开关互相不认识）。 */
+        try {
+          if (global.__xkSound && typeof global.__xkSound.set === 'function') {
+            global.__xkSound.set(SPEAK.on, 'speak-ja');
+          }
+        } catch (e) { /* 忽略 */ }
         voiceNote(SPEAK.on
           ? '声音已开：之后每题念一句日语（中文字幕照旧）。再点一次就关声。'
           : '声音已关：只留中文字幕（不请求任何语音）。');
@@ -3118,6 +3162,8 @@
     create: function (opts) { return new Player(opts); },
     /** 全局语音入口（页面底部输入条的 🔊 用它；语音线接入时把 bank/endpoint 传进来即可）。 */
     speak: function (phraseId, text, cfg) { return speakImpl(phraseId, text, cfg || {}); },
+    /** 立刻静音并清空待播队列（声音开关关掉时由 `xk-sound` 事件调用；也供本地验收脚本用）。 */
+    stop: function () { stopVoice(); return KurisuPlayer; },
     boot: function () {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', watch, false);

@@ -1675,7 +1675,9 @@
    *  声音状态由 kurisu-player.js 的 🔊 挂在 window.__xkSpeakJa 上（两支脚本互不依赖文件顺序）。 */
   function speakJaWanted() {
     try {
-      if (window.__xkSound && window.__xkSound.on === false) { return false; }
+      /* ★2026-10-19 站主：默认关是硬口径 —— 没有开关/读不到状态（全站 88 个页面根本没加载头像卡）
+         一律按"关"算，不再是 `on === false` 才拦。以前在那些页面上她会自己开口。 */
+      if (!(window.__xkSound && window.__xkSound.on === true)) { return false; }
       return !!(window.__xkSpeakJa && window.__xkSpeakJa.on);
     } catch (e) { return false; }
   }

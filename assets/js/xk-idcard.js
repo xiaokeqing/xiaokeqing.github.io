@@ -278,8 +278,10 @@
     try { var p = document.getElementById('xkLoginPass'); if (p) { p.value = ''; } } catch (e) { }
   }
   function unlock() {
-    /* 登录后：声音自动开一次（站主的原话是"可以让助手做所有动作和语音"） */
-    try { if (!D.sound) { setSound(true, 'login'); } } catch (e) { }
+    /* ★2026-10-19 站主：「默认声音应该是关的」⇒ 登录**不再**替用户把声音打开。
+       原来这里写着"站主的原话是让他们能做所有动作和语音"，于是登录一次就永久变成默认开声；
+       现在只保留提示，声音开关完全由那颗按钮决定（状态仍存 localStorage['xk-sound-on']）。 */
+    try { if (!D.sound) { say('已登录。声音仍是关的 —— 点「声音」才出声。'); } } catch (e) { }
     try { if (window.__xkAskBar && window.__xkAskBar.poke) { window.__xkAskBar.poke(); } } catch (e) { }
     try { openPanel(); } catch (e) { }
   }

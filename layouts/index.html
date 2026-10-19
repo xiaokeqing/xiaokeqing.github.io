@@ -1886,9 +1886,13 @@ function xkvGreet(){
     xkvPlay(id);
   });
 }
-/* ★批次A：声音开关打开的那一刻，把刚才因为"声音关着"压下来的那一句补播（同一句，不换文案）。 */
+/* ★批次A：声音开关打开的那一刻，把刚才因为"声音关着"压下来的那一句补播（同一句，不换文案）。
+   ★2026-10-19 站主：关掉那一刻要**立刻静音**（含本页内联播放器自己的 Audio 兜底路径）并把 pending 丢掉。 */
 addEventListener('xk-sound', function(ev){
-  if(ev && ev.detail && ev.detail.on && XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); }
+  const on = !!(ev && ev.detail && ev.detail.on);
+  if(on){ if(XKV.pending){ const id = XKV.pending; XKV.pending = null; xkvPlay(id); } return; }
+  XKV.pending = null;
+  if(XKV.audio){ try{ XKV.audio.pause(); }catch(_){} try{ XKV.audio.currentTime = 0; }catch(_){} }
 });
 addEventListener('pointerdown', xkvUnlock, {once:true});
 addEventListener('keydown', xkvUnlock, {once:true});

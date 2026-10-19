@@ -760,7 +760,9 @@ tickClock(); setInterval(tickClock, 20000);
   var $=function(i){ return document.getElementById(i); };
   var snd=$('phSnd'), say=$('phSay'), mood=$('phMood'), anim=$('phAnim');
   var MOODS=['normal','sided_thinking'], mi=0;
-  function soundOn(){ return !(window.__xkSound && window.__xkSound.on === false); }
+  /* ★2026-10-19 站主：默认关是**硬口径** —— 读不到开关状态（脚本还没跑/本页没加载头像卡）时按"关"算，
+     不再按"开"算。以前是 `!== false`，于是没加载头像卡的页面图标显示 🔊、且闸门放行。 */
+  function soundOn(){ return !!(window.__xkSound && window.__xkSound.on === true); }
   function syncSnd(){ if(!snd) return; snd.textContent = soundOn() ? '🔊' : '🔇'; snd.className = soundOn() ? '' : 'off'; }
   if(snd){ snd.onclick=function(){ var b=document.getElementById('xkSndBtn'); if(b){ b.click(); } setTimeout(syncSnd,60); }; syncSnd(); setInterval(syncSnd,1500); }
   if(say){ say.onclick=function(){
@@ -1076,7 +1078,9 @@ function askDemo(){
   stateEl.textContent = 'THINKING';
   /* ★E2 思考垫音：开声时先放一句短垫音，填住「等 3–20 秒」的空档；不改字幕 */
   try {
-    if (D.sound && window.KurisuPlayer && KurisuPlayer.speakGroup) {
+    /* ★2026-10-19：原来这里写的是 `D.sound`，而本文件里**从来没有 D 这个变量** —— 整句抛 ReferenceError
+       被外层 try 吞掉，垫音一次都没响过（与开关无关，纯粹是死代码）。改读唯一真值源 window.__xkSound。 */
+    if (window.__xkSound && window.__xkSound.on === true && window.KurisuPlayer && KurisuPlayer.speakGroup) {
       var _ls = ['lead_wait','lead_hmm','lead_check'];
       KurisuPlayer.speakGroup('lead_in', { preferId: _ls[Math.floor(Math.random()*_ls.length)] });
     }
@@ -1145,9 +1149,23 @@ function xkvPageLine(){
   const on = document.querySelector('.view.on'); const id = on ? on.id : '';
   return ({ 'v-monitor':'nav_monitor', 'v-notes':'nav_notes', 'v-ai':'nav_ai', 'v-what':'nav_what', 'v-lab':'nav_lab' })[id] || 'nav_home';
 }
+function xkvSoundOn(){ return !!(window.__xkSound && window.__xkSound.on === true); }
+function xkvStop(){
+  if(XKV.audio){
+    try{ XKV.audio.pause(); }catch(_){}
+    try{ XKV.audio.currentTime = 0; }catch(_){}
+    try{ XKV.audio.src = ''; }catch(_){}
+    XKV.audio = null;
+  }
+}
 function xkvPlay(id){
   const line = xkvLine(id);
   if(!line){ XKV.errors.push('no line: '+id); return; }
+  /* ★2026-10-19 站主：「默认声音应该是关的」+「开关关掉要真的不响」。
+     这里以前**完全不看声音开关**，于是内容页 1.8 秒后自己开口 —— 头像卡那颗开关关着也照播，
+     关掉也不会停。现在：开关没明确打开就一个字节都不播（连 Audio 对象都不建），只把 id 记进
+     pending，等访客自己点开 🔊 再由下面的 xk-sound 监听补播。 */
+  if(!xkvSoundOn()){ XKV.pending = id; return; }
   if(!XKV.unlocked){ XKV.pending = id; return; }
   if(XKV.lastId === id && XKV.audio && !XKV.audio.paused) return;
   try{
@@ -1165,6 +1183,18 @@ function xkvPlay(id){
 addEventListener('pointerdown', xkvUnlock, {once:true});
 addEventListener('keydown', xkvUnlock, {once:true});
 setTimeout(()=>{ xkvLoad().then(()=>xkvPlay(xkvPageLine())); }, 1800);
+/* ★2026-10-19 站主：这套播放器也要听那颗开关（它和 kurisu-player.js 是两条独立的播放路径，
+   以前只有后者记挂 xk-sound）。关 ⇒ 立刻停并丢弃 pending；开 ⇒ 补播刚才压下的那一句。 */
+try{
+  addEventListener('xk-sound', function(ev){
+    const on = !!(ev && ev.detail && ev.detail.on === true);
+    if(!on){ xkvStop(); XKV.pending = null; return; }
+    XKV.unlocked = true;
+    const id = XKV.pending;
+    XKV.pending = null;
+    if(id){ xkvPlay(id); }
+  });
+}catch(e){ /* 忽略 */ }
 
 
 /* ================= ★批次 R2（2026-10-16 前端优化批）：交互层 ================= */
