@@ -722,7 +722,7 @@ var XK_SM_JS = (function(){
     cur:null, fi:0, acc:0, hold:false, lastT:0, hiddenSkipped:0, frames:0, atlasMode:null,
     lastHost:-1e9, lastAny:-1e9, lastIdleFired:-1e9, lastCadFired:-1e9, lastHostMs:-1e9, lastHostEvt:-1e9, hostCd:1800,
     idleMs:12000, cadenceMs:25000, idleCd:8000,
-    atlas:{mf:null, mfErr:null, imgs:{}, pending:0, loaded:0, pages:0, budget:1.5},
+    atlas:{mf:null, full:null, mfErr:null, imgs:{}, pending:0, loaded:0, pages:0, budget:1.5},
     autoMaxMs:2200, startedAt:0
   };
   window.__xkSM = V;
@@ -771,6 +771,7 @@ var XK_SM_JS = (function(){
     }).then(function(j){
       var cm = (j && j.clipsMedium && j.clipsMedium.clips) || null;
       if(!cm) throw new Error('manifest 里没有 clipsMedium.clips');
+      V.atlas.full = j;                       /* ★Q2：整份清单留着 —— idle 要吃 clips[].atlas.hi */
       V.atlas.mf = cm;
       return cm;
     }).catch(function(e){ V.atlas.mfErr = String(e.message || e); return null; });
@@ -830,14 +831,63 @@ var XK_SM_JS = (function(){
   function prefetch(clip){
     var c = V.atlas.mf && V.atlas.mf[clip];
     if(!c) return;
+    if(hiAtlas(clip)) return;                 /* ★Q2：这一档要吃 hi，就不要先白拉 medium 页 */
     var ps = c.atlas.medium.pages, i;
     for(i = 0; i < ps.length; i++){ if(i < V.atlas.budget) img(ps[i].url); }
+  }
+  /* ★Q2（2026-10-19 画质批）：首页 CRT 的角色本来走 medium 瓦片 **134×180**，
+     而 CRT 的 CSS 尺寸是 673×509（DPR2 时画布后台 1346×1017）⇒ 放大 2.8× / 5.6×，
+     这才是"人物糊"的真正原因（同一帧里 desk.webp 原生 1672×941 只放大 1.15×，所以背景看着清楚）。
+     现成的 hi 图集 `kurisu/full/idle.hi.webp` 是 476×640 / 60 帧 / 2.03MB：DPR1 下是 0.8× 缩小，
+     DPR2 也只放大 1.6× —— 观感提升明显，代价是首页多 1.3MB 且解码内存 ~78MB。
+     只给 idle 用：它常驻；speaking/thinking 是交互时才出现的，继续走各自的老路径省内存。
+     `XK_TIER.hiAllowed()` 已经覆盖了 ?xk-tier=... 与 noHi 两种降档旋钮，这里直接沿用。
+     帧号映射：medium 120 帧 @21ms ↔ hi 60 帧 @42ms，同一段时间轴 ⇒ 按比例折算。 */
+  /* ★Q2（2026-10-19 画质批）：首页 CRT 的角色本来走 medium 瓦片 **134×180**，
+     而 CRT 的 CSS 尺寸是 673×509（DPR2 时画布后台 1346×1017）⇒ 放大 2.83× / 5.66×，
+     这才是"人物糊"的真正原因（同一帧里 desk.webp 原生 1672×941 只放大 1.15×，所以背景看着清楚）。
+     现成的高一档图集 kurisu/hi/<clip>.atlas.webp 是 **268×360 / 120 帧**（statemachine.json
+     每个节点都带 hi 页，帧数与 medium 一一对应 ⇒ 不需要折算帧号）：放大降到 1.41× / 2.83×。
+     只认单页的 hi（多页要跨页取帧，没实现）；没有 hi 的剪辑（如 idle2）继续走 medium。
+     XK_TIER.hiAllowed() 已经覆盖 ?xk-tier=medium|poster 与 noHi 两种降档旋钮，这里沿用：
+     想回到轻量档访问 /?xk-tier=medium 即可（整页不再取任何 hi 页）。 */
+  var HI_MIN_H = 380;                 /* CRT 画布高度低于这个就继续用 medium：小窗/手机上不值得多付 4.5MB */
+  function hiWanted(){
+    var el = document.getElementById('charCanvas'), r = el ? el.getBoundingClientRect() : null;
+    return !!(r && r.height >= HI_MIN_H);
+  }
+  function hiAtlas(clip){
+    if(!hiWanted()) return null;
+    try{ if(!XK_TIER.hiAllowed(clip)) return null; }catch(e){ return null; }
+    var n = (V.byClip && V.byClip[clip]) || null;
+    var hi = n && n.hi;
+    var ps = hi && hi.pages;
+    if(!ps || ps.length !== 1) return null;          /* 多页 hi 不在本批范围 */
+    var p = ps[0];
+    if(!p || !p.url || !p.tile_w) return null;
+    return {p:p, frames:(n.frames || p.frames || 1), cols:(p.cols || 8)};
+  }
+  function paintHi(clip, fi, cw, ch){
+    var h = hiAtlas(clip);
+    if(!h) return null;
+    var n = h.frames, i = ((Math.round(fi) % n) + n) % n;
+    var tw = h.p.tile_w, th = h.p.tile_h;
+    var im = img(h.p.url);
+    if(!im.complete || !im.naturalWidth) return null;   /* hi 没就绪：这一帧先留着原型帧，不画 */
+    return {mode:'atlas', ops:[
+      ['clear', [0, 0, cw, ch]],
+      ['img', [im, (i % h.cols) * tw, Math.floor(i / h.cols) * th, tw, th,
+        Math.min(cw * CHAR_BOX.maxW / CHAR_BOX.w, ch * CHAR_BOX.maxH / CHAR_BOX.h),
+        cw * CHAR_BOX.xRatio, ch - Math.max(3, ch * CHAR_BOX.footRatio)]]]};
   }
   /* 视频优先、拿不到画图集；两者都没就绪就**不画**（让原型那一帧继续留着，避免闪空）。
      关键：clearRect 滞后到"图真的就绪"那一步 —— 否则会把原型这一帧清成空白（会闪）✗ */
   function paintOps(clip, fi, cw, ch){
     var r = {mode:null, ops:[]};
     if(V.atlas.mf === undefined) return r;          /* 图集清单还没到：什么都不做 */
+    var hr = paintHi(clip, fi, cw, ch);              /* ★Q2：idle 优先吃 hi（476×640） */
+    if(hr) return hr;
+    if(hiAtlas(clip)) return r;                      /* hi 还没就绪：别顺手把 medium 也拉了，留着原型帧 */
     var c = V.atlas.mf && V.atlas.mf[clip];
     if(!c) return r;
     var n = c.frames || 1, i = ((Math.round(fi) % n) + n) % n;
