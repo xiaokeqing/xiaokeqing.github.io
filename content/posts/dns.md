@@ -13,19 +13,13 @@ ShowToc: true
 
 ## 1、DNS
 
-Domain Name Service
-
-域名服务
-
-作用：为客户机提供域名解析服务器（域名 -- 解析为 -- IP地址）
+Domain Name Service域名服务作用：为客户机提供域名解析服务器（域名 -- 解析为 -- IP地址）
 
 ## 2、域名组成
 
 ### 2.1、域名组成概述
 
-如"www.sina.com."是一个域名
-
-"sina.com"才被称为域名(全球唯一)
+如"www.sina.com."是一个域名"sina.com"才被称为域名(全球唯一)
 
 "www"是主机名。
 
@@ -41,9 +35,7 @@ www.    sina.     com       .
 www.      topsec.   com.   cn      .
 ```
 
-主机名     三级       二级   顶级     根
-
-案例：
+主机名     三级       二级   顶级     根案例：
 
 ```
 购买了域名sina.com ,花了500万
@@ -60,9 +52,7 @@ nba.sina.com   ----  6.6.6.6
 
 ![DNS 部署与安全 示意图 1](/images/windows-notes/dns/img-01.png)
 
-根域         .
-
-顶级域（也叫一级域名）
+根域         .顶级域（也叫一级域名）
 
 国家和地区顶级域  cn  jp  hk  tw  uk
 
@@ -81,15 +71,7 @@ net    互联网
 
 如：www.baidu.com.
 
-.为根域
-
-com为顶级域
-
-baidu为二级域名
-
-www为主机名
-
-万网
+.为根域com为顶级域baidu为二级域名www为主机名万网
 
 ```
 map.baidu.com
@@ -105,9 +87,7 @@ www.baidu.com.（完整合格的域名）
 baidu.com.为域名后缀
 ```
 
-www为主机名
-
-也有教科书上称DNS后缀为FQDN
+www为主机名也有教科书上称DNS后缀为FQDN
 
 ## 3、监听端口
 
@@ -155,11 +135,7 @@ www .baidu .com .
 
 ## 5、客户机域名请求解析顺序
 
-1.DNS缓存----2.本地hosts文件--3.找本地DNS服务器
-
-hosts文件路径：c:\windows\system32\drivers\etc\hosts
-
-win7之后得系统，若要修改hosts文件，需要给自己添加NTFS权限，才可以修改！！
+1.DNS缓存----2.本地hosts文件--3.找本地DNS服务器hosts文件路径：c:\windows\system32\drivers\etc\hosts win7之后得系统，若要修改hosts文件，需要给自己添加NTFS权限，才可以修改！！
 
 hosts文件得格式：1.1.1.1  www.teacher.com
 
@@ -181,9 +157,7 @@ hosts文件得格式：1.1.1.1  www.teacher.com
 
 ![DNS 部署与安全 示意图 3](/images/windows-notes/dns/img-03.png)
 
-3）创建区域文件（负责一个域名后缀的解析，如baidu.com为域名后缀，一台DNS服务器内可存放多
-
-个区域文件）
+3）创建区域文件（负责一个域名后缀的解析，如baidu.com为域名后缀，一台DNS服务器内可存放多个区域文件）
 
 ![DNS 部署与安全 示意图 4](/images/windows-notes/dns/img-04.png)
 
@@ -234,32 +208,16 @@ ipconfig  /flushdns         # 清空DNS缓存
 
 ## 10、域名解析记录类型
 
-SOA：权威服务器
-
-NS：域名服务器
-
-A记录： 正向解析记录  主机名对ip
-
-CNAME记录：别名
-
-PTR记录：反向解析记录 （反向指针）  ip对域名
-
-MX：邮件交换记录（知悉即可）
+SOA：权威服务器NS：域名服务器A记录： 正向解析记录  主机名对ip CNAME记录：别名PTR记录：反向解析记录 （反向指针）  ip对域名MX：邮件交换记录（知悉即可）
 
 ## 11、练习
 
-1、win7，win2019均桥接到nat，全部能上网，将2019部署为DNS服务器，win7的DNS指向2019，且
-
-依然可以上网！（此时2019的DNS服务器是通过找根完成对客户的解析请求！）
+1、win7，win2019均桥接到nat，全部能上网，将2019部署为DNS服务器，win7的DNS指向2019，且依然可以上网！（此时2019的DNS服务器是通过找根完成对客户的解析请求！）
 
 2、win2019设置转发器设置为当地dns，提高win7的解析速度，且保证win7依然可以上网！
 
 3、学会查看客户机的本地缓存，win2019DNS服务器上的缓存
 
-4、新建权威本地解析文件：jd.com www--6.6.6.6 写入到hosts文件当中，结果win7无法访问jd网站，
-
-然后删除权威文件，测式win7是否可以正常上网！新建权威本地解析文件：teacher.com www-
-
--7.7.7.7，并实现员工可以解析www.teacher.com为7.7.7.7
+4、新建权威本地解析文件：jd.com www--6.6.6.6 写入到hosts文件当中，结果win7无法访问jd网站，然后删除权威文件，测式win7是否可以正常上网！新建权威本地解析文件：teacher.com www--7.7.7.7，并实现员工可以解析www.teacher.com为7.7.7.7
 
 5、（真实机）作业网站可否自己创建域名？

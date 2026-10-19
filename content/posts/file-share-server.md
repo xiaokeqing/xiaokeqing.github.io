@@ -19,9 +19,7 @@ ShowToc: true
 
 服务：PC对外开放了一个服务窗口，每一个服务窗口都有一个端口号 （server服务一定要开启）
 
-文件共享服务：==协议名SMB 服务消息块 ：445（SMBv1/SAMv2）==
-
-==常见服务复习：==
+文件共享服务：==协议名SMB 服务消息块 ：445（SMBv1/SAMv2）====常见服务复习：==
 
 ```
 RDP：3389
@@ -32,9 +30,7 @@ http: 80
 https: 443
 ```
 
-==查看本地网络连接状态：==
-
-netstat  -an  |  find  “:445”
+==查看本地网络连接状态：==netstat  -an  |  find  “:445”
 
   - 但唯独445共享服务，不建议使用该命令验证是否开启，因为445关闭后，在部分老系统上依然显示445端口号445服务是否开放建议使用net share命令来验证
 
@@ -56,19 +52,13 @@ netstat  -an  |  find  “:445”
 
 win7   禁用administrator         win2003 访问共享
 
-1、win2003在输入unc路径后 会用自己当前的用户名和密码尝试连接对方，因为win7默认设定的远程
-
-登陆账户时 everyone用户所以包含 administrator 但是由于该用户被禁用了因此弹窗报错。
+1、win2003在输入unc路径后 会用自己当前的用户名和密码尝试连接对方，因为win7默认设定的远程登陆账户时 everyone用户所以包含 administrator 但是由于该用户被禁用了因此弹窗报错。
 
 ![文件共享服务器 示意图 1](/images/windows-notes/file-share-server/img-01.png)
 
-2、win7启用该账户admin ，由于win2003和win7的admin用户名和密码一致，导致直接看到共享文件
+2、win7启用该账户admin ，由于win2003和win7的admin用户名和密码一致，导致直接看到共享文件夹。
 
-夹。
-
-3、什么时候出现弹窗？当我链接对方使用我的用户名和密码在对方验证无法通过的时候就会有用户身份
-
-验证窗口了
+3、什么时候出现弹窗？当我链接对方使用我的用户名和密码在对方验证无法通过的时候就会有用户身份验证窗口了
 
 ![文件共享服务器 示意图 2](/images/windows-notes/file-share-server/img-02.png)
 
@@ -128,19 +118,11 @@ net share  共享名  /del            #删除共享
 
 （2003服务应用）
 
-HKEY_Local_MACHINE\System\CurrentControlSet\Services\LanmanServer\Parameters\
+HKEY_Local_MACHINE\System\CurrentControlSet\Services\LanmanServer\Parameters\，此时在右侧区域，老系统：
 
-，此时在右侧区域，
+右键新建REG_DWORD类型的AutoShareServer 键，值为 0新系统：
 
-老系统：
-
-右键新建REG_DWORD类型的AutoShareServer 键，值为 0
-
-新系统：
-
-右键新建REG_DWORD类型的AutoShareWks 键，值为 0
-
-然后重启，验证，系统分区c$ d$等，不再自动生成隐藏共享，实验成功！
+右键新建REG_DWORD类型的AutoShareWks 键，值为 0然后重启，验证，系统分区c$ d$等，不再自动生成隐藏共享，实验成功！
 
 ## 八、关闭445服务（防止被通过SMB漏洞攻击）
 

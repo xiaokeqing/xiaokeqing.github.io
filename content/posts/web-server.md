@@ -59,17 +59,9 @@ http: 80
 
 IIS：微软（IIS软件可以发布web服务器、发布FTP服务器）（发布静态网页、asp动态网页）
 
-apache-http：开源的，速度快
+apache-http：开源的，速度快nginx：速度更快apache-tomcat：（发布java语言编写的网页）
 
-nginx：速度更快
-
-apache-tomcat：（发布java语言编写的网页）
-
-Weblogic: Oracle公司
-
-Websphere：IBM公司
-
-第三方：phpstudy、XAMPP、WAMP等等
+Weblogic: Oracle公司Websphere：IBM公司第三方：phpstudy、XAMPP、WAMP等等
 
 目前在互联网上，最流行的中间件/web容器是：IIS、Apache、Nginx、Tomcat
 
@@ -104,17 +96,13 @@ Websphere：IBM公司
 
 =======================================
 
-6）老师准备发布第二个网站：例如hr系统，新建网站（发布网站），再网站右键--新建网站即可（其中
-
-不能与第一个网站冲突，我们把网站改为8080端口）！
+6）老师准备发布第二个网站：例如hr系统，新建网站（发布网站），再网站右键--新建网站即可（其中不能与第一个网站冲突，我们把网站改为8080端口）！
 
 7）设置默认文档，如hr网站--右键属性--文档--添加首页！
 
 =======================================
 
-8）将baidu和flower两个网站分别绑定2个域名，要求员工必须使用域名来访问网站，进而能够区分2个
-
-网站，也最终实现了在1台服务器上成功发布了2个web网站！此时必须解决员工进行域名解析得问题，所以必须在公司内部搭建一个DNS服务器（本实验飞哥用的是hosts文件实现解析的）！
+8）将baidu和flower两个网站分别绑定2个域名，要求员工必须使用域名来访问网站，进而能够区分2个网站，也最终实现了在1台服务器上成功发布了2个web网站！此时必须解决员工进行域名解析得问题，所以必须在公司内部搭建一个DNS服务器（本实验飞哥用的是hosts文件实现解析的）！
 
 ## 7、虚拟主机
 
@@ -124,9 +112,7 @@ Websphere：IBM公司
 
   - 方法2、使用相同得IP，相同得端口号，不同得域名（本方法是对公开开放的最根本方法！）
 
-基于端口的虚拟主机
-
-同时发布多个网站，但使用不同的端口
+基于端口的虚拟主机同时发布多个网站，但使用不同的端口
 
 ![WEB 服务器 示意图 2](/images/windows-notes/web-server/img-02.png)
 
@@ -144,15 +130,9 @@ Websphere：IBM公司
 
 ## 8、网站类型
 
-1）静态网站
+1）静态网站不能与客户进行交互/互动的网站就是静态网站，一般都是用html语言编写的，网页文件扩展名为.html或.htm只有前台页面，没有后台数据库
 
-不能与客户进行交互/互动的网站就是静态网站，一般都是用html语言编写的，网页文件扩展名为.html或.htm
-
-只有前台页面，没有后台数据库
-
-2）动态网站
-
-可以与客户进行交互/互动，动态网页在html静态页面得基础上内置了动态脚本语言+数据库。
+2）动态网站可以与客户进行交互/互动，动态网页在html静态页面得基础上内置了动态脚本语言+数据库。
 
 动态脚本语言：
 
@@ -165,13 +145,9 @@ java：
 jsp、python等
 ```
 
-动态语言得作用：连接前台页面与后台数据库
+动态语言得作用：连接前台页面与后台数据库如：
 
-如：
-
-php编写得动态网页扩展名为: .php
-
-asp编写得动态网页扩展名为: .asp
+php编写得动态网页扩展名为: .php asp编写得动态网页扩展名为: .asp
 
 3）动态网站常见的环境组合
 
@@ -182,19 +158,13 @@ windows+Apache+php+mysql == WAMP平台
 Linux+nginx+php+mysql == LNMP平台
 ```
 
-一般发布asp网站时：在windows服务器上：IIS+ASP+SQL Sever
-
-一般发布php网站时：在linux服务器上：Apache+php+mysql
+一般发布asp网站时：在windows服务器上：IIS+ASP+SQL Sever一般发布php网站时：在linux服务器上：Apache+php+mysql
 
 ![WEB 服务器 示意图 6](/images/windows-notes/web-server/img-06.png)
 
 ## 9、IIS版本
 
-windows2003：IIS6.0
-
-windows2008：IIS7.0
-
-windows2012：IIS8.0
+windows2003：IIS6.0 windows2008：IIS7.0 windows2012：IIS8.0
 
 ### 10、windows2008 IIS7发布ASP动态网站
 
@@ -214,9 +184,7 @@ windows2012：IIS8.0
 
 ![WEB 服务器 示意图 11](/images/windows-notes/web-server/img-11.png)
 
-可以先尝试建立 index.asp文件并写入 <%=now()%>验证asp功能
-
-配置雷池应用池兼容性
+可以先尝试建立 index.asp文件并写入 <%=now()%>验证asp功能配置雷池应用池兼容性
 
 ![WEB 服务器 示意图 12](/images/windows-notes/web-server/img-12.png)
 

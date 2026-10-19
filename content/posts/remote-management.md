@@ -15,31 +15,19 @@ ShowToc: true
 
 远程管理服务器有3种常见的类型：
 
-1、远程桌面RDP（图形）：3389
+1、远程桌面RDP（图形）：3389 windows服务器常用
 
-windows服务器常用
-
-2、telnet：23
-
-（命令行-不安全-密码明文传输）：windows服务器、linux服务器、路由器、防火墙、交换机等都常用
+2、telnet：23（命令行-不安全-密码明文传输）：windows服务器、linux服务器、路由器、防火墙、交换机等都常用
 
 3、SSH：22  security shell（命令解释器）
 
 （命令行-安全-加密传输）
 
-linux服务器、路由器、防火墙、交换机等都常用
-
-服务访问方式：C/S    B/S
+linux服务器、路由器、防火墙、交换机等都常用服务访问方式：C/S    B/S
 
 ## 二、远程桌面
 
-windows远程桌面服务：也叫RDP服务
-
-RDP服务：端口3389
-
-扫描端口：scanport.exe
-
-nmap扫描器之王（后期讲到）
+windows远程桌面服务：也叫RDP服务RDP服务：端口3389扫描端口：scanport.exe nmap扫描器之王（后期讲到）
 
 扫描公司内部哪些设备开放了3389：
 
@@ -75,9 +63,7 @@ nmap  -p3389,80  10.100.4.0/24
 
 ## 三、telnet
 
-telnet服务：端口23
-
-telnet是一种命令行远程管理方式。
+telnet服务：端口23 telnet是一种命令行远程管理方式。
 
 实验拓扑图：
 
@@ -91,9 +77,7 @@ telnet是一种命令行远程管理方式。
 
 3、客户机上：开始 -- 运行 -- 输入cmd。
 
-4、在命令行窗口中输入：telnet 10.1.1.x，然后输入回车。（如没有telnet命令，安装:开始-运行-
-
-control-程序-程序-打开或关闭功能-telnet客户机程序-安装）
+4、在命令行窗口中输入：telnet 10.1.1.x，然后输入回车。（如没有telnet命令，安装:开始-运行-control-程序-程序-打开或关闭功能-telnet客户机程序-安装）
 
 5、输入服务器的账号及密码。
 
@@ -109,9 +93,7 @@ control-程序-程序-打开或关闭功能-telnet客户机程序-安装）
 
 要求win7分别成功远程连接03和08得RDP及telnet！
 
-打开控制面板命令：开始--运行---输入control
-
-linux系统(kali)启动ssh服务
+打开控制面板命令：开始--运行---输入control linux系统(kali)启动ssh服务
 
 ```
 sudo systemctl start ssh   #启动
