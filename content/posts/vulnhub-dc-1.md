@@ -2,7 +2,7 @@
 title: "VulnHub DC-1 靶机实战：从 Drupal 7 到 root"
 date: 2026-10-19T10:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["课程笔记", "靶机实战"]
 tags: ["Linux", "靶机", "渗透", "课程笔记"]
 summary: "网段扫描与全端口探测、Apache 2.2.22 + Drupal 7 的指纹识别、敏感目录与后台入口、拿到 root 并读取 /etc/shadow 的完整路径。"
 description: "网段扫描与全端口探测、Apache 2.2.22 + Drupal 7 的指纹识别、敏感目录与后台入口、拿到 root 并读取 /etc/shadow 的完整路径。"

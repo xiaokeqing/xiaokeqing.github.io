@@ -2,7 +2,7 @@
 title: "VulnHub DC-2 靶机实战：WordPress 与 hosts 绑定"
 date: 2026-10-19T09:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["课程笔记", "靶机实战"]
 tags: ["Linux", "靶机", "渗透", "课程笔记"]
 summary: "nmap 定位 Web 端口、站点不允许 IP 直连时改 hosts、cewl 生成字典、dirb 扫敏感目录、wp-login 后台尝试与后续提权。"
 description: "nmap 定位 Web 端口、站点不允许 IP 直连时改 hosts、cewl 生成字典、dirb 扫敏感目录、wp-login 后台尝试与后续提权。"
