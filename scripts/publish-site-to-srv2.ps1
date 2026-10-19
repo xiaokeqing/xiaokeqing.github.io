@@ -254,6 +254,16 @@ $allFiles = Get-ChildItem -Path $PublicDir -Recurse -File
 $totalBytes = ($allFiles | Measure-Object -Property Length -Sum).Sum
 Ok ("index.html = {0:N0} B" -f $indexLen)
 Ok ("文件数 = {0}，合计 {1:N2} MB" -f $allFiles.Count, ($totalBytes / 1MB))
+# ★2026-10-19：回填接收侧 manifest 的「文件数」口径预期 —— srv2-site-receive.sh 的 write_manifest()
+#   数的是「目录内全部普通文件，只排除 ./manifest.json 与 ./data/uptime.json」，
+#   而发送侧 $tree.Count 是整树哈希口径（另外排除 ./index.json，且本地产物里没有 manifest.json）。
+#   两者天然差 1（index.json 接收侧算、发送侧不算）。此前直接拿 $tree.Count 比，
+#   导致每次发布都在最后一步报「文件数（2565）与本地（2564）不一致」，脚本死在 Die 上，
+#   后面的 release-info.json 同步与 CF 缓存处理全被跳过。这里按接收侧口径单独算一遍。
+$manExpectCount = @($allFiles | Where-Object {
+        (($_.FullName.Substring($PublicDir.Length).TrimStart('\', '/')) -replace '\\', '/') -ne 'data/uptime.json'
+    }).Count
+Ok ("manifest 口径预期文件数 = {0}（含 index.json、排除 manifest.json 与 data/uptime.json）" -f $manExpectCount)
 $indexSha = (Get-FileHash -LiteralPath $indexPath -Algorithm SHA256).Hash.ToLower()
 Ok "index.html sha256 = $($indexSha.Substring(0,16))..."
 $localhostHits = @(Select-String -Path (Join-Path $PublicDir '*.html') -Pattern 'localhost' -SimpleMatch -ErrorAction SilentlyContinue)
@@ -418,8 +428,8 @@ if ($release) {
         if ($manSha -ne $tree.Hash) {
             $msg3 = "接收侧 manifest.json 的整树哈希（$($manSha.Substring(0,16))…）与本地（$($tree.Hash.Substring(0,16))…）不一致 —— 两侧 tree_hash 口径不同版本，或文件没传全"
             if ($FromRef) { Die $msg3 } else { Warn "$msg3（未给 -FromRef，按工作区构建环境问题处理）" }
-        } elseif ($manCount -and [int]$manCount -ne $tree.Count) {
-            $msg3 = "接收侧 manifest.json 的文件数（$manCount）与本地（$($tree.Count)）不一致"
+        } elseif ($manCount -and [int]$manCount -ne $manExpectCount) {
+            $msg3 = "接收侧 manifest.json 的文件数（$manCount）与本地按同一口径预期（$manExpectCount）不一致"
             if ($FromRef) { Die $msg3 } else { Warn "$msg3（未给 -FromRef，按工作区构建环境问题处理）" }
         } else {
             Ok "接收侧 manifest.json 与本地整树口径一致（$($manSha.Substring(0,16))…，$manCount 个文件）"
