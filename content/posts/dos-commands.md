@@ -2,7 +2,7 @@
 title: "DOS 基本命令与批处理"
 date: 2026-10-19T15:00:00+08:00
 draft: false
-categories: ["课程笔记", "Windows 服务基础"]
+categories: ["课程笔记", "windows系统"]
 tags: ["Windows Server", "cmd", "批处理", "课程笔记"]
 summary: "color / cls / start / date / dir / cd / copy / move / del / ipconfig / ping 等常用命令、目录结构与管道，以及批处理脚本的基本写法。"
 description: "color / cls / start / date / dir / cd / copy / move / del / ipconfig / ping 等常用命令、目录结构与管道，以及批处理脚本的基本写法。"

@@ -2,7 +2,7 @@
 title: "FTP 服务器：主动/被动模式与用户隔离"
 date: 2026-10-19T08:00:00+08:00
 draft: false
-categories: ["课程笔记", "Windows 服务基础"]
+categories: ["课程笔记", "windows系统"]
 tags: ["Windows Server", "FTP", "课程笔记"]
 summary: "FTP 的 21/20 双端口、主动与被动模式的区别、Windows 下搭建 FTP 站点与用户隔离部署。"
 description: "FTP 的 21/20 双端口、主动与被动模式的区别、Windows 下搭建 FTP 站点与用户隔离部署。"

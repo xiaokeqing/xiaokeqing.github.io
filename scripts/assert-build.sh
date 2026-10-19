@@ -39,7 +39,7 @@ head1() { printf '\n\033[1;36m== %s\033[0m\n' "$*"; }
 
 # 只扫文本文件：-I 让 grep 跳过二进制（png/jpg/woff），
 # 否则"在图片里搜到 localhost"会变成随机的假失败。
-scan() { grep -rIl --exclude-dir=./.git -e "$1" "$PUB" 2>/dev/null; }
+scan() { grep -rIl -E --exclude-dir=./.git -e "$1" "$PUB" 2>/dev/null; }
 
 echo "构建产物断言：$PUB"
 [ -d "$PUB" ] || { echo "错误：找不到目录 $PUB"; exit 1; }
@@ -93,15 +93,22 @@ else
 fi
 
 # ---------- ⑤ 不得出现 localhost ----------
-head1 "⑤ 全站不得出现 localhost"
-HITS=$(scan 'localhost' | head -20)
+# 【2026-10-19 改】原来扫裸 'localhost'，把课程笔记里的真实 shell 提示符
+# （[root@localhost ~]#、[root@localhost Desktop]#）当成"开发机地址"拦下，
+# 导致 15 篇 Linux 笔记整批发布被拒。这条断言的本意是**产物里带回了开发机的
+# 接口基址**，所以改成只匹配 localhost 作为**主机名/URL** 出现的形态：
+#   http://localhost  https://localhost  //localhost  localhost:8080  "localhost"
+# 裸写 localhost 作为命令参数（mysql -h localhost）与提示符不再命中。
+head1 "⑤ 全站不得出现 localhost（作为接口基址/URL）"
+LOCALHOST_RE='(https?://localhost|//localhost|localhost:[0-9]{2,5}|["'"'"']localhost["'"'"'])'
+HITS=$(scan "$LOCALHOST_RE" | head -20)
 if [ -z "$HITS" ]; then
-  ok "没有任何文件包含 localhost"
+  ok "没有任何文件把 localhost 当接口基址（提示符里的 localhost 不算）"
 else
-  no "有文件包含 localhost（线上会让用户去请求他自己的本机）："
+  no "有文件把 localhost 当接口基址（线上会让用户去请求他自己的本机）："
   printf '%s\n' "$HITS" | sed 's/^/        /'
   printf '%s\n' "$HITS" | head -3 | while IFS= read -r f; do
-    grep -n -m2 -e 'localhost' "$f" | sed "s|^|        $(printf '%s' "$f") :|"
+    grep -n -m2 -E -e "$LOCALHOST_RE" "$f" | sed "s|^|        $(printf '%s' "$f") :|"
   done
 fi
 

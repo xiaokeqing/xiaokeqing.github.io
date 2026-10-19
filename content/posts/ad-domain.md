@@ -2,7 +2,7 @@
 title: "AD 域：域控、活动目录与组策略"
 date: 2026-10-19T07:00:00+08:00
 draft: false
-categories: ["课程笔记", "Windows 服务基础"]
+categories: ["课程笔记", "windows系统"]
 tags: ["Windows Server", "Active Directory", "域", "课程笔记"]
 summary: "域与工作组的区别、域控制器与 AD、DNS 在域中的作用、OU 与 GPO 下发，以及部署一台 DC 的完整步骤。"
 description: "域与工作组的区别、域控制器与 AD、DNS 在域中的作用、OU 与 GPO 下发，以及部署一台 DC 的完整步骤。"

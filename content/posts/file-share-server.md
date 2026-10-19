@@ -2,7 +2,7 @@
 title: "文件共享服务器：共享、权限与隐藏共享"
 date: 2026-10-19T13:00:00+08:00
 draft: false
-categories: ["课程笔记", "Windows 服务基础"]
+categories: ["课程笔记", "windows系统"]
 tags: ["Windows Server", "SMB", "课程笔记"]
 summary: "创建共享、共享权限与 NTFS 权限的区别（取最严）、访问共享的三种方式、隐藏共享与注册表删除默认共享。"
 description: "创建共享、共享权限与 NTFS 权限的区别（取最严）、访问共享的三种方式、隐藏共享与注册表删除默认共享。"

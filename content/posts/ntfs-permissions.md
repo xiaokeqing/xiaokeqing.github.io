@@ -2,7 +2,7 @@
 title: "NTFS 安全权限：文件系统、权限与共享"
 date: 2026-10-19T14:00:00+08:00
 draft: false
-categories: ["课程笔记", "Windows 服务基础"]
+categories: ["课程笔记", "windows系统"]
 tags: ["Windows Server", "NTFS", "权限", "课程笔记"]
 summary: "FAT32/NTFS/EXT 的差别、NTFS 权限的继承与累加、拒绝优先、取得所有权与 EFS 加密。"
 description: "FAT32/NTFS/EXT 的差别、NTFS 权限的继承与累加、拒绝优先、取得所有权与 EFS 加密。"

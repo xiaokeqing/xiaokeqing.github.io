@@ -2,7 +2,7 @@
 title: "PKI 完整版：加密、数字签名与证书体系"
 date: 2026-10-19T06:00:00+08:00
 draft: false
-categories: ["课程笔记", "Windows 服务基础"]
+categories: ["课程笔记", "windows系统"]
 tags: ["Windows Server", "PKI", "密码学", "课程笔记"]
 summary: "对称/非对称加密与哈希、数字签名与证书、CA 层级与证书吊销，以及 HTTPS 如何串起这一整套。"
 description: "对称/非对称加密与哈希、数字签名与证书、CA 层级与证书吊销，以及 HTTPS 如何串起这一整套。"
