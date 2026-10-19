@@ -101,15 +101,15 @@ ShowToc: true
 
 1）计算机右键--属性，如下
 
-![AD 域 示意图 1](/images/windows-notes/ad-domain/img-01.png)
+![AD 域 示意图 1](/images/windows-notes/ad-domain/img-01.webp)
 
 2）检查DNS是否自动注册域名等信息
 
-![AD 域 示意图 2](/images/windows-notes/ad-domain/img-02.png)
+![AD 域 示意图 2](/images/windows-notes/ad-domain/img-02.webp)
 
 3）打开活动目录“Active Directory用户和计算机”，验证是否可以打开或报错，如果可以打开并没有任何报错，证明AD已经安装成功，如下图：
 
-![AD 域 示意图 3](/images/windows-notes/ad-domain/img-03.png)
+![AD 域 示意图 3](/images/windows-notes/ad-domain/img-03.webp)
 
 ### 6.3 员工机器加入域
 
@@ -135,13 +135,13 @@ ShowToc: true
 
 组策略需要作用在组织单位（OU）上，先在AD管理界面上点击域，新建---组织单位，创建北京总户，接着点击北京总部文件夹，新建组织单位，创建董事会，一个市场部...接着创建华中区...新建-组织单位
 
-![AD 域 示意图 4](/images/windows-notes/ad-domain/img-04.png)
+![AD 域 示意图 4](/images/windows-notes/ad-domain/img-04.webp)
 
-![AD 域 示意图 5](/images/windows-notes/ad-domain/img-05.png)
+![AD 域 示意图 5](/images/windows-notes/ad-domain/img-05.webp)
 
-![AD 域 示意图 6](/images/windows-notes/ad-domain/img-06.png)
+![AD 域 示意图 6](/images/windows-notes/ad-domain/img-06.webp)
 
-![AD 域 示意图 7](/images/windows-notes/ad-domain/img-07.png)
+![AD 域 示意图 7](/images/windows-notes/ad-domain/img-07.webp)
 
 ## 0x09 下发组策略原理
 
@@ -165,4 +165,4 @@ ShowToc: true
 
 如董事会得组策略不想下发给该部门得某用户，如下图
 
-![AD 域 示意图 8](/images/windows-notes/ad-domain/img-08.png)
+![AD 域 示意图 8](/images/windows-notes/ad-domain/img-08.webp)

@@ -54,13 +54,13 @@ win7   禁用administrator         win2003 访问共享
 
 1、win2003在输入unc路径后 会用自己当前的用户名和密码尝试连接对方，因为win7默认设定的远程登陆账户时 everyone用户所以包含 administrator 但是由于该用户被禁用了因此弹窗报错。
 
-![文件共享服务器 示意图 1](/images/windows-notes/file-share-server/img-01.png)
+![文件共享服务器 示意图 1](/images/windows-notes/file-share-server/img-01.webp)
 
 2、win7启用该账户admin ，由于win2003和win7的admin用户名和密码一致，导致直接看到共享文件夹。
 
 3、什么时候出现弹窗？当我链接对方使用我的用户名和密码在对方验证无法通过的时候就会有用户身份验证窗口了
 
-![文件共享服务器 示意图 2](/images/windows-notes/file-share-server/img-02.png)
+![文件共享服务器 示意图 2](/images/windows-notes/file-share-server/img-02.webp)
 
   - 方法：
 

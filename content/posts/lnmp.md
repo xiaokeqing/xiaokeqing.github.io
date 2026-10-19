@@ -43,7 +43,7 @@ make install
 
 启动时候遇到的问题分析
 
-![LNMP 平台搭建 示意图 1](/images/linux-notes/lnmp/img-01.png)
+![LNMP 平台搭建 示意图 1](/images/linux-notes/lnmp/img-01.webp)
 
 默认主页的存放路径为
 
@@ -51,9 +51,9 @@ make install
 
 如何配合nginx实现 lnmp平台首先验证
 
-![LNMP 平台搭建 示意图 2](/images/linux-notes/lnmp/img-02.png)
+![LNMP 平台搭建 示意图 2](/images/linux-notes/lnmp/img-02.webp)
 
-![LNMP 平台搭建 示意图 3](/images/linux-notes/lnmp/img-03.png)
+![LNMP 平台搭建 示意图 3](/images/linux-notes/lnmp/img-03.webp)
 
 解决方法 安装 php-fpm，作用是让php编程一个服务端提供服务 开端口 开监听
 
@@ -70,19 +70,19 @@ php-fpm &  在后台启动
 
 ss -antpl | grep php-fpm  能够看到9000端口即可
 
-![LNMP 平台搭建 示意图 4](/images/linux-notes/lnmp/img-04.png)
+![LNMP 平台搭建 示意图 4](/images/linux-notes/lnmp/img-04.webp)
 
 但是nginx不会主动找9000端口，修改配置文件使其主动连接9000端口对php文件进行解析修改配置文件
 
-![LNMP 平台搭建 示意图 5](/images/linux-notes/lnmp/img-05.png)
+![LNMP 平台搭建 示意图 5](/images/linux-notes/lnmp/img-05.webp)
 
 设定配置文件
 
-![LNMP 平台搭建 示意图 6](/images/linux-notes/lnmp/img-06.png)
+![LNMP 平台搭建 示意图 6](/images/linux-notes/lnmp/img-06.webp)
 
 识别php页面信息
 
-![LNMP 平台搭建 示意图 7](/images/linux-notes/lnmp/img-07.png)
+![LNMP 平台搭建 示意图 7](/images/linux-notes/lnmp/img-07.webp)
 
 遇到 File not found. 出现的问题解决：
 
@@ -102,8 +102,8 @@ nginx -s reload重新启动nginx解决方法二：
 
 systemctl restart php-fpm利用lnmp实现农场复现
 
-![LNMP 平台搭建 示意图 8](/images/linux-notes/lnmp/img-08.png)
+![LNMP 平台搭建 示意图 8](/images/linux-notes/lnmp/img-08.webp)
 
 验证
 
-![LNMP 平台搭建 示意图 9](/images/linux-notes/lnmp/img-09.png)
+![LNMP 平台搭建 示意图 9](/images/linux-notes/lnmp/img-09.webp)

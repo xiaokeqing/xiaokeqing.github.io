@@ -39,7 +39,7 @@ nmap  -p3389,80  10.100.4.0/24
 
 实验拓扑图
 
-![服务器远程管理 示意图 1](/images/windows-notes/remote-management/img-01.png)
+![服务器远程管理 示意图 1](/images/windows-notes/remote-management/img-01.webp)
 
 步骤：
 
@@ -67,7 +67,7 @@ telnet服务：端口23 telnet是一种命令行远程管理方式。
 
 实验拓扑图：
 
-![服务器远程管理 示意图 2](/images/windows-notes/remote-management/img-02.png)
+![服务器远程管理 示意图 2](/images/windows-notes/remote-management/img-02.webp)
 
 步骤：
 
@@ -81,7 +81,7 @@ telnet服务：端口23 telnet是一种命令行远程管理方式。
 
 5、输入服务器的账号及密码。
 
-![服务器远程管理 示意图 3](/images/windows-notes/remote-management/img-03.png)
+![服务器远程管理 示意图 3](/images/windows-notes/remote-management/img-03.webp)
 
 ## 四、Windows服务管理
 

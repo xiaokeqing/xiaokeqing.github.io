@@ -15,7 +15,7 @@ author：讲师
 
 ## 一、简单局域网的构成
 
-![IP 地址详解（二） 示意图 1](/images/windows-notes/ip-basics-2/img-01.png)
+![IP 地址详解（二） 示意图 1](/images/windows-notes/ip-basics-2/img-01.webp)
 
   - 局域网：一般称为内网
 
@@ -176,7 +176,7 @@ DNS：Domain Name Service 域名服务202.106.0.20    www.baidu.com 公网ip地�
 
 8.8.8.8
 
-![IP 地址详解（二） 示意图 2](/images/windows-notes/ip-basics-2/img-02.png)
+![IP 地址详解（二） 示意图 2](/images/windows-notes/ip-basics-2/img-02.webp)
 
   - 备注：
 
@@ -184,7 +184,7 @@ DNS：Domain Name Service 域名服务202.106.0.20    www.baidu.com 公网ip地�
 
 ## 七、配置IP地址
 
-![IP 地址详解（二） 示意图 3](/images/windows-notes/ip-basics-2/img-03.png)
+![IP 地址详解（二） 示意图 3](/images/windows-notes/ip-basics-2/img-03.webp)
 
 ## 八、网络测试命令
 
@@ -215,7 +215,7 @@ nslookup  域名
 tracert www.baidu.com 查看到该网址经历的节点设备
 ```
 
-![IP 地址详解（二） 示意图 4](/images/windows-notes/ip-basics-2/img-04.png)
+![IP 地址详解（二） 示意图 4](/images/windows-notes/ip-basics-2/img-04.webp)
 
 ## 九、练习
 

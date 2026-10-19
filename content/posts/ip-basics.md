@@ -15,7 +15,7 @@ author：讲师
 
 ## 一、简单局域网的构成
 
-![IP 地址详解（一） 示意图 1](/images/windows-notes/ip-basics/img-01.png)
+![IP 地址详解（一） 示意图 1](/images/windows-notes/ip-basics/img-01.webp)
 
   - 局域网：一般称为内网
 

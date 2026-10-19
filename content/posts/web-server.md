@@ -69,7 +69,7 @@ Weblogic: Oracle公司Websphere：IBM公司第三方：phpstudy、XAMPP、WAMP�
 
 实验拓扑图如下：
 
-![WEB 服务器 示意图 1](/images/windows-notes/web-server/img-01.png)
+![WEB 服务器 示意图 1](/images/windows-notes/web-server/img-01.webp)
 
 1）开win7+2019虚拟机，还原快照，桥接到vmnet1，再开机。
 
@@ -114,19 +114,19 @@ Weblogic: Oracle公司Websphere：IBM公司第三方：phpstudy、XAMPP、WAMP�
 
 基于端口的虚拟主机同时发布多个网站，但使用不同的端口
 
-![WEB 服务器 示意图 2](/images/windows-notes/web-server/img-02.png)
+![WEB 服务器 示意图 2](/images/windows-notes/web-server/img-02.webp)
 
 基于域名的虚拟主机
 
-![WEB 服务器 示意图 3](/images/windows-notes/web-server/img-03.png)
+![WEB 服务器 示意图 3](/images/windows-notes/web-server/img-03.webp)
 
 修改win7hosts文件进行验证
 
-![WEB 服务器 示意图 4](/images/windows-notes/web-server/img-04.png)
+![WEB 服务器 示意图 4](/images/windows-notes/web-server/img-04.webp)
 
 验证
 
-![WEB 服务器 示意图 5](/images/windows-notes/web-server/img-05.png)
+![WEB 服务器 示意图 5](/images/windows-notes/web-server/img-05.webp)
 
 ## 8、网站类型
 
@@ -160,7 +160,7 @@ Linux+nginx+php+mysql == LNMP平台
 
 一般发布asp网站时：在windows服务器上：IIS+ASP+SQL Sever一般发布php网站时：在linux服务器上：Apache+php+mysql
 
-![WEB 服务器 示意图 6](/images/windows-notes/web-server/img-06.png)
+![WEB 服务器 示意图 6](/images/windows-notes/web-server/img-06.webp)
 
 ## 9、IIS版本
 
@@ -170,31 +170,31 @@ windows2003：IIS6.0 windows2008：IIS7.0 windows2012：IIS8.0
 
 新建网站，如下：
 
-![WEB 服务器 示意图 7](/images/windows-notes/web-server/img-07.png)
+![WEB 服务器 示意图 7](/images/windows-notes/web-server/img-07.webp)
 
 设置默认文档：
 
-![WEB 服务器 示意图 8](/images/windows-notes/web-server/img-08.png)
+![WEB 服务器 示意图 8](/images/windows-notes/web-server/img-08.webp)
 
-![WEB 服务器 示意图 9](/images/windows-notes/web-server/img-09.png)
+![WEB 服务器 示意图 9](/images/windows-notes/web-server/img-09.webp)
 
-![WEB 服务器 示意图 10](/images/windows-notes/web-server/img-10.png)
+![WEB 服务器 示意图 10](/images/windows-notes/web-server/img-10.webp)
 
 开启对asp的支持（如果建立了雷池则会多出对雷池的应用池因此要修改雷池应用池的高级配置）：
 
-![WEB 服务器 示意图 11](/images/windows-notes/web-server/img-11.png)
+![WEB 服务器 示意图 11](/images/windows-notes/web-server/img-11.webp)
 
 可以先尝试建立 index.asp文件并写入 <%=now()%>验证asp功能配置雷池应用池兼容性
 
-![WEB 服务器 示意图 12](/images/windows-notes/web-server/img-12.png)
+![WEB 服务器 示意图 12](/images/windows-notes/web-server/img-12.webp)
 
 效果验证
 
-![WEB 服务器 示意图 13](/images/windows-notes/web-server/img-13.png)
+![WEB 服务器 示意图 13](/images/windows-notes/web-server/img-13.webp)
 
 基于域名的虚拟主机
 
-![WEB 服务器 示意图 14](/images/windows-notes/web-server/img-14.png)
+![WEB 服务器 示意图 14](/images/windows-notes/web-server/img-14.webp)
 
 asp小案例
 
@@ -206,6 +206,6 @@ asp小案例
 
   - <pre>   将输出信息格式化成一整行
 
-![WEB 服务器 示意图 15](/images/windows-notes/web-server/img-15.png)
+![WEB 服务器 示意图 15](/images/windows-notes/web-server/img-15.webp)
 
-![WEB 服务器 示意图 16](/images/windows-notes/web-server/img-16.png)
+![WEB 服务器 示意图 16](/images/windows-notes/web-server/img-16.webp)

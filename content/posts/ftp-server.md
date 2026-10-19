@@ -27,7 +27,7 @@ File  Transfor Protocol  === 文件传输协议FTP服务器功能几乎等于445
 
 20端口：数据端口（默认不开启，只有在传输数据瞬间才打开使用，传输完毕，端口也关闭）对2个端口的初步了解，如下：
 
-![FTP 服务器 示意图 1](/images/windows-notes/ftp-server/img-01.png)
+![FTP 服务器 示意图 1](/images/windows-notes/ftp-server/img-01.webp)
 
 FTP协议有2中连接模式
 
@@ -39,7 +39,7 @@ FTP协议有2中连接模式
 
 --实验步骤--
 
-![FTP 服务器 示意图 2](/images/windows-notes/ftp-server/img-02.png)
+![FTP 服务器 示意图 2](/images/windows-notes/ftp-server/img-02.webp)
 
 1）开启2台虚拟机，，还原快照，开机，桥接到vmnet8，配置IP，并互相ping通！
 
@@ -49,9 +49,9 @@ FTP协议有2中连接模式
 
 4）此时客户访问：我的电脑---地址栏输入---ftp://10.1.1.2  直接成功访问！
 
-![FTP 服务器 示意图 3](/images/windows-notes/ftp-server/img-03.png)
+![FTP 服务器 示意图 3](/images/windows-notes/ftp-server/img-03.webp)
 
-![FTP 服务器 示意图 4](/images/windows-notes/ftp-server/img-04.png)
+![FTP 服务器 示意图 4](/images/windows-notes/ftp-server/img-04.webp)
 
 5）但是不建议使用默认得FTP站点，此时停用默认FTP站点！
 
@@ -97,8 +97,8 @@ ftp>
 
 选择网卡
 
-![FTP 服务器 示意图 5](/images/windows-notes/ftp-server/img-05.png)
+![FTP 服务器 示意图 5](/images/windows-notes/ftp-server/img-05.webp)
 
 默认为被动模式，直接get下载即可通过passive命令切换主动模式验证
 
-![FTP 服务器 示意图 6](/images/windows-notes/ftp-server/img-06.png)
+![FTP 服务器 示意图 6](/images/windows-notes/ftp-server/img-06.webp)

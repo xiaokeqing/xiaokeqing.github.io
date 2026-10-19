@@ -131,9 +131,9 @@ RSA
 
   - 加密双方要彼此交换各自的公钥！
 
-![PKI 完整版 示意图 1](/images/windows-notes/pki/img-01.png)
+![PKI 完整版 示意图 1](/images/windows-notes/pki/img-01.webp)
 
-![PKI 完整版 示意图 2](/images/windows-notes/pki/img-02.png)
+![PKI 完整版 示意图 2](/images/windows-notes/pki/img-02.webp)
 
 非对称加密算法优点
 
@@ -167,7 +167,7 @@ openssl rsa -in rsa.key -pubout -out pub.key
 
 对比图，下图分别是私钥和公钥，虽然位置略有不同，但仍然可以找到相同的字符串内容
 
-![PKI 完整版 示意图 3](/images/windows-notes/pki/img-03.png)
+![PKI 完整版 示意图 3](/images/windows-notes/pki/img-03.webp)
 
 3、使用pub.key公钥加密一个文件（test2.txt 为原始文件，test2.enc为加密之后的文件）
 
@@ -200,11 +200,11 @@ SHA
 
 哈希算法流程
 
-![PKI 完整版 示意图 4](/images/windows-notes/pki/img-04.png)
+![PKI 完整版 示意图 4](/images/windows-notes/pki/img-04.webp)
 
 完整的加密流程图：（包括机密性、完整性、身份验证）
 
-![PKI 完整版 示意图 5](/images/windows-notes/pki/img-05.png)
+![PKI 完整版 示意图 5](/images/windows-notes/pki/img-05.webp)
 
 ### 0x05 数字证书
 
@@ -236,7 +236,7 @@ CA
 
   - 颁发者的数字签名（钢印、指纹）
 
-![PKI 完整版 示意图 6](/images/windows-notes/pki/img-06.png)
+![PKI 完整版 示意图 6](/images/windows-notes/pki/img-06.webp)
 
 ### 0x05 实验
 
@@ -274,13 +274,13 @@ CA
 
   - 此时可以去客户机上验证是否可以通过域名访问网站！
 
-![PKI 完整版 示意图 7](/images/windows-notes/pki/img-07.png)
+![PKI 完整版 示意图 7](/images/windows-notes/pki/img-07.webp)
 
-![PKI 完整版 示意图 8](/images/windows-notes/pki/img-08.png)
+![PKI 完整版 示意图 8](/images/windows-notes/pki/img-08.webp)
 
-![PKI 完整版 示意图 9](/images/windows-notes/pki/img-09.png)
+![PKI 完整版 示意图 9](/images/windows-notes/pki/img-09.webp)
 
-![PKI 完整版 示意图 10](/images/windows-notes/pki/img-10.png)
+![PKI 完整版 示意图 10](/images/windows-notes/pki/img-10.webp)
 
 4.搭建部署CA服务器(类似于政府/公安局)
 
@@ -292,86 +292,86 @@ CA
 
 5、创建证书申请08证书请求文件建立
 
-![PKI 完整版 示意图 11](/images/windows-notes/pki/img-11.png)
+![PKI 完整版 示意图 11](/images/windows-notes/pki/img-11.webp)
 
-![PKI 完整版 示意图 12](/images/windows-notes/pki/img-12.png)
+![PKI 完整版 示意图 12](/images/windows-notes/pki/img-12.webp)
 
-![PKI 完整版 示意图 13](/images/windows-notes/pki/img-13.png)
+![PKI 完整版 示意图 13](/images/windows-notes/pki/img-13.webp)
 
-![PKI 完整版 示意图 14](/images/windows-notes/pki/img-14.png)
+![PKI 完整版 示意图 14](/images/windows-notes/pki/img-14.webp)
 
 上一步没有指定路径，发现原来在c:\windows\system32中
 
-![PKI 完整版 示意图 15](/images/windows-notes/pki/img-15.png)
+![PKI 完整版 示意图 15](/images/windows-notes/pki/img-15.webp)
 
 6、向CA服务器提交申请单！
 
-![PKI 完整版 示意图 16](/images/windows-notes/pki/img-16.png)
+![PKI 完整版 示意图 16](/images/windows-notes/pki/img-16.webp)
 
 方法：在win2008上，打开IE，输入：http://192.168.188.136/certsrv，选择申请证书--高级申请-
 
   - -base64编码，提交！
 
-![PKI 完整版 示意图 17](/images/windows-notes/pki/img-17.png)
+![PKI 完整版 示意图 17](/images/windows-notes/pki/img-17.webp)
 
-![PKI 完整版 示意图 18](/images/windows-notes/pki/img-18.png)
+![PKI 完整版 示意图 18](/images/windows-notes/pki/img-18.webp)
 
-![PKI 完整版 示意图 19](/images/windows-notes/pki/img-19.png)
+![PKI 完整版 示意图 19](/images/windows-notes/pki/img-19.webp)
 
 7、CA审核，并颁发证书！
 
-![PKI 完整版 示意图 20](/images/windows-notes/pki/img-20.png)
+![PKI 完整版 示意图 20](/images/windows-notes/pki/img-20.webp)
 
-![PKI 完整版 示意图 21](/images/windows-notes/pki/img-21.png)
+![PKI 完整版 示意图 21](/images/windows-notes/pki/img-21.webp)
 
 8、web服务器下载颁发好的证书
 
 打开IE，输入：http://192.168.188.136/certsrv，下载颁发后得证书！
 
-![PKI 完整版 示意图 22](/images/windows-notes/pki/img-22.png)
+![PKI 完整版 示意图 22](/images/windows-notes/pki/img-22.webp)
 
-![PKI 完整版 示意图 23](/images/windows-notes/pki/img-23.png)
+![PKI 完整版 示意图 23](/images/windows-notes/pki/img-23.webp)
 
 9、导入证书到IIS服务器中08导入证书
 
-![PKI 完整版 示意图 24](/images/windows-notes/pki/img-24.png)
+![PKI 完整版 示意图 24](/images/windows-notes/pki/img-24.webp)
 
-![PKI 完整版 示意图 25](/images/windows-notes/pki/img-25.png)
+![PKI 完整版 示意图 25](/images/windows-notes/pki/img-25.webp)
 
-![PKI 完整版 示意图 26](/images/windows-notes/pki/img-26.png)
+![PKI 完整版 示意图 26](/images/windows-notes/pki/img-26.webp)
 
-![PKI 完整版 示意图 27](/images/windows-notes/pki/img-27.png)
+![PKI 完整版 示意图 27](/images/windows-notes/pki/img-27.webp)
 
 10、win7客户机访问并验证https客户机使用https://www.leichi.com访问，验证是否成功访问，此时应该会报错，显示为不信任CA，但依然可以选择继续访问成功！
 
-![PKI 完整版 示意图 28](/images/windows-notes/pki/img-28.png)
+![PKI 完整版 示意图 28](/images/windows-notes/pki/img-28.webp)
 
 ==================接下来解决报错问题====================
 
 12、客户机信任CA机构首先在win7客户上，IE关闭安全增强，如下2个图：
 
-![PKI 完整版 示意图 29](/images/windows-notes/pki/img-29.png)
+![PKI 完整版 示意图 29](/images/windows-notes/pki/img-29.webp)
 
-![PKI 完整版 示意图 30](/images/windows-notes/pki/img-30.png)
+![PKI 完整版 示意图 30](/images/windows-notes/pki/img-30.webp)
 
 接下来，CA证书并信任之：安装导入CA证书到信任列表中
 
-![PKI 完整版 示意图 31](/images/windows-notes/pki/img-31.png)
+![PKI 完整版 示意图 31](/images/windows-notes/pki/img-31.webp)
 
-![PKI 完整版 示意图 32](/images/windows-notes/pki/img-32.png)
+![PKI 完整版 示意图 32](/images/windows-notes/pki/img-32.webp)
 
 火狐
 
-![PKI 完整版 示意图 33](/images/windows-notes/pki/img-33.png)
+![PKI 完整版 示意图 33](/images/windows-notes/pki/img-33.webp)
 
 13、再次用客户机win7，访问https://www.leichi.com，没有再报错，成功！
 
-![PKI 完整版 示意图 34](/images/windows-notes/pki/img-34.png)
+![PKI 完整版 示意图 34](/images/windows-notes/pki/img-34.webp)
 
 ====================接下来解决禁用http 80访问问题，只能用https访问========================
 
 14、禁止使用http访问，必须使用https方式访问!
 
-![PKI 完整版 示意图 35](/images/windows-notes/pki/img-35.png)
+![PKI 完整版 示意图 35](/images/windows-notes/pki/img-35.webp)
 
 15、验证，此时在win7客户机上，应该只能通过https访问！

@@ -15,105 +15,105 @@ ShowToc: true
 
 1、建立
 
-![Linux 操作系统的安装 示意图 1](/images/linux-notes/linux-install/img-01.png)
+![Linux 操作系统的安装 示意图 1](/images/linux-notes/linux-install/img-01.webp)
 
-![Linux 操作系统的安装 示意图 2](/images/linux-notes/linux-install/img-02.png)
+![Linux 操作系统的安装 示意图 2](/images/linux-notes/linux-install/img-02.webp)
 
-![Linux 操作系统的安装 示意图 3](/images/linux-notes/linux-install/img-03.png)
+![Linux 操作系统的安装 示意图 3](/images/linux-notes/linux-install/img-03.webp)
 
-![Linux 操作系统的安装 示意图 4](/images/linux-notes/linux-install/img-04.png)
+![Linux 操作系统的安装 示意图 4](/images/linux-notes/linux-install/img-04.webp)
 
-![Linux 操作系统的安装 示意图 5](/images/linux-notes/linux-install/img-05.png)
+![Linux 操作系统的安装 示意图 5](/images/linux-notes/linux-install/img-05.webp)
 
-![Linux 操作系统的安装 示意图 6](/images/linux-notes/linux-install/img-06.png)
+![Linux 操作系统的安装 示意图 6](/images/linux-notes/linux-install/img-06.webp)
 
-![Linux 操作系统的安装 示意图 7](/images/linux-notes/linux-install/img-07.png)
+![Linux 操作系统的安装 示意图 7](/images/linux-notes/linux-install/img-07.webp)
 
-![Linux 操作系统的安装 示意图 8](/images/linux-notes/linux-install/img-08.png)
+![Linux 操作系统的安装 示意图 8](/images/linux-notes/linux-install/img-08.webp)
 
-![Linux 操作系统的安装 示意图 9](/images/linux-notes/linux-install/img-09.png)
+![Linux 操作系统的安装 示意图 9](/images/linux-notes/linux-install/img-09.webp)
 
 2、准备开始安装前
 
-![Linux 操作系统的安装 示意图 10](/images/linux-notes/linux-install/img-10.png)
+![Linux 操作系统的安装 示意图 10](/images/linux-notes/linux-install/img-10.webp)
 
 设定双网卡
 
-![Linux 操作系统的安装 示意图 11](/images/linux-notes/linux-install/img-11.png)
+![Linux 操作系统的安装 示意图 11](/images/linux-notes/linux-install/img-11.webp)
 
 安装
 
-![Linux 操作系统的安装 示意图 12](/images/linux-notes/linux-install/img-12.png)
+![Linux 操作系统的安装 示意图 12](/images/linux-notes/linux-install/img-12.webp)
 
 语言选择
 
-![Linux 操作系统的安装 示意图 13](/images/linux-notes/linux-install/img-13.png)
+![Linux 操作系统的安装 示意图 13](/images/linux-notes/linux-install/img-13.webp)
 
 选择软件
 
-![Linux 操作系统的安装 示意图 14](/images/linux-notes/linux-install/img-14.png)
+![Linux 操作系统的安装 示意图 14](/images/linux-notes/linux-install/img-14.webp)
 
 选择
 
-![Linux 操作系统的安装 示意图 15](/images/linux-notes/linux-install/img-15.png)
+![Linux 操作系统的安装 示意图 15](/images/linux-notes/linux-install/img-15.webp)
 
 确认硬盘
 
-![Linux 操作系统的安装 示意图 16](/images/linux-notes/linux-install/img-16.png)
+![Linux 操作系统的安装 示意图 16](/images/linux-notes/linux-install/img-16.webp)
 
 选择安装硬盘
 
-![Linux 操作系统的安装 示意图 17](/images/linux-notes/linux-install/img-17.png)
+![Linux 操作系统的安装 示意图 17](/images/linux-notes/linux-install/img-17.webp)
 
 选择时区
 
-![Linux 操作系统的安装 示意图 18](/images/linux-notes/linux-install/img-18.png)
+![Linux 操作系统的安装 示意图 18](/images/linux-notes/linux-install/img-18.webp)
 
-![Linux 操作系统的安装 示意图 19](/images/linux-notes/linux-install/img-19.png)
+![Linux 操作系统的安装 示意图 19](/images/linux-notes/linux-install/img-19.webp)
 
 修改主机名
 
-![Linux 操作系统的安装 示意图 20](/images/linux-notes/linux-install/img-20.png)
+![Linux 操作系统的安装 示意图 20](/images/linux-notes/linux-install/img-20.webp)
 
-![Linux 操作系统的安装 示意图 21](/images/linux-notes/linux-install/img-21.png)
+![Linux 操作系统的安装 示意图 21](/images/linux-notes/linux-install/img-21.webp)
 
-![Linux 操作系统的安装 示意图 22](/images/linux-notes/linux-install/img-22.png)
+![Linux 操作系统的安装 示意图 22](/images/linux-notes/linux-install/img-22.webp)
 
 点击开始安装
 
-![Linux 操作系统的安装 示意图 23](/images/linux-notes/linux-install/img-23.png)
+![Linux 操作系统的安装 示意图 23](/images/linux-notes/linux-install/img-23.webp)
 
 设定root密码，root为linux操作系统管理员的名称。
 
-![Linux 操作系统的安装 示意图 24](/images/linux-notes/linux-install/img-24.png)
+![Linux 操作系统的安装 示意图 24](/images/linux-notes/linux-install/img-24.webp)
 
 必须建立一个普通用户
 
-![Linux 操作系统的安装 示意图 25](/images/linux-notes/linux-install/img-25.png)
+![Linux 操作系统的安装 示意图 25](/images/linux-notes/linux-install/img-25.webp)
 
-![Linux 操作系统的安装 示意图 26](/images/linux-notes/linux-install/img-26.png)
+![Linux 操作系统的安装 示意图 26](/images/linux-notes/linux-install/img-26.webp)
 
-![Linux 操作系统的安装 示意图 27](/images/linux-notes/linux-install/img-27.png)
+![Linux 操作系统的安装 示意图 27](/images/linux-notes/linux-install/img-27.webp)
 
 点击重启之后
 
-![Linux 操作系统的安装 示意图 28](/images/linux-notes/linux-install/img-28.png)
+![Linux 操作系统的安装 示意图 28](/images/linux-notes/linux-install/img-28.webp)
 
-![Linux 操作系统的安装 示意图 29](/images/linux-notes/linux-install/img-29.png)
+![Linux 操作系统的安装 示意图 29](/images/linux-notes/linux-install/img-29.webp)
 
 用户登录
 
-![Linux 操作系统的安装 示意图 30](/images/linux-notes/linux-install/img-30.png)
+![Linux 操作系统的安装 示意图 30](/images/linux-notes/linux-install/img-30.webp)
 
-![Linux 操作系统的安装 示意图 31](/images/linux-notes/linux-install/img-31.png)
+![Linux 操作系统的安装 示意图 31](/images/linux-notes/linux-install/img-31.webp)
 
 有欢迎提示一路next
 
-![Linux 操作系统的安装 示意图 32](/images/linux-notes/linux-install/img-32.png)
+![Linux 操作系统的安装 示意图 32](/images/linux-notes/linux-install/img-32.webp)
 
 正式进入桌面
 
-![Linux 操作系统的安装 示意图 33](/images/linux-notes/linux-install/img-33.png)
+![Linux 操作系统的安装 示意图 33](/images/linux-notes/linux-install/img-33.webp)
 
 3、系统登录和优化了解操作系统
 
@@ -121,27 +121,27 @@ ShowToc: true
 
 fdisk -l
 
-![Linux 操作系统的安装 示意图 34](/images/linux-notes/linux-install/img-34.png)
+![Linux 操作系统的安装 示意图 34](/images/linux-notes/linux-install/img-34.webp)
 
 uname -r
 
-![Linux 操作系统的安装 示意图 35](/images/linux-notes/linux-install/img-35.png)
+![Linux 操作系统的安装 示意图 35](/images/linux-notes/linux-install/img-35.webp)
 
 对该系统关机init 0 关机调整系统的分辨率还有电源管理
 
-![Linux 操作系统的安装 示意图 36](/images/linux-notes/linux-install/img-36.png)
+![Linux 操作系统的安装 示意图 36](/images/linux-notes/linux-install/img-36.webp)
 
-![Linux 操作系统的安装 示意图 37](/images/linux-notes/linux-install/img-37.png)
+![Linux 操作系统的安装 示意图 37](/images/linux-notes/linux-install/img-37.webp)
 
-![Linux 操作系统的安装 示意图 38](/images/linux-notes/linux-install/img-38.png)
+![Linux 操作系统的安装 示意图 38](/images/linux-notes/linux-install/img-38.webp)
 
-![Linux 操作系统的安装 示意图 39](/images/linux-notes/linux-install/img-39.png)
+![Linux 操作系统的安装 示意图 39](/images/linux-notes/linux-install/img-39.webp)
 
 设定 防火墙功能要关闭
 
-![Linux 操作系统的安装 示意图 40](/images/linux-notes/linux-install/img-40.png)
+![Linux 操作系统的安装 示意图 40](/images/linux-notes/linux-install/img-40.webp)
 
-![Linux 操作系统的安装 示意图 41](/images/linux-notes/linux-install/img-41.png)
+![Linux 操作系统的安装 示意图 41](/images/linux-notes/linux-install/img-41.webp)
 
 关闭selinux 服务 属于应用层的限制程序
 
@@ -149,19 +149,19 @@ uname -r
 nano /etc/selinux/config
 ```
 
-![Linux 操作系统的安装 示意图 42](/images/linux-notes/linux-install/img-42.png)
+![Linux 操作系统的安装 示意图 42](/images/linux-notes/linux-install/img-42.webp)
 
 关闭一个虚拟网卡
 
-![Linux 操作系统的安装 示意图 43](/images/linux-notes/linux-install/img-43.png)
+![Linux 操作系统的安装 示意图 43](/images/linux-notes/linux-install/img-43.webp)
 
 熟悉基本的操作页面 还有 加入中文的输入法
 
-![Linux 操作系统的安装 示意图 44](/images/linux-notes/linux-install/img-44.png)
+![Linux 操作系统的安装 示意图 44](/images/linux-notes/linux-install/img-44.webp)
 
-![Linux 操作系统的安装 示意图 45](/images/linux-notes/linux-install/img-45.png)
+![Linux 操作系统的安装 示意图 45](/images/linux-notes/linux-install/img-45.webp)
 
-![Linux 操作系统的安装 示意图 46](/images/linux-notes/linux-install/img-46.png)
+![Linux 操作系统的安装 示意图 46](/images/linux-notes/linux-install/img-46.webp)
 
 linux虚拟机和真实机之间如何拷贝文件。
 
@@ -169,11 +169,11 @@ linux虚拟机和真实机之间如何拷贝文件。
 
 最后一步优化建立关机快照普通用户如果是用systemct poweroff 关机需要加 -i
 
-![Linux 操作系统的安装 示意图 47](/images/linux-notes/linux-install/img-47.png)
+![Linux 操作系统的安装 示意图 47](/images/linux-notes/linux-install/img-47.webp)
 
 建立关机快照
 
-![Linux 操作系统的安装 示意图 48](/images/linux-notes/linux-install/img-48.png)
+![Linux 操作系统的安装 示意图 48](/images/linux-notes/linux-install/img-48.webp)
 
 基本命令的使用和目录结构的分析cd      ls      pwd打开终端后显示的 [root@localhost ~]# 什么意思[当前的用户名@主机名 当前所在的目录名] ## 表示当前用户的身份为超级管理员如果是其他用户 用 $符号提示pwd 命令查看当前所在的路径
 
@@ -202,11 +202,11 @@ cd  change  directory
 
 ls == dir  相当于windows的列出当前目录中的内容  （list 列出）
 
-![Linux 操作系统的安装 示意图 49](/images/linux-notes/linux-install/img-49.png)
+![Linux 操作系统的安装 示意图 49](/images/linux-notes/linux-install/img-49.webp)
 
 目录分析/   操作系统的起始路径/bin   目录中保存了系统中普通用户和管理员都可以运行的命令字/sbin  只有管理员才可以运行的命令（普通用户也可以运行某些命令 但是显示效果不如管理员多）bin目录的分析对于绝对路径和相对路径的理解
 
-![Linux 操作系统的安装 示意图 50](/images/linux-notes/linux-install/img-50.png)
+![Linux 操作系统的安装 示意图 50](/images/linux-notes/linux-install/img-50.webp)
 
 通过练习学命令（增 删 改 查）
 
@@ -229,7 +229,7 @@ bash: notepad: command not found...
 
 大家好我是胡洋老师
 
-![Linux 操作系统的安装 示意图 51](/images/linux-notes/linux-install/img-51.png)
+![Linux 操作系统的安装 示意图 51](/images/linux-notes/linux-install/img-51.webp)
 
 此时按ctrl+o 确认写入提示用户名直接回车确认再出现提示窗 按ctrl+x 退出
 
@@ -303,4 +303,4 @@ rh
 
 4、将 /tmp/nz2002/nz2002.txt 建立一个符号链接在桌面上，要求可以双击打开该文件
 
-![Linux 操作系统的安装 示意图 52](/images/linux-notes/linux-install/img-52.png)
+![Linux 操作系统的安装 示意图 52](/images/linux-notes/linux-install/img-52.webp)

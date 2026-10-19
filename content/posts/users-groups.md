@@ -30,7 +30,7 @@ shell种类：sh  Bash （最流行） Csh  Ksh  Zsh（最高级）
 
 shell与用户，内核的关系，如图：
 
-![用户与组管理 示意图 1](/images/linux-notes/users-groups/img-01.png)
+![用户与组管理 示意图 1](/images/linux-notes/users-groups/img-01.webp)
 
 ### 1.3 查看用户信息
 

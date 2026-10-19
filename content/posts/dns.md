@@ -50,7 +50,7 @@ nba.sina.com   ----  6.6.6.6
 
 域名树形结构
 
-![DNS 部署与安全 示意图 1](/images/windows-notes/dns/img-01.png)
+![DNS 部署与安全 示意图 1](/images/windows-notes/dns/img-01.webp)
 
 根域         .顶级域（也叫一级域名）
 
@@ -125,7 +125,7 @@ www .baidu .com .
 
 2）迭代查询：本地DNS服务器与根等其他DNS服务器的解析过程
 
-![DNS 部署与安全 示意图 2](/images/windows-notes/dns/img-02.png)
+![DNS 部署与安全 示意图 2](/images/windows-notes/dns/img-02.webp)
 
 ### 4.2、按照查询内容分类：
 
@@ -155,31 +155,31 @@ hosts文件得格式：1.1.1.1  www.teacher.com
 
 2）安装DNS服务器插件（也就是安装并开启53端口），可以使用netstat  -an验证是否开启了53端口
 
-![DNS 部署与安全 示意图 3](/images/windows-notes/dns/img-03.png)
+![DNS 部署与安全 示意图 3](/images/windows-notes/dns/img-03.webp)
 
 3）创建区域文件（负责一个域名后缀的解析，如baidu.com为域名后缀，一台DNS服务器内可存放多个区域文件）
 
-![DNS 部署与安全 示意图 4](/images/windows-notes/dns/img-04.png)
+![DNS 部署与安全 示意图 4](/images/windows-notes/dns/img-04.webp)
 
-![DNS 部署与安全 示意图 5](/images/windows-notes/dns/img-05.png)
+![DNS 部署与安全 示意图 5](/images/windows-notes/dns/img-05.webp)
 
 4）新建A记录
 
-![DNS 部署与安全 示意图 6](/images/windows-notes/dns/img-06.png)
+![DNS 部署与安全 示意图 6](/images/windows-notes/dns/img-06.webp)
 
-![DNS 部署与安全 示意图 7](/images/windows-notes/dns/img-07.png)
+![DNS 部署与安全 示意图 7](/images/windows-notes/dns/img-07.webp)
 
-![DNS 部署与安全 示意图 8](/images/windows-notes/dns/img-08.png)
+![DNS 部署与安全 示意图 8](/images/windows-notes/dns/img-08.webp)
 
 同时我们也可以解析其他地址因为本身就能找到根服务器
 
-![DNS 部署与安全 示意图 9](/images/windows-notes/dns/img-09.png)
+![DNS 部署与安全 示意图 9](/images/windows-notes/dns/img-09.webp)
 
 对于解析过的域名dns服务器本身具有缓存
 
-![DNS 部署与安全 示意图 10](/images/windows-notes/dns/img-10.png)
+![DNS 部署与安全 示意图 10](/images/windows-notes/dns/img-10.webp)
 
-![DNS 部署与安全 示意图 11](/images/windows-notes/dns/img-11.png)
+![DNS 部署与安全 示意图 11](/images/windows-notes/dns/img-11.webp)
 
 清除缓存后dns之前的解析信息都会清除
 
@@ -202,7 +202,7 @@ ipconfig  /flushdns         # 清空DNS缓存
 
 转发dns练习，缓解当前服务器每次寻找根服务器的压力，可以让其指向另一个dns服务器
 
-![DNS 部署与安全 示意图 12](/images/windows-notes/dns/img-12.png)
+![DNS 部署与安全 示意图 12](/images/windows-notes/dns/img-12.webp)
 
 其优势在于作为dns服务器减少了对每个域名解析时侯去与根服务器沟通的压力
 

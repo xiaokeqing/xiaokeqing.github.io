@@ -39,15 +39,15 @@ netstat -an命令查看是否开放端口
 
 2）安装DHCP服务插件/软件，输入netstat  -an  验证67/68是否开启！
 
-![DHCP 部署与安全 示意图 1](/images/windows-notes/dhcp/img-01.png)
+![DHCP 部署与安全 示意图 1](/images/windows-notes/dhcp/img-01.webp)
 
-![DHCP 部署与安全 示意图 2](/images/windows-notes/dhcp/img-02.png)
+![DHCP 部署与安全 示意图 2](/images/windows-notes/dhcp/img-02.webp)
 
 3）打开DHCP软件：开始--管理工具--DHCP，并新建作用域（也就是地址池）及作用域选项
 
-![DHCP 部署与安全 示意图 3](/images/windows-notes/dhcp/img-03.png)
+![DHCP 部署与安全 示意图 3](/images/windows-notes/dhcp/img-03.webp)
 
-![DHCP 部署与安全 示意图 4](/images/windows-notes/dhcp/img-04.png)
+![DHCP 部署与安全 示意图 4](/images/windows-notes/dhcp/img-04.webp)
 
 4）激活作用域(否，稍后配置)
 
@@ -94,27 +94,27 @@ ipconfig /renew
 
 在win2019部署dhcp服务并抓包验证
 
-![DHCP 部署与安全 示意图 5](/images/windows-notes/dhcp/img-05.png)
+![DHCP 部署与安全 示意图 5](/images/windows-notes/dhcp/img-05.webp)
 
-![DHCP 部署与安全 示意图 6](/images/windows-notes/dhcp/img-06.png)
+![DHCP 部署与安全 示意图 6](/images/windows-notes/dhcp/img-06.webp)
 
 双击dhcp项后分析最后的状态从发现开始的4个数据包就是整个dhcp租用的过程=======================================
 
 1、discover
 
-![DHCP 部署与安全 示意图 7](/images/windows-notes/dhcp/img-07.png)
+![DHCP 部署与安全 示意图 7](/images/windows-notes/dhcp/img-07.webp)
 
 2、offer
 
-![DHCP 部署与安全 示意图 8](/images/windows-notes/dhcp/img-08.png)
+![DHCP 部署与安全 示意图 8](/images/windows-notes/dhcp/img-08.webp)
 
 3、request
 
-![DHCP 部署与安全 示意图 9](/images/windows-notes/dhcp/img-09.png)
+![DHCP 部署与安全 示意图 9](/images/windows-notes/dhcp/img-09.webp)
 
 4、ack
 
-![DHCP 部署与安全 示意图 10](/images/windows-notes/dhcp/img-10.png)
+![DHCP 部署与安全 示意图 10](/images/windows-notes/dhcp/img-10.webp)
 
 ### 8、DHCP续约
 
@@ -126,7 +126,7 @@ ipconfig /renew
 
 ### 9、DHCP攻击与防御
 
-![DHCP 部署与安全 示意图 11](/images/windows-notes/dhcp/img-11.png)
+![DHCP 部署与安全 示意图 11](/images/windows-notes/dhcp/img-11.webp)
 
 1）DHCP服务器地址耗尽攻击频繁的发送伪装DHCP发现请求，直到将DHCP地址池资源耗尽使用DHCPig.py软件可以进行DHCP服务器耗尽攻击，dhcpig.py软件下载地址： python https://github.com/kamorin/DHCPig www.github.com 提供所有开发爱好者上传的免费开源的软件软件下载
 
@@ -158,7 +158,7 @@ sudo python2 pig.py eth0            # 从eth0网卡对外开始攻击DHCP服务�
 址发送Discovery包！
 ```
 
-![DHCP 部署与安全 示意图 12](/images/windows-notes/dhcp/img-12.png)
+![DHCP 部署与安全 示意图 12](/images/windows-notes/dhcp/img-12.webp)
 
 防御方法在交换机（管理型）的端口上做MAC地址数量限制（后期网络中会学习交换机原理和命令）
 

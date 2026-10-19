@@ -1,0 +1,5 @@
+{{- /* ★2026-10-19（加载速度）：markdown 里的图片以前渲染成裸 <img>，一页 36 张课程
+       截图会全部进首屏请求（/posts/pki/ 实测 3.2MB 图片）。这里统一加 lazy + async 解码：
+       只有视口附近的图才会取，其它等滚动到才取。alt 保持原样（可访问性不变），
+       title 有才写。 */ -}}
+<img src="{{ .Destination | safeURL }}" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }} loading="lazy" decoding="async">

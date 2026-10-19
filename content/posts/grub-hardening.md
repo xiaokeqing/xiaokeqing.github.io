@@ -13,28 +13,28 @@ ShowToc: true
 
 grub引导菜单配置文件 /boot/grub2/grub.cfg  配置文件，但是不能修改
 
-![GRUB 引导菜单加固 示意图 1](/images/linux-notes/grub-hardening/img-01.png)
+![GRUB 引导菜单加固 示意图 1](/images/linux-notes/grub-hardening/img-01.webp)
 
 查看对应文件内容
 
-![GRUB 引导菜单加固 示意图 2](/images/linux-notes/grub-hardening/img-02.png)
+![GRUB 引导菜单加固 示意图 2](/images/linux-notes/grub-hardening/img-02.webp)
 
 配置就脚本目录分析
 
-![GRUB 引导菜单加固 示意图 3](/images/linux-notes/grub-hardening/img-03.png)
+![GRUB 引导菜单加固 示意图 3](/images/linux-notes/grub-hardening/img-03.webp)
 
 根据源配置文件分析为何要修改10_linux需要首先生成密码
 
-![GRUB 引导菜单加固 示意图 4](/images/linux-notes/grub-hardening/img-04.png)
+![GRUB 引导菜单加固 示意图 4](/images/linux-notes/grub-hardening/img-04.webp)
 
 编辑10_linux添加密码
 
-![GRUB 引导菜单加固 示意图 5](/images/linux-notes/grub-hardening/img-05.png)
+![GRUB 引导菜单加固 示意图 5](/images/linux-notes/grub-hardening/img-05.webp)
 
 生成配置文件
 
-![GRUB 引导菜单加固 示意图 6](/images/linux-notes/grub-hardening/img-06.png)
+![GRUB 引导菜单加固 示意图 6](/images/linux-notes/grub-hardening/img-06.webp)
 
 重启后验证
 
-![GRUB 引导菜单加固 示意图 7](/images/linux-notes/grub-hardening/img-07.png)
+![GRUB 引导菜单加固 示意图 7](/images/linux-notes/grub-hardening/img-07.webp)

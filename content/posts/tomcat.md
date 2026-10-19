@@ -15,9 +15,9 @@ ShowToc: true
 
 首先需要安装两个软件tomcat和java，先装java-jdk再装tomcat
 
-![Tomcat 部署 示意图 1](/images/linux-notes/tomcat/img-01.png)
+![Tomcat 部署 示意图 1](/images/linux-notes/tomcat/img-01.webp)
 
-![Tomcat 部署 示意图 2](/images/linux-notes/tomcat/img-02.png)
+![Tomcat 部署 示意图 2](/images/linux-notes/tomcat/img-02.webp)
 
 启动tomcat，不要使用右下角的任务管理器管理tomcat使用命令启动#linux部署案例
 
@@ -44,9 +44,9 @@ D:\apache-tomcat-8.5.32\webapps\manager\META-INF
 /webapps/manager/META-INF/context.xml
 ```
 
-![Tomcat 部署 示意图 3](/images/linux-notes/tomcat/img-03.png)
+![Tomcat 部署 示意图 3](/images/linux-notes/tomcat/img-03.webp)
 
-![Tomcat 部署 示意图 4](/images/linux-notes/tomcat/img-04.png)
+![Tomcat 部署 示意图 4](/images/linux-notes/tomcat/img-04.webp)
 
 ```
 <Context antiResourceLocking="false" privileged="true" >
@@ -76,26 +76,26 @@ script,manager-jmx,manager-status,admin-gui,admin-script"/>
 
 使用tomcat/tomcat  ，登录Manager App 。
 
-![Tomcat 部署 示意图 5](/images/linux-notes/tomcat/img-05.png)
+![Tomcat 部署 示意图 5](/images/linux-notes/tomcat/img-05.webp)
 
-![Tomcat 部署 示意图 6](/images/linux-notes/tomcat/img-06.png)
+![Tomcat 部署 示意图 6](/images/linux-notes/tomcat/img-06.webp)
 
-![Tomcat 部署 示意图 7](/images/linux-notes/tomcat/img-07.png)
+![Tomcat 部署 示意图 7](/images/linux-notes/tomcat/img-07.webp)
 
 将jshell.jsp大马文件进行打包成war，在打包之前需要先观察该文件的密码
 
-![Tomcat 部署 示意图 8](/images/linux-notes/tomcat/img-08.png)
+![Tomcat 部署 示意图 8](/images/linux-notes/tomcat/img-08.webp)
 
-![Tomcat 部署 示意图 9](/images/linux-notes/tomcat/img-09.png)
+![Tomcat 部署 示意图 9](/images/linux-notes/tomcat/img-09.webp)
 
 ```
 jar cvf jshell.war jshell.jsp
 ```
 
-![Tomcat 部署 示意图 10](/images/linux-notes/tomcat/img-10.png)
+![Tomcat 部署 示意图 10](/images/linux-notes/tomcat/img-10.webp)
 
 ```
 http://192.168.16.111:8080/jshell/jshell.jsp
 ```
 
-![Tomcat 部署 示意图 11](/images/linux-notes/tomcat/img-11.png)
+![Tomcat 部署 示意图 11](/images/linux-notes/tomcat/img-11.webp)

@@ -19,7 +19,7 @@ ShowToc: true
 
 3、设置权限防止资源被篡改、删除
 
-![NTFS 安全权限 示意图 1](/images/windows-notes/ntfs-permissions/img-01.png)
+![NTFS 安全权限 示意图 1](/images/windows-notes/ntfs-permissions/img-01.webp)
 
 ## 二、文件系统概述
 
@@ -33,7 +33,7 @@ ShowToc: true
 
 •EXT 和 XFS   linux常见
 
-![NTFS 安全权限 示意图 2](/images/windows-notes/ntfs-permissions/img-02.png)
+![NTFS 安全权限 示意图 2](/images/windows-notes/ntfs-permissions/img-02.webp)
 
 ## 三、NTFS文件系统特点（考点）
 
@@ -61,7 +61,7 @@ ShowToc: true
 
 方法：文件夹右键属性---安全---高级---去掉第一个对号--选择复制即可
 
-![NTFS 安全权限 示意图 3](/images/windows-notes/ntfs-permissions/img-03.png)
+![NTFS 安全权限 示意图 3](/images/windows-notes/ntfs-permissions/img-03.webp)
 
 ### 4.2、文件及文件夹权限
 
@@ -109,7 +109,7 @@ net localgroup hr /add
 
 作用：可以将任何文件夹的所有者改为administrator
 
-![NTFS 安全权限 示意图 4](/images/windows-notes/ntfs-permissions/img-04.png)
+![NTFS 安全权限 示意图 4](/images/windows-notes/ntfs-permissions/img-04.webp)
 
 案例3：
 
@@ -127,7 +127,7 @@ net localgroup hr /add
 
 windows系统中c:\windows\system32\drivers\etc\hosts 是本地主机映射文件。其作用是指定ip和域名的对应关系，其优先级要高于dns服务器因此早些时候常被人恶意篡改导致无法访问正常的网站。
 
-![NTFS 安全权限 示意图 5](/images/windows-notes/ntfs-permissions/img-05.png)
+![NTFS 安全权限 示意图 5](/images/windows-notes/ntfs-permissions/img-05.webp)
 
 ```
 ipconfig  /displaydns  #显示dns缓存

