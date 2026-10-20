@@ -3,16 +3,18 @@
      值只新增这一组，不改任何既有配色/字体/背景（站主点名的"头像卡片"这一处新增） */
   /* ★DESK-RAIL 2026-10-18：桌面端卡片贴左上角（原 left:10px;top:14px，比导航的 top 还低，抬头留一道空）。
      ≤980px 那套 M1 自己把卡片定在 top:52px;left:10px（见下面 @media(max-width:980px)），手机端不受影响。 */
-  .xk-idcard{position:fixed;left:8px;top:8px;z-index:61;display:grid;grid-template-columns:42px minmax(0,1fr);
-    align-items:center;gap:9px;width:146px;padding:8px 10px 7px;
+  .xk-idcard{position:fixed;left:8px;top:8px;z-index:61;display:flex;flex-direction:column;align-items:center;gap:5px;
+    width:96px;padding:8px 8px 6px;
     background:var(--solid,rgba(48,45,41,.82));border:1px solid var(--line2,rgba(255,246,235,.28));
     border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
-  .xk-idmeta{display:flex;flex-direction:column;gap:2px;min-width:0}
+  /* ★2026-10-20 站主口径：头像在上、名字在头像下面（原先是头像在左、名字在右，卡片 146px 太宽） */
+  .xk-idmeta{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;width:100%}
   .xk-idsub{font:8.5px/1 var(--mono,monospace);letter-spacing:.05em;text-transform:uppercase;color:var(--mut,#D2CBBD);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .xk-idstat{grid-column:1/-1;display:flex;align-items:center;gap:6px;padding-top:6px;margin-top:1px;
-    border-top:1px solid var(--line,rgba(255,246,235,.15));font:10.5px/1.2 var(--sans,sans-serif);color:var(--mut,#D2CBBD)}
-  .xk-idstat .dots{margin-left:auto;display:flex;gap:3px;flex:none}
+  .xk-idstat{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;padding-top:5px;margin-top:1px;
+    border-top:1px solid var(--line,rgba(255,246,235,.15));font:10px/1.2 var(--sans,sans-serif);color:var(--mut,#D2CBBD)}
+  .xk-idstat .dots{margin-left:4px;display:flex;gap:2px;flex:none}
+  .xk-idstat .dots i{width:5px;height:5px}
   .xk-idstat .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,246,235,.22);display:block}
   .xk-idstat .dots i.on1{background:#F2A6B0}.xk-idstat .dots i.on2{background:#9FD8E6}
   .xk-idstat .dots i.on3{background:#E8B45A}
@@ -21,7 +23,7 @@
     background:#E8ECEF;line-height:0}
   .xk-idcard-av canvas{width:42px;height:42px;display:block}
   /* ★2026-10-17 站主口径：头像就单纯一个头像，头像下面写名字 */
-  .xk-idname{font:600 12.5px/1.15 var(--sans,sans-serif);letter-spacing:.02em;
+  .xk-idname{font:600 12.5px/1.15 var(--sans,sans-serif);letter-spacing:.02em;text-align:center;max-width:100%;
     color:var(--txt,#FAF7F0);user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* ★2026-10-17 站主口径：功能文字全写到左下角，做成一行文字钮（不再用认不出的图标） */
   /* ★2026-10-17 站主口径（m06282）：功能钮跟导航一样**竖着**排，别摊成一横条挤在底部。
@@ -216,7 +218,6 @@
       color:var(--mut,#D2CBBD);font:12px/1 var(--mono,monospace);transition:transform .18s ease}
     .xk-idfold:hover{color:var(--txt,#FAF7F0);background:rgba(255,246,235,.08)}
     .xk-idcard.open .xk-idfold{transform:rotate(180deg);color:var(--acc,#7FD4D8)}
-    .xk-idmeta{padding-right:16px}
     /* ② 功能钮桌面不再常驻：收起时 display:none（offsetHeight=0 ⇒ 不占位，导航紧贴卡片） */
     .xk-idcard-col{display:none}
     /* ③ 展开 = 卡片正下方的一竖列（与卡片同 x/同宽 146px，比卡片矮一档的毛玻璃），
@@ -224,7 +225,7 @@
           位置在正文左内边距 184px 的左边 ⇒ 不压正文，5 个钮都能点。 */
     .xk-idcard.open + .xk-idcard-col{
       display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:4px;
-      position:fixed;left:8px;top:auto;right:auto;bottom:auto;width:146px;
+      position:fixed;left:8px;top:auto;right:auto;bottom:auto;width:96px;
       padding:5px;border-radius:12px;z-index:80;
       background:rgba(9,11,14,.94);backdrop-filter:blur(10px);
       border:1px solid var(--line2,rgba(255,246,235,.22));box-shadow:0 14px 40px rgba(0,0,0,.5)}

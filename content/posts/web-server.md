@@ -2,7 +2,7 @@
 title: "WEB 服务器：IIS 部署、HTML 与 WEB 攻击"
 date: 2026-10-19T09:00:00+08:00
 draft: false
-categories: ["课程笔记", "windows系统"]
+categories: ["windows系统"]
 tags: ["Windows Server", "IIS", "Web", "课程笔记"]
 summary: "WEB 服务器原理与 HTTP 交互、IIS 站点部署、默认 80/8080 端口，以及常见 WEB 攻击面。"
 description: "WEB 服务器原理与 HTTP 交互、IIS 站点部署、默认 80/8080 端口，以及常见 WEB 攻击面。"

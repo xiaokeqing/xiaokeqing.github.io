@@ -2,7 +2,7 @@
 title: "VulnHub Node 靶机实战：3000 端口的 Node 应用"
 date: 2026-10-19T07:00:00+08:00
 draft: false
-categories: ["课程笔记", "靶机实战"]
+categories: ["靶机实战"]
 tags: ["Linux", "靶机", "渗透", "课程笔记"]
 summary: "先扫网段再全端口（-p-）定位 3000 端口、dirb / dirbuster 目录枚举到 /login、Node 应用的信息泄露与后台进入，以及提权路径。"
 description: "先扫网段再全端口（-p-）定位 3000 端口、dirb / dirbuster 目录枚举到 /login、Node 应用的信息泄露与后台进入，以及提权路径。"

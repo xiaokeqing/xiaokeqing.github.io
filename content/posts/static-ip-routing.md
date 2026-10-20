@@ -2,7 +2,7 @@
 title: "静态 IP 配置与路由转发"
 date: 2026-10-19T14:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "网络", "路由", "课程笔记"]
 summary: "CentOS 7 与 Kali 在 NAT 模式下的静态地址写法、DNS 设定，以及把主机配置成路由转发节点的步骤（截图为主）。"
 description: "CentOS 7 与 Kali 在 NAT 模式下的静态地址写法、DNS 设定，以及把主机配置成路由转发节点的步骤（截图为主）。"

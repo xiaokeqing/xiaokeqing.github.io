@@ -2,8 +2,8 @@
 title: "163.5.210.194：一条零失败率的 SSH 爆破链（2026-10-15 ~ 10-18）"
 date: 2026-10-18
 type: post
-categories: ["威胁分析"]
-tags: ["attack-analysis", "honeypot", "suricata", "wazuh", "攻防复盘"]
+categories: ["ai笔记"]
+tags: ["attack-analysis", "honeypot", "suricata", "wazuh", "攻防复盘", "威胁分析"]
 summary: "一周内 6,956 次会话、6,931 次登录成功、6 次失败，0 条命令、0 条 Suricata 告警、0 次封禁。163.5.210.194 是一条「只打 2222、一枪就中、登进去就走」的机器人，它把失败次数型规则整条废掉了。"
 description: "复刻一条真实攻击链：Suricata 首见 flow（midstream/timeout）、Cowrie 首见会话、单端口特征、每会话 0.997 次成功登录、command.input=0、audit.js 里 18 条封禁全是自测地址。含检测质量复盘：94.9% 告警是云 agent 心跳、规则 100110 命中 0、按会话速率（10/300s vs 20/300s）的实测窗口分布。"
 ShowToc: true

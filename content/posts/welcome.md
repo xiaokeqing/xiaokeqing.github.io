@@ -2,8 +2,8 @@
 title: "这个站点在做什么"
 date: 2026-10-10
 draft: false
-tags: ["站点说明"]
-categories: ["随笔"]
+tags: ["站点说明", "随笔"]
+categories: ["ai笔记"]
 summary: "一个安全方向的学习与技术记录站——把做过的项目、踩过的坑、以及可以亲手试的东西放在一起。"
 ShowToc: false
 ---

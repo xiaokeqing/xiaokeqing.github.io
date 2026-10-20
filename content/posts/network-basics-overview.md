@@ -2,7 +2,7 @@
 title: "网络基础笔记（OSI/TCP·IP、数据链路层、交换机、路由）"
 date: 2026-10-20T20:00:00+08:00
 draft: false
-categories: ["课程笔记", "网络基础"]
+categories: ["网络基础"]
 tags: ["网络基础", "OSI", "TCP/IP", "VLAN", "STP", "路由"]
 summary: "网络基础课程的整体笔记：OSI 七层与 TCP/IP 协议栈、数据链路层、IP 地址与子网、交换机 VLAN/STP、路由与静态路由，按面试背诵版整理。"
 description: "网络基础课程的整体笔记：OSI 七层与 TCP/IP 协议栈、数据链路层、IP 地址与子网、交换机 VLAN/STP、路由与静态路由，按面试背诵版整理。"

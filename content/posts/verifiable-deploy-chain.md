@@ -2,8 +2,8 @@
 title: "把部署链做成「造不了假」：CI → ACR → digest → 看门狗"
 date: 2026-10-13
 draft: false
-tags: ["部署", "供应链", "Docker", "CI", "可核验"]
-categories: ["工程实践"]
+tags: ["部署", "供应链", "Docker", "CI", "可核验", "工程实践"]
+categories: ["ai笔记"]
 summary: "一个容器跑起来，你怎么知道跑的就是你刚推的那个 commit？这条链上我封了五道闸门：触发即校验、jar 内指纹核对、镜像 digest 而不是 tag、部署前后的硬校验、以及一个会自己回滚的看门狗。"
 description: "把发布链做成可核验的：CI 校验工作区与 commit、解包核对 jar 内 git.properties、ACR 用 digest 而不是 tag、部署脚本硬校验 label、健康看门狗自动回滚。全部数字来自 SecAgent 的 RUNBOOK 与真实输出。"
 ShowToc: true

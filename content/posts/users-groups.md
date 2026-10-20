@@ -2,7 +2,7 @@
 title: "用户与组管理：/etc/passwd、shadow 与权限模型"
 date: 2026-10-19T18:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "用户", "权限", "课程笔记"]
 summary: "超级用户/普通用户/程序用户的 UID 划分、Shell 与内核的关系、passwd/shadow/group 的字段含义，以及用户与组管理的常用命令。"
 description: "超级用户/普通用户/程序用户的 UID 划分、Shell 与内核的关系、passwd/shadow/group 的字段含义，以及用户与组管理的常用命令。"

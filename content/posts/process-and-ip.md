@@ -2,7 +2,7 @@
 title: "开机流程与进程管理：systemd、ps 与 top"
 date: 2026-10-19T16:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "systemd", "进程", "课程笔记"]
 summary: "BIOS→GRUB→内核→systemd 的开机链条、systemd 的工作模式与 systemctl 控制项、ps aux 与 top 的实时观察与排序，以及进程启动状态调整。"
 description: "BIOS→GRUB→内核→systemd 的开机链条、systemd 的工作模式与 systemctl 控制项、ps aux 与 top 的实时观察与排序，以及进程启动状态调整。"

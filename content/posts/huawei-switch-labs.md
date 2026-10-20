@@ -2,7 +2,7 @@
 title: "华为交换机实验手册（实验一～十三）"
 date: 2026-10-20T14:00:00+08:00
 draft: false
-categories: ["课程笔记", "网络基础"]
+categories: ["网络基础"]
 tags: ["网络基础", "交换机", "实验", "VLAN", "STP", "华为"]
 summary: "华为交换机实验一到十三的完整手册：基本设置与 Telnet、VLAN 划分与跨交换机 VLAN、hybrid、单臂路由、多层交换、GVRP、STP/MSTP、链路聚合、端口镜像。"
 description: "华为交换机实验一到十三的完整手册：基本设置与 Telnet、VLAN 划分与跨交换机 VLAN、hybrid、单臂路由、多层交换、GVRP、STP/MSTP、链路聚合、端口镜像。"

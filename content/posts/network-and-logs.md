@@ -2,7 +2,7 @@
 title: "网络地址配置与日志服务"
 date: 2026-10-19T15:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "网络", "日志", "课程笔记"]
 summary: "ip addr / ip route 的命令行配置与配置文件静态写法、/etc/resolv.conf 的 DNS 设定、systemctl 管理服务自启，以及日志服务的基本用法。"
 description: "ip addr / ip route 的命令行配置与配置文件静态写法、/etc/resolv.conf 的 DNS 设定、systemctl 管理服务自启，以及日志服务的基本用法。"

@@ -2,7 +2,7 @@
 title: "Windows 服务基础 · 全篇合并整理版（修订美化）"
 date: 2026-10-19T18:00:00+08:00
 draft: false
-categories: ["课程笔记", "windows系统"]
+categories: ["windows系统"]
 tags: ["Windows Server", "基础设施", "课程笔记"]
 summary: "把 IP 地址、DOS、NTFS、共享、远程管理、DHCP/DNS、WEB/FTP、域与 PKI 十三份讲义压成一份连续通读稿，章节带小结与对比表。"
 description: "把 IP 地址、DOS、NTFS、共享、远程管理、DHCP/DNS、WEB/FTP、域与 PKI 十三份讲义压成一份连续通读稿，章节带小结与对比表。"

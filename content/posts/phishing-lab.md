@@ -2,7 +2,7 @@
 title: "钓鱼网站实训（DNS 欺骗与 ARP 攻击）"
 date: 2026-10-20T12:00:00+08:00
 draft: false
-categories: ["课程笔记", "网络基础"]
+categories: ["网络基础"]
 tags: ["网络基础", "钓鱼网站", "DNS", "ARP", "实训"]
 summary: "网络安全实训：DNS 欺骗、ARP 攻击与钓鱼网站的制作过程与原理分析。"
 description: "网络安全实训：DNS 欺骗、ARP 攻击与钓鱼网站的制作过程与原理分析。"

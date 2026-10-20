@@ -2,7 +2,7 @@
 title: "IP 地址详解（二）：测试网络连通性"
 date: 2026-10-19T16:00:00+08:00
 draft: false
-categories: ["课程笔记", "windows系统"]
+categories: ["windows系统"]
 tags: ["Windows Server", "TCP/IP", "课程笔记"]
 summary: "ping / ipconfig / 环路地址与 DNS 服务器的作用，以及同一网段与跨网段通信的判断方法。"
 description: "ping / ipconfig / 环路地址与 DNS 服务器的作用，以及同一网段与跨网段通信的判断方法。"

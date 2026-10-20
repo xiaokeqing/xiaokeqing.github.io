@@ -444,7 +444,8 @@
     contentEl.appendChild(host);
     SSR_HOST = name;
   })();
-  var INDEX = null;          // 笔记索引（/index.json）
+  var INDEX = null;          // 笔记索引（/index.json，带正文，只在真正要就地渲染一篇时才取）
+  var LITE = null;           // 轻索引（/index-lite.json，无正文，搜索与空闲预取用）
 
   /** #content 里由构建期渲染好的那一份视图（data-xk-ssr 与路由同名时直接复用） */
   function ssrHostFor(route) {
@@ -1074,6 +1075,13 @@
   /* ==========================================================================
      8. 笔记列表 + 阅读
      ========================================================================== */
+  function loadLite() {
+    if (LITE) return Promise.resolve(LITE);
+    return fetch('/index-lite.json', { cache: 'no-cache' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) { LITE = j; return LITE; });
+  }
+
   function loadIndex() {
     if (INDEX) return Promise.resolve(INDEX);
     return fetch('/index.json', { cache: 'no-cache' })
@@ -2054,8 +2062,8 @@
     var input = $('#xk-search-input');
     input.value = '';
     input.focus();
-    $('#xk-search-list').innerHTML = '<li class="xk-modal__empty">正在读取笔记索引 /index.json …</li>';
-    loadIndex().then(function (idx) {
+    $('#xk-search-list').innerHTML = '<li class="xk-modal__empty">正在读取笔记索引…</li>';
+    loadLite().then(function (idx) {
       searchState.items = (idx && idx.notes) || [];
       searchState.cursor = 0;
       renderSearch('');
@@ -2244,9 +2252,10 @@
     if (r) render(r);
   });
 
-  // 13.4 笔记索引空闲预取：不占首屏带宽，但点笔记时已经在本地
+  // 13.4 轻索引空闲预取：约 80 KB，打开搜索即可用；带正文的 /index.json（1.2 MB）不预取，
+  //      只在用户真的要在页面里就地读一篇时才取 —— 3 Mbps 链路上预取它会把首屏图片挤到后面。
   function prefetchIndex() {
-    loadIndex().catch(function () { /* 失败就等用户真的点开再报错 */ });
+    loadLite().catch(function () { /* 失败就等用户真的打开搜索再报错 */ });
   }
   if (window.requestIdleCallback) requestIdleCallback(prefetchIndex, { timeout: 4000 });
   else setTimeout(prefetchIndex, 2500);

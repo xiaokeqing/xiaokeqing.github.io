@@ -2,7 +2,7 @@
 title: "Linux 操作系统的诞生：Unix、GNU 与内核"
 date: 2026-10-19T20:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "历史", "课程笔记"]
 summary: "Unix 1969 年在贝尔实验室诞生、B 语言到 C 语言、斯托曼与 GNU 社区、1991 年林纳斯发布 Linux 内核，以及开源理念如何成型。"
 description: "Unix 1969 年在贝尔实验室诞生、B 语言到 C 语言、斯托曼与 GNU 社区、1991 年林纳斯发布 Linux 内核，以及开源理念如何成型。"

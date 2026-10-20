@@ -2,8 +2,8 @@
 title: "我打的攻击，我的平台能看见吗 —— 一次可复现的紫队自测设计"
 date: 2026-10-18
 type: post
-categories: ["紫队演练"]
-tags: ["purple-team", "detection-engineering", "suricata", "wazuh", "自测"]
+categories: ["ai笔记"]
+tags: ["purple-team", "detection-engineering", "suricata", "wazuh", "自测", "紫队演练"]
 summary: "在自己靶场里主动打三下（SSH 爆破 / 端口扫描 / Web 探测），每一击都指定一条该命中的规则，再用 eve.json 和 alerts.json 的 grep 去对账。结论先摆好：规则还没部署，所以「实测命中」这一栏全部是未验证 —— grep 返回 0 证明的是没加载，不是没命中。"
 description: "紫队自测设计：三条可测攻击对应 Suricata SID 1000101–1000108 与 Wazuh 100400–100402，给出发起命令、预期命中理由（含 detections/README.md 的真实窗口分布与计数）与 eve.json / alerts.json 的 grep 验证方法；未部署、未验证的部分如实标注。"
 ShowToc: true

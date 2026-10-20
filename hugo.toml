@@ -121,8 +121,16 @@ hasCJKLanguage = true
 # ---------- 输出格式 ----------
 # home 额外输出 JSON：SPA 的笔记阅读/搜索索引（/index.json），
 # 由 layouts/index.json 生成，内容全部来自仓库里的 Markdown，不含第三方服务。
+# 2026-10-20 追加 jsonlite：同一份索引的"无正文"版本（/index-lite.json，约 60 KB），
+# Ctrl+K 搜索与空闲预取用它；带正文的 /index.json（1.2 MB）不再每页预取。
+[outputFormats.jsonlite]
+  mediaType = "application/json"
+  baseName = "index-lite"
+  isPlainText = true
+  notAlternative = true
+
 [outputs]
-  home = ["HTML", "RSS", "JSON"]
+  home = ["HTML", "RSS", "JSON", "JSONLITE"]
   section = ["HTML", "RSS"]
 
 [sitemap]

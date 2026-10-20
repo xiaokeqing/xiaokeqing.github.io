@@ -1,0 +1,26 @@
+{{/*
+  笔记轻索引（/index-lite.json）—— Ctrl+K 搜索与「空闲预取」用的一份小索引
+  ---------------------------------------------------------------------------
+  为什么不直接用 /index.json：
+    · /index.json 带每篇渲染好的正文（content 字段），51 篇合计 1.2 MB；而站上每页都在
+      requestIdleCallback 里预取它，3 Mbps 链路上等于替后台抢走 3 秒带宽，把真正要用的
+      图片/字体挤到后面（2026-10-20 实测 /categories/* 的 loadEventEnd 被拖到 9 s）。
+    · 搜索只需要标题、摘要、纯文本前 400 字，正文可以等用户真的点开那一篇再取。
+  字段与 /index.json 同名同义，只少了 content、text 截到 400 字。
+*/}}
+{{- $notes := slice -}}
+{{- range $p := where site.RegularPages "Section" "posts" -}}
+  {{- $notes = $notes | append (dict
+      "slug" $p.File.BaseFileName
+      "title" $p.Title
+      "url" $p.RelPermalink
+      "date" ($p.Date.Format "2006-01-02")
+      "categories" ($p.Params.categories | default slice)
+      "tags" ($p.Params.tags | default slice)
+      "summary" ($p.Params.summary | default ($p.Summary | plainify))
+      "wordCount" $p.WordCount
+      "readingTime" $p.ReadingTime
+      "text" ($p.Plain | truncate 400)
+  ) -}}
+{{- end -}}
+{{- dict "generatedAt" (now.Format "2006-01-02 15:04:05") "count" (len $notes) "notes" $notes | jsonify -}}

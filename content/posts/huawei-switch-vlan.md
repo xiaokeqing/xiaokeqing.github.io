@@ -2,7 +2,7 @@
 title: "华为交换机技术与应用（VLAN 部分）"
 date: 2026-10-20T16:00:00+08:00
 draft: false
-categories: ["课程笔记", "网络基础"]
+categories: ["网络基础"]
 tags: ["网络基础", "交换机", "VLAN", "华为"]
 summary: "华为交换机课程课件：认识交换机、二层转发原理、MAC 地址表、VLAN 划分与配置。"
 description: "华为交换机课程课件：认识交换机、二层转发原理、MAC 地址表、VLAN 划分与配置。"

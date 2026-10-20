@@ -2,7 +2,7 @@
 title: "OSI 与 TCP/IP 协议栈"
 date: 2026-10-20T19:00:00+08:00
 draft: false
-categories: ["课程笔记", "网络基础"]
+categories: ["网络基础"]
 tags: ["网络基础", "OSI", "TCP/IP", "协议栈"]
 summary: "OSI 七层模型与 TCP/IP 协议栈：分层思想、各层职责与代表协议、封装与解封装过程，附课件与讲义。"
 description: "OSI 七层模型与 TCP/IP 协议栈：分层思想、各层职责与代表协议、封装与解封装过程，附课件与讲义。"

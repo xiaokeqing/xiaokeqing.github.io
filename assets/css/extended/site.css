@@ -156,6 +156,10 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   pointer-events: none;
   /* ↓ 规格 §1 指定的四个属性，逐条照写 */
   background-image: url("/images/bg.jpg");
+  /* ★2026-10-20：同一张图的 WebP 版本（bg.jpg 一个字节没动，仍留在仓库当母版）。
+     浏览器支持 image-set 且支持 WebP 时用下面这条覆盖，659 KB → 136 KB（1x）/ 265 KB（2x）。
+     不支持时上面那条 jpg 生效，行为与今天一致。 */
+  background-image: image-set(url("/images/bg-1920.webp") 1x, url("/images/bg.webp") 2x);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

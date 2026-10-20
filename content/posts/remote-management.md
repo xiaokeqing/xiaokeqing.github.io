@@ -2,7 +2,7 @@
 title: "服务器远程管理：RDP / telnet / SSH"
 date: 2026-10-19T12:00:00+08:00
 draft: false
-categories: ["课程笔记", "windows系统"]
+categories: ["windows系统"]
 tags: ["Windows Server", "RDP", "运维", "课程笔记"]
 summary: "RDP(3389)、telnet(23)、SSH(22) 三种远程管理方式的安全性对比，以及 nmap 扫描端口的基本用法。"
 description: "RDP(3389)、telnet(23)、SSH(22) 三种远程管理方式的安全性对比，以及 nmap 扫描端口的基本用法。"

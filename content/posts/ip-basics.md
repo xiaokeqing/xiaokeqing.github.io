@@ -2,7 +2,7 @@
 title: "IP 地址详解（一）：局域网构成、IP 与子网掩码"
 date: 2026-10-19T17:00:00+08:00
 draft: false
-categories: ["课程笔记", "windows系统"]
+categories: ["windows系统"]
 tags: ["Windows Server", "TCP/IP", "课程笔记"]
 summary: "从交换机/网线/PC 的局域网构成讲到 32 位 IP 的二进制换算、A/B/C 类地址、子网掩码与网关。"
 description: "从交换机/网线/PC 的局域网构成讲到 32 位 IP 的二进制换算、A/B/C 类地址、子网掩码与网关。"

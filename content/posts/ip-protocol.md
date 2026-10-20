@@ -2,7 +2,7 @@
 title: "IP 协议分析"
 date: 2026-10-20T18:00:00+08:00
 draft: false
-categories: ["课程笔记", "网络基础"]
+categories: ["网络基础"]
 tags: ["网络基础", "IP协议", "IP地址"]
 summary: "IP 协议（Internet Protocol）详解：报文结构、地址与分片、TTL、协议号等关键字段与工作原理。"
 description: "IP 协议（Internet Protocol）详解：报文结构、地址与分片、TTL、协议号等关键字段与工作原理。"

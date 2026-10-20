@@ -2,7 +2,7 @@
 title: "LNMP 平台搭建：Nginx + PHP-FPM"
 date: 2026-10-19T12:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "Nginx", "LNMP", "课程笔记"]
 summary: "Nginx 的多并发与负载均衡优势、编译安装前建程序用户与装开发包、./configure 参数、默认主页路径，以及配合 PHP-FPM 与 MySQL 组成 LNMP 的步骤。"
 description: "Nginx 的多并发与负载均衡优势、编译安装前建程序用户与装开发包、./configure 参数、默认主页路径，以及配合 PHP-FPM 与 MySQL 组成 LNMP 的步骤。"

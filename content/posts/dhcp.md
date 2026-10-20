@@ -2,7 +2,7 @@
 title: "DHCP 部署与安全：地址池、租约与 DHCP 攻击"
 date: 2026-10-19T11:00:00+08:00
 draft: false
-categories: ["课程笔记", "windows系统"]
+categories: ["windows系统"]
 tags: ["Windows Server", "DHCP", "课程笔记"]
 summary: "动态主机配置协议的四个报文、作用域与租约、地址保留，以及 DHCP 饿死攻击与防护。"
 description: "动态主机配置协议的四个报文、作用域与租约、地址保留，以及 DHCP 饿死攻击与防护。"

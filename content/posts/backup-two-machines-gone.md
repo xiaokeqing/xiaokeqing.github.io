@@ -1,8 +1,8 @@
 ---
 title: "两台机器同时没了也不丢：备份链的四个洞"
 date: 2026-10-17
-categories: ["工程实践"]
-tags: ["备份", "加密", "异地", "systemd", "fail-closed"]
+categories: ["ai笔记"]
+tags: ["备份", "加密", "异地", "systemd", "fail-closed", "工程实践"]
 summary: "备份最怕的不是没做，是做了却在静默失败。这次查出来四个洞：密钥只在两台机器上、配置里有 44 个键从来没进过备份、定时脚本从 10-12 起就没成功过、解密凭据不在配置包里。修法是双向收件端 + 加密互备 + 新鲜度告警。"
 description: "备份加固实录：/root/backup.sh 自 10-12 起静默失败、.env 44 个键不在任何备份、备份密钥只有两台机器各一份、Cloudflare 凭据不在配置包里。修法（双向收件端 + AES 加密互备 + systemd timer + 08:05 新鲜度告警）与五条 fail-closed 负例。"
 ---

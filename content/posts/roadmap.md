@@ -2,8 +2,8 @@
 title: "写作计划：接下来会写什么"
 date: 2026-10-10
 draft: false
-tags: ["站点说明", "写作计划"]
-categories: ["随笔"]
+tags: ["站点说明", "写作计划", "随笔"]
+categories: ["ai笔记"]
 summary: "把准备写的题目列出来，写完一个勾一个——公开自己的进度表，也是一种督促。"
 ShowToc: true
 ---

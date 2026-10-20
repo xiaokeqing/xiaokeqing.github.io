@@ -2,7 +2,7 @@
 title: "Tomcat 部署：JDK 与 Catalina 启动"
 date: 2026-10-19T11:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "Tomcat", "Java", "课程笔记"]
 summary: "先装 JDK 再装 Tomcat 的顺序、用 startup.sh / catalina.sh 命令启动而不是任务管理器、开启 manager 远程访问，以及 Linux 下的部署实录。"
 description: "先装 JDK 再装 Tomcat 的顺序、用 startup.sh / catalina.sh 命令启动而不是任务管理器、开启 manager 远程访问，以及 Linux 下的部署实录。"

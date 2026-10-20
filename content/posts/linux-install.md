@@ -2,7 +2,7 @@
 title: "Linux 操作系统的安装：虚拟机建立与系统安装"
 date: 2026-10-19T19:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "虚拟机", "课程笔记"]
 summary: "从新建虚拟机、选择安装介质到分区与系统安装完成，逐步走完一台 Linux 虚拟机的落地过程（图为主）。"
 description: "从新建虚拟机、选择安装介质到分区与系统安装完成，逐步走完一台 Linux 虚拟机的落地过程（图为主）。"

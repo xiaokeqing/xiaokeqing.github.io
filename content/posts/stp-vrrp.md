@@ -2,7 +2,7 @@
 title: "生成树（STP）与 VRRP"
 date: 2026-10-20T15:00:00+08:00
 draft: false
-categories: ["课程笔记", "网络基础"]
+categories: ["网络基础"]
 tags: ["网络基础", "STP", "VRRP", "链路聚合"]
 summary: "二层环路与生成树：广播风暴、MAC 表震荡、STP 通信过程与端口状态；以及 VRRP 网关冗余、链路聚合与端口镜像。"
 description: "二层环路与生成树：广播风暴、MAC 表震荡、STP 通信过程与端口状态；以及 VRRP 网关冗余、链路聚合与端口镜像。"

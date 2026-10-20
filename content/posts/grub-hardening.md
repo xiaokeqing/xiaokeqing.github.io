@@ -2,7 +2,7 @@
 title: "GRUB 引导菜单加固：给启动项加密码"
 date: 2026-10-19T13:00:00+08:00
 draft: false
-categories: ["课程笔记", "linux系统"]
+categories: ["linux系统"]
 tags: ["Linux", "GRUB", "加固", "课程笔记"]
 summary: "grub.cfg 与 /etc/grub.d/10_linux 的生成关系、为什么改脚本而不是改 grub.cfg、用 grub2-setpassword 生成密码并重建配置、重启验证。"
 description: "grub.cfg 与 /etc/grub.d/10_linux 的生成关系、为什么改脚本而不是改 grub.cfg、用 grub2-setpassword 生成密码并重建配置、重启验证。"

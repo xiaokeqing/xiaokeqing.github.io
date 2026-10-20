@@ -2,7 +2,7 @@
 title: "DNS 部署与安全：域名结构、解析与攻防"
 date: 2026-10-19T10:00:00+08:00
 draft: false
-categories: ["课程笔记", "windows系统"]
+categories: ["windows系统"]
 tags: ["Windows Server", "DNS", "课程笔记"]
 summary: "域名组成、DNS 解析的递归与迭代、正向/反向解析与记录类型，以及 DNS 劫持、欺骗与投毒的区别和防护。"
 description: "域名组成、DNS 解析的递归与迭代、正向/反向解析与记录类型，以及 DNS 劫持、欺骗与投毒的区别和防护。"
