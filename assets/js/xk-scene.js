@@ -448,10 +448,20 @@ var XK_TIER = window.__xkTier || (function(){
             body: null, bodyTier: {}, bodyRetry: {}, bodyRole: null,
             fail: (q('xk-tier-fail') || '').split(',').filter(Boolean), blank: q('xk-tier-blank') === '1',
             events: [], history: [], errors: [] };
-  T.noHi = (forced === 'medium' || forced === 'poster') ? true : (forced === 'hi' ? false : (mobile || T.lowMem));
+  /* 弱网判定（2026-10-20）：3 Mbps 的校园网拉 4.5MB 的 hi 图集要十几秒，人物一直不出来。
+     这类链路上自动降到 134×180 的 medium 档（略糊但能开）；强制要看清晰版用 ?xk-tier=hi。 */
+  var netSlow = false;
+  try {
+    var cn = navigator.connection || {};
+    var et = String(cn.effectiveType || '');
+    netSlow = !!cn.saveData || et === 'slow-2g' || et === '2g' || et === '3g' ||
+              (typeof cn.downlink === 'number' && cn.downlink > 0 && cn.downlink < 4);
+  } catch(e){}
+  T.netSlow = netSlow;
+  T.noHi = (forced === 'medium' || forced === 'poster') ? true : (forced === 'hi' ? false : (mobile || T.lowMem || T.netSlow));
   T.initTier = (forced === 'poster') ? 'poster' : (T.noHi ? 'medium' : 'hi');
   T.log = function(s){ try { var e = Math.round(performance.now() - T.t0) + 'ms ' + s; T.events.push(e); if(T.events.length > 30){ T.events.shift(); } T.history.push(e); if(T.history.length > 60){ T.history.shift(); } } catch(e){} };
-  T.log('init mobile=' + mobile + ' lowMem=' + T.lowMem + ' noHi=' + T.noHi + ' tier=' + T.initTier + ' forced=' + T.forced);
+  T.log('init mobile=' + mobile + ' lowMem=' + T.lowMem + ' netSlow=' + T.netSlow + ' noHi=' + T.noHi + ' tier=' + T.initTier + ' forced=' + T.forced);
   window.__xkTier = T;
   return T;
 })();
