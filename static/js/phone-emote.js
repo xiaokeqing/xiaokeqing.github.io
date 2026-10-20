@@ -58,16 +58,11 @@
     /* ★弱网闸门（2026-10-20）：E-mote 是 11.6MB（模型 JSON 3.5MB + 三张 4096 纹理 2.9MB + 驱动 1.2MB），
        3 Mbps 的链路上要 30 秒以上，期间手机面板是空的。这类链路直接不接管画布，退回 Sprite 三段（约 2MB）。
        想强制开启：?xk-phone-emote=on 。 */
-    if (qp('xk-phone-emote') !== 'on') {
-      var slow = false;
-      try {
-        var cn = navigator.connection || {};
-        var et = String(cn.effectiveType || '');
-        slow = !!cn.saveData || et === 'slow-2g' || et === '2g' || et === '3g' ||
-               (typeof cn.downlink === 'number' && cn.downlink > 0 && cn.downlink < 4);
-      } catch (e) { slow = false; }
-      if (slow) { r.push('slow-net'); }
-    }
+    /* ★2026-10-20 决定：**不按网速关掉 E-mote**。
+       试过按 downlink<2 关掉，省下 8 MB，但关掉之后手机面板露出的是旧的 Sprite 兜底
+       （321×432 被塞进 282×380 的盒子，画面是错位的两块人），比慢更难看。
+       所以 /ai/ 维持"可见就载"，要省流量由用户显式关：?xk-phone-emote=off。 */
+
     if (reduced()) { r.push('prefers-reduced-motion'); }
     var ok = false;
     try { var c = document.createElement('canvas'); ok = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { ok = false; }

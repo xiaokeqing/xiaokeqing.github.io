@@ -857,10 +857,18 @@ var XK_TIER = window.__xkTier || (function(){
      这类链路上自动降到 134×180 的 medium 档（略糊但能开）；强制要看清晰版用 ?xk-tier=hi。 */
   var netSlow = false;
   try {
-    var cn = navigator.connection || {};
-    var et = String(cn.effectiveType || '');
-    netSlow = !!cn.saveData || et === 'slow-2g' || et === '2g' || et === '3g' ||
-              (typeof cn.downlink === 'number' && cn.downlink > 0 && cn.downlink < 4);
+    var qnet = String(location.search).match(/[?&]xk-net=([^&]+)/);
+    qnet = qnet ? decodeURIComponent(qnet[1]) : '';
+    if (qnet === 'fast') { netSlow = false; }          /* 手动口径：?xk-net=fast|slow */
+    else if (qnet === 'slow') { netSlow = true; }
+    else {
+      var cn = navigator.connection || {};
+      var et = String(cn.effectiveType || '');
+      /* downlink 是浏览器自己的估计，初次加载常偏保守（本机实测 100Mbps 也有报 1.6 的），
+         所以阈值只取 2 Mbps —— 只把"真的慢"的链路降档，别把好网也降到糊的那一档。 */
+      netSlow = !!cn.saveData || et === 'slow-2g' || et === '2g' || et === '3g' ||
+                (typeof cn.downlink === 'number' && cn.downlink > 0 && cn.downlink < 2);
+    }
   } catch(e){}
   T.netSlow = netSlow;
   T.noHi = (forced === 'medium' || forced === 'poster') ? true : (forced === 'hi' ? false : (mobile || T.lowMem || T.netSlow));
