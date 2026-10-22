@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本站已迁移 · xiaokeqing</title>
+
+<!-- ============================================================
+     这个目录就是 gh-pages 分支的【全部内容】（由 .github/workflows/deploy.yml 发布）。
+     为什么只剩一个跳转页：
+       xiaokeqing.github.io 曾经镜像过整套博客前端，里面带着「DEMO-v5 · 数字均为演示数据」
+       的旧原型。谁点进来都会把演示数据当成真实数据 —— 对面试展示是硬伤。
+       现在 CI 照旧构建 + 断言真实站点（构建坏了照样红、照样拦），
+       但【发布出去的只有这一个跳转页】：github.io 这条入口不再承载任何内容。
+     注意：本目录【不放 CNAME】。放了就会把自定义域绑到 gh-pages 上，
+       而 GitHub Pages 的 301 是 http:// 而不是 https:// —— 详情见同目录 README.md。
+     ============================================================ -->
+
+<meta http-equiv="refresh" content="0; url=https://xiaokeqing.cn/">
+<link rel="canonical" href="https://xiaokeqing.cn/">
+<script>location.replace('https://xiaokeqing.cn/');</script>
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="旧 GitHub Pages 站已收口，主站为 https://xiaokeqing.cn/">
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    background: #0f1115; color: #e8eaed;
+    font: 400 16px/1.7 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    padding: 24px;
+  }
+  main { max-width: 34rem; }
+  h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 .75rem; }
+  p { margin: 0 0 .6rem; color: #b9bec7; }
+  a { color: #7cc4ff; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: .92em; color: #cfd4dc; }
+  .fallback { margin-top: 1.4rem; padding: .9rem 1rem; border: 1px solid #2a2f38; border-radius: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>本站已迁移</h1>
+  <p>本站已迁移到 <a href="https://xiaokeqing.cn/">xiaokeqing.cn</a>。旧的 GitHub Pages 站不再更新，正在跳转……</p>
+  <p>没有自动跳转的话，点上面的链接即可。</p>
+  <noscript>
+    <p class="fallback">浏览器禁用了 JavaScript（或禁用了 meta refresh）：请手动打开 <a href="https://xiaokeqing.cn/">https://xiaokeqing.cn/</a>。</p>
+  </noscript>
+  <div class="fallback">
+    <p>跳转地址：<code>https://xiaokeqing.cn/</code></p>
+  </div>
+</main>
+</body>
+</html>
