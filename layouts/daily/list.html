@@ -1,0 +1,310 @@
+{{- /* ============================================================================
+   /daily/ = 安全日报栏目（手写页，不归 _dev/gen-demo-pages.py 管）。
+   ----------------------------------------------------------------------------
+   只做三件事：① 今天的这一份（/api/public/daily.js 的机读摘要）② 往前翻的归档
+   （前端按日期探测 /api/public/daily/daily-<date>.json，后端没有列表端点）
+   ③ 口径说明——哪些数字是 24 小时窗口、哪些是"最近 800 条蜜罐"、IP 的口径由谁决定。
+   取不到就写「未取到」，未生成就写「未生成」，不补零、不拿样例值充数。
+   结构沿用外壳同一套类（.screen/.screen-hd/.screen-bd/.mod/.mod-hd/.mod-bd/.t/.led/.sync/.tag），
+   只补本页 .dy-* 规则；不引外部字体/CDN/任何外链资源。
+   ============================================================================ */ -}}
+{{- $v := "daily" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源 */
+.dy-bd{display:flex;flex-direction:column;gap:14px}
+.dy-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.dy-lead b{color:#cfe9f5;font-weight:600}
+.dy-lead code,.dy-note code,.dy-rules code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.dy-run{background:none;border:1px solid rgba(160,220,240,.35);color:#cfe9f5;border-radius:7px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;padding:3px 10px;cursor:pointer;flex:none}
+.dy-run:hover{border-color:rgba(160,220,240,.6);color:#eaf6ff}
+.dy-run[disabled]{opacity:.45;cursor:default}
+.dy-hero{display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px;margin:0 0 4px}
+.dy-num b{display:block;font-family:ui-monospace,Consolas,monospace;font-size:30px;line-height:1.1;color:#eaf6ff;font-weight:600;letter-spacing:.01em}
+.dy-num span{display:block;margin-top:4px;font-size:12px;color:rgba(255,255,255,.5)}
+.dy-sev{display:flex;flex-wrap:wrap;gap:8px}
+.dy-sev i{display:inline-flex;align-items:baseline;gap:5px;padding:4px 9px;border-radius:7px;border:1px solid rgba(255,255,255,.12);font-style:normal;font-size:11.5px;color:rgba(255,255,255,.72)}
+.dy-sev i b{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#e8f3f8}
+.dy-sev i.c{border-color:rgba(232,131,123,.5)}.dy-sev i.c b{color:#E8837B}
+.dy-sev i.h{border-color:rgba(232,180,90,.45)}.dy-sev i.h b{color:#E8B45A}
+.dy-sev i.m{border-color:rgba(160,220,240,.4)}.dy-sev i.m b{color:#9FD8F0}
+.dy-sev i.l{border-color:rgba(255,255,255,.16)}.dy-sev i.l b{color:#cfe9f5}
+.dy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:14px 0 0}
+.dy-grid>div{padding:10px 12px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(0,0,0,.18)}
+.dy-grid h4{margin:0 0 6px;font-size:11px;font-weight:500;letter-spacing:.06em;color:rgba(255,255,255,.48)}
+.dy-grid .v{font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.7;color:#e8f3f8;word-break:break-all}
+.dy-grid .v small{display:block;font-family:inherit;font-size:11.5px;color:rgba(255,255,255,.45);margin-top:3px}
+.dy-acts{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.dy-acts a{display:inline-block;padding:5px 12px;border-radius:7px;border:1px solid rgba(160,220,240,.35);font-size:12.5px;color:#cfe9f5;text-decoration:none}
+.dy-acts a:hover{border-color:rgba(160,220,240,.6);color:#eaf6ff}
+.dy-acts a.off{opacity:.4;pointer-events:none}
+.dy-note{margin:12px 0 0;font-size:12.5px;line-height:1.9;color:rgba(255,255,255,.5)}
+.dy-note b{color:rgba(255,255,255,.76);font-weight:600}
+.dy-archbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 10px}
+.dy-hint{font-size:12px;color:rgba(255,255,255,.45)}
+.dy-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.dy-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+.dy-tbl th,.dy-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+.dy-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:12px;letter-spacing:.05em;white-space:nowrap}
+.dy-tbl td.n{font-family:ui-monospace,Consolas,monospace;color:rgba(255,255,255,.85);white-space:nowrap}
+.dy-tbl td.d{font-family:ui-monospace,Consolas,monospace;color:#cfe9f5;white-space:nowrap}
+.dy-tbl td a{color:#bfe3d0;text-decoration:none;margin-right:8px;white-space:nowrap}
+.dy-tbl td a:hover{text-decoration:underline}
+/* 窄屏：6 列的表格在 390px 下只能横向滚，读起来像被裁掉。
+   改成"每天一张卡"——表头隐藏，每个单元格自带 data-l 标签名。 */
+@media (max-width:720px){
+  .dy-tbl{min-width:0;font-size:12.5px}
+  .dy-tbl thead{display:none}
+  .dy-tbl tr{display:block;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+  .dy-tbl td{display:flex;gap:10px;align-items:baseline;padding:2px 0;border:0;white-space:normal}
+  .dy-tbl td.n,.dy-tbl td.d{white-space:normal}
+  .dy-tbl td::before{content:attr(data-l);flex:0 0 76px;color:rgba(255,255,255,.45);font-size:11.5px}
+  .dy-tbl td.d{padding-bottom:4px}
+  .dy-tbl td.d::before{content:none}
+  .dy-tbl td[colspan]{display:block}
+  .dy-tbl td[colspan]::before{content:none}
+}
+.dy-na{color:rgba(255,255,255,.42)}
+.dy-rules{margin:0;padding-left:18px;font-size:12.5px;line-height:2;color:rgba(255,255,255,.72)}
+.dy-rules li{margin:0}
+.dy-rules b{color:#cfe9f5;font-weight:600}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="daily">
+<section class="view on" id="v-daily">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 安全日报 <em class="ops-en">DAILY DIGEST</em></span>
+      <button class="dy-run" id="dyRun" type="button">刷新</button>
+      <span class="sync" id="dySync">● 每天 08:10 自动生成一份</span>
+    </div>
+    <div class="screen-bd dy-bd">
+
+      <p class="dy-lead">
+        这是站点后端每天生成的一份<b>安全日报</b>：过去 24 小时的告警、按严重程度的分布、来源国家 Top5、
+        蜜罐抓到的东西，以及被护栏拦下的动作。文字版、Markdown、语音三种形态都在，
+        来源 IP 显示成什么样<b>由后端决定</b>（响应里的 <code>masked</code> 字段就是这次的口径），前端不改写、不补全。
+      </p>
+      <noscript><p class="dy-note">这一页的数字都由浏览器前端 fetch 得到。你关掉了 JavaScript，所以只会看到占位的「—」——
+        这不是接口挂了，是这一页本来就靠它取数。</p></noscript>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>今天的这一份<span class="tag" id="dyTodayTag">读取中…</span></div>
+        <div class="mod-bd">
+          <div class="dy-hero">
+            <div class="dy-num"><b id="dyTotal">—</b><span>条告警 · 过去 24 小时</span></div>
+            <div class="dy-sev" id="dySev"><i>等待读取…</i></div>
+          </div>
+          <div class="dy-grid">
+            <div><h4>Top 来源国家</h4><div class="v" id="dyCountry">—</div></div>
+            <div><h4>蜜罐</h4><div class="v" id="dyHoney">—</div></div>
+            <div><h4>最凶来源</h4><div class="v" id="dyWorst">—</div></div>
+            <div><h4>语音摘要</h4><div class="v" id="dySpeech">—</div></div>
+          </div>
+          <div class="dy-acts" id="dyActs"></div>
+          <p class="dy-note" id="dyNote">正在读 <code>/api/public/daily.js</code>…</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>往前翻 · 归档<span class="tag">最近 30 天</span></div>
+        <div class="mod-bd">
+          <div class="dy-archbar">
+            <button class="dy-run" id="dyLoad" type="button">加载归档</button>
+            <span class="dy-hint" id="dyArchHint">点一下才去读归并索引（一个请求，不是按天逐个探）</span>
+          </div>
+          <div class="dy-scroll">
+            <table class="dy-tbl">
+              <thead><tr><th>日期</th><th>告警总数</th><th>严重程度</th><th>Top 国家</th><th>最凶来源</th><th>文件</th></tr></thead>
+              <tbody id="dyArchBody"><tr><td colspan="6" class="dy-na">还没加载 —— 点上面的「加载归档」。</td></tr></tbody>
+            </table>
+          </div>
+          <p class="dy-note" id="dyArchNote">归档由后端一次给全（<code>/api/public/daily/index.json</code>）：扫一遍当天的日报目录，有几份、哪天缺件，由服务端回答。</p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径 · 这些数字怎么来的</div>
+        <div class="mod-bd">
+          <ul class="dy-rules">
+            <li><b>告警</b>：Wazuh 的过去 24 小时窗口（<code>/api/public/alerts</code> 的 <code>stats24h</code>），不是"今天 0 点到现在"。</li>
+            <li><b>来源国家</b>：同一批 24 小时告警按来源 IP 做地理位置聚合，只显示有足量样本的国家（<code>/api/public/geo</code> 同一套聚合器）。</li>
+            <li><b>蜜罐</b>：Cowrie 最近 800 条蜜罐告警（<b>不是</b>时间窗），样本量写在卡片上，不当作全量。</li>
+            <li><b>护栏拦截</b>：处置审计留痕的全量累计（<code>data/response-audit.json</code>），不是 24 小时。</li>
+            <li><b>没生成的日子</b>：显示「未生成」，不给 0 —— <code>0</code> 会被读成"那天一个告警都没有"，那是另一回事。</li>
+            <li><b>刷新</b>：接口自身缓存 60 秒；页面上的时刻是服务器给的时间，不是你点刷新的时间。</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+{{ partial "xk-demo/api-bind.html" . }}
+<script src="/js/xk-realtime.js" defer></script>
+<script>
+(function(){
+  'use strict';
+  /* 基址来自 <meta name="wb-api">，和全站其它页面同一个口径；不写死域名 */
+  var meta = document.querySelector('meta[name="wb-api"]');
+  var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+  var $ = function(id){ return document.getElementById(id); };
+  var SEV = [['CRITICAL','c','严重'],['HIGH','h','高危'],['MEDIUM','m','中危'],['LOW','l','低危']];
+
+  function n(v){ if(v === null || v === undefined || v === '') { return '—'; }
+    return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function esc(s){ return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function url(name){ return API + '/api/public/daily/' + name; }
+  function stamp(){ var d = new Date(); return d.toTimeString().slice(0,8); }
+
+  /* ---------- 今天的这一份 ---------- */
+  function renderToday(j){
+    var tag = $('dyTodayTag'), note = $('dyNote'), acts = $('dyActs');
+    if(!j || j.available !== true){
+      $('dyTotal').textContent = '—';
+      $('dySev').innerHTML = '<i>今天还没有</i>';
+      $('dyCountry').innerHTML = '—';
+      $('dyHoney').innerHTML = '—';
+      $('dyWorst').innerHTML = '—';
+      $('dySpeech').innerHTML = '—';
+      acts.innerHTML = '';
+      tag.textContent = '未生成';
+      note.innerHTML = '<b>今天的日报还没生成</b>（' + esc(j && j.reason || 'not_generated') + '）' +
+        (j && j.note ? '：' + esc(j.note) : '') +
+        '。这是"还没跑"，不是"今天没告警"——上一次生成见下面的归档。';
+      return;
+    }
+    $('dyTotal').textContent = n(j.alertTotal);
+    var sev = j.alertsBySeverity || {}, html = '';
+    for(var i = 0; i < SEV.length; i++){
+      var k = SEV[i][0];
+      if(sev[k] === undefined || sev[k] === null){ continue; }
+      html += '<i class="' + SEV[i][1] + '">' + SEV[i][2] + ' <b>' + n(sev[k]) + '</b></i>';
+    }
+    $('dySev').innerHTML = html || '<i>接口没给分级</i>';
+
+    var c = j.topCountry || {};
+    $('dyCountry').innerHTML = (c.name || '—') + (c.code ? ' <small>' + esc(c.code) + ' · ' + n(c.count) + ' 条 / ' + n(c.uniqueIps) + ' 个 IP</small>' : '');
+    var h = j.honeypot || {};
+    $('dyHoney').innerHTML = '连接 ' + n(h.connections) + ' · 登录 ' + n(h.logins) +
+      '<small>失败 ' + n(h.loginFails) + ' · 样本 ' + n(h.sampled) + ' 条蜜罐告警</small>';
+    var w = j.worstSource || {};
+    $('dyWorst').innerHTML = esc(w.ip || '—') + (w.attempts !== null && w.attempts !== undefined ? '<small>' + n(w.attempts) + ' 次尝试 · ' + (j.masked === true ? 'IP 已掩码' : '完整地址（后端口径）') + '</small>' : '');
+    $('dySpeech').innerHTML = (j.speechChars ? n(j.speechChars) + ' 字日语摘要' : '—') + '<small>点下面的「听语音」直接播</small>';
+
+    var f = j.files || {}, out = '';
+    function link(ext, label){
+      if(!f[ext]) { return ''; }
+      var tgt = (ext === 'html' || ext === 'md') ? ' target="_blank" rel="noopener"' : '';
+      return '<a href="' + esc(url(f[ext].name)) + '"' + tgt + '>' + label + '</a>';
+    }
+    out += link('html', '看全文');
+    out += link('md', 'Markdown');
+    out += link('json', '原始 JSON');
+    out += link('wav', '听语音 WAV');
+    out += link('mp3', '听语音 MP3');
+    acts.innerHTML = out || '<a class="off">这一份没有可下载的文件</a>';
+
+    tag.textContent = j.date || '';
+    note.innerHTML = '服务器时间 <b>' + esc(j.generatedAt || '—') + '</b>，接口缓存 ' + n(j.cacheSeconds) + ' 秒。' +
+      '口径：<b>' + esc(j.window || '—') + '</b>' +
+      (j.note ? '<br>' + esc(j.note) : '');
+  }
+
+  function loadToday(){
+    var tag = $('dyTodayTag');
+    tag.textContent = '读取中…';
+    $('dySync').textContent = '● 请求 /api/public/daily.js …';
+    fetch(API + '/api/public/daily.js', { cache: 'no-cache' })
+      .then(function(r){ if(!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
+      .then(function(j){
+        renderToday(j);
+        $('dySync').textContent = '● 已更新 ' + stamp() + '（接口缓存 60 秒）';
+      })
+      .catch(function(e){
+        $('dyTodayTag').textContent = '未取到';
+        $('dyNote').innerHTML = '<b>接口没响应</b>：' + esc(e.message) +
+          '。这不是"今天没告警"，是这一页没拿到数据 —— 归档照旧可翻。';
+        $('dySync').textContent = '● 取数失败 ' + stamp();
+      });
+  }
+
+  /* ---------- 归档：一次请求拿全 ----------
+     早先的写法是对最近 30 天逐个探 /api/public/daily/daily-<日期>.json，
+     结果一头撞在公网端点的 20 次/分钟限流上，而且"限流失败"和"那天没生成"
+     在浏览器里长得一样。所以改成读 /api/public/daily/index.json —— 有没有、有几天，
+     由服务端一次回答（见 DailyReportController.index()）。 */
+  var archLoaded = false;
+  function row(d){
+    var day = d.date;
+    if(d.reason === 'unreadable'){
+      return '<tr><td class="d">' + day + '</td><td class="n dy-na" data-l="状态" colspan="5">这份清单读不出来（文件在，内容损坏）</td></tr>';
+    }
+    var sev = d.alertsBySeverity || {}, parts = [];
+    for(var i = 0; i < SEV.length; i++){
+      var k = SEV[i][0];
+      if(sev[k] === undefined || sev[k] === null){ continue; }
+      parts.push(SEV[i][2].replace('危','') + ' ' + n(sev[k]));
+    }
+    var c = d.topCountry || {}, w = d.worstSource || {}, f = d.files || {};
+    var files = '';
+    ['html','md','wav'].forEach(function(ext){
+      if(!f[ext]) { return; }
+      files += '<a href="' + esc(url(f[ext].name)) + '"' + (ext === 'wav' ? '' : ' target="_blank" rel="noopener"') + '>' +
+        (ext === 'html' ? '全文' : ext === 'md' ? 'MD' : '语音') + '</a>';
+    });
+    return '<tr><td class="d" data-l="日期">' + day + (d.missingCount ? ' <span class="dy-na">缺 ' + d.missingCount + ' 项</span>' : '') +
+      '</td><td class="n" data-l="告警总数">' + n(d.alertTotal) + '</td><td class="n" data-l="严重程度">' + (parts.join(' · ') || '—') +
+      '</td><td data-l="Top 国家">' + esc(c.name || '—') + (c.count !== undefined ? ' <span class="dy-na">' + n(c.count) + '</span>' : '') +
+      '</td><td class="n" data-l="最凶来源">' + esc(w.ip || '—') + (w.attempts !== undefined ? ' <span class="dy-na">' + n(w.attempts) + ' 次</span>' : '') +
+      '</td><td data-l="文件">' + (files || '—') + '</td></tr>';
+  }
+  function loadArchive(){
+    if(archLoaded){ return; }
+    archLoaded = true;
+    var body = $('dyArchBody'), hint = $('dyArchHint'), btn = $('dyLoad');
+    btn.disabled = true; hint.textContent = '正在读归档索引…';
+    fetch(API + '/api/public/daily/index.json', { cache: 'no-cache' })
+      .then(function(r){ if(!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
+      .then(function(j){
+        var days = (j && j.days) || [];
+        if(!days.length){
+          body.innerHTML = '<tr><td colspan="6" class="dy-na">服务器上还没有任何日报文件。</td></tr>';
+        } else {
+          body.innerHTML = days.map(row).join('');
+        }
+        hint.textContent = '共 ' + n(j.count) + ' 份 · 索引缓存 ' + n(j.cacheSeconds) + ' 秒';
+        $('dyArchNote').innerHTML = '一次请求拿全（<code>/api/public/daily/index.json</code>），不再按日期逐个试探 —— ' +
+          '那样会撞上公网端点 20 次/分钟的限流，而且"被限流"与"那天没生成"在页面上分不清。' +
+          '每行的「全文 / MD / 语音」直接指向 <code>/api/public/daily/</code> 的文件。';
+        btn.disabled = false; btn.textContent = '重新加载';
+        archLoaded = false;
+      })
+      .catch(function(e){
+        body.innerHTML = '<tr><td colspan="6" class="dy-na">归档索引没取到：' + esc(e.message) + '</td></tr>';
+        hint.textContent = '取数失败';
+        btn.disabled = false; btn.textContent = '重试';
+        archLoaded = false;
+      });
+  }
+
+  $('dyRun').addEventListener('click', loadToday);
+  $('dyLoad').addEventListener('click', loadArchive);
+  loadToday();
+})();
+</script>
+</body>
+</html>
