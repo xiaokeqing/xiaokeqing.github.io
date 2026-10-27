@@ -369,9 +369,15 @@
     this.destroyed = false;
     /* 降级：reduced-motion / saveData 只画静态一帧。
        ★ 窄屏（≤980px）**只有右栏面板**还降级（那是别的栏目页的既有行为，保持现状）；
-         舞台（CRT 屏内）在窄屏上也播逐帧动画 —— 站主要"网页一进来就是这个大屏效果"。 */
+         舞台（CRT 屏内）在窄屏上也播逐帧动画 —— 站主要"网页一进来就是这个大屏效果"。
+       ★ 2026-10-22：**面板本身太矮（<300 CSS px）也只画静态一帧**。
+         实测：/categories/… 那种侧栏小人物区只有 294×268，却为了播 268 px 高的动画
+         拉了整张 759 KB 的 medium 图集（134×180 的瓦片还要放大），
+         换成 poster 单帧只要 36 KB，画面在这个尺寸下看不出差别。 */
+    const panelH = (this.mount && this.mount.clientHeight) || 0;
     this.staticOnly = !!opts.staticOnly || this.env.reducedMotion || this.env.saveData ||
-      (this.env.narrow && this.mode === 'rail');
+      (this.env.narrow && this.mode === 'rail') ||
+      (panelH > 0 && panelH < 300);
     /* 头像形态（132px 图集）：只剩"角落点缀"、显式标了 data-xk-kurisu-avatar 的面板、
        以及窄屏右栏面板用；**舞台（CRT 屏内）永远是全身序列**，手机上也一样。 */
     this.avatarMode = this.mode === 'corner' || this.mount.hasAttribute('data-xk-kurisu-avatar') ||
@@ -1117,6 +1123,13 @@
   /* ------------------------------------------------------------- 生命周期 */
   Player.prototype.start = function () {
     var self = this;
+    /* ★2026-10-22：构造那一刻挂载点常常还没布局（clientHeight = 0），
+       所以"面板太矮就只画静态一帧"这条必须在 start()（DOM 已在页面上）再判一次。
+       量的是**画布**高度（.xk-kurisu 面板还含说明文字与情绪按钮，量面板会偏大）。
+       实测 /categories/… 的画布只有 268 px 高，却为它拉了 759 KB 的 medium 图集。 */
+    if (!this.staticOnly && this.canvas && this.canvas.clientHeight > 0 && this.canvas.clientHeight < 300) {
+      this.staticOnly = true;
+    }
     document.addEventListener('visibilitychange', this._onVis, false);
     global.addEventListener('resize', this._onResize, false);
     ['(prefers-reduced-motion: reduce)', '(max-width: 980px)'].forEach(function (qs) {
@@ -1212,7 +1225,8 @@
     var wasStatic = this.staticOnly;
     this.env = env;
     this.staticOnly = !!this.opts.staticOnly || env.reducedMotion || env.saveData ||
-      (env.narrow && this.mode === 'rail');
+      (env.narrow && this.mode === 'rail') ||
+      (((this.mount && this.mount.clientHeight) || 0) > 0 && this.mount.clientHeight < 300);
     if (this.staticOnly && !wasStatic) {
       this.smStop();
       this.stopLoop();

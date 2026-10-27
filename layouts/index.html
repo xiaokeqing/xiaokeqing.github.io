@@ -1941,6 +1941,10 @@ function xkvPlay(id){
 /* ★批次A（站主追加①）：主页进入**固定一句问候** —— 首访 greet_first / 回访 greet_back；
    不随机、不参与"防复读"轮换（台账口径见 docs/台词表-入口与固定台词-20261016.md）。 */
 function xkvGreet(){
+  /* ★2026-10-22 省流量：声音默认关时**连语音库都不取**（原来无条件 xkvLoad()，
+     首页每访客白拉 145 KB 的 voice/bank.json，而 xkvPlay 里面反正只会出字幕）。
+     开关打开时由 xk-sound 监听走 xkvLoad() 补播（见下面那段）。 */
+  if(!xkSoundOn()){ XKV.entryId = (function(){ try{ return localStorage.getItem('xk-visited') ? 'greet_welcome_back' : 'greet_welcome'; }catch(_){ return 'greet_welcome'; } })(); return; }
   xkvLoad().then(()=>{
     let seen = false;
     try{ seen = !!localStorage.getItem('xk-visited'); localStorage.setItem('xk-visited','1'); }catch(_){}
@@ -1966,7 +1970,10 @@ addEventListener('xk-sound', function(ev){
 addEventListener('pointerdown', xkvUnlock, {once:true});
 addEventListener('keydown', xkvUnlock, {once:true});
 /* 语音库在首屏窗口（门禁口径 1.5s）**之后**才取 —— 语音资产不进首屏字节 */
-setTimeout(xkvLoad, 1800);
+/* ★2026-10-22 省流量：原来是 `setTimeout(xkvLoad, 1800)` —— 声音默认关也照样把 145 KB 的
+   voice/bank.json 拉下来（xkvPlay 里面反正只出字幕）。改成开声才取；
+   开声那一刻由 xk-sound 监听走 xkvLoad() 补播（见下面 XKV 那段）。 */
+setTimeout(function(){ if(xkSoundOn()) xkvLoad(); }, 1800);
 if(!RM){ setTimeout(xkvGreet, 2600); }
 let xkvHiddenAt = 0;
 document.addEventListener('visibilitychange', ()=>{

@@ -902,7 +902,12 @@
   setTimeout(function () {
     if (D.prefetchOff) { D.prefetchNote = '跳过空闲预取（' + D.prefetchOff + '：只取首屏 + 当前栏目）'; return; }
     idle(function () {
-      ['/kurisu/manifest.json', '/kurisu/video-manifest.json', '/kurisu/voice/bank.json'].forEach(prefetch);
+      ['/kurisu/manifest.json', '/kurisu/video-manifest.json'].forEach(prefetch);
+      /* ★2026-10-22：语音库 bank.json 145 KB **默认不预取**。
+         站主口径（§22）是"声音默认关"，关着就一个音频字节都不该取；而这条预取在每页都跑，
+         等于把 145 KB 白花在从不发声的访客身上（实测每页 wire 清单里都有它）。
+         真正开声时 kurisu-player / xk-shell 自己会取（走 HTTP 缓存），一次不多一次不少。 */
+      if (window.__xkSound && window.__xkSound.on === true) { prefetch('/kurisu/voice/bank.json'); }
     }, 1500);
   }, 2000);
   /* 清单到位后用**真值**覆盖头像帧数（只读；清单本来就在上面的空闲预取清单里 ⇒ 走缓存，不额外发请求） */

@@ -15,6 +15,12 @@ const CHAR_BOX = {w:764, h:1028, maxW:0.64, maxH:0.90, xRatio:0.52, footRatio:0.
 const stage = document.getElementById('stage');
 const crt = document.getElementById('crt');
 const canvas = document.getElementById('charCanvas');
+/* ★2026-10-22：这是**主页专用**的 CRT 舞台脚本，但被所有页面引；内容页没有 #charCanvas / #crt。
+   原来这里直接 canvas.getContext('2d')，内容页抛
+   "Cannot read properties of null (reading 'getContext')" 把整个 IIFE 打断
+   （后面的 resize/draw/状态机一个都没跑，控制台每次导航都留一条红字）。
+   拿不到舞台就安静退出：不注册监听、不占内存、不污染控制台。 */
+if (!canvas || !crt) { return; }
 const ctx = canvas.getContext('2d');
 const cache = {};
 function img(src){ if(!cache[src]){ const im=new Image(); im.src=src; cache[src]=im; } return cache[src]; }

@@ -72,7 +72,11 @@ function feedDetailShow(d){
     + line('规则', d.rule) + line('状态', d.st) + line('聚合号', d.agg);
   box.hidden = false;
 }
-termFeed.addEventListener('click', function (e) {
+/* ★2026-10-22：#termFeed 只存在于主页（终端日志那一栏），但本文件被所有页面引。
+   原来这里无条件 termFeed.addEventListener，内容页抛
+   "Cannot read properties of null (reading 'addEventListener')" 打断整个 IIFE
+   —— 面板播放器等后续初始化全部没跑。没有这栏就跳过这段监听即可。 */
+if (termFeed) termFeed.addEventListener('click', function (e) {
   const row = e.target && e.target.closest ? e.target.closest('.tl') : null;
   if (!row || !row.__d) return;
   feedDetailShow(row.__d);
@@ -1133,8 +1137,13 @@ function askDemo(){
     emo = 'normal'; render();
   }).then(()=>{ xkAsking = false; });
 }
-document.getElementById('askBtn').onclick = askDemo;
-document.getElementById('askInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') askDemo(); });
+/* ★2026-10-22：askBtn/askInput 只在 /ai/ 有；内容页原来在这里直接取 onclick 抛
+   "Cannot set properties of null (setting 'onclick')"（旧版被更早的一处异常挡住，没暴露）。
+   拿不到输入栏就整段跳过。 */
+const askBtnEl = document.getElementById('askBtn');
+const askInputEl = document.getElementById('askInput');
+if (askBtnEl) askBtnEl.onclick = askDemo;
+if (askInputEl) askInputEl.addEventListener('keydown', e=>{ if(e.key === 'Enter') askDemo(); });
 
 
 /* ================= 桐莉栖语音（L1 预渲染语音库）· 内容页 =================
@@ -1193,7 +1202,15 @@ function xkvPlay(id){
 }
 addEventListener('pointerdown', xkvUnlock, {once:true});
 addEventListener('keydown', xkvUnlock, {once:true});
-setTimeout(()=>{ xkvLoad().then(()=>xkvPlay(xkvPageLine())); }, 1800);
+/* ★2026-10-22 省流量：这句原来是"进页面 1.8 s 后无条件 xkvLoad()"——
+   `xkvPlay` 里面虽然会看开关，但 **fetch 已经发生了**：声音默认关的访客每页都被白拉 145 KB 的
+   voice/bank.json（实测首页/内容页 wire 清单里都有它）。
+   改成：只在开关真的开着时才取；关着就什么都不做，等下面 xk-sound 那条监听在开声时再来取。
+   开关状态在 1.8 s 前就可能被 restore 设好（xk-idcard 先初始化），所以这里读的是当时真值。 */
+setTimeout(()=>{
+  if(!xkvSoundOn()) return;
+  xkvLoad().then(()=>xkvPlay(xkvPageLine()));
+}, 1800);
 /* ★2026-10-19 站主：这套播放器也要听那颗开关（它和 kurisu-player.js 是两条独立的播放路径，
    以前只有后者记挂 xk-sound）。关 ⇒ 立刻停并丢弃 pending；开 ⇒ 补播刚才压下的那一句。 */
 try{
@@ -1205,8 +1222,10 @@ try{
        自动播放策略拒掉，而 pending 又没记 ⇒ 老访客（上次开着）反而一声不响。留给他们下一次
        点击/按键（下面的 pointerdown/keydown 一次性监听）来解锁，再补播 pending。 */
     if(why !== 'restore'){ XKV.unlocked = true; }
+    /* ★2026-10-22：开声这一刻才取语音库（见上面 1.8 s 那句的注释）；库没到就先取再播。 */
     const id = XKV.pending;
     XKV.pending = null;
+    if(!XKV.bank){ xkvLoad().then(()=>{ if(id) xkvPlay(id); }); return; }
     if(id){ xkvPlay(id); }
   });
 }catch(e){ /* 忽略 */ }
