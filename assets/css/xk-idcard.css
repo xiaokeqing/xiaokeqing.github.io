@@ -215,9 +215,11 @@
   @media (min-width:981px){
     /* ① ▾ 桌面也显示：它现在是功能钮唯一的开关（原 .xk-idfold{display:none} 是"桌面用不着"的旧口径）。
        贴卡片右上角 18×18；.xk-idmeta 让出 16px 右内边距，名字/HOLO-LINK 不会被它压字。 */
-    .xk-idfold{display:flex;position:absolute;right:2px;top:2px;align-items:center;justify-content:center;
-      width:18px;height:18px;padding:0;cursor:pointer;background:transparent;border:0;border-radius:6px;
-      color:var(--mut,#D2CBBD);font:12px/1 var(--mono,monospace);transition:transform .18s ease}
+    .xk-idfold{display:flex;position:absolute;right:0;top:0;align-items:center;justify-content:center;
+      width:30px;height:30px;padding:0;cursor:pointer;background:transparent;border:0;border-radius:8px;
+      color:var(--mut,#D2CBBD);font:13px/1 var(--mono,monospace);transition:transform .18s ease}
+    /* ★2026-10-30：18×18 → 30×30。原来那个▾ 贴在卡片右上角只有 18px，点不中就像"开关用不了"。
+       卡片尺寸不变，贴边改成 0，热区 30×30；.xk-idmeta 已让出右侧空间。 */
     .xk-idfold:hover{color:var(--txt,#FAF7F0);background:rgba(255,246,235,.08)}
     .xk-idcard.open .xk-idfold{transform:rotate(180deg);color:var(--acc,#7FD4D8)}
     /* ② 功能钮桌面不再常驻：收起时 display:none（offsetHeight=0 ⇒ 不占位，导航紧贴卡片） */
