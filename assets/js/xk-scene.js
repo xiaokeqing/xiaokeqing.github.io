@@ -369,6 +369,19 @@ var XKV2_BLOCK = (function(){
       });
     });
   }
+  /* ★2026-10-30：视频比图集便宜得多（一段 115~280KB vs medium 两页 1.6MB）。
+     "首次手势前不取视频"这条规格原本是为了省流量，现在恰恰相反。
+     所以开场动画放完（3.2 秒）后自动解锁视频：静音、无音频轨，浏览器允许自动播放。
+     视频一旦失败（failed 非空）图集会立即让回来。 */
+  setTimeout(function(){
+    try{
+      if(!V.enabled || !V.videoOK || V.gesture) return;
+      if(document.hidden) return;
+      /* 视频档代管后，开场也只需要 boot 图集（275KB），不要升到 hi（1004KB）。 */
+      try{ if(XK_TIER && XK_TIER.degrade) XK_TIER.degrade('opening', '视频档接管：开场走 boot 图集'); }catch(e){}
+      unlock();
+    }catch(e){}
+  }, 2000);
   ['pointerdown', 'keydown'].forEach(function(ev){
     addEventListener(ev, function(){ unlock(); }, {once:true, passive:true});
   });
@@ -636,7 +649,9 @@ setTimeout(function(){ try { XK_TIER.watchCRT(); XK_TIER.watchPhone(); } catch(e
    直接吃 boot 中档（34~53MB 的位图根本不会出现在内存里）。 */
 function xkClipIm(name){
   const c = CLIPS[name];
-  if(XK_TIER.hiAllowed(name)){
+  /* ★2026-10-30：视频档可用时，转场/开场也只拿中档 boot图集（opening 275KB vs hi 1004KB）。 */
+  const xkVidOK = !!(window.__xkVid && window.__xkVid.videoOK);
+  if(XK_TIER.hiAllowed(name) && !xkVidOK){
     const px = cache[c.src];
     if(px && px.complete && px.naturalWidth) return {im:px, c:c};
   }
@@ -836,8 +851,11 @@ var XK_SM_JS = (function(){
        视频每段只有 115~280KB。一旦视频失败（failed 非空）立即把图集让回来。 */
     try{
       var Vv = window.__xkVid;
-      if(!Vv || Vv.mode !== 'video' || !Vv.drawn || Vv.drawn < 20) return false;
+      if(!Vv || !Vv.videoOK) return false;
       if(Vv.failed && Object.keys(Vv.failed).length) return false;
+      /* ★2026-10-30：只要视频档可用就不拉图集（不再等 gesture / drawn 阈值）。
+         开场动画由视频层自己的图集段负责，不走这个函数；
+         真要图集回来只有一种情况：视频失败（failed 非空，上面已经 return false）。 */
       return true;
     }catch(e){ return false; }
   }
