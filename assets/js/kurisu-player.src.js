@@ -1130,7 +1130,25 @@
     if (!this.staticOnly && this.canvas && this.canvas.clientHeight > 0 && this.canvas.clientHeight < 300) {
       this.staticOnly = true;
     }
-    document.addEventListener('visibilitychange', this._onVis, false);
+    /* ★2026-10-30：画布还没尺寸就别去拉 68KB 的 manifest.json。
+     实测 /posts/pki/ 这类页面不放人物（canvas 0×0），却为它取了整份清单。
+     等它真有了高度再起播；只等一次，避免反复 start 把监听器重复注册。 */
+  if (this.canvas && !this.canvas.clientHeight && !this.avatarMode) {
+    if (global.ResizeObserver && !this._visibleWait && !this._startedOnce) {
+      var selfV = this;
+      this._visibleWait = new ResizeObserver(function () {
+        if (selfV.canvas && selfV.canvas.clientHeight > 0) {
+          selfV._visibleWait.disconnect();
+          selfV._visibleWait = null;
+          if (!selfV._startedOnce) { selfV._startedOnce = true; selfV.start(); }
+        }
+      });
+      this._visibleWait.observe(this.mount);
+    }
+    return Promise.resolve(this);
+  }
+  this._startedOnce = true;
+  document.addEventListener('visibilitychange', this._onVis, false);
     global.addEventListener('resize', this._onResize, false);
     ['(prefers-reduced-motion: reduce)', '(max-width: 980px)'].forEach(function (qs) {
       var m = mq(qs);
