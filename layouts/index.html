@@ -1269,7 +1269,24 @@ var XK_SM_JS = (function(){
     visAt = t;
     return visVal;
   }
+  var XK_BLANK = null;
+  function videoOwnsCrt(){
+    /* ★ 2026-10-28：视频层已经在出帧时，图集就别再拉了。
+       实测：接管后还照拉 idle/idle1 两张 2.2MB 图集，首页总量 7124KB；
+       视频每段只有 115~280KB。一旦视频失败（failed 非空）立即把图集让回来。 */
+    try{
+      var Vv = window.__xkVid;
+      if(!Vv || Vv.mode !== 'video' || !Vv.drawn || Vv.drawn < 20) return false;
+      if(Vv.failed && Object.keys(Vv.failed).length) return false;
+      return true;
+    }catch(e){ return false; }
+  }
   function img(url){
+    if(videoOwnsCrt()){
+      if(!XK_BLANK){ XK_BLANK = new Image();
+        XK_BLANK.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; }
+      return XK_BLANK;
+    }
     var im = V.atlas.imgs[url];
     if(im){
       if(im.__xkDefer && canvasRendered()){          /* 画布露出来了：就地补拉（之前只是占位）*/
@@ -1295,6 +1312,11 @@ var XK_SM_JS = (function(){
   function prefetch(clip){
     var c = V.atlas.mf && V.atlas.mf[clip];
     if(!c) return;
+    /* ★ 2026-10-28：视频档可用就不预取图集了。轮换的下一支 idle1 是 894KB，
+       而首次手势后 CRT 就切视频，这份预取根本用不上。当前支的首帧走 paintOps→img，不受影响。 */
+    try{ var Vv = window.__xkVid;
+      if(Vv && Vv.videoOK && !(Vv.failed && Object.keys(Vv.failed).length)) return;
+    }catch(e){}
     if(hiAtlas(clip)) return;                 /* ★Q2：这一档要吃 hi，就不要先白拉 medium 页 */
     var ps = c.atlas.medium.pages, i;
     for(i = 0; i < ps.length; i++){ if(i < V.atlas.budget) img(ps[i].url); }
@@ -1322,6 +1344,14 @@ var XK_SM_JS = (function(){
   }
   function hiAtlas(clip){
     if(!hiWanted()) return null;
+    /* ★ 2026-10-28：视频档可用时不再升 hi——首次手势后 CRT 就切到 268×360 的 VP9 视频，
+       hi 那 4.5MB 只是白付（实测首页 7124KB 里 4516KB 是两张 hi 图集）。视频一旦失败自动恢复 hi。 */
+    try{
+      var Vv = window.__xkVid;
+      /* 用 videoOK（poster 阶段就是 true）而不是 mode==='video'：首次手势之前 mode 还是 poster，
+         拿 mode 判会让 hi 在手势前就被拉下来（实测 8017KB 就是这么来的）。 */
+      if(Vv && Vv.videoOK && !(Vv.failed && Object.keys(Vv.failed).length)) return null;
+    }catch(e){}
     try{ if(!XK_TIER.hiAllowed(clip)) return null; }catch(e){ return null; }
     var n = (V.byClip && V.byClip[clip]) || null;
     var hi = n && n.hi;
@@ -1768,7 +1798,20 @@ var XK_SM_JS = (function(){
 function loop(t){
   if(!started) return;
   /* ★T8：状态机接管后由它推进（含 hidden 清零/累加器夹取/指纹记账）*/
-  if(XK_SM_JS.state.tookOver){ XK_SM_JS.tick(); lastT = t; requestAnimationFrame(loop); return; }
+  if(XK_SM_JS.state.tookOver){
+    /* ★ 2026-10-28 站主任务：状态机接管后也要先问视频层。
+       原来这条分支直接 return，而视频层只在 drawFrame() 里被问一次，
+       接管之后永远轮不到 ⇒ 40 段 VP9-alpha 素材被图集挡着（实测 __xkVid.drawn 恒 0）。
+       数字纪律：视频层说“这一帧我出了”就不再画图集；它说 false 就照原样。 */
+    XK_SM_JS.tick();
+    try{
+      var sc = XK_SM_JS.state.cur, sf = XK_SM_JS.state.fi;
+      if(XKV2_BLOCK.draw(sc, sf, {plan:{vid:sc, fit:'anchor'}, ctx:ctx, w:canvas.width, h:canvas.height})){
+        lastT = t; requestAnimationFrame(loop); return;
+      }
+    }catch(e){}
+    lastT = t; requestAnimationFrame(loop); return;
+  }
   if(XK_ACT){ xkmTick(t); lastT = t; requestAnimationFrame(loop); return; }   /* ★表情模式接管画布 */
   if(cur){
     const _xk = xkClipIm(cur);

@@ -188,12 +188,17 @@ else no "找不到 static/images/bg.jpg"; fi
 #   算术交代（别把两个数当互相等价）：当前角色+场景 ≈88MB，原声入库后 ≈134MB，距 160MiB 还有 ≈26MB；
 #   合成分片一旦超过 ≈26MB 会**先撞总量门禁**（这是有意的：总量是全局闸，分片上限是单路闸）。
 #   到那天按站主口径再调总量，**不许顺手把分片上限抬上去**。
-head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 160MiB、分片各自封顶（原声 64MiB / 合成 32MiB）"
+# 【2026-10-28 改】160MiB → **176MiB**：新增 `static/kurisu/video/`（40 段 268×360 的 VP9-alpha
+#   WebM + 40 张 poster，合计 9,315,889 B ≈ 8.9MB），把总量顶到 161MB 撞门。
+#   这 8.9MB 不是纯增量——首页 CRT 的动画改由视频承载后，`hi/` 图集在视频可用时被整档跳过
+#   （实测首页外部请求 7124KB → 4261KB；见 docs §29）。算术：161MB + 余量 ⇒ 176MiB 上限，
+#   仍低于发布 tarball 的 200MiB 预算；分片上限（原声 64MiB / 合成 32MiB）**未动**。
+head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 176MiB、分片各自封顶（原声 64MiB / 合成 32MiB）"
 if [ -d static/kurisu ]; then
   EMPTY=$(find static/kurisu static/images/crt -type f -size 0 2>/dev/null | head -5)
   TOT=$(du -sk static/kurisu static/images/crt 2>/dev/null | awk '{s+=$1} END {print s+0}')
   [ -z "$EMPTY" ] && ok "无 0 字节资产" || { no "存在 0 字节资产（会解码失败）："; printf '%s\n' "$EMPTY" | sed 's/^/        /'; }
-  if [ "$TOT" -le 163840 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 160MiB"; else no "角色+场景资产合计 $((TOT/1024))MB > 160MiB"; fi
+  if [ "$TOT" -le 180224 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 176MiB"; else no "角色+场景资产合计 $((TOT/1024))MB > 176MiB"; fi
   # 分片各自封顶（$1=glob $2=上限KiB $3=中文名；目录不存在 = 跳过，不算失败）
   shard_cap() {
     local g=$1 cap=$2 name=$3 dirs s
