@@ -304,6 +304,9 @@
   $('dyRun').addEventListener('click', loadToday);
   $('dyLoad').addEventListener('click', loadArchive);
   loadToday();
+  /* ★2026-10-30 站主口径：归档不再等点击 —— 索引端点 600 秒缓存且一次给全（排除了
+     "被限流"与"那天没生成"分不清的老问题），进页面就自己加载；按钮留着当"重试"。 */
+  loadArchive();
 })();
 </script>
 </body>

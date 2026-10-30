@@ -902,7 +902,11 @@
   setTimeout(function () {
     if (D.prefetchOff) { D.prefetchNote = '跳过空闲预取（' + D.prefetchOff + '：只取首屏 + 当前栏目）'; return; }
     idle(function () {
-      ['/kurisu/manifest.json', '/kurisu/video-manifest.json'].forEach(prefetch);
+      /* ★ 2026-10-30：只有页面上真有角色画布时才预取这两份清单。
+       实测 /posts/pki/ 下没有任何角色画布却白拉 manifest 68KB + video-manifest 20KB。 */
+if(document.querySelector('[data-xk-kurisu-canvas],#xk-kurisu__canvas,#charCanvas,.xk-scene')){
+  ['/kurisu/manifest.json', '/kurisu/video-manifest.json'].forEach(prefetch);
+}
       /* ★2026-10-22：语音库 bank.json 145 KB **默认不预取**。
          站主口径（§22）是"声音默认关"，关着就一个音频字节都不该取；而这条预取在每页都跑，
          等于把 145 KB 白花在从不发声的访客身上（实测每页 wire 清单里都有它）。

@@ -31,6 +31,13 @@
   font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.55;padding:4px 10px;
   border:1px solid rgba(160,220,240,.26);border-radius:999px;color:#cfe9f5;text-decoration:none}
 .smp-toc-l a:hover{border-color:rgba(160,220,240,.6);color:#eaf6ff}
+/* ★2026-10-30 站主反馈修复：窄屏下这三条索引是长句（"① 168.144.28.221 · 2 小时 28 分
+   4,242 次 SSH 连接…"），原来一律 nowrap + ellipsis ⇒ 390px 上整句被裁掉，
+   排版审计把它判成本站唯一 P0（a scrollWidth=507 / clientWidth=310）。
+   窄屏改成允许换行：宁可标签高一点，也不要把字裁掉。 */
+@media (max-width:720px){
+  .smp-toc-l a{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.6;border-radius:12px}
+}
 /* 正文（Markdown 渲染结果）：字段是 <li>，来源标记是 <blockquote> */
 .smp-md{font-size:13px;line-height:1.95;color:rgba(255,255,255,.8);min-width:0;overflow-wrap:anywhere}
 .smp-md p{margin:0 0 10px}
