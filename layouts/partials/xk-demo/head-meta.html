@@ -10,6 +10,7 @@
 {{- $ogImg := $ogImgPath | absURL -}}
 <title>{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }} · xiaokeqing{{ end }}</title>
 <meta name="description" content="{{ $desc }}">
+<meta name="robots" content="{{ if in (slice "demo" "test") .Section }}noindex, nofollow{{ else }}index, follow{{ end }}">
 <meta name="author" content="{{ site.Params.author }}">
 <meta name="color-scheme" content="dark">
 {{ hugo.Generator }}
