@@ -2254,7 +2254,28 @@
 
   // 13.4 轻索引空闲预取：约 80 KB，打开搜索即可用；带正文的 /index.json（1.2 MB）不预取，
   //      只在用户真的要在页面里就地读一篇时才取 —— 3 Mbps 链路上预取它会把首屏图片挤到后面。
+  //      ★2026-11-04 站主口径「每页先给最快的东西」：慢网（下行 < 2 Mbps / 省流量模式）**不预取**，
+  //      等用户真的点开搜索再取 —— 搜索框打开时 loadLite() 会当场加载，功能不受影响。
+  function slowNetForIndex() {
+    try {
+      var c = navigator.connection || {};
+      if (c.saveData) { return true; }
+      var et = String(c.effectiveType || '');
+      if (et === 'slow-2g' || et === '2g' || et === '3g') { return true; }
+      if (typeof c.downlink === 'number' && c.downlink > 0 && c.downlink < 2) { return true; }
+    } catch (e) { }
+    try {
+      var q = String(location.search).match(/[?&]xk-net=([^&]+)/);
+      if (q) {
+        var v = decodeURIComponent(q[1]);
+        if (v === 'slow') { return true; }
+        if (v === 'fast') { return false; }
+      }
+    } catch (e) { }
+    return false;
+  }
   function prefetchIndex() {
+    if (slowNetForIndex()) { return; }   // 慢网：不预取，打开搜索时再取
     loadLite().catch(function () { /* 失败就等用户真的打开搜索再报错 */ });
   }
   if (window.requestIdleCallback) requestIdleCallback(prefetchIndex, { timeout: 4000 });

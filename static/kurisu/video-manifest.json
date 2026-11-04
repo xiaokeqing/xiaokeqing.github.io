@@ -993,10 +993,7 @@
  "format": "xiaokeqing.kurisu.video-manifest.v1",
  "generatedBy": "_dev/build_video_manifest.py",
  "note": "frameIntervalMs 来自 statemachine（播放语义）；容器 60fps 的 durationMs 不是帧间隔，渲染器按 frameIndex 逐帧画。解码失败/404 ⇒ 逐级降级 video→图集→poster。",
- "preload": [
-  "idle",
-  "idle_mic_wind"
- ],
+ "preload": ["idle"],
  "root": "idle",
  "source": "video-assets/manifest-video.json（2026-10-15 自检 40/40 过）+ static/kurisu/statemachine.json",
  "tier": "h268",
