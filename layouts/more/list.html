@@ -1,0 +1,90 @@
+{{- /* ============================================================================
+   /more/ —— 目录页。2026-11-04 升级：导航 10 → 6 后，把其余页面按"问题"分四组摆开。
+   设计：docs/页面设计稿-栏目整理-20261104.md（§4）。零 JS 依赖：脚本全挂也能用。
+   ============================================================================ */ -}}
+{{- $v := "more" -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+.mr-wrap{max-width:1180px;margin:0 auto;padding:0 20px 72px}
+.mr-hd{padding:38px 0 6px}
+.mr-eyebrow{font:11px/1.4 ui-monospace,Consolas,monospace;letter-spacing:.14em;color:#6f828c;text-transform:uppercase}
+.mr-h1{margin:8px 0 10px;font-size:30px;line-height:1.25;font-weight:700;color:#eef3f6}
+.mr-lede{margin:0;max-width:820px;font-size:14.5px;line-height:1.75;color:#9fb0ba}
+.mr-g{margin-top:34px}
+.mr-g-hd{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.mr-g-hd::before{content:"";width:3px;height:18px;border-radius:2px;background:#7fd3e3}
+.mr-g-hd h2{margin:0;font-size:15px;font-weight:600;color:#7fd3e3;letter-spacing:.02em}
+.mr-g-hd::after{content:"";flex:1;height:1px;background:rgba(127,211,227,.12)}
+.mr-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.mr-card{display:flex;flex-direction:column;gap:8px;padding:16px 17px;border:1px solid rgba(127,211,227,.18);border-radius:14px;background:rgba(12,18,22,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);text-decoration:none;transition:border-color .15s ease,transform .15s ease}
+.mr-card:hover,.mr-card:focus-visible{border-color:rgba(127,211,227,.34);transform:translateY(-1px);outline:none}
+.mr-card:focus-visible{outline:2px solid rgba(127,211,227,.55);outline-offset:2px}
+.mr-card b{font-size:15px;font-weight:600;color:#eef3f6;line-height:1.45}
+.mr-card p{margin:0;font-size:13px;line-height:1.65;color:#9fb0ba;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mr-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:4px}
+.mr-tag{font:11.5px/1.5 ui-monospace,Consolas,monospace;color:#7fd3e3;border:1px solid rgba(127,211,227,.26);border-radius:999px;padding:1px 8px}
+@media (max-width:980px){.mr-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.mr-wrap{padding:0 14px 56px}.mr-cards{grid-template-columns:1fr}.mr-h1{font-size:24px}}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="more">
+  <section class="view on" id="v-more">
+    <div class="mr-wrap">
+      <div class="mr-hd">
+        <div class="mr-eyebrow">XK-LAB // MORE · 12 PAGES</div>
+        <h1 class="mr-h1">更多</h1>
+        <p class="mr-lede">首页回答"现在被打成什么样"。这里回答剩下的：凭什么信这些数字、我练了什么、这台机器自己怎么样、有什么顺手的小工具。每个页面一句话，点进去都是那个页面真实的数字。</p>
+      </div>
+
+      <div class="mr-g" id="g-evidence">
+        <div class="mr-g-hd"><h2>凭什么信这些数字</h2></div>
+        <div class="mr-cards">
+          <a class="mr-card" href="/noise/"><b>告警噪音指数</b><p>29 万条告警里 94.9% 是心跳噪音。这一页把"降噪"量化成可复核的几个数。</p><span class="mr-tags"><span class="mr-tag">量化</span><span class="mr-tag">降噪</span></span></a>
+          <a class="mr-card" href="/ip/"><b>这个 IP 干过什么</b><p>个人版 IP 档案：命中过哪几条规则、攻击过哪些端点、最近出现在什么时候。</p><span class="mr-tags"><span class="mr-tag">IP</span><span class="mr-tag">档案</span></span></a>
+          <a class="mr-card" href="/passwords/"><b>高频弱口令</b><p>蜜罐里被尝试最多的口令。只给结构统计，不列完整明文。</p><span class="mr-tags"><span class="mr-tag">口令</span><span class="mr-tag">结构</span></span></a>
+          <a class="mr-card" href="/samples/"><b>真实样本分析</b><p>三条打进来的攻击链，逐条给原始日志片段与判断依据。</p><span class="mr-tags"><span class="mr-tag">样本</span><span class="mr-tag">攻击链</span></span></a>
+          <a class="mr-card" href="/api/"><b>公开端点清单</b><p>20 个只读端点的用途、限流与缓存口径。站上的每个数字都能在这里找到出处。</p><span class="mr-tags"><span class="mr-tag">20 端点</span><span class="mr-tag">只读</span></span></a>
+        </div>
+      </div>
+
+      <div class="mr-g" id="g-training">
+        <div class="mr-g-hd"><h2>我练了什么</h2></div>
+        <div class="mr-cards">
+          <a class="mr-card" href="/redteam/"><b>红队攻防榜</b><p>27 条攻击用例回归，逐条标注当前是拦住、部分拦住还是没拦住。</p><span class="mr-tags"><span class="mr-tag">27 用例</span><span class="mr-tag">回归</span></span></a>
+          <a class="mr-card" href="/purpleteam/"><b>紫队演练</b><p>我打的攻击，我的检测能不能看见。看不见的规则缺口直接列出来。</p><span class="mr-tags"><span class="mr-tag">紫队</span><span class="mr-tag">检测</span></span></a>
+          <a class="mr-card" href="/lab/"><b>靶场（攻防验证）</b><p>7 台容器上跑的攻防练习与验证环境，只开在自己机器里。</p><span class="mr-tags"><span class="mr-tag">容器</span><span class="mr-tag">隔离</span></span></a>
+        </div>
+      </div>
+
+      <div class="mr-g" id="g-machine">
+        <div class="mr-g-hd"><h2>这台机器本身</h2></div>
+        <div class="mr-cards">
+          <a class="mr-card" href="/status/"><b>状态</b><p>8 个端点的存活与耗时，每一次探测的时间与结果都写出来。</p><span class="mr-tags"><span class="mr-tag">巡检</span><span class="mr-tag">16 项</span></span></a>
+          <a class="mr-card" href="/what/"><b>这是什么</b><p>三分钟讲清整套东西怎么运转：采集、聚合、展示分别在哪儿。</p><span class="mr-tags"><span class="mr-tag">架构</span><span class="mr-tag">说明</span></span></a>
+          <a class="mr-card" href="/projects/"><b>项目记录</b><p>5 个可核实的小项目，每个都附代码位置与验证方式。</p><span class="mr-tags"><span class="mr-tag">项目</span><span class="mr-tag">可核实</span></span></a>
+        </div>
+      </div>
+
+      <div class="mr-g" id="g-tools">
+        <div class="mr-g-hd"><h2>顺手的小工具</h2></div>
+        <div class="mr-cards">
+          <a class="mr-card" href="/tools/"><b>工具台</b><p>CVE 查询、口令强度、单位换算这类自用小工具，全部本地算、不上传。</p><span class="mr-tags"><span class="mr-tag">离线</span><span class="mr-tag">自用</span></span></a>
+          <a class="mr-card" href="/ai/"><b>AI 问答</b><p>公开只读的安全知识问答，答案带引用与状态标注，不编造。</p><span class="mr-tags"><span class="mr-tag">只读</span><span class="mr-tag">带引用</span></span></a>
+          <a class="mr-card" href="/daily/"><b>安全日报</b><p>每天 08:10 生成的一份日报：告警、来源、蜜罐与被拦下的动作。</p><span class="mr-tags"><span class="mr-tag">每日</span><span class="mr-tag">语音</span></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+{{ partial "xk-demo/api-bind.html" . }}
+</body>
+</html>

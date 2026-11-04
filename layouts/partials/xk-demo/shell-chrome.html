@@ -11,15 +11,11 @@
 <nav class="dock" id="dock" aria-label="站点导航（演示）">
   <div class="brand">XK-LAB</div>
   <a href="/" class="{{ if eq $v "home" }}on{{ end }}">主页</a>
-  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">监测中心</a>
+  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">攻击实况</a>
   <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
-  <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
   <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
-  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">靶场</a>
-  <a href="/status/" class="{{ if eq $v "status" }}on{{ end }}">状态</a>
-  <a href="/api/" class="{{ if eq $v "api" }}on{{ end }}">接口</a>
-  <a href="/tools/" class="{{ if eq $v "tools" }}on{{ end }}">工具</a>
-  <a href="/what/" class="{{ if eq $v "what" }}on{{ end }}">介绍</a>
+  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">攻防验证</a>
+  <a href="/more/" class="{{ if or (eq $v "more") (eq $v "ai") (eq $v "status") (eq $v "api") (eq $v "tools") (eq $v "what") }}on{{ end }}">更多</a>
     </nav>
 
 <!-- HOLO 人物面板：左上角 -->
