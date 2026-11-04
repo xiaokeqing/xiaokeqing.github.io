@@ -8,6 +8,10 @@
 <html lang="{{ site.Language.Lang | default `zh-cn` }}" data-theme="light"{{ if and site.Params.kurisuEnabled .IsHome }} data-xk-crt-on="1"{{ end }}>
 <head>
   {{ partial "head.html" . }}
+  {{- /* ★2026-11-04：/demo/ /test/ 这两个 section 的 _index.md 写了 `layout: "single"`，
+         走的是这条 baseof（**不经** partials/xk-demo/head-meta.html）⇒ 那边的 robots 规则
+         在这两页从来没生效过。这里按同一口径再写一次。 */}}
+  <meta name="robots" content="{{ if in (slice "demo" "test") .Section }}noindex, nofollow{{ else }}index, follow{{ end }}">
 </head>
 {{- /* 注：#xk-app 的根**不改挂到 <body>** —— 试过：`#xk-app{min-height:100vh}` 挂在 body 上会让
        CRT 盒的定位/尺寸基准变化，角色与画布错位（实测 CRT 内部像素差从 11% 恶化到 81%），
