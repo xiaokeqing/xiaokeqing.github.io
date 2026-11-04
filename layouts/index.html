@@ -1,96 +1,140 @@
 <!DOCTYPE html>
-<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-gate="1">
+<html lang="zh-CN" data-xk-gate="1">
 <head>
-{{ partial "xk-demo/head-meta.html" . }}
-  <meta name="robots" content="index, follow">
-  <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XK-LAB · 一个人搭的公网安全观测站</title>
+<meta name="description" content="公网安全观测站：主机、网络、蜜罐三路采集，每天一份日报，能看到攻击实况和原始日志。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://xiaokeqing.cn/">
+<meta name="theme-color" content="#05080a">
+{{- /* 入口页只做一件事：把客厅那张照片摆出来，让电视屏幕里放完开屏动画，然后进攻击实况。
+       设计口径（站主 2026-11-04）：开屏就是电视里那一下开屏，不要额外文案。
+       体积：desk.webp 76 KB + opening.boot.webp 275 KB，一共约 360 KB；旧的整台客厅 2054 KB。 */}}
+<link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
+<link rel="preload" as="image" href="/kurisu/full/opening.gate.webp">
 <style>
-  /* ★2026-11-04 站主口径：「主页直接删掉，只留一个进入动画」。
-     这一页只做一件事 —— 让第一次来的人 2.6 秒知道这是哪儿，然后进 /alerts/。
-     旧的电视房间整份搬到 /room/（登录后可见），这里一个字节的 canvas 都不跑。 */
   :root{
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
-    --txt:#FAF7F0; --mut:#B9C2C8; --acc:#7FD4D8; --line:rgba(255,246,235,.16);
+    --crt-x:32.8947%; --crt-y:20.7226%; --crt-w:35.0478%; --crt-h:47.0776%;
+    --bg:#05080a; --ink:#eef3f6; --cy:#7fd3e3;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
+  html,body{height:100%}
   body{
-    background:#05080a; color:var(--txt); font-family:var(--sans);
-    display:grid; place-items:center; overflow:hidden;
+    margin:0; background:var(--bg); overflow:hidden;
+    opacity:0; transition:opacity .32s ease;
+    font:14px/1.5 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
   }
-  .g-bg{
-    position:fixed; inset:0; z-index:0;
-    background:url("/images/crt/desk.webp") center/cover no-repeat;
-    filter:saturate(.85) brightness(.55) blur(1.5px);
-    transform:scale(1.04);
-  }
-  .g-veil{
-    position:fixed; inset:0; z-index:1; pointer-events:none;
-    background:
-      radial-gradient(60% 55% at 50% 46%, rgba(0,0,0,0) 0%, rgba(4,7,9,.55) 62%, rgba(4,7,9,.88) 100%),
-      repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 2px, rgba(0,0,0,0) 2px 4px);
-    mix-blend-mode:multiply;
-  }
-  .g-wrap{position:relative; z-index:2; text-align:center; padding:0 24px; max-width:640px}
-  .g-badge{
-    display:inline-flex; align-items:center; gap:8px;
-    font:600 12px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase;
-    color:var(--acc); border:1px solid rgba(127,212,216,.35); border-radius:999px;
-    padding:7px 14px; margin-bottom:22px; background:rgba(9,16,19,.55);
-  }
-  .g-badge i{width:6px; height:6px; border-radius:50%; background:var(--acc); box-shadow:0 0 10px var(--acc)}
-  .g-title{
-    font:700 clamp(26px,4.4vw,42px)/1.25 var(--sans);
-    margin:0 0 14px; letter-spacing:.02em; text-shadow:0 2px 24px rgba(0,0,0,.6);
-  }
-  .g-sub{margin:0 0 30px; color:var(--mut); font-size:15px; line-height:1.75}
-  .g-sub b{color:var(--txt); font-weight:600}
-  .g-bar{
-    width:min(320px,72vw); height:3px; margin:0 auto 14px;
-    background:rgba(255,246,235,.14); border-radius:99px; overflow:hidden;
-  }
-  .g-bar i{display:block; height:100%; width:0; background:linear-gradient(90deg,#7FD4D8,#b9f3f5); animation:grow 2.6s linear forwards}
-  @keyframes grow{to{width:100%}}
-  .g-tip{margin:0; font:12px/1.6 var(--mono); color:var(--mut); letter-spacing:.08em}
+  body.on{opacity:1}
+  body.out{opacity:0}
+  .g-desk{position:fixed; inset:0; background:var(--bg)}
+  .g-desk img{width:100%; height:100%; object-fit:cover; display:block; user-select:none; -webkit-user-drag:none}
+  /* 电视屏幕：位置/尺寸全部由变量驱动，换视口等比跟随（与 /room/ 同一套口径） */
+  .crt{position:absolute; left:var(--crt-x); top:var(--crt-y); width:var(--crt-w); height:var(--crt-h)}
+  .crt canvas{width:100%; height:100%; display:block; background:#0a0f12}
   .g-skip{
-    position:fixed; right:20px; bottom:18px; z-index:3;
-    color:var(--mut); text-decoration:none; font:12px/1 var(--mono); letter-spacing:.1em;
-    border:1px solid var(--line); border-radius:999px; padding:9px 14px;
-    background:rgba(9,16,19,.6);
+    position:fixed; right:18px; bottom:16px; z-index:9;
+    padding:7px 14px; border-radius:999px; cursor:pointer;
+    border:1px solid rgba(127,211,227,.28); background:rgba(7,11,13,.6);
+    color:#9fb0ba; font:12px/1.4 inherit; letter-spacing:.04em;
+    backdrop-filter:blur(6px); transition:color .2s,border-color .2s;
   }
-  .g-skip:hover,.g-skip:focus-visible{color:var(--txt); border-color:rgba(127,212,216,.5)}
-  @media (prefers-reduced-motion: reduce){ .g-bar i{animation-duration:.2s} }
+  .g-skip:hover{color:var(--cy); border-color:rgba(127,211,227,.5)}
+  @media (prefers-reduced-motion: reduce){ body{transition:none} }
 </style>
 </head>
 <body>
-  <div class="g-bg" aria-hidden="true"></div>
-  <div class="g-veil" aria-hidden="true"></div>
-
-  <main class="g-wrap" id="content" data-xk-ssr="gate">
-    <div class="g-badge"><i></i>XK-LAB</div>
-    <h1 class="g-title">一个人搭的公网安全观测站</h1>
-    <p class="g-sub">
-      主机 · 网络 · 蜜罐 <b>三路采集</b>，7×24 盯着谁在打它。<br>
-      能看到攻击实况、每份日报，和这些数字背后的原始日志。
-    </p>
-    <div class="g-bar"><i></i></div>
-    <p class="g-tip">正在进入攻击实况 …</p>
-  </main>
-
-  <a class="g-skip" href="/alerts/">跳过 ↗</a>
-
+<div class="g-desk"><img src="/images/crt/desk.webp" alt="" aria-hidden="true" fetchpriority="high" decoding="async"></div>
+<div class="crt" aria-hidden="true"><canvas id="gateCrt"></canvas></div>
+<a class="g-skip" id="gSkip" href="/alerts/">跳过</a>
+<noscript><meta http-equiv="refresh" content="0;url=/alerts/"></noscript>
 <script>
-  /* 一次会话只放一次：同标签页第二次进来直接去 /alerts/，不重复下载这张照片。 */
-  (function(){
-    var NEXT = '/alerts/';
-    var KEY = 'xk-entered';
-    var seen = false;
-    try { seen = sessionStorage.getItem(KEY) === '1'; } catch(e) {}
-    if (seen) { location.replace(NEXT); return; }
-    try { sessionStorage.setItem(KEY, '1'); } catch(e) {}
-    setTimeout(function(){ location.replace(NEXT); }, 2600);
-  })();
+(function(){
+  'use strict';
+  var HOME = '/alerts/';
+  var ATLAS = '/kurisu/full/opening.gate.webp';
+  var COLS = 8, FW = 380, FH = 290, FRAMES = 25, STEP = 70;   /* 25 帧 × 70 ms ≈ 1.75 s（含 39–42 那一次眨眼） */
+  var HOLD = 320, FADE = 340;
+
+  function go(){
+    try { sessionStorage.setItem('xk-entered', '1'); } catch(e){}
+    location.replace(HOME);
+  }
+  /* 本次会话已经进过：不重复播 */
+  try { if (sessionStorage.getItem('xk-entered') === '1') { go(); return; } } catch(e){}
+
+  document.addEventListener('DOMContentLoaded', boot);
+  if (document.readyState !== 'loading') boot();
+
+  function boot(){
+    var body = document.body;
+    var canvas = document.getElementById('gateCrt');
+    var skip = document.getElementById('gSkip');
+    var done = false;
+
+    function finish(){
+      if (done) return; done = true;
+      body.classList.add('out');
+      setTimeout(go, FADE);
+    }
+    if (skip) skip.addEventListener('click', function(e){ e.preventDefault(); finish(); });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); finish(); }
+    });
+
+    /* 关掉动效 / 没有 canvas：直接进 */
+    var reduce = false;
+    try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
+    if (!canvas || !canvas.getContext || reduce) {
+      body.classList.add('on');
+      setTimeout(go, reduce ? 220 : 700);
+      return;
+    }
+
+    var ctx = canvas.getContext('2d');
+    var dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+    var box = { w: 0, h: 0 };
+
+    function fit(){
+      var r = canvas.getBoundingClientRect();
+      var w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      box.w = canvas.width; box.h = canvas.height;
+    }
+    fit();
+    body.classList.add('on');
+
+    /* 屏幕里按 cover 铺满，不裁掉脸 */
+    function draw(img, i){
+      var sx = (i % COLS) * FW, sy = Math.floor(i / COLS) * FH;
+      var s = Math.max(box.w / FW, box.h / FH);
+      var dw = FW * s, dh = FH * s;
+      ctx.clearRect(0, 0, box.w, box.h);
+      ctx.drawImage(img, sx, sy, FW, FH, (box.w - dw) / 2, (box.h - dh) / 2, dw, dh);
+    }
+
+    var img = new Image();
+    img.decoding = 'async';
+    img.onload = function(){
+      var i = 0;
+      draw(img, 0);
+      var timer = setInterval(function(){
+        i++;
+        if (i >= FRAMES) { clearInterval(timer); setTimeout(finish, HOLD); return; }
+        draw(img, i);
+      }, STEP);
+    };
+    img.onerror = function(){ setTimeout(go, 500); };
+    img.src = ATLAS;
+
+    /* 视口变化：重算画布（动画期间也能跟上） */
+    window.addEventListener('resize', function(){
+      dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+      fit();
+    }, { passive: true });
+  }
+})();
 </script>
 </body>
 </html>

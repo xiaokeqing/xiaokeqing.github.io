@@ -295,13 +295,22 @@ if [ -f "$PUB/js/xk-saver.js" ]; then
 else warn "缺 $PUB/js/xk-saver.js（省流模式未上线）"; fi
 
 # 字幕垫板走 data-src 惰性加载（省流时 373KB 不请求；非省流由 xk-saver 补回）
-if grep -q 'data-src=/kurisu/scene/subtitle_frame_big.webp' "$PUB/index.html"; then ok "主页字幕垫板是 data-src 惰性加载"; else warn "主页字幕垫板不是 data-src（省流模式会白取 373KB）"; fi
+if grep -q 'data-src=/kurisu/scene/subtitle_frame_big.webp' "$PUB/room/index.html"; then ok "字幕垫板是 data-src 惰性加载（/room/）"; else warn "字幕垫板不是 data-src（省流模式会白取 373KB，查 /room/）"; fi
 
 # CRT 位置/尺寸必须由 --crt-w/--crt-h 变量驱动（禁写死像素，换视口就错位）
 # ★2026-11-04 站主口径：电视房间从首页搬到 /room/（首页只剩入口动画）⇒ CRT 变量校验改指向 /room/
 CRT_PG="$PUB/room/index.html"
 if [ -s "$CRT_PG" ] && grep -q -- '--crt-w' "$CRT_PG" && grep -q 'width:var(--crt-w)' "$CRT_PG"; then ok "CRT 尺寸由 --crt-w/--crt-h 驱动（随视口等比，/room/）"; else no "CRT 尺寸不是变量驱动（换视口会错位，查 /room/）"; fi
-if [ -s "$PUB/index.html" ] && grep -q 'var(--crt-w)' "$PUB/index.html"; then no "首页又出现 CRT 了（客厅只该在 /room/）"; else ok "首页是入口页，CRT 只在 /room/（不重复渲染）"; fi
+# ★2026-11-04 二次口径：首页 = 入口页，只许有「电视屏幕那一张画布」放开屏动画；
+#   整台客厅（角色舞台 charCanvas / 场景机）仍然只在 /room/。
+GATE_PG="$PUB/index.html"
+if [ -s "$GATE_PG" ]; then
+  if grep -q 'id=gateCrt' "$GATE_PG" && grep -q -- '--crt-w' "$GATE_PG" && ! grep -q 'charCanvas' "$GATE_PG"; then
+    ok "入口页只有电视开屏画布（gateCrt，尺寸变量驱动），没有整台客厅舞台"
+  else
+    no "入口页应只含 gateCrt 画布且不许出现 charCanvas（开屏动画靠它放，别把整台客厅搬回来）"
+  fi
+fi
 
 # ---------- ⑤ [EMO] 情绪标签协议（页面永不出现标签 + 逐句继承）----------
 if [ -s "$PUB/ai/index.html" ]; then
