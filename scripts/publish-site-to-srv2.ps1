@@ -75,7 +75,9 @@ $RemoteTar = "$RemoteDeployDir/xk-site-$Stamp.tar.gz"
 $ReceiveLocal = Join-Path $PSScriptRoot 'srv2-site-receive.sh'
 $ReceiveRemote = '/opt/secagent/scripts/srv2-site-receive.sh'
 $WorktreeAdded = $false
-$MinIndexBytes = 4096
+# 2026-11-04: the homepage is now a gate page (fully inline, only the CRT opening clip),
+# so the artifact is ~3.8 KB. The old 4096 floor rejects it; 3000 still catches truncation.
+$MinIndexBytes = 3000
 
 function Step($n, $text) { Write-Host "`n[$n] $text" -ForegroundColor Cyan }
 function Ok($text)   { Write-Host "    [OK] $text" -ForegroundColor Green }

@@ -166,6 +166,16 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   background-repeat: no-repeat;
 }
 
+/* ★2026-11-04 站主口径（3 Mbps 链路上每页省一点）：窄视口没必要下 1920 那张。
+   ≤1400 px 视口改用 1280 宽版本（136 KB → 71 KB），2x 屏也一起降成 1920 那张，
+   保证 2x 下仍然够清晰（1920 / 2 = 960 CSS px ≥ 1400 视口的可视宽度需求）。 */
+@media (max-width: 1400px) {
+  .xk-bg {
+    background-image: url("/images/bg-1280.webp");
+    background-image: image-set(url("/images/bg-1280.webp") 1x, url("/images/bg-1920.webp") 2x);
+  }
+}
+
 /* 遮罩：顶部欢迎区薄 → 向下加浓。
    追加要求（2026-10-12 第三轮 ③）：背景"喧宾夺主"，整条曲线整体加深 ——
    顶部 .15 → .32、内容区 .62 → .75，让背景退到后面；bg.jpg 本身一个像素没动，
