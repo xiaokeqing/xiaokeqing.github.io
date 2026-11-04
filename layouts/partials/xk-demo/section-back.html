@@ -1,0 +1,52 @@
+{{- /* 二级页顶部返回条（2026-11-04 升级 P0）。
+   入参：v（页面标识）。分组与同组链接在这里统一维护，13 个页面只插一行 partial。 */ -}}
+{{- $v := .v -}}
+{{- $groups := slice
+  (dict "id" "g-evidence" "name" "凭什么信这些数字" "pages" (slice
+      (dict "v" "noise" "t" "噪音指数" "u" "/noise/")
+      (dict "v" "ip" "t" "IP 档案" "u" "/ip/")
+      (dict "v" "passwords" "t" "弱口令" "u" "/passwords/")
+      (dict "v" "samples" "t" "样本分析" "u" "/samples/")
+      (dict "v" "api" "t" "端点清单" "u" "/api/")))
+  (dict "id" "g-training" "name" "我练了什么" "pages" (slice
+      (dict "v" "redteam" "t" "红队榜" "u" "/redteam/")
+      (dict "v" "purpleteam" "t" "紫队演练" "u" "/purpleteam/")
+      (dict "v" "lab" "t" "靶场" "u" "/lab/")))
+  (dict "id" "g-machine" "name" "这台机器本身" "pages" (slice
+      (dict "v" "status" "t" "状态" "u" "/status/")
+      (dict "v" "what" "t" "这是什么" "u" "/what/")
+      (dict "v" "projects" "t" "项目记录" "u" "/projects/")))
+  (dict "id" "g-tools" "name" "顺手的小工具" "pages" (slice
+      (dict "v" "tools" "t" "工具台" "u" "/tools/")
+      (dict "v" "ai" "t" "AI 问答" "u" "/ai/")
+      (dict "v" "daily" "t" "安全日报" "u" "/daily/")))
+-}}
+{{- $hit := false -}}
+{{- $gname := "" -}}
+{{- $gid := "" -}}
+{{- $sibs := slice -}}
+{{- range $g := $groups -}}
+  {{- range $g.pages -}}
+    {{- if eq .v $v -}}{{- $hit = true -}}{{- $gname = $g.name -}}{{- $gid = $g.id -}}{{- $sibs = $g.pages -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $hit -}}
+<style>
+.sec-back{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 14px;padding:7px 0 9px;border-bottom:1px solid rgba(127,211,227,.12);font-size:12.5px;line-height:1.5}
+.sec-back a{color:#9fb0ba;text-decoration:none}
+.sec-back a:hover,.sec-back a:focus-visible{color:#7fd3e3}
+.sec-back .sb-home{color:#7fd3e3;font-weight:600}
+.sec-back .sb-sib{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+.sec-back .sb-sib a::after{content:"·";color:rgba(127,211,227,.35);margin-left:10px}
+.sec-back .sb-sib a:last-child::after{content:""}
+@media (max-width:720px){.sec-back .sb-sib{display:none}}
+</style>
+<nav class="sec-back" aria-label="分组内导航">
+  <a class="sb-home" href="/more/#{{ $gid }}">← 更多 / {{ $gname }}</a>
+  <span class="sb-sib">
+    {{- range $sibs -}}
+      {{- if ne .v $v }}<a href="{{ .u }}">{{ .t }}</a>{{ end -}}
+    {{- end -}}
+  </span>
+</nav>
+{{- end -}}
