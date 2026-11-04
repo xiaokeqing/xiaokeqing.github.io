@@ -146,10 +146,25 @@
     snd.textContent = D.sound ? '声音 开' : '声音 关';
     snd.setAttribute('aria-pressed', D.sound ? 'true' : 'false');
     snd.setAttribute('title', D.sound ? '声音：已打开（点一下关掉）' : '声音：已关闭（点一下打开）');
+    /* ★2026-11-04 站主口径「声音按钮常显」：卡片右上角那颗小 🔊 与折叠面板里那颗永远是同一状态 */
+    try {
+      var mini = document.getElementById('xkSndMini');
+      if (mini) {
+        mini.setAttribute('aria-pressed', D.sound ? 'true' : 'false');
+        mini.setAttribute('title', D.sound ? '声音：已打开（点一下关掉）' : '声音：已关闭（点一下打开）');
+        mini.classList.toggle('on', !!D.sound);
+      }
+    } catch (e) { }
     try { window.dispatchEvent(new CustomEvent('xk-sound', { detail: { on: D.sound, why: why || 'btn' } })); } catch (e) { }
   }
   function toggleSound() { setSound(!D.sound, 'btn'); }
   snd.addEventListener('click', toggleSound);
+  /* ★2026-11-04 站主口径「声音按钮常显」：卡片右上角小 🔊 直接复用折叠面板里那颗的点击，
+     不另写状态机 —— 状态唯一真值仍是 D.sound / window.__xkSound.on。 */
+  try {
+    var sndMini = document.getElementById('xkSndMini');
+    if (sndMini) { sndMini.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); toggleSound(); }); }
+  } catch (e) { }
   setSound(lg('xk-sound-on') === '1', 'restore');
 
   /* ---------- 场景光束开关（★2026-10-16 站主口径：光束保留，做成左上角头像旁的小功能）

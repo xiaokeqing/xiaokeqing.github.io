@@ -10,6 +10,8 @@ ShowToc: true
 ---
 
 > 来源：Linux 服务基础课程讲义（`linux操作系统的诞生.pdf`，共 6 页）。由 PDF 转为 Markdown 并抽取原文图片，仅整理排版与章节层级，正文内容未改写。
+>
+> 讲义版权归任课讲师，这里仅作个人学习记录，未用于商业用途。
 
 1、Unix操作系统的起源，Ken Thompson （左图）Dennis Ritchie（右图）
 

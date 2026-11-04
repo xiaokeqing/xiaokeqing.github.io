@@ -27,6 +27,17 @@
   /* ★2026-10-17 站主口径：头像就单纯一个头像，头像下面写名字 */
   .xk-idname{font:600 12.5px/1.15 var(--sans,sans-serif);letter-spacing:.02em;text-align:left;max-width:100%;
     color:var(--txt,#FAF7F0);user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* ★2026-11-04 站主口径「声音按钮常显」：卡片只有 96px 宽、右上角已被 ▾ 占着，所以这颗 🔊 做成
+     贴在**头像右下角**的小徽标（20×20），手机与桌面同一位置、不随 ▾ 收起、也不进折叠面板。
+     关闭时半透明，打开时亮起并加青色描边；点击与折叠面板里那颗共用同一个 toggleSound()。 */
+  .xk-idsnd{display:flex;position:absolute;left:40px;top:26px;z-index:3;align-items:center;justify-content:center;
+    width:20px;height:20px;padding:0;cursor:pointer;background:rgba(9,11,14,.94);
+    border:1px solid var(--line2,rgba(255,246,235,.22));border-radius:7px;
+    font-size:11px;line-height:1;color:var(--mut,#D2CBBD);opacity:.8;
+    transition:opacity .15s ease,border-color .15s ease}
+  .xk-idsnd:hover{opacity:1}
+  .xk-idsnd.on{opacity:1;color:var(--acc,#7FD4D8);border-color:rgba(127,212,216,.55);
+    box-shadow:0 0 0 1px rgba(127,212,216,.25)}
   /* ★2026-10-17 站主口径：功能文字全写到左下角，做成一行文字钮（不再用认不出的图标） */
   /* ★2026-10-17 站主口径（m06282）：功能钮跟导航一样**竖着**排，别摊成一横条挤在底部。
    >980px：左栏是一条从上往下的轨 —— 头像卡（贴左上 left:8/top:8）→ 展开时的功能钮 → 导航，
@@ -164,6 +175,7 @@
       border-radius:14px; border:1px solid var(--line2,rgba(255,246,235,.16));
     }
     .xk-idfold{grid-area:fold;align-self:center;justify-self:end}
+    /* ★2026-11-04 站主口径「声音按钮常显」：规则本体在文件顶部（全局），这里不再重复。 */
     .xk-idcard-av{grid-area:av}
     .xk-idmeta{grid-area:meta}
     .xk-idstat{grid-area:stat}
@@ -222,6 +234,8 @@
        卡片尺寸不变，贴边改成 0，热区 30×30；.xk-idmeta 已让出右侧空间。 */
     .xk-idfold:hover{color:var(--txt,#FAF7F0);background:rgba(255,246,235,.08)}
     .xk-idcard.open .xk-idfold{transform:rotate(180deg);color:var(--acc,#7FD4D8)}
+    /* ①b 桌面上那颗 🔊 用第 170 行那条基线（头像右下角徽标），这里不再单独覆写 ——
+       之前写成"右上角 26×26"会压住头像，实测两者重叠 11px。 */
     /* ② 功能钮桌面不再常驻：收起时 display:none（offsetHeight=0 ⇒ 不占位，导航紧贴卡片） */
     .xk-idcard-col{display:none}
     /* ③ 展开 = 卡片正下方的一竖列（与卡片同 x/同宽 146px，比卡片矮一档的毛玻璃），

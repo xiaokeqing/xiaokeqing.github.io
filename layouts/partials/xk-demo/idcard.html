@@ -48,6 +48,11 @@
        它是唯一的开关；两端同一套 .open / aria-expanded，不另写 JS。 -->
   <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false"
     aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
+  {{- /* ★2026-11-04 站主口径「声音按钮常显」：原来只藏在 ▾ 折叠里（桌面 18×18、手机上根本找不到）。
+       这颗 26×26 的 🔊 一直贴在卡片右上角、在 ▾ 左边；点击与折叠面板那颗是同一个 toggle，
+       状态由 setSound() 同步（两者 aria-pressed 永远一致）。 */}}
+  <button class="xk-idsnd" id="xkSndMini" type="button" aria-pressed="false"
+    title="声音：已关闭（点一下打开）" aria-label="声音开关：默认关闭，点一下打开">🔊</button>
   <button class="xk-idcard-av" id="xkIdAv" type="button"
     title="点一下：换个情绪说一句 · 长按半秒：打开情绪与动作面板"
     aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">

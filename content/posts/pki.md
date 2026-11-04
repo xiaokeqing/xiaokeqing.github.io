@@ -10,6 +10,8 @@ ShowToc: true
 ---
 
 > 来源：Windows 服务基础课程讲义（`PKI（完整版）.pdf`，共 21 页）。由 PDF 转为 Markdown 并抽取原文图片，仅整理排版与章节层级，正文内容未改写。
+>
+> 讲义版权归任课讲师，这里仅作个人学习记录，未用于商业用途。
 
 名称：Public Key Infrastructure  （公钥基础设施）
 

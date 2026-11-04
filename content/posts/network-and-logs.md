@@ -10,6 +10,8 @@ ShowToc: true
 ---
 
 > 来源：Linux 服务基础课程讲义（`网络地址配置以及日志服务.pdf`，共 22 页）。由 PDF 转为 Markdown 并抽取原文图片，仅整理排版与章节层级，正文内容未改写。
+>
+> 讲义版权归任课讲师，这里仅作个人学习记录，未用于商业用途。
 
 linux 3版本内核   systemd第一个启动的进程systemctl  控制命令   控制进程启动与关闭 ，控制开机后默认的启动项systemctl  控制项  进程名称控制项：start   stop   enable  disable  status get-default  查看当前启动进入的工作模式  图形set-default  设定默认进入的模式关机   救援模式   多用户字符界面   图形界面   重启ip地址配置ip addr  查看ip地址ip addr add ip地址 dev ens33 ip route 网关查看ip route  add default via 网关ip/etc/resolv.conf centos7 和 kali都用nat模式
 
