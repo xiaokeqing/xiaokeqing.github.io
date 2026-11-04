@@ -298,7 +298,10 @@ else warn "缺 $PUB/js/xk-saver.js（省流模式未上线）"; fi
 if grep -q 'data-src=/kurisu/scene/subtitle_frame_big.webp' "$PUB/index.html"; then ok "主页字幕垫板是 data-src 惰性加载"; else warn "主页字幕垫板不是 data-src（省流模式会白取 373KB）"; fi
 
 # CRT 位置/尺寸必须由 --crt-w/--crt-h 变量驱动（禁写死像素，换视口就错位）
-if grep -q -- '--crt-w' "$PUB/index.html" && grep -q 'width:var(--crt-w)' "$PUB/index.html"; then ok "CRT 尺寸由 --crt-w/--crt-h 驱动（随视口等比）"; else no "CRT 尺寸不是变量驱动（换视口会错位）"; fi
+# ★2026-11-04 站主口径：电视房间从首页搬到 /room/（首页只剩入口动画）⇒ CRT 变量校验改指向 /room/
+CRT_PG="$PUB/room/index.html"
+if [ -s "$CRT_PG" ] && grep -q -- '--crt-w' "$CRT_PG" && grep -q 'width:var(--crt-w)' "$CRT_PG"; then ok "CRT 尺寸由 --crt-w/--crt-h 驱动（随视口等比，/room/）"; else no "CRT 尺寸不是变量驱动（换视口会错位，查 /room/）"; fi
+if [ -s "$PUB/index.html" ] && grep -q 'var(--crt-w)' "$PUB/index.html"; then no "首页又出现 CRT 了（客厅只该在 /room/）"; else ok "首页是入口页，CRT 只在 /room/（不重复渲染）"; fi
 
 # ---------- ⑤ [EMO] 情绪标签协议（页面永不出现标签 + 逐句继承）----------
 if [ -s "$PUB/ai/index.html" ]; then
@@ -315,7 +318,7 @@ else warn "缺 $PUB/ai/index.html（跳过 V5 断言）"; fi
 
 # ---------- ⑥ 全站共用书桌底图 + E-mote 署名（站主：比例/底图不许各页各写一套）----------
 DESK_OK=0; DESK_N=0
-for pg in index.html alerts/index.html posts/index.html ai/index.html test/index.html; do
+for pg in room/index.html alerts/index.html posts/index.html ai/index.html test/index.html; do
   if [ -s "$PUB/$pg" ]; then
     DESK_N=$((DESK_N + 1))
     if grep -q 'class="\?desk' "$PUB/$pg"; then DESK_OK=$((DESK_OK + 1)); fi
@@ -413,7 +416,14 @@ for pg in index.html alerts/index.html posts/index.html ai/index.html test/index
     no "$pg HTML $sz 字节 > 90000（内联运行时又回来了？）"
   fi
   REFS=$(grep -oE '/(css|js)/[A-Za-z0-9._/-]+' "$f" | sort -u)
-  if [ -z "$REFS" ]; then no "$pg 没有任何 /css 或 /js 外链（模板可能退回整段内联）"; continue; fi
+  if [ -z "$REFS" ]; then
+    if [ "$pg" = "index.html" ] && grep -q 'data-xk-gate' "$f"; then
+      ok "$pg 是入口页（全内联、零外链，有意为之：不为 2.6 秒的动画多开一次请求）"
+    else
+      no "$pg 没有任何 /css 或 /js 外链（模板可能退回整段内联）"
+    fi
+    continue
+  fi
   BAD=""; N=0
   for ref in $REFS; do
     N=$((N + 1))

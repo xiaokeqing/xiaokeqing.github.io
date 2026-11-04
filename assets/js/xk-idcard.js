@@ -221,9 +221,20 @@
   window.__xkKeys = { token: TOKEN_KEY, auth: AUTH_KEY, cid: CID_KEY };
   var XL = window.__xkLogin = { state: 'anon', reason: 'notoken', status: 0, retryAfter: 0,
     checkedAt: 0, hasToken: false, role: '', username: '', errors: [], modal: false };
+  /* ★2026-11-04 站主口径：电视房间（/room/）只在登录后出现在导航末位。
+     默认 hidden 写在 partial 里，这里按登录态显隐；未登录永远不出现。 */
+  function syncRoom() {
+    try {
+      var a = document.getElementById('dockRoom');
+      if (!a) { return; }
+      if (D.loggedIn) { a.removeAttribute('hidden'); } else { a.setAttribute('hidden', ''); }
+    } catch (e) { }
+  }
+  window.__xkSyncRoom = syncRoom;
   function paintLogin() {
     var on = (XL.state === 'logged-in');
     D.loggedIn = on;
+    syncRoom();
     login.setAttribute('aria-pressed', on ? 'true' : 'false');
     login.textContent = on ? '退出' : '登录';
     login.title = on ? ('已登录：' + (XL.username || '站主') + '（点一下退出）') : '登录（只有站主能登）';
