@@ -85,7 +85,9 @@
 <div id="xk-views" hidden aria-hidden="true"></div>
 {{ partial "xk-demo/idcard.html" . }}
 {{ partial "xk-demo/shell-script.html" . }}
-{{ partial "xk-demo/api-bind.html" . }}
+{{- /* ★2026-11-04 站主口径「每页先给最快的东西」：文章页没有监测中心/状态屏，
+       api-bind 那 66 KB 按它自己的注释也是「其余四页 → 0 个请求」，纯属白下载 ⇒ 不再引入。
+       真正需要数据绑定的是 /alerts/ /ai/ /daily/ /more/ /posts/ 列表与 /room/，那些页面各自还留着。 */}}
 <script src="/js/xk-realtime.js" defer></script>
 </body>
 </html>

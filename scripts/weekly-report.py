@@ -681,7 +681,7 @@ code{background:#101820;border:1px solid var(--line);border-radius:4px;padding:1
 ul{padding-left:20px}
 .nav{font-size:13px;color:var(--mut);margin-bottom:14px}
 </style></head><body><main>
-<div class="nav"><a href="/">← 回站点</a> · <a href="/reports/">全部周报</a></div>
+<div class="nav"><a href="/">← 回站点</a> · <a href="/reports/">全部报告</a></div>
 %s
 </main></body></html>
 """
@@ -697,7 +697,8 @@ def write_html_for(md_path, report):
         fh.write(_PAGE % (title, render_md_html(report)))
     d = os.path.dirname(os.path.abspath(md_path))
     items = []
-    for p in sorted(glob.glob(os.path.join(d, "weekly-*.html")), reverse=True):
+    for p in sorted(glob.glob(os.path.join(d, "weekly-*.html")) +
+                   glob.glob(os.path.join(d, "monthly-*.html")), reverse=True):
         name = os.path.basename(p)
         head = ""
         try:
@@ -710,8 +711,8 @@ def write_html_for(md_path, report):
             pass
         items.append('<li><a href="%s">%s</a>%s</li>' % (_esc(name), _esc(name),
                                                           ("<br><span style=\"color:var(--mut);font-size:13px\">%s</span>" % head) if head else ""))
-    idx = _PAGE % ("安全战报 · 周报目录",
-                   "<h1>安全战报 · 周报目录</h1><p>每周一 06:00 自动生成；每个数字都能追溯到公开端点。"
+    idx = _PAGE % ("安全战报 · 报告目录",
+                   "<h1>安全战报 · 报告目录</h1><p>周报每周一 06:00、月报每月 1 日 06:00（报上个月）自动生成；每个数字都能追溯到公开端点。"
                    "没有条目就是还没跑过。</p><ul>" + "".join(items) + "</ul>")
     with open(os.path.join(d, "index.html"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(idx)

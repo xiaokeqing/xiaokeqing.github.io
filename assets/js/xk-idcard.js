@@ -1040,8 +1040,14 @@ if(document.querySelector('[data-xk-kurisu-canvas],#xk-kurisu__canvas,#charCanva
       if (window.__xkSound && window.__xkSound.on === true) { prefetch('/kurisu/voice/bank.json'); }
     }, 1500);
   }, 2000);
-  /* 清单到位后用**真值**覆盖头像帧数（只读；清单本来就在上面的空闲预取清单里 ⇒ 走缓存，不额外发请求） */
+  /* 清单到位后用**真值**覆盖头像帧数（只读；清单本来就在上面的空闲预取清单里 ⇒ 走缓存，不额外发请求）
+     ★2026-11-04 站主口径「每页先给最快的东西，别一直挂着加载」：这份清单只在
+       「本页真有角色画布」且「上面那条空闲预取真的跑过」时才取 —— 有画布的页走缓存不多花字节，
+       没画布的页（/posts/、/posts/pki/、/categories/… 等）本来就不预取，这里也不该再发一次 68 KB。
+       帧数缺省值 framesOf 里已有，读不到清单不影响头像显示。 */
   setTimeout(function () {
+    var hasCanvas = document.querySelector('[data-xk-kurisu-canvas],#xk-kurisu__canvas,#charCanvas,.xk-scene');
+    if (!hasCanvas || !D.pref['/kurisu/manifest.json']) { return; }
     fetch('/kurisu/manifest.json', { cache: 'force-cache' }).then(function (r) { return r.json(); }).then(function (j) {
       var em = (j && j.emotions) || {};
       EMOS8.forEach(function (e) {
