@@ -10,7 +10,25 @@
 <meta name="theme-color" content="#05080a">
 {{- /* 入口页只做一件事：把客厅那张照片摆出来，让电视屏幕里放完开屏动画，然后进攻击实况。
        设计口径（站主 2026-11-04）：开屏就是电视里那一下开屏，不要额外文案。
-       体积：desk.webp 76 KB + opening.boot.webp 275 KB，一共约 360 KB；旧的整台客厅 2054 KB。 */}}
+       体积：desk.webp 76 KB + opening.boot.webp 275 KB，一共约 360 KB；旧的整台客厅 2054 KB。
+       ★2026-11-04 晚 站主口径「手机流量下啥也加载不出来」：**窄屏或慢网直接跳过这个门** ——
+         一秒都不等、一张图都不下（下面的 preload 只在放行时才生效），手机上真正要紧的是内容。
+         想看一次开屏：/?xk-gate=1；彻底关掉：/?xk-gate=0。 */}}
+<script>
+(function () {
+  try {
+    var q = String(location.search);
+    if (q.indexOf('xk-gate=1') >= 0) { return; }
+    if (q.indexOf('xk-gate=0') >= 0) { location.replace('/alerts/'); return; }
+    var narrow = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
+    var c = navigator.connection || {};
+    var et = String(c.effectiveType || '');
+    var slow = !!c.saveData || et === 'slow-2g' || et === '2g' ||
+               (typeof c.downlink === 'number' && c.downlink > 0 && c.downlink < 1.5);
+    if (narrow || slow) { location.replace('/alerts/'); }
+  } catch (e) { }
+})();
+</script>
 <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
 <link rel="preload" as="image" href="/kurisu/full/opening.gate.webp">
 <style>
