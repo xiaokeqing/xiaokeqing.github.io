@@ -245,18 +245,30 @@
     if (lbuilt || !lbox) { return; }
     lbuilt = true;
     lbox.innerHTML =
-      '<form class="xk-login-card" id="xkLoginForm" autocomplete="on">' +
+      '<div class="xk-login-card" id="xkLoginCard">' +
       '<h3>' + L10N.title + '</h3>' +
       '<p class="xk-login-hd">' + L10N.head + '</p>' +
+      '<form id="xkLoginForm" autocomplete="on">' +
       '<label for="xkLoginUser">' + L10N.userLb + '</label>' +
       '<input id="xkLoginUser" name="username" type="text" autocomplete="username" spellcheck="false" required>' +
       '<label for="xkLoginPass">' + L10N.passLb + '</label>' +
       '<input id="xkLoginPass" name="password" type="password" autocomplete="current-password" required>' +
       '<div class="xk-login-row"><button class="xk-login-sub" id="xkLoginSubmit" type="submit">登录</button>' +
       '<button class="xk-login-x" id="xkLoginCancel" type="button">取消</button></div>' +
+      '</form>' +
+      '<div class="xk-login-or"><span>或者用邮箱验证码（只有站主那个邮箱能收到）</span></div>' +
+      '<form id="xkCodeForm" autocomplete="off">' +
+      '<label for="xkCodeEmail">邮箱</label>' +
+      '<input id="xkCodeEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" placeholder="见 .env 里的 APP_AUTH_OWNER_EMAIL">' +
+      '<div class="xk-login-row"><button class="xk-login-sub xk-login-send" id="xkCodeSend" type="button">获取验证码</button></div>' +
+      '<label for="xkCodeInput">6 位验证码</label>' +
+      '<input id="xkCodeInput" name="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 位数字，5 分钟内有效">' +
+      '<div class="xk-login-row"><button class="xk-login-sub" id="xkCodeSubmit" type="submit">用验证码登录</button></div>' +
+      '</form>' +
       '<p class="xk-login-err" id="xkLoginErr" role="alert" aria-live="assertive"></p>' +
       '<p class="xk-login-who" id="xkLoginWho"></p>' +
-      '</form>';
+      '<p class="xk-login-note" id="xkLoginNote" role="status" aria-live="polite"></p>' +
+      '</div>';
     var form = document.getElementById('xkLoginForm');
     var err = document.getElementById('xkLoginErr');
     document.getElementById('xkLoginCancel').addEventListener('click', closeLogin);
@@ -265,6 +277,15 @@
       ev.preventDefault();
       submitLogin(err);
     });
+    var cform = document.getElementById('xkCodeForm');
+    if (cform) {
+      cform.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        submitCode();
+      });
+    }
+    var csend = document.getElementById('xkCodeSend');
+    if (csend) { csend.addEventListener('click', function () { sendCode(); }); }
   }
   function who() {
     var el = document.getElementById('xkLoginWho');
@@ -318,11 +339,8 @@
     }).then(function (x) {
       var b = x.b || {}, d = b.data || {};
       if (x.s === 200 && d.token) {
-        try { localStorage.setItem(AUTH_KEY, String(d.token)); } catch (e) { }
-        try { localStorage.setItem(USER_KEY, String(d.username || u)); } catch (e) { }
-        XL.state = 'logged-in'; XL.reason = ''; XL.username = d.username || u; XL.role = d.roleLabel || d.role || '';
-        paintLogin(); closeLogin(); unlock();
-        say(L10N.ok); who();
+        applySession(d, u);
+        setNote('');
         return;
       }
       if (x.s === 401) {
@@ -344,6 +362,103 @@
       paintLogin();
     }).then(function () {
       if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+    });
+  }
+  /* ---------- 邮箱验证码登录（★2026-11-04 站主口径：只给站主自己用，不做注册） ----------
+     契约（与后端 SecAgent 对齐）：
+       POST {apiBase}/api/auth/code        {email}
+         → 永远 200：{ok:true,expiresInSeconds:300}
+         或 {ok:false,reason:"unavailable"}   （白名单外 / 没配 SMTP / 发信失败 —— 一律同一句话，不区分）
+         或 {ok:false,reason:"rate_limited",retryAfterSeconds:N}
+       POST {apiBase}/api/auth/code-login  {email,code}
+         → 成功体与 /login 逐字段一致（code:200,data:{token,…}）；失败 {ok:false,reason:"invalid"}
+     纪律：验证码只在请求体里出现一次；不落 localStorage、不进 URL、不打日志；
+           登录成功后的令牌处理与密码登录共用同一个 applySession()。 */
+  function setNote(t) {
+    var el = document.getElementById('xkLoginNote');
+    if (el) { el.textContent = t || ''; }
+  }
+  function cooldown(btn, secs, label) {
+    if (!btn) { return; }
+    var left = Math.max(1, parseInt(secs, 10) || 60);
+    btn.disabled = true;
+    btn.textContent = label + '\uff08' + left + 's\uff09';
+    var t = setInterval(function () {
+      left -= 1;
+      if (left <= 0) { clearInterval(t); btn.disabled = false; btn.textContent = label; return; }
+      btn.textContent = label + '\uff08' + left + 's\uff09';
+    }, 1000);
+  }
+  function applySession(d, u) {
+    try { localStorage.setItem(AUTH_KEY, String(d.token)); } catch (e) { }
+    try { localStorage.setItem(USER_KEY, String(d.username || u)); } catch (e) { }
+    XL.state = 'logged-in'; XL.reason = '';
+    XL.username = d.username || u; XL.role = d.roleLabel || d.role || '';
+    paintLogin(); closeLogin(); unlock();
+    say(L10N.ok); who();
+  }
+  function sendCode() {
+    var base = apiBase();
+    var emailEl = document.getElementById('xkCodeEmail');
+    var btn = document.getElementById('xkCodeSend');
+    var email = String((emailEl || {}).value || '').replace(/^\s+|\s+$/g, '');
+    if (!base) { setNote(L10N.offline); return; }
+    if (!email || email.indexOf('@') < 0) { setNote('\u5148\u586b\u90ae\u7bb1'); if (emailEl) { emailEl.focus(); } return; }
+    if (btn && btn.disabled) { return; }
+    if (btn) { btn.disabled = true; btn.textContent = '\u53d1\u9001\u4e2d\u2026'; }
+    setNote('');
+    fetch(base + '/api/auth/code', {
+      method: 'POST', cache: 'no-store', credentials: 'omit',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (b) {
+      b = b || {};
+      if (b.ok) {
+        setNote('\u9a8c\u8bc1\u7801\u5df2\u53d1\u51fa\uff0c5 \u5206\u949f\u5185\u6709\u6548\uff08\u6ca1\u6536\u5230\u5c31\u7ffb\u5783\u573e\u90ae\u4ef6\uff09');
+        cooldown(btn, 60, '\u91cd\u65b0\u83b7\u53d6');
+        var c = document.getElementById('xkCodeInput');
+        if (c) { c.focus(); }
+        return;
+      }
+      if (b.reason === 'rate_limited') {
+        var ra = parseInt(b.retryAfterSeconds, 10) || 60;
+        setNote('\u592a\u9891\u7e41\u4e86\uff1a' + ra + ' \u79d2\u540e\u624d\u80fd\u518d\u8981\u4e00\u5c01');
+        cooldown(btn, Math.min(ra, 900), '\u91cd\u65b0\u83b7\u53d6');
+        return;
+      }
+      setNote('\u8fd9\u4e2a\u90ae\u7bb1\u6536\u4e0d\u5230\u9a8c\u8bc1\u7801\uff08\u53ea\u6709\u7ad9\u4e3b\u90a3\u4e2a\u90ae\u7bb1\u53ef\u7528\uff09');
+      if (btn) { btn.disabled = false; btn.textContent = '\u83b7\u53d6\u9a8c\u8bc1\u7801'; }
+    }).catch(function () {
+      setNote(L10N.offline);
+      if (btn) { btn.disabled = false; btn.textContent = '\u83b7\u53d6\u9a8c\u8bc1\u7801'; }
+    });
+  }
+  function submitCode() {
+    var base = apiBase();
+    var email = String((document.getElementById('xkCodeEmail') || {}).value || '').replace(/^\s+|\s+$/g, '');
+    var code = String((document.getElementById('xkCodeInput') || {}).value || '').replace(/[^0-9]/g, '');
+    var btn = document.getElementById('xkCodeSubmit');
+    var errEl = document.getElementById('xkLoginErr');
+    if (errEl) { errEl.textContent = ''; }
+    if (!base) { setNote(L10N.offline); return; }
+    if (!email || code.length !== 6) { setNote('\u90ae\u7bb1\u548c 6 \u4f4d\u9a8c\u8bc1\u7801\u90fd\u8981\u586b'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = '\u767b\u5f55\u4e2d\u2026'; }
+    fetch(base + '/api/auth/code-login', {
+      method: 'POST', cache: 'no-store', credentials: 'omit',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, code: code })
+    }).then(function (r) {
+      XL.status = r.status;
+      return r.json().catch(function () { return null; });
+    }).then(function (b) {
+      b = b || {};
+      var d = b.data || {};
+      if (b.code === 200 && d.token) { setNote(''); applySession(d, 'admin'); return; }
+      if (errEl) { errEl.textContent = '\u9a8c\u8bc1\u7801\u4e0d\u5bf9\u6216\u5df2\u8fc7\u671f\uff08\u4e00\u6b21\u6709\u6548\uff0c5 \u5206\u949f\uff09'; }
+    }).catch(function () {
+      setNote(L10N.offline);
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = '\u7528\u9a8c\u8bc1\u7801\u767b\u5f55'; }
     });
   }
   function probeAuth() {

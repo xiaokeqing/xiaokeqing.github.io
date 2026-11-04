@@ -236,3 +236,12 @@
     /* ④ 导航与卡片左对齐（卡片贴 left:8px，导航原来在 left:0 / 由 rail() 写 10px） */
     body.xk-has-idcard .dock{left:8px}
   }
+/* ★2026-11-04 登录弹窗加「邮箱验证码」第二条路（只给站主；不做注册） */
+.xk-login-card{max-height:calc(100vh - 40px);overflow-y:auto}
+.xk-login-or{display:flex;align-items:center;gap:9px;margin:14px 0 10px;
+  font:11px/1.4 var(--mono,monospace);color:var(--mut,#9fb0ba)}
+.xk-login-or::before,.xk-login-or::after{content:"";flex:1;height:1px;background:rgba(127,211,227,.18)}
+.xk-login-or span{white-space:nowrap}
+.xk-login-note{font:11.5px/1.55 var(--mono,monospace);color:#7fd3e3;margin:7px 0 0;min-height:1px}
+.xk-login-note:empty{display:none}
+.xk-login-send{flex:1}
