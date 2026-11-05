@@ -68,8 +68,29 @@
      —— 图集是 8 列宽，但只有前 3 格有画面，后 5 格是空位；按"列数×行数"算会画到空位（实测：头像整块变白）。
      清单到位后（空闲预取那张）再用真值覆盖一次，防止以后素材改成 8 帧。 */
   var ctx = cv.getContext('2d'), CELL = 132, COLS = 8, framesOf = {}, imgs = {}, url = {}, last = 0, fi = 0;
+  /* ★2026-11-05：慢网标记（html.xk-slow），头像改为纯色圆占位，省 63 KB。 */
+  D.slowAv = false;
+  try { D.slowAv = document.documentElement.classList.contains('xk-slow'); } catch (e) { }
   EMOS8.forEach(function (e) { url[e[0]] = e[2]; framesOf[e[0]] = 3; });
-  function im(u) { if (!imgs[u]) { var i = new Image(); i.decoding = 'async'; i.src = u; imgs[u] = i; } return imgs[u]; }
+  function im(u) {
+    /* ★2026-11-05 站主口径「按网速分档」：慢网不取头像雪碧图（normal.idle.webp 63 KB），
+       画一个同色纯色圆占位 —— 头像框与版式都在，只是没有画面；?xk-kurisu=on 可强制走原路径。 */
+    try {
+      if (D.slowAv && String(location.search).indexOf('xk-kurisu=on') < 0) {
+        if (!D.slowAvDrawn) {
+          D.slowAvDrawn = 1;
+          try {
+            ctx.clearRect(0, 0, CELL, CELL);
+            ctx.fillStyle = 'rgba(127,212,216,.18)';
+            ctx.beginPath(); ctx.arc(CELL / 2, CELL / 2, CELL * 0.34, 0, Math.PI * 2); ctx.fill();
+          } catch (e) { }
+        }
+        return { complete: false, naturalWidth: 0 };
+      }
+    } catch (e) { }
+    if (!imgs[u]) { var i = new Image(); i.decoding = 'async'; i.src = u; imgs[u] = i; }
+    return imgs[u];
+  }
   function paint() {
     var u = url[D.emo] || url.normal, g = im(u);
     if (!g.complete || !g.naturalWidth) { return; }

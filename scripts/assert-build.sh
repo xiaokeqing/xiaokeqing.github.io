@@ -615,6 +615,37 @@ else
   ok "public/redteam/submissions/ 不存在（样本正文未被渲染成页面）"
 fi
 
+# ---------- ⑥ 慢网分档与门页（2026-11-05 新增回归项） ----------
+head1 "慢网分档（xk-slow）与门页"
+
+if grep -q "xk-slow" "$PUB/alerts/index.html"; then
+  ok "alerts/index.html 带慢网判定（head 里的 xk-slow 脚本在位）"
+else
+  no "alerts/index.html 里没有 xk-slow 判定 —— 慢网不再降档，会白拉 400+ KB"
+fi
+
+if grep -qh "slow-placeholder" "$PUB/js/xk-shell.min."*.js 2>/dev/null; then
+  ok "xk-shell.min 里有 slow-placeholder（慢网头像画占位、不取 63 KB 雪碧图）"
+else
+  no "xk-shell.min 里找不到 slow-placeholder —— 慢网又会取头像雪碧图"
+fi
+
+if grep -q "data-xk-gate" "$PUB/index.html"; then
+  if grep -q "kurisu/manifest.json" "$PUB/index.html"; then
+    no "门页 index.html 里出现了 kurisu/manifest.json —— 门页只该有开屏动画"
+  else
+    ok "门页不含人物清单（只放开屏动画）"
+  fi
+else
+  no "index.html 不是门页（缺 data-xk-gate）"
+fi
+
+if grep -q "gateCrt" "$PUB/index.html"; then
+  ok "门页有开屏画布 gateCrt"
+else
+  no "门页没有 gateCrt 画布 —— 开屏动画不会显示"
+fi
+
 # ---------- 汇总 ----------
 head1 "汇总"
 echo "  通过 $PASS 项，失败 $FAIL 项"
