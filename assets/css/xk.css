@@ -736,3 +736,67 @@ html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}
     .dock{gap:4px;padding:6px}
     .dock a{min-height:44px;min-width:44px;justify-content:center;padding:13px 10px}
   }
+
+
+/* ============================================================================
+   ★2026-11-05 站主口径「把页面布局都调整一下，好好设计一下，看这乱成啥了」
+   —— 作战室（/alerts/）重排 v2。只覆盖 #v-monitor 内部，不动配色、不动其它页。
+   病根（站主截图）：① 标题、四个 tab、右侧取数状态挤在同一行，1440 宽就把最后一个 tab 顶到边上；
+   ② 三个数字卡高 60px 全是「—」，下面还挂一行「战报载入中…」，空得难看；
+   ③ 实时流黑块没有高度上限，1440×900 下吃掉 60% 屏幕还全黑；
+   ④ 右栏三张卡骨架条粗细不齐，「取数中…」孤零零挂在卡片顶上。
+   改法：标题行与 tab 行分开、数字卡统一高度且数字放大、实时流给 min/max 高度、
+   右栏骨架条统一成 8px、内容区在超宽屏收口到 1240px。
+   ============================================================================ */
+
+/* 内容收口：1920 不再无限拉宽，1440 以下铺满 */
+#v-monitor .screen-bd{max-width:1240px;margin:0 auto;padding:14px 18px 22px;display:flex;flex-direction:column;gap:14px}
+
+/* 标题行：标题 + 取数状态一行，tab 单独一行（整行等分，不再被挤到边角） */
+#v-monitor .screen-hd{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:14px 18px 0}
+#v-monitor .screen-hd .t{flex:1 1 auto;min-width:0}
+#v-monitor .screen-hd .sync{flex:0 0 auto;order:2;font-size:12px;opacity:.8}
+#v-monitor .ops-tabs{order:3;flex:1 1 100%;display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 0}
+#v-monitor .ops-tabs button{flex:1 1 0;min-width:96px;min-height:34px;justify-content:center}
+
+/* 三个数字卡：统一高度、数字放大、说明统一 */
+#v-monitor .ops-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  padding:0;background:none;border:0}
+#v-monitor .oh-cell{display:flex;flex-direction:column;justify-content:center;gap:6px;
+  min-height:96px;padding:16px 18px;border-radius:14px;
+  background:rgba(12,18,22,.72);border:1px solid rgba(127,211,227,.18)}
+#v-monitor .oh-cell b{font:600 30px/1.1 var(--mono,ui-monospace,Consolas,monospace);letter-spacing:.5px}
+#v-monitor .oh-cell span{font-size:12.5px;opacity:.75}
+#v-monitor .oh-line{grid-column:1 / -1;min-height:0;padding:2px 2px 0;font-size:12.5px;opacity:.72}
+
+/* 实时流：给一个高度区间，不让它独占屏幕 */
+#v-monitor .ops-live{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;align-items:start}
+#v-monitor .term{min-height:320px;max-height:min(52vh,520px);display:flex;flex-direction:column;overflow:hidden}
+#v-monitor .term-bd{flex:1 1 auto;overflow:auto}
+#v-monitor .ops-rail{display:flex;flex-direction:column;gap:14px}
+#v-monitor .ops-rail .mod{padding:12px 14px}
+#v-monitor .ops-rail .mod-hd{margin-bottom:8px}
+
+/* 骨架条统一粗细，不再忽粗忽细；空态一句话说清"在取数" */
+#v-monitor .sk{height:8px;border-radius:5px}
+#v-monitor .mod-bd .row{min-height:22px;align-items:center}
+
+/* 窄屏：数字卡一列、右栏落到下方 */
+@media (max-width:1080px){
+  #v-monitor .ops-live{grid-template-columns:minmax(0,1fr)}
+  #v-monitor .term{max-height:none;min-height:260px}
+}
+@media (max-width:720px){
+  #v-monitor .screen-bd{padding:10px 12px 18px;gap:10px}
+  #v-monitor .ops-hero{grid-template-columns:minmax(0,1fr)}
+  #v-monitor .oh-cell{min-height:76px;padding:12px 14px}
+  #v-monitor .oh-cell b{font-size:24px}
+  #v-monitor .ops-tabs button{min-width:0;flex:1 1 46%}
+}
+
+/* 空态/占位再收一轮（站主截图里"战报载入中…"像一条多余的横杠） */
+#v-monitor .oh-line{background:none;border:0;box-shadow:none;color:inherit}
+#v-monitor .term-bd:empty::before{content:"正在连接实时流…（慢网下第一批事件可能要等几秒）";
+  display:flex;align-items:center;justify-content:center;height:100%;min-height:220px;
+  font-size:12.5px;opacity:.55;letter-spacing:.3px}
+#v-monitor .ops-hero{background:none;border:0;box-shadow:none}
