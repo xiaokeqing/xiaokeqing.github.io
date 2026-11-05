@@ -10,7 +10,9 @@
      依据（2026-10-16 20:00 实测）：后端本机暖态 2.9~5.3ms，但**经 Cloudflare 单端点 0.94~2.60s**、
      建连 TCP 209ms + TLS 439ms ≈ 650ms、命中 LHR 边缘且抖动大（同一端点连打 6 次 0.96~3.68s）
      ⇒ 12s 会导致"慢一下就整块读不到"。口径与文档一致："20~25s 超时 + 重试 + 保留上次成功数据"。 */
-  var TIMEOUT = 25000;
+  var TIMEOUT = 9000;   /* ★2026-11-04 晚 站主口径「先给最快的东西」：原来 25 s 才报超时，
+                         慢网上用户盯着「取数中…」25 秒什么都看不到。9 s 足够 CF 回源 + 慢网 3G，
+                         超时就明说"超时（9s 未返回）"，用户还可以手动刷新。 */
   var REFRESH = 40000;
   var lastSync = 0;
 
@@ -366,7 +368,7 @@
   function whyOf(e) {
     if (!e) return '未发起';
     if (e.status) return 'HTTP ' + e.status;
-    if (e.name === 'AbortError') return '超时（' + Math.round(TIMEOUT / 1000) + 's 未返回）';
+    if (e.name === 'AbortError') return '超时（' + Math.round(TIMEOUT / 1000) + 's 未返回，网络慢可点页面右上角刷新重试）';
     if (e.name === 'TypeError') return '网络/CORS 被拦（' + (e.message || 'fetch failed') + '）';
     return (e.name ? e.name + '：' : '') + (e.message || '不可达');
   }

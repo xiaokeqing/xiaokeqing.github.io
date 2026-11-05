@@ -21,15 +21,14 @@ const canvas = document.getElementById('charCanvas');
    （后面的 resize/draw/状态机一个都没跑，控制台每次导航都留一条红字）。
    拿不到舞台就安静退出：不注册监听、不占内存、不污染控制台。 */
 if (!canvas || !crt) { return; }
-/* ★2026-11-04 晚 站主口径「手机开流量啥也加载不出来」：**手机上不跑 CRT 角色层**。
-   实测 /alerts/ 在 350 kbps 下 857 KB，其中角色相关 416 KB（视频 115 + 清单 68 + 状态机 54 +
-   播放器 71 + 头像 63 + 光束 45），而那块画面在手机上只有一两百像素。
-   手机（≤720 CSS px）直接退出：不下视频、不下清单、不建画布 —— 首屏只留文字与数据。
+/* ★2026-11-04 晚 站主口径：**按网速分档，不按设备分档**（他电脑是限速校园网、手机流量反而快）。
+   慢网（html.xk-slow，由 head 里那段 200 字节脚本判定）不跑角色层：/alerts/ 慢网下 857 KB 里
+   角色相关占 416 KB（视频 115 + 清单 68 + 状态机 54 + 播放器 71 + 头像 63 + 光束 45）。
    想强制看角色：/?xk-kurisu=on。 */
 try {
   const qs = String(location.search);
   const forceOn = qs.indexOf('xk-kurisu=on') >= 0;
-  if (!forceOn && window.matchMedia && window.matchMedia('(max-width: 720px)').matches) { return; }
+  if (!forceOn && document.documentElement.classList.contains('xk-slow')) { return; }
 } catch (e) { }
 const ctx = canvas.getContext('2d');
 const cache = {};

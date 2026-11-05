@@ -105,8 +105,22 @@
   <script src="/js/app.js" defer></script>
   {{- if site.Params.kurisuEnabled }}
   {{/* 角色播放器：独立模块，app.js 完全不知道它存在（路由靠 hashchange +
-       对 #content 的 MutationObserver 自己感知，见文件头注释）。 */}}
-  <script src="/js/kurisu-player.js" defer></script>
+       对 #content 的 MutationObserver 自己感知，见文件头注释）。
+       ★2026-11-04 晚 站主口径「电脑是限速校园网」：**慢网不加载这个 71 KB 模块** ——
+         此时 xk-scene.js 也不跑角色层，画面上没有人物，装一个没人用的播放器纯属浪费。
+         判定靠 head 里那段脚本加的 html.xk-slow；想看角色：/?xk-kurisu=on。 */}}
+  <script defer>
+    (function () {
+      try {
+        var d = document.documentElement;
+        if (d.classList.contains('xk-slow') && String(location.search).indexOf('xk-kurisu=on') < 0) { return; }
+      } catch (e) { }
+      var s = document.createElement('script');
+      s.src = '/js/kurisu-player.js';
+      s.defer = true;
+      document.head.appendChild(s);
+    })();
+  </script>
   {{- end }}
 
   {{- /* 视图模板表：每条路由一份 <template>，与 <main> 平级（不在它里面）。

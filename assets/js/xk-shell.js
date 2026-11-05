@@ -433,7 +433,24 @@ function makePlayer(canvas){
   const ctx = canvas.getContext('2d');
   const cache = {};
   let cur = null, frames = 0, fi = 0, last = 0;
+  /* ★2026-11-04 晚 站主口径（按网速分档）：慢网不取头像雪碧图（normal.idle.webp 63 KB），
+     画一个同色的纯色圆占位，卡片布局不变、头像框仍在（?xk-kurisu=on 可强制走原路径）。 */
+  const xkSlow = (function(){ try{
+    return document.documentElement.classList.contains('xk-slow')
+        && String(location.search).indexOf('xk-kurisu=on') < 0;
+  }catch(e){ return false; } })();
   function img(src){ if(!cache[src]){ const im = new Image(); im.src = src; cache[src] = im; } return cache[src]; }
+  if(xkSlow){
+    function placeholder(){
+      try{
+        ctx.clearRect(0, 0, CELL, CELL);
+        ctx.fillStyle = 'rgba(127,212,216,.18)';
+        ctx.beginPath(); ctx.arc(CELL/2, CELL/2, CELL*0.34, 0, Math.PI*2); ctx.fill();
+      }catch(e){}
+    }
+    placeholder();
+    return { set: function(){}, draw: function(){}, note: 'slow-placeholder' };
+  }
   function set(src){
     if(cur === src) return;
     cur = src; fi = 0;

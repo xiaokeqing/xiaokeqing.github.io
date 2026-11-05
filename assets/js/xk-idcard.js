@@ -963,6 +963,12 @@
   function loadPlayer() {
     /* ★全站关角色总开关（v4 §六#2 合规）：开关打开时不拉播放器（也就不会有角色/语音） */
     if (window.__xkNoKurisu) { return; }
+    /* ★2026-11-04 晚 站主口径：慢网不拉这个 71 KB 的播放器 —— 此时 xk-scene 也不跑角色层，
+       页面上没有人物，播放器只占带宽（/?xk-kurisu=on 可强制）。 */
+    try {
+      if (document.documentElement.classList.contains('xk-slow')
+          && String(location.search).indexOf('xk-kurisu=on') < 0) { return; }
+    } catch (e) { }
     if (window.KurisuPlayer || D.playerAsked) { return; }
     D.playerAsked = true;
     D.playerAt = Math.round(performance.now());
@@ -1044,8 +1050,11 @@
     if (D.prefetchOff) { D.prefetchNote = '跳过空闲预取（' + D.prefetchOff + '：只取首屏 + 当前栏目）'; return; }
     idle(function () {
       /* ★ 2026-10-30：只有页面上真有角色画布时才预取这两份清单。
-       实测 /posts/pki/ 下没有任何角色画布却白拉 manifest 68KB + video-manifest 20KB。 */
-if(document.querySelector('[data-xk-kurisu-canvas],#xk-kurisu__canvas,#charCanvas,.xk-scene')){
+       实测 /posts/pki/ 下没有任何角色画布却白拉 manifest 68KB + video-manifest 20KB。
+       ★ 2026-11-04 晚：慢网（html.xk-slow）也不预取 —— xk-scene 此时不跑角色层，这两份清单没人用。 */
+      var slowNow = false;
+      try { slowNow = document.documentElement.classList.contains('xk-slow'); } catch (e) { }
+if(!slowNow && document.querySelector('[data-xk-kurisu-canvas],#xk-kurisu__canvas,#charCanvas,.xk-scene')){
   ['/kurisu/manifest.json', '/kurisu/video-manifest.json'].forEach(prefetch);
 }
       /* ★2026-10-22：语音库 bank.json 145 KB **默认不预取**。

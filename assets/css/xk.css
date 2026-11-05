@@ -644,11 +644,10 @@
   /*   ★2026-10-16 站主口径②：**不要 10 张背景切换器**；背景只放"人物不在的电视/书桌图"（desk.webp），
       人物在手机面板里（主页的她在 CRT 里）；光束保留、做成左上角头像旁的小按钮；配色切换器不要（用现有暖色）。 */
   .bg{position:fixed;inset:0;z-index:-3;background:#0A0D11 center/cover no-repeat;background-image:url(/kurisu/scene/bg/room_clean.webp);transform:scale(1.06)}
-  /* ★2026-11-04 晚 站主口径「手机开流量啥也加载不出来」：手机上这张 76 KB 的暖玻璃照片底不下，
-     换一层同色渐变（与 .xk-bg 同一套色），6 寸屏上肉眼几乎无差别，但整页重量少 76 KB。 */
-  @media (max-width: 720px){
-    .bg{background-image:radial-gradient(120% 80% at 20% 0%,#101a1f 0%,#0a1013 45%,#05080a 100%)}
-  }
+  /* ★2026-11-04 晚 站主口径：按网速分档（电脑限速、手机流量快），不按屏幕宽度。
+     慢网时这张 76 KB 的暖玻璃照片底 + 45 KB 光束层都不下，换同色渐变（肉眼几乎无差别）。 */
+  html.xk-slow .bg{background-image:radial-gradient(120% 80% at 20% 0%,#101a1f 0%,#0a1013 45%,#05080a 100%)}
+  html.xk-slow .bglite{display:none}
   /*   ★2026-10-17 站主口径（再改）：换干净房间底图 room_clean.webp（无显示器外框，任意分辨率都不露边）。
       来源 = screen_empty.webp（原图 1094×653，CRT 屏内画面、天然不带外框），2× Lanczos 上采样 + 轻锐化到 2188×1306，
       quality=88 转 webp（158KB）。room_empty.webp 自带一圈 CRT 外框，cover 放大后两侧露深色边框 = 站主说的"雾"。

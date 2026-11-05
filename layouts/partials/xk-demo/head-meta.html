@@ -3,6 +3,14 @@
        其余一个字节都不加。 */ -}}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{- /* ★2026-11-04 晚 站主口径：**按网速分档，不按设备分档**（他电脑是限速校园网、手机流量反而快）。
+       这一段在 CSS 之前同步跑：测到慢网就给 <html> 挂 xk-slow，样式表里所有"慢网省流"的规则
+       都挂在这个类上（不下背景照片、不显示光束层）。只读不发请求，约 200 字节。 */}}
+<script>(function(){try{var c=navigator.connection||{},et=String(c.effectiveType||""),q=String(location.search);
+if(q.indexOf("xk-net=fast")>=0){return;}
+var slow=!!c.saveData||et==="slow-2g"||et==="2g"||(typeof c.downlink==="number"&&c.downlink>0&&c.downlink<2);
+if(q.indexOf("xk-net=slow")>=0){slow=true;}
+if(slow){document.documentElement.classList.add("xk-slow");}}catch(e){}})();</script>
 {{- $desc := .Description | default site.Params.description -}}
 {{- $ogTitle := cond .IsHome "xiaokeqing · 个人博客与安全运营工作台" .Title -}}
 {{- $ogImgPath := "/images/bg.jpg" -}}
