@@ -28,7 +28,7 @@
          或 ?xk-saver=1）并给 <html> 上 xk-saver 类；重活（不启动状态机/不取垫板）由它自己安排。 */}}
   <script src="/js/xk-saver.js"></script>
   {{- /* ★P0-④：首屏第一张（壁纸）preload + high —— 只这一张抢带宽，其余按顺序 decode */}}
-  <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="/images/crt/desk.webp?v=20261106b" fetchpriority="high">
 <style>
   :root{
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -200,7 +200,7 @@
 
 
 <div class="stage" id="stage">
-  <img class="desk" fetchpriority="high" src="/images/crt/desk.webp" alt="" aria-hidden="true">
+  <img class="desk" fetchpriority="high" src="/images/crt/desk.webp?v=20261106b" alt="" aria-hidden="true">
   <img class="glow" src="/kurisu/scene/amadeus_ambient_high_blend.webp" alt="" aria-hidden="true">
 
   <div class="crt" id="crt">
