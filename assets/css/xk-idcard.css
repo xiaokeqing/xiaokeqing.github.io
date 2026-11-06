@@ -259,3 +259,22 @@
 .xk-login-note{font:11.5px/1.55 var(--mono,monospace);color:#7fd3e3;margin:7px 0 0;min-height:1px}
 .xk-login-note:empty{display:none}
 .xk-login-send{flex:1}
+
+/* ★2026-11-06 站主口径（第二次提）：导航从左侧竖排改到顶部横条。
+   桌面专用（≤980 px 那套本来就是贴顶横条）。原来的几何：卡片 top:8 / 导航 top:104 竖排在左，
+   主内容 padding-left:88；改后：导航 fixed 顶部 46 px，卡片下移到 top:56，内容左内边距收到 24。 */
+@media (min-width:981px){
+  body.xk-has-idcard .dock{
+    position:fixed;left:0;right:0;top:0;width:auto;height:46px;
+    flex-direction:row;align-items:center;flex-wrap:nowrap;gap:2px;padding:0 14px;
+    border:0;border-bottom:1px solid rgba(127,212,216,.16);border-radius:0;
+    background:rgba(7,11,13,.72);backdrop-filter:blur(12px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  body.xk-has-idcard .dock .brand{border-bottom:0;border-right:1px solid rgba(127,212,216,.14);
+    margin:0 10px 0 0;padding:0 12px 0 2px;height:22px;display:flex;align-items:center;text-align:left}
+  body.xk-has-idcard .dock a{padding:7px 12px;border-radius:9px}
+  body.xk-has-idcard .xk-idcard{top:56px}
+  body.xk-has-idcard #xk-app .main,
+  body.xk-has-idcard .main{padding:62px 24px 60px 120px;max-width:1400px}
+}
+/* 顶栏里 hidden 的项必须真的不显示（<a> 自带 display 会压过 [hidden]） */
+body.xk-has-idcard .dock a[hidden]{display:none !important}

@@ -53,17 +53,18 @@
         e.style.bottom = ''; e.style.transform = ''; });
       return;
     }
-    [card, dock, col].forEach(function(e){ if (!e) return;
+    /* ★2026-11-06 站主口径：导航上顶（顶部 46 px 横条由 CSS 定位）⇒ rail 不再搬 dock，
+       只把卡片正下方那串功能钮排好；y 用卡片实测下沿，卡片 top 从 8 改成 56 也不用改这里。 */
+    [card, col].forEach(function(e){ if (!e) return;
       e.style.left = LEFT + 'px'; e.style.right = 'auto';
       e.style.bottom = 'auto'; e.style.transform = 'none'; });
-    /* 卡片自己的 top 交给 CSS（left:8px;top:8px），这里只从它下沿往下排 */
-    var y = LEFT + card.offsetHeight + GAP;
+    dock.style.top = ''; dock.style.left = ''; dock.style.right = '';
+    var y = card.getBoundingClientRect().bottom + GAP;
     if (col) {
       col.style.top = y + 'px';
       /* 收起时 CSS 是 display:none（桌面不再常驻）⇒ offsetHeight=0 ⇒ 不占位，导航紧贴卡片 */
       if (col.offsetHeight) y += col.offsetHeight + GAP;
     }
-    dock.style.top = y + 'px';
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', rail);
   else rail();
