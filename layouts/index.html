@@ -54,7 +54,10 @@
   .g-desk img{width:100%; height:100%; object-fit:cover; display:block; user-select:none; -webkit-user-drag:none}
   /* 电视屏幕：位置/尺寸全部由变量驱动，换视口等比跟随（与 /room/ 同一套口径） */
   .crt{position:absolute; left:var(--crt-x); top:var(--crt-y); width:var(--crt-w); height:var(--crt-h)}
-  .crt canvas{width:100%; height:100%; display:block; background:#0a0f12}
+  /* ★2026-11-06 站主「网页还加载不出来」：CRT 里先铺一张 15 KB 的静帧（opening.poster.webp），
+     动画图集（268 KB）到了再盖上去 —— 慢网也不会出现"整屏全黑"的第一印象。 */
+  .crt{background:#0a0f12 url("/kurisu/full/opening.poster.webp") center/cover no-repeat}
+  .crt canvas{width:100%; height:100%; display:block; background:transparent}
   .g-skip{
     position:fixed; right:18px; bottom:16px; z-index:9;
     padding:7px 14px; border-radius:999px; cursor:pointer;
@@ -138,6 +141,10 @@
 
     var img = new Image();
     img.decoding = 'async';
+    /* ★2026-11-06 站主「网页还加载不出来」：绝对兜底 —— 不管图集到没到、动画播没播完，
+       2.6 s 一定进站。原来只有"动画播完/播完停留"才跳转，慢网或浏览器节能模式把 rAF
+       节流到 1 Hz 时，门页就整屏黑着不动，看起来就是"网站打不开"。 */
+    setTimeout(function(){ finish(); }, 2600);
     img.onload = function(){
       var i = 0;
       draw(img, 0);
