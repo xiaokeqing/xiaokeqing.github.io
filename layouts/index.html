@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#05080a">
 {{- /* 入口页只做一件事：把客厅那张照片摆出来，让电视屏幕里放完开屏动画，然后进攻击实况。
        设计口径（站主 2026-11-04）：开屏就是电视里那一下开屏，不要额外文案。
-       体积：desk-gate.webp 22 KB + opening.gate2.webp 38 KB ≈ 60 KB（2026-11-06 从 355 KB 压下来）；旧的整台客厅 2054 KB。
+       体积：desk.webp 76 KB + opening.gate.webp 268 KB ≈ 344 KB（2026-11-06 夜 站主「速度太快了」后从 65 KB 版恢复成高清版，另加 2.6 s 绝对兜底）。
        ★2026-11-04 晚 站主口径（改）：**按"网速"分，不按"设备"分** —— 站主电脑是限速的校园网、
          手机流量反而快，所以窄屏不再特殊对待。只在测到慢网（saveData / 2g / downlink<1.5 Mbps）
          时跳过这个门：一秒都不等、一张图都不下。
@@ -33,8 +33,8 @@
   } catch (e) { }
 })();
 </script>
-<link rel="preload" as="image" href="/images/crt/desk-gate.webp" fetchpriority="high">
-<link rel="preload" as="image" href="/kurisu/full/opening.gate2.webp">
+<link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
+<link rel="preload" as="image" href="/kurisu/full/opening.gate.webp">
 <style>
   :root{
     --crt-x:32.8947%; --crt-y:20.7226%; --crt-w:35.0478%; --crt-h:47.0776%;
@@ -70,7 +70,7 @@
 </style>
 </head>
 <body>
-<div class="g-desk"><img src="/images/crt/desk-gate.webp" alt="" aria-hidden="true" fetchpriority="high" decoding="async"></div>
+<div class="g-desk"><img src="/images/crt/desk.webp" alt="" aria-hidden="true" fetchpriority="high" decoding="async"></div>
 <div class="crt" aria-hidden="true"><canvas id="gateCrt"></canvas></div>
 <a class="g-skip" id="gSkip" href="/alerts/">跳过</a>
 <noscript><meta http-equiv="refresh" content="0;url=/alerts/"></noscript>
@@ -78,9 +78,9 @@
 (function(){
   'use strict';
   var HOME = '/alerts/';
-  var ATLAS = '/kurisu/full/opening.gate2.webp';
-  var COLS = 8, FW = 380, FH = 290, FRAMES = 8, STEP = 95;   /* 8 帧 × 95 ms ≈ 0.76 s，含张眼那一下 */
-  var HOLD = 260, FADE = 260;
+  var ATLAS = '/kurisu/full/opening.gate.webp';
+  var COLS = 8, FW = 380, FH = 290, FRAMES = 8, STEP = 70;   /* 8 帧 × 70 ms，高质量图集（267 KB），速度已不是瓶颈 */
+  var HOLD = 320, FADE = 340;
 
   function go(){
     try { sessionStorage.setItem('xk-entered', '1'); } catch(e){}
@@ -144,7 +144,7 @@
     /* ★2026-11-06 站主「网页还加载不出来」：绝对兜底 —— 不管图集到没到、动画播没播完，
        2.6 s 一定进站。原来只有"动画播完/播完停留"才跳转，慢网或浏览器节能模式把 rAF
        节流到 1 Hz 时，门页就整屏黑着不动，看起来就是"网站打不开"。 */
-    setTimeout(function(){ finish(); }, 1400);
+    setTimeout(function(){ finish(); }, 2600);
     img.onload = function(){
       var i = 0;
       draw(img, 0);
