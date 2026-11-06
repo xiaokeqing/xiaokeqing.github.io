@@ -301,14 +301,14 @@ if grep -q 'data-src=/kurisu/scene/subtitle_frame_big.webp' "$PUB/room/index.htm
 # ★2026-11-04 站主口径：电视房间从首页搬到 /room/（首页只剩入口动画）⇒ CRT 变量校验改指向 /room/
 CRT_PG="$PUB/room/index.html"
 if [ -s "$CRT_PG" ] && grep -q -- '--crt-w' "$CRT_PG" && grep -q 'width:var(--crt-w)' "$CRT_PG"; then ok "CRT 尺寸由 --crt-w/--crt-h 驱动（随视口等比，/room/）"; else no "CRT 尺寸不是变量驱动（换视口会错位，查 /room/）"; fi
-# ★2026-11-04 二次口径：首页 = 入口页，只许有「电视屏幕那一张画布」放开屏动画；
-#   整台客厅（角色舞台 charCanvas / 场景机）仍然只在 /room/。
+# ★2026-11-06 站主口径「就是原来那样的，没删之前的主页，动画就在主页上」：
+#   首页恢复成电视房间外壳（整台客厅 charCanvas + CRT + 开屏动画同页），/room/ 继续保留同一套外壳。
 GATE_PG="$PUB/index.html"
 if [ -s "$GATE_PG" ]; then
-  if grep -q 'id=gateCrt' "$GATE_PG" && grep -q -- '--crt-w' "$GATE_PG" && ! grep -q 'charCanvas' "$GATE_PG"; then
-    ok "入口页只有电视开屏画布（gateCrt，尺寸变量驱动），没有整台客厅舞台"
+  if grep -q -- '--crt-w' "$GATE_PG" && grep -q 'charCanvas' "$GATE_PG" && grep -q 'opening' "$GATE_PG"; then
+    ok "首页是电视房间外壳（charCanvas + CRT 尺寸变量 + 开屏动画）"
   else
-    no "入口页应只含 gateCrt 画布且不许出现 charCanvas（开屏动画靠它放，别把整台客厅搬回来）"
+    no "首页缺客厅舞台 / CRT 变量 / 开屏动画之一 —— 主页又变回跳转页了"
   fi
 fi
 
@@ -630,21 +630,21 @@ else
   no "xk-shell.min 里找不到 slow-placeholder —— 慢网又会取头像雪碧图"
 fi
 
-if grep -q "data-xk-gate" "$PUB/index.html"; then
-  if grep -q "kurisu/manifest.json" "$PUB/index.html"; then
-    no "门页 index.html 里出现了 kurisu/manifest.json —— 门页只该有开屏动画"
-  else
-    ok "门页不含人物清单（只放开屏动画）"
-  fi
+# ★2026-11-06 站主口径「就是原来那样的，没删之前的主页，动画就在主页上」：
+#   首页不再是那张独立门页，而是把 /room/ 的电视房间外壳搬回根路径（去掉登录门禁与 noindex）。
+#   所以这两条改成判「首页是主页外壳」+「CRT 开屏画布在位」。
+if grep -q 'data-xk-ssr=home' "$PUB/index.html"; then
+  ok "首页 index.html 是主页外壳（data-xk-ssr=home）"
 else
-  no "index.html 不是门页（缺 data-xk-gate）"
+  no "index.html 不是主页外壳（缺 data-xk-ssr=\"home\"）—— 首页又变成跳转页了"
 fi
 
-if grep -q "gateCrt" "$PUB/index.html"; then
-  ok "门页有开屏画布 gateCrt"
+if grep -q "charCanvas" "$PUB/index.html" && grep -q "opening" "$PUB/index.html"; then
+  ok "首页有 CRT 画布与开屏动画（动画就在主页上）"
 else
-  no "门页没有 gateCrt 画布 —— 开屏动画不会显示"
+  no "首页缺 CRT 画布或开屏动画 —— 电视里那段动画不会播"
 fi
+
 
 # ---------- 汇总 ----------
 head1 "汇总"
