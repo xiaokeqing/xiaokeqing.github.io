@@ -16,9 +16,9 @@
   <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
   <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">攻防验证</a>
   <a href="/more/" class="{{ if or (eq $v "more") (eq $v "ai") (eq $v "status") (eq $v "api") (eq $v "tools") (eq $v "what") }}on{{ end }}">更多</a>
-  {{- /* ★2026-11-04 站主口径：电视房间从首页搬到 /room/，只在登录后出现。
-         默认 hidden，由 assets/js/xk-idcard.js 在 __xkAdmin.allowed() 为真时去掉 hidden。 */}}
-  <a href="/room/" id="dockRoom" class="{{ if eq $v "room" }}on{{ end }}" hidden>我的房间</a>
+  {{- /* ★2026-11-07：/room/ 与 / 合并 —— 首页本身就是电视房间外壳，单独一个"我的房间"入口已经没意义。
+         这一项删除；老书签访问 /room/ 由 netlify.toml 的 301 规则兜住。
+         assets/js/xk-idcard.js 的 syncRoom() 在元素缺席时直接 return（已核实安全）。 */}}
       {{ partial "xk-demo/dock-tools.html" . }}
 </nav>
 

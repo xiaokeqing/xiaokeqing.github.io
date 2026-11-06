@@ -65,3 +65,17 @@
 #   to = "https://demo.xiaokeqing.cn/api/:splat"
 #   status = 200
 #   force = false
+
+# ★2026-11-07：/room/ 与 / 合并 —— 首页本身就是电视房间外壳，保留 /room/ 只会让两套同源外壳各改一遍。
+# 这个 URL 继续可用（老书签、以前的站内链接），但一律 301 到首页。
+[[redirects]]
+  from = "/room/*"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/room/"
+  to = "/"
+  status = 301
+  force = true
