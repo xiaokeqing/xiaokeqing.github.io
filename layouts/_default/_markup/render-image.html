@@ -2,4 +2,20 @@
        截图会全部进首屏请求（/posts/pki/ 实测 3.2MB 图片）。这里统一加 lazy + async 解码：
        只有视口附近的图才会取，其它等滚动到才取。alt 保持原样（可访问性不变），
        title 有才写。 */ -}}
-<img src="{{ .Destination | safeURL }}" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }} loading="lazy" decoding="async">
+{{- /* ★2026-11-07（AVIF）：笔记配图已同目录生成同名 .avif（Pillow/libavif，q65，尺寸不变，
+       原 .webp 保留回退）。支持 AVIF 的浏览器优先取 .avif，其余（含 AVIF 解码失败）回退 .webp。
+       只有「.webp 且同目录确实存在 .avif」才包 <picture> —— 没转成功/不是笔记图的仍是原来的
+       裸 <img>，不会因为 source 404 变坏图。原 img 的 alt/title/loading/decoding 一字未动。 */ -}}
+{{- $dest := .Destination -}}
+{{- $avif := "" -}}
+{{- if and (hasSuffix $dest ".webp") (os.FileExists (printf "static%s" $dest)) -}}
+  {{- $candidate := printf "%s.avif" (strings.TrimSuffix ".webp" $dest) -}}
+  {{- if os.FileExists (printf "static%s" $candidate) -}}
+    {{- $avif = $candidate -}}
+  {{- end -}}
+{{- end -}}
+{{- if $avif -}}
+<picture><source type="image/avif" srcset="{{ $avif | safeURL }}"><img src="{{ $dest | safeURL }}" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }} loading="lazy" decoding="async"></picture>
+{{- else -}}
+<img src="{{ $dest | safeURL }}" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }} loading="lazy" decoding="async">
+{{- end -}}
