@@ -6,9 +6,9 @@
   "ExternalTextures": false,
   "Context": {},
   "Resources": {
-    "0": "kurisu_c.psb/tex#002-texture.png",
-    "1": "kurisu_c.psb/tex#001-texture.png",
-    "2": "kurisu_c.psb/tex#000-texture.png"
+    "0": "kurisu_c.psb/tex_002-texture.png",
+    "1": "kurisu_c.psb/tex_001-texture.png",
+    "2": "kurisu_c.psb/tex_000-texture.png"
   },
   "ExtraResources": {
     "@0": "kurisu_c.psb/extra/@0.bin",
