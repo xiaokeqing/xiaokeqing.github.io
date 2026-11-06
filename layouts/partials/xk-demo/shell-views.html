@@ -43,10 +43,12 @@
 
         <!-- 视图 1：实时攻击 -->
         <div class="ops-hero" id="opsHero" aria-live="polite">
-          <div class="oh-cell"><b id="ohBlocked">—</b><span>累计拦截</span></div>
-          <div class="oh-cell"><b id="ohIps">—</b><span>累计封禁 IP</span></div>
-          <div class="oh-cell"><b id="ohHoney">—</b><span>蜜罐连接</span></div>
-          <div class="oh-line" id="ohLine">战报载入中…</div>
+          {{- /* ★2026-11-06 慢网口径「先给最快的东西」：首屏三个数字先用构建期快照（data/ops-snapshot.json），接口回来后再覆盖。 */ -}}
+{{- $snap := site.Data.ops_snapshot -}}{{- $fmt := "" -}}{{- with $snap }}{{ if .blockedByGuard }}{{ $fmt = lang.FormatNumberCustom 0 (float .blockedByGuard) "," "." -1 -1 }}{{ end }}{{ end -}}
+          <div class="oh-cell"><b id="ohBlocked">{{ if and $snap $snap.blockedByGuard }}{{ lang.FormatNumberCustom 0 (float $snap.blockedByGuard) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计拦截</span></div>
+          <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计封禁 IP</span></div>
+          <div class="oh-cell"><b id="ohHoney">{{ if and $snap $snap.honeyConnections }}{{ lang.FormatNumberCustom 0 (float $snap.honeyConnections) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>蜜罐连接</span></div>
+          <div class="oh-line" id="ohLine">{{ if $snap }}快照 {{ $snap.generatedAt }} · 正在同步最新{{ else }}战报载入中…{{ end }}</div>
         </div>
         <div class="ops-live">
             <div class="term">

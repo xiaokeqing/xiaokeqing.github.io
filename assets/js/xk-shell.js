@@ -128,21 +128,24 @@ addEventListener('resize', feedTrim);
     const got = await Promise.all([grab('audit'), grab('honeypot')]);
     const audit = got[0], honey = got[1];
     const s = (audit && audit.summary) || {};
-    put('ohBlocked', num(s.blockedByGuard));
-    put('ohIps', num(s.blockTotal));
+    /* ★2026-11-06 慢网：首屏数字已在构建期用快照写好（data/ops_snapshot.json），
+       这里只在真的拿到值时覆盖；没取到就保留快照，绝不把它改写成「未取到」。 */
+    if(s.blockedByGuard != null) put('ohBlocked', num(s.blockedByGuard));
+    if(s.blockTotal != null) put('ohIps', num(s.blockTotal));
     /* ★C6（2026-10-18 外部巡检第 6 条）：`total` 是**统计上限哨兵**（恒 10000），不是真值。
        真值在同一响应的 `connections`（其次 `logins`）；只有拿到哨兵时写「≥10,000（上限）」，绝不把 10000 当累计。 */
     const hpN = honey && ((typeof honey.connections === 'number' && honey.connections > 0) ? honey.connections
       : ((typeof honey.logins === 'number' && honey.logins > 0) ? honey.logins : null));
-    put('ohHoney', hpN ? num(hpN) : (honey && honey.total >= 10000 ? '≥10,000（上限）' : num(honey && honey.total)));
+    if(hpN) put('ohHoney', num(hpN));
+    else if(honey && honey.total >= 10000) put('ohHoney', '≥10,000（上限）');
     const top = (honey && honey.topSources && honey.topSources[0]) || null;
     const at = (audit && audit.generatedAt) || (honey && honey.generatedAt) || '';
     const parts = [];
     if(top && top.key) parts.push('今天最凶的来源 ' + top.key + '，' + num(top.count) + ' 次登录尝试');
     if(s.blockActive != null) parts.push('当前生效封禁 ' + num(s.blockActive) + ' 个');
     if(at) parts.push('数据时间 ' + at);
-    if(!parts.length) parts.push('两个端点本次都未取到 —— 不补样例值');
-    put('ohLine', parts.join(' · '));
+    if(parts.length) put('ohLine', parts.join(' · '));
+    else put('ohLine', '快照（接口本次未取到，不补样例值）');
   }
   load();
   setInterval(load, 60000);
