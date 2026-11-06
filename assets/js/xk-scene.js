@@ -31,6 +31,7 @@ try {
   if (!forceOn && document.documentElement.classList.contains('xk-slow')) { return; }
 } catch (e) { }
 const ctx = canvas.getContext('2d');
+if (ctx) ctx.imageSmoothingQuality = 'high';
 const cache = {};
 function img(src){ if(!cache[src]){ const im=new Image(); im.src=src; cache[src]=im; } return cache[src]; }
 

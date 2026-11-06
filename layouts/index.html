@@ -34,7 +34,7 @@
 })();
 </script>
 <link rel="preload" as="image" href="/images/crt/desk.webp" fetchpriority="high">
-<link rel="preload" as="image" href="/kurisu/full/opening.gate.webp">
+<link rel="preload" as="image" href="/kurisu/full/opening.gateHi.webp">
 <style>
   :root{
     --crt-x:32.8947%; --crt-y:20.7226%; --crt-w:35.0478%; --crt-h:47.0776%;
@@ -78,8 +78,8 @@
 (function(){
   'use strict';
   var HOME = '/alerts/';
-  var ATLAS = '/kurisu/full/opening.gate.webp';
-  var COLS = 8, FW = 380, FH = 290, FRAMES = 8, STEP = 70;   /* 8 帧 × 70 ms，高质量图集（267 KB），速度已不是瓶颈 */
+  var ATLAS = '/kurisu/full/opening.gateHi.webp';
+  var COLS = 8, FW = 1000, FH = 760, FRAMES = 8, STEP = 80;   /* 2026-11-06 夜：换 1000×760 高清图集（640 KB，像素是旧版 6.9 倍，带 unsharp），8 帧 × 80 ms */
   var HOLD = 320, FADE = 340;
 
   function go(){

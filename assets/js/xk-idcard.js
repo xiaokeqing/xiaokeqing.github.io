@@ -67,7 +67,8 @@
      ⚠ 帧数只取 **3**：manifest.json 里 emotions.*.idle 全是 {columns:8, frames:3, atlasW:1056}
      —— 图集是 8 列宽，但只有前 3 格有画面，后 5 格是空位；按"列数×行数"算会画到空位（实测：头像整块变白）。
      清单到位后（空闲预取那张）再用真值覆盖一次，防止以后素材改成 8 帧。 */
-  var ctx = cv.getContext('2d'), CELL = 132, COLS = 8, framesOf = {}, imgs = {}, url = {}, last = 0, fi = 0;
+  var ctx = cv.getContext('2d'); if (ctx) ctx.imageSmoothingQuality = 'high';
+  var CELL = 132, COLS = 8, framesOf = {}, imgs = {}, url = {}, last = 0, fi = 0;
   /* ★2026-11-05：慢网标记（html.xk-slow），头像改为纯色圆占位，省 63 KB。 */
   D.slowAv = false;
   try { D.slowAv = document.documentElement.classList.contains('xk-slow'); } catch (e) { }

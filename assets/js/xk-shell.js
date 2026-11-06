@@ -434,6 +434,7 @@ const EMOS = {   /* ★2026-10-15 接手批：5 套 → 8 套（素材本来就�
 };
 function makePlayer(canvas){
   const ctx = canvas.getContext('2d');
+  if (ctx) ctx.imageSmoothingQuality = 'high';
   const cache = {};
   let cur = null, frames = 0, fi = 0, last = 0;
   /* ★2026-11-04 晚 站主口径（按网速分档）：慢网不取头像雪碧图（normal.idle.webp 63 KB），
@@ -745,6 +746,7 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
 
 function makeBodyPlayer(canvas){
   const ctx = canvas.getContext('2d');
+  if (ctx) ctx.imageSmoothingQuality = 'high';
   canvas.width = 321; canvas.height = 432;
   const CW = 321, CH = 432, COLS = 8;
   const cache = {};
