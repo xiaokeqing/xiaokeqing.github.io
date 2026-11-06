@@ -117,12 +117,19 @@ var XKV2_BLOCK = (function(){
     slowNet: !!(navigator.connection && /(^|-)2g$/.test(navigator.connection.effectiveType || '')),
     lowMem: (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4),
     small: !!(window.matchMedia && matchMedia('(max-width: 979px)').matches),
+    /* ★2026-11-06 站主口径「所有任务一次做完」：小面板不跑视频。
+       笔记列表页 / 分类页侧边那个 200~300px 高的窗口，一段视频 100~220 KB，
+       而它显示出来只有缩略图大小；用图集（或 poster）已经够看，视频纯属占带宽。
+       判据取 CSS 高度而不是设备宽度：站主反复强调「按实际布局，不按设备分」。 */
+    shortPanel: (function(){ try{ var el=document.getElementById('charCanvas');
+      if(!el) return false; var h=el.getBoundingClientRect().height;
+      return h > 0 && h < 300; }catch(e){ return false; } })(),
     canPlay: !!(document.createElement('video').canPlayType('video/webm; codecs="vp9"')),
     mseVP9: !!(typeof MediaSource !== 'undefined' && MediaSource.isTypeSupported && MediaSource.isTypeSupported('video/webm; codecs="vp9"')),
     ua: uaOf()
   };
   var c = V.cfg;
-  V.auto = (c.rm || c.saveData || c.slowNet || c.lowMem || (!c.canPlay && !c.mseVP9));
+  V.auto = (c.rm || c.saveData || c.slowNet || c.lowMem || c.shortPanel || (!c.canPlay && !c.mseVP9));
   V.mode = core();
   if(V.mode === 'off'){
     V.reason = '开关 off（角色层不加载）';
