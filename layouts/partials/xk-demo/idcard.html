@@ -43,43 +43,23 @@
    ★改生成物要先改生成器：本文件由 _dev/gen-demo-pages.py 的 IDCARD_PARTIAL 写出。 */ -}}
 <link rel="stylesheet" href="{{ (resources.Get "css/xk-idcard.css" | minify | fingerprint).RelPermalink }}">
 <aside class="xk-idcard" id="xkIdCard" aria-label="桐莉栖 · 头像卡">
-  <!-- ★M1（2026-10-18 站主）：手机上头像卡收起功能栏，展开钮放在头像**左边**。
-       ★DESK-RAIL 2026-10-18：桌面上它也在（贴在卡片右上角）—— 桌面功能钮已收进折叠，
-       它是唯一的开关；两端同一套 .open / aria-expanded，不另写 JS。 -->
-  <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false"
-    aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
-  {{- /* ★2026-11-04 站主口径「声音按钮常显」：原来只藏在 ▾ 折叠里（桌面 18×18、手机上根本找不到）。
-       这颗 26×26 的 🔊 一直贴在卡片右上角、在 ▾ 左边；点击与折叠面板那颗是同一个 toggle，
-       状态由 setSound() 同步（两者 aria-pressed 永远一致）。 */}}
-  <button class="xk-idsnd" id="xkSndMini" type="button" aria-pressed="false"
-    title="声音：已关闭（点一下打开）" aria-label="声音开关：默认关闭，点一下打开">🔊</button>
+  {{- /* ★2026-11-06 站主口径：卡内只留圆形头像 44–48px。
+       ▾ 折叠、🔊、名字/HOLO-LINK、状态灯 全部从卡里移走：
+         · 🔒 登录、情绪、动作、声音、光束 → 右上角工具区（partials/xk-demo/dock-tools.html）
+         · 这些按钮的 id 一个都没变（xkLoginBtn / xkEmoBtn / xkActBtn / xkSndBtn / xkLiteBtn / xkSndMini），
+           因为 assets/js/xk-idcard.js 第 64 行有一句硬判 `if (!av || !cv || !cap || !panel || !snd || !login) return;`
+           —— 少一个按钮整段脚本就静默退出，所以只搬位置、不改 id。
+       仍留在 DOM 里但藏起来的：#xkIdFold / #xkIdStat（toggle 脚本与诊断仍会读它们）。 */}}
   <button class="xk-idcard-av" id="xkIdAv" type="button"
     title="点一下：换个情绪说一句 · 长按半秒：打开情绪与动作面板"
     aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">
     <canvas id="xkIdAvCanvas" width="132" height="132" aria-hidden="true"></canvas>
   </button>
-  <span class="xk-idmeta">
-    <span class="xk-idname">桐莉栖</span>
-    <span class="xk-idsub">HOLO-LINK</span>
+  <span class="xk-idcard-hidden" hidden aria-hidden="true">
+    <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false" aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
+    <span class="xk-idstat" id="xkIdStat"><span id="xkIdStatTxt">待命</span></span>
   </span>
-  <div class="xk-idstat" id="xkIdStat" aria-hidden="true">
-    <span id="xkIdStatTxt">待命</span>
-    <span class="dots"><i class="on1"></i><i class="on2"></i><i class="on3"></i><i></i><i></i></span>
-  </div>
 </aside>
-<div class="xk-idcard-col" id="xkIdCol" role="group" aria-label="功能">
-    <button class="xk-idcard-btn" id="xkLoginBtn" type="button"
-      title="登录（只有站主能登）">登录</button>
-    <button class="xk-idcard-btn" id="xkEmoBtn" type="button"
-      title="情绪：点开选一种，她演出来">情绪</button>
-    <button class="xk-idcard-btn" id="xkActBtn" type="button"
-      title="动作：点开选一个（全身画布只在主页）">动作</button>
-    <button class="xk-idcard-btn" id="xkSndBtn" type="button" aria-pressed="false"
-      title="声音：默认关闭（点一下打开）">声音 关</button>
-    <button class="xk-idcard-btn" id="xkLiteBtn" type="button" aria-pressed="false"
-      title="场景光束：点一下开/关（只影响背景）">光束</button>
-    <span></span>
-</div>
 
 <script src="{{ (resources.Get "js/xk-idcard-toggle.js" | minify | fingerprint).RelPermalink }}"></script>
 

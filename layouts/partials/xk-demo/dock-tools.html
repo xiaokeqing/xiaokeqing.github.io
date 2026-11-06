@@ -1,0 +1,18 @@
+{{- /* ★2026-11-06 站主口径：头像卡瘦身 —— 只留圆形头像，其余功能全部搬到右上角工具区。
+      为什么放在 .dock 里而不是新开一个 fixed 层：.dock 在 >980px 上已经是 fixed 顶栏
+      （见 assets/css/xk-idcard.css 的 @media (min-width:981px)），直接复用它的定位，
+      不新增层就没有新的层级/z-index/避让问题；手机上 .dock 本来就是顶部横条，工具区自然跟过去。
+      ⚠ 全部沿用原 id：assets/js/xk-idcard.js 按 id 绑定，改名会静默失效。 */ -}}
+{{- /* 顶栏中段：实时攻击 ticker（数据复用 /api/public/alerts，慢网不拉、失败静默隐藏） */ -}}
+<div class="dock-ticker" id="dockTicker" aria-live="off" hidden></div>
+<script src="{{ (resources.Get "js/xk-ticker.js" | minify | fingerprint).RelPermalink }}" defer></script>
+
+<div class="dock-tools" id="dockTools" role="group" aria-label="站点工具">
+  <button class="xk-idsnd" id="xkSndMini" type="button" aria-pressed="false"
+    title="声音：已关闭（点一下打开）" aria-label="声音开关：默认关闭，点一下打开">🔊</button>
+  <button class="xk-idcard-btn dt" id="xkSndBtn" type="button" aria-pressed="false" title="声音：默认关闭（点一下打开）">声音 关</button>
+  <button class="xk-idcard-btn dt" id="xkEmoBtn" type="button" title="情绪：点开选一种，她演出来">情绪</button>
+  <button class="xk-idcard-btn dt" id="xkActBtn" type="button" title="动作：点开选一个（全身画布只在主页）">动作</button>
+  <button class="xk-idcard-btn dt" id="xkLiteBtn" type="button" aria-pressed="false" title="场景光束：点一下开/关（只影响背景）">光束</button>
+  <button class="xk-idcard-btn dt" id="xkLoginBtn" type="button" title="登录（只有站主能登）">登录</button>
+</div>

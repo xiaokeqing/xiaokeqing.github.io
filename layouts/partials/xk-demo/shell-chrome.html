@@ -19,7 +19,8 @@
   {{- /* ★2026-11-04 站主口径：电视房间从首页搬到 /room/，只在登录后出现。
          默认 hidden，由 assets/js/xk-idcard.js 在 __xkAdmin.allowed() 为真时去掉 hidden。 */}}
   <a href="/room/" id="dockRoom" class="{{ if eq $v "room" }}on{{ end }}" hidden>我的房间</a>
-    </nav>
+      {{ partial "xk-demo/dock-tools.html" . }}
+</nav>
 
 <!-- HOLO 人物面板：左上角 -->
 <aside class="holo live" id="holo" role="complementary" aria-label="助手面板（演示）">
