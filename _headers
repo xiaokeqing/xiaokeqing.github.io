@@ -1,0 +1,4 @@
+# Netlify 额外头（netlify.toml 的 [[headers]] 已覆盖主要路径，这里只补全局安全头）
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

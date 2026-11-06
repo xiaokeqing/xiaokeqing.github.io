@@ -1,0 +1,67 @@
+# Netlify 构建与缓存配置（2026-11-06 新增）
+# 背景：Cloudflare 到站主网络的链路长期抖动（实测 TLS 6–23 s、20 次里 6 次超时），
+#       直连源站只要 0.08 s ⇒ 换 Netlify 托管静态站（不备案、自动 HTTPS、免费额度 100 GB/月）。
+#       接口仍留在 srv1（demo.xiaokeqing.cn），页面首屏已用构建期快照，不依赖接口。
+# 口径：构建版本必须写死 0.167.0，与 .github/workflows/deploy.yml 的 HUGO_VERSION 一致
+#       （Hugo 小版本之间渲染/校验行为会变，跟着 latest 走会让 90 项断言随机红）。
+
+[build]
+  command = "hugo --gc --minify --cleanDestinationDir"
+  publish = "public"
+
+[build.environment]
+  # ★ 必须写死：Netlify 默认镜像里的 hugo 版本不是 0.167.0
+  HUGO_VERSION = "0.167.0"
+  HUGO_ENV = "production"
+  TZ = "Asia/Shanghai"
+  # 仓库里 static/ 有 200 MB 素材，构建内存给足一点（Netlify 默认 8 GB，够）
+  NODE_OPTIONS = "--max-old-space-size=4096"
+
+# 指纹化资源（.min.<hash>.css/js）由 Hugo 生成，文件名变即缓存失效 ⇒ 一年强缓存安全
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# 图片/人物素材：内容可能替换但文件名不变 ⇒ 30 天（与 srv2 nginx 一致）
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/kurisu/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# HTML 一律回源校验（发布新版本立刻生效，不出现"旧的首页缓存 30 天"）
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+
+[[headers]]
+  for = "/index.json"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/index-lite.json"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+# /api/* 暂不反代：源站只有自签证书（Wazuh），Netlify 回源会 TLS 校验失败。
+# 等给源站签好 Let's Encrypt 通配证书、并确认 80/443 不被备案检查拦后再打开下面这一段。
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://demo.xiaokeqing.cn/api/:splat"
+#   status = 200
+#   force = false
