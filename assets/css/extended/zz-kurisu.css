@@ -249,7 +249,17 @@ html[data-xk-crt-on="1"] .xk-veil {
   overflow: hidden;
   border-radius: calc(var(--r-card) - 6px);
   background: linear-gradient(180deg, rgba(8, 14, 24, .35), rgba(8, 14, 24, .62));
+  /* ★2026-11-06：右侧这个 294×268 的小舞台不再装 71 KB 的播放器（baseof 的探针闸跳过），
+     直接铺一张 19 KB 的静态帧（从 hi 图集第一格裁的 268×360），画布藏掉。
+     只在 baseof 判定"这页不走播放器"时生效（html.xk-noplayer）；想看动画就在 URL 上追加 ?xk-kurisu=on。 */
 }
+html.xk-noplayer .xk-kurisu--rail .xk-kurisu__stage {
+  background-image: url(/images/crt/panel-poster.webp);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: contain;
+}
+html.xk-noplayer .xk-kurisu__stage > canvas.xk-kurisu__canvas { opacity: 0; }
 .xk-kurisu--rail .xk-kurisu__say {
   position: static;
   margin: 10px 0 0;

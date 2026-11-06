@@ -992,7 +992,47 @@
           && String(location.search).indexOf('xk-kurisu=on') < 0) { return; }
     } catch (e) { }
     if (window.KurisuPlayer || D.playerAsked) { return; }
+    /* ★2026-11-06 站主口径「分类页只留静态帧就行」：只有在**有真正的大 CRT 画布**（高 ≥300px）时才值得
+       拉播放器 + 70 KB manifest；分类页/笔记页那种小面板（或根本没有 CRT）直接铺一张 19 KB 静态帧
+       （static/images/crt/panel-poster.webp，从 idle 图集第一格裁出来），省 141 KB（player 71 + manifest 70）。
+       ⚠️ 不能在注入时用 panel.clientHeight 判断 —— 面板默认是隐藏的，那一刻高度恒为 0；要看 CRT 画布。 */
+    try {
+      if (String(location.search).indexOf('xk-kurisu=on') < 0) {
+        var probe = document.querySelector('#charCanvas, #crt, .crt');
+        var ch = probe ? probe.getBoundingClientRect().height : 0;
+        if (ch < 300) {
+          D.playerWhy = 'no-big-crt-poster';
+          D.playerSkipped = 'no-big-crt';
+          var panelEl = document.getElementById('xkIdPanel');
+          if (panelEl) {
+            panelEl.style.backgroundImage = 'url(/images/crt/panel-poster.webp)';
+            panelEl.style.backgroundSize = 'contain';
+            panelEl.style.backgroundPosition = 'center bottom';
+            panelEl.style.backgroundRepeat = 'no-repeat';
+            var cv0 = panelEl.querySelector('canvas');
+            if (cv0) { cv0.style.opacity = '0'; }
+          }
+          /* 旧主题的侧栏小舞台（分类页/标签页上的 .xk-kurisu__stage，294×268）——
+             播放器不装了，这里直接铺同一张静态帧，并把它自己的 canvas 藏掉。 */
+          var stages = document.querySelectorAll('.xk-kurisu__stage');
+          for (var si = 0; si < stages.length; si++) {
+            var st = stages[si];
+            var sr = st.getBoundingClientRect();
+            if (sr.height > 0 && sr.height < 300) {
+              st.style.backgroundImage = 'url(/images/crt/panel-poster.webp)';
+              st.style.backgroundSize = 'contain';
+              st.style.backgroundPosition = 'center bottom';
+              st.style.backgroundRepeat = 'no-repeat';
+              var sc = st.querySelector('canvas');
+              if (sc) { sc.style.opacity = '0'; }
+            }
+          }
+          return;
+        }
+      }
+    } catch (e) { }
     D.playerAsked = true;
+
     D.playerAt = Math.round(performance.now());
     try {
       var s = document.createElement('script');
