@@ -275,6 +275,8 @@ var XKV2_BLOCK = (function(){
     im.addEventListener('error', function(){ c.err.push('poster 404'); });
     im.src = posterUrl(name);
     c.pst = im;
+    /* ★2026-11-07 P0-2：首屏只取 metadata（几百字节），真要播时才由 play() 拉视频体 —— 不再一上来就下 423KB的 idle.webm。 */
+    try { vd.preload = 'metadata'; } catch (e) {}
     vd.src = videoUrl(name);
     return c;
   }
