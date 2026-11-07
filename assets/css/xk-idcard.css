@@ -341,11 +341,20 @@ body.xk-has-idcard .xk-idcard .xk-idcard-hidden{display:none !important}
 /* ★2026-11-07 手机端修复：工具区 sticky 会压在导航文字上面（390 宽实测「攻击实况」被盖住）。
    改成让顶栏换行，工具区独占第二行、右对齐，不再覆盖导航。 */
 @media (max-width: 980px){
-  body.xk-has-idcard .dock{flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scrollbar-width:none}
+  body.xk-has-idcard .dock{flex-wrap:wrap; row-gap:2px; overflow:visible}
+  body.xk-has-idcard .xk-idcard{top:158px}
+  body.xk-has-idcard .main{padding-top:176px}
   body.xk-has-idcard .dock .dock-tools{
-    order:99; flex:0 0 auto; position:static; margin-left:auto; padding:0 2px 2px;
+    order:99; flex:1 1 100%; position:static; margin-left:0; padding:0 2px 2px;
     justify-content:flex-end; background:none; overflow-x:auto;
   }
   body.xk-has-idcard .dock .dock-tools .xk-idcard-btn{padding:0 8px; font-size:11px; white-space:nowrap}
   body.xk-has-idcard .dock .dock-ticker{display:none}
+}
+/* ★2026-11-07 手机端（≤720）：头像卡在窄屏只会压住内容，且它此时是灰占位球 ⇒ 直接收起，
+   顶栏两行（导航 + 工具）独占，内容从 176px 起。桌面端不受影响。 */
+@media (max-width: 720px){
+  body.xk-has-idcard .xk-idcard{display:none !important}
+  body.xk-has-idcard .main{padding-top:176px}
+  body.xk-has-idcard .dock{row-gap:0}
 }
