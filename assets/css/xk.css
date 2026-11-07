@@ -930,3 +930,18 @@ pre{position:relative}
   background:rgba(10,16,19,.82);color:inherit;border:1px solid rgba(127,212,216,.28);opacity:.72}
 .xk-copy:hover{opacity:1}
 @media (max-width:720px){ .xk-pal.on{padding-top:8vh} }
+
+/* ★2026-11-07 攻击图谱里的「点个 IP 看它干过什么」入口（xk-ipjump.js 用） */
+#v-monitor .ipjump-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 0 8px}
+#v-monitor .ipjump-in{flex:1 1 260px;min-width:0;height:34px;padding:0 12px;border-radius:9px;
+  border:1px solid rgba(127,212,216,.28);background:rgba(8,14,18,.6);color:inherit;font-size:13px}
+#v-monitor .ipjump-in::placeholder{color:rgba(230,240,244,.42)}
+#v-monitor .ipjump-in:focus{outline:none;border-color:rgba(127,212,216,.62);box-shadow:0 0 0 2px rgba(127,212,216,.16)}
+#v-monitor .ipjump-go{height:34px;padding:0 14px;border-radius:9px;border:1px solid rgba(127,212,216,.4);
+  background:rgba(127,212,216,.14);color:inherit;font-size:13px;cursor:pointer}
+#v-monitor .ipjump-go:hover{background:rgba(127,212,216,.24)}
+#v-monitor .ipjump-chips{display:flex;gap:6px;flex-wrap:wrap;font-size:12px;color:rgba(230,240,244,.6)}
+#v-monitor .ipjump-chip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:7px;
+  border:1px solid rgba(127,212,216,.24);color:rgba(186,230,235,.95);text-decoration:none;
+  font-variant-numeric:tabular-nums}
+#v-monitor .ipjump-chip:hover{border-color:rgba(127,212,216,.6);background:rgba(127,212,216,.12)}

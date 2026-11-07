@@ -68,7 +68,17 @@
                   <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
                 </div>
               </div>
-              <div class="mod"><div class="mod-hd"><span class="led"></span>蜜罐捕获凭据<span class="tag">已脱敏 · 只给结构</span></div>
+              <!-- xk-metrics-card -->
+              {{- /* 处置时效（MTTD / MTTR）：数据来自 /api/public/metrics（脱敏聚合，不含 IP）；
+                     口径见 docs/Amadeus-项目总文档 的「处置时效」一节。样本 <3 时如实写"样本不足"，不写 0。 */ -}}
+              <div class="mod" id="modMetrics"><div class="mod-hd"><span class="led"></span>处置时效<span class="tag">MTTD / MTTR · 24h</span></div>
+                <div class="mod-bd">
+                  <div class="row"><span class="k">MTTD · 从告警到处置</span><span class="chip" id="mtMttd">取数中…</span></div>
+                  <div class="row"><span class="k">MTTR · 从封禁到恢复</span><span class="chip" id="mtMttr">取数中…</span></div>
+                  <p class="vz-nt" id="mtNote">样本足够时给中位数；不足 3 个样本就写「样本不足」，不写 0。</p>
+                </div>
+              </div>
+<div class="mod"><div class="mod-hd"><span class="led"></span>蜜罐捕获凭据<span class="tag">已脱敏 · 只给结构</span></div>
                 <div class="mod-bd">
                   <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
                   <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
@@ -105,6 +115,20 @@
           <div class="mod"><div class="mod-hd"><span class="led"></span>实时攻击路径 · 攻击者 → 本站传感器<span class="tag">数据 /alerts + /honeypot</span></div>
             <div class="mod-bd graphwrap"><canvas id="atkGraph"></canvas>
               <div class="graph-legend"><span><i class="lg red"></i>攻击来源</span><span><i class="lg teal"></i>蜜罐传感器</span><span><i class="lg dot"></i>实时命中</span></div>
+            </div>
+          </div>
+          <!-- xk-ipjump -->
+          {{- /* 点个 IP 看它干过什么：跳到 /ip/?q=<IP>（那页有 /api/public/story 的攻击时间线）。
+                 不额外拉接口：Top 来源直接复用本页 /alerts + /geo 已有的快照数据，由 xk-ipjump.js 填。 */ -}}
+          <div class="mod" id="modIpJump"><div class="mod-hd"><span class="led"></span>点个 IP，看它干过什么<span class="tag">/ip/ · 攻击时间线</span></div>
+            <div class="mod-bd">
+              <form class="ipjump-form" id="ipjumpForm" action="/ip/" method="get">
+                <input class="ipjump-in" id="ipjumpInput" name="q" type="text" inputmode="decimal"
+                       autocomplete="off" spellcheck="false" placeholder="填一个公网 IP，例如 193.32.162.20" aria-label="要查看的 IP" />
+                <button class="ipjump-go" type="submit">看时间线</button>
+              </form>
+              <div class="ipjump-chips" id="ipjumpChips" aria-live="polite"></div>
+              <p class="vz-nt" id="ipjumpNote">只接受公网 IPv4；列表取本站观测到的 Top 来源，点一下直接跳。</p>
             </div>
           </div>
           <div class="stats">

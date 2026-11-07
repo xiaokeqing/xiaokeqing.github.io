@@ -135,7 +135,7 @@ head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 #   后端 DailyReportController 已实现（本仓库外，同批交付）；**这是预登记** —— 本轮不发布、不 push，
 #   线上还没实测过 200。上线后请先 curl 一次 /api/public/daily.js 确认（未生成时也应是 200 + available:false），
 #   再保持它在白名单里。站点 /status/ 的「今日日报」卡引用它；取不到时卡片写「未生成」而非填 0。
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password daily stream"
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password daily stream metrics"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do

@@ -19,3 +19,6 @@
 <script src="/js/xk-rail.js" defer></script>
 
 <script src="/js/xk-sse.js" defer></script>
+{{- /* 处置时效卡片（MTTD/MTTR）：只读 /api/public/metrics，慢网不请求 */ -}}
+<script src="{{ (resources.Get "js/xk-metrics.js" | minify | fingerprint).RelPermalink }}" defer></script>
+<script src="{{ (resources.Get "js/xk-ipjump.js" | minify | fingerprint).RelPermalink }}" defer></script>
