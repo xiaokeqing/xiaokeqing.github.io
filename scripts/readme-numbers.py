@@ -72,15 +72,24 @@ def count_tests():
 
 
 def count_endpoints():
-    """数后端 publicapi 包里的 HTTP 映射注解。"""
+    """数后端 publicapi 包里的公开端点（按**路径去重**）。
+
+    为什么不数注解个数：2026-11-07 把 god controller 拆成 5 个按域 controller 之后，
+    旧的 `PublicApiController` 仍保留为"测试专用委托门面"（20 个一行转发方法，仍带同样的
+    `@GetMapping`），注解数会变成 20+21=41 的重复计数；文档要的是真实端点个数，
+    所以按注解里的路径字面量去重。
+    """
     root = os.path.join(BACKEND, "src", "main", "java", "org", "example", "publicapi")
     if not os.path.isdir(root):
         return None, "没找到 %s" % root
-    total = 0
+    paths = set()
     for path in glob.glob(os.path.join(root, "**", "*.java"), recursive=True):
         with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            total += len(re.findall(r"@(?:Get|Post|Put|Delete)Mapping", fh.read()))
-    return total, "publicapi 包注解计数"
+            src = fh.read()
+        for m in re.finditer(r"@(?:Get|Post|Put|Delete)Mapping\s*\(([^)]*)\)", src):
+            for lit in re.findall(r'"([^"]*)"', m.group(1)):
+                paths.add(lit)
+    return len(paths), "publicapi 包路径去重计数"
 
 
 def main():
