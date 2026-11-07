@@ -38,6 +38,9 @@ function feedRow(it){
   if (it.d) { el.__d = it.d; el.style.cursor = 'pointer'; el.title = '点一下看这条聚合告警的明细'; }
   termFeed.appendChild(el);
 }
+/* ★2026-11-07：把 row 构造器暴露给 SSE 侧（static/js/xk-sse.js）。只暴露函数本身，
+   不改变轮询路径；SSE 拿不到数据时这条通路就是死的，页面行为与现在完全一致。 */
+window.__xkFeedPush = function (it) { try { feedRow(it); feedTrim(); } catch (e) {} };
 
 /* ★A3（2026-10-17）：点行看明细。只用 /alerts 已经返回的聚合字段，不额外发请求、不补字段。 */
 let fdBox = null;
