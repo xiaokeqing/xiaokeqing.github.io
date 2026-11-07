@@ -117,3 +117,6 @@ eval-out/
 
 # �����������ݲ����汾�⣨�ᶥ�� 160MiB �ʲ����ޣ�
 static/kurisu/voice/bank.json.bak-*
+# API 快照必须入库（.gitignore 的 public/ 规则会吞掉它）
+!static/api/public/
+!static/api/public/**
