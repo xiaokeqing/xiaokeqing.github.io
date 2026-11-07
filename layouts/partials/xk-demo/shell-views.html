@@ -157,6 +157,18 @@
 
         <!-- 视图 4：数据统计 -->
         <div class="ops-tab" data-pane="stats">
+          {{- /* ★2026-11-07 信息架构重排：这三张原来只埋在 /more/ 里。搬到「数据统计」页顶做入口卡，
+                 点击仍跳原页 —— 不复制内容、不改原页，只把入口放到用户看得到的地方。 */ -}}
+          <div class="mod xk-ent">
+            <div class="mod-hd"><span class="led"></span>数据可信度 · 三个入口<span class="tag">点开看证据</span></div>
+            <div class="mod-bd">
+              <div class="xk-ent-grid">
+                <a class="xk-ent-card" href="/noise/"><b>告警噪音指数</b><span>29 万条告警里 94.9% 是心跳噪音 —— 降噪被量化成几个能复核的数。</span><em>看噪音 →</em></a>
+                <a class="xk-ent-card" href="/ip/"><b>这个 IP 干过什么</b><span>个人版 IP 档案：命中过哪条规则、打过哪些端点、最近出现时间。</span><em>查 IP →</em></a>
+                <a class="xk-ent-card" href="/passwords/"><b>高频弱口令</b><span>蜜罐里被尝试最多的口令，只给结构统计、不列明文。</span><em>看口令 →</em></a>
+              </div>
+            </div>
+          </div>
           <div class="mod"><div class="mod-hd"><span class="led"></span>7×24 访问统计 · 按整点聚合<span class="tag">/webstats · 零 IP</span></div>
             <div class="mod-bd"><div class="bars anim">
               <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i>

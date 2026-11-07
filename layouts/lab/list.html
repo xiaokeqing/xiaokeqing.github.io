@@ -44,6 +44,19 @@
 .lab-pre .c{color:rgba(255,255,255,.45)}
 .lab-foot{font-size:13px;color:rgba(255,255,255,.5);line-height:1.9;margin:8px 0 0}
 .lab-foot a{color:#bfe3d0}
+/* ★2026-11-07 信息架构重排：/lab/ 从「只是靶场」变成「演练场三分区」的总页。
+   分区一 / 二 仍在各自原页（/redteam/ · /purpleteam/，内容不搬家），分区三就是本页靶场。 */
+.lab-secs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lab-sec{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:12px;text-decoration:none;
+  border:1px solid rgba(160,220,240,.22);background:rgba(120,190,220,.07);color:inherit;
+  transition:border-color .15s ease,background .15s ease}
+.lab-sec:hover,.lab-sec:focus-visible{border-color:rgba(160,220,240,.55);background:rgba(120,190,220,.13);outline:none}
+.lab-sec.on{border-color:rgba(90,210,150,.45);background:rgba(90,210,150,.09)}
+.lab-sec .n{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;color:rgba(255,255,255,.45)}
+.lab-sec b{font-size:14.5px;font-weight:600;color:#e8f3f8}
+.lab-sec .s{font-size:12.5px;line-height:1.7;color:rgba(255,255,255,.62)}
+.lab-sec em{margin-top:2px;font-style:normal;font-size:11.5px;color:#bfe3d0}
+@media (max-width:980px){.lab-secs{grid-template-columns:1fr}}
 </style>
 </head>
 <body data-skin="warm" data-phone="v1" class="xk-has-idcard">
@@ -54,12 +67,36 @@
   <div class="screen">
     <div class="screen-hd">
       <span class="led"></span>
-      <span class="t">XK-LAB // 靶场 <em class="ops-en">TARGET-RANGE</em></span>
-      <span class="sync">● 公网已关闭 · 只走内网隧道</span>
+      <span class="t">XK-LAB // 演练场 <em class="ops-en">LAB</em></span>
+      <span class="sync">● 三个分区 · 红队榜 / 紫队演练 / 靶场（分区三在本页）</span>
     </div>
     <div class="screen-bd lab-bd">
 
-      <div class="mod lab-hero">
+      {{- /* ★2026-11-07 信息架构重排：红队榜、紫队演练、靶场原来散在 /more/ 的三张卡里，
+             现在合并成 /lab/ 的三个分区。分区一 / 二 仍落在各自原页（内容不搬家、不复制），
+             分区三就是本页下面的靶场说明。 */ -}}
+      <div class="lab-secs">
+        <a class="lab-sec" href="/redteam/">
+          <span class="n">分区一</span>
+          <b>红队攻防榜</b>
+          <span class="s">27 条攻击用例回归 · 逐条标注拦住 / 部分拦住 / 没拦住。</span>
+          <em>去红队榜 →</em>
+        </a>
+        <a class="lab-sec" href="/purpleteam/">
+          <span class="n">分区二</span>
+          <b>紫队演练</b>
+          <span class="s">我打的攻击，我的检测看不看得见；看不见的规则缺口直接列出来。</span>
+          <em>去紫队 →</em>
+        </a>
+        <a class="lab-sec on" href="#range">
+          <span class="n">分区三</span>
+          <b>靶场</b>
+          <span class="s">7 台容器靶场跑在内网，只开 SSH 隧道；说明就在本页往下。</span>
+          <em>看本页靶场 ↓</em>
+        </a>
+      </div>
+
+      <div class="mod lab-hero" id="range">
         <span class="lab-dot off"></span>
         <div>
           <p class="t2">七台靶场 · 内网在线（公网入口已撤）</p>

@@ -1,6 +1,8 @@
 {{- /* 外壳常驻件（逐字）：底图两层 / demo 标识条 / 左侧 .dock / HOLO 面板 / 背景选择器。
       唯一改动：.dock 的 <button data-v> → <a href="站点真路由">（样式值逐字，见 shell-style）。
-      ★T27（2026-10-15 站主）：/labs/ 与 /about/ 两页已删 ⇒ dock 六项 → 四项（主页 / 监测中心 / AI 问答 / 笔记）。 */ -}}
+      ★T27（2026-10-15 站主）：/labs/ 与 /about/ 两页已删 ⇒ dock 六项 → 四项（主页 / 监测中心 / AI 问答 / 笔记）。
+      ★2026-11-07 信息架构重排：只是改人话名字，**不加项**（项数仍 7，手机 ≤720 折行数与改前一致）：
+        「攻击实况 → 实时看板」「攻防验证 → 演练场」；/more/ 降级为全部索引页，入口仍留在这里。 */ -}}
 {{- $v := .v -}}
 <!-- ★底图两层（恢复自 docs/demo-内容页外壳.html:427 + :45-47）：内容页的暖玻璃面板需要照片底 -->
 <div class="bg" aria-hidden="true"></div>
@@ -11,11 +13,11 @@
 <nav class="dock" id="dock" aria-label="站点导航（演示）">
   <div class="brand">XK-LAB</div>
   <a href="/" class="xk-nav-home">主页</a>
-  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">攻击实况</a>
+  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">实时看板</a>
   <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
   <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
 <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
-  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">攻防验证</a>
+  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">演练场</a>
   <a href="/more/" class="{{ if or (eq $v "more") (eq $v "status") (eq $v "api") (eq $v "tools") (eq $v "what") }}on{{ end }}">更多</a>
   {{- /* ★2026-11-07：/room/ 与 / 合并 —— 首页本身就是电视房间外壳，单独一个"我的房间"入口已经没意义。
          这一项删除；老书签访问 /room/ 由 netlify.toml 的 301 规则兜住。

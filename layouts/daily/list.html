@@ -73,6 +73,18 @@
 .dy-rules{margin:0;padding-left:18px;font-size:12.5px;line-height:2;color:var(--xk-text-sev)}
 .dy-rules li{margin:0}
 .dy-rules b{color:var(--xk-ink-link);font-weight:600}
+/* ★2026-11-07 信息架构重排：周报 / 月报原本只埋在 /more/ 的卡 + 本页归档区两条小注里，
+   现在提到页顶做两张入口卡（内容仍在 /reports/，这里不复制任何报告正文）。 */
+.dy-rep{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dy-rep-card{display:flex;flex-direction:column;gap:4px;padding:11px 12px;border-radius:10px;
+  border:1px solid var(--xk-mint-fill-10);background:var(--xk-bg-18);text-decoration:none;color:inherit}
+.dy-rep-card:hover,.dy-rep-card:focus-visible{border-color:var(--xk-ink-mint);background:var(--xk-mint-fill-10);outline:none}
+.dy-rep-card b{font-size:13.5px;font-weight:600;color:var(--xk-ink-strong)}
+.dy-rep-card span{font-size:12.5px;line-height:1.7;color:var(--xk-text-dim)}
+.dy-rep-card em{margin-top:2px;font-style:normal;font-size:11.5px;color:var(--xk-ink-link)}
+@media (max-width:720px){.dy-rep{grid-template-columns:1fr}}
+/* 窄屏下标题会换行，但时间标签不能被折成两段（实测 390 宽断在「每月 1 / 日 06:00」） */
+.dy-rep-hd .tag{white-space:nowrap}
 </style>
 </head>
 <body data-skin="warm" data-phone="v1" class="xk-has-idcard">
@@ -96,6 +108,20 @@
       </p>
       <noscript><p class="dy-note">这一页的数字都由浏览器前端 fetch 得到。你关掉了 JavaScript，所以只会看到占位的「—」——
         这不是接口挂了，是这一页本来就靠它取数。</p></noscript>
+
+      {{- /* ★2026-11-07 信息架构重排：「周报与月报」从 /more/ 的卡片提到本页页顶。
+             内容不在本仓库构建（srv2 nginx alias + autoindex），所以这里只给入口，不假装有列表。 */ -}}
+      <div class="mod" id="dy-reports">
+        <div class="mod-hd dy-rep-hd"><span class="led"></span>周报与月报 · 按周 / 按月归档<span class="tag">周一 / 每月 1 日 06:00</span></div>
+        <div class="mod-bd">
+          <div class="dy-rep">
+            <a class="dy-rep-card" href="/reports/"><b>周报</b><span>每周一 06:00 汇总上一周：告警量、来源、蜜罐、被拦下的动作，HTML + Markdown 两种。</span><em>打开 /reports/ →</em></a>
+            <a class="dy-rep-card" href="/reports/"><b>月报</b><span>每月 1 日 06:00 汇总上个月整月；首份 <code>monthly-2026-10</code> 已生成。</span><em>打开 /reports/ →</em></a>
+          </div>
+          <p class="dy-note">两份都落在站外目录 <code>/reports/</code>（srv2 上 nginx 直接给目录页，不在本仓库构建），
+            口径与这里的日报一致：只读、不处置、不补 0。</p>
+        </div>
+      </div>
 
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>今天的这一份<span class="tag" id="dyTodayTag">读取中…</span></div>
@@ -147,8 +173,8 @@
               <tbody id="dyArchBody"><tr><td colspan="6" class="dy-na">还没加载 —— 点上面的「加载归档」。</td></tr></tbody>
             </table>
           </div>
-          <p class="dy-note">📅 周报：srv2 上每周一 06:00 自动跑一次（<code>weekly-report.timer</code>），产物落在站外目录，直接看 → <a href="/reports/" style="color:inherit;border-bottom:1px dotted currentColor">/reports/</a>（按周归档的 HTML + Markdown）。与这里的日报口径一致：只读、不处置、不补 0。</p>
-          <p class="dy-note">📆 月报：每月 1 日 06:00 把上个月整月的数字汇一份（<code>monthly-report.timer</code>），同样落在 <a href="/reports/" style="color:inherit;border-bottom:1px dotted currentColor">/reports/</a>。首份 <code>monthly-2026-10</code> 已生成：整月 1,976,893 条告警、覆盖 13/31 天。</p>
+          <p class="dy-note">📅 周报由 <code>weekly-report.timer</code>（周一 06:00）生成、📆 月报由 <code>monthly-report.timer</code>（每月 1 日 06:00）生成，
+            都落在站外 <a href="/reports/">/reports/</a>（入口在页顶「周报与月报」那张卡）；首份 <code>monthly-2026-10</code>：整月 1,976,893 条告警、覆盖 13/31 天。</p>
           <p class="dy-note" id="dyArchNote">归档由后端一次给全（<code>/api/public/daily/index.json</code>）：扫一遍当天的日报目录，有几份、哪天缺件，由服务端回答。</p>
         </div>
       </div>

@@ -5,7 +5,12 @@
 .xk-foot a{color:#9fb0ba;text-decoration:none}
 .xk-foot a:hover,.xk-foot a:focus-visible{color:#7fd3e3}
 .xk-foot .xk-foot-r{margin-left:auto}
-@media (max-width:720px){.xk-foot{padding:12px 14px 22px;font-size:11.5px}.xk-foot .xk-foot-r{margin-left:0;width:100%}}
+/* ★2026-11-07 信息架构重排：页脚加一条固定「常用」快捷行（四项都已是用户能看见的主页，不新增路由） */
+.xk-foot .xk-foot-q{flex-basis:100%;margin-top:2px;color:#6f828c}
+.xk-foot .xk-foot-q a{margin:0 1px}
+/* ★2026-11-07 信息架构重排：页脚最后一行在手机上会被左下角固定的「展开」按钮（.xk-rail-toggle）压住，
+   底部留白按按钮高度留出来（22 → 64px），否则新加的「常用」行在 390 宽正好被盖掉半句。 */
+@media (max-width:720px){.xk-foot{padding:12px 14px 64px;font-size:11.5px}.xk-foot .xk-foot-r{margin-left:0;width:100%}}
 </style>
 <footer class="xk-foot">
   <b>XK-LAB</b>
@@ -17,4 +22,5 @@
   <a href="/subscribe/">订阅日报</a>
   <a href="/what/">这是什么</a>
   <span class="xk-foot-r">© 2026 XK-LAB</span>
+  <span class="xk-foot-q">常用：<a href="/alerts/">实时看板</a> / <a href="/daily/">每日战报</a> / <a href="/posts/">笔记</a> / <a href="/lab/">演练场</a></span>
 </footer>

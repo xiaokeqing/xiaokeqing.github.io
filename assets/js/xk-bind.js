@@ -2376,7 +2376,17 @@
            不滚的话视口还停在上一屏，看起来像“没反应”。用 scrollIntoView 而不手算偏移，
            因为顶部导航高度随断点变（窄屏会折行）。哈希深链进来时也一样。 */
         var host = document.querySelector('.ops-tab.on[data-pane="' + now + '"]') || document.querySelector('.ops-tab[data-pane="' + now + '"]');
-        if (host && host.scrollIntoView) { try { host.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { host.scrollIntoView(); } }
+        if (host && host.scrollIntoView) {
+          /* ★2026-11-07 信息架构重排：面板顶部现在放的是页内入口卡（数据统计 → 数据可信度三项），
+             scrollIntoView(block:'start') 会把面板顶顶到 fixed 顶栏底下（桌面 46px、手机 108/152px），
+             第一张卡被切掉。按顶栏实测底边留出让位；顶栏不在页顶（老版贴底布局）时不动。 */
+          var dock = document.querySelector('.dock');
+          if (dock) {
+            var db = dock.getBoundingClientRect();
+            if (db.top <= 20 && db.bottom < window.innerHeight * 0.5) host.style.scrollMarginTop = (Math.round(db.bottom) + 10) + 'px';
+          }
+          try { host.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { host.scrollIntoView(); }
+        }
       }, 30);
     });
     obs.observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });

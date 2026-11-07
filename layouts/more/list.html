@@ -1,5 +1,7 @@
 {{- /* ============================================================================
    /more/ —— 目录页。2026-11-04 升级：导航 10 → 6 后，把其余页面按"问题"分四组摆开。
+   2026-11-07 信息架构重排：常用功能上提到各自主页后，这一页降级为「全部索引」——
+   页顶写清去向（名字仍链回原页），卡片只留还没有更显眼入口的 5 页。
    设计：docs/页面设计稿-栏目整理-20261104.md（§4）。零 JS 依赖：脚本全挂也能用。
    ============================================================================ */ -}}
 {{- $v := "more" -}}
@@ -15,7 +17,16 @@
 .mr-hd{padding:38px 0 6px}
 .mr-eyebrow{font:11px/1.4 ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--xk-ink-eyebrow);text-transform:uppercase}
 .mr-h1{margin:8px 0 10px;font-size:30px;line-height:1.25;font-weight:700;color:var(--xk-ink-title)}
-.mr-lede{margin:0;max-width:820px;font-size:14.5px;line-height:1.75;color:var(--xk-ink-lede)}
+.mr-lede{margin:0;max-width:820px;font-size:14.5px;line-height:1.75;color:var(--xk-ink-lede);
+  text-shadow:0 1px 2px rgba(6,10,12,.72)}  /* 窄屏背景图裁到白板时导语会发灰，垫一层紧贴的暗影（大半径会糊成一团） */
+/* ★2026-11-07：页顶说明「常用功能已上提到对应页面」—— 每条给出目标页，直接点得进去 */
+.mr-up{display:flex;flex-direction:column;gap:3px;margin:16px 0 0;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--xk-cyan-line-18);border-left:3px solid var(--xk-cyan);background:var(--xk-bg-card)}
+.mr-up b{font-size:12.5px;font-weight:600;color:var(--xk-ink-title)}
+.mr-up p{margin:0;font-size:12.5px;line-height:1.8;color:var(--xk-ink-lede)}
+.mr-up a{font-size:12.5px;line-height:1.7;color:var(--xk-ink-lede);text-decoration:none;
+  border-bottom:1px dotted var(--xk-cyan-line-26);align-self:flex-start}
+.mr-up a:hover,.mr-up a:focus-visible{color:var(--xk-cyan);border-bottom-color:var(--xk-cyan-line-55)}
 .mr-g{margin-top:34px}
 .mr-g-hd{display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .mr-g-hd::before{content:"";width:3px;height:18px;border-radius:2px;background:var(--xk-cyan)}
@@ -39,29 +50,24 @@
   <section class="view on" id="v-more">
     <div class="mr-wrap">
       <div class="mr-hd">
-        <div class="mr-eyebrow">XK-LAB // MORE · 12 PAGES</div>
-        <h1 class="mr-h1">更多</h1>
-        <p class="mr-lede">首页回答"现在被打成什么样"。这里回答剩下的：凭什么信这些数字、我练了什么、这台机器自己怎么样、有什么顺手的小工具。每个页面一句话，点进去都是那个页面真实的数字。</p>
-      </div>
-
-      <div class="mr-g" id="g-evidence">
-        <div class="mr-g-hd"><h2>凭什么信这些数字</h2></div>
-        <div class="mr-cards">
-          <a class="mr-card" href="/noise/"><b>告警噪音指数</b><p>29 万条告警里 94.9% 是心跳噪音。这一页把"降噪"量化成可复核的几个数。</p><span class="mr-tags"><span class="mr-tag">量化</span><span class="mr-tag">降噪</span></span></a>
-          <a class="mr-card" href="/ip/"><b>这个 IP 干过什么</b><p>个人版 IP 档案：命中过哪几条规则、攻击过哪些端点、最近出现在什么时候。</p><span class="mr-tags"><span class="mr-tag">IP</span><span class="mr-tag">档案</span></span></a>
-          <a class="mr-card" href="/passwords/"><b>高频弱口令</b><p>蜜罐里被尝试最多的口令。只给结构统计，不列完整明文。</p><span class="mr-tags"><span class="mr-tag">口令</span><span class="mr-tag">结构</span></span></a>
-          <a class="mr-card" href="/samples/"><b>真实样本分析</b><p>三条打进来的攻击链，逐条给原始日志片段与判断依据。</p><span class="mr-tags"><span class="mr-tag">样本</span><span class="mr-tag">攻击链</span></span></a>
-          <a class="mr-card" href="/api/"><b>公开端点清单</b><p>20 个只读端点的用途、限流与缓存口径。站上的每个数字都能在这里找到出处。</p><span class="mr-tags"><span class="mr-tag">20 端点</span><span class="mr-tag">只读</span></span></a>
-          <a class="mr-card" href="/reports/"><b>周报与月报目录</b><p>每周一 06:00 生成周报、每月 1 日 06:00 生成月报，都在这一页上可以直接打开。</p><span class="mr-tags"><span class="mr-tag">周报</span><span class="mr-tag">月报</span></span></a>
+        <div class="mr-eyebrow">XK-LAB // MORE · ALL INDEX</div>
+        <h1 class="mr-h1">全部索引</h1>
+        <p class="mr-lede">常用功能已经上提到对应页面 —— 这一页不再是它们的唯一入口，只留还没有更显眼入口的那几页，翻不到的东西再来这里找。</p>
+        {{- /* ★2026-11-07 信息架构重排：这一页从「12 个功能都埋在这儿」降级成「全部索引」。
+               上提的去向写在页顶，名字仍链回原页（索引不残），后面的「→」指新入口。 */ -}}
+        <div class="mr-up">
+          <b>已上提（点名字回原页，点箭头那一头去新入口）：</b>
+          <p><a href="/noise/">告警噪音指数</a> / <a href="/ip/">这个 IP 干过什么</a> / <a href="/passwords/">高频弱口令</a> → <a href="/alerts/">实时看板 · 数据统计</a> 页顶三张入口卡</p>
+          <p><a href="/api/">公开端点清单</a> → 就是 <a href="/api/">端点清单页</a> 本身，顶部多了一条页内入口</p>
+          <p><a href="/reports/">周报与月报</a> → <a href="/daily/">安全日报</a> 页顶「周报与月报」两张卡</p>
+          <p><a href="/redteam/">红队攻防榜</a> / <a href="/purpleteam/">紫队演练</a> / <a href="/lab/">靶场</a> → <a href="/lab/">演练场</a> 的三个分区</p>
         </div>
       </div>
 
-      <div class="mr-g" id="g-training">
-        <div class="mr-g-hd"><h2>我练了什么</h2></div>
+      <div class="mr-g" id="g-evidence">
+        <div class="mr-g-hd"><h2>证据与样本</h2></div>
         <div class="mr-cards">
-          <a class="mr-card" href="/redteam/"><b>红队攻防榜</b><p>27 条攻击用例回归，逐条标注当前是拦住、部分拦住还是没拦住。</p><span class="mr-tags"><span class="mr-tag">27 用例</span><span class="mr-tag">回归</span></span></a>
-          <a class="mr-card" href="/purpleteam/"><b>紫队演练</b><p>我打的攻击，我的检测能不能看见。看不见的规则缺口直接列出来。</p><span class="mr-tags"><span class="mr-tag">紫队</span><span class="mr-tag">检测</span></span></a>
-          <a class="mr-card" href="/lab/"><b>靶场（攻防验证）</b><p>7 台容器上跑的攻防练习与验证环境，只开在自己机器里。</p><span class="mr-tags"><span class="mr-tag">容器</span><span class="mr-tag">隔离</span></span></a>
+          <a class="mr-card" href="/samples/"><b>真实样本分析</b><p>三条打进来的攻击链，逐条给原始日志片段与判断依据。</p><span class="mr-tags"><span class="mr-tag">样本</span><span class="mr-tag">攻击链</span></span></a>
         </div>
       </div>
 
@@ -78,8 +84,6 @@
         <div class="mr-g-hd"><h2>顺手的小工具</h2></div>
         <div class="mr-cards">
           <a class="mr-card" href="/tools/"><b>工具台</b><p>CVE 查询、口令强度、单位换算这类自用小工具，全部本地算、不上传。</p><span class="mr-tags"><span class="mr-tag">离线</span><span class="mr-tag">自用</span></span></a>
-          <a class="mr-card" href="/ai/"><b>AI 问答</b><p>公开只读的安全知识问答，答案带引用与状态标注，不编造。</p><span class="mr-tags"><span class="mr-tag">只读</span><span class="mr-tag">带引用</span></span></a>
-          <a class="mr-card" href="/daily/"><b>安全日报</b><p>每天 08:10 生成的一份日报：告警、来源、蜜罐与被拦下的动作。</p><span class="mr-tags"><span class="mr-tag">每日</span><span class="mr-tag">语音</span></span></a>
         </div>
       </div>
     </div>
