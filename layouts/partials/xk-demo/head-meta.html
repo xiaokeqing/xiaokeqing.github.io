@@ -64,3 +64,4 @@ if(location.search.indexOf('live=1')>=0)return;m.setAttribute('content','');}cat
 <meta name="twitter:image" content="{{ $ogImg }}">
 {{- /* ★2026-11-07 命令面板 / 阅读进度 / 复制按钮（static/js/xk-ux.js） */ -}}
 <script src="{{ (resources.Get "js/xk-ux.js" | minify | fingerprint).RelPermalink }}" defer></script>
+{{ with resources.Get "js/xk-geo.js" }}<script src="{{ (. | minify | fingerprint).RelPermalink }}" defer></script>{{ end }}

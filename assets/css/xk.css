@@ -945,3 +945,8 @@ pre{position:relative}
   border:1px solid rgba(127,212,216,.24);color:rgba(186,230,235,.95);text-decoration:none;
   font-variant-numeric:tabular-nums}
 #v-monitor .ipjump-chip:hover{border-color:rgba(127,212,216,.6);background:rgba(127,212,216,.12)}
+/* V1 攻击地理热力（自绘 SVG，无底图、无外部请求） */
+.xk-geo-map{position:relative;margin:6px 0 4px}
+.xk-geo-map svg{display:block;width:100%;border-radius:10px;background:rgba(8,12,15,.45)}
+.xk-geo-tip{position:fixed;z-index:60;padding:4px 8px;border-radius:6px;font-size:12px;
+  background:rgba(8,14,17,.92);border:1px solid rgba(127,212,216,.35);color:#dfe9ec;pointer-events:none}
