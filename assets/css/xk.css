@@ -950,3 +950,35 @@ pre{position:relative}
 .xk-geo-map svg{display:block;width:100%;border-radius:10px;background:rgba(8,12,15,.45)}
 .xk-geo-tip{position:fixed;z-index:60;padding:4px 8px;border-radius:6px;font-size:12px;
   background:rgba(8,14,17,.92);border:1px solid rgba(127,212,216,.35);color:#dfe9ec;pointer-events:none}
+
+/* ============================================================================
+   ★2026-11-07 信息架构重排：/alerts/「数据统计」页顶的「数据可信度 · 三个入口」。
+   三张卡指向各自原来的页面（/noise/ · /ip/ · /passwords/），这里只做入口，
+   不复制任何数字；配色沿用 #v-monitor 的暖玻璃口径。
+   ============================================================================ */
+.xk-ent .mod-bd{padding:12px 15px}
+.xk-ent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.xk-ent-card{display:flex;flex-direction:column;gap:5px;padding:11px 12px;border-radius:10px;
+  border:1px solid rgba(127,212,216,.22);background:rgba(127,212,216,.05);text-decoration:none;
+  color:inherit;transition:border-color .15s ease,background .15s ease}
+.xk-ent-card:hover,.xk-ent-card:focus-visible{border-color:rgba(127,212,216,.6);background:rgba(127,212,216,.11);outline:none}
+.xk-ent-card:focus-visible{outline:2px solid rgba(127,212,216,.6);outline-offset:2px}
+.xk-ent-card b{font-size:13.5px;font-weight:600;color:#dff0f4;line-height:1.4}
+.xk-ent-card span{font-size:12px;line-height:1.6;color:rgba(230,240,244,.6)}
+.xk-ent-card em{margin-top:2px;font-style:normal;font-size:11.5px;color:rgba(127,212,216,.92)}
+@media (max-width:720px){.xk-ent-grid{grid-template-columns:1fr}}
+/* ★2026-11-07 晚 A8 补完：① 命令面板结果项的「40 字摘要」第二行 ② 离线提示条（sw.js 回缓存时插）
+   —— 只追加，不改上面已有的 .xk-pal* 规则；行高/间距都按现有面板的口径走。 */
+.xk-pal-i{align-items:flex-start}
+.xk-pal-m{min-width:0;display:flex;flex-direction:column;gap:2px}
+.xk-pal-i b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xk-pal-s{font-style:normal;font-size:12px;line-height:1.35;opacity:.55;max-width:min(420px,56vw);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xk-offline{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:8500;
+  padding:7px 14px;border-radius:999px;font-size:12.5px;line-height:1.4;text-align:center;
+  background:rgba(10,16,19,.94);color:#dfe9ec;border:1px solid rgba(127,212,216,.45);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none}
+@media (max-width:720px){
+  .xk-pal-s{max-width:56vw}
+  .xk-offline{max-width:86vw;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+}

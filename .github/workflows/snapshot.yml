@@ -1,0 +1,140 @@
+# ============================================================
+# 定时刷新 API 快照（★2026-11-07 晚 A8）
+# ------------------------------------------------------------
+# 【为什么需要它】
+#   数据页（首页/监测中心/日报/接口…）读的是【同源静态快照】static/api/public/*.js，
+#   而不是 demo.xiaokeqing.cn 实时接口 —— 那条 CF 隧道对大响应掉到 ~600 B/s，页面会长时间转圈。
+#   代价：快照不刷，页面上的数字就是旧的。这份工作流负责每 10 分钟刷一次。
+#
+# 【为什么放 GitHub Actions，而不是本机】
+#   scripts/snapshot-refresh.ps1（ssh secagent-srv1 → scp 打包 → 哈希比对 → 有变化才 commit/push）
+#   已经在本机跑了，但要装计划任务就需要管理员权限；站主的这台机器不批。
+#   Actions 的 ubuntu-latest 自带 git/curl，跑完直接提交回 main，零手工。
+#
+# 【secret 没配时必须"跳过"，不是"失败"】
+#   站点现在没有 secret 也在正常发布。这条流水线的定位是"锦上添花"，
+#   一旦它因为没 secret 变红，main 上就会天天挂一条红色 ×，把真正的失败淹掉。
+#   所以第一步没读到 secrets.XK_SNAP_URL 就打印 "skip: XK_SNAP_URL 未配置" 并 exit 0，
+#   后面所有步骤都用 if: 检查 have == '1'，整条流水线干净地结束。
+#
+# 【网络前提（唯一硬前提）】
+#   GitHub 托管的 runner 在公网，够不到家里那台 srv1 的内网地址。
+#   所以 XK_SNAP_URL 必须是【公网可达】的：经隧道/反代映射出来的域名或公网地址，
+#   形如 http://<srv1>:9900（同网段/自建 runner 时）或 https://snap.example.com（经隧道）。
+#   结尾不要带 /api —— 本文件自己拼 "$BASE/api/public/<端点>"。
+#
+# 【抓哪 12 个端点】
+#   就是仓库里已入库的 12 个文件（一一对应，不多不少）：
+#     home.js alerts.js alerts5.js geo.js metrics.js stories.js webstats.js
+#     password.js kb.js deploy.js eval.js daily/index.json
+#   抓取失败的端点只打 ::warning:: 并【保留旧文件】，不整轮失败 —— 快照新旧不一致
+#   比"一条都刷不上"危害小得多（assert ⑥ 只按白名单认端点名，文件内容不参与断言）。
+#
+# 【什么时候提交】
+#   git diff --quiet -- static/api/public 为真（12 个文件一个字节都没变）⇒ 直接 exit 0，不提交。
+#   数据没变也提交的话，一天会多出上百条空提交，把真实改动埋在噪音里。
+#   提交身份固定 github-actions[bot]；push 被拒（远端又有人推了）才 pull --rebase 重试，
+#   最多 3 次，仍失败就红一次 —— 下一轮 10 分钟后自然会再试。
+# ============================================================
+name: Snapshot API
+
+"on":
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write        # 要把刷新后的快照提交回 main
+
+# 与 deploy.yml 同理：两轮快照别叠着跑（叠着跑的唯一后果是后一轮白抓一次）
+concurrency:
+  group: snapshot-api
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: 抓 12 个公开端点 → 有变化才提交
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 读 secret（未配置 = 整条跳过，不算失败）
+        id: cfg
+        env:
+          SNAP: ${{ secrets.XK_SNAP_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SNAP:-}" ]; then
+            echo "skip: XK_SNAP_URL 未配置"
+            echo "have=0" >> "$GITHUB_OUTPUT"
+            echo "### 跳过：XK_SNAP_URL 未配置" >> "$GITHUB_STEP_SUMMARY"
+            echo "没有 secret 时用本机 scripts/snapshot-refresh.ps1 手动刷（见 docs/快照自动刷新-20261107.md）。" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "have=1" >> "$GITHUB_OUTPUT"
+          echo "base=${SNAP%/}" >> "$GITHUB_OUTPUT"
+          echo "已读到 XK_SNAP_URL（值不回显）"
+
+      - name: 检出源码
+        if: steps.cfg.outputs.have == '1'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1        # 只用当前树做提交，不需要历史
+
+      - name: 抓快照（12 个端点，失败的保留旧文件）
+        if: steps.cfg.outputs.have == '1'
+        env:
+          BASE: ${{ steps.cfg.outputs.base }}
+        run: |
+          set -uo pipefail
+          OK=0; BAD=0
+          for p in home.js alerts.js alerts5.js geo.js metrics.js stories.js \
+                   webstats.js password.js kb.js deploy.js eval.js daily/index.json; do
+            out="static/api/public/$p"
+            mkdir -p "$(dirname "$out")"
+            tmp="$out.tmp"
+            # 只认 JSON 体（{ 或 [ 开头）：隧道口配错时 502/HTML 页面也会"200"，不能让它盖掉真快照
+            if curl -fsS -m 20 --retry 2 --retry-delay 2 "$BASE/api/public/$p" -o "$tmp" && [ -s "$tmp" ]; then
+              first=$(head -c 1 "$tmp" || true)
+              case "$first" in
+                '{'|'[') mv "$tmp" "$out"; OK=$((OK+1)); echo "  [OK]   $p" ;;
+                *) rm -f "$tmp"; BAD=$((BAD+1)); echo "::warning::不是 JSON，保留旧文件：$p" ;;
+              esac
+            else
+              rm -f "$tmp"; BAD=$((BAD+1)); echo "::warning::抓取失败，保留旧文件：$p"
+            fi
+          done
+          echo "抓成功 $OK 个，失败 $BAD 个"
+          echo "### 快照抓取：$OK 个成功 / $BAD 个失败" >> "$GITHUB_STEP_SUMMARY"
+          # 全挂 = secret 指向的地址根本不通，值得红一次；个别挂只 warning
+          [ "$OK" -gt 0 ] || { echo "12 个端点全部抓取失败 —— 检查 XK_SNAP_URL 是否公网可达"; exit 1; }
+
+      - name: 有变化才提交并推送
+        if: steps.cfg.outputs.have == '1'
+        run: |
+          set -euo pipefail
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # 12 个文件全部已入库 ⇒ git diff 能看全（不是新文件就漏看）
+          if git diff --quiet -- static/api/public; then
+            echo "快照无变化，不提交"
+            echo "### 快照无变化，未提交" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git add --all static/api/public
+          git commit -m "chore(snapshot): 定时刷新 API 快照（$(date -u '+%Y-%m-%d %H:%M UTC')）"
+          echo "已产生提交：$(git log -1 --pretty='%h %s')"
+
+          # 远端可能刚被别的推送/上一轮快照推过：先尝试直推，被拒再 rebase 重试
+          for i in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "已推送 $(git rev-parse --short HEAD)"
+              exit 0
+            fi
+            echo "推送被拒，rebase 后重试（第 $i 次）"
+            git pull --rebase --autostash origin main
+            sleep $((i * 5))
+          done
+          echo "推送连续失败 3 次 —— 下一轮定时任务会再试"
+          exit 1
