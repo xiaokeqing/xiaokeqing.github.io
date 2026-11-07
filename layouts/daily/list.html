@@ -249,6 +249,27 @@
       '口径：<b>' + esc(j.window || '—') + '</b>' +
       (j.note ? '<br>' + esc(j.note) : '');
     if(window.__xkViz){ window.__xkViz({sev:j.alertsBySeverity || null, total:j.alertTotal}); }
+    /* ★2026-11-07：日报契约里没有"按小时"字段，但这页的热力格不该永远是「—」。
+       作战室那份 /api/public/alerts 的 stats24h 里有 24 个整点桶（已缓存 60s），
+       这里顺手取一次，只喂热力，不动本页任何数字 —— 取不到就保持「—」并照实说明。 */
+    loadHourlyFromAlerts();
+  }
+
+  var hourlyAsked = false;
+  function loadHourlyFromAlerts(){
+    if(hourlyAsked || !window.__xkViz){ return; }
+    hourlyAsked = true;
+    fetch(API + '/api/public/alerts?w=5', { cache: 'no-cache' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(a){
+        var s = a && (a.stats24h || (a.data && a.data.stats24h));
+        if(!s || !s.trend || !s.trend.length){ return; }
+        /* 只补热力：total/sev 保持日报自己的口径，避免两套数字在一页里打架 */
+        window.__xkViz({ trend: s.trend });
+        var nt = document.querySelector('[data-vz-heatnote]');
+        if(nt){ nt.textContent = '按整点 · 后台实时聚合（' + (s.windowHours || 24) + 'h 窗口）· 与上面日报的统计日不同'; }
+      })
+      .catch(function(){});
   }
 
   function loadToday(){
