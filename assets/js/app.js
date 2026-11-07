@@ -445,7 +445,6 @@
     SSR_HOST = name;
   })();
   var INDEX = null;          // 笔记索引（/index.json，带正文，只在真正要就地渲染一篇时才取）
-  var LITE = null;           // 轻索引（/index-lite.json，无正文，搜索与空闲预取用）
 
   /** #content 里由构建期渲染好的那一份视图（data-xk-ssr 与路由同名时直接复用） */
   function ssrHostFor(route) {
@@ -1074,14 +1073,10 @@
 
   /* ==========================================================================
      8. 笔记列表 + 阅读
+     --------------------------------------------------------------------------
+     ★2026-11-07：`loadLite()`（轻索引解析）已随搜索逻辑一起搬进
+     assets/js/xk-search-lazy.js（懒块，见 §12）。这里只剩带正文的 /index.json。
      ========================================================================== */
-  function loadLite() {
-    if (LITE) return Promise.resolve(LITE);
-    return fetch('/index-lite.json', { cache: 'no-cache' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (j) { LITE = j; return LITE; });
-  }
-
   function loadIndex() {
     if (INDEX) return Promise.resolve(INDEX);
     return fetch('/index.json', { cache: 'no-cache' })
@@ -2048,110 +2043,63 @@
 
   /* ==========================================================================
      12. 搜索（Ctrl+K，只搜笔记）
+     --------------------------------------------------------------------------
+     ★2026-11-07 拆包（站主口径「分类页 383 KB 里 app.js 120 KB 要拆」）：
+       模糊匹配（hi / searchBucket / renderSearch）、索引解析（loadLite 读
+       /index-lite.json）、键盘移动与提交、空闲预取 —— 全部搬进
+       assets/js/xk-search-lazy.js（Hugo 管道指纹，URL 由
+       <meta name="xk-search-lazy"> 传给本文件）。
+       首屏只留：开/关弹层 + 键盘判定 + 输入转发。用户从不搜索 ⇒ 懒块一个字节都不下；
+       慢网（html.xk-slow）连空闲预取都不做。
      ========================================================================== */
   var searchState = { open: false, items: [], cursor: 0 };
   /* 首屏可玩（英雄区「试着攻击我」）的运行态：用 document 级委托，视图换来换去也只绑一次 */
   var heroPlay = { running: false, bound: false };
+  var searchMod = null, searchP = null;
 
   function updateSearchButtonState() { /* 预留：导航上的搜索按钮始终可用 */ }
 
+  /* 懒块注入：只注入一次；失败把 Promise 放空，下次再打开搜索可以重试 */
+  function searchLazy() {
+    if (searchMod) return Promise.resolve(searchMod);
+    if (searchP) return searchP;
+    var meta = document.querySelector('meta[name="xk-search-lazy"]');
+    var src = meta ? (meta.getAttribute('content') || '') : '';
+    searchP = new Promise(function (resolve, reject) {
+      if (!src) { reject(new Error('xk-search-lazy 未登记')); return; }
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = function () {
+        searchMod = window.__xkSearch || null;
+        if (!searchMod) { reject(new Error('xk-search-lazy 无导出')); return; }
+        searchMod.init({ $: $, $$: $$, esc: esc, navigate: navigate, state: searchState, toast: toast });
+        resolve(searchMod);
+      };
+      s.onerror = function () { reject(new Error('xk-search-lazy 注入失败')); };
+      document.head.appendChild(s);
+    }).catch(function (err) { searchP = null; throw err; });
+    return searchP;
+  }
+
   function openSearch() {
     var modal = $('#xk-search');
-    modal.hidden = false;
+    if (modal) modal.hidden = false;
     searchState.open = true;
     var input = $('#xk-search-input');
-    input.value = '';
-    input.focus();
-    $('#xk-search-list').innerHTML = '<li class="xk-modal__empty">正在读取笔记索引…</li>';
-    loadLite().then(function (idx) {
-      searchState.items = (idx && idx.notes) || [];
-      searchState.cursor = 0;
-      renderSearch('');
-    }).catch(function () {
-      $('#xk-search-list').innerHTML = '<li class="xk-modal__empty">笔记索引读取失败。</li>';
+    if (input) { input.value = ''; input.focus(); }
+    var list = $('#xk-search-list');
+    if (list) list.innerHTML = '<li class="xk-modal__empty">正在读取笔记索引…</li>';
+    searchLazy().then(function (m) { m.open(); }).catch(function () {
+      var l = $('#xk-search-list');
+      if (l) l.innerHTML = '<li class="xk-modal__empty">笔记索引读取失败。</li>';
     });
   }
 
   function closeSearch() {
-    $('#xk-search').hidden = true;
+    var modal = $('#xk-search');
+    if (modal) modal.hidden = true;
     searchState.open = false;
-  }
-
-  /**
-   * 搜索结果渲染（第十一轮 ③）：命中高亮 + 分组 + 键盘上下选择。
-   * 高亮做法：把 query 转成安全的正则（转义元字符），只对【已经 esc() 过的文本】做包裹，
-   * 所以不存在把用户输入当 HTML 注入的路径（esc 在前，包 <mark> 在后）。
-   */
-  function hi(text, q) {
-    var s = esc(text == null ? '' : String(text));
-    if (!q) return s;
-    var safe = String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    try { return s.replace(new RegExp('(' + safe + ')', 'gi'), '<mark class="xk-mark">$1</mark>'); }
-    catch (e) { return s; }
-  }
-
-  function searchBucket(n, q) {
-    var qq = q.toLowerCase();
-    if (String(n.title || '').toLowerCase().indexOf(qq) >= 0) return '标题命中';
-    if (((n.categories || []).join(' ') + ' ' + (n.tags || []).join(' ')).toLowerCase().indexOf(qq) >= 0) return '分类 / 标签命中';
-    return '正文命中';
-  }
-
-  function renderSearch(q) {
-    var list = $('#xk-search-list');
-    var query = String(q || '').trim();
-    var lc = query.toLowerCase();
-    var items = searchState.items;
-    if (query) {
-      items = items.filter(function (n) {
-        var hay = [n.title, (n.categories || []).join(' '), (n.tags || []).join(' '), n.summary, n.text].join(' ').toLowerCase();
-        return hay.indexOf(lc) >= 0;
-      });
-    }
-    if (!items.length) {
-      list.innerHTML = '<li class="xk-modal__empty">没有匹配的笔记。</li>';
-      searchState.filtered = [];
-      return;
-    }
-    searchState.filtered = items;
-    searchState.cursor = 0;
-
-    /* 分组：标题命中 → 分类/标签命中 → 正文命中（组内保持仓库里的时间倒序） */
-    var groups = ['标题命中', '分类 / 标签命中', '正文命中'];
-    var html = '', flat = 0;
-    var shown = items.slice(0, 20);
-    groups.forEach(function (g) {
-      var inGroup = shown.filter(function (n) { return searchBucket(n, query || '') === g; });
-      if (!inGroup.length) return;
-      html += '<li class="xk-modal__group" aria-hidden="true">' + esc(g) + '</li>';
-      inGroup.forEach(function (n) {
-        var idx = flat++;
-        html += '<li class="xk-modal__item' + (idx === 0 ? ' is-on' : '') + '" data-xk-idx="' + idx + '" data-xk-slug="' + esc(n.slug) + '" role="option">' +
-          '<b>' + hi(n.title, query) + '</b>' +
-          '<span>' + esc(n.date + ' · ' + (n.categories || []).join(' / ')) + ' · ' + hi(n.summary, query) + '</span></li>';
-      });
-    });
-    list.innerHTML = html;
-    // 分组后 Flat 顺序与 items 顺序一致，键盘移动仍然按 DOM 顺序走
-    searchState.filtered = shown;
-  }
-
-  function moveSearch(delta) {
-    var items = searchState.filtered || [];
-    if (!items.length) return;
-    searchState.cursor = (searchState.cursor + delta + items.length) % items.length;
-    $$('#xk-search-list .xk-modal__item').forEach(function (li, i) {
-      li.classList.toggle('is-on', i === searchState.cursor);
-      if (i === searchState.cursor) li.scrollIntoView({ block: 'nearest' });
-    });
-  }
-
-  function submitSearch() {
-    var items = searchState.filtered || [];
-    var pick = items[searchState.cursor];
-    if (!pick) return;
-    closeSearch();
-    navigate('#/notes/' + pick.slug);
   }
 
   /* ==========================================================================
@@ -2236,13 +2184,13 @@
     }
     if (!searchState.open) return;
     if (e.key === 'Escape') { closeSearch(); }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); moveSearch(1); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); moveSearch(-1); }
-    else if (e.key === 'Enter') { e.preventDefault(); submitSearch(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); if (searchMod) searchMod.move(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (searchMod) searchMod.move(-1); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (searchMod) searchMod.submit(); }
   });
 
   document.addEventListener('input', function (e) {
-    if (e.target && e.target.id === 'xk-search-input') renderSearch(e.target.value);
+    if (e.target && e.target.id === 'xk-search-input' && searchMod) searchMod.render(e.target.value);
   });
 
   // 13.3 前进/后退 + 手改 hash
@@ -2252,34 +2200,16 @@
     if (r) render(r);
   });
 
-  // 13.4 轻索引空闲预取：约 80 KB，打开搜索即可用；带正文的 /index.json（1.2 MB）不预取，
-  //      只在用户真的要在页面里就地读一篇时才取 —— 3 Mbps 链路上预取它会把首屏图片挤到后面。
-  //      ★2026-11-04 站主口径「每页先给最快的东西」：慢网（下行 < 2 Mbps / 省流量模式）**不预取**，
-  //      等用户真的点开搜索再取 —— 搜索框打开时 loadLite() 会当场加载，功能不受影响。
-  function slowNetForIndex() {
-    try {
-      var c = navigator.connection || {};
-      if (c.saveData) { return true; }
-      var et = String(c.effectiveType || '');
-      if (et === 'slow-2g' || et === '2g' || et === '3g') { return true; }
-      if (typeof c.downlink === 'number' && c.downlink > 0 && c.downlink < 2) { return true; }
-    } catch (e) { }
-    try {
-      var q = String(location.search).match(/[?&]xk-net=([^&]+)/);
-      if (q) {
-        var v = decodeURIComponent(q[1]);
-        if (v === 'slow') { return true; }
-        if (v === 'fast') { return false; }
-      }
-    } catch (e) { }
-    return false;
+  // 13.4 轻索引空闲预取：约 80 KB，打开搜索即可用；带正文的 /index.json（1.2 MB）不预取。
+  //      ★2026-11-07 拆包后：预取的判据（xk-slow / saveData / 2g-3g / 下行<2 Mbps /
+  //      ?xk-net=slow）和 loadLite 都在懒块里 —— 这里只负责「快网空闲时把懒块取回来」，
+  //      慢网连懒块都不取（首屏省下 6.6 KB 代码 + 一次请求）。
+  function prefetchSearch() {
+    if (document.documentElement.classList.contains('xk-slow')) { return; }
+    searchLazy().then(function (m) { m.prefetch(); }).catch(function () { });
   }
-  function prefetchIndex() {
-    if (slowNetForIndex()) { return; }   // 慢网：不预取，打开搜索时再取
-    loadLite().catch(function () { /* 失败就等用户真的打开搜索再报错 */ });
-  }
-  if (window.requestIdleCallback) requestIdleCallback(prefetchIndex, { timeout: 4000 });
-  else setTimeout(prefetchIndex, 2500);
+  if (window.requestIdleCallback) requestIdleCallback(prefetchSearch, { timeout: 4000 });
+  else setTimeout(prefetchSearch, 2500);
 
   /* ==========================================================================
      14. 首屏可玩：Hero 里的「试着攻击我」（第十一轮 ③）

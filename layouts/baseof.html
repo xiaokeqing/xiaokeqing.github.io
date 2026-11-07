@@ -102,7 +102,19 @@
       "ssrSlug" $slug
     | jsonify | safeJS }}</script>
 
-  <script src="/js/app.js" defer></script>
+  {{- /* ★2026-11-07（站主 P0）：app.js 从 static/ 直出（120 KB 明文）搬进内容管道 ——
+         minify + fingerprint 后 54.7 KB（120 KB → 54.7 KB），且换内容即换 URL（缓存永远刷得掉）。
+         它以前在 static/ 里是历史遗留，⑭ 的白名单本来就没有它，只是没有断言页引用它。 */}}
+  {{- $app := resources.Get "js/app.js" | minify | fingerprint }}
+  <script src="{{ $app.RelPermalink }}" defer></script>
+  {{- /* ★2026-11-07（站主 P0）：搜索懒块的指纹地址。app.js 现在也在管道里了，但它自己
+         拿不到「同一次构建」的另一个资源路径 —— 只有模板能算，所以走 <meta> 传给 JS。
+         app.js 只在用户真的打开搜索（或快网空闲）时才 document.head.appendChild 注入它。 */}}
+  {{- with resources.Get "js/xk-search-lazy.js" }}
+  {{- $lazy := . | minify | fingerprint }}
+  <meta name="xk-search-lazy" content="{{ $lazy.RelPermalink }}">
+  {{- end }}
+
   {{/* 数据页侧栏让位（1 KB）：默认收起右侧面板、只留左上角小头像，用户点开一次就记住。
        样式在 assets/css/extended/zz-rail.css；只在 monitor/daily/ip/noise/passwords/more/api 生效。 */}}
   <script src="/js/xk-rail.js" defer></script>

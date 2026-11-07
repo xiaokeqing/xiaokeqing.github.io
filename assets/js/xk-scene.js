@@ -129,9 +129,28 @@ var XKV2_BLOCK = (function(){
     ua: uaOf()
   };
   var c = V.cfg;
+  /* ★2026-11-07 P0-3：手动降档口（站主要求「保留一个手动能降档的开关」）。
+     ?xk-tier=medium / ?xk-lite=1 / <html data-xk-lite> 三种写法都表示
+     「这一页只要图集，视频一个字节都不取」—— 与 ?xk-kurisu-mode=pixel 等价，
+     但读者不用知道内部开关名（medium 图集 1.3–1.6 MB，视频档却是 273 KB 起，
+     所以「想要更省」的人拿到的其实是图集，这一点写在 docs 里）。
+     诊断：window.__xkVid.lite / .reason。 */
+  var liteReq = (function(){
+    try{
+      var s = String(location.search || '');
+      if(/[?&]xk-lite=1(?:&|$)/.test(s)) return '?xk-lite=1';
+      if(/[?&]xk-tier=(medium|low|poster|atlas)(?:&|$)/i.test(s)) return '?xk-tier=' + RegExp.$1.toLowerCase();
+      if(document.documentElement.hasAttribute('data-xk-lite')) return 'data-xk-lite';
+    }catch(e){}
+    return null;
+  })();
+  V.lite = !!liteReq;
   V.auto = (c.rm || c.saveData || c.slowNet || c.lowMem || c.shortPanel || (!c.canPlay && !c.mseVP9));
   V.mode = core();
-  if(V.mode === 'off'){
+  if(V.mode !== 'off' && liteReq){
+    V.mode = 'pixel';
+    V.reason = '手动降档（' + liteReq + '）：只跑图集，视频不取';
+  }else if(V.mode === 'off'){
     V.reason = '开关 off（角色层不加载）';
   }else if(V.mode === 'pixel'){
     V.reason = '开关 pixel（保持接线前的图集行为）';
@@ -147,6 +166,80 @@ var XKV2_BLOCK = (function(){
   }
   V.videoOK = (V.mode === 'poster' || V.mode === 'video');
   V.enabled = (V.mode !== 'off' && V.mode !== 'pixel');
+
+  /* ★2026-11-07 P0-4 视口门控 —— 站主要求「列表页离开视口就不加载视频」。
+     ---------------------------------------------------------------------------
+     改前实测 /posts/?xk-net=fast：948.6 KB 里 273 KB webm + 207 KB poster + 25 KB
+     video-manifest，全是在给一块 **0×0** 的画布解码（#v-home 在那个页面
+     display:none；shortPanel 判据只认 h>0 && h<300，h=0 正好漏过去）。
+     现在只看 canvas 自己的矩形：
+       · 不可见（0×0 / 滚出视口 / 标签页隐藏）⇒ 不 ensure、不预载、不取清单，
+         并把已经解码的 <video> 全部 pause + 释放（不留元素、不留 body）；
+       · 可见 ⇒ 才允许解锁、取清单、预载（2s 开场动画时序不变）。
+     同时把 LRU 硬上限从 4 降到 2：同一时间最多 2 枚 <video> 存活（站主要求）。
+     诊断：window.__xkVid.vis / .visWhy / .maxAlive / .suspendCount。 */
+  V.vis = false; V.visWhy = 'init'; V.suspendCount = 0;
+  V.maxAlive = 2;
+  var wantUnlock = false;                  /* 有解锁请求但当时不可见 ⇒ 进视口后补做 */
+  var autoDue = false;                     /* 2s 自动解锁的时点已到 */
+  function visNow(){
+    try{
+      if(document.visibilityState === 'hidden') return false;
+      var el = document.getElementById('charCanvas') || document.getElementById('crt');
+      if(!el) return false;
+      var r = el.getBoundingClientRect();
+      if(!(r.width > 8 && r.height > 8)) return false;   /* display:none ⇒ 0×0 */
+      var ih = window.innerHeight || 0;
+      return r.bottom > 0 && r.top < ih;
+    }catch(e){ return false; }
+  }
+  function pauseAll(hard){
+    var k, cc;
+    for(k in V.decoded){
+      cc = V.decoded[k];
+      if(cc.seekTimer){ clearTimeout(cc.seekTimer); cc.seekTimer = 0; }
+      cc.pending = -1;
+      try{ cc.vd.pause(); }catch(e){}
+      if(hard){
+        release(cc, true);                       /* act=false 时 release 会早退 ⇒ 下面再补一次硬释放 */
+        try{ cc.vd.removeAttribute('src'); cc.vd.load(); }catch(e){}
+      }
+      delete V.decoded[k];
+    }
+    if(hard){
+      V.alive = 0; V.cur = null; V.suspendCount++;
+      if(V.free && V.free.length > 8) V.free.length = 0;
+    }
+  }
+  function applyVis(up, why){
+    if(up === V.vis) return;
+    V.vis = up; V.visWhy = why;
+    if(up){
+      if(wantUnlock || autoDue) autoUnlock();
+    }else{
+      pauseAll(true);
+    }
+  }
+  function autoUnlock(){
+    if(V.gesture || !V.enabled || !V.videoOK || !V.vis || document.hidden) return;
+    /* 视频档代管后，开场也只需要 boot 图集（275KB），不要升到 hi（1004KB）。 */
+    try{ if(XK_TIER && XK_TIER.degrade) XK_TIER.degrade('opening', '视频档接管：开场走 boot 图集'); }catch(e){}
+    unlock();
+  }
+  try{
+    if(window.IntersectionObserver){
+      var ioTarget = document.getElementById('charCanvas') || document.getElementById('crt');
+      if(ioTarget){
+        V.io = new IntersectionObserver(function(es){
+          var e = es && es[es.length - 1];
+          applyVis(!!(e && e.isIntersecting && e.intersectionRatio > 0.01) && visNow(), 'io');
+        }, {threshold:[0, 0.01, 0.25, 0.5]});
+        V.io.observe(ioTarget);
+      }
+    }else{
+      V.vis = visNow(); V.visWhy = 'no-io';   /* 老浏览器：退化成一次性判定，行为与改前一致 */
+    }
+  }catch(e){ V.vis = visNow(); V.visWhy = 'io-fail'; }
 
   function clean(u){ return '/' + String(u).replace(/^\/+/, ''); }
   function posterUrl(n){ var m = V.manifest && V.manifest.clips && V.manifest.clips[n]; return m ? clean(m.poster) : ('/kurisu/video/' + n + '.poster.webp'); }
@@ -232,14 +325,22 @@ var XKV2_BLOCK = (function(){
     V.free.push(c);
   }
   function lru(){
-    if(V.alive < 4) return;
+    /* ★2026-11-07 P0-4：上限 4 → 2（站主要求「同一时间最多 2 个 <video> 在播」）。
+       不可见时 applyVis(false) 会把存活数直接清零，所以这个上限只约束「可见 + 预载」。
+       ★同日修：被淘汰的条目要从 V.decoded 里删掉，否则 release 只会把 act 置 false、
+       下一轮 lru 选到它时 release 直接早退（act 已 false）⇒ 存活数会偷偷超过上限。 */
+    var cap = V.maxAlive || 2;
+    if(V.alive < cap) return;
     var best = null, k;
     for(k in V.decoded){
       var c = V.decoded[k];
-      if(!c.act || k === V.cur) continue;              /* 正在播的不动 */
+      if(k === V.cur || !c.act) continue;            /* 正在播的不动 */
       if(!best || c.used < best.used) best = c;
     }
-    if(best) release(best, true);                      /* 腾不出就不腾，下一帧再判 */
+    if(best){ release(best, true); delete V.decoded[best.name]; return; }
+    /* 兜底：没有可释放的 act 条目（残留/失败）⇒ 直接丢掉非当前的，让 ensure 重建 */
+    for(k in V.decoded){ if(k !== V.cur){ delete V.decoded[k]; } }
+    V.alive = Math.min(V.alive, 1);
   }
   function make(name){
     var vd = document.createElement('video');          /* ★绝不 appendChild：离屏、不进 DOM */
@@ -280,12 +381,16 @@ var XKV2_BLOCK = (function(){
     /* ★2026-11-07 P0-2 渐进：首屏先用 268×360 的 lite 档（idle 117KB / idle1 121KB），
    解锁（首次交互或空闲 2.5s）后换成 535×720 正式档 —— 最终画质不变，只是把 423KB 挪到后面。 */
     var liteUrl = videoUrl(name).replace('/kurisu/video/', '/kurisu/video/lite/');
-    var useLite = !V.gestured && /^idle\d*$/.test(name);
+    /* ★2026-11-07：原来判的是 V.gestured（不存在的字段，恒 undefined ⇒ 永远取 lite 档，
+       解锁后的升级循环又选不到离屏元素 ⇒ 正式档其实从没被取过）。现在按 V.gesture 判，
+       解锁后再新建的剪辑直接取正式档。 */
+    var useLite = !V.gesture && /^idle\d*$/.test(name);
     vd.src = useLite ? liteUrl : videoUrl(name);
     try { if (useLite) { vd.dataset.lite = '1'; vd.dataset.full = videoUrl(name); } } catch (e) {}
     return c;
   }
   function ensure(name){
+    if(!V.vis) return null;                            /* ★P0-4：画布不可见 ⇒ 一枚都不建（不预载） */
     var c = V.decoded[name];
     if(c) return c;
     if(V.failed[name]) return null;                    /* 永久降级：不再重试 ✗ */
@@ -340,6 +445,7 @@ var XKV2_BLOCK = (function(){
        所以这一段只返回 false，页面照原样画图集 —— 接线后首屏字节因此**零变化**。 */
     if(!V.gesture) return false;
     if(!V.enabled || !V.videoOK || !V.disp) return false;
+    if(!V.vis){ V.fallbackDrawn++; return false; }     /* ★P0-4：不可见 ⇒ 一帧都不解码，交给图集 */
     var plan = box.plan, ctx = box.ctx, W = box.w, H = box.h;
     var vname = clipOf(name, plan);
     if(!vname || NOVID[vname]){ V.fallbackDrawn++; return false; }   /* 交给图集 */
@@ -379,13 +485,20 @@ var XKV2_BLOCK = (function(){
   function unlock(){
     /* 只在**首次手势**里被调（pointerdown / keydown）：解锁后才会取清单、才知道预载集。
        绝不在 play() 里调它 —— 那会让"手势前不预载视频"这条规格作废（本轮真踩过：
-       gate 报告里首屏多出 2 个 poster + 1 个 404）。 */
+       gate 报告里首屏多出 2 个 poster + 1 个 404）。
+       ★P0-4：画布不可见时同样不解锁 —— 否则清单（25 KB）与预载剪辑会在看不见的
+       页面上先下起来；此时只记一个 wantUnlock，等进视口补做。 */
     if(V.gesture) return;
-  /* ★2026-11-07 P0-2：解锁后把首屏用的 lite 档换成正式 535x720 档（同帧号接续，画质升级不闪） */
+    if(!V.vis){ wantUnlock = true; return; }
+    wantUnlock = false;
+    V.gesture = true;                        /* 先置位：之后新建的 <video> 直接用正式档 */
+  /* ★2026-11-07 P0-2：解锁后把首屏用的 lite 档换成正式 535x720 档（同帧号接续，画质升级不闪）。
+     ★同日修正：原来用 document.querySelectorAll('video[data-lite="1"]') —— 视频全是离屏
+     createElement 出来的、从不进 DOM，这个选择器一个都选不到，等于从没升级过。现在遍历 V.decoded。 */
   try{
-    var lis = document.querySelectorAll('video[data-lite="1"]');
-    for (var li = 0; li < lis.length; li++) {
-      var vd2 = lis[li];
+    for (var lk in V.decoded) {
+      var c0 = V.decoded[lk], vd2 = c0 && c0.vd;
+      if (!vd2 || vd2.getAttribute('data-lite') !== '1') continue;
       var full = vd2.getAttribute('data-full') || '';
       if (!full) continue;
       vd2.setAttribute('data-lite', '0');
@@ -394,7 +507,6 @@ var XKV2_BLOCK = (function(){
       try { vd2.play().catch(function () { }); } catch (e) { }
     }
   } catch (e) {}
-    V.gesture = true;
     if(!V.enabled || !V.videoOK) return;
     manifestLoad().then(function(j){
       if(!j || !j.preload) return;
@@ -412,20 +524,17 @@ var XKV2_BLOCK = (function(){
      视频一旦失败（failed 非空）图集会立即让回来。 */
   setTimeout(function(){
     try{
-      if(!V.enabled || !V.videoOK || V.gesture) return;
-      if(document.hidden) return;
-      /* 视频档代管后，开场也只需要 boot 图集（275KB），不要升到 hi（1004KB）。 */
-      try{ if(XK_TIER && XK_TIER.degrade) XK_TIER.degrade('opening', '视频档接管：开场走 boot 图集'); }catch(e){}
-      unlock();
+      autoDue = true;
+      autoUnlock();                        /* ★P0-4：不可见就只记时点，进视口由 applyVis 补做 */
     }catch(e){}
   }, 2000);
   ['pointerdown', 'keydown'].forEach(function(ev){
     addEventListener(ev, function(){ unlock(); }, {once:true, passive:true});
   });
   document.addEventListener('visibilitychange', function(){
-    /* 页面隐藏：暂停视频；可见后由 seek 归位（时间累加器的清零在 walker/loop 侧） */
-    var k;
-    if(document.hidden){ for(k in V.decoded){ try{ V.decoded[k].vd.pause(); }catch(e){} } }
+    /* 页面隐藏 = 不可见的一种：整层挂起（pause + 释放），回来再按真实矩形判一次。
+       ★P0-4 之前这里只 pause，元素与 body 都留着 —— 列表页长时间挂后台仍占解码内存。 */
+    try{ applyVis(document.hidden ? false : visNow(), document.hidden ? 'hidden' : 'shown'); }catch(e){}
   });
   return { draw:draw, unlock:unlock, ensure:ensure, state:V, clipOf:clipOf,
            manifest:manifestLoad,
@@ -437,6 +546,7 @@ var XKV2_BLOCK = (function(){
              }
              return { mode:V.mode, reason:V.reason, alive:V.alive, decoded:dc,
                       failed:Object.keys(V.failed).length, bytesFetchedHint:bytes, drawn:V.drawn,
+                      vis:V.vis, visWhy:V.visWhy, maxAlive:V.maxAlive, suspendCount:V.suspendCount,
                       fallbackDrawn:V.fallbackDrawn, released:V.released, preload:V.preload,
                       gesture:V.gesture, probe:V.probe, probes:V.probes, alphaFail:V.alphaFail,
                       errors:V.errors.slice(-4) };
