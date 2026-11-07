@@ -55,3 +55,5 @@ if(slow){document.documentElement.classList.add("xk-slow");}}catch(e){}})();</sc
 <meta name="twitter:title" content="{{ $ogTitle }}">
 <meta name="twitter:description" content="{{ $desc }}">
 <meta name="twitter:image" content="{{ $ogImg }}">
+{{- /* ★2026-11-07 命令面板 / 阅读进度 / 复制按钮（static/js/xk-ux.js） */ -}}
+<script src="{{ (resources.Get "js/xk-ux.js" | minify | fingerprint).RelPermalink }}" defer></script>
