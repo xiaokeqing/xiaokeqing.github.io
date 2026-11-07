@@ -73,4 +73,18 @@
   };
   /* 首帧：数据没到 → 24 个 — 灰格 + 空环，绝不先写 0 */
   heat(false, null); ring(false, null, null);
+
+  /* ★2026-11-07：/daily/ 页并不请求 alerts（它只拉 daily.js），那边的两张图会永远"取数中…"。
+     6 秒还没等到数据且本页不是作战室 ⇒ 换成"本页没有这份数据 + 跳转"，而不是挂着转圈。 */
+  setTimeout(function () {
+    var main = document.getElementById('content');
+    var page = main && main.getAttribute('data-xk-ssr');
+    if (page === 'monitor') { return; }
+    if (window.XK24H || window.XK_SEV24) { return; }
+    var h = document.querySelector('[data-vz-heatnote]');
+    var r = document.querySelector('[data-vz-ringnote]');
+    var tip = '本页不请求实时分级数据（去 <a href="/alerts/">作战室</a> 看 24h 分级与热力）';
+    if (h) { h.innerHTML = tip; }
+    if (r) { r.innerHTML = tip; }
+  }, 6000);
 })();
