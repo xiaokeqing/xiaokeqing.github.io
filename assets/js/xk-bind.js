@@ -452,14 +452,22 @@
       else { txt(k, ''); txt(c, ''); if (c) c.style.display = 'none'; }   /* 没数据的那几行不留空药丸 */
     }
   }
-  function mods() { return document.querySelectorAll('.ops-rail .mod'); }
+  /* 卡片按 data-xk-mod 锚定，不按序号取：rail 里后来插了「处置时效」卡（metrics），
+     序号整体后移 ⇒ 2026-11-07 实测 bindHoney 取到的 ms[2] 就是 MTTD/MTTR 卡，
+     把蜜罐凭据（szy / 7 位 · ×78 · 弱口令）写进了处置时效两行。序号只做旧 HTML 的兜底，
+     兜底序号按"插卡后"的实际位置给（honey 现在是 rail 里第 4 张）。 */
+  function mod(key, idx) {
+    var el = document.querySelector('.ops-rail .mod[data-xk-mod="' + key + '"]');
+    if (el) return el;
+    return document.querySelectorAll('.ops-rail .mod')[idx] || null;
+  }
 
   /* ★B5：渐进渲染 —— 原 `bindRail` 拆成"一张卡一个来源"的四个小绑定：
      `alerts` 先到就先出威胁等级、`geo` 先到就先出 TOP 来源、`honeypot` 先到就先出蜜罐凭据，
      **各自只在"自己的端点已到（或已失败）"时才写 DOM**；未到的端点保持 SSR 骨架，绝不写"读不到"。 */
   function bindThreat(parts) {
-    var ms = mods();
-    if (!ms[0] || pend('alerts')) return;                 /* ★B5：还没到 ⇒ 骨架照旧 */
+    var m = mod('threat', 0);
+    if (!m || pend('alerts')) return;                     /* ★B5：还没到 ⇒ 骨架照旧 */
     var al = pick(parts, 'alerts');
     /* 威胁等级：等级由 24h 真实严重度分布推出（口径写在旁边），没有该字段就写读不到 */
     var sev = al && al.stats24h && al.stats24h.available !== false ? al.stats24h.bySeverity : null;
@@ -472,26 +480,26 @@
       var nz = keys.filter(function (k) { return n(k[0]) > 0; });
       basis = '24h ' + (nz.length ? nz : keys).slice(0, 2).map(function (k) { return k[1] + ' ' + fmt(n(k[0])); }).join(' · ');
     }
-    txt(ms[0].querySelector('.lv'), lv || NA);
-    txt(ms[0].querySelector('.trend'), basis);
+    txt(m.querySelector('.lv'), lv || NA);
+    txt(m.querySelector('.trend'), basis);
   }
   function bindGeo(parts) {
-    var ms = mods();
-    if (!ms[1] || pend('geo')) return;                    /* ★B5 */
+    var m = mod('geotop', 1);
+    if (!m || pend('geo')) return;                        /* ★B5 */
     /* TOP 攻击来源 ← /api/public/geo byCountry（后端不给 IP，只给国家/地区 + 计数） */
     var geo = pick(parts, 'geo');
     var top = (geo && Array.isArray(geo.byCountry) && geo.byCountry.length) ? geo.byCountry.slice(0, 4) : null;
-    fillRows(rowsOf(ms[1]), top ? top.map(function (c) {
+    fillRows(rowsOf(m), top ? top.map(function (c) {
       return [(c.country || '—') + ' · ' + (c.countryName || '—'), fmt(c.count) + ' 次' + (c.sharePercent !== undefined ? ' · ' + c.sharePercent + '%' : '')];
     }) : [[NA, '/geo']]);
   }
   function bindHoney(parts) {
-    var ms = mods();
-    if (!ms[2] || pend('honeypot')) return;               /* ★B5 */
+    var m = mod('honey', 3);
+    if (!m || pend('honeypot')) return;                   /* ★B5 */
     /* 蜜罐捕获凭据 ← /api/public/honeypot topCredentials（只给结构：用户名 + 长度 + 是否弱口令） */
     var hp = pick(parts, 'honeypot');
     var creds = (hp && Array.isArray(hp.topCredentials) && hp.topCredentials.length) ? hp.topCredentials.slice(0, 4) : null;
-    fillRows(rowsOf(ms[2]), creds ? creds.map(function (c) {
+    fillRows(rowsOf(m), creds ? creds.map(function (c) {
       return [(c.username || '—') + ' / ' + (c.passwordLength !== undefined ? c.passwordLength + ' 位' : '—'),
         '×' + (Number(c.count) || 0) + ' · ' + (c.weakPassword ? '弱口令' : (c.passwordCharClasses || '—'))];
     }) : [[NA, '/honeypot']]);
