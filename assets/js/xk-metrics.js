@@ -5,28 +5,32 @@
  *      页面照抄 reason，**不写 0 分钟** —— 0 会被读成"处理得飞快"。
  *   2. 取不到 / 接口 4xx-5xx / 非 JSON ⇒ 两个数字写 "—"，脚下说明写"未取到（原因）"，
  *      不编数、不补 0。
- *   3. 只在 /alerts/（data-xk-ssr=monitor）且不是慢网时跑；慢网省掉这一次请求。
+ *   3. 只在 /alerts/（data-xk-ssr=monitor）且不是慢网时跑；慢网省掉这一次请求，
+ *      但要把"取数中…"改成如实说明（否则看起来像一直在转圈）。
  */
 (function () {
   'use strict';
   var doc = document;
+
   var host = doc.getElementById('modMetrics');
   if (!host) return;
-  var ssr = doc.getElementById('content');
-  var page = ssr && ssr.getAttribute('data-xk-ssr');
-  if (page !== 'monitor') return;
-  if (doc.documentElement.classList.contains('xk-slow')) {
-    // 慢网不为此多打一次请求：把"取数中…"改成如实说明，别让人以为一直在转圈。
-    elTtd.textContent = '—';
-    elTtr.textContent = '—';
-    elNote.textContent = '慢网下不请求这一项（省一次往返）；换个网速正常的网络刷新就能看到。';
-    return;
-  }
 
+  var ssr = doc.getElementById('content');
+  if (!ssr || ssr.getAttribute('data-xk-ssr') !== 'monitor') return;
+
+  // 先取元素引用，再决定跑不跑 —— 顺序反了会在慢网分支上引用未定义变量（踩过一次：
+  // "Cannot set properties of undefined (setting 'textContent')"，卡片还会显示成别的行的文案）。
   var elTtd = doc.getElementById('mtMttd');
   var elTtr = doc.getElementById('mtMttr');
   var elNote = doc.getElementById('mtNote');
   if (!elTtd || !elTtr || !elNote) return;
+
+  if (doc.documentElement.classList.contains('xk-slow')) {
+    elTtd.textContent = '—';
+    elTtr.textContent = '—';
+    elNote.textContent = '慢网下不请求这一项（省一次往返）；网速正常时刷新即可看到中位数。';
+    return;
+  }
 
   function apiBase() {
     var w = window.wb_api || window.WB_API || '';
@@ -48,8 +52,7 @@
     return false;
   }
 
-  var url = apiBase() + '/api/public/metrics?hours=24';
-  fetch(url, { headers: { Accept: 'application/json' } })
+  fetch(apiBase() + '/api/public/metrics?hours=24', { headers: { Accept: 'application/json' } })
     .then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
@@ -59,12 +62,11 @@
       var okTtd = cell(elTtd, d.mttd);
       var okTtr = cell(elTtr, d.mttr);
       var s = d.samples || {};
-      var bits = [];
-      bits.push('24 小时窗口');
+      var bits = ['24 小时窗口'];
       if (s.alerts != null) bits.push('告警 ' + s.alerts + ' 条');
       if (s.mttdPairs != null) bits.push('可配对 ' + s.mttdPairs + ' 对');
-      if (!okTtd || !okTtr) bits.push('配对数不足 3 时只报原因、不报 0');
-      if (d.mode && d.mode !== 'REAL') bits.push('模式 ' + d.mode + '（含演练数据已剔除）');
+      if (!okTtd || !okTtr) bits.push('配对数不足 3 只报原因、不报 0');
+      if (d.mode && d.mode !== 'REAL') bits.push('模式 ' + d.mode);
       elNote.textContent = bits.join(' · ');
     })
     .catch(function (e) {
