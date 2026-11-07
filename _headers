@@ -1,3 +1,4 @@
+# 已迁移 Vercel，保留作历史（Vercel 不读本文件，不影响构建；回退 Netlify 时可直接用）
 # Netlify 额外头（netlify.toml 的 [[headers]] 已覆盖主要路径，这里只补全局安全头）
 /*
   X-Content-Type-Options: nosniff
