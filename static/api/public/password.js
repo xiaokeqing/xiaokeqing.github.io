@@ -1,0 +1,1 @@
+{"code":400,"message":"p 必须是口令 SHA-256 的前 5 位小写十六进制（例如 /api/public/password?p=a1b2c）；本端点只收前缀，不收口令原文、不收大写 hex、也不收前 6 位以上的部分 hash","reason":"INVALID_PREFIX"}
