@@ -338,3 +338,14 @@ body.xk-has-idcard .xk-idcard .xk-idcard-hidden{display:none !important}
   /* 工具区在窄屏贴右侧常驻：导航项横滚时它不跟着滚走 */
   .dock .dock-tools{position:sticky;right:0;background:linear-gradient(90deg,rgba(7,11,13,0),rgba(7,11,13,.92) 18%);padding-left:12px}
 }
+/* ★2026-11-07 手机端修复：工具区 sticky 会压在导航文字上面（390 宽实测「攻击实况」被盖住）。
+   改成让顶栏换行，工具区独占第二行、右对齐，不再覆盖导航。 */
+@media (max-width: 980px){
+  body.xk-has-idcard .dock{flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scrollbar-width:none}
+  body.xk-has-idcard .dock .dock-tools{
+    order:99; flex:0 0 auto; position:static; margin-left:auto; padding:0 2px 2px;
+    justify-content:flex-end; background:none; overflow-x:auto;
+  }
+  body.xk-has-idcard .dock .dock-tools .xk-idcard-btn{padding:0 8px; font-size:11px; white-space:nowrap}
+  body.xk-has-idcard .dock .dock-ticker{display:none}
+}
