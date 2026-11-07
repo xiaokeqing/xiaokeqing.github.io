@@ -13,7 +13,7 @@
     if (trend && trend.length) for (i = 0; i < trend.length; i++) {
       var t = trend[i] || {}, h = parseInt(t.time, 10), c = Number(t.count);
       if (!(h >= 0 && h < 24) || !isFinite(c) || c < 0) continue;
-      slot[h] += c; has[h] = 1;   /* 首尾可能是同一钟点的两个半桶 → 累加 */
+      slot[h] += c; has[h] = 1;
     }
     for (i = 0; i < 24; i++) if (has[i]) {
       seen++; ord.push(slot[i]);
@@ -22,7 +22,6 @@
     ord.sort(function (a, b) { return a - b; });
     for (i = 0; i < 24; i++) {
       v = has[i] ? slot[i] : null;
-      /* 5 档 = 有数据小时的分位色阶，避免长尾数据全挤在同一档 */
       html += '<b class="vz-c ' + (v === null ? 'nd' : 'l' + (1 + Math.min(4, Math.floor(ord.indexOf(v) / seen * 5)))) +
         '" title="' + pad(i) + ':00 · ' + (v === null ? '无数据' : fmt(v) + ' 条') + '">' +
         (v === null ? '—' : pad(i)) + '</b>';
@@ -62,29 +61,24 @@
       (stops.length ? stops.join(',') : 'var(--line) 0deg 360deg') + ')"></i><span class="vz-m"><b>' +
       (known ? fmt(tot) : '—') + '</b><em>24h 总数</em></span></div><div class="vz-ls">' + rows + '</div></div>';
     if ((known || done) && nt) nt.textContent = known
-      ? '合计 ' + fmt(sum) + ' 条' + (tot !== sum ? ' · 接口总数 ' + fmt(tot) : '') + ' · INFO 不计入'
+      ? '合计 ' + fmt(sum) + ' 条 · INFO 不计入'
       : '读不到分级数据：环不画';
   }
 
+  var drew = 0;
   window.__xkViz = function (opt) {
-    opt = opt || {};
+    opt = opt || {}; drew++;
     heat(true, 'trend' in opt ? opt.trend : window.XK24H);
     ring(true, 'sev' in opt ? opt.sev : window.XK_SEV24, 'total' in opt ? opt.total : window.XK_TOT24);
   };
   /* 首帧：数据没到 → 24 个 — 灰格 + 空环，绝不先写 0 */
   heat(false, null); ring(false, null, null);
 
-  /* ★2026-11-07：/daily/ 页并不请求 alerts（它只拉 daily.js），那边的两张图会永远"取数中…"。
-     6 秒还没等到数据且本页不是作战室 ⇒ 换成"本页没有这份数据 + 跳转"，而不是挂着转圈。 */
   setTimeout(function () {
-    var main = document.getElementById('content');
-    var page = main && main.getAttribute('data-xk-ssr');
-    if (page === 'monitor') { return; }
-    if (window.XK24H || window.XK_SEV24) { return; }
-    var h = document.querySelector('[data-vz-heatnote]');
-    var r = document.querySelector('[data-vz-ringnote]');
-    var tip = '本页不请求实时分级数据（去 <a href="/alerts/">作战室</a> 看 24h 分级与热力）';
-    if (h) { h.innerHTML = tip; }
-    if (r) { r.innerHTML = tip; }
+    if (drew || window.XK24H || window.XK_SEV24) return;
+    var tip = '本页不请求实时分级数据，<a href="/alerts/">去作战室</a>看 24h 热力与分级';
+    var h = document.querySelector('[data-vz-heatnote]'), r = document.querySelector('[data-vz-ringnote]');
+    if (h) h.innerHTML = tip;
+    if (r) r.innerHTML = tip;
   }, 6000);
 })();

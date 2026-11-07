@@ -893,12 +893,8 @@ html.xk-rail-collapsed .xk-rail-toggle:focus-visible {
 /* V2 24h 热力 + V3 严重度环：纯 CSS，颜色全走令牌；无数据格虚线边 + 「—」。 */
 .vz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin-top:14px}.vz-grid>*{min-width:0}
 .vz-heat{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:3px}
-.vz-c{display:block;height:34px;border:1px solid var(--line);border-radius:5px;background:var(--panel2);font:500 9px/32px var(--mono);text-align:center;color:var(--mut)}
-.vz-c.l1{background:color-mix(in srgb,var(--acc) 8%,var(--panel2))}
-.vz-c.l2{background:color-mix(in srgb,var(--acc) 24%,var(--panel2))}
-.vz-c.l3{background:color-mix(in srgb,var(--acc) 40%,var(--panel2))}
-.vz-c.l4{background:color-mix(in srgb,var(--acc) 56%,var(--panel2))}
-.vz-c.l5{background:color-mix(in srgb,var(--acc) 72%,var(--panel2))}
+.vz-c{display:block;height:34px;border:1px solid var(--line);border-radius:5px;background:color-mix(in srgb,var(--acc) var(--t,8%),var(--panel2));font:500 9px/32px var(--mono);text-align:center;color:var(--mut)}
+.vz-c.l2{--t:24%}.vz-c.l3{--t:40%}.vz-c.l4{--t:56%}.vz-c.l5{--t:72%}
 .vz-c.l4,.l5{color:var(--solid)}
 .vz-c.nd{background:none;border-style:dashed;opacity:.5}
 .vz-c:hover{border-color:var(--line2)}
