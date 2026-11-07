@@ -135,7 +135,7 @@ head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 #   后端 DailyReportController 已实现（本仓库外，同批交付）；**这是预登记** —— 本轮不发布、不 push，
 #   线上还没实测过 200。上线后请先 curl 一次 /api/public/daily.js 确认（未生成时也应是 200 + available:false），
 #   再保持它在白名单里。站点 /status/ 的「今日日报」卡引用它；取不到时卡片写「未生成」而非填 0。
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password daily"
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password daily stream"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
@@ -414,7 +414,7 @@ new_page_gate subscribe 日报订阅页
 #                     实际引用逐个 stat，缺文件直接红
 # 手写静态文件（static/ 下的 xk-saver.js / xk-realtime.js / xk-app.js / phone-emote.js /
 # xk-rail.js）不在内容管道里，历史上也没指纹，明确列进白名单；其余一律要求带指纹。
-# xk-rail.js：数据页侧栏让位（1 KB，2026-11-07），故意留 static/ 直出、不进 Hugo Pipes。
+# xk-rail.js：数据页侧栏让位（1 KB，2026-11-07），故意留 static/ 直出、不进 Hugo Pipes。`n# xk-sse.js：作战室 SSE 实时流（2026-11-07），同样是手写直出；后端 /api/public/stream 已在线上 curl 实测 200 + REAL。`n# ⑥ 白名单新增 stream：/api/public/stream 于 2026-11-07 12:58 线上实测 event: hello + mode:REAL。
 # ★外壳内联 <script 数量判据：外壳（shell-script.html）必须仍然只产 2 个 <script 标签
 #   （shell 运行时 + scene-js），2026-10-18 起两个都带 src（正文进 /js/xk-shell.js、
 #   /js/xk-scene.js），id="scene-js" 保留（_dev/audit-shell.mjs 靠它定位）。见 ⑭ 末尾那条。
@@ -444,7 +444,7 @@ for pg in index.html alerts/index.html posts/index.html ai/index.html test/index
     N=$((N + 1))
     if [ ! -f "$PUB$ref" ]; then BAD="$BAD 缺文件:$ref"; continue; fi
     case "$ref" in
-      /js/xk-saver.js|/js/xk-realtime.js|/js/xk-app.js|/js/phone-emote.js|/js/kurisu-player.js|/js/xk-rail.js) : ;;
+      /js/xk-saver.js|/js/xk-realtime.js|/js/xk-app.js|/js/phone-emote.js|/js/kurisu-player.js|/js/xk-rail.js|/js/xk-sse.js) : ;;
       *) printf '%s' "$ref" | grep -qE '\.min\.[0-9a-f]{64}\.(css|js)$' || BAD="$BAD 无指纹:$ref" ;;
     esac
   done

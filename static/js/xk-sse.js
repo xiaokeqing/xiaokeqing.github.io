@@ -2,7 +2,7 @@
  *
  * 口径（为什么这么写）：
  *  1. 长连接不放在站点域（Netlify 只出静态文件），而是连到我们自己的 API 域
- *     <meta name="wb-api">，跨域由后端 CORS 白名单放行（xiaokeqing.cn / www / localhost:1313）。
+ *     <meta name="wb-api">，跨域由后端 CORS 白名单放行（xiaokeqing.cn / www / 本地调试域）。
  *  2. **SSE 只是加速层，不是唯一通路**：连不上 / 中途断了 / 后端 mode=MOCK，都直接关掉，
  *     页面继续用原来的 15s 轮询 —— 最差情况不比以前差，这是设计前提。
  *  3. 慢网不连（html.xk-slow）：长连接在 3G 上占一条连接还吃心跳，不值得。
