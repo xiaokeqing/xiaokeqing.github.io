@@ -1052,6 +1052,9 @@ function xkClipIm(name){
   const c = CLIPS[name];
   /* ★2026-10-30：视频档可用时，转场/开场也只拿中档 boot图集（opening 275KB vs hi 1004KB）。 */
   const xkVidOK = !!(window.__xkVid && window.__xkVid.videoOK);
+  /* ★2026-11-07 P0-1：视频档可用时不再取 boot 中档图集（idle 854KB / speaking 750KB / thinking 817KB / opening 275KB），
+     一律退回单帧 poster（约 36KB）—— 桌面端主画面由 <video> 负责，boot 只服务转场，转场用 poster 也够。 */
+  if(xkVidOK && c.bootSrc){ c.bootSrc = null; c.src = XK_TIER.posterUrl(name); c.frames = 1; }
   if(XK_TIER.hiAllowed(name) && !xkVidOK){
     const px = cache[c.src];
     if(px && px.complete && px.naturalWidth) return {im:px, c:c};
