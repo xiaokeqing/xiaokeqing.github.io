@@ -90,6 +90,54 @@
 .ipp-threat-meta{margin:7px 0 0;font-size:11.5px;line-height:1.8;color:var(--xk-text-dim)}
 .ipp-threat-tbl{min-width:460px;margin-top:8px}
 .ipp-threat-tbl td.w{white-space:nowrap}
+/* 攻击时间线：竖向单列，零依赖。颜色只复用本页已有的严重度四色
+   （critical/high=--bad、medium=--warn、low=--ok），不新增色值。 */
+.ipp-tlmod[hidden]{display:none}
+.ipp-tl-sum{margin:0 0 9px;font-size:12.5px;line-height:1.85;color:var(--xk-text-dim)}
+.ipp-tl-sum b{color:var(--xk-ink-strong);font-weight:600}
+.ipp-tl-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.ipp-tl-chip{font-family:ui-monospace,Consolas,monospace;font-size:10.5px;letter-spacing:.04em;border:1px solid var(--xk-border-12);border-radius:999px;padding:1px 8px;color:var(--xk-text-dim);white-space:nowrap}
+.ipp-tl-chip b{font-weight:600;color:var(--xk-ink-strong)}
+.ipp-tl-chip.critical{border-color:var(--xk-bad-line-55);color:var(--bad)}
+.ipp-tl-chip.critical b{color:var(--bad)}
+.ipp-tl-chip.high{border-color:var(--xk-bad-line-55);color:var(--bad)}
+.ipp-tl-chip.high b{color:var(--bad)}
+.ipp-tl-chip.medium{border-color:var(--xk-sev-medium);color:var(--xk-sev-medium)}
+.ipp-tl-chip.medium b{color:var(--xk-sev-medium)}
+.ipp-tl-chip.low{border-color:var(--xk-border-12);color:var(--ok)}
+.ipp-tl-chip.low b{color:var(--ok)}
+.ipp-tl{list-style:none;margin:0;padding:0;position:relative}
+.ipp-tl::before{content:"";position:absolute;left:83px;top:8px;bottom:8px;width:1px;background:var(--xk-border-12)}
+.ipp-tl>li{display:grid;grid-template-columns:66px minmax(0,1fr);gap:18px;padding:9px 0;position:relative}
+.ipp-tl .tm{font-family:ui-monospace,Consolas,monospace;font-size:10.5px;line-height:1.55;color:var(--xk-text-dim);text-align:right;padding-top:2px;white-space:nowrap}
+.ipp-tl .tm b{display:block;font-weight:400;color:var(--xk-text-label);letter-spacing:.02em}
+.ipp-tl .bd{position:relative;min-width:0;padding-left:12px}
+.ipp-tl .bd::before{content:"";position:absolute;left:-4px;top:6px;width:7px;height:7px;border-radius:50%;background:var(--xk-text-ghost);box-shadow:0 0 0 3px var(--xk-bg-22)}
+.ipp-tl li[data-sev="CRITICAL"] .bd::before,.ipp-tl li[data-sev="HIGH"] .bd::before{background:var(--bad)}
+.ipp-tl li[data-sev="MEDIUM"] .bd::before{background:var(--warn)}
+.ipp-tl li[data-sev="LOW"] .bd::before{background:var(--ok)}
+.ipp-tl .hd{display:flex;flex-wrap:wrap;gap:5px;align-items:baseline;font-size:12.5px;line-height:1.75;color:var(--xk-text-body);min-width:0}
+.ipp-tl .sev{font-family:ui-monospace,Consolas,monospace;font-size:10px;letter-spacing:.05em;border:1px solid currentColor;border-radius:4px;padding:0 5px;line-height:1.65;white-space:nowrap;color:var(--xk-text-dim)}
+.ipp-tl .sev.critical,.ipp-tl .sev.high{color:var(--bad)}
+.ipp-tl .sev.medium{color:var(--warn)}
+.ipp-tl .sev.low{color:var(--ok)}
+.ipp-tl .kind{color:var(--xk-ink-link)}
+.ipp-tl .op{color:var(--xk-text-ghost)}
+.ipp-tl .rule{color:var(--xk-text-emph);word-break:break-word}
+.ipp-tl .src{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--xk-ink-mint);word-break:break-all}
+.ipp-tl .cnt{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--xk-text-dim)}
+.ipp-tl details{margin-top:3px;font-size:11.5px;line-height:1.8;color:var(--xk-text-faint)}
+.ipp-tl summary{cursor:pointer;color:var(--xk-text-label);outline:none;width:-moz-fit-content;width:fit-content}
+.ipp-tl summary:hover{color:var(--xk-ink-mint)}
+.ipp-tl .dt{margin:4px 0 0;padding:7px 9px;border-left:2px solid var(--xk-border-12);background:var(--xk-bg-22);color:var(--xk-text-body);word-break:break-word}
+@media (max-width:560px){
+  .ipp-tl::before{display:none}
+  .ipp-tl>li{grid-template-columns:1fr;gap:2px;padding:8px 0;border-bottom:1px solid var(--xk-border-08)}
+  .ipp-tl .tm{display:flex;gap:6px;text-align:left;padding-top:0}
+  .ipp-tl .tm b{display:inline}
+  .ipp-tl .bd{padding-left:0}
+  .ipp-tl .bd::before{display:none}
+}
 </style>
 </head>
 <body data-skin="warm" data-phone="v1" class="xk-has-idcard">
@@ -141,6 +189,14 @@
             还没查。上面输入一个 IPv4 后回车（或点「查询」）——
             结果卡会逐项标出哪个数读到了、哪个读不到、以及读不到的原因。
           </p>
+        </div>
+      </div>
+
+      <!-- ============ ②b 攻击时间线（独立卡片；接口不存在/不是 JSON 时整块隐藏） ============ -->
+      <div class="mod ipp-tlmod" id="ippTlMod" hidden>
+        <div class="mod-hd"><span class="led"></span>攻击时间线 · 这个 IP 干过什么<span class="tag" id="ippTlTag">近 24h · 最多 200 条</span></div>
+        <div class="mod-bd" id="ippTlOut">
+          <p class="ipp-note ipp-na">正在探测时间线接口…</p>
         </div>
       </div>
 
@@ -506,6 +562,124 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
     return '未知原因';
   }
 
+  /* ============ 攻击时间线：GET /api/public/story?id=<ip>&hours=24 ============
+     独立卡片，失败不影响上面的主结果区。三条不变量：
+       · 能力探测：404 / 不是 {code,data} JSON（含旧后端的 400）→ 整块 display:none，
+         不报错、不占位，页面照常可用；
+       · available:false → 只显示后端给的 reason（如「数据源不可用」），不写 0；
+       · 事件按后端给的正序渲染；detail 折在 <details> 里，永远 esc()。 */
+  var TL_KIND = { alerts: '告警', decoyPorts: '诱饵端口', honeypotLogins: '蜜罐登录', auditActions: '处置审计' };
+  var TL_SEV = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+  var tlSeq = 0;
+
+  function tlSev(v) {
+    var s = String(v || '').toUpperCase();
+    return TL_SEV.indexOf(s) >= 0 ? s : '';
+  }
+  function hideTimeline() {
+    var m = $('ippTlMod');
+    if (m) { m.hidden = true; }
+  }
+  function renderTimeline(d) {
+    var m = $('ippTlMod'), out = $('ippTlOut'), tag = $('ippTlTag');
+    if (!m || !out) return;
+    var win = d.window || {};
+    var hours = Number(win.hours) || 24;
+    if (tag) tag.textContent = '近 ' + hours + 'h · 最多 200 条';
+
+    if (d.available !== true) {
+      out.innerHTML = '<p class="ipp-p"><b class="ipp-null">时间线读不到</b>（' +
+        esc(d.reason || '数据源不可用') + '）—— <b>不补数</b>，不写 0。</p>' +
+        '<p class="ipp-note">这不是「这个 IP 没干过什么」，而是这次没有可画的事件。' +
+        '窗口：' + esc(win.start || '—') + ' → ' + esc(win.end || '—') + '。</p>';
+      m.hidden = false;
+      return;
+    }
+
+    var events = Array.isArray(d.events) ? d.events : [];
+    var total = Number(d.total);
+    if (!isFinite(total) || total < 0) total = events.length;
+    var html = [];
+    html.push('<p class="ipp-tl-sum">共 <b>' + esc(total) + '</b> 条 · 窗口 <b>' +
+      esc(win.start || '—') + '</b> → <b>' + esc(win.end || '—') + '</b>' +
+      (total > events.length ? ' · <span class="ipp-na">按时间只画最早的 ' + esc(events.length) + ' 条</span>' : '') +
+      ' · 首见 <b>' + esc(d.firstSeen || '—') + '</b> · 末见 <b>' + esc(d.lastSeen || '—') + '</b></p>');
+
+    var sevCount = d.severity || {};
+    var chips = '';
+    for (var s = 0; s < TL_SEV.length; s++) {
+      var sn = TL_SEV[s], sc = Number(sevCount[sn]);
+      if (!isFinite(sc)) sc = 0;
+      chips += '<span class="ipp-tl-chip ' + sn.toLowerCase() + '">' + sn +
+        ' <b>' + esc(sc) + '</b></span>';
+    }
+    html.push('<div class="ipp-tl-chips">' + chips + '</div>');
+
+    if (!events.length) {
+      html.push('<p class="ipp-note ipp-na">这个窗口内没有可画的事件（后端 available:true 但 events 为空）—— 不补数。</p>');
+      out.innerHTML = html.join('');
+      m.hidden = false;
+      return;
+    }
+
+    html.push('<ul class="ipp-tl">');
+    for (var i = 0; i < events.length; i++) {
+      var e = events[i] || {};
+      var t = String(e.time || '');
+      var date = t.length >= 16 ? t.slice(5, 10) : '';
+      var clk = t.length >= 19 ? t.slice(11, 19) : t;
+      var sv = tlSev(e.sev);
+      var kind = TL_KIND[e.kind] || e.kind || '—';
+      var rule = e.rule || '—';
+      var cnt = Number(e.count);
+      /* kind 已是中文动作时，rule 常与它同名（如「诱饵端口 · 诱饵端口」）—— 去重，只留一段 */
+      var head = '<span class="kind">' + esc(kind) + '</span>' +
+        (rule !== kind ? '<span class="op">·</span><span class="rule">' + esc(rule) + '</span>' : '') +
+        '<span class="op">←</span><span class="src">' + esc(e.src || '') + '</span>' +
+        (isFinite(cnt) && cnt > 0 ? '<span class="cnt">×' + esc(cnt) + '</span>' : '');
+      if (sv) head = '<span class="sev ' + sv.toLowerCase() + '">' + sv + '</span>' + head;
+      html.push('<li' + (sv ? ' data-sev="' + sv + '"' : '') + '>' +
+        '<span class="tm" title="' + esc(t) + '"><b>' + esc(date || '—') + '</b>' + esc(clk || '—') + '</span>' +
+        '<div class="bd"><div class="hd">' + head + '</div>' +
+        (e.detail ? '<details><summary>detail</summary><p class="dt">' + esc(e.detail) + '</p></details>' : '') +
+        '</div></li>');
+    }
+    html.push('</ul>');
+    out.innerHTML = html.join('');
+    m.hidden = false;
+  }
+
+  function loadTimeline(q) {
+    var m = $('ippTlMod');
+    if (!m) return;
+    var seq = ++tlSeq;
+    if (!q || !isV4(q)) { m.hidden = true; return; }
+    m.hidden = true; /* 先收起旧卡片，避免把上一个 IP 的时间线当成本次的 */
+    var init = { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store',
+                 headers: { 'Accept': 'application/json' } };
+    var ctrl = null, timer = null;
+    if (window.AbortController) {
+      ctrl = new AbortController();
+      init.signal = ctrl.signal;
+      timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT);
+    }
+    var url = API + '/api/public/story.js?id=' + encodeURIComponent(q) + '&hours=24';
+    fetch(url, init).then(function (res) {
+      return res.text().then(function (text) {
+        if (seq !== tlSeq) return;
+        var json = null;
+        try { json = JSON.parse(text); } catch (err) { json = null; }
+        /* 404 / 旧后端 400 / 非 JSON / 被限流：都当作"没有这个能力"，静默隐藏 */
+        if (!res.ok || !json || json.code !== 200 || !json.data) { m.hidden = true; return; }
+        renderTimeline(json.data);
+      });
+    }).catch(function () {
+      if (seq === tlSeq) m.hidden = true;
+    }).then(function () {
+      if (timer) clearTimeout(timer);
+    });
+  }
+
   function setSync(txt) { var s = $('ippSync'); if (s) s.textContent = '● ' + txt; }
   function setTag(txt) { var t = $('ippTag'); if (t) t.textContent = txt; }
 
@@ -518,11 +692,14 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
         '<span class="ipp-na">（四段十进制，每段 0–255；IPv6 / 域名 / 带端口 / 网段都不接受）</span></p>';
       setSync('拒绝查询：输入不是 IPv4 字面量 · ' + clock(new Date()));
       setTag('输入非法');
+      tlSeq++;
+      hideTimeline();
       return;
     }
     if (btn) { btn.disabled = true; }
     setSync('正在查 ' + q + ' …');
     setTag('查询中');
+    loadTimeline(q);
 
     var init = { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store',
                  headers: { 'Accept': 'application/json' } };
