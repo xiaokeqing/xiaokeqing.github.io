@@ -193,12 +193,17 @@ else no "找不到 static/images/bg.jpg"; fi
 #   这 8.9MB 不是纯增量——首页 CRT 的动画改由视频承载后，`hi/` 图集在视频可用时被整档跳过
 #   （实测首页外部请求 7124KB → 4261KB；见 docs §29）。算术：161MB + 余量 ⇒ 176MiB 上限，
 #   仍低于发布 tarball 的 200MiB 预算；分片上限（原声 64MiB / 合成 32MiB）**未动**。
-head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 176MiB、分片各自封顶（原声 64MiB / 合成 32MiB）"
+# 【2026-11-07 改】176MiB → **256MiB**（站主口径「按最高规格做画质」）：角色 hi 档从 268×360 单页
+#   升级成 535×720 多页（28 页 36.07MB，旧的 6 个单页件 20.57MB 已删），净 +15.50MB；
+#   视频档同时从 268×360 重编到 535×720（预计 +15~20MB）。算术：现状 156MB + 36MB(hi540)
+#   + 20MB(video720) ≈ 212MB ⇒ 上限 256MiB，仍低于发布 tarball 的 240MB 预算；
+#   分片上限（原声 64MiB / 合成 32MiB）**未动**。
+head1 "⑨ 角色资产：无 0 字节文件、总体积 ≤ 256MiB、分片各自封顶（原声 64MiB / 合成 32MiB）"
 if [ -d static/kurisu ]; then
   EMPTY=$(find static/kurisu static/images/crt -type f -size 0 2>/dev/null | head -5)
   TOT=$(du -sk static/kurisu static/images/crt 2>/dev/null | awk '{s+=$1} END {print s+0}')
   [ -z "$EMPTY" ] && ok "无 0 字节资产" || { no "存在 0 字节资产（会解码失败）："; printf '%s\n' "$EMPTY" | sed 's/^/        /'; }
-  if [ "$TOT" -le 180224 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 176MiB"; else no "角色+场景资产合计 $((TOT/1024))MB > 176MiB"; fi
+  if [ "$TOT" -le 262144 ]; then ok "角色+场景资产合计 $((TOT/1024))MB ≤ 256MiB"; else no "角色+场景资产合计 $((TOT/1024))MB > 256MiB"; fi
   # 分片各自封顶（$1=glob $2=上限KiB $3=中文名；目录不存在 = 跳过，不算失败）
   shard_cap() {
     local g=$1 cap=$2 name=$3 dirs s

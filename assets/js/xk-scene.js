@@ -945,27 +945,67 @@ var XK_SM_JS = (function(){
       var Vv = window.__xkVid;
       /* 用 videoOK（poster 阶段就是 true）而不是 mode==='video'：首次手势之前 mode 还是 poster，
          拿 mode 判会让 hi 在手势前就被拉下来（实测 8017KB 就是这么来的）。 */
-      if(Vv && Vv.videoOK && !(Vv.failed && Object.keys(Vv.failed).length)) return null;
+      /* ★2026-11-07：`?xk-kurisu-mode=pixel` 时视频层本来就不接管画布（画的是图集），
+         但 Vv.videoOK 仍然会是 true（只看清单有没有到），上面那条会误把 hi 挡掉 ⇒ 必须排除这两种模式。 */
+      if(Vv && Vv.videoOK && Vv.mode !== 'pixel' && Vv.mode !== 'off' && !(Vv.failed && Object.keys(Vv.failed).length)) return null;
     }catch(e){}
     try{ if(!XK_TIER.hiAllowed(clip)) return null; }catch(e){ return null; }
     var n = (V.byClip && V.byClip[clip]) || null;
     var hi = n && n.hi;
     var ps = hi && hi.pages;
-    if(!ps || ps.length !== 1) return null;          /* 多页 hi 不在本批范围 */
-    var p = ps[0];
-    if(!p || !p.url || !p.tile_w) return null;
-    return {p:p, frames:(n.frames || p.frames || 1), cols:(p.cols || 8)};
+    if(!ps || !ps.length) return null;
+    /* ★2026-11-07：hi 改成多页（535×720 每页 ≤40 帧）之后，不能再只认单页。
+       这里把整组页交回去，取帧时按 first_frame/last_frame 落页（见 hiPageOf）。 */
+    var ok = [], i, p;
+    for(i = 0; i < ps.length; i++){
+      p = ps[i];
+      if(!p || !p.url || !p.tile_w) return null;
+      ok.push(p);
+    }
+    return {pages:ok, frames:(n.frames || ok[0].frames || 1), cols:(ok[0].cols || 8)};
+  }
+  /* ★2026-11-07 诊断口（只在 ?xk-debug=1 时挂）：hi 多页升级后"到底哪道闸把它挡了"很难猜，
+     直接暴露每一道判据，别再靠 v.drew/网络请求反推。 */
+  if(/[?&]xk-debug=1/.test(String(location.search))){
+    window.__xkHiDbg = function(clip){
+      var n = V.byClip[((clip || V.cur) || 'idle')];
+      var out = {cur:V.cur, clip:clip || V.cur, wanted:null, allowed:null, pages:null, imgState:null};
+      try{ out.wanted = hiWanted(); }catch(e){ out.wanted = 'E' + e; }
+      try{ out.allowed = XK_TIER.hiAllowed(clip || V.cur); }catch(e){ out.allowed = 'E' + e; }
+      try{ out.pages = n && n.hi && n.hi.pages ? n.hi.pages.length : 0; }catch(e){ out.pages = 'E' + e; }
+      try{
+        var h = hiAtlas(clip || V.cur);
+        if(h){ var at = hiPageOf(h, 0); var im = V.atlas.imgs[at.page.url];
+          out.imgState = {url:at.page.url, has:!!im, complete:!!(im && im.complete), nw:im ? im.naturalWidth : 0, defer: im ? (im.__xkDefer || 0) : null}; }
+      }catch(e){ out.imgState = 'E' + e; }
+      return out;
+    };
+  }
+  /* 帧号 → 页（hi 多页共用；没有 first_frame 的老单页件按"第 0 页装全部帧"处理） */
+  function hiPageOf(h, idx){
+    var ps = h.pages, i, p, f0, f1;
+    for(i = 0; i < ps.length; i++){
+      p = ps[i];
+      f0 = (p.first_frame || 1) - 1;
+      f1 = (typeof p.last_frame === 'number') ? p.last_frame : f0 + (p.frames || 1) - 1;
+      if(idx >= f0 && idx <= f1 && idx - f0 < (p.frames || 1)) return {page:p, local:idx - f0};
+    }
+    p = ps[ps.length - 1];
+    f0 = (p.first_frame || 1) - 1;
+    return {page:p, local:Math.max(0, Math.min((p.frames || 1) - 1, idx - f0))};
   }
   function paintHi(clip, fi, cw, ch){
     var h = hiAtlas(clip);
     if(!h) return null;
     var n = h.frames, i = ((Math.round(fi) % n) + n) % n;
-    var tw = h.p.tile_w, th = h.p.tile_h;
-    var im = img(h.p.url);
+    var at = hiPageOf(h, i);
+    if(!at || !at.page) return null;
+    var tw = at.page.tile_w, th = at.page.tile_h, cols = at.page.cols || h.cols;
+    var im = img(at.page.url);
     if(!im.complete || !im.naturalWidth) return null;   /* hi 没就绪：这一帧先留着原型帧，不画 */
     return {mode:'atlas', ops:[
       ['clear', [0, 0, cw, ch]],
-      ['img', [im, (i % h.cols) * tw, Math.floor(i / h.cols) * th, tw, th,
+      ['img', [im, (at.local % cols) * tw, Math.floor(at.local / cols) * th, tw, th,
         Math.min(cw * CHAR_BOX.maxW / CHAR_BOX.w, ch * CHAR_BOX.maxH / CHAR_BOX.h),
         cw * CHAR_BOX.xRatio, ch - Math.max(3, ch * CHAR_BOX.footRatio)]]]};
   }

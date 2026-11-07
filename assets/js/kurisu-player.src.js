@@ -170,6 +170,27 @@
     return (idx < 0) ? pages[0] : last;
   }
 
+  /** 页级懒解码的保留窗口：当前页 + 前后各 SM_PAGE_KEEP 页（即最多 3 页常驻）。
+   *  ★2026-11-07：原来 ensureMediumClip 会把一个剪辑的**所有页**一次解码并常驻，
+   *  medium 档 4 页的 idle_closed_eye 就约 96MB 解码位图；要上 540 高清图集（单页更大），
+   *  全页常驻会直接吃满内存（单 clip 全页到过 185MB）。所以按页装、按页扔。 */
+  var SM_PAGE_KEEP = 1;
+
+  /** 全局帧号 → 页下标（smPageFor 的索引版；越界时与它一样落在首/末页） */
+  function smPageIndexFor(pages, idx) {
+    var pg = smPageFor(pages, idx);
+    var i = pages.indexOf(pg);
+    return i < 0 ? 0 : i;
+  }
+
+  /** 这个图集当前真正持着位图的页数（诊断/自证用；懒解码后应 ≤ 2*SM_PAGE_KEEP+1） */
+  function smCountLive(atlas) {
+    var n = 0;
+    if (!atlas || !atlas.pages) { return n; }
+    for (var i = 0; i < atlas.pages.length; i++) { if (atlas.pages[i].img) { n++; } }
+    return n;
+  }
+
   /** 环境探测：三种情况都必须降级成"只画静态一帧"（站主 06 补 2） */
   function probeEnv() {
     var conn = global.navigator && (global.navigator.connection || global.navigator.mozConnection);
@@ -667,15 +688,18 @@
     if (cur.reverse && cur.fixedFrame == null) { idx = total - 1 - idx; }
     var img = null, cols = cur.columns, fw = cur.fw, fh = cur.fh, local = idx;
     if (atlas.pages && atlas.pages.length) {
-      /* 状态机剪辑：medium 档是**多分页**图集（9 个新生成的剪辑 2~4 页）。
-         全局帧号 idx → 落在哪一页 + 页内局部帧号。 */
-      var pg = smPageFor(atlas.pages, idx);
+      /* 状态机剪辑：medium/hi 档是**多分页**图集（9 个新生成的剪辑 2~4 页）。
+         全局帧号 idx → 落在哪一页 + 页内局部帧号。
+         ★2026-11-07 懒解码：只有当前页 ±1 在内存里，切页时远处页当场释放
+         （smPageWindow 里做）。目标页还没解码好时**保留上一帧**直接 return ——
+         既不出黑块，也不画错姿势；等那一页的 img 就位，下一帧 rAF 自然补上。 */
+      var pg = this.smPageWindow(atlas, idx);
       if (!pg || !pg.img) { return; }
       img = pg.img; cols = pg.cols; fw = pg.tile_w; fh = pg.tile_h;
       local = idx - (pg.first_frame - 1);
       if (local < 0) { local = 0; }
       if (local > pg.frames - 1) { local = pg.frames - 1; }
-      cur.tier = 'medium';
+      cur.tier = atlas.tier || 'medium';   // 如实上报实际档位（原来写死 'medium'，hi 档统计会低估）
       cur.page = pg.file || null;
     } else {
       img = atlas.hi || atlas.boot;
@@ -1285,6 +1309,10 @@
     });
     Object.keys(this.atlases).forEach(function (k) {
       var e = self.atlases[k];
+      if (e && e.pages) {   // 懒解码的图集：逐页放掉位图（src='' 让浏览器也丢掉解码缓存）
+        e.dead = true;
+        e.pages.forEach(function (pg) { self.smFreePage(pg); });
+      }
       if (e && e.boot) { e.boot.src = ''; }
       if (e && e.hi) { e.hi.src = ''; }
     });
@@ -2259,6 +2287,9 @@
        · 帧推进仍然是 tick() 里那**同一个** rAF + 时间累加，不新开循环、不用 setInterval 做帧循环。
      资产：每个节点只发 medium 一档（48.15MB / 49 页），懒载 + 只留当前剪辑一个
      （idle_closed_eye 4 页 = 约 96MB 解码位图，多留一份就可能吃满内存）。
+     ★2026-11-07：剪辑内部再按**页**懒解码，只保留当前页 ±1（≤3 页）—— 见 SM_PAGE_KEEP /
+     smPageWindow。原来是把一个剪辑的全部页一次解码常驻（单剪辑全页到过 185MB），
+     上 540 高清图集后单页更大，必须先按页装、按页扔。
      诊断钩子（给验收脚本与站主演示用，不参与渲染）：
        window.__xkSm = { seed, seq:[{clip,tMs,holdMs,frames,pages}], edges:[], visited:{}, errors:[] }
      —— 测试/取证才显式开：挂载点属性 data-xk-kurisu-sm="on"（或 manifest.stateMachine.auto=true）。
@@ -2324,67 +2355,172 @@
   };
 
   /** hi 档该不该用：hi 的 tile 是 medium 的 2 倍（268×360 vs 134×180），
-   *  解码位图是 4 倍。只在画布背板 ≥480px（桌面档的 CRT 屏）时才值 ——
-   *  窄屏屏宽 ~380px、角色 ~243px，medium 的 1.8× 放大还能接受，不必付 4 倍内存。 */
+   *  解码位图是 4 倍。★2026-11-07 门槛 480 → **700 设备像素**（canvas.width 里已经乘过
+   *  dpr 并由面积预算封顶，所以这里就是"设备像素"口径）：CRT 屏背板在 dpr=1 的桌面上约
+   *  608px、dpr=2 的手机上屏宽只有 ~380CSS×2 但会被面积预算压下来 —— 都不到 700，
+   *  于是这些画布只吃 medium。理由：小画布上放 2× 图集肉眼几乎看不出差别，
+   *  却要白下几 MB（hi 单页常 2~4MB），上 540 高清图集后只会更贵。 */
   Player.prototype.smUseHi = function (node) {
     if (!node || !node.hi || !node.hi.pages || !node.hi.pages.length) { return false; }
     if (this.staticOnly) { return false; }
     var w = (this.canvas && this.canvas.width) || 0;
-    return w >= 480;
+    return w >= 700;
   };
 
-  /** 载入一个状态机节点的图集（medium 或 hi，可能 2~4 页）。只保留当前这一个剪辑。
+  /** 载入一个状态机节点的图集**元数据**（medium 或 hi，可能 2~4 页），位图按页懒解码。
+   *  只保留当前这一个剪辑；同一个剪辑里也只有当前页 ±1 常驻（见 smPageWindow）。
    *  别名节点（node.atlas_clip）与源剪辑共用同一个缓存键：同一张图只下载一次、只解码一次
-   *  ——0.17.0α 的返回过渡 key_point_to_thinking 就是 thinking_to_key_point 的倒放，走这条路。 */
+   *  ——0.17.0α 的返回过渡 key_point_to_thinking 就是 thinking_to_key_point 的倒放，走这条路。
+   *  ★2026-11-07 改动：这里原来是"等全部页解码完再返回"；现在只等**第 0 帧所在那一页**
+   *  （smPageWindow 的窗口会把前后页排进后台队列，draw() 的 rAF 到点自然补上），
+   *  所以换剪辑的等待时间从"整段图集"降到"一页"。 */
   Player.prototype.ensureMediumClip = function (node) {
     var self = this;
     var key = 'sm:' + (node.atlas_clip || node.clip);
     var have = this.atlases[key];
-    if (have && have.pages) { return Promise.resolve(have); }
+    if (have && have.pages && !have.dead) { return Promise.resolve(have); }
     var useHi = this.smUseHi(node);
-    var pages = (useHi && node.hi && node.hi.pages) ? node.hi.pages : node.medium.pages;
+    var src = (useHi && node.hi && node.hi.pages) ? node.hi : node.medium;
     var tier = useHi ? 'hi' : 'medium';
-    var chain = Promise.resolve([]);
-    pages.forEach(function (p) {
-      chain = chain.then(function (acc) {
-        if (self.destroyed) { throw new Error('destroyed'); }
-        return loadImage(joinUrl(self.basePath, p.url)).then(function (img) {
-          acc.push({
-            img: img, file: p.file, url: p.url, cols: p.cols, rows: p.rows, frames: p.frames,
-            first_frame: p.first_frame, last_frame: p.last_frame,
-            tile_w: p.tile_w, tile_h: p.tile_h, bytes: p.bytes
-          });
-          return acc;
-        });
-      });
+    /* 页对象只保留元数据（cols/tile/first_frame/bytes…）—— 渲染几何全从这里来，
+       所以懒解码不影响 draw() 的对外行为；img 由 smLoadPage 填。 */
+    var pages = (src.pages || []).map(function (p) {
+      return {
+        img: null, loading: null, error: null, failedAt: 0,
+        file: p.file, url: p.url, cols: p.cols, rows: p.rows, frames: p.frames,
+        first_frame: p.first_frame, last_frame: p.last_frame,
+        tile_w: p.tile_w, tile_h: p.tile_h, bytes: p.bytes
+      };
     });
-    return chain.then(function (imgs) {
+    var e = {
+      clip: key, pages: pages, tier: tier, bytes: src.bytes,
+      boot: null, hi: null, bootFrames: node.frames, node: node,
+      wantLo: -1, wantHi: -1, wantIdx: -1, live: 0, dead: false, freedPages: 0
+    };
+    this.atlases[key] = e;
+    this.smEvict(key);
+    if (!pages.length) { return Promise.resolve(e); }
+    var first = this.smPageWindow(e, 0);
+    var wait = (first && first.loading) ? first.loading : Promise.resolve(first && first.img);
+    return wait.then(function () {
       if (self.destroyed) { throw new Error('destroyed'); }
-      var e = { clip: key, pages: imgs, tier: tier, bytes: node.medium.bytes,
-        boot: null, hi: null, bootFrames: node.frames };
-      self.atlases[key] = e;
-      self.smEvict(key);
+      if (e.dead) { return e; }                      // 等待期间已被淘汰：调用方自己会跳过
+      e.live = smCountLive(e);
       return e;
     });
   };
 
-  /** 状态机模式下的内存回收：只留 keep 这一个剪辑（clips.* 那几段也一起摘掉） */
+  /** 页窗口（懒解码的核心）：按目标帧号算出"该在内存里的页区间" = 当前页 ±SM_PAGE_KEEP，
+   *  先**同步**释放区间外的页位图（所以任何时刻常驻页数 ≤ 3），再把区间内缺的页排进队列。
+   *  返回目标页；目标页还在解码时 img 为 null —— draw() 保留上一帧，不清屏、不画错姿势。 */
+  Player.prototype.smPageWindow = function (atlas, idx) {
+    if (!atlas || !atlas.pages || !atlas.pages.length) { return null; }
+    var k = smPageIndexFor(atlas.pages, idx);
+    var lo = Math.max(0, k - SM_PAGE_KEEP);
+    var hi = Math.min(atlas.pages.length - 1, k + SM_PAGE_KEEP);
+    atlas.wantIdx = k;
+    if (atlas.wantLo !== lo || atlas.wantHi !== hi) {
+      this.smTrimPages(atlas, lo, hi);
+      for (var i = lo; i <= hi; i++) { this.smLoadPage(atlas, i); }
+    } else {
+      /* 窗口没变：仍要补"空着的页"（首帧/解码失败后重试；smLoadPage 内有 4s 冷却） */
+      for (var j = lo; j <= hi; j++) {
+        var pg = atlas.pages[j];
+        if (!pg.img && !pg.loading) { this.smLoadPage(atlas, j); }
+      }
+    }
+    atlas.live = smCountLive(atlas);
+    return atlas.pages[k];
+  };
+
+  /** 把窗口收缩到 [lo, hi]：区间外的页当场释放位图（页元数据留着，回头再装） */
+  Player.prototype.smTrimPages = function (atlas, lo, hi) {
+    var freed = 0;
+    atlas.wantLo = lo;
+    atlas.wantHi = hi;
+    for (var i = 0; i < atlas.pages.length; i++) {
+      if (i < lo || i > hi) { if (this.smFreePage(atlas.pages[i])) { freed++; } }
+    }
+    if (freed) { atlas.freedPages = (atlas.freedPages || 0) + freed; }
+    return freed;
+  };
+
+  /** 释放一页的解码位图（置空 img 让 GC 收位图；src='' 让浏览器也放掉解码缓存） */
+  Player.prototype.smFreePage = function (pg) {
+    if (!pg || !pg.img) { return false; }
+    try { pg.img.src = ''; } catch (e) { /* 忽略 */ }
+    pg.img = null;
+    return true;
+  };
+
+  /** 单页懒解码：幂等（同一页只发一次请求，并发调用共用同一个 promise）。
+   *  装回来时若剪辑已被淘汰、或窗口已经挪走（这一页又出了窗口），就当場丢弃，不留常驻副本。
+   *  单页失败不抛（一张页坏了只影响那几帧，不该把整个剪辑卡死）：记 failedAt，4s 后重试。 */
+  Player.prototype.smLoadPage = function (atlas, k) {
+    var self = this;
+    var pg = atlas && atlas.pages && atlas.pages[k];
+    if (!pg) { return Promise.resolve(null); }
+    if (pg.img) { return Promise.resolve(pg.img); }
+    if (pg.loading) { return pg.loading; }
+    if (pg.failedAt && (Date.now() - pg.failedAt) < 4000) { return Promise.resolve(null); }
+    pg.loading = loadImage(joinUrl(this.basePath, pg.url)).then(function (img) {
+      pg.loading = null;
+      if (!img || self.destroyed || atlas.dead) { return null; }
+      if (k < atlas.wantLo || k > atlas.wantHi) { return null; }   // 窗口已经挪走：不装
+      pg.img = img;
+      pg.failedAt = 0;
+      atlas.live = smCountLive(atlas);
+      return img;
+    }, function (err) {
+      pg.loading = null;
+      pg.failedAt = Date.now();
+      pg.error = String((err && err.message) || err);
+      return null;
+    });
+    return pg.loading;
+  };
+
+  /** 等"帧 idx 所在那一页"解码完 —— 懒解码之后，截图/口型对拍/覆盖取证都必须先等页窗口，
+   *  否则 draw() 会因为目标页还没位图而保留上一帧（对外表现是"画全透明/画错帧"）。 */
+  Player.prototype.smAwaitPage = function (atlas, idx) {
+    var pg = this.smPageWindow(atlas, idx);
+    if (!pg) { return Promise.resolve(null); }
+    if (pg.img) { return Promise.resolve(pg.img); }
+    var k = smPageIndexFor(atlas.pages, idx);
+    return this.smLoadPage(atlas, k).then(function () { return pg.img || null; });
+  };
+
+  /** 取证/截图用：把 current 定到某绝对帧并画出来（懒解码下先把那一页装好） */
+  Player.prototype.smFixFrame = function (atlas, frame) {
+    var self = this;
+    return this.smAwaitPage(atlas, frame).then(function () {
+      if (!self.current || self.destroyed) { return false; }
+      self.current.fixedFrame = frame;
+      self.draw();
+      return true;
+    });
+  };
+
+  /** 状态机模式下的内存回收：只留 keep 这一个剪辑（clips.* 那几段也一起摘掉）。
+   *  ★2026-11-07：pages 现在是"页元数据 + 可能已解码的 img"，所以要逐页释放位图；
+   *  同时打 dead 标记 —— smLoadPage 的回调看到 dead 就把刚解码好的图丢掉，不留常驻副本。 */
   Player.prototype.smEvict = function (keep) {
     var self = this;
     Object.keys(this.atlases).forEach(function (k) {
       if (k === keep) { return; }
       var e = self.atlases[k];
       if (!e) { return; }
-      if (e.pages) {
-        e.pages.forEach(function (pg) { try { pg.img.src = ''; } catch (err) { /* 忽略 */ } });
-      }
+      e.dead = true;
+      if (e.pages) { e.pages.forEach(function (pg) { self.smFreePage(pg); }); }
       if (e.boot) { try { e.boot.src = ''; } catch (err2) { /* 忽略 */ } }
       if (e.hi) { try { e.hi.src = ''; } catch (err3) { /* 忽略 */ } }
-      delete self.atlases[k];
+      try { delete self.atlases[k]; } catch (err4) { /* 忽略 */ }
     });
   };
 
-  /** 把一个状态机节点变成 current（几何全部来自节点里的 medium 分页元数据） */
+  /** 把一个状态机节点变成 current（几何全部来自节点里的分页元数据）。
+   *  ★2026-11-07：tier 不再写死 'medium'，按 atlas 实际用的档位（hi/medium）如实上报 ——
+   *  正确性/遥测修正：hi 档的记忆体积与日志一直被打成 medium，统计会低估。 */
   Player.prototype.smSetCurrent = function (node, atlas) {
     var p0 = atlas.pages[0];
     this.current = {
@@ -2395,7 +2531,7 @@
       fw: p0.tile_w,
       fh: p0.tile_h,
       interval: Math.max(16, node.frameIntervalMs || 42),
-      tier: 'medium',
+      tier: atlas.tier || 'medium',
       fit: 'char',
       once: node.loopMode === 'once_then_hold',
       /* 倒放复用（0.17.0α 新增的返回过渡 key_point_to_thinking）：
@@ -2526,7 +2662,9 @@
           if (maxBytes > 0 && self.smDiag.bytes >= maxBytes) { finish(null, 'bytes'); return; }
           self.smPlayNode(cur).then(function (node) {
             if (!node) { finish(null, 'no-node'); return; }
-            self.smDiag.bytes += node.medium.bytes;
+            /* 如实记账：这个节点实际吃的是哪一档就记哪一档（hi 档体积是 medium 的 2× 上下） */
+            var a2 = self.atlases['sm:' + (node.atlas_clip || node.clip)];
+            self.smDiag.bytes += (a2 && a2.bytes) || node.medium.bytes;
             /* 空闲计时（真事件，不是定时器编的）：连续待在待机类剪辑上超过 12s → 推一次"闭眼休息"入口 */
             if (/^idle/.test(node.clip)) {
               self._idleAccumMs = (self._idleAccumMs || 0) + smHoldMs(node);
@@ -2595,26 +2733,39 @@
         chain = chain.then(function () {
           return self.ensureMediumClip(node).then(function (atlas) {
             self.smSetCurrent(node, atlas);
+            /* 取证期间停掉 rAF 循环：懒解码下 loop 也会调用 smPageWindow 挪窗口，
+               和这里的固定帧探针抢同一页（会把刚装好的页又释放掉）。取完在链尾恢复。 */
+            self.stopLoop();
             var cur = self.current;
             var probes = [0, Math.floor(node.frames / 2), node.frames - 1];
             var rec = { clip: node.clip, frames: node.frames, pages: atlas.pages.length,
               tier: atlas.tier, frameIntervalMs: node.frameIntervalMs, loopMode: node.loopMode,
               bytes: atlas.pages.reduce(function (s, p) { return s + p.bytes; }, 0),
               probes: [] };
+            /* 三个 probe 串行跑：每次都先把那一页装进窗口（≤3 页）再画，跑完再下一帧 */
+            var pchain = Promise.resolve();
             probes.forEach(function (k) {
-              cur.fixedFrame = k;
-              self.draw();
-              var d = self.ctx.getImageData(0, 0, self.canvas.width, self.canvas.height).data;
-              var opaque = 0, hash = 0;
-              for (var i = 3; i < d.length; i += 4) { if (d[i] > 8) { opaque++; } }
-              for (var j = 0; j < d.length; j += 397) { hash = (hash * 31 + d[j]) >>> 0; }
-              rec.probes.push({ frame: k, opaque: opaque, hash: hash });
+              pchain = pchain.then(function () {
+                /* 懒解码：先等这一帧所在的那一页解码完，再画 —— 否则 draw() 会因为
+                   目标页还没有位图而保留上一帧，getImageData 读到的就不是这一帧。 */
+                return self.smAwaitPage(atlas, k);
+              }).then(function () {
+                cur.fixedFrame = k;
+                self.draw();
+                var d = self.ctx.getImageData(0, 0, self.canvas.width, self.canvas.height).data;
+                var opaque = 0, hash = 0;
+                for (var i = 3; i < d.length; i += 4) { if (d[i] > 8) { opaque++; } }
+                for (var j = 0; j < d.length; j += 397) { hash = (hash * 31 + d[j]) >>> 0; }
+                rec.probes.push({ frame: k, opaque: opaque, hash: hash });
+              });
             });
-            cur.fixedFrame = null;
-            var anyOpaque = rec.probes.some(function (p) { return p.opaque > 0; });
-            rec.ok = !!anyOpaque;
-            if (anyOpaque) { out.ok++; } else { out.failed.push(node.clip + ': 画布全透明'); }
-            out.nodes.push(rec);
+            return pchain.then(function () {
+              cur.fixedFrame = null;
+              var anyOpaque = rec.probes.some(function (p) { return p.opaque > 0; });
+              rec.ok = !!anyOpaque;
+              if (anyOpaque) { out.ok++; } else { out.failed.push(node.clip + ': 画布全透明'); }
+              out.nodes.push(rec);
+            });
           }, function (err) {
             out.failed.push(node.clip + ': ' + (err && err.message));
             out.nodes.push({ clip: node.clip, ok: false, error: String(err && err.message) });
@@ -2630,6 +2781,8 @@
             hostTriggered: e.prob === 0
           });
         });
+        /* 取证结束：把 rAF 循环还回去（跑完覆盖后页面还得继续演） */
+        if (self.current && !self.destroyed) { self.current.fixedFrame = null; self.startLoop(); }
         return out;
       });
     });
@@ -2798,14 +2951,13 @@
       return self.ensureMediumClip(node).then(function (atlas) {
         self.smSetCurrent(node, atlas);
         self.stopLoop();
-        self.current.fixedFrame = frame;
         return self.loadMouth(label).then(function (m) {
           if (!m) { return false; }
           VOICE.variant = (opts.variant === 'frame') ? 'frame' : 'patch';
           VOICE.speaking = opts.speaking !== false;
           VOICE.mouthValue = (typeof opts.mouthValue === 'number') ? opts.mouthValue : 0;
-          self.draw();
-          return true;
+          /* 懒解码：先把 frame 所在那一页装好，再定帧 + 画（smFixFrame 内部就是这两步） */
+          return self.smFixFrame(atlas, frame).then(function () { return true; });
         });
       });
     });
@@ -2828,9 +2980,12 @@
       if (!node) { return { error: 'label 不在状态机里：' + label }; }
       return self.ensureMediumClip(node).then(function (atlas) {
         self.smSetCurrent(node, atlas);
-        self.current.fixedFrame = frame;
         self.stopLoop();
-        return self.loadMouth(label).then(function (m) {
+        /* 懒解码：先把 frame 所在那一页装好再定帧 —— 下面的 grab() 是同步 draw + getImageData，
+           页还没就位就会取到上一帧（旧实现全页常驻，所以这里原来是同步的）。 */
+        return self.smFixFrame(atlas, frame)
+          .then(function () { return self.loadMouth(label); })
+          .then(function (m) {
           if (!m) { return { error: '口型数据载不到' }; }
           var d = m.data;
           var track = d.anchorTrack || [];
@@ -3294,21 +3449,24 @@
         return p.ensureMediumClip(node).then(function (atlas) {
           p.smSetCurrent(node, atlas);
           p.stopLoop();
-          p.current.fixedFrame = frame;
-          BLINK.alpha = (typeof opts.alpha === 'number') ? opts.alpha : 1;
-          p.draw();
-          var r = p.charRect(p.canvas.width, p.canvas.height, p.current.fw / p.current.fh);
-          var k = (typeof d.k === 'number' && d.k > 0) ? d.k : 1;
-          var up = d.upsample || 1;
-          var bw = d.box[0] / up * k, bh = d.box[1] / up * k;
-          var out = { label: d.sourceClip || 'idle1', frame: frame, alpha: BLINK.alpha,
-                      shown: p.drawBlink(r, p.current.clipName || p.current.clip),
-                      box: d.box, sourceAnchor: d.sourceAnchor,
-                      drawn: { x: r.x + (d.sourceAnchor[0] * k - bw / 2) * (r.w / 764),
-                               y: r.y + (d.sourceAnchor[1] * k - bh / 2) * (r.h / 1028),
-                               w: bw * (r.w / 764), h: bh * (r.h / 1028) } };
-          if (opts.reset !== false) { BLINK.alpha = 0; p.current.fixedFrame = null; p.draw(); }
-          return out;
+          /* 懒解码：先把 frame 所在那一页装好再定帧、量几何、叠眼皮 */
+          return p.smFixFrame(atlas, frame).then(function () {
+            if (!p.current) { return false; }
+            BLINK.alpha = (typeof opts.alpha === 'number') ? opts.alpha : 1;
+            p.draw();
+            var r = p.charRect(p.canvas.width, p.canvas.height, p.current.fw / p.current.fh);
+            var k = (typeof d.k === 'number' && d.k > 0) ? d.k : 1;
+            var up = d.upsample || 1;
+            var bw = d.box[0] / up * k, bh = d.box[1] / up * k;
+            var out = { label: d.sourceClip || 'idle1', frame: frame, alpha: BLINK.alpha,
+                        shown: p.drawBlink(r, p.current.clipName || p.current.clip),
+                        box: d.box, sourceAnchor: d.sourceAnchor,
+                        drawn: { x: r.x + (d.sourceAnchor[0] * k - bw / 2) * (r.w / 764),
+                                 y: r.y + (d.sourceAnchor[1] * k - bh / 2) * (r.h / 1028),
+                                 w: bw * (r.w / 764), h: bh * (r.h / 1028) } };
+            if (opts.reset !== false) { BLINK.alpha = 0; p.current.fixedFrame = null; p.draw(); }
+            return out;
+          });
         });
       });
     },
