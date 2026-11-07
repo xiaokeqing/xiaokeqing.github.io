@@ -16,6 +16,10 @@ if(slow){document.documentElement.classList.add("xk-slow");}}catch(e){}})();</sc
 {{- $ogImgPath := "/images/bg.jpg" -}}
 {{- with .Params.images }}{{ $ogImgPath = index . 0 }}{{ end -}}
 {{- $ogImg := $ogImgPath | absURL -}}
+{{- /* ★2026-11-07 PWA：可安装 + 离线壳（static/manifest.webmanifest、static/sw.js）。只注册，不预缓存大资产。 */ -}}
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0a1013">
+<script>if('serviceWorker' in navigator){addEventListener('load',function(){setTimeout(function(){navigator.serviceWorker.register('/sw.js').catch(function(){});},1800);});}</script>
 <title>{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }} · xiaokeqing{{ end }}</title>
 <meta name="description" content="{{ $desc }}">
 <meta name="robots" content="{{ if in (slice "demo" "test") .Section }}noindex, nofollow{{ else }}index, follow{{ end }}">

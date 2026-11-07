@@ -1,0 +1,20 @@
+{
+  "name": "XK-LAB · 一个人的公网安全观测站",
+  "short_name": "XK-LAB",
+  "description": "主机 / 网络 / 蜜罐三路采集的个人安全观测站：实时攻击、每日战报、笔记与靶场。",
+  "start_url": "/alerts/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a1013",
+  "theme_color": "#0a1013",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "/images/xk-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/xk-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "作战室", "url": "/alerts/" },
+    { "name": "安全日报", "url": "/daily/" },
+    { "name": "笔记", "url": "/posts/" }
+  ]
+}

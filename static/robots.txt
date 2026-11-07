@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# 人物素材与 CRT 底图属于「界面装饰」，不被搜索引擎收录，也避免爬虫白白消耗带宽/额度
+Disallow: /kurisu/
+Disallow: /images/crt/
+
+# 笔记配图与文章正文允许抓取（/images/notes/ 等不要挡）
+Sitemap: https://xiaokeqing.cn/sitemap.xml
