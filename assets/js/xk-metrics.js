@@ -15,7 +15,13 @@
   var ssr = doc.getElementById('content');
   var page = ssr && ssr.getAttribute('data-xk-ssr');
   if (page !== 'monitor') return;
-  if (doc.documentElement.classList.contains('xk-slow')) return;
+  if (doc.documentElement.classList.contains('xk-slow')) {
+    // 慢网不为此多打一次请求：把"取数中…"改成如实说明，别让人以为一直在转圈。
+    elTtd.textContent = '—';
+    elTtr.textContent = '—';
+    elNote.textContent = '慢网下不请求这一项（省一次往返）；换个网速正常的网络刷新就能看到。';
+    return;
+  }
 
   var elTtd = doc.getElementById('mtMttd');
   var elTtr = doc.getElementById('mtMttr');

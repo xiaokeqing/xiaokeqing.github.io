@@ -18,7 +18,21 @@
     var url = API + '/api/public/stories?limit=8';
     return fetch(url, { cache: 'no-store', credentials: 'omit' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (o) { return (o && o.data) ? o.data : o; })
+      .then(function (o) {
+        /* ★2026-11-07 修：/api/public/stories 的 data 可能是**数组**，也可能是
+           {stories:[…]} / {items:[…]} / {list:[…]} 这样的对象（后端换过形状），
+           以前直接 return data 会在 mount() 里 `(stories||[]).map` 报
+           "(stories || []).map is not a function"，整块图表白屏。这里统一归一成数组。 */
+        var d = (o && o.data) ? o.data : o;
+        if (Array.isArray(d)) return d;
+        if (d && typeof d === 'object') {
+          var keys = ['stories', 'items', 'list', 'rows'];
+          for (var i = 0; i < keys.length; i++) {
+            if (Array.isArray(d[keys[i]])) return d[keys[i]];
+          }
+        }
+        return null;
+      })
       .catch(function () { return null; });
   }
 
