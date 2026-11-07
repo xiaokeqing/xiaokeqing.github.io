@@ -20,9 +20,9 @@
 
   // 先取元素引用，再决定跑不跑 —— 顺序反了会在慢网分支上引用未定义变量（踩过一次：
   // "Cannot set properties of undefined (setting 'textContent')"，卡片还会显示成别的行的文案）。
-  var elTtd = doc.getElementById('mtMttd');
-  var elTtr = doc.getElementById('mtMttr');
-  var elNote = doc.getElementById('mtNote');
+  var elTtd = doc.getElementById('xkMtTtd');
+  var elTtr = doc.getElementById('xkMtTtr');
+  var elNote = doc.getElementById('xkMtNote');
   if (!elTtd || !elTtr || !elNote) return;
 
   if (doc.documentElement.classList.contains('xk-slow')) {

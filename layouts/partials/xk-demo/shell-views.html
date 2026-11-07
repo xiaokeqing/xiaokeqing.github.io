@@ -71,11 +71,11 @@
               <!-- xk-metrics-card -->
               {{- /* 处置时效（MTTD / MTTR）：数据来自 /api/public/metrics（脱敏聚合，不含 IP）；
                      口径见 docs/Amadeus-项目总文档 的「处置时效」一节。样本 <3 时如实写"样本不足"，不写 0。 */ -}}
-              <div class="mod" id="modMetrics"><div class="mod-hd"><span class="led"></span>处置时效<span class="tag">MTTD / MTTR · 24h</span></div>
+              <div class="mod" id="xkMetricsCard"><div class="mod-hd"><span class="led"></span>处置时效<span class="tag">MTTD / MTTR · 24h</span></div>
                 <div class="mod-bd">
-                  <div class="row"><span class="k">MTTD · 从告警到处置</span><span class="chip" id="mtMttd">取数中…</span></div>
-                  <div class="row"><span class="k">MTTR · 从封禁到恢复</span><span class="chip" id="mtMttr">取数中…</span></div>
-                  <p class="vz-nt" id="mtNote">样本足够时给中位数；不足 3 个样本就写「样本不足」，不写 0。</p>
+                  <div class="row"><span class="k">MTTD · 从告警到处置</span><span class="chip" id="xkMtTtd">取数中…</span></div>
+                  <div class="row"><span class="k">MTTR · 从封禁到恢复</span><span class="chip" id="xkMtTtr">取数中…</span></div>
+                  <p class="vz-nt" id="xkMtNote">样本足够时给中位数；不足 3 个样本就写「样本不足」，不写 0。</p>
                 </div>
               </div>
 <div class="mod"><div class="mod-hd"><span class="led"></span>蜜罐捕获凭据<span class="tag">已脱敏 · 只给结构</span></div>
