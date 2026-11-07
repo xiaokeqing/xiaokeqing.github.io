@@ -277,7 +277,12 @@ var XKV2_BLOCK = (function(){
     c.pst = im;
     /* ★2026-11-07 P0-2：首屏只取 metadata（几百字节），真要播时才由 play() 拉视频体 —— 不再一上来就下 423KB的 idle.webm。 */
     try { vd.preload = 'metadata'; } catch (e) {}
-    vd.src = videoUrl(name);
+    /* ★2026-11-07 P0-2 渐进：首屏先用 268×360 的 lite 档（idle 117KB / idle1 121KB），
+   解锁（首次交互或空闲 2.5s）后换成 535×720 正式档 —— 最终画质不变，只是把 423KB 挪到后面。 */
+    var liteUrl = videoUrl(name).replace('/kurisu/video/', '/kurisu/video/lite/');
+    var useLite = !V.gestured && /^idle\d*$/.test(name);
+    vd.src = useLite ? liteUrl : videoUrl(name);
+    try { if (useLite) { vd.dataset.lite = '1'; vd.dataset.full = videoUrl(name); } } catch (e) {}
     return c;
   }
   function ensure(name){
@@ -376,6 +381,19 @@ var XKV2_BLOCK = (function(){
        绝不在 play() 里调它 —— 那会让"手势前不预载视频"这条规格作废（本轮真踩过：
        gate 报告里首屏多出 2 个 poster + 1 个 404）。 */
     if(V.gesture) return;
+  /* ★2026-11-07 P0-2：解锁后把首屏用的 lite 档换成正式 535x720 档（同帧号接续，画质升级不闪） */
+  try{
+    var lis = document.querySelectorAll('video[data-lite="1"]');
+    for (var li = 0; li < lis.length; li++) {
+      var vd2 = lis[li];
+      var full = vd2.getAttribute('data-full') || '';
+      if (!full) continue;
+      vd2.setAttribute('data-lite', '0');
+      vd2.preload = 'auto';
+      vd2.src = full;
+      try { vd2.play().catch(function () { }); } catch (e) { }
+    }
+  } catch (e) {}
     V.gesture = true;
     if(!V.enabled || !V.videoOK) return;
     manifestLoad().then(function(j){
