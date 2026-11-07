@@ -412,8 +412,9 @@ new_page_gate subscribe 日报订阅页
 #                     浏览器缓存的旧文件永远刷不掉（比内联更糟）
 #   · 外链断了     —— resources.Get 路径写错时 Hugo 不报错、只吐空引用，这里按产物里的
 #                     实际引用逐个 stat，缺文件直接红
-# 手写静态文件（static/ 下的 xk-saver.js / xk-realtime.js / xk-app.js / phone-emote.js）不在
-# 内容管道里，历史上也没指纹，明确列进白名单；其余一律要求带指纹。
+# 手写静态文件（static/ 下的 xk-saver.js / xk-realtime.js / xk-app.js / phone-emote.js /
+# xk-rail.js）不在内容管道里，历史上也没指纹，明确列进白名单；其余一律要求带指纹。
+# xk-rail.js：数据页侧栏让位（1 KB，2026-11-07），故意留 static/ 直出、不进 Hugo Pipes。
 # ★外壳内联 <script 数量判据：外壳（shell-script.html）必须仍然只产 2 个 <script 标签
 #   （shell 运行时 + scene-js），2026-10-18 起两个都带 src（正文进 /js/xk-shell.js、
 #   /js/xk-scene.js），id="scene-js" 保留（_dev/audit-shell.mjs 靠它定位）。见 ⑭ 末尾那条。
@@ -443,7 +444,7 @@ for pg in index.html alerts/index.html posts/index.html ai/index.html test/index
     N=$((N + 1))
     if [ ! -f "$PUB$ref" ]; then BAD="$BAD 缺文件:$ref"; continue; fi
     case "$ref" in
-      /js/xk-saver.js|/js/xk-realtime.js|/js/xk-app.js|/js/phone-emote.js|/js/kurisu-player.js) : ;;
+      /js/xk-saver.js|/js/xk-realtime.js|/js/xk-app.js|/js/phone-emote.js|/js/kurisu-player.js|/js/xk-rail.js) : ;;
       *) printf '%s' "$ref" | grep -qE '\.min\.[0-9a-f]{64}\.(css|js)$' || BAD="$BAD 无指纹:$ref" ;;
     esac
   done

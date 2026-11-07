@@ -15,3 +15,5 @@
  */ -}}
 <script src="{{ (resources.Get "js/xk-shell.js" | minify | fingerprint).RelPermalink }}"></script>
 <script id="scene-js" src="{{ (resources.Get "js/xk-scene.js" | minify | fingerprint).RelPermalink }}"></script>
+{{/* 数据页侧栏让位（1 KB）：默认收起右侧面板，用户点开过就记住。样式见 assets/css/extended/zz-rail.css */}}
+<script src="/js/xk-rail.js" defer></script>

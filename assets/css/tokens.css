@@ -1,0 +1,104 @@
+/* ============================================================================
+   xiaokeqing 博客 · 设计令牌（唯一事实源）
+   ----------------------------------------------------------------------------
+   本文件 =
+     ① 原 assets/css/xk.css 开头 :root 的逐字搬迁（同名同值，零视觉变化）；
+     ② 新增间距 / 字号 / 圆角 / 容器阶；
+     ③ /more/ /daily/ /ip/ 三个手写页原先硬编码色的语义令牌。
+   加载顺序：必须在 xk.css 之前。实际接线在
+     layouts/partials/xk-demo/shell-style.html（tokens.css 的 <link> 排 xk.css 前面）。
+   data-skin="light"/"dark" 的覆盖块仍留在 xk.css —— 它们要覆盖这里的默认值，
+   所以必须后加载。
+   ============================================================================ */
+
+/* ---- 1. 基础令牌（2026-11-07 从 xk.css 第 2–15 行原样搬出） ---- */
+:root{
+  --shade:.08;
+  /* 暖烟灰玻璃：取色自背景实验室（暖灰棕调），非白非黑 */
+  --panel:rgba(54,51,46,.24);
+  --panel2:rgba(42,40,36,.13);
+  --line:rgba(255,246,235,.15);
+  --line2:rgba(255,246,235,.28);
+  --txt:#FAF7F0; --mut:#D2CBBD;
+  --acc:#7FD4D8; --acc2:#B0A0E8;
+  --ok:#6FD3A0; --warn:#E8B45A; --bad:#E8837B;
+  --solid:rgba(48,45,41,.82);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Segoe UI","Microsoft YaHei",system-ui,sans-serif; --r:12px;
+
+  /* ---- 2. 间距阶（4 / 8 / 12 / 16 / 24 / 32 / 48 / 64） ---- */
+  --sp-1:4px;  --sp-2:8px;  --sp-3:12px; --sp-4:16px;
+  --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px;
+
+  /* ---- 3. 字号阶（四阶；本次只登记，不改现有页面字号） ---- */
+  --fs-sm:12px; --fs-md:14px; --fs-lg:16px; --fs-xl:20px;
+
+  /* ---- 4. 圆角阶（6 / 8 / 12 / 16；--r 保留 12px 兼容旧引用） ---- */
+  --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px;
+
+  /* ---- 5. 容器三档 ---- */
+  --w-article:760px; --w-data:1180px; --w-wide:1400px;
+
+  /* ---- 6. /more/ /daily/ /ip/ 硬编码色收口 ----
+     下面每个值都原样取自三个页面 2026-11-07 之前的内联 <style> 字面量。
+     不做近似、不合并近似值：换成令牌只为一处修改全站生效，视觉零变化。 */
+
+  /* 6.1 文本层级（深底上的实色） */
+  --xk-ink-title:#eef3f6;        /* /more/ 页标题 .mr-h1、卡片标题 .mr-card b */
+  --xk-ink-strong:#eaf6ff;       /* /daily/ 主数字与按钮 hover；/ip/ 输入值、卡片大数、正文强调 */
+  --xk-ink-value:#e8f3f8;        /* /daily/ 严重度数字、数据格子值；/ip/ 字段值 */
+  --xk-ink-key:#d7e7ef;          /* /ip/ 键名列、预格式块正文 */
+  --xk-ink-link:#cfe9f5;         /* /daily/ /ip/ 链接、键名、按钮文字 */
+  --xk-ink-mint:#bfe3d0;         /* /daily/ /ip/ 代码文字、次级链接（薄荷绿） */
+  --xk-ink-lede:#9fb0ba;         /* /more/ 导语 .mr-lede、卡片说明 */
+  --xk-ink-eyebrow:#6f828c;      /* /more/ 眉标 .mr-eyebrow */
+  --xk-sev-medium:#9fd8f0;       /* /daily/ 中危严重度数字 .dy-sev i.m b */
+
+  /* 6.2 白色不透明度阶（原 rgba(255,255,255,α)，α 原样保留） */
+  --xk-text-num:rgba(255,255,255,.85);       /* /daily/ 表格数字列 .dy-tbl td.n */
+  --xk-text-num-soft:rgba(255,255,255,.82);  /* /ip/ 表格数字列 .ipp-tbl td.num */
+  --xk-text-body:rgba(255,255,255,.8);       /* /daily/ .dy-lead；/ip/ .ipp-lead / td */
+  --xk-text-emph:rgba(255,255,255,.76);      /* /daily/ /ip/ 注释里的强调 b */
+  --xk-text-sev:rgba(255,255,255,.72);       /* /daily/ 严重度标签正文 */
+  --xk-text-label:rgba(255,255,255,.55);     /* /daily/ /ip/ 表头、返回链接 */
+  --xk-text-dim:rgba(255,255,255,.5);        /* /daily/ /ip/ 说明文字 */
+  --xk-text-caption:rgba(255,255,255,.48);   /* /daily/ 数据格子小标题 */
+  --xk-text-faint:rgba(255,255,255,.45);     /* /daily/ /ip/ 副值、提示 */
+  --xk-text-ghost:rgba(255,255,255,.42);     /* /daily/ /ip/ 缺席占位 */
+  --xk-text-band-na:rgba(255,255,255,.38);   /* /ip/ 威胁带 na 色 */
+  --xk-text-placeholder:rgba(255,255,255,.32); /* /ip/ 输入框 placeholder */
+
+  /* 6.3 白色叠加边线（卡片 / 表行 / 分隔线） */
+  --xk-border-16:rgba(255,255,255,.16); /* /daily/ 低危标签边框 */
+  --xk-border-12:rgba(255,255,255,.12); /* /daily/ 严重度标签边框；/ip/ 威胁卡边框 */
+  --xk-border-10:rgba(255,255,255,.1);  /* /daily/ 窄屏表行；/ip/ 数据卡边框 */
+  --xk-border-08:rgba(255,255,255,.08); /* /daily/ /ip/ 表格行与格子边框 */
+
+  /* 6.4 青色系（/more/ 一支基色 127,211,227；/daily/ /ip/ 一支基色 160,220,240） */
+  --xk-cyan:#7fd3e3;                        /* /more/ 分组标题、标签、强调条 */
+  --xk-cyan-line-12:rgba(127,211,227,.12);  /* /more/ 分组标题后的分隔线 */
+  --xk-cyan-line-18:rgba(127,211,227,.18);  /* /more/ 卡片边框 */
+  --xk-cyan-line-26:rgba(127,211,227,.26);  /* /more/ 标签边框 */
+  --xk-cyan-line-34:rgba(127,211,227,.34);  /* /more/ 卡片 hover 边框 */
+  --xk-cyan-line-55:rgba(127,211,227,.55);  /* /more/ 键盘聚焦描边 */
+  --xk-control-line-28:rgba(160,220,240,.28); /* /ip/ 输入框边框 */
+  --xk-control-line-35:rgba(160,220,240,.35); /* /daily/ 按钮/链接边框 */
+  --xk-control-line-40:rgba(160,220,240,.4);  /* /daily/ 中危边框；/ip/ 按钮边框 */
+  --xk-control-line-60:rgba(160,220,240,.6);  /* /daily/ 按钮 hover 边框 */
+  --xk-control-line-62:rgba(160,220,240,.62); /* /ip/ 输入框聚焦边框 */
+  --xk-control-line-68:rgba(160,220,240,.68); /* /ip/ 按钮 hover 边框 */
+  --xk-mint-fill-10:rgba(120,200,160,.1);     /* /daily/ /ip/ 行内代码底色 */
+
+  /* 6.5 状态色派生（基色已由 --bad / --warn / --ok 提供，这里只登记半透明边/底） */
+  --xk-bad-line-50:rgba(232,131,123,.5);  /* /daily/ 严重标签边框 */
+  --xk-bad-line-55:rgba(232,131,123,.55); /* /ip/ 威胁带 critical 边框 */
+  --xk-bad-fill-16:rgba(232,131,123,.16); /* /ip/ critical 带底色 */
+  --xk-warn-line-45:rgba(232,180,90,.45); /* /daily/ 高危标签边框 */
+
+  /* 6.6 深色底 / 卡片底 */
+  --xk-bg-card:rgba(12,18,22,.72); /* /more/ 卡片底 */
+  --xk-bg-18:rgba(0,0,0,.18);      /* /daily/ 数据格子底 */
+  --xk-bg-22:rgba(0,0,0,.22);      /* /ip/ 数据卡底 */
+  --xk-bg-26:rgba(0,0,0,.26);      /* /ip/ 威胁卡底 */
+  --xk-bg-35:rgba(0,0,0,.35);      /* /ip/ 输入框、预格式块底 */
+}

@@ -29,6 +29,9 @@
   {{- /* ★批次A-P1：统一播放器按需加载（同主页那条理由：138KB 放进首屏会顶爆 /ai/ 的门禁） */}}
 {{ partial "xk-demo/shell-script.html" . }}
 {{ partial "xk-demo/api-bind.html" . }}
+{{- /* ★V2/V3（2026-11-07）：24h 热力 + 严重度环。不吃新端点，只读 xk-bind 已取到的 stats24h；
+     同步加载（不加 defer）→ 首帧先画「—」骨架，数据回来后由 xk-bind 调 window.__xkViz 补画。 */}}
+<script src="{{ (resources.Get "js/xk-viz.js" | minify | fingerprint).RelPermalink }}"></script>
 <script src="/js/xk-realtime.js" defer></script>
 </body>
 </html>

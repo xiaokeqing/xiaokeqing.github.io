@@ -540,8 +540,13 @@
   function bindSpark(parts) {
     var al = pick(parts, 'alerts');
     var s24 = al && al.stats24h;
-    window.XK24H = (s24 && s24.available !== false && Array.isArray(s24.trend)) ? s24.trend : null;
+    var ok = !!(s24 && s24.available !== false);
+    window.XK24H = (ok && Array.isArray(s24.trend)) ? s24.trend : null;
+    /* ★V3：环形图与热力吃同一份 stats24h，不另开端点（零新增请求） */
+    window.XK_SEV24 = ok ? s24.bySeverity : null;
+    window.XK_TOT24 = ok ? s24.total : null;
     if (window.__xkSpark) window.__xkSpark();
+    if (window.__xkViz) window.__xkViz();
   }
 
   function bindCounters(parts) {

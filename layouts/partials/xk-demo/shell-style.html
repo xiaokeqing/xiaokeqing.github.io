@@ -1,4 +1,7 @@
 {{- /* 外壳共享样式 = docs/demo-内容页外壳.html 的 <style> 逐字（第 7–398 行）+ 一条 <a> 伴随规则。
       ★2026-10-18：正文已搬到 assets/css/xk.css（由本生成器逐字写出），这里只留 <link>；
-      Hugo Pipes 压缩 + 内容指纹 → /css/xk.min.<sha40>.css。位置＝原 <style> 所在的 <head> 位置。 */ -}}
+      Hugo Pipes 压缩 + 内容指纹 → /css/xk.min.<sha40>.css。位置＝原 <style> 所在的 <head> 位置。
+      ★2026-11-07：tokens.css 必须排在最前 —— xk.css 的 :root 基础令牌已搬进它，
+      顺序反了页面会先按无令牌渲染一帧（变量缺失），data-skin 覆盖块仍靠 xk.css 后加载生效。 */ -}}
+<link rel="stylesheet" href="{{ (resources.Get "css/tokens.css" | minify | fingerprint).RelPermalink }}">
 <link rel="stylesheet" href="{{ (resources.Get "css/xk.css" | minify | fingerprint).RelPermalink }}">

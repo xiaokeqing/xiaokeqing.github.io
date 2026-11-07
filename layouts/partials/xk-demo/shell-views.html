@@ -44,7 +44,8 @@
         <!-- 视图 1：实时攻击 -->
         <div class="ops-hero" id="opsHero" aria-live="polite">
           {{- /* ★2026-11-06 慢网口径「先给最快的东西」：首屏三个数字先用构建期快照（data/ops-snapshot.json），接口回来后再覆盖。 */ -}}
-{{- $snap := site.Data.ops_snapshot -}}{{- $fmt := "" -}}{{- with $snap }}{{ if .blockedByGuard }}{{ $fmt = lang.FormatNumberCustom 0 (float .blockedByGuard) "," "." -1 -1 }}{{ end }}{{ end -}}
+{{- /* ★2026-11-07 修 deprecation WARN：site.Data → hugo.Data（Hugo 0.156+ 命名空间；部署钉 0.167.0，netlify.toml 已固定）。 */ -}}
+{{- $snap := hugo.Data.ops_snapshot -}}{{- $fmt := "" -}}{{- with $snap }}{{ if .blockedByGuard }}{{ $fmt = lang.FormatNumberCustom 0 (float .blockedByGuard) "," "." -1 -1 }}{{ end }}{{ end -}}
           <div class="oh-cell"><b id="ohBlocked">{{ if and $snap $snap.blockedByGuard }}{{ lang.FormatNumberCustom 0 (float $snap.blockedByGuard) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计拦截</span></div>
           <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计封禁 IP</span></div>
           <div class="oh-cell"><b id="ohHoney">{{ if and $snap $snap.honeyConnections }}{{ lang.FormatNumberCustom 0 (float $snap.honeyConnections) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>蜜罐连接</span></div>
@@ -80,6 +81,23 @@
           <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时攻击时序<span class="tag">/alerts · stats24h</span></div>
             <div class="mod-bd"><canvas id="spark24" class="spark24"></canvas></div>
           </div>
+          {{- if eq $v "monitor" }}
+          {{- /* ★V2/V3（2026-11-07）：纯 CSS 两图，数据只吃上面同一份 stats24h；空壳由 xk-viz.js 填充 */}}
+          <div class="vz-grid">
+            <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时告警热力<span class="tag">/alerts · stats24h.trend</span></div>
+              <div class="mod-bd">
+                <div class="vz-heat" data-vz-heat role="img" aria-label="24 小时告警热力：取数中"></div>
+                <p class="vz-nt" data-vz-heatnote>取数中…（没有数据的小时写 —）</p>
+              </div>
+            </div>
+            <div class="mod"><div class="mod-hd"><span class="led"></span>严重度构成<span class="tag">24h · stats24h.bySeverity</span></div>
+              <div class="mod-bd">
+                <div data-vz-ring></div>
+                <p class="vz-nt" data-vz-ringnote>取数中…</p>
+              </div>
+            </div>
+          </div>
+          {{- end }}
         </div>
 
         <!-- 视图 2：攻击图谱 -->

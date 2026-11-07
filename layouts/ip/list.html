@@ -22,72 +22,72 @@
   <script src="/js/xk-saver.js"></script>
 {{ partial "xk-demo/shell-style.html" . }}
 <style>
-/* 本页专用：色板与外框全部复用外壳，不加新配色、不引外部资源 */
-.ipp-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.55);text-decoration:none}
-.ipp-back:hover{color:#bfe3d0}
+/* 本页专用：色板统一引用 assets/css/tokens.css 的 --xk-* 令牌；外框复用外壳，不引外部资源 */
+.ipp-back{display:inline-block;margin:0 0 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;letter-spacing:.03em;color:var(--xk-text-label);text-decoration:none}
+.ipp-back:hover{color:var(--xk-ink-mint)}
 .ipp-bd{display:flex;flex-direction:column;gap:14px}
-.ipp-lead{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
-.ipp-lead b{color:#cfe9f5;font-weight:600}
-.ipp-lead code,.ipp-p code,.ipp-note code,.ipp-kv code,.ipp-tbl code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.ipp-lead{margin:0;font-size:13px;line-height:1.95;color:var(--xk-text-body)}
+.ipp-lead b{color:var(--xk-ink-link);font-weight:600}
+.ipp-lead code,.ipp-p code,.ipp-note code,.ipp-kv code,.ipp-tbl code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--xk-ink-mint);background:var(--xk-mint-fill-10);padding:1px 5px;border-radius:4px}
 .ipp-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.ipp-in{flex:1 1 260px;min-width:220px;background:rgba(0,0,0,.35);border:1px solid rgba(160,220,240,.28);border-radius:7px;color:#eaf6ff;font-family:ui-monospace,Consolas,monospace;font-size:13px;padding:8px 11px;outline:none}
-.ipp-in::placeholder{color:rgba(255,255,255,.32)}
-.ipp-in:focus{border-color:rgba(160,220,240,.62)}
-.ipp-go{background:none;border:1px solid rgba(160,220,240,.4);color:#cfe9f5;border-radius:7px;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:8px 16px;cursor:pointer;flex:none}
-.ipp-go:hover{border-color:rgba(160,220,240,.68);color:#eaf6ff}
+.ipp-in{flex:1 1 260px;min-width:220px;background:var(--xk-bg-35);border:1px solid var(--xk-control-line-28);border-radius:7px;color:var(--xk-ink-strong);font-family:ui-monospace,Consolas,monospace;font-size:13px;padding:8px 11px;outline:none}
+.ipp-in::placeholder{color:var(--xk-text-placeholder)}
+.ipp-in:focus{border-color:var(--xk-control-line-62)}
+.ipp-go{background:none;border:1px solid var(--xk-control-line-40);color:var(--xk-ink-link);border-radius:7px;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:8px 16px;cursor:pointer;flex:none}
+.ipp-go:hover{border-color:var(--xk-control-line-68);color:var(--xk-ink-strong)}
 .ipp-go[disabled]{opacity:.45;cursor:default}
-.ipp-hint{margin:9px 0 0;font-size:13px;line-height:1.85;color:rgba(255,255,255,.45)}
+.ipp-hint{margin:9px 0 0;font-size:13px;line-height:1.85;color:var(--xk-text-faint)}
 .ipp-cards{display:flex;flex-wrap:wrap;gap:10px}
-.ipp-card{flex:1 1 150px;min-width:150px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.22)}
-.ipp-card .k{display:block;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);font-family:ui-monospace,Consolas,monospace}
-.ipp-card .n{display:block;margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:20px;line-height:1.2;color:#eaf6ff;font-weight:600;word-break:break-all}
-.ipp-card .d{display:block;margin-top:3px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.45)}
-.ipp-card.bad .n{color:#E8837B}
-.ipp-card.good .n{color:#6FD3A0}
-.ipp-card.warn .n{color:#E8B45A}
-.ipp-card.na .n{font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);font-weight:500}
+.ipp-card{flex:1 1 150px;min-width:150px;padding:10px 12px;border:1px solid var(--xk-border-10);border-radius:8px;background:var(--xk-bg-22)}
+.ipp-card .k{display:block;font-size:11px;letter-spacing:.06em;color:var(--xk-text-dim);font-family:ui-monospace,Consolas,monospace}
+.ipp-card .n{display:block;margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:20px;line-height:1.2;color:var(--xk-ink-strong);font-weight:600;word-break:break-all}
+.ipp-card .d{display:block;margin-top:3px;font-size:11px;line-height:1.6;color:var(--xk-text-faint)}
+.ipp-card.bad .n{color:var(--bad)}
+.ipp-card.good .n{color:var(--ok)}
+.ipp-card.warn .n{color:var(--warn)}
+.ipp-card.na .n{font-size:13px;line-height:1.5;color:var(--xk-text-dim);font-weight:500}
 .ipp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .ipp-kv{width:100%;border-collapse:collapse;font-size:13px}
-.ipp-kv th,.ipp-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
-.ipp-kv tbody th{color:#cfe9f5;font-weight:600;font-size:12.5px;white-space:nowrap;width:132px}
-.ipp-kv td{color:rgba(255,255,255,.8);line-height:1.9}
-.ipp-kv td.f{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#e8f3f8}
+.ipp-kv th,.ipp-kv td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--xk-border-08);vertical-align:top}
+.ipp-kv tbody th{color:var(--xk-ink-link);font-weight:600;font-size:12.5px;white-space:nowrap;width:132px}
+.ipp-kv td{color:var(--xk-text-body);line-height:1.9}
+.ipp-kv td.f{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--xk-ink-value)}
 .ipp-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
-.ipp-tbl th,.ipp-tbl td{text-align:left;padding:6px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
-.ipp-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:13px;letter-spacing:.06em;white-space:nowrap}
-.ipp-tbl td.k{color:#d7e7ef}
-.ipp-tbl td.num{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:rgba(255,255,255,.82);white-space:nowrap}
-.ipp-p{margin:0 0 10px;font-size:13px;line-height:1.95;color:rgba(255,255,255,.76)}
+.ipp-tbl th,.ipp-tbl td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--xk-border-08);vertical-align:top}
+.ipp-tbl th{color:var(--xk-text-label);font-weight:500;font-size:13px;letter-spacing:.06em;white-space:nowrap}
+.ipp-tbl td.k{color:var(--xk-ink-key)}
+.ipp-tbl td.num{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--xk-text-num-soft);white-space:nowrap}
+.ipp-p{margin:0 0 10px;font-size:13px;line-height:1.95;color:var(--xk-text-emph)}
 .ipp-p:last-child{margin-bottom:0}
-.ipp-p b{color:#eaf6ff;font-weight:600}
-.ipp-note{margin:10px 0 0;font-size:13px;line-height:1.9;color:rgba(255,255,255,.5)}
+.ipp-p b{color:var(--xk-ink-strong);font-weight:600}
+.ipp-note{margin:10px 0 0;font-size:13px;line-height:1.9;color:var(--xk-text-dim)}
 .ipp-note:first-child{margin-top:0}
-.ipp-note b{color:rgba(255,255,255,.76);font-weight:600}
-.ipp-null{color:#E8B45A}
-.ipp-ok{color:#6FD3A0;font-weight:600}
-.ipp-bad{color:#E8837B;font-weight:600}
-.ipp-na{color:rgba(255,255,255,.42)}
-.ipp-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
-.ipp-pre .c{color:rgba(255,255,255,.45)}
-.ipp-noscript{font-size:12.5px;line-height:1.9;color:#E8B45A}
-.ipp-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.85;color:rgba(255,255,255,.55)}
+.ipp-note b{color:var(--xk-text-emph);font-weight:600}
+.ipp-null{color:var(--warn)}
+.ipp-ok{color:var(--ok);font-weight:600}
+.ipp-bad{color:var(--bad);font-weight:600}
+.ipp-na{color:var(--xk-text-ghost)}
+.ipp-pre{margin:0 0 10px;padding:11px 12px;background:var(--xk-bg-35);border:1px solid var(--xk-border-08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:var(--xk-ink-key)}
+.ipp-pre .c{color:var(--xk-text-faint)}
+.ipp-noscript{font-size:12.5px;line-height:1.9;color:var(--warn)}
+.ipp-notes{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.85;color:var(--xk-text-label)}
 .ipp-notes li{margin:2px 0}
 /* 威胁分卡：大数字 + band 色条 + 因子表。色板仍只用本页那四个颜色：
    low=绿 / medium=黄 / high=红 / critical=红+粗边框（同色不新增色值） */
-.ipp-threat{--tc:#6FD3A0;margin:12px 0 0;padding:12px 13px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.26);border-radius:9px}
-.ipp-threat[data-band="medium"]{--tc:#E8B45A}
-.ipp-threat[data-band="high"]{--tc:#E8837B}
-.ipp-threat[data-band="critical"]{--tc:#E8837B;border-color:rgba(232,131,123,.55)}
-.ipp-threat[data-band="na"]{--tc:rgba(255,255,255,.38)}
+.ipp-threat{--tc:var(--ok);margin:12px 0 0;padding:12px 13px;border:1px solid var(--xk-border-12);background:var(--xk-bg-26);border-radius:9px}
+.ipp-threat[data-band="medium"]{--tc:var(--warn)}
+.ipp-threat[data-band="high"]{--tc:var(--bad)}
+.ipp-threat[data-band="critical"]{--tc:var(--bad);border-color:var(--xk-bad-line-55)}
+.ipp-threat[data-band="na"]{--tc:var(--xk-text-band-na)}
 .ipp-threat-hd{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
-.ipp-threat-hd .k{font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);font-family:ui-monospace,Consolas,monospace}
+.ipp-threat-hd .k{font-size:11px;letter-spacing:.06em;color:var(--xk-text-dim);font-family:ui-monospace,Consolas,monospace}
 .ipp-threat-band{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.04em;color:var(--tc);border:1px solid var(--tc);border-radius:999px;padding:2px 9px;white-space:nowrap}
-.ipp-threat[data-band="critical"] .ipp-threat-band{background:rgba(232,131,123,.16)}
+.ipp-threat[data-band="critical"] .ipp-threat-band{background:var(--xk-bad-fill-16)}
 .ipp-threat-n{margin-top:2px;font-family:ui-monospace,Consolas,monospace;font-size:42px;line-height:1.05;font-weight:600;color:var(--tc);letter-spacing:-.01em}
-.ipp-threat-n .of{font-size:12px;font-weight:400;color:rgba(255,255,255,.45);letter-spacing:0;margin-left:6px}
-.ipp-threat-bar{height:8px;margin-top:7px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.ipp-threat-n .of{font-size:12px;font-weight:400;color:var(--xk-text-faint);letter-spacing:0;margin-left:6px}
+.ipp-threat-bar{height:8px;margin-top:7px;border-radius:999px;background:var(--xk-border-08);overflow:hidden}
 .ipp-threat-bar i{display:block;height:100%;background:var(--tc);border-radius:inherit}
-.ipp-threat-meta{margin:7px 0 0;font-size:11.5px;line-height:1.8;color:rgba(255,255,255,.5)}
+.ipp-threat-meta{margin:7px 0 0;font-size:11.5px;line-height:1.8;color:var(--xk-text-dim)}
 .ipp-threat-tbl{min-width:460px;margin-top:8px}
 .ipp-threat-tbl td.w{white-space:nowrap}
 </style>
@@ -216,9 +216,9 @@
             <b>不做的</b>：不封禁、不触发任何处置动作、不写任何文件；这个端点是一次纯读。
           </p>
           <p class="ipp-note">
-            同一套口径问「现在有什么告警」看 <a href="/alerts/" style="color:#bfe3d0">/alerts/</a>；
-            看「哪个来源的故事完整」看 <a href="/status/" style="color:#bfe3d0">/status/</a>；
-            端点清单看 <a href="/api/" style="color:#bfe3d0">/api/</a>。
+            同一套口径问「现在有什么告警」看 <a href="/alerts/" style="color:var(--xk-ink-mint)">/alerts/</a>；
+            看「哪个来源的故事完整」看 <a href="/status/" style="color:var(--xk-ink-mint)">/status/</a>；
+            端点清单看 <a href="/api/" style="color:var(--xk-ink-mint)">/api/</a>。
           </p>
         </div>
       </div>

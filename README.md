@@ -6,6 +6,19 @@
 
 本仓库只负责**站点这一侧**：Hugo 静态页 + 自研页面生成器 + 前端取数逻辑。数据全部来自后端只读接口 `/api/public/*`；后端与部署脚本在 [SecAgent](https://github.com/xiaokeqing/SecAgent)。
 
+## 1.5 黄金演示路径（照着点，每一步都能下钻到原始记录）
+
+```text
+xiaokeqing.cn           首页 → CRT 里的人物 + 三个数字（累计拦截 / 封禁 IP / 蜜罐连接）
+  ↓ /alerts/            作战室 → 实时攻击流（原始规则 + 来源 IP）、24h 时序热力、严重度分级环
+  ↓ 点任一来源 IP        /ip/<IP>/ → 该 IP 档案：命中过哪几条规则、打过哪些端口、最近出现时间
+  ↓ /daily/             安全日报 → 24h 告警量、来源国 Top5、严重度分布、语音摘要
+  ↓ /more/              "凭什么信这些数字" → 降噪指数、弱口令结构、公开端点清单、周报月报
+```
+
+一句话口径：**站上每个数字，都能点回到产生它的那条原始告警。** 拿不到就显示「未取到 + 原因」，绝不补 0。
+
+
 ## 2. 架构图（双机：srv2 采集 → srv1 只读 API → Cloudflare → 静态站）
 
 ```text
@@ -22,7 +35,7 @@ srv2 上海 · 采集面 ──────────────────�
         ▼
 srv1 杭州 · 应用面 ───────────────────────────────────────────
   Spring Boot `secagent`，容器仅监听 127.0.0.1:9900
-  /api/public/*（16 个映射）只读 + 应用内快照缓存（max-age=45s）
+  /api/public/*（<!--N:endpoints-->20<!--/N--> 个映射）只读 + 应用内快照缓存（max-age=45s）
   规则判定 → 处置 → 真实防火墙落盘 + 审计留痕（模型只解释不拍板）
         │  HTTPS：demo.xiaokeqing.cn 是唯一 API 出口
         ▼
@@ -36,10 +49,12 @@ Cloudflare Tunnel / CDN
 | # | 指标 | 实测值 | 出处 |
 |---|---|---|---|
 | 1 | 告警量级 | 24h 被分析告警 **78,130** 条（含源 IP 75,127；已定位 30,263；排除本机 44,003、内网 861） | §3 实测数字 |
-| 2 | 后端单元测试 | **721** 例 / 0 失败 / 4 跳过（`mvn -o test`） | §19.2、§19.11 |
-| 3 | 构建断言 | **42** 项（`scripts/assert-build.sh`，全过才允许发布） | §20.1 |
+| 2 | 后端单元测试 | **<!--N:tests-->872<!--/N-->** 例 / 0 失败 / 4 跳过（`mvn -o test`） | §19.2、§19.11 |
+| 3 | 构建断言 | **<!--N:assert-->90<!--/N-->** 项（`scripts/assert-build.sh`，全过才允许发布） | §20.1 |
 | 4 | 门禁 SSR 契约 | **9** 页（`_dev/check-ssr-contract.py`：home/monitor/notes/ai/test/what/lab/status/api） | §20.1 |
 | 5 | 隔离靶场 | **7** 台（Pikachu / DVWA / Juice Shop / WebGoat / DVNA / DSVW + WebWolf） | §19.9 |
+
+> 上面第 2、3 行的数字**不是手填的**：`python scripts/readme-numbers.py --write` 会实跑断言脚本、汇总后端 surefire 报告、数 `/api/public/*` 的映射注解，再把结果写回本文件（占位符 `<!--N:…-->`）。漂移一次就被脚本改回来。
 
 ## 4. 在线地址与只读 API
 
@@ -72,7 +87,7 @@ hugo version                                  # 需 extended；CI 钉 0.167.0
 
 python -X utf8 _dev/gen-demo-pages.py         # 生成 layouts/partials 与内容页（生成物源头在这里）
 hugo --gc --minify --cleanDestinationDir
-bash scripts/assert-build.sh                  # 42 项断言，全过才允许发布
+bash scripts/assert-build.sh                  # <!--N:assert-->90<!--/N--> 项断言，全过才允许发布
 python _dev/check-ssr-contract.py public      # SSR 契约 9 页
 hugo server --bind 0.0.0.0 --port 1313        # 本地预览
 
@@ -86,10 +101,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-site-to-
 `.github/workflows/deploy.yml` 在 gh-pages 上**只发 `redirect-site/` 跳转页**，不整站镜像。
 
 ## 6. 技术栈
-
 ![Hugo](https://img.shields.io/badge/Hugo-extended%200.167.0-FF4088?logo=hugo&logoColor=white)
 ![Vanilla JS](https://img.shields.io/badge/frontend-vanilla%20JS-F7DF1E?logo=javascript&logoColor=black)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnel%20%2B%20CDN-F38020?logo=cloudflare&logoColor=white)
 ![Nginx](https://img.shields.io/badge/nginx-reverse%20proxy-009639?logo=nginx&logoColor=white)
 ![No third-party assets](https://img.shields.io/badge/third--party%20JS%2Ffont%2FCDN-0-brightgreen)
-![Tests](https://img.shields.io/badge/build%20assertions-42%2F42-brightgreen)
+![Tests](https://img.shields.io/badge/build%20assertions-90%2F90-brightgreen)

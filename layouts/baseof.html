@@ -103,6 +103,9 @@
     | jsonify | safeJS }}</script>
 
   <script src="/js/app.js" defer></script>
+  {{/* 数据页侧栏让位（1 KB）：默认收起右侧面板、只留左上角小头像，用户点开一次就记住。
+       样式在 assets/css/extended/zz-rail.css；只在 monitor/daily/ip/noise/passwords/more/api 生效。 */}}
+  <script src="/js/xk-rail.js" defer></script>
   {{- if site.Params.kurisuEnabled }}
   {{/* 角色播放器：独立模块，app.js 完全不知道它存在（路由靠 hashchange +
        对 #content 的 MutationObserver 自己感知，见文件头注释）。
