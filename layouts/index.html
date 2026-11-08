@@ -2317,5 +2317,18 @@ if(!RM){ setTimeout(xkmLoad, 2000); }
 </script>
 {{ partial "xk-demo/api-bind.html" . }}
 <script src="/js/xk-realtime.js" defer></script>
+{{/* ★2026-11-08 站主要求：首页整屏 CRT 会把页脚那行「全部页面：…」盖住，
+     所以在右下角补一个低调入口（和左下角的口播提示同一层，不抢画面）。 */}}
+<a class="xk-allpages" href="/more/" title="全部页面索引">全部页面</a>
+<style>
+.xk-allpages{position:fixed;right:12px;bottom:10px;z-index:60;
+  font:11.5px/1 var(--xk-mono,ui-monospace,Consolas,monospace);
+  color:var(--fg-faint,#6F828C);text-decoration:none;letter-spacing:.04em;
+  padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.10);
+  background:rgba(8,12,15,.55);backdrop-filter:blur(6px);
+  opacity:.55;transition:opacity .15s,color .15s,border-color .15s}
+.xk-allpages:hover,.xk-allpages:focus-visible{opacity:1;color:var(--fg,#D7E3E9);border-color:rgba(127,212,216,.45);outline:none}
+@media (max-width:720px){.xk-allpages{right:8px;bottom:64px;font-size:11px}}
+</style>
 </body>
 </html>
