@@ -405,6 +405,10 @@ new_page_gate subscribe 日报订阅页
 #   （手写 section 页，数据来自 data/attack.json，由 scripts/attack-coverage.py 从 Wazuh 真实告警聚合）。
 new_page_gate attack ATT&CK覆盖页
 new_page_gate trend 每日留存页
+# ★2026-11-08：蜜罐会话回放（/session/）与样本流水线（/samples-pipeline/）。
+#   两者数据都来自构建期快照（data/sessions/index.json、data/samples.json），页面不 fetch。
+new_page_gate session 蜜罐会话回放页
+new_page_gate samples-pipeline 样本流水线页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
 # 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。
