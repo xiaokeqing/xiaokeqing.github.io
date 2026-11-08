@@ -227,6 +227,9 @@
 <h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">小刻晴 · 一个人的安全实验室</h1>
 </main>
 <div id="xk-views" hidden aria-hidden="true"></div>
+{{- /* 页脚兜底：顶栏只放 9 项，其余页面都在这一行（主页是整屏 CRT，页脚在文档流末尾、被 body overflow:hidden 裁掉，
+      但 DOM 与读屏器仍在；内容页可见）。 */}}
+{{ partial "xk-demo/site-foot.html" . }}
 {{ partial "xk-demo/idcard.html" . }}
   {{- /* ★批次A-P1（站主 2026-10-16）：宿主页**按需加载**统一播放器 `/js/kurisu-player.js`
          （选句/防复读/包络/口型一处实现）。为什么不写死 <script src>：

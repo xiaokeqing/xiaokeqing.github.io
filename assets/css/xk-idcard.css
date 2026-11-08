@@ -266,7 +266,7 @@
 @media (min-width:981px){
   body.xk-has-idcard .dock{
     position:fixed;left:0;right:0;top:0;width:auto;height:46px;
-    flex-direction:row;align-items:center;flex-wrap:nowrap;gap:2px;padding:0 14px;
+    flex-direction:row;align-items:center;flex-wrap:nowrap;gap:0;padding:0 14px;
     border:0;border-bottom:1px solid rgba(127,212,216,.16);border-radius:0;
     background:rgba(7,11,13,.72);backdrop-filter:blur(12px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
   body.xk-has-idcard .dock .brand{border-bottom:0;border-right:1px solid rgba(127,212,216,.14);
@@ -357,38 +357,4 @@ body.xk-has-idcard .xk-idcard .xk-idcard-hidden{display:none !important}
   body.xk-has-idcard .xk-idcard{display:none !important}
   body.xk-has-idcard .main{padding-top:176px}
   body.xk-has-idcard .dock{row-gap:0}
-}
-
-/* ============================================================================
-   ★2026-11-08 站主口径：「把导航栏的东西都列出来…不要写没用的文字」
-   「更多」= 功能下拉（12 项按真名列出）；≤980px 不用下拉、直接两列展开。
-   为什么样式只写在这一份：主页与内容页都加载 xk-idcard.css（idcard.html 里的 <link>），
-   而主页的内联 <style> 在 <head>、本文件在 <body> 之后加载 ⇒ 两边共用同一份几何值，
-   不再重复「首页一份 / 内容页一份」的坑。
-   桌面 >980px 顶栏是 46px 横条（见上方 2026-11-06 那段）⇒ 面板从「更多」正下方向下展开；
-   ≤980px 顶栏是贴顶横条 + 换行（见上方 2026-11-07 那段）⇒ 面板直接占满一行做两列。
-   ============================================================================ */
-.dock-more{position:relative;display:flex;align-items:center}
-.dock-flyout{
-  display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:60;
-  min-width:168px;padding:6px;
-  background:rgba(7,11,13,.92);border:1px solid rgba(127,212,216,.16);border-radius:10px;
-  backdrop-filter:blur(12px);box-shadow:0 14px 40px rgba(0,0,0,.5)}
-.dock-more.open .dock-flyout{display:block}
-.dock-flyout a{
-  display:block;font:13px/30px var(--sans,sans-serif);color:var(--mut,#D2CBBD);
-  padding:0 10px;border-radius:7px;text-decoration:none;white-space:nowrap}
-.dock-flyout a:hover,.dock-flyout a:focus-visible{
-  color:var(--txt,#FAF7F0);background:rgba(127,212,216,.08);outline:none}
-@media (max-width:980px){
-  body.xk-has-idcard .dock .dock-more{display:contents}
-  body.xk-has-idcard .dock .dock-more > a{flex:0 0 auto}
-  body.xk-has-idcard .dock .dock-flyout{
-    display:grid;position:static;order:98;flex:0 0 100%;
-    grid-template-columns:1fr 1fr;gap:0 4px;
-    min-width:0;padding:2px 0 0;background:none;border:0;border-radius:0;
-    backdrop-filter:none;box-shadow:none}
-  body.xk-has-idcard .dock .dock-flyout a{
-    display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:0 8px;
-    font-size:13px;line-height:1.2;white-space:nowrap}
 }
