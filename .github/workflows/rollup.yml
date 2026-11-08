@@ -1,0 +1,49 @@
+name: daily-rollup
+# 每日 rollup：把"当天最新快照"固化成一行 append-only 历史。
+# 为什么必须做：Wazuh 只留 7 天、static/api/public/*.js 是覆盖写 ⇒ 不存这一行，
+#   MTTD/MTTR 趋势、ATT&CK 覆盖率演进、样本周报全都做不出来（站主 2026-11-08 定调）。
+# 只读仓库内的快照文件，不联网、不碰服务器。
+on:
+  schedule:
+    - cron: "20 0 * * *"   # 每天 08:20 CST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-rollup
+  cancel-in-progress: false
+
+jobs:
+  rollup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 生成当日 rollup
+        run: python3 scripts/rollup-daily.py
+
+      - name: 有变化才提交
+        run: |
+          set -eu
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/rollup
+          if git diff --cached --quiet; then
+            echo "今日 rollup 与已有内容一致，跳过提交"
+            exit 0
+          fi
+          git commit -m "chore(rollup): $(date -u -d '+8 hours' +%Y-%m-%d) 每日聚合快照归档"
+          for i in 1 2 3; do
+            if git push; then exit 0; fi
+            git pull --rebase --autostash || true
+            sleep 5
+          done
+          echo "::error::push 连续失败"; exit 1

@@ -1,0 +1,120 @@
+{{- /* /trend/ 每日留存：数据来自 data/rollup/*.json（构建期读入，SSR 直出，零 JS）。
+   口径：只抄快照已有的数，取不到写「未取到」，不补 0；不落任何完整 IP。 */ -}}
+{{- $rows := slice -}}
+{{- range $k, $v := hugo.Data.rollup -}}
+  {{- $rows = $rows | append $v -}}
+{{- end -}}
+{{- $rows = sort $rows "date" "desc" -}}
+{{- $n := len $rows -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+.tr-back{display:inline-block;margin:0 0 10px;font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.03em;color:var(--xk-ink-lede,rgba(255,255,255,.55));text-decoration:none}
+.tr-back:hover{color:var(--xk-cyan,#7FD4D8)}
+.tr-md{font-size:14.5px;line-height:1.95;color:var(--xk-ink-lede,rgba(255,255,255,.72))}
+.tr-md b{color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.tr-md p{margin:0 0 10px}
+.tr-md ul{margin:0;padding-left:20px}
+.tr-md li{margin:2px 0}
+.tr-note{padding:10px 16px 14px;opacity:.7;font-size:13px;margin:0}
+.tr-table{width:100%;border-collapse:collapse;font:13px/1.7 var(--xk-mono,ui-monospace,Consolas,monospace)}
+.tr-table th,.tr-table td{padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--xk-line,rgba(255,255,255,.09))}
+.tr-table th{font-weight:600;font-size:11.5px;letter-spacing:.04em;color:var(--xk-ink-lede,rgba(255,255,255,.62));background:rgba(255,255,255,.03)}
+.tr-table td{color:var(--xk-ink-title,#eaf6ff)}
+.tr-table tbody tr:hover{background:rgba(127,212,216,.06)}
+</style>
+</head>
+<body class="is-view xk-has-idcard" data-skin="warm" data-phone="v1">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" "trend") }}
+
+<main id="content" data-xk-ssr="trend">
+<section class="screen">
+  <div class="screen-hd">
+    <span class="dot"></span><b>XK-LAB</b><span class="sep">//</span><b>每日留存</b>
+    <span class="tag">DAILY ROLLUP</span>
+    <span class="sync">● 已归档 {{ $n }} 天{{ if gt $n 0 }} · 最新 {{ (index $rows 0).date }}{{ end }}</span>
+  </div>
+
+  <div class="screen-bd">
+    <a class="tr-back" href="/alerts/">← 实时看板 /alerts/</a>
+
+    <div class="mod">
+      <div class="ch"><b>一句话</b><span class="src">每天 08:20 自动落一行，只增不改</span></div>
+      <div class="tr-md" style="padding:14px 16px">
+        <p><b>为什么要这一页：</b>Wazuh 只保留 7 天索引，站上的实时快照又是"覆盖写"——两者叠起来，
+        任何"这周比上周多还是少"的问题都答不了。所以每天把关键聚合抄一行进仓库，跟着版本一起存着。</p>
+        <p style="margin-bottom:0">当前已存 <b>{{ $n }}</b> 天{{ if lt $n 7 }}（不到一周，趋势还看不出东西，所以这里只列明细、不画曲线）{{ end }}。
+        往后每过一天多一行，不需要人工维护。</p>
+      </div>
+    </div>
+
+    <div class="mod">
+      <div class="ch"><b>逐日明细</b><span class="src">1 行 = 1 天 · 取抓取时刻的窗口口径</span></div>
+      <div style="overflow-x:auto">
+        <table class="tr-table" style="min-width:960px">
+          <thead>
+            <tr>
+              <th>日期</th><th>24h 告警</th><th>严重</th><th>高危</th>
+              <th>最多来源</th><th>护栏拦截</th><th>蜜罐连接</th>
+              <th>MTTD</th><th>ATT&amp;CK 覆盖</th>
+            </tr>
+          </thead>
+          <tbody>
+          {{- range $rows }}
+            {{- $a := .alerts24h -}}
+            {{- $top := "" -}}
+            {{- if gt (len .topCountries) 0 -}}
+              {{- $c := index .topCountries 0 -}}
+              {{- $top = printf "%s · %s" ($c.name | default $c.cc) (lang.FormatNumber 0 $c.count) -}}
+            {{- end -}}
+            {{- $mtt := "无封禁记录" -}}
+            {{- with .metrics.mttd }}{{ $mtt = printf "%.1f 分" . }}{{ end -}}
+            {{- $att := "未取到" -}}
+            {{- with .attack }}{{ $att = printf "%.2f%%（未映射 %s）" .coveragePct (lang.FormatNumber 0 .unmapped) }}{{ end -}}
+            <tr>
+              <td>{{ .date }}</td>
+              <td>{{ if $a.available }}{{ lang.FormatNumber 0 $a.total }}{{ else }}未取到{{ end }}</td>
+              <td>{{ with $a.cr }}{{ lang.FormatNumber 0 . }}{{ else }}—{{ end }}</td>
+              <td>{{ with $a.hi }}{{ lang.FormatNumber 0 . }}{{ else }}—{{ end }}</td>
+              <td>{{ if $top }}{{ $top }}{{ else }}未取到{{ end }}</td>
+              <td>{{ with .guard.blocked }}{{ lang.FormatNumber 0 . }}{{ else }}—{{ end }}</td>
+              <td>{{ with .honeypot.connections }}{{ lang.FormatNumber 0 . }}{{ else }}—{{ end }}</td>
+              <td>{{ $mtt }}</td>
+              <td>{{ $att }}</td>
+            </tr>
+          {{- end }}
+          </tbody>
+        </table>
+      </div>
+      <p class="tr-note">
+        「护栏拦截」是处置护栏按策略挡下的动作数；「蜜罐连接」取自蜜罐聚合窗口（近 800 条告警的样本），不是全天全量；
+        MTTD 只在 24 小时内有封禁记录时才给中位数，没有就直说「无封禁记录」。
+      </p>
+    </div>
+
+    <div class="mod">
+      <div class="ch"><b>口径 · 这些数从哪来</b><span class="src">先看这块，再看数字</span></div>
+      <div class="tr-md" style="padding:14px 16px">
+        <ul>
+          <li><b>数据源</b>：仓库内 <code>static/api/public/*.js</code>（站上同源快照）+ <code>data/attack.json</code>，由 <code>scripts/rollup-daily.py</code> 每天读取。</li>
+          <li><b>触发</b>：<code>.github/workflows/rollup.yml</code>，每天 08:20（CST）一次，也可手动 Run workflow。</li>
+          <li><b>只增不改</b>：每天一个新文件 <code>data/rollup/YYYY-MM-DD.json</code>；同一天重跑覆盖当天那一行，不动历史。</li>
+          <li><b>不编数</b>：快照里没有的字段写 <code>null</code> 并登记进 <code>missing</code>，页面显示「未取到」，不补 0。</li>
+          <li><b>不存 IP</b>：只留聚合（国家计数、Top 来源），不落任何完整来源地址。</li>
+          <li><b>相关</b>：<a href="/attack/">ATT&amp;CK 覆盖</a> · <a href="/noise/">告警噪音指数</a> · <a href="/alerts/">实时看板</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+{{ partial "xk-demo/site-foot.html" . }}
+</body>
+</html>
