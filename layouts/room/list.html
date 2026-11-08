@@ -226,15 +226,8 @@
   </div>
 </div>
 
-<nav class="dock dock--wait" id="dock" aria-label="站点导航（演示）">
-  <div class="brand">XK-LAB</div>
-  <a href="/" class="on">主页</a>
-  <a href="/alerts/">攻击实况</a>
-  <a href="/daily/">安全日报</a>
-  <a href="/posts/">笔记</a>
-  <a href="/lab/">攻防验证</a>
-  <a href="/more/">更多</a>
-</nav>
+<!-- 导航：引用全站共享 partial（第三份同构代码一并收口，改导航只改 layouts/partials/xk-demo/dock.html） -->
+{{ partial "xk-demo/dock.html" (dict "v" "home" "wait" true) }}
 
 <div class="bootveil" id="bootveil"></div>
 <div class="fallback" id="fallback">CRT 高度不足 260px，该视口下降级为移动端 CHIP 模式<br>（见 demo-内容页外壳.html）</div>

@@ -9,21 +9,8 @@
 <div class="bglite" aria-hidden="true"></div>
 <div class="bgshade" aria-hidden="true"></div>
 
-<!-- 左侧竖排导航 -->
-<nav class="dock" id="dock" aria-label="站点导航（演示）">
-  <div class="brand">XK-LAB</div>
-  <a href="/" class="xk-nav-home">主页</a>
-  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">实时看板</a>
-  <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
-  <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
-<a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
-  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">演练场</a>
-  <a href="/more/" class="{{ if or (eq $v "more") (eq $v "status") (eq $v "api") (eq $v "tools") (eq $v "what") }}on{{ end }}">更多</a>
-  {{- /* ★2026-11-07：/room/ 与 / 合并 —— 首页本身就是电视房间外壳，单独一个"我的房间"入口已经没意义。
-         这一项删除；老书签访问 /room/ 由 netlify.toml 的 301 规则兜住。
-         assets/js/xk-idcard.js 的 syncRoom() 在元素缺席时直接 return（已核实安全）。 */}}
-      {{ partial "xk-demo/dock-tools.html" . }}
-</nav>
+<!-- 导航：与首页共用 layouts/partials/xk-demo/dock.html（唯一来源，改导航只改那份） -->
+{{ partial "xk-demo/dock.html" (dict "v" $v) }}
 
 <!-- HOLO 人物面板：左上角 -->
 <aside class="holo live" id="holo" role="complementary" aria-label="助手面板（演示）">

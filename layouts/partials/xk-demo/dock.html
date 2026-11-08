@@ -1,0 +1,63 @@
+{{- /* 导航 dock —— 全站唯一来源（2026-11-08）。
+      以后改导航只改这一份：首页 layouts/index.html 与内容页外壳 shell-chrome.html 都引用它，
+      不再出现「首页一份内联、内容页一份」两处同构代码各改一遍的问题。
+      参数：v = 当前页（monitor/daily/ai/notes/lab/more/status/api/tools/what/home…）
+            wait = true 时带首页开场动画用的 .dock--wait。
+      「更多」= 功能下拉：12 项按真名列出，不写描述性文字（站主口径「把导航栏的东西都列出来」）。 */ -}}
+{{- $v := .v -}}
+<nav class="dock{{ if .wait }} dock--wait{{ end }}" id="dock" aria-label="站点导航（演示）">
+  <div class="brand">XK-LAB</div>
+  <a href="/" class="{{ if eq $v "home" }}on{{ end }}">主页</a>
+  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">实时看板</a>
+  <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
+  <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
+  <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
+  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">演练场</a>
+  <div class="dock-more" id="dockMore">
+    <a href="/more/" class="dock-more-t{{ if or (eq $v "more") (eq $v "status") (eq $v "api") (eq $v "tools") (eq $v "what") }} on{{ end }}" aria-expanded="false" aria-controls="dockFlyout">更多</a>
+    <div class="dock-flyout" id="dockFlyout">
+      <a href="/noise/">告警噪音指数</a>
+      <a href="/ip/">这个 IP 干过什么</a>
+      <a href="/passwords/">高频弱口令</a>
+      <a href="/samples/">真实样本分析</a>
+      <a href="/api/">公开端点清单</a>
+      <a href="/reports/">周报与月报</a>
+      <a href="/redteam/">红队攻防榜</a>
+      <a href="/purpleteam/">紫队演练</a>
+      <a href="/status/">运行状态</a>
+      <a href="/what/">这个站在做什么</a>
+      <a href="/projects/">项目记录</a>
+      <a href="/tools/">工具台</a>
+    </div>
+  </div>
+  {{ partial "xk-demo/dock-tools.html" . }}
+</nav>
+<script>
+/* 「更多」下拉：桌面 hover / 键盘 focus 展开（JS 切换 .open，CSS 只认 .open），Esc 关闭并收起焦点；
+   ≤980px 面板由 CSS 直接展开（不用下拉），这里只同步 aria-expanded。 */
+(function(){
+  var more = document.getElementById('dockMore');
+  if (!more) return;
+  var link = more.querySelector('.dock-more-t');
+  var mq = window.matchMedia('(max-width:980px)');
+  function setOpen(on){
+    more.classList.toggle('open', !!on);
+    link.setAttribute('aria-expanded', (on || mq.matches) ? 'true' : 'false');
+  }
+  more.addEventListener('mouseenter', function(){ if (!mq.matches) setOpen(true); });
+  more.addEventListener('mouseleave', function(){ if (!mq.matches) setOpen(false); });
+  more.addEventListener('focusin', function(){ if (!mq.matches) setOpen(true); });
+  more.addEventListener('focusout', function(e){
+    if (!mq.matches && !more.contains(e.relatedTarget)) setOpen(false);
+  });
+  function sync(){ setOpen(more.classList.contains('open')); }
+  if (mq.addEventListener) mq.addEventListener('change', sync); else if (mq.addListener) mq.addListener(sync);
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && more.classList.contains('open')) {
+      setOpen(false);
+      if (more.contains(document.activeElement)) document.activeElement.blur();
+    }
+  });
+  setOpen(false);
+})();
+</script>
