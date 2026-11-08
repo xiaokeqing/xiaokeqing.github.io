@@ -1022,3 +1022,9 @@ pre{position:relative}
 /* ★V5（2026-11-08）：卡片暗投影减半（.45/.55 → .22），改用 1px 内高光提边缘，
    避免深色背景下叠成一团黑；面本身仍由暖灰 --panel 承担。 */
 .mod,.screen,.note-card,.xk-ent-card,.xk-ai-cache,.ops-hero{box-shadow:0 10px 26px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.06)}
+
+/* ★2026-11-08 修：卡片头 <b>标题</b> + <span class=src> 互相压住（地理分布卡实测标题被盖）。
+   .ch 两端对齐、标题允许截断、src 不换行。 */
+.xk-views .ch, .ops-rail .ch, .screen-bd .ch{display:flex;align-items:baseline;gap:10px;min-width:0}
+.xk-views .ch>b, .ops-rail .ch>b, .screen-bd .ch>b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xk-views .ch>span.src, .ops-rail .ch>span.src, .screen-bd .ch>span.src{margin-left:auto;flex:0 0 auto;white-space:nowrap}
