@@ -67,7 +67,18 @@
      ⚠ 帧数只取 **3**：manifest.json 里 emotions.*.idle 全是 {columns:8, frames:3, atlasW:1056}
      —— 图集是 8 列宽，但只有前 3 格有画面，后 5 格是空位；按"列数×行数"算会画到空位（实测：头像整块变白）。
      清单到位后（空闲预取那张）再用真值覆盖一次，防止以后素材改成 8 帧。 */
-  var ctx = cv.getContext('2d'); if (ctx) ctx.imageSmoothingQuality = 'high';
+  /* ★2026-11-08 站主口径「头像按 DPR 渲染」：卡片外框 56×56，
+     以前 backing store 与 CSS 盒脱钩（HTML 里写死 132），高分屏下等于让合成器把位图整体放大。
+     现在 backing store = 56 × min(devicePixelRatio, 2) = 112、再用 ctx.scale(dpr,dpr) 把绘图坐标
+     还原成 56×56 的口径 —— 高分屏不再被合成器拉伸。
+     （实测 CSS 里的画布本身是 46×46：body.xk-has-idcard .xk-idcard .xk-idcard-av canvas，
+      所以 112 是 2.43× 缓冲，宁可多采样也不糊。）
+     素材侧没有 2× 精灵图（static/kurisu/avatar/*.idle.webp 的单元就是 132px），
+     照旧用原图：canvas 只负责在 112px 缓冲里做一次高质量重采样，不新增图片文件。 */
+  var AV = 56, DPR = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
+  cv.width = Math.round(AV * DPR); cv.height = cv.width;
+  var ctx = cv.getContext('2d');
+  if (ctx) { ctx.imageSmoothingQuality = 'high'; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
   var CELL = 132, COLS = 8, framesOf = {}, imgs = {}, url = {}, last = 0, fi = 0;
   /* ★2026-11-05：慢网标记（html.xk-slow），头像改为纯色圆占位，省 63 KB。 */
   D.slowAv = false;
@@ -81,9 +92,9 @@
         if (!D.slowAvDrawn) {
           D.slowAvDrawn = 1;
           try {
-            ctx.clearRect(0, 0, CELL, CELL);
+            ctx.clearRect(0, 0, AV, AV);
             ctx.fillStyle = 'rgba(127,212,216,.18)';
-            ctx.beginPath(); ctx.arc(CELL / 2, CELL / 2, CELL * 0.34, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(AV / 2, AV / 2, AV * 0.34, 0, Math.PI * 2); ctx.fill();
           } catch (e) { }
         }
         return { complete: false, naturalWidth: 0 };
@@ -98,9 +109,24 @@
     var n = framesOf[D.emo] || 3;
     if (g.naturalWidth === CELL) { n = 1; }
     var k = n > 1 ? (fi % n) : 0;
-    ctx.clearRect(0, 0, CELL, CELL);
-    ctx.drawImage(g, (k % COLS) * CELL, Math.floor(k / COLS) * CELL, CELL, CELL, 0, 0, CELL, CELL);
+    ctx.clearRect(0, 0, AV, AV);
+    /* 源仍是 132px 单元，目标用 56 口径（×dpr 后就是 112 物理像素） */
+    ctx.drawImage(g, (k % COLS) * CELL, Math.floor(k / COLS) * CELL, CELL, CELL, 0, 0, AV, AV);
   }
+  /* 拖到另一块屏（或 Ctrl+± 缩放）会换 devicePixelRatio ⇒ 重建 backing store 并重画。
+     用 setTransform 而不是再 scale 一次：重复 scale 会把坐标越缩越小。 */
+  function fitDpr() {
+    if (!ctx) { return; }
+    var d = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
+    if (d === DPR) { return; }
+    DPR = d;
+    cv.width = Math.round(AV * DPR); cv.height = cv.width;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    D.slowAvDrawn = 0;
+    paint();
+  }
+  try { window.addEventListener('resize', fitDpr); } catch (e) { }
   (function tick(t) {
     requestAnimationFrame(tick);
     if (!last) { last = t; }

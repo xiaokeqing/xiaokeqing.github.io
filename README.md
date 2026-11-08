@@ -35,7 +35,7 @@ srv2 上海 · 采集面 ──────────────────�
         ▼
 srv1 杭州 · 应用面 ───────────────────────────────────────────
   Spring Boot `secagent`，容器仅监听 127.0.0.1:9900
-  /api/public/*（<!--N:endpoints-->35<!--/N--> 个映射）只读 + 应用内快照缓存（max-age=45s）
+  /api/public/*（<!--N:endpoints-->41<!--/N--> 个映射）只读 + 应用内快照缓存（max-age=45s）
   规则判定 → 处置 → 真实防火墙落盘 + 审计留痕（模型只解释不拍板）
         │  HTTPS：demo.xiaokeqing.cn 是唯一 API 出口
         ▼
@@ -49,7 +49,7 @@ Cloudflare Tunnel / CDN
 | # | 指标 | 实测值 | 出处 |
 |---|---|---|---|
 | 1 | 告警量级 | 24h 被分析告警 **78,130** 条（含源 IP 75,127；已定位 30,263；排除本机 44,003、内网 861） | §3 实测数字 |
-| 2 | 后端单元测试 | **<!--N:tests-->893<!--/N-->** 例 / 0 失败 / 4 跳过（`mvn -o test`） | §19.2、§19.11 |
+| 2 | 后端单元测试 | **<!--N:tests-->903<!--/N-->** 例 / 0 失败 / 4 跳过（`mvn -o test`） | §19.2、§19.11 |
 | 3 | 构建断言 | **<!--N:assert-->90<!--/N-->** 项（`scripts/assert-build.sh`，全过才允许发布） | §20.1 |
 | 4 | 门禁 SSR 契约 | **9** 页（`_dev/check-ssr-contract.py`：home/monitor/notes/ai/test/what/lab/status/api） | §20.1 |
 | 5 | 隔离靶场 | **7** 台（Pikachu / DVWA / Juice Shop / WebGoat / DVNA / DSVW + WebWolf） | §19.9 |
