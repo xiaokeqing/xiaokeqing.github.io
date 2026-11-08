@@ -716,21 +716,42 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
   document.documentElement.classList.add('xk-phone-emote');
   window.__xkPhoneAnim = false;   /* ★V2.1：手机只放 E-mote，停掉原始帧动画 */
   XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;
+  /* ★2026-11-08（站主截图：手机里上半 Sprite、下半 E-mote、腰带两次）：
+     E-mote 和 Sprite **画在同一张 #phoneCanvas 上**，所以不能靠 display:none 分层。
+     E-mote ready ⇒ 停掉 Sprite 的 rAF + 关掉它的 draw/set 闸门 + 清一次画布；
+     E-mote 未就绪/失败 ⇒ 才让 Sprite 画（兜底）。这样任一时刻只有一层在写这张 canvas。 */
+  function spriteTakeover(on){
+    window.__xkPhoneSpriteOff = !!on;
+    window.__xkPhoneLayer = on ? 'emote' : 'sprite';
+    var pb = window.__xkPhoneBody;
+    if(on){
+      try { if(pb) pb.stop(); } catch(e){}
+      try {
+        var c = document.getElementById('phoneCanvas');
+        var x = c && c.getContext('2d');
+        if(x) x.clearRect(0, 0, c.width, c.height);   /* 清掉 Sprite 残影，别留半截身体 */
+      } catch(e){}
+    } else {
+      try { if(pb) pb.play(); } catch(e){}
+      try { if(typeof setPhone === 'function') setPhone(); } catch(e){}
+    }
+  }
   em.onStatus(function(s){
     if(!s) return;
     /* ★ 加载中保留静态立绘垫底，只有 E-mote 真正 ready 才撤（否则加载期手机是空屏） */
-    if(s.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); }
-    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); document.documentElement.classList.remove('xk-emote-ready'); XK_TIER.phoneEmote = null; }
+    if(s.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); spriteTakeover(true); }
+    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); document.documentElement.classList.remove('xk-emote-ready'); XK_TIER.phoneEmote = null; spriteTakeover(false); }
     var el = document.getElementById('phoneState');
     if(el && s.state) el.textContent = String(s.state).toUpperCase();
   });
   /* ★兜底（2026-10-17 实测踩到）：模型从缓存命中时 mount 里就已经 ready，onStatus 只报「变化」，
-     这一枪收不到 ⇒ 静态立绘和 E-mote 叠成两个人。这里补一个轮询，直到状态真为 ready 为止。 */
+     这一枪收不到 ⇒ 静态立绘和 E-mote 叠成两个人。这里补一个轮询，直到状态真为 ready 为止。
+     ★2026-11-08：轮询命中 ready 时同样要走 spriteTakeover(true)，否则第二条画轨永远不关。 */
   var _rp = setInterval(function(){
     try{
       var s2 = (em.status && em.status()) || null;
-      if(s2 && s2.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); clearInterval(_rp); }
-      else if(s2 && (s2.state === 'error' || s2.state === 'off')){ clearInterval(_rp); }
+      if(s2 && s2.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); spriteTakeover(true); clearInterval(_rp); }
+      else if(s2 && (s2.state === 'error' || s2.state === 'off')){ spriteTakeover(false); clearInterval(_rp); }
     }catch(e){ clearInterval(_rp); }
   }, 400);
   /* 模式跟随：读手机面板状态文字（IDLE/THINKING/SPEAKING），变化时通知 E-mote（不改原 setPhone） */
@@ -750,10 +771,18 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
 function makeBodyPlayer(canvas){
   const ctx = canvas.getContext('2d');
   if (ctx) ctx.imageSmoothingQuality = 'high';
-  canvas.width = 321; canvas.height = 432;
-  const CW = 321, CH = 432, COLS = 8;
+  /* ★2026-11-08（P0，站主截图：手机里两段身体、腰带出现两次）：
+     真值来自 kurisu/manifest.json —— full 图集 columns=8、frameWidth=476、frameHeight=640
+     （idle/speaking/thinking 都一样）。commit ef403f4 把 idle 图集从 321×432 提到 476×640 时
+     只换了 webp/manifest，这里还留着 321×432 ⇒ drawImage 的 321×432 窗口横跨相邻帧，
+     上半截是上一帧的腰/腰带、下半截是下一帧的头/肩，看起来就是"两份人物上下错位"。
+     现在按 476×640 取格；行数从图高实际算，boot 24 帧（3 行）也不会越界。 */
+  const CW = 476, CH = 640, COLS = 8;
+  canvas.width = CW; canvas.height = CH;
   const cache = {};
   let cur = null, frames = 0, fi = 0, last = 0, iv = 42;
+  let raf = 0, stopped = false;
+  function spriteOff(){ return !!window.__xkPhoneSpriteOff; }
   /* ★2026-10-19（加载速度）：手机面板收起时 canvas 布局尺寸是 0×0，而 BODY.idle 就是
      /kurisu/full/idle.hi.webp（2083KB）—— 以前 setPhone() 一上来就 new Image 把它拉下来，
      整页白下 2MB、一个像素都没画。现在：**面板没有布局尺寸就不建 Image、不缓存、不发请求**；
@@ -767,6 +796,7 @@ function makeBodyPlayer(canvas){
     return cache[src];
   }
   function set(clip){
+    if(spriteOff()) return;   /* E-mote 已接管：绝不再往同一张 canvas 画 Sprite */
     if(cur === clip.src) return;
     cur = clip.src; frames = clip.frames; iv = clip.interval; fi = 0;
     const im = img(cur);
@@ -774,19 +804,41 @@ function makeBodyPlayer(canvas){
     (im.complete && im.naturalWidth) ? ready() : (im.onload = ready);
   }
   function draw(i){
+    if(spriteOff()) return;
     const im = img(cur);
     if(!im.complete || !im.naturalWidth) return;
-    ctx.clearRect(0, 0, CW, CH);
-    ctx.drawImage(im, (i % COLS) * CW, Math.floor(i / COLS) * CH, CW, CH, 0, 0, CW, CH);
+    const rows = Math.max(1, Math.round(im.naturalHeight / CH));
+    const n = rows * COLS, idx = ((i % n) + n) % n;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(im, (idx % COLS) * CW, Math.floor(idx / COLS) * CH, CW, CH, 0, 0, CW, CH);
+    /* ★2026-11-08：Sprite 的兜底立绘一旦真的画上屏，就撤掉 .phone-scr 的静态 poster 垫底 ——
+       否则「Sprite 人物 + 底部 poster」又叠成两张（站主截图里的下半截就是它）。 */
+    if(!window.__xkPhoneSpriteDrawn){
+      window.__xkPhoneSpriteDrawn = true;
+      document.documentElement.classList.add('xk-phone-sprite-drawn');
+    }
   }
   function tick(t){
-    if(cur && frames > 1 && !RM && window.__xkPhoneAnim !== false && t - last > iv){ fi = (fi + 1) % frames; draw(fi); last = t; }
-    requestAnimationFrame(tick);
+    if(stopped) return;
+    if(!spriteOff() && cur && frames > 1 && !RM && window.__xkPhoneAnim !== false && t - last > iv){ fi = (fi + 1) % frames; draw(fi); last = t; }
+    raf = requestAnimationFrame(tick);
   }
-  requestAnimationFrame(tick);
-  return { set };
+  /* E-mote ready ⇒ stop()：rAF 停、draw/set 闸门同时关；E-mote 失败/off ⇒ play()：恢复兜底 */
+  function stop(){ stopped = true; if(raf){ cancelAnimationFrame(raf); raf = 0; } }
+  function play(){
+    if(!stopped) return;
+    stopped = false;
+    canvas.width = CW; canvas.height = CH;   /* E-mote 接管时改过 backing store，恢复成图集坐标 */
+    draw(fi);
+    last = 0;
+    raf = requestAnimationFrame(tick);
+  }
+  window.__xkPhoneLayer = 'sprite';
+  raf = requestAnimationFrame(tick);
+  return { set, stop, play };
 }
 const phoneBody = makeBodyPlayer(document.getElementById('phoneCanvas'));
+window.__xkPhoneBody = phoneBody;
 const phoneAv  = null; // 手机用全身播放器，见 phoneBody
 const phoneEl  = document.getElementById('phone');
 const phoneLineEl = document.getElementById('phoneLine');
@@ -861,6 +913,8 @@ window.__xkSetEmo = function(n){
 };
 function setPhone(){
   if(__xkPhoneDefer){ phoneStateEl.textContent = '连接中'; return; }
+  /* ★2026-11-08：E-mote 已接管这张 canvas 时，任何 render()/mood/speak/degrade 都不许再画 Sprite */
+  if(window.__xkPhoneSpriteOff) return;
   /* ★P0-①：按 XK_TIER 当前的档取图（手机上 = boot 中档；降档后 = 静态 poster） */
   var _xkRole = (mode === 'speaking' ? 'speaking' : (emo === 'sided_thinking' ? 'thinking' : 'idle'));
   XK_TIER.bodyOf(_xkRole);

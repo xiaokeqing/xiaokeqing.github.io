@@ -700,6 +700,10 @@ html.xk-phone-emote #phoneCanvas{left:0;top:0;bottom:auto;transform:none;width:1
 /* E-mote 接管后必须撤掉静态立绘垫底，否则会和 E-mote 人物叠成两个（线上实际出现过：上 E-mote、下 poster）；
    但**只在 ready 之后**撤：加载期还靠这张垫底撑画面，否则手机是空屏 */
 html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}
+/* ★2026-11-08：Sprite 兜底一旦画上屏（xk-shell.js 的 draw()），同样撤掉 poster 垫底 ——
+   否则「Sprite 人物 + 底部 poster」上下叠成两张（站主截图的下半截）。窄屏 chip 不画 Sprite，
+   这个 class 不会加，poster 仍作为竖直立绘条保留。 */
+@media (min-width:981px){ html.xk-phone-sprite-drawn .phone-scr{background-image:none} }
 /* 灵动岛 / 状态栏 / 斜向反光 / Home 条 */
 .phone-island{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:88px;height:24px;border-radius:14px;background:#000;z-index:5}
 .phone-bar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;
