@@ -31,8 +31,12 @@ if(slow){document.documentElement.classList.add("xk-slow");}}catch(e){}})();</sc
      原因：demo.xiaokeqing.cn 那条 CF 隧道对大响应吞吐掉到 ~600 B/s（home.js 36KB 60s 只收到 3KB），
      数据页因此长时间转圈。快照由 scripts/snapshot-api.ps1 定期从 srv1/srv2 侧抓下来，落在 static/api/public/ 下，
      与线上端点同路径 ⇒ 页面把 wb-api 清空即改读同源静态 JSON（秒开）。
-     想临时用实时接口：URL 加 ?live=1。 */}}
+     想临时用实时接口：URL 加 ?live=1。
+     ★2026-11-08：清空前把原值抄一份到 <html data-wb-api>。问答（/ai/）和 SSE（/alerts/）没有静态快照可用，
+     只能打后端，所以它们回退到这份原值；其余只读数据页仍读同源快照。 */}}
 <script>(function(){try{var m=document.querySelector('meta[name="wb-api"]');if(!m)return;
+var v=m.getAttribute('content')||'';
+if(v)document.documentElement.setAttribute('data-wb-api',v);
 if(location.search.indexOf('live=1')>=0)return;m.setAttribute('content','');}catch(e){}})();</script>
 {{- /* ★P（2026-10-18）：只给"真的会打 demo API"的页面做 preconnect —— 首页/监测中心/状态页/接口页。
        其余页面（文章、靶场、介绍）一次都不会连 demo.xiaokeqing.cn，给它们 preconnect 只是白付一次 TLS 握手。

@@ -222,6 +222,38 @@
   .chat-ft button{background:var(--acc);border:0;color:#04282b;font-weight:600;padding:0 20px;border-radius:99px;cursor:pointer}
   .chat-note{text-align:center;font:13px/1.6 var(--mono);color:var(--mut);padding:6px 0 0}
 
+  /* ★2026-11-08 跨境慢链路降级（/ai/ 提问在 5s / 25s 两个时间点）：
+     .xk-ai-slow = "还在取 / 这次没取到"的文案（黄，不抢答案的视觉位）；
+     .xk-ai-cache = 本地缓存的相关条目块（5s 出现、成功后折叠成"（另见缓存条目）"）。
+     宽度上限 720：min(100%,720px) + 列表项 min-width:0 + overflow-wrap:anywhere，
+     保证 390 档长标题/长链接只换行、不撑出横向滚动。 */
+  .xk-ai-slow{color:var(--warn);font-size:13px;line-height:1.65;overflow-wrap:anywhere}
+  .xk-ai-cache{align-self:stretch;max-width:min(100%,720px);min-width:0;
+    background:rgba(57,208,216,.06);border:1px solid var(--line2);border-left:3px solid var(--acc);
+    border-radius:12px;padding:10px 13px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+  body[data-skin="light"] .xk-ai-cache{background:rgba(109,91,208,.05)}
+  .xk-ai-cache-hd{font:11.5px var(--mono);color:var(--acc);letter-spacing:.04em;margin-bottom:6px}
+  .xk-ai-cache-hd .src{color:var(--mut);margin-left:6px;letter-spacing:0}
+  .xk-ai-cache ul{list-style:none;margin:0;padding:0;min-width:0}
+  .xk-ai-cache li{padding:7px 0;border-top:1px dashed var(--line);min-width:0}
+  .xk-ai-cache li:first-child{border-top:0;padding-top:0}
+  .xk-ai-cache li a{color:var(--txt);font-weight:600;text-decoration:none;
+    border-bottom:1px solid rgba(57,208,216,.45);word-break:break-word}
+  .xk-ai-cache li a:hover{color:var(--acc)}
+  .xk-ai-cache li p{margin:3px 0 0;color:var(--mut);font-size:12.5px;word-break:break-word}
+  .xk-ai-cache-note{margin-top:8px;color:var(--mut);font-size:11.5px;opacity:.85}
+  .xk-ai-cache-empty{color:var(--mut);font-size:12.5px}
+  .xk-ai-cache.is-collapsed{background:transparent;border-left-color:var(--line2);padding:5px 10px;font-size:12px}
+  .xk-ai-cache-fold summary{cursor:pointer;color:var(--mut);font:12px var(--mono)}
+  .xk-ai-cache-fold summary:hover{color:var(--acc)}
+  .xk-ai-cache-fold .xk-ai-cache-hd{margin-top:8px}
+  .chat-ft button:disabled{opacity:.55;cursor:progress}
+  @media (max-width:720px){
+    .xk-ai-cache{padding:9px 11px;border-radius:10px;font-size:12.5px}
+    .xk-ai-cache li p{font-size:12px}
+    .xk-ai-slow{font-size:12.5px}
+  }
+
   /* AI 页手机：她活在手机里 */
   .ai-grid{display:grid;grid-template-columns:1fr 292px;gap:20px;max-width:1180px;margin:0 auto;align-items:start}
   .phone{width:292px;background:#0A0C0F;border:1px solid var(--line2);border-radius:38px;padding:12px;

@@ -17,7 +17,10 @@
   if (location.search.indexOf('xk-sse=0') >= 0) { return; }
 
   var meta = document.querySelector('meta[name="wb-api"]');
-  var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+  /* 同源快照模式会清空 meta 的 content（只读数据页改读同源快照），但 SSE 没有快照可读，
+     清空前原值抄在 <html data-wb-api>（见 layouts/partials/xk-demo/head-meta.html），这里回退到它。 */
+  var API = ((meta && meta.getAttribute('content'))
+    || document.documentElement.getAttribute('data-wb-api') || '').replace(/\/+$/, '');
   if (!API) { return; }
 
   var badge = document.createElement('span');
@@ -35,6 +38,21 @@
   }
 
   var es = null, ok = false, seen = {};
+  /* ★2026-11-08 跨境慢链路降级：
+     - HELLO_MS：EventSource 的 open 事件不代表后端真的推了帧（跨境链路上 TCP 能连上、SSE 帧却
+       迟迟不过河，页面就挂着一个"假活"的长连接）。3s 内没收到 hello 帧 ⇒ 判定这条连接没有价值，
+       角标写"SSE 连接慢 · 已切轮询"并**主动 close()**，把连接还给轮询；
+     - RETRY_COOLDOWN：关掉之后 30s 内不再重连（原逻辑只在 visibilitychange 里重开，但每次回到前台
+       都重开一次、每次还得再等 3s，慢链路上等于反复拖页面）。 */
+  var HELLO_MS = 3000, RETRY_COOLDOWN = 30000;
+  var helloTimer = null, retryAt = 0;
+
+  function stopEs() {
+    if (helloTimer) { clearTimeout(helloTimer); helloTimer = null; }
+    if (!es) { return; }
+    try { es.close(); } catch (err) {}
+    es = null;
+  }
 
   /* 级别 → 既有行样式（lv-* 前缀的类在 xk.css 里已有；不认识的落 dns） */
   var CLS = { ssh: 'ssh', http: 'http', dns: 'dns', tls: 'tls', flow: 'dns', scan: 'scan', alert: 'scan' };
@@ -53,8 +71,20 @@
   function open() {
     try { es = new EventSource(API + '/api/public/stream'); } catch (e) { setBadge('SSE 不可用 · 走轮询', true); return; }
 
+    /* 3s 内必须见到 hello 帧；见不到就主动断开，不做"假活"的长连接 */
+    if (helloTimer) { clearTimeout(helloTimer); }
+    helloTimer = setTimeout(function () {
+      helloTimer = null;
+      if (ok || !es) { return; }
+      setBadge('SSE 连接慢 · 已切轮询', true);
+      retryAt = Date.now() + RETRY_COOLDOWN;
+      stopEs();
+    }, HELLO_MS);
+
     es.addEventListener('hello', function (e) {
       ok = true;
+      retryAt = 0;
+      if (helloTimer) { clearTimeout(helloTimer); helloTimer = null; }
       var d = {};
       try { d = JSON.parse(e.data); } catch (err) {}
       var m = d.mode || '?';
@@ -68,19 +98,20 @@
     });
 
     /* 后端满员是 503，EventSource 会按 Retry-After 反复重连 —— 这里只让浏览器自己重试一次节奏，
-       连续失败就把角标改成"走轮询"，不打扰页面（轮询本来就在跑）。 */
+       连续失败就把角标改成"走轮询"，不打扰页面（轮询本来就在跑）。
+       关闭后 30s 内不再重试：慢链路上反复重连只会把页面拖慢，轮询已经能兜住。 */
     es.onerror = function () {
       if (!ok) { setBadge('SSE 未连上 · 走轮询', true); }
       else { setBadge('SSE 断开 · 走轮询', true); }
-      try { es.close(); } catch (err) {}
-      es = null;
+      retryAt = Date.now() + RETRY_COOLDOWN;
+      stopEs();
       ok = false;
     };
   }
 
-  /* 页面隐藏时不断连（轮询也在跑），但避免后台标签页里反复重连：只在前台重开 */
+  /* 页面隐藏时不断连（轮询也在跑），但避免后台标签页里反复重连：只在前台且过了冷却期才重开 */
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && !es) { open(); }
+    if (!document.hidden && !es && Date.now() >= retryAt) { open(); }
   });
 
   open();

@@ -928,9 +928,12 @@ document.querySelectorAll('#dock button').forEach(b=>b.onclick = ()=>switchView(
 /* ★2026-10-15 接手批：原 demo 这里等 900ms 插一段写死的回答（0 网络请求）—— 改成真实调用。
    纪律：state / stateLabel / citations / failureReason / quota 全部按后端返回值如实展示；
         generated=false 就写服务端给的原因，绝不补"像答案"的文字；失败/超时/限流如实写，不给替代答案。
-        不做 SSE/WebSocket（公开面只有一次性 POST），最多等 20 秒，429 按 Retry-After 倒计时。 */
-const XK_ASK_API = ((document.querySelector('meta[name="wb-api"]')||{}).content||'').replace(/\/+$/,'');
-const XK_ASK_TIMEOUT = 20000, XK_ASK_MAX = 600;
+        不做 SSE/WebSocket（公开面只有一次性 POST），最多等 25 秒，429 按 Retry-After 倒计时。 */
+/* ★2026-11-08：问答没有静态快照可用，必须打后端。同源快照模式会把 meta 的 content 清空，
+   但清空前把原值抄到 <html data-wb-api>（见 layouts/partials/xk-demo/head-meta.html），这里回退到它。 */
+const XK_ASK_API = (((document.querySelector('meta[name="wb-api"]')||{}).content)
+  || (document.documentElement.getAttribute('data-wb-api')||'')).replace(/\/+$/,'');
+const XK_ASK_TIMEOUT = 25000, XK_ASK_MAX = 600;
 const XK_STATE_LABEL = {
   'model':['模型研判'], 'rule-based':['规则解析（拒答）'],
   'input-insufficient':['依据不足，不做定性'], 'no-retrieval':['未检索到依据，不给结论'],
@@ -1107,16 +1110,207 @@ function xkCountdown(el, msg, secs){
   }
   paint(); el.__cd = setInterval(paint, 1000);
 }
+/* ★2026-11-08 跨境慢链路降级（站主口径：CF 侧不再改，前端自己平滑降级）
+   为什么要有这一层：接口域走 Cloudflare 隧道，跨境丢包 ~70%、大响应吞吐 ~600 B/s，
+   /api/public/ask 经常十几秒不回。以前只有一个 20s 一刀切超时 —— 用户对着"生成中…"干等，
+   页面上没有任何可点开的东西。现在把等待拆成三段：
+     0s   立刻写"正在检索…（跨境链路慢时最多等 25 秒）"（有上界，不是无底洞转圈）
+     5s   文案改成"还在取…先看缓存的相关条目"，并在回答区下方渲染同源快照里对得上的条目（最多 5 条）
+     25s  明确失败态 + 把发送按钮恢复可点（绝不永久 loading）
+   成功返回后，之前那列缓存折叠成一句"（另见缓存条目）"，可点开 —— 不删掉用户已经看到的东西。
+
+   ⚠️ 数据源偏差（如实写在这里，交付报告里也写明）：
+   题目写的数据源是同源快照 /api/public/kb.js。实测该快照是"不带 q"的那一份（快照 workflow
+   每 10 分钟只取 /api/public/kb.js，静态文件也不认 ?q），results 恒为空数组，拿它按关键词
+   匹配永远是 0 条。所以这里两级：
+     ① 先按题面请求 kb.js?q=<关键词>，有命中就用它的 title/snippet（链接落到本页"知识库"分区）；
+     ② kb 快照没有命中 → 退回同源 /index-lite.json（本站文章轻量索引，条目自带真实 url），
+        块标题里如实标"来自本站文章快照"。宁可用真能点开的缓存，也不摆一个空列表。 */
+const XK_CACHE_MAX = 5, XK_CACHE_SNIP = 40;
+const XK_CACHE_STOP = ['什么','怎么','如何','为什','怎样','哪些','哪个','可以','一下','这个','那个',
+  '请问','告诉','解释','介绍','说说','是什','么是','么样','是否','为什么','多少','以及','我们','你们',
+  '他们','需要','应该','有没有','一个','这些','那些','就是','还是','或者','如果','因为','所以','然后',
+  '现在','问题','能否'];
+/* 简单包含匹配用的关键词：英文/数字按空格切；中文按 2-gram（"蜜罐怎么检测" → 蜜罐/罐怎/怎么/么检/检测），
+   再去掉疑问/虚词 2-gram。够粗，但比"整句 indexOf"命中率高得多，且零依赖。 */
+function xkCacheKw(q){
+  const s = String(q||'').toLowerCase().replace(/[^0-9a-z\u4e00-\u9fa5]+/g,' ').trim();
+  if(!s) return [];
+  const out = [];
+  s.split(/\s+/).forEach(function(tok){
+    if(/^[0-9a-z]+$/.test(tok)){ if(tok.length >= 2) out.push(tok); return; }
+    (tok.match(/[\u4e00-\u9fa5]+/g) || []).forEach(function(r){
+      if(r.length <= 4) out.push(r);
+      for(let i = 0; i + 1 < r.length; i++) out.push(r.substr(i, 2));
+    });
+  });
+  return out.filter(function(k, i, a){
+    return k.length >= 2 && XK_CACHE_STOP.indexOf(k) < 0 && a.indexOf(k) === i;
+  }).slice(0, 12);
+}
+function xkCacheClip(s, n){
+  let t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  if(t.length > n) t = t.slice(0, n) + '…';
+  return t;
+}
+/* 标题命中记 3、正文/摘要命中记 1；一条都没命中就不算候选（宁缺毋滥） */
+function xkCacheScore(it, kws){
+  const t = String(it.title || '').toLowerCase();
+  const s = String(it.text || '').toLowerCase();
+  let sc = 0, hit = 0;
+  for(let i = 0; i < kws.length; i++){
+    const k = kws[i];
+    const inT = t.indexOf(k) >= 0, inS = s.indexOf(k) >= 0;
+    if(inT) sc += 3;
+    if(inS) sc += 1;
+    if(inT || inS) hit += 1;
+  }
+  return hit ? sc : 0;
+}
+/* 同源取 JSON：3 秒硬上界 —— 缓存这一层自己也不能变成新的转圈点 */
+function xkCacheFetchJson(url){
+  const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+  const timer = setTimeout(function(){ if(ctrl) ctrl.abort(); }, 3000);
+  return fetch(url, {cache:'no-cache', credentials:'omit', signal: ctrl ? ctrl.signal : undefined})
+    .then(function(r){ clearTimeout(timer); if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .catch(function(e){ clearTimeout(timer); throw e; });
+}
+function xkCacheKbItems(q, kws){
+  return xkCacheFetchJson('/api/public/kb.js?q=' + encodeURIComponent(String(q).slice(0, 80))).then(function(d){
+    const list = (d && Array.isArray(d.results)) ? d.results : (Array.isArray(d) ? d : []);
+    return list.map(function(x){
+      const title = String(x && x.title || '');
+      return {
+        title: title,
+        snippet: String(x && (x.snippet || x.summary) || ''),
+        href: (x && x.url) || '#kb',
+        kb: !(x && x.url),
+        score: xkCacheScore({title: title, text: (x && (x.snippet || '')) || ''}, kws)
+      };
+    }).filter(function(x){ return x.title && x.score > 0; });
+  }).catch(function(){ return []; });
+}
+function xkCacheLiteItems(kws){
+  return xkCacheFetchJson('/index-lite.json').then(function(d){
+    const list = (d && Array.isArray(d.notes)) ? d.notes : (Array.isArray(d) ? d : []);
+    return list.map(function(n){
+      const title = String(n && n.title || '');
+      const text = String(n && (n.summary || '') || '') + ' ' + String(n && n.text || '');
+      return {
+        title: title,
+        snippet: String(n && (n.summary || n.text) || ''),
+        href: (n && n.url) || '/',
+        kb: false,
+        score: xkCacheScore({title: title, text: text}, kws)
+      };
+    }).filter(function(x){ return x.title && x.score > 0; });
+  }).catch(function(){ return []; });
+}
+function xkCacheHtml(items, src){
+  const head = '<div class="xk-ai-cache-hd">本地缓存的相关条目' +
+    (src === 'kb' ? '<span class="src">· 来自知识库快照</span>'
+                  : src === 'lite' ? '<span class="src">· 来自本站文章快照</span>' : '') + '</div>';
+  if(!items.length){
+    return head + '<div class="xk-ai-cache-empty">缓存快照里没有和这个问题对得上的条目 —— 不是取不到，是快照里确实没有；' +
+      '接口回来后这里会显示正式答案。</div>';
+  }
+  const list = items.map(function(x){
+    const a = x.kb
+      ? '<a href="#kb" data-kb-open="' + xkAskEsc(x.title) + '">'
+      : '<a href="' + xkAskEsc(x.href) + '">';
+    return '<li>' + a + xkAskEsc(x.title) + '</a><p>' + xkAskEsc(xkCacheClip(x.snippet, XK_CACHE_SNIP)) + '</p></li>';
+  }).join('');
+  return head + '<ul>' + list + '</ul>' +
+    '<div class="xk-ai-cache-note">缓存是同源快照，可能比接口旧；点了就能看，不必等这条请求。</div>';
+}
+/* kb 快照条目没有 url（后端只出海 title/snippet/来源类型 —— 内部路径一律不出），
+   所以那条链接落到本页"知识库"分区，并把标题填进输入框（只填不发，避免多打一次 /kb 额度）。 */
+document.addEventListener('click', function(ev){
+  const a = (ev.target && ev.target.closest) ? ev.target.closest('[data-kb-open]') : null;
+  if(!a) return;
+  ev.preventDefault();
+  const tab = document.querySelector('[data-aitab="kb"]');
+  if(tab) tab.click();
+  const kbIn = document.getElementById('kbInput');
+  if(kbIn){ kbIn.value = a.getAttribute('data-kb-open') || ''; try{ kbIn.focus(); }catch(e){} }
+});
+/* 渲染"本地缓存的相关条目"块：作为 pending 回答后面的独立消息，失败时可整体提到失败文案上方 */
+function xkAiCacheRender(pending, q){
+  if(!pending || !pending.parentNode) return null;
+  let box = document.getElementById('xkAiCache');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'xkAiCache';
+    box.className = 'msg ai xk-ai-cache';
+    box.innerHTML = '<div class="xk-ai-cache-hd">本地缓存的相关条目</div>' +
+      '<div class="xk-ai-cache-empty">正在翻本地缓存快照…</div>';
+    pending.parentNode.insertBefore(box, pending.nextSibling);
+  }
+  box.__q = q;
+  xkCacheAllCached(q).then(function(r){
+    if(!box || !document.body.contains(box)) return;
+    /* 相关度排序（标题命中 3 / 正文命中 1），最多 5 条 —— 让最像的那条排第一 */
+    const items = r.items.slice().sort(function(a, b){ return (b.score || 0) - (a.score || 0); })
+      .slice(0, XK_CACHE_MAX);
+    box.__items = xkCacheHtml(items, r.src);
+    box.__src = r.src;
+    if(box.__collapsed){ xkAiCacheCollapse(box); return; }
+    box.innerHTML = box.__items;
+  });
+  return box;
+}
+/* 先按题面查 kb 快照；kb 没有命中再退回本站文章快照（顺序写死，避免两路并发抢结果） */
+function xkCacheAllCached(q){
+  const kws = xkCacheKw(q);
+  if(!kws.length) return Promise.resolve({src:'', items:[]});
+  return xkCacheKbItems(q, kws).then(function(kb){
+    if(kb.length) return {src:'kb', items:kb};
+    return xkCacheLiteItems(kws).then(function(lite){
+      return {src: lite.length ? 'lite' : '', items: lite};
+    });
+  });
+}
+function xkAiCacheCollapse(box){
+  if(!box) return;
+  box.__collapsed = true;
+  box.classList.add('is-collapsed');
+  if(!box.__items) return;       /* 快照还在路上：等它的 then 里按 __collapsed 补渲染 */
+  box.innerHTML = '<details class="xk-ai-cache-fold"><summary>（另见缓存条目）</summary>' +
+    box.__items + '</details>';
+}
+/* 25s 明确失败：和 xkAskApi 的 25s Abort 同一个时间点 —— 谁先到都只走这一段，幂等 */
+function xkAskSlowFail(pending){
+  if(!pending || pending.__failed) return;
+  pending.__failed = true;
+  pending.__done = true;
+  clearTimeout(pending.__t5);
+  clearTimeout(pending.__t25);
+  const box = document.getElementById('xkAiCache');
+  if(!box) xkAiCacheRender(pending, pending.__q);          /* 万一 5s 那次的快照还没落，补一次 */
+  pending.innerHTML = '<div class="who">AI 安全 · <span class="st st-bad">超时</span></div>' +
+    '<p class="xk-ai-slow">这次没取到（超时 25s）。缓存条目在上方，可直接点开。</p>';
+  if(box && box.parentNode){                               /* 把缓存列提到失败文案上方，文案才不含糊 */
+    try { box.parentNode.insertBefore(box, pending); } catch(e){}
+  }
+  xkBadge('AI 安全 · 超时');
+  stateEl.textContent = 'TIMEOUT';
+  xkAsking = false;
+  if(askBtnEl) askBtnEl.disabled = false;
+  emo = 'normal'; render();
+}
 function askDemo(){
   const inp = document.getElementById('askInput');
   const q = inp.value.trim(); if(!q) return;
   if(xkAsking) return;                 /* 同一来源只允许 1 个在飞：前端也不重复发 */
   xkAsking = true;
   inp.value = '';
+  /* 上一轮留下的缓存块先清掉，别把上一个问题的条目挂在这次提问下面 */
+  const staleCache = document.getElementById('xkAiCache');
+  if(staleCache && staleCache.parentNode) staleCache.parentNode.removeChild(staleCache);
   xkPush('me', '').textContent = q;
   emo = 'sided_thinking'; mode = 'idle'; render();
   stateEl.textContent = 'THINKING';
-  /* ★E2 思考垫音：开声时先放一句短垫音，填住「等 3–20 秒」的空档；不改字幕 */
+  /* ★E2 思考垫音：开声时先放一句短垫音，填住「等 3–25 秒」的空档；不改字幕 */
   try {
     /* ★2026-10-19：原来这里写的是 `D.sound`，而本文件里**从来没有 D 这个变量** —— 整句抛 ReferenceError
        被外层 try 吞掉，垫音一次都没响过（与开关无关，纯粹是死代码）。改读唯一真值源 window.__xkSound。 */
@@ -1126,9 +1320,26 @@ function askDemo(){
     }
   } catch (e) {}
   xkBadge('AI 安全 · 生成中…');
-  const pending = xkPush('ai', '<div class="who">AI 安全 · <span class="st">生成中…</span></div><p>正在走检索增强链路（最多 20 秒）…</p>');
+  /* 提交即进入"检索中"：文案自带时间上界，避免用户以为页面卡死 */
+  const pending = xkPush('ai', '<div class="who">AI 安全 · <span class="st">检索中…</span></div>' +
+    '<p class="xk-ai-slow">正在检索…（跨境链路慢时最多等 25 秒）</p>');
+  pending.__q = q;
+  if(askBtnEl) askBtnEl.disabled = true;   /* 在飞时禁点，防重复；5s/25s/任何返回都恢复，绝不永久禁用 */
   const t0 = Date.now();
+  /* ① 5s：先给能点开的东西，不让用户对着转圈等接口 */
+  pending.__t5 = setTimeout(function(){
+    if(pending.__done) return;
+    const p = pending.querySelector('p.xk-ai-slow');
+    if(p) p.textContent = '还在取，网络到接口不稳定；先看缓存的相关条目 ↓';
+    xkAiCacheRender(pending, q);
+  }, 5000);
+  /* ② 25s：明确失败（与 xkAskApi 的 25s Abort 同一时间点，谁先到都收敛到同一段） */
+  pending.__t25 = setTimeout(function(){ xkAskSlowFail(pending); }, XK_ASK_TIMEOUT);
   xkAskApi(q).then(r=>{
+    pending.__done = true;
+    clearTimeout(pending.__t5); clearTimeout(pending.__t25);
+    /* 之前渲染过缓存条目：保留内容、折叠成一句可点开的"（另见缓存条目）" */
+    xkAiCacheCollapse(document.getElementById('xkAiCache'));
     const body = r.body;
     if(r.status === 429){
       const wait = parseInt(r.retryAfter || (body&&body.retryAfter) || 0, 10) || 60;
@@ -1152,15 +1363,17 @@ function askDemo(){
                               : '这次没有生成结论，原因如实写在消息里 —— 我不编答案。');
     window.__xkAskLast = { status:r.status, state:d.state, ms:Date.now()-t0, cites:(d.citations||[]).length };
   }).catch(err=>{
+    if(pending.__failed) return;         /* 25s 的明确失败已经写过了，不再覆盖 */
+    pending.__done = true;
+    clearTimeout(pending.__t5); clearTimeout(pending.__t25);
     if(err && err.timeout){
-      pending.innerHTML = '<div class="who">AI 安全 · <span class="st">超时</span></div><p>等了 20 秒还没返回，这次请求已放弃。后端可能正在排队、或模型这一轮很慢 —— 这里不显示任何推测的答案，过一会儿可以重试。</p>';
-      stateEl.textContent = 'TIMEOUT'; xkBadge('AI 安全 · 超时');
+      xkAskSlowFail(pending);            /* 同一段收尾：25s 文案 + 缓存列提到上方 + 按钮恢复 */
     }else{
       pending.innerHTML = '<div class="who">AI 安全 · <span class="st">请求失败</span></div><p>提问失败（网络不可达或跨域被拒）。没有拿到答案，也没有替代结论。</p>';
       stateEl.textContent = 'FAILED'; xkBadge('AI 安全 · 请求失败');
+      emo = 'normal'; render();
     }
-    emo = 'normal'; render();
-  }).then(()=>{ xkAsking = false; });
+  }).then(()=>{ xkAsking = false; if(askBtnEl) askBtnEl.disabled = false; });
 }
 /* ★2026-10-22：askBtn/askInput 只在 /ai/ 有；内容页原来在这里直接取 onclick 抛
    "Cannot set properties of null (setting 'onclick')"（旧版被更早的一处异常挡住，没暴露）。
