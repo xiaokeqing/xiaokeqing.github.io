@@ -13,6 +13,12 @@
 
 用法：python _dev/gen-demo-pages.py
 """
+# ⚠️ 已废弃（2026-11-08）：本文件里的 HEAD_META / IDCARD_PARTIAL 已落后于 layouts 现值
+#    （缺 xk-slow 慢网判定、PWA manifest、robots、wb-api 抄写、xk-ux/xk-geo 合并等），
+#    再跑一次会把现有 partial 整块覆盖回去。保留只为考古；要改先改 layouts 下的 partial。
+#    下面这行在任何写盘前退出，防止误跑。
+import sys as _sys
+_sys.exit("已废弃：模板落后，会覆盖现有改动，勿运行")
 import io
 import os
 import re
