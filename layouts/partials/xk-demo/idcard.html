@@ -61,8 +61,6 @@
   </span>
 </aside>
 
-<script src="{{ (resources.Get "js/xk-idcard-toggle.js" | minify | fingerprint).RelPermalink }}"></script>
-
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
 <div class="xk-idpanel" id="xkIdPanel" role="dialog" aria-label="桐莉栖 · 情绪与动作面板"></div>
 <div class="xk-login" id="xkLogin" role="dialog" aria-modal="true" aria-label="站主登录"></div>
@@ -77,4 +75,8 @@
   <span class="xk-askbar-count" id="xkAskCount" aria-hidden="true">0/600</span>
   <button type="button" id="xkAskSend">提问</button>
 </div>
-<script src="{{ (resources.Get "js/xk-idcard.js" | minify | fingerprint).RelPermalink }}"></script>
+{{- /* ★2026-11-08 首屏脚本收口（12 → 8）：toggle（折叠 / 长按）与 idcard（头像帧 / 面板 / 登录 / 声音）
+     合成一个指纹文件。两个 IIFE 都放在这里、DOM 之后同步执行：idcard.js 硬判的
+     #xkIdAv / #xkIdCap / #xkIdPanel / #xkSndBtn / #xkLoginBtn 此时都已存在（原先 toggle 在 cap 之前）。 */ -}}
+{{- $idcard := slice (resources.Get "js/xk-idcard-toggle.js") (resources.Get "js/xk-idcard.js") | resources.Concat "js/xk-idcard-bundle.js" | minify | fingerprint -}}
+<script src="{{ $idcard.RelPermalink }}"></script>

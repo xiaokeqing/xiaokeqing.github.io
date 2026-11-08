@@ -28,13 +28,13 @@
 .api-openapi a{color:#bfe3d0;text-decoration:none;border-bottom:1px dotted rgba(191,227,208,.5)}
 .api-openapi a:hover{border-bottom-color:#bfe3d0}
 .api-bd{display:flex;flex-direction:column;gap:14px}
-.api-lead{margin:0;font-size:14px;line-height:1.95;color:rgba(255,255,255,.86)}
+.api-lead{margin:0;font-size:15px;line-height:1.75;color:rgba(255,255,255,.86)}
 .api-lead b{color:#cfe9f5;font-weight:600}
 .api-lead code,.api-p code,.api-kv code,.api-foot code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
 .api-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .api-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:960px}
 .api-tbl th,.api-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
-.api-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:13px;letter-spacing:.06em;white-space:nowrap}
+.api-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:13px;white-space:nowrap}
 .api-tbl code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
 .api-ep{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#d7e7ef;white-space:nowrap}
 .api-m{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:rgba(255,255,255,.62);white-space:nowrap}
@@ -44,10 +44,10 @@
 .api-pit{color:rgba(232,180,90,.92)}
 .api-pit b{color:#f2cc8c;font-weight:600}
 .api-pit i{font-style:normal;color:rgba(255,255,255,.6)}
-.api-p{margin:0 0 10px;font-size:13px;line-height:1.95;color:rgba(255,255,255,.74)}
+.api-p{margin:0 0 1em;font-size:15px;line-height:1.75;color:rgba(255,255,255,.74)}
 .api-p:last-child{margin-bottom:0}
 .api-p b{color:#eaf6ff;font-weight:600}
-.api-kv{margin:0;font-size:13px;line-height:1.95;color:rgba(255,255,255,.8)}
+.api-kv{margin:0;font-size:14px;line-height:1.8;color:rgba(255,255,255,.8)}
 .api-kv b{color:#e8f3f8}
 .api-pre{margin:0 0 10px;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
 .api-pre .c{color:rgba(255,255,255,.45)}
@@ -276,7 +276,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/honeypot.js | head -c 400
 <span class="c"># ③ 限流长什么样：连打 3 次 kb（20 次/分钟按 IP 算，打满后就是 429）</span>
 for i in 1 2 3; do curl -s -o /dev/null -w '%{http_code} ' "https://demo.xiaokeqing.cn/api/public/kb?q=rate-limit"; done; echo
 
-<span class="c"># Windows PowerShell 等价写法（本页就是在这台机器上写的）：</span>
+<span class="c"># Windows PowerShell 等价写法：</span>
 <span class="c">#  Invoke-WebRequest -UseBasicParsing https://demo.xiaokeqing.cn/api/health | % Content</span>
 <span class="c">#  curl.exe -s -o NUL -w "%{http_code} " "https://demo.xiaokeqing.cn/api/public/kb?q=probe"</span></pre>
           <p class="api-foot">三条都只读，不写库、不改状态、不触发任何处置动作。取不到的时候（断网、429、源站挂了）就是取不到 ——
@@ -296,7 +296,7 @@ for i in 1 2 3; do curl -s -o /dev/null -w '%{http_code} ' "https://demo.xiaokeq
             <b>③ 失败说失败。</b>取不到就写「未取到 / 读不到」并带原因（<code>available:false</code> + <code>reason</code>），不补 0、不补样例值。<br>
             <b>④ 不常驻。</b>没有 SSE / WebSocket，一次性返回；要新数据就再敲一次。
           </p>
-          <p class="api-foot">要复现「现在通不通」的逐端点体检看 <a href="/status/">状态页 /status/</a>；要复现这个站是干什么的看
+          <p class="api-foot">要复现「现在通不通」的逐端点体检看 <a href="/status/">状态页 /status/</a>；站点范围与数据口径见
             <a href="/what/">介绍页 /what/</a>。口径细节写在笔记里：
             <a href="/posts/public-api-rate-limit-owner-token/">公开接口防刷</a> ·
             <a href="/posts/verifiable-deploy-chain/">可验证的发布链</a></p>

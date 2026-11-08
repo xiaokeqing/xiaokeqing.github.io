@@ -14,8 +14,11 @@
     if (document.documentElement.classList.contains('xk-slow')) { return; }
   } catch (e) { }
 
+  // 2026-11-08：head 的内联脚本会把接口原值抄到 <html data-wb-api> 后清空 meta（防爬），
+  // 所以先读 data-wb-api，meta 只作为 JS 未执行时的兜底。
   var meta = document.querySelector('meta[name="wb-api"]');
-  var api = (meta && meta.getAttribute('content')) || '';
+  var api = document.documentElement.getAttribute('data-wb-api')
+    || (meta && meta.getAttribute('content')) || '';
   if (!api) { return; }
   var items = [], idx = 0, timer = 0;
 

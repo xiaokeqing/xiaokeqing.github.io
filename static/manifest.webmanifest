@@ -1,7 +1,7 @@
 {
-  "name": "XK-LAB · 一个人的公网安全观测站",
+  "name": "XK-LAB · 公网安全观测站",
   "short_name": "XK-LAB",
-  "description": "主机 / 网络 / 蜜罐三路采集的个人安全观测站：实时攻击、每日战报、笔记与靶场。",
+  "description": "主机 / 网络 / 蜜罐三路采集的公网安全观测站：实时攻击、每日战报、笔记与靶场。",
   "start_url": "/alerts/",
   "scope": "/",
   "display": "standalone",

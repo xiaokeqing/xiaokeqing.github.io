@@ -6,9 +6,10 @@
 {{- /* ★2026-11-07 站主口径：「除了登录和声音剩下的按钮全删了」——工具区只留 声音 + 登录。
       #xkSndBtn 与 #xkLoginBtn 必须保留：assets/js/xk-idcard.js 第 66 行
       if (!av || !cv || !cap || !panel || !snd || !login) { return; } 硬依赖这两个 id。*/ -}}
-{{- /* 顶栏中段：实时攻击 ticker（数据复用 /api/public/alerts，慢网不拉、失败静默隐藏） */ -}}
+{{- /* 顶栏中段：实时攻击 ticker（数据复用 /api/public/alerts，慢网不拉、失败静默隐藏）。
+      ★2026-11-08：脚本标签从这里移到 head-meta 的 ux/geo/ticker 合并包（首屏脚本 12 → 8），
+      这里只留容器；ticker 脚本自己会判 #dockTicker 是否存在。 */ -}}
 <div class="dock-ticker" id="dockTicker" aria-live="off" hidden></div>
-<script src="{{ (resources.Get "js/xk-ticker.js" | minify | fingerprint).RelPermalink }}" defer></script>
 
 <div class="dock-tools" id="dockTools" role="group" aria-label="站点工具">
   <button class="xk-idcard-btn dt" id="xkSndBtn" type="button" aria-pressed="false" title="声音：默认关闭（点一下打开）">声音 关</button>

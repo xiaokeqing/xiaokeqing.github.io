@@ -2,7 +2,7 @@
 
 ## 1. 一句话定位
 
-> 把真实公网攻击数据做成面试官 30 秒内能自己验证的第一入口。
+> 把公网攻击数据做成能逐条回到原始告警的只读观测站。
 
 本仓库只负责**站点这一侧**：Hugo 静态页 + 自研页面生成器 + 前端取数逻辑。数据全部来自后端只读接口 `/api/public/*`；后端与部署脚本在 [SecAgent](https://github.com/xiaokeqing/SecAgent)。
 
@@ -60,11 +60,15 @@ Cloudflare Tunnel / CDN
 
 | 入口 | 地址 | 说明 |
 |---|---|---|
-| 主页 | <https://xiaokeqing.cn/> | Canvas CRT + 竖排导航 + 开屏语音 |
+| 主页 | <https://xiaokeqing.cn/> | Canvas CRT + 顶栏 7 项 + 开屏语音 |
 | 监测中心 | <https://xiaokeqing.cn/alerts/> | 英雄数字、实时攻击流、威胁矩阵、TOP 来源、单源时间线 |
 | 公开端点清单 | <https://xiaokeqing.cn/api/> | 人读的端点表 + 三条 curl（不是 JSON） |
 | 状态页 | <https://xiaokeqing.cn/status/> | 8 个端点逐个 PASS/FAIL、构建 SHA、耗时、一致性 CI 卡 |
 | API 基址 | <https://demo.xiaokeqing.cn> | 唯一数据出口，只读 |
+
+> 导航口径（2026-11-08）：**顶栏只有 7 项** —— 实时看板 / 安全日报 / 笔记 / 演练场 / AI 问答 / 工具台 / 运行状态；主页点左上 XK-LAB 回；
+> 其余 19 个 section 页统一收在每页页脚的「全部页面」一行（`/tools/cve/`、`/tools/password/` 从 `/tools/` 与 `/more/` 进）。
+> 不做下拉、不做二级菜单；改顶栏时同步 `_shots/check_navflat.py` 的 `EXPECTED` 数组。
 
 ```bash
 curl -s https://demo.xiaokeqing.cn/api/health | head -c 300          # 健康探针 + buildSha
@@ -85,7 +89,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://lab.xiaokeqing.cn/  # 应返回
 git clone https://github.com/xiaokeqing/xiaokeqing.github.io.git && cd xiaokeqing.github.io
 hugo version                                  # 需 extended；CI 钉 0.167.0
 
-python -X utf8 _dev/gen-demo-pages.py         # 生成 layouts/partials 与内容页（生成物源头在这里）
+python scripts/gen-og-image.py                  # 生成 OG 分享图 1200×630（_dev/gen-demo-pages.py 已停用，跑会直接退出）
 hugo --gc --minify --cleanDestinationDir
 bash scripts/assert-build.sh                  # <!--N:assert-->90<!--/N--> 项断言，全过才允许发布
 python _dev/check-ssr-contract.py public      # SSR 契约 9 页
@@ -96,7 +100,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-site-to-
 ```
 
 其它现成脚本：`scripts/consistency-check.sh`（srv2 上 15 项一致性巡检，timer 每 15 分钟）、
-`scripts/weekly-report.py`（战报 md/html + 目录页）、`scripts/note-publish.ps1`（发笔记）。
+`scripts/weekly-report.py`（战报 md/html + 目录页）、`scripts/note-publish.ps1`（发笔记）、
+`scripts/gen-og-image.py`（OG 分享图 1200×630 再生成，数字变了重跑）。
 `_dev/` 只按白名单入库（生成器 + 两道门禁 + 素材产线），截图与探针不进仓库。
 `.github/workflows/deploy.yml` 在 gh-pages 上**只发 `redirect-site/` 跳转页**，不整站镜像。
 

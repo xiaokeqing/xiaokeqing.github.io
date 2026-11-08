@@ -1,15 +1,17 @@
 {{- /* 统一页脚（2026-11-04 升级 P0）。只放可点的固定入口与一句话定位，不写任何"状态正常"这类会骗人的动态结论。
-      ★2026-11-08 站主口径：顶栏只平铺 9 项，其余页面从导航删掉 —— 页脚兜底成一行列出**所有**页面，
-      保证 /more/ 与每一个二级页仍然点得到（订阅日报单列，避免这一行出现 20 项挤成两行）。 */ -}}
+      ★2026-11-08 站主口径：顶栏只平铺 7 项（访客 30 秒内会点的），其余页面从导航删掉 ——
+      页脚兜底成一行列出**全部 section 级页面（19 项）**，保证 /more/ 与每一个二级页仍然点得到
+      （订阅日报单列，避免这一行挤成两行）。/tools/ 下的 CVE 速递、密码自查是工具台的子页，
+      在 1440 宽再加两项会把这一行挤换行，故仍从 /tools/ 卡片与 /more/ 进入。 */ -}}
 <style>
-.xk-foot{max-width:1280px;margin:34px auto 0;padding:14px 20px 26px;border-top:1px solid rgba(127,211,227,.12);font-size:12px;line-height:1.7;color:#6f828c;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
-.xk-foot b{color:#9fb0ba;font-weight:600}
-.xk-foot a{color:#9fb0ba;text-decoration:none}
-.xk-foot a:hover,.xk-foot a:focus-visible{color:#7fd3e3}
+.xk-foot{max-width:1280px;margin:34px auto 0;padding:14px 20px 26px;border-top:1px solid rgba(127,211,227,.12);font-size:var(--fs-xs);line-height:1.7;color:var(--fg-faint);display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
+.xk-foot b{color:var(--fg-dim);font-weight:600}
+.xk-foot a{color:var(--fg-dim);text-decoration:none}
+.xk-foot a:hover,.xk-foot a:focus-visible{color:var(--acc)}
 .xk-foot .xk-foot-r{margin-left:auto}
 /* ★2026-11-08：页脚一行平铺全部页面（19 项）。字号收到 11.5px 才能在 1440 宽真正排成一行；
    390 宽下允许自然换行（不设 nowrap），绝不横向溢出。 */
-.xk-foot .xk-foot-q{flex-basis:100%;margin-top:2px;color:#6f828c;font-size:11.5px;line-height:1.9}
+.xk-foot .xk-foot-q{flex-basis:100%;margin-top:2px;color:var(--fg-faint);font-size:var(--fs-xs);line-height:1.9}
 .xk-foot .xk-foot-q a{margin:0 1px}
 /* ★2026-11-07 信息架构重排：页脚最后一行在手机上会被左下角固定的「展开」按钮（.xk-rail-toggle）压住，
    底部留白按按钮高度留出来（22 → 64px），否则最后的链接行在 390 宽正好被盖掉半句。 */
@@ -17,7 +19,6 @@
 </style>
 <footer class="xk-foot">
   <b>XK-LAB</b>
-  <span>一个人搭的公网安全观测站</span>
   <a href="/subscribe/">订阅日报</a>
   <span class="xk-foot-r">© 2026 XK-LAB</span>
   <span class="xk-foot-q">全部页面：<a href="/">主页</a> · <a href="/alerts/">实时看板</a> · <a href="/daily/">安全日报</a> · <a href="/ai/">AI 问答</a> · <a href="/posts/">笔记</a> · <a href="/lab/">演练场</a> · <a href="/reports/">周报月报</a> · <a href="/api/">端点清单</a> · <a href="/status/">运行状态</a> · <a href="/noise/">噪音指数</a> · <a href="/ip/">IP 档案</a> · <a href="/passwords/">弱口令</a> · <a href="/samples/">样本分析</a> · <a href="/redteam/">红队榜</a> · <a href="/purpleteam/">紫队演练</a> · <a href="/more/">全部索引</a> · <a href="/tools/">工具台</a> · <a href="/what/">这个站在做什么</a> · <a href="/projects/">项目记录</a></span>

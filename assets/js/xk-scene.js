@@ -1604,7 +1604,7 @@ let hudShown = false;
 function showHud(){
   if(hudShown) return; hudShown = true;
   document.getElementById('crtStatus').hidden = false;
-  typeSub('这里分三块：监测中心看实时攻击，AI 问答查概念，笔记写搭建过程。都不用登录。');
+  typeSub('数字取不到就写读不到；点任意数字回到那条原始告警。');
 }
 let typeTimer = null;
 function typeSub(text){

@@ -155,10 +155,10 @@ code, kbd, pre, samp { font-family: var(--xk-mono); font-size: 12.5px; }
   z-index: 0;
   pointer-events: none;
   /* ↓ 规格 §1 指定的四个属性，逐条照写 */
-  background-image: url("/images/bg.jpg");
-  /* ★2026-10-20：同一张图的 WebP 版本（bg.jpg 一个字节没动，仍留在仓库当母版）。
-     浏览器支持 image-set 且支持 WebP 时用下面这条覆盖，659 KB → 136 KB（1x）/ 265 KB（2x）。
-     不支持时上面那条 jpg 生效，行为与今天一致。 */
+  /* ★2026-11-08：页面用图只走 WebP —— bg.jpg（3245×1440 / 674,601 B）退出首屏与 CSS 引用，
+     留在仓库当母版（断言 ⑧ 校验它的 SHA256，删了会判死）。没有 image-set 的浏览器拿 1920 那张，
+     支持的按 1x/2x 选 1920 / 3245，659 KB → 136 KB / 265 KB。 */
+  background-image: url("/images/bg-1920.webp");
   background-image: image-set(url("/images/bg-1920.webp") 1x, url("/images/bg.webp") 2x);
   background-size: cover;
   background-position: center;
@@ -1009,7 +1009,7 @@ html.xk-slow .xk-bg {
   overflow: auto;
   padding-right: 6px;
 }
-.xk-read__toc-title { font-size: 13px; font-weight: 600; letter-spacing: .1em; color: var(--xk-muted); text-transform: uppercase; margin-bottom: 8px; } /* ★T-c6：11.5px → 13px */
+.xk-read__toc-title { font-size: 13px; font-weight: 600; color: var(--xk-muted); text-transform: uppercase; margin-bottom: 8px; } /* T2：中文标题去字距 */
 .xk-toc { display: flex; flex-direction: column; gap: 2px; border-left: 1px solid var(--xk-line-2); }
 .xk-toc a {
   display: block;
@@ -1349,18 +1349,18 @@ html.xk-slow .xk-bg {
 /* ---------------------------------------------------------------------------
    15. Markdown 正文（笔记 / 关于）
    --------------------------------------------------------------------------- */
-.xk-md { font-size: 14px; line-height: 1.72; color: var(--xk-text); }
+.xk-md { font-size: 15px; line-height: 1.75; color: var(--xk-text); } /* T1：正文 15/1.75（长文阅读口径） */
 .xk-md > *:first-child { margin-top: 0; }
 .xk-md h2 { margin: 30px 0 12px; padding-bottom: 8px; font-size: 20px; border-bottom: 1px solid var(--xk-line); scroll-margin-top: 92px; }
 .xk-md h3 { margin: 24px 0 10px; font-size: 16.5px; scroll-margin-top: 92px; }
 .xk-md h4 { margin: 18px 0 8px; font-size: 14.5px; scroll-margin-top: 92px; }
-.xk-md p { margin: 12px 0; }
+.xk-md p { margin: 1em 0; }
 .xk-md a { text-decoration: underline; text-decoration-color: rgba(47, 122, 239, .35); text-underline-offset: 3px; }
 .xk-md strong { color: var(--xk-title); }
 .xk-md ul, .xk-md ol { margin: 12px 0; padding-left: 1.4em; }
 .xk-md ul { list-style: disc; }
 .xk-md ol { list-style: decimal; }
-.xk-md li { margin: 5px 0; }
+.xk-md li { margin: 6px 0; }
 .xk-md li::marker { color: rgba(47, 122, 239, .6); }
 .xk-md blockquote {
   margin: 16px 0;

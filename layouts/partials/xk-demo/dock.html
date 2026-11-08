@@ -1,22 +1,24 @@
-{{- /* 导航 dock —— 全站唯一来源（2026-11-08）。
-      以后改导航只改这一份：首页 layouts/index.html 与内容页外壳 shell-chrome.html 都引用它。
-      站主口径（2026-11-08）：「不要下拉，有用的直接平铺在顶栏，没用的全删掉」——
-      顶栏只放 9 个有用页面，不做「更多」下拉、不留 flyout 面板与 hover/Esc 脚本。
-      其余页面（噪音指数 / IP 档案 / 弱口令 / 样本分析 / 红队榜 / 紫队演练 / 全部索引 /
-      工具台 / 这个站在做什么 / 项目记录）仍可分别从 /alerts/、/lab/、/more/ 与页脚抵达。
-      参数：v = 当前页（home/monitor/daily/ai/notes/lab/reports/api/status…）
+{{- /* 导航 dock —— 全站唯一来源。
+      站主口径（2026-11-08）：不要下拉、不要二级菜单；真正需要一眼看到的直接平铺在顶栏，
+      其余收进页脚「全部页面」。
+      顶栏 7 项 = 实时看板 / 安全日报 / 笔记 / 演练场 / AI 问答 / 工具台 / 运行状态。
+        · 演练场：站上唯一"真的在打靶"的入口（七台靶机，公网入口已撤，仅站主 SSH 隧道）；
+        · 运行状态：核验"数据不是 PPT"的唯一自助入口（逐端点实测）；
+        · 工具台：CVE 速递 + 密码自查，日常最常用；IP 档案并入工具台，不单占一格。
+      主页不占顶栏：点左侧 XK-LAB 标识回首页（brand 已是 <a href="/">）。
+      降到页脚的：主页 / 周报月报 / 端点清单 / 噪音指数 / IP 档案 / 弱口令 / 样本分析 /
+      红队榜 / 紫队演练 / 全部索引 / 这个站在做什么 / 项目记录 / 订阅日报（共 19 项 section 页）。
+      参数：v = 当前页（home/monitor/daily/notes/lab/ai/tools/status…）
             wait = true 时带首页开场动画用的 .dock--wait。 */ -}}
 {{- $v := .v -}}
 <nav class="dock{{ if .wait }} dock--wait{{ end }}" id="dock" aria-label="站点导航">
-  <div class="brand">XK-LAB</div>
-  <a href="/" class="{{ if eq $v "home" }}on{{ end }}">主页</a>
+  <a class="brand" href="/" aria-label="返回首页 XK-LAB">XK-LAB</a>
   <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">实时看板</a>
   <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
-  <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
   <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
   <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">演练场</a>
-  <a href="/reports/" class="{{ if eq $v "reports" }}on{{ end }}">周报月报</a>
-  <a href="/api/" class="{{ if eq $v "api" }}on{{ end }}">端点清单</a>
+  <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
+  <a href="/tools/" class="{{ if eq $v "tools" }}on{{ end }}">工具台</a>
   <a href="/status/" class="{{ if eq $v "status" }}on{{ end }}">运行状态</a>
   {{ partial "xk-demo/dock-tools.html" . }}
 </nav>

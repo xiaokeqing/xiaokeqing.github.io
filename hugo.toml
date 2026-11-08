@@ -34,7 +34,7 @@ hasCJKLanguage = true
   #   （旧占位值 daily@xiaokeqing.cn 已删 —— 那是一个不存在的邮箱，mailto 点开会退信。）
   digestMail = ""
   author = "小刻晴"
-  description = "xiaokeqing 的个人博客 —— 个人网络安全学习实践记录，以及一个正在真实运行的安全运营工作台（告警 / 蜜罐 / 处置审计）。"
+  description = "xiaokeqing 的公网安全观测站：Wazuh / Suricata / 蜜罐三层告警的只读面板，附公开只读 API 与安全笔记。"
   keywords = ["网络安全", "AI 安全", "安全运营", "应急响应", "RAG", "多 Agent", "SOC"]
 
   # 工作台（监测中心 / 主页实时动态）取数的【公开只读】接口基址。
@@ -63,8 +63,6 @@ hasCJKLanguage = true
   # （旧值：个人网络安全的学习与实践记录 —— 同时挂着我在真实运行的安全运营工作台：主机/网络告警、蜜罐战报、带护栏与审计的处置链路。）
   # 站主 2026-10-13 第九轮：品牌名单独放大做视觉主体 → 主标题只留欢迎语，站名交给 heroBrand。
   heroBrand = "xiaokeqing"
-  heroTitle = "欢迎来到我的个人博客"
-  heroLead = "个人网络安全的学习与实践记录，外加一个真实在跑的安全运营工作台。"
 
   # ---------- Hero 第四个数字：单元测试数 ----------
   # 为什么是常量而不是现场取：博客是静态站，构建期不会去跑后端测试；

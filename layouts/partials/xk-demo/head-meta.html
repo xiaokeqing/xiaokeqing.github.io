@@ -12,15 +12,16 @@ var slow=!!c.saveData||et==="slow-2g"||et==="2g"||(typeof c.downlink==="number"&
 if(q.indexOf("xk-net=slow")>=0){slow=true;}
 if(slow){document.documentElement.classList.add("xk-slow");}}catch(e){}})();</script>
 {{- $desc := .Description | default site.Params.description -}}
-{{- $ogTitle := cond .IsHome "xiaokeqing · 个人博客与安全运营工作台" .Title -}}
-{{- $ogImgPath := "/images/bg.jpg" -}}
+{{- $ogTitle := cond .IsHome "xiaokeqing · 公网安全观测站" .Title -}}
+{{- /* ★2026-11-08：分享图改成专门的 1200×630 / 112KB JPEG（scripts/gen-og-image.py 生成），
+       不再指向 3245×1440 / 674,601 B 的 bg.jpg —— 社交平台抓图不再拖 659KB，裁切也不再切脸。 */ -}}
+{{- $ogImgPath := "/images/og-1200x630.jpg" -}}
 {{- with .Params.images }}{{ $ogImgPath = index . 0 }}{{ end -}}
 {{- $ogImg := $ogImgPath | absURL -}}
 {{- /* ★2026-11-07 PWA：可安装 + 离线壳（static/manifest.webmanifest、static/sw.js）。只注册，不预缓存大资产。 */ -}}
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0a1013">
-<script>if('serviceWorker' in navigator){addEventListener('load',function(){setTimeout(function(){navigator.serviceWorker.register('/sw.js').catch(function(){});},1800);});}</script>
-<title>{{ if .IsHome }}xiaokeqing · 个人博客与安全运营工作台{{ else }}{{ .Title }} · xiaokeqing{{ end }}</title>
+<title>{{ if .IsHome }}xiaokeqing · 公网安全观测站{{ else }}{{ .Title }} · xiaokeqing{{ end }}</title>
 <meta name="description" content="{{ $desc }}">
 <meta name="robots" content="{{ if in (slice "demo" "test") .Section }}noindex, nofollow{{ else }}index, follow{{ end }}">
 <meta name="author" content="{{ site.Params.author }}">
@@ -33,11 +34,14 @@ if(slow){document.documentElement.classList.add("xk-slow");}}catch(e){}})();</sc
      与线上端点同路径 ⇒ 页面把 wb-api 清空即改读同源静态 JSON（秒开）。
      想临时用实时接口：URL 加 ?live=1。
      ★2026-11-08：清空前把原值抄一份到 <html data-wb-api>。问答（/ai/）和 SSE（/alerts/）没有静态快照可用，
-     只能打后端，所以它们回退到这份原值；其余只读数据页仍读同源快照。 */}}
-<script>(function(){try{var m=document.querySelector('meta[name="wb-api"]');if(!m)return;
-var v=m.getAttribute('content')||'';
-if(v)document.documentElement.setAttribute('data-wb-api',v);
-if(location.search.indexOf('live=1')>=0)return;m.setAttribute('content','');}catch(e){}})();</script>
+     只能打后端，所以它们回退到这份原值；其余只读数据页仍读同源快照。
+     ★2026-11-08 晚：原来这里是两个内联 <script>（SW 注册 + wb-api 抄写），合并成一个 ——
+     首页 <script> 总数 12 → 8；两段互不依赖，合并后执行点不变（都在 meta wb-api 之后、解析 <body> 之前）。 */}}
+<script>(function(){function sw(){try{if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}}catch(e){}}
+if(document.readyState==='complete'){setTimeout(sw,1800);}else{addEventListener('load',function(){setTimeout(sw,1800);});}
+try{var m=document.querySelector('meta[name="wb-api"]');if(m){var v=m.getAttribute('content')||'';
+if(v){document.documentElement.setAttribute('data-wb-api',v);}
+if(location.search.indexOf('live=1')<0){m.setAttribute('content','');}}}catch(e){}})();</script>
 {{- /* ★P（2026-10-18）：只给"真的会打 demo API"的页面做 preconnect —— 首页/监测中心/状态页/接口页。
        其余页面（文章、靶场、介绍）一次都不会连 demo.xiaokeqing.cn，给它们 preconnect 只是白付一次 TLS 握手。
        crossorigin 必须写：API 请求是 CORS 模式，不带它的 preconnect 会另开一条"非 CORS"连接，等于没做。
@@ -62,10 +66,18 @@ if(location.search.indexOf('live=1')>=0)return;m.setAttribute('content','');}cat
 <meta property="og:site_name" content="{{ site.Title }}">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="{{ $ogImg }}">
+{{- /* 默认分享图是 1200×630；页面自定义 images 时不再写死宽高（尺寸未知）。 */}}
+{{- if not .Params.images }}
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="XK-LAB 公网安全观测站：24h 告警 78,130 条 · 27 条攻防用例 · 41 个只读端点">
+{{- end }}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ $ogTitle }}">
 <meta name="twitter:description" content="{{ $desc }}">
 <meta name="twitter:image" content="{{ $ogImg }}">
-{{- /* ★2026-11-07 命令面板 / 阅读进度 / 复制按钮（static/js/xk-ux.js） */ -}}
-<script src="{{ (resources.Get "js/xk-ux.js" | minify | fingerprint).RelPermalink }}" defer></script>
-{{ with resources.Get "js/xk-geo.js" }}<script src="{{ (. | minify | fingerprint).RelPermalink }}" defer></script>{{ end }}
+{{- /* ★2026-11-08 首屏脚本收口（12 → 8）：ux（命令面板 / 阅读进度 / 复制按钮）、
+       geo（攻击地理热力）、ticker（顶栏实时攻击轮播）三个独立 IIFE 合成一个指纹文件。
+       行为不变：都是 defer、都在 DOM 解析完后按序执行；ticker 自己会判 html.xk-slow 与 #dockTicker。 */ -}}
+{{- $uxBundle := slice (resources.Get "js/xk-ux.js") (resources.Get "js/xk-geo.js") (resources.Get "js/xk-ticker.js") | resources.Concat "js/xk-ux-geo-ticker.js" | minify | fingerprint -}}
+<script src="{{ $uxBundle.RelPermalink }}" defer></script>
