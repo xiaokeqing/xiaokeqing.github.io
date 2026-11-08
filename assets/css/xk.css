@@ -687,6 +687,9 @@
 body.is-home .phone{display:none}
 /* ★PHONE-ONLY-AI 2026-10-18：右侧手机框人物大卡只在 /ai/ 保留，其余页面一律不渲染（腾出的横向空间还给数据区，正文才能提到 13px） */
 body:has(> main[data-xk-ssr]:not([data-xk-ssr="ai"])) .phone{display:none}
+/* ★2026-11-08：右侧角色面板在数据页已经隐藏，「展开」按钮没有可展开的东西了；
+   头像卡也从左上角并入顶栏（情绪面板改成点头像弹出）⇒ 这个悬浮按钮只会孤零零挂在左上，一并隐藏。 */
+body:has(> main[data-xk-ssr]:not([data-xk-ssr="ai"])) .xk-rail-toggle{display:none!important}
 .phone{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:55;
   width:min(300px,44vh);height:auto;padding:8px;border-radius:34px;
   background:linear-gradient(160deg,#2b3138,#0c0f13 55%,#23272d);
@@ -700,6 +703,13 @@ html.xk-phone-emote #phoneCanvas{left:0;top:0;bottom:auto;transform:none;width:1
 /* E-mote 接管后必须撤掉静态立绘垫底，否则会和 E-mote 人物叠成两个（线上实际出现过：上 E-mote、下 poster）；
    但**只在 ready 之后**撤：加载期还靠这张垫底撑画面，否则手机是空屏 */
 html.xk-phone-emote.xk-emote-ready .phone-scr{background-image:none}
+/* ★2026-11-08 站主口径（/ai/ 一进来看到 Sprite 图集版人物 + LOADING）：
+   E-mote 还没 ready 时**整屏保持空**（纯色 #07090c + 一行「载入中」），
+   不再拿 idle.poster.webp（476×640 白大褂 Sprite 帧）垫底 —— 那张就是站主截图里的旧版人物。
+   这个类只由 head 里的同步脚本在 /ai/ + 桌面 + E-mote 未被开关关掉时挂上，
+   E-mote ready / 明确失败 / 8s 超时后由 xk-shell.js 摘掉。
+   注意：底下的 poster 规则保留（其他页面 / 窄屏 chip 仍用它做静态帧）。 */
+html.xk-phone-emote-wait .phone-scr{background-image:none}
 /* ★2026-11-08：Sprite 兜底一旦画上屏（xk-shell.js 的 draw()），同样撤掉 poster 垫底 ——
    否则「Sprite 人物 + 底部 poster」上下叠成两张（站主截图的下半截）。窄屏 chip 不画 Sprite，
    这个 class 不会加，poster 仍作为竖直立绘条保留。 */
@@ -848,9 +858,11 @@ html.xk-rail-collapsed .xk-idcard:focus-within {
   opacity: 1;
 }
 
-/* 收起时把「她的面板」藏掉，只留左上角那张小头像卡（56px 圆形） */
-html.xk-rail-collapsed .xk-idpanel,
-html.xk-rail-collapsed #xkIdPanel,
+/* 收起时把「她的面板」藏掉，只留左上角那张小头像卡（56px 圆形）
+   ★2026-11-08：头像已并入顶栏 .dock-tools，#xkIdPanel 变成点头像弹出的浮层 ——
+   用户主动 .open 时必须能显示，不能再被这里的 !important 压掉（/alerts/ 实测面板 0×0）。 */
+html.xk-rail-collapsed .xk-idpanel:not(.open),
+html.xk-rail-collapsed #xkIdPanel:not(.open),
 html.xk-rail-collapsed .xk-kurisu--rail {
   display: none !important;
 }

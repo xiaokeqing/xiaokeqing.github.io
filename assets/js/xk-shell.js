@@ -657,6 +657,8 @@ XK_TIER.watchPhone = function(){
   setInterval(function(){
     if(performance.now() - XK_TIER.t0 < gate) return;
     try { if(typeof __xkPhoneDefer !== 'undefined' && __xkPhoneDefer) return; } catch(e){}
+    /* ★2026-11-08：E-mote 等待/接管期间 canvas 本来就是空的（不画 Sprite），0 像素不是"位图丢失" */
+    if(window.__xkPhoneSpriteOff) return;
     var vAi = document.getElementById('v-ai');
     if(document.body.classList.contains('is-home')) return;
     var role = XK_TIER.bodyRole; if(!role) return;
@@ -700,11 +702,61 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
       document.documentElement.classList.remove('xk-phone-open');
     }, true);
   })();
+
+  /* ★2026-11-08 站主口径（/ai/ 一进来先看到 Sprite 图集版人物、底部还挂着 LOADING）：
+     E-mote ready 之前**一个 Sprite 像素都不许画**；只有 E-mote 明确失败（error / off）
+     或 8s 超时才回落到 Sprite。这里在 makeBodyPlayer() 之前同步闸住（它在本文件下面才执行），
+     闸门与 head-meta.html 里挂 xk-phone-emote-wait 的条件保持同一套。
+     为什么不用"先画一帧再清"：那张 canvas 同时是 Sprite 和 E-mote 的画布，先画必闪一下旧版人物。 */
+  var emInst = null;
+  var planned = false;
+  try{
+    planned = !!(document.body && document.body.classList.contains('is-ai')) &&
+      (window.innerWidth || 0) >= 1280 &&
+      !((navigator.deviceMemory || 0) && navigator.deviceMemory < 8) &&
+      !((navigator.hardwareConcurrency || 0) && navigator.hardwareConcurrency < 4) &&
+      !window.__xkPhoneEmoteOff && !(window.__xkNoKurisu === true) &&
+      /* 与 head-meta.html 挂 wait 类、phone-emote.js 的 gateReasons 三处同一口径：
+         显式关掉 E-mote 时根本不该先闸住 Sprite，否则会白等一次 mount-null 再回落。 */
+      String(location.search).indexOf('xk-phone-emote=off') < 0 &&
+      String(location.search).indexOf('xk-kurisu=off') < 0 &&
+      String(location.search).indexOf('xk-no-kurisu=1') < 0 &&
+      !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }catch(e){}
+  var fallbackTimer = 0;
+  function emoteFallback(){
+    if(window.__xkPhoneEmoteReady) return;
+    window.__xkPhoneEmoteTimedOut = true;
+    window.__xkPhoneSpriteOff = false;          /* 放行 Sprite 兜底 */
+    window.__xkPhoneLayer = 'sprite';
+    document.documentElement.classList.remove('xk-phone-emote-wait');
+    document.documentElement.classList.remove('xk-phone-emote');
+    document.documentElement.classList.remove('xk-emote-ready');
+    try { if(emInst && emInst.dispose) emInst.dispose(); } catch(e){}
+    /* E-mote mount 可能把 canvas backing store 改成显示尺寸（282×596 之类）；回落前强制恢复图集坐标 */
+    try { var c0 = document.getElementById('phoneCanvas'); if(c0){ c0.width = 476; c0.height = 640; } } catch(e){}
+    var pb = window.__xkPhoneBody;
+    try { if(pb) pb.play(); } catch(e){}
+    try { if(typeof setPhone === 'function') setPhone(); } catch(e){}
+    var el = document.getElementById('phoneState');
+    if(el) el.textContent = 'IDLE';
+  }
+  window.__xkPhoneEmoteFallback = emoteFallback;
+  if(planned){
+    window.__xkPhoneSpriteOff = true;
+    window.__xkPhoneLayer = 'wait';
+    fallbackTimer = setTimeout(emoteFallback, 8000);   /* N=8s */
+  }
   var n = 0;
   function go(){
   var cv = document.getElementById('phoneCanvas');
   /* ★时序：phone-emote.js 是 defer 脚本、可能比本段后到 ⇒ 最多等 10s（40×250ms）再挂 */
-  if(!cv || !window.XKPhoneEmote){ if(++n < 40) setTimeout(go, 250); return; }
+  if(!cv || !window.XKPhoneEmote){
+    if(++n < 40){ setTimeout(go, 250); return; }
+    if(planned) emoteFallback();     /* 等到超时还没等到运行时 ⇒ 回落 Sprite */
+    return;
+  }
+  if(window.__xkPhoneEmoteTimedOut) return;   /* 8s 已回落，别再让第二个引擎抢同一张 canvas */
   try { if(document.body && document.body.classList.contains('is-home')) return; } catch(e){}
   var w = window.innerWidth || 0, mem = navigator.deviceMemory || 0, cores = navigator.hardwareConcurrency || 0;
   if(w < 1280) return;
@@ -712,7 +764,8 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
   if(cores && cores < 4) return;
   if(window.__xkPhoneEmoteOff) return;
   var em = window.XKPhoneEmote.mount(cv, { model: 'kurisu_c', mode: 'idle', crop: 0.52 });
-  if(!em) return;
+  if(!em){ if(planned) emoteFallback(); return; }   /* 开关/WebGL/降级闸 ⇒ 立即回落 Sprite */
+  emInst = em;
   document.documentElement.classList.add('xk-phone-emote');
   window.__xkPhoneAnim = false;   /* ★V2.1：手机只放 E-mote，停掉原始帧动画 */
   XK_TIER.phoneEmote = em; window.__xkPhoneEmoteInst = em;
@@ -736,22 +789,46 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
       try { if(typeof setPhone === 'function') setPhone(); } catch(e){}
     }
   }
+  function markReady(){
+    if(window.__xkPhoneEmoteReady) return;
+    window.__xkPhoneEmoteReady = true;
+    if(fallbackTimer){ clearTimeout(fallbackTimer); fallbackTimer = 0; }
+    document.documentElement.classList.remove('xk-phone-emote-wait');
+    document.documentElement.classList.add('xk-emote-ready');
+    spriteTakeover(true);
+    try { if(typeof render === 'function') render(); } catch(e){}
+  }
+  function markFailed(){
+    window.__xkPhoneEmoteReady = false;
+    if(fallbackTimer){ clearTimeout(fallbackTimer); fallbackTimer = 0; }
+    document.documentElement.classList.remove('xk-phone-emote-wait');
+    document.documentElement.classList.remove('xk-emote-ready');
+    document.documentElement.classList.remove('xk-phone-emote');
+    XK_TIER.phoneEmote = null;
+    spriteTakeover(false);
+    try { if(typeof render === 'function') render(); } catch(e){}
+  }
   em.onStatus(function(s){
-    if(!s) return;
-    /* ★ 加载中保留静态立绘垫底，只有 E-mote 真正 ready 才撤（否则加载期手机是空屏） */
-    if(s.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); spriteTakeover(true); }
-    if(s.state === 'error' || s.state === 'off'){ document.documentElement.classList.remove('xk-phone-emote'); document.documentElement.classList.remove('xk-emote-ready'); XK_TIER.phoneEmote = null; spriteTakeover(false); }
+    if(!s || window.__xkPhoneEmoteTimedOut) return;
+    if(s.state === 'ready') markReady();
+    if(s.state === 'error' || s.state === 'off') markFailed();
     var el = document.getElementById('phoneState');
-    if(el && s.state) el.textContent = String(s.state).toUpperCase();
+    if(!el) return;
+    /* ★2026-11-08：不再把内部状态（LOADING/PENDING…）直接甩到屏上 ——
+       站主截图底部那行 "LOADING" 就是这里写的，压在按钮上方很脏。
+       等待期固定一行中文「载入中」；ready/失败后交回 IDLE/THINKING/SPEAKING 三态。 */
+    if(s.state === 'ready' || s.state === 'error' || s.state === 'off' || s.state === 'disposed') el.textContent = 'IDLE';
+    else if(planned) el.textContent = '载入中';
   });
   /* ★兜底（2026-10-17 实测踩到）：模型从缓存命中时 mount 里就已经 ready，onStatus 只报「变化」，
      这一枪收不到 ⇒ 静态立绘和 E-mote 叠成两个人。这里补一个轮询，直到状态真为 ready 为止。
-     ★2026-11-08：轮询命中 ready 时同样要走 spriteTakeover(true)，否则第二条画轨永远不关。 */
+     ★2026-11-08：轮询命中 ready 时同样要走 markReady()，否则第二条画轨永远不关。 */
   var _rp = setInterval(function(){
     try{
+      if(window.__xkPhoneEmoteTimedOut){ clearInterval(_rp); return; }
       var s2 = (em.status && em.status()) || null;
-      if(s2 && s2.state === 'ready'){ document.documentElement.classList.add('xk-emote-ready'); spriteTakeover(true); clearInterval(_rp); }
-      else if(s2 && (s2.state === 'error' || s2.state === 'off')){ spriteTakeover(false); clearInterval(_rp); }
+      if(s2 && s2.state === 'ready'){ markReady(); clearInterval(_rp); }
+      else if(s2 && (s2.state === 'error' || s2.state === 'off')){ markFailed(); clearInterval(_rp); }
     }catch(e){ clearInterval(_rp); }
   }, 400);
   /* 模式跟随：读手机面板状态文字（IDLE/THINKING/SPEAKING），变化时通知 E-mote（不改原 setPhone） */
@@ -833,7 +910,7 @@ function makeBodyPlayer(canvas){
     last = 0;
     raf = requestAnimationFrame(tick);
   }
-  window.__xkPhoneLayer = 'sprite';
+  if(!window.__xkPhoneSpriteOff) window.__xkPhoneLayer = 'sprite';   /* ★2026-11-08：等待/接管时别把 wait/emote 覆盖掉 */
   raf = requestAnimationFrame(tick);
   return { set, stop, play };
 }
@@ -927,7 +1004,9 @@ function render(){
   if(!document.body.classList.contains('is-home')) setPhone();
   const label = mode === 'speaking' ? 'SPEAKING' : (emo === 'sided_thinking' ? 'THINKING' : 'IDLE');
   stateEl.textContent = label;
-  phoneStateEl.textContent = __xkPhoneDefer ? '连接中' : label;
+  /* ★2026-11-08：E-mote 等待期显示「载入中」；三态标签仍是 mode-follow 的输入，不改大小写语义 */
+  var waiting = !!(window.__xkPhoneSpriteOff && !window.__xkPhoneEmoteReady);
+  phoneStateEl.textContent = waiting ? '载入中' : (__xkPhoneDefer ? '连接中' : label);
   holo.classList.toggle('live', mode === 'speaking' && !RM);
   phoneEl.classList.toggle('live', mode === 'speaking' && !RM);
 }

@@ -42,24 +42,13 @@
      验收：`_dev/gate-firstscreen.mjs --cold`（warm 与冷缓存两套口径，别混用）。
    ★改生成物要先改生成器：本文件由 _dev/gen-demo-pages.py 的 IDCARD_PARTIAL 写出。 */ -}}
 <link rel="stylesheet" href="{{ (resources.Get "css/xk-idcard.css" | minify | fingerprint).RelPermalink }}">
-<aside class="xk-idcard" id="xkIdCard" aria-label="桐莉栖 · 头像卡">
-  {{- /* ★2026-11-06 站主口径：卡内只留圆形头像 44–48px。
-       ▾ 折叠、🔊、名字/HOLO-LINK、状态灯 全部从卡里移走：
-         · 🔒 登录、情绪、动作、声音、光束 → 右上角工具区（partials/xk-demo/dock-tools.html）
-         · 这些按钮的 id 一个都没变（xkLoginBtn / xkEmoBtn / xkActBtn / xkSndBtn / xkLiteBtn / xkSndMini），
-           因为 assets/js/xk-idcard.js 第 64 行有一句硬判 `if (!av || !cv || !cap || !panel || !snd || !login) return;`
-           —— 少一个按钮整段脚本就静默退出，所以只搬位置、不改 id。
-       仍留在 DOM 里但藏起来的：#xkIdFold / #xkIdStat（toggle 脚本与诊断仍会读它们）。 */}}
-  <button class="xk-idcard-av" id="xkIdAv" type="button"
-    title="点一下：换个情绪说一句 · 长按半秒：打开情绪与动作面板"
-    aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">
-    <canvas id="xkIdAvCanvas" width="132" height="132" aria-hidden="true"></canvas>
-  </button>
-  <span class="xk-idcard-hidden" hidden aria-hidden="true">
-    <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false" aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
-    <span class="xk-idstat" id="xkIdStat"><span id="xkIdStatTxt">待命</span></span>
-  </span>
-</aside>
+{{- /* ★2026-11-08 站主口径：左上角头像卡取消，头像并入顶栏右侧 .dock-tools
+     （partials/xk-demo/dock-tools.html，顺序 头像 → 声音 → 登录）。
+     这里只留 toggle/诊断仍会读的两个旧节点，整块 hidden、不占位。 */}}
+<div class="xk-idcard-old" id="xkIdCard" hidden aria-hidden="true">
+  <button class="xk-idfold" id="xkIdFold" type="button" aria-expanded="false" aria-controls="xkIdCol" title="展开 / 收起功能">▾</button>
+  <span class="xk-idstat" id="xkIdStat"><span id="xkIdStatTxt">待命</span></span>
+</div>
 
 <div class="xk-idcap" id="xkIdCap" role="status" aria-live="polite"></div>
 <div class="xk-idpanel" id="xkIdPanel" role="dialog" aria-label="桐莉栖 · 情绪与动作面板"></div>

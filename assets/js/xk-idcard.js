@@ -945,8 +945,37 @@
       }
     });
   })();
-  function openPanel() { panel.classList.add('open'); D.panel = true; cap.classList.remove('on'); markPanel(); }
+  /* ★2026-11-08：头像并入顶栏右侧 .dock-tools 后，面板不能再写死 left:96/top:88，
+     否则会浮在左边/被顶栏盖住。每次打开（和 resize 时若开着）按头像实测矩形重算：
+     右边缘与头像右对齐、上边缘落在头像下沿 +8px，四周至少留 8px，超出视口高度就内部滚动。 */
+  function placePanel() {
+    var w = panel.offsetWidth || 252, vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+    /* 窄屏的 #xkIdAv 是 44px 触控区、canvas 才是 30px 可见圆 ⇒ 用 canvas 的矩形对齐，
+       面板右边缘才与看得见的头像对齐（桌面两者同尺寸，结果不变）。 */
+    var box = av.querySelector('canvas') || av;
+    var r = box.getBoundingClientRect();
+    var dock = document.querySelector('.dock');
+    var dr = dock ? dock.getBoundingClientRect() : null;
+    var left, top;
+    if (r.width > 0 && r.height > 0) {
+      left = Math.min(Math.max(8, r.right - w), vw - w - 8);
+      /* 头像在顶栏里垂直居中，r.bottom 比顶栏下沿还高几像素 ⇒ 必须取两者较大值 + 8，
+         否则面板会压住顶栏下边缘（手机上实测压 3px） */
+      top = Math.max(r.bottom, dr ? dr.bottom : 0) + 8;
+    } else {
+      left = Math.min(Math.max(8, (dr ? dr.right - w - 2 : vw - w - 12)), vw - w - 8);
+      top = (dr ? dr.bottom : 46) + 8;
+    }
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+    panel.style.maxHeight = Math.max(120, vh - top - 12) + 'px';
+    panel.style.overflowY = 'auto';
+  }
+  function openPanel() { panel.classList.add('open'); D.panel = true; cap.classList.remove('on'); markPanel(); placePanel(); }
   function closePanel() { panel.classList.remove('open'); D.panel = false; }
+  window.addEventListener('resize', function () { if (D.panel) { try { placePanel(); } catch (e) { } } });
 
   /* ---------- 点头像：切下一个情绪 + 念一句；长按 >=500ms：开面板 ---------- */
   var pressTimer = 0, longDone = false, taps = [];
@@ -1029,15 +1058,9 @@
         if (ch < 300) {
           D.playerWhy = 'no-big-crt-poster';
           D.playerSkipped = 'no-big-crt';
-          var panelEl = document.getElementById('xkIdPanel');
-          if (panelEl) {
-            panelEl.style.backgroundImage = 'url(/images/crt/panel-poster.webp)';
-            panelEl.style.backgroundSize = 'contain';
-            panelEl.style.backgroundPosition = 'center bottom';
-            panelEl.style.backgroundRepeat = 'no-repeat';
-            var cv0 = panelEl.querySelector('canvas');
-            if (cv0) { cv0.style.opacity = '0'; }
-          }
+          /* ★2026-11-08 站主口径：头像并入顶栏后 #xkIdPanel 变成右上角浮层，
+             不能再铺 268×360 的白大褂静态帧当背景 —— 那会像"旧 Sprite 人物"透在
+             情绪/动作按钮后面，而且面板底是半透明的，正压住正文。直接留纯色面板。 */
           /* 旧主题的侧栏小舞台（分类页/标签页上的 .xk-kurisu__stage，294×268）——
              播放器不装了，这里直接铺同一张静态帧，并把它自己的 canvas 藏掉。 */
           var stages = document.querySelectorAll('.xk-kurisu__stage');

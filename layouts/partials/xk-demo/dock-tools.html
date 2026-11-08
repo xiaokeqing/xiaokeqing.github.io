@@ -12,6 +12,13 @@
 <div class="dock-ticker" id="dockTicker" aria-live="off" hidden></div>
 
 <div class="dock-tools" id="dockTools" role="group" aria-label="站点工具">
+  {{- /* ★2026-11-08 站主口径：头像并入顶栏右侧工具区，顺序 头像 → 声音 → 登录。
+       只搬位置、不改 id：assets/js/xk-idcard.js 硬判 #xkIdAv / #xkIdAvCanvas 必须存在且唯一。 */}}
+  <button class="xk-idcard-av dock-av" id="xkIdAv" type="button"
+    title="点一下：换个情绪说一句 · 长按半秒：打开情绪与动作面板"
+    aria-label="桐莉栖头像：点一下换个情绪并说一句，长按半秒打开情绪与动作面板">
+    <canvas id="xkIdAvCanvas" width="132" height="132" aria-hidden="true"></canvas>
+  </button>
   <button class="xk-idcard-btn dt" id="xkSndBtn" type="button" aria-pressed="false" title="声音：默认关闭（点一下打开）">声音 关</button>
   <button class="xk-idcard-btn dt" id="xkLoginBtn" type="button" title="登录（只有站主能登）">登录</button>
 </div>

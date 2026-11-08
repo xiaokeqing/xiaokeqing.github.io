@@ -65,7 +65,8 @@
     background:var(--solid,rgba(48,45,41,.94));border:1px solid var(--line2,rgba(255,246,235,.28));
     border-radius:10px;padding:6px 9px;opacity:0;transition:opacity .2s;pointer-events:none}
   .xk-idcap.on{opacity:1}
-  .xk-idpanel{position:fixed;left:96px;top:88px;z-index:63;width:252px;display:none;
+  .xk-idpanel{position:fixed;left:auto;right:14px;top:54px;z-index:63;width:252px;max-width:calc(100vw - 16px);display:none;
+    max-height:calc(100vh - 66px);overflow-y:auto;
     background:var(--solid,rgba(48,45,41,.96));border:1px solid var(--line2,rgba(255,246,235,.28));
     border-radius:12px;padding:10px 11px;box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(4px);
     font:11.5px/1.5 var(--sans,sans-serif);color:var(--txt,#FAF7F0)}
@@ -114,7 +115,7 @@
   .xk-idcard-btn{width:auto;min-width:54px;height:26px;padding:0 10px;font-size:11.5px}
     .xk-idcard-col #xkLoginBtn{width:auto;height:30px;font-size:12px}
     .xk-idcap{bottom:58px;top:auto}
-    .xk-idpanel{left:6px;bottom:52px;top:auto}
+    .xk-idpanel{left:auto;right:10px;top:100px;bottom:auto}
   }
   /* ★批次 ②：主页底部对话输入栏（第 1 期）
      只新增这一组值；沿用既有变量（--solid/--line2/--txt/--mut/--acc/--mono/--sans），不引入新配色。
@@ -247,8 +248,8 @@
       padding:5px;border-radius:12px;z-index:80;
       background:rgba(9,11,14,.94);backdrop-filter:blur(10px);
       border:1px solid var(--line2,rgba(255,246,235,.22));box-shadow:0 14px 40px rgba(0,0,0,.5)}
-    /* ④ 导航与卡片左对齐（卡片贴 left:8px，导航原来在 left:0 / 由 rail() 写 10px） */
-    body.xk-has-idcard .dock{left:8px}
+    /* ④ 导航与顶栏 left:0 对齐（卡片已并入顶栏，不再需要 8px 偏移） */
+    body.xk-has-idcard .dock{left:0}
   }
 /* ★2026-11-04 登录弹窗加「邮箱验证码」第二条路（只给站主；不做注册） */
 .xk-login-card{max-height:calc(100vh - 40px);overflow-y:auto}
@@ -272,9 +273,10 @@
   body.xk-has-idcard .dock .brand{border-bottom:0;border-right:1px solid rgba(127,212,216,.14);
     margin:0 10px 0 0;padding:0 12px 0 2px;height:22px;display:flex;align-items:center;text-align:left}
   body.xk-has-idcard .dock a{padding:7px 12px;border-radius:9px}
-  body.xk-has-idcard .xk-idcard{top:56px}
+  /* ★2026-11-08：头像并入顶栏右侧 .dock-tools ⇒ 左上角不再有独立卡片，主内容
+     左侧让位（原 120px）恢复成与右侧一致的 24px。 */
   body.xk-has-idcard #xk-app .main,
-  body.xk-has-idcard .main{padding:62px 24px 60px 120px;max-width:1400px}
+  body.xk-has-idcard .main{padding:62px 24px 60px;max-width:1400px}
 }
 /* 顶栏里 hidden 的项必须真的不显示（<a> 自带 display 会压过 [hidden]） */
 body.xk-has-idcard .dock a[hidden]{display:none !important}
@@ -309,6 +311,19 @@ body.xk-has-idcard .xk-idcard .xk-idcard-hidden{display:none !important}
   white-space:nowrap;
 }
 .dock .dock-tools .xk-idcard-btn:hover{border-color:rgba(127,212,216,.38)}
+/* ★2026-11-08 站主口径：头像并入工具区（顺序 头像 → 声音 → 登录），
+   28–32px 圆形、与 26px 文字钮同一条垂直中线。canvas 仍是 132px 图集，
+   由 assets/js/xk-idcard.js 画到 56 口径的 backing store，这里只改显示尺寸。 */
+.dock .dock-tools .xk-idcard-av{
+  width:30px;height:30px;flex:none;padding:0;cursor:pointer;display:block;
+  border:0;border-radius:50%;overflow:hidden;background:transparent;line-height:0;
+}
+.dock .dock-tools .xk-idcard-av canvas{
+  width:30px;height:30px;border:1px solid rgba(127,212,216,.28);border-radius:50%;
+  display:block;background:#E8ECEF;box-shadow:0 1px 4px rgba(0,0,0,.28);
+}
+.dock .dock-tools .xk-idcard-av:hover canvas{border-color:rgba(127,212,216,.6)}
+.dock .dock-tools .xk-idcard-av:focus-visible{outline:2px solid var(--acc,#7FD4D8);outline-offset:2px}
 /* 🔊 在工具区里改成 inline 排布（原来 absolute 贴在卡片右上角） */
 .dock .dock-tools .xk-idsnd{
   position:static;display:inline-flex;align-items:center;justify-content:center;
@@ -350,6 +365,19 @@ body.xk-has-idcard .xk-idcard .xk-idcard-hidden{display:none !important}
   }
   body.xk-has-idcard .dock .dock-tools .xk-idcard-btn{padding:0 8px; font-size:11px; white-space:nowrap}
   body.xk-has-idcard .dock .dock-ticker{display:none}
+  /* ★2026-11-08：xk.css 给窄屏 `.dock button` 定了 44px 最小触控区（站主 2026-10-16 口径），
+     这套规则会连头像一起撑到 44px。头像视觉仍要 28–32px，所以把按钮做成 44×44 的透明命中区、
+     canvas 居中画 30px 圆 —— 触控边够大，视觉还是小圆头像。主页有自己的外壳样式（无 xk.css），
+     不套这条，保持 30px 与 26px 文字钮同高。 */
+  body.xk-has-idcard:not(.is-home) .dock .dock-tools .xk-idcard-av{
+    width:44px;height:44px;min-width:44px;min-height:44px;padding:6px;
+    border:1px solid transparent;background:transparent;box-shadow:none;
+  }
+  body.xk-has-idcard:not(.is-home) .dock .dock-tools .xk-idcard-av canvas{
+    width:30px;height:30px;border:1px solid rgba(127,212,216,.28);border-radius:50%;
+    background:#E8ECEF;box-shadow:0 1px 4px rgba(0,0,0,.28);
+  }
+  body.xk-has-idcard:not(.is-home) .dock .dock-tools .xk-idcard-av:hover canvas{border-color:rgba(127,212,216,.6)}
 }
 /* ★2026-11-07 手机端（≤720）：头像卡在窄屏只会压住内容，且它此时是灰占位球 ⇒ 直接收起，
    顶栏两行（导航 + 工具）独占，内容从 176px 起。桌面端不受影响。 */

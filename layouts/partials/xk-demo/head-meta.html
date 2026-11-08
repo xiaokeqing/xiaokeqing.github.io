@@ -11,6 +11,29 @@ if(q.indexOf("xk-net=fast")>=0){return;}
 var slow=!!c.saveData||et==="slow-2g"||et==="2g"||(typeof c.downlink==="number"&&c.downlink>0&&c.downlink<2);
 if(q.indexOf("xk-net=slow")>=0){slow=true;}
 if(slow){document.documentElement.classList.add("xk-slow");}}catch(e){}})();</script>
+{{- /* ★2026-11-08 站主口径（/ai/ 一进来先看到 Sprite 图集版人物）：
+       E-mote ready 之前不要把 Sprite/poster 画上手机屏。这里在 CSS 之前同步挂
+       xk-phone-emote-wait（CSS 把 .phone-scr 的 idle.poster.webp 垫底撤掉，只留纯色），
+       条件与 xk-shell.js 里 E-mote 的挂载闸门同一套；ready/失败/8s 超时由页面脚本摘掉。
+       为什么放 head：poster 是 CSS 背景，等 DOM/脚本再摘会先闪一帧白大褂。
+       9000ms 是防「xk-shell.js 没加载」的保险丝（正常路径 8s 由 xk-shell.js 摘）。 */}}
+<script>(function(){try{
+var p=String(location.pathname||"");
+if(p.indexOf("/ai/")!==0) return;
+var q=String(location.search||"");
+if(q.indexOf("xk-phone-emote=off")>=0||q.indexOf("xk-kurisu=off")>=0||q.indexOf("xk-no-kurisu=1")>=0) return;
+if((window.innerWidth||0)<1280) return;
+if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+var mem=navigator.deviceMemory||0, cores=navigator.hardwareConcurrency||0;
+if(mem&&mem<8) return;
+if(cores&&cores<4) return;
+document.documentElement.classList.add("xk-phone-emote-wait");
+setTimeout(function(){
+  if(!document.documentElement.classList.contains("xk-emote-ready")){
+    document.documentElement.classList.remove("xk-phone-emote-wait");
+  }
+},9000);
+}catch(e){}})();</script>
 {{- $desc := .Description | default site.Params.description -}}
 {{- $ogTitle := cond .IsHome "xiaokeqing · 公网安全观测站" .Title -}}
 {{- /* ★2026-11-08：分享图改成专门的 1200×630 / 112KB JPEG（scripts/gen-og-image.py 生成），
