@@ -60,7 +60,7 @@ jobs:
       - name: 读 secret（未配置 = 整条跳过，不算失败）
         id: cfg
         env:
-          SNAP: ${{ secrets.XK_SNAP_URL }}
+          SNAP: ${{ secrets.XK_SNAP_URL || 'https://demo.xiaokeqing.cn' }}
         run: |
           set -euo pipefail
           if [ -z "${SNAP:-}" ]; then
