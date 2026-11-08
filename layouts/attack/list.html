@@ -64,6 +64,13 @@
 .at-tbl tbody th{width:132px;color:var(--xk-cyan,#cfe9f5);font-weight:600;font-size:12.5px;white-space:nowrap}
 .at-tbl td{color:var(--xk-ink-lede,rgba(255,255,255,.8))}
 .at-tbl tr:last-child th,.at-tbl tr:last-child td{border-bottom:0}
+/* Suricata 块：category 是分类名（= classification.config 的 description），不是技术卡 */
+.at-cats{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.at-cat{display:inline-flex;align-items:baseline;gap:8px;min-width:0;max-width:100%;padding:6px 9px;border:1px solid rgba(127,212,216,.2);border-radius:7px;background:rgba(127,212,216,.06)}
+.at-cat .k{font-size:12px;line-height:1.45;color:var(--xk-ink-title,rgba(255,255,255,.86));overflow-wrap:anywhere}
+.at-cat .v{font:600 11.5px/1.4 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ok,#d3f3e2);white-space:nowrap}
+.at-cat.warn{border-color:rgba(232,180,90,.34);background:rgba(232,180,90,.07)}
+.at-cat.warn .v{color:var(--xk-warn,#E8B45A)}
 @media (max-width:720px){
   .at-lead{font-size:16px}
   .at-row{grid-template-columns:1fr;gap:8px}
@@ -178,6 +185,79 @@
       </div>
 
       <div class="mod">
+        <div class="mod-hd"><span class="led"></span>Suricata 侧 · 按 classtype 手工映射<span class="tag">无 ATT&amp;CK 字段 · 人工对照</span></div>
+        <div class="mod-bd">
+          {{- $s := $d.suricata }}
+          {{- with $s }}
+          {{- if .available }}
+          <ul class="at-kpis">
+            <li class="at-kpi"><span class="k">窗口内告警</span><span class="v">{{ lang.FormatNumber 0 .total }}</span></li>
+            <li class="at-kpi"><span class="k">映射到战术</span><span class="v ok">{{ lang.FormatNumber 0 .mapped }}</span></li>
+            <li class="at-kpi"><span class="k">未映射</span><span class="v warn">{{ lang.FormatNumber 0 .unmapped }}</span></li>
+            <li class="at-kpi"><span class="k">覆盖战术</span><span class="v">{{ len .tactics }} 个</span></li>
+            <li class="at-kpi"><span class="k">category</span><span class="v">{{ len .byCategory }} 类</span></li>
+          </ul>
+          <div class="at-mx">
+            {{- range $tac := .tactics }}
+            <div class="at-row">
+              <div class="at-th">
+                <span class="tid">{{ $tac.id }}</span>
+                <span class="tnm">{{ $tac.name }}</span>
+                <span class="tcn">{{ lang.FormatNumber 0 $tac.count }} 条</span>
+              </div>
+              <div class="at-cats">
+                {{- range $c := $tac.categories }}
+                <span class="at-cat" title="{{ $c.category }} → {{ $tac.name }}">
+                  <span class="k">{{ $c.category }}</span>
+                  <span class="v">{{ lang.FormatNumber 0 $c.count }}</span>
+                </span>
+                {{- end }}
+              </div>
+            </div>
+            {{- end }}
+            <div class="at-row">
+              <div class="at-th">
+                <span class="tid">TA—</span>
+                <span class="tnm">未映射</span>
+                <span class="tcn">{{ lang.FormatNumber 0 .unmapped }} 条</span>
+              </div>
+              <div class="at-cats">
+                {{- range $c := .unmappedCategories }}
+                <span class="at-cat warn" title="{{ $c.why }}">
+                  <span class="k">{{ if $c.category }}{{ $c.category }}{{ else }}（空 category）{{ end }}</span>
+                  <span class="v">{{ lang.FormatNumber 0 $c.count }}</span>
+                </span>
+                {{- end }}
+              </div>
+            </div>
+          </div>
+          <p class="at-note">
+            <b>Suricata 没有 ATT&amp;CK 字段，这张表是人工对照，映射不上的一律单列。</b>
+            数据取 srv2 宿主机的 <code>/opt/suricata/logs/eve.json*</code>（只读 <code>event_type=alert</code>，
+            按 <code>alert.category</code> 计数）；对照表写死在 <code>scripts/attack-coverage.py</code>，
+            表里没有的 category 进「未映射」，不按签名猜、不摊进任何战术或技术。
+            本块与上面的 Wazuh 是两套告警源，<b>条数不可相加</b>。
+          </p>
+          <p class="at-note">
+            实际覆盖：{{ .observedFrom }} → {{ .observedTo }}（{{ .files }} 个文件，约
+            {{ printf "%.2f" (div (float .bytes) 1073741824.0) }} GB 解压后）· 映射率
+            {{ printf "%.2f" .mappedPct }}% · {{ with .coverage }}{{ . }}{{ end }}
+          </p>
+          {{- else }}
+          <p class="at-lead">未取到 Suricata 数据（{{ .reason }}）。</p>
+          <p class="at-sub">
+            这一块降级为空，<b>Wazuh 的矩阵和口径不受影响</b>；修好 srv2 取数后重跑
+            <code>python scripts/attack-coverage.py</code> 即可。Suricata 没有 ATT&amp;CK 字段，本来也只能人工对照，
+            所以这里宁可留空，也不编一张表出来。
+          </p>
+          {{- end }}
+          {{- else }}
+          <p class="at-empty">data/attack.json 里没有 suricata 块（旧快照）；重跑脚本后本块会出现。</p>
+          {{- end }}
+        </div>
+      </div>
+
+      <div class="mod">
         <div class="mod-hd"><span class="led"></span>口径 · 这些数从哪来<span class="tag">先看这块，再看数字</span></div>
         <div class="mod-bd">
           <table class="at-tbl">
@@ -194,6 +274,11 @@
               <tr><th>名称</th><td>技术名优先用脚本内置的 ATT&amp;CK 名称表（离线写死，不联网）；
                 表里没有的才退回告警自带的 <code>rule.mitre.technique</code>。
                 战术名是 Wazuh 输出里的原名，页面按内置表映射回 <code>TA00xx</code>。</td></tr>
+              <tr><th>Suricata 口径</th><td>srv2 宿主机 <code>/opt/suricata/logs/eve.json*</code>（含轮转件，
+                只读 <code>event_type=alert</code>，按 <code>alert.category</code> 计数）；
+                Suricata 不输出 ATT&amp;CK 字段，战术来自脚本里 <b>人工写死的 category → 战术对照表</b>，
+                表外/留空的一律进「未映射」。取数失败只把 <code>suricata.available</code> 置 false，
+                整页照常构建。</td></tr>
               <tr><th>生成</th><td><code>scripts/attack-coverage.py</code> →
                 <code>data/attack.json</code>（本页构建时直接读，SSR，不 fetch）+
                 <code>static/api/public/attack.js</code>（同内容公开快照）。
@@ -203,6 +288,7 @@
             </tbody>
           </table>
           <p class="at-note">相关：<a href="/alerts/">实时告警</a> ·
+            <a href="/session/">蜜罐会话</a> ·
             <a href="/noise/">告警噪音指数</a> ·
             <a href="/status/">运行状态</a> ·
             <a href="/api/">公开端点清单</a></p>
