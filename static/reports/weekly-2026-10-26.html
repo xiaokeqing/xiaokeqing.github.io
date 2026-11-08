@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>安全战报 · 2026-W44（2026-10-26 ~ 2026-11-01）</title>
+<style>
+:root{--bg:#0b0f12;--fg:#dfe7ea;--mut:#8ea3ab;--acc:#78e6e1;--line:#22313a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.75 -apple-system,"Segoe UI",system-ui,"Microsoft YaHei",sans-serif}
+main{max-width:82ch;margin:0 auto;padding:28px 18px 64px}
+a{color:var(--acc)}
+h1{font-size:22px;margin:8px 0 6px}
+h2{font-size:17px;margin:26px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;margin:18px 0 6px;color:var(--acc)}
+p,li{color:var(--fg)}
+blockquote{margin:12px 0;padding:10px 14px;border-left:3px solid var(--acc);background:#101820;color:var(--mut)}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#101820;color:var(--mut);font-weight:600}
+code{background:#101820;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12.5px}
+ul{padding-left:20px}
+.nav{font-size:13px;color:var(--mut);margin-bottom:14px}
+</style></head><body><main>
+<div class="nav"><a href="/">← 回站点</a> · <a href="/reports/">全部周报</a></div>
+<h1>安全战报 · 2026-W44（2026-10-26 ~ 2026-11-01）</h1>
+<blockquote>统计窗口（本周）：<code>2026-10-26 00:00</code> → <code>2026-11-02 00:00</code>（本地时区，含头不含尾）<br>生成时间：2026-10-26 06:03:01 ｜ 数据源：https://demo.xiaokeqing.cn 的四个公开只读端点（不读服务器日志、不做任何处置）</blockquote>
+<h2>0. 一句话结论</h2>
+<p><b>护栏累计拦下 98 个动作、已执行 0 个处置动作；本周没有新增封禁留痕（留痕总数 0 条，口径见 §1）；蜜罐累计连接 260 次；最近 24h 告警 170,277 条；24h 来源以 荷兰 为主（52.6%）。</b></p>
+<h2>1. 指标与口径（每个数字都能回查）</h2>
+<table><tr><th>指标</th><th>数值</th><th>口径（端点 · 字段 · 窗口）</th></tr><tr><td>拦截总数（护栏拦下）</td><td>98</td><td><code>audit</code> · <code>summary.blockedByGuard</code> · <b>累计</b>，非本周</td></tr><tr><td>已执行处置动作</td><td>0</td><td><code>audit</code> · <code>summary.executedActions</code> · <b>累计</b></td></tr><tr><td>本周新增封禁留痕</td><td>0 条</td><td><code>audit</code> · <code>blocks[].createdAt</code> 归周现算 · <b>本周</b></td></tr><tr><td>封禁 IP 数（本周，去重）</td><td>0</td><td>同上，按 <code>blocks[].ip</code> 去重后计数 · <b>本周</b></td></tr><tr><td>封禁 IP 数（留痕内累计，去重）</td><td>0</td><td><code>audit</code> · <code>blocks[].ip</code> 全量去重 · 留痕文件范围</td></tr><tr><td>当前生效中的封禁</td><td>0</td><td><code>audit</code> · <code>summary.blockActive</code> · <b>累计</b></td></tr><tr><td>蜜罐连接数</td><td>260</td><td><code>honeypot</code> · <code>connections</code> · 服务端累计</td></tr><tr><td>蜜罐登录尝试 / 登录失败</td><td>269 / 0</td><td><code>honeypot</code> · <code>logins</code> / <code>loginFails</code> · 同一响应内</td></tr><tr><td>蜜罐累计事件（total）</td><td>10,000</td><td><code>honeypot</code> · <code>total</code> · <b>统计上限哨兵值，非真实累计</b></td></tr><tr><td>24h 告警总量</td><td>170,277</td><td><code>alerts</code> · <code>stats24h.total</code> · <b>24h 未去重</b></td></tr><tr><td>24h 严重 / 高危</td><td>严重 3,106，高危 41,772（合计占比 26.4%）</td><td><code>alerts</code> · <code>stats24h.bySeverity</code> · 同一 24h 桶</td></tr></table>
+<blockquote>⚠️ <b>蜜罐 `total` 的「统计上限」语义</b>：实测四个时点 <code>total</code> 恒为 10000，而 <code>connections</code> 只有几百 —— 10000 是服务端的截断/哨兵值，不是真实累计。本报告一律用 <code>connections</code> 当连接数，<code>total</code> 只作「已到上限」的标记。</blockquote>
+<h2>2. 告警与蜜罐</h2>
+<table><tr><th>项</th><th>数值</th><th>说明</th></tr><tr><td>24h 告警</td><td>170,277 条</td><td><code>stats24h.total</code>，未去重；state=ok</td></tr><tr><td>24h 严重 / 高危</td><td>严重 3,106，高危 41,772（合计占比 26.4%）</td><td>同一 24h 桶</td></tr><tr><td>当前聚合窗口告警（去重）</td><td>30 条</td><td><code>alerts.total</code>，窗口 5 分钟</td></tr><tr><td>当前窗口原始条数</td><td>200</td><td><code>alerts.rawTotal</code>；<code>alerts.windowSize</code> = 200 条为取数上限</td></tr><tr><td>蜜罐连接 / 登录 / 登录失败</td><td>260 / 269 / 0</td><td>同一响应内字段（口径一致）</td></tr><tr><td>蜜罐采样窗口</td><td>800</td><td><code>honeypot.sampled</code>（Top 榜只在这个窗口内计数）</td></tr><tr><td>命令时间线</td><td>数据源未接入</td><td><code>commandsAvailable=False</code>，数据源未接入（不编造）</td></tr></table>
+<h2>3. Top 5 来源国家 / ASN</h2>
+<blockquote>窗口：<code>geo.window</code> = <b>24h</b>（端点固定 24 小时；实测传 <code>window=72h</code> / <code>7d</code> 仍返回 24h）。周粒度的国别/ASN 聚合<b>未接入</b>，所以这一节不是「本周」口径，读的时候别当成周数据。</blockquote>
+<table><tr><th>#</th><th>国家</th><th>24h 告警数</th><th>唯一来源 IP</th><th>占比</th></tr><tr><td>1</td><td>荷兰（<code>NL</code>）</td><td>87,889</td><td>42</td><td>52.6%</td></tr><tr><td>2</td><td>新加坡（<code>SG</code>）</td><td>35,199</td><td>12</td><td>21.1%</td></tr><tr><td>3</td><td>德国（<code>DE</code>）</td><td>17,322</td><td>33</td><td>10.4%</td></tr><tr><td>4</td><td>法国（<code>FR</code>）</td><td>14,424</td><td>12</td><td>8.6%</td></tr><tr><td>5</td><td>AD（<code>AD</code>）</td><td>3,379</td><td>5</td><td>2.0%</td></tr></table>
+<table><tr><th>#</th><th>ASN</th><th>组织</th><th>24h 告警数</th><th>唯一来源 IP</th></tr><tr><td>1</td><td><code>AS47890</code></td><td>UNMANAGED LTD</td><td>68,694</td><td>8</td></tr><tr><td>2</td><td><code>AS14061</code></td><td>DigitalOcean, LLC</td><td>35,241</td><td>23</td></tr><tr><td>3</td><td><code>AS49581</code></td><td>Ferdinand Zink trading as Tube-Hosting</td><td>18,915</td><td>2</td></tr><tr><td>4</td><td><code>AS63949</code></td><td>Akamai Technologies, Inc.</td><td>17,585</td><td>62</td></tr><tr><td>5</td><td><code>AS214961</code></td><td>Stellar Group SAS</td><td>13,106</td><td>1</td></tr></table>
+<p>分母（<code>geo.coverage</code>）：窗口内告警 170,262 条，其中带来源 IP 169,005 条，成功定位 167,176 条，排除自身 966 条、内网 863 条；入榜门槛 count≥3 且占比≥1.0%。</p>
+<h2>4. Top 5 攻击 IP（脱敏）</h2>
+<blockquote>口径：<code>honeypot.topSources[]</code>，采样窗口 <code>sampled=800</code>；IP 显示按仓库既有规则「保留前三段 + 末段换 <code>x</code>」（<code>a.b.c.d</code> → <code>a.b.c.x</code>）。去重与计数用原始值，只有展示被掩码。</blockquote>
+<table><tr><th>#</th><th>来源 IP（已掩码）</th><th>命中次数</th></tr><tr><td>1</td><td><code>193.32.162.x</code></td><td>390</td></tr><tr><td>2</td><td><code>94.154.32.x</code></td><td>104</td></tr><tr><td>3</td><td><code>81.192.46.x</code></td><td>6</td></tr><tr><td>4</td><td><code>147.90.234.x</code></td><td>6</td></tr><tr><td>5</td><td><code>20.243.208.x</code></td><td>4</td></tr></table>
+<p>本周封禁留痕涉及的地址：本周无新增留痕。</p>
+<h2>5. Top 5 规则命中（ATT&amp;CK）</h2>
+<blockquote>ATT&amp;CK 技术编号<b>未接入</b>：四个公开端点都没有 <code>attack.*</code> 字段（<code>alerts</code> 只给 <code>type</code>/<code>typeLabel</code>/<code>ruleName</code>），所以本节给的是<b>规则命中</b>，不是 ATT&amp;CK 矩阵。窗口：<code>alerts.list</code> 只覆盖最近 5 分钟（windowSize=200），非本周。</blockquote>
+<table><tr><th>#</th><th>规则名</th><th>命中次数</th></tr><tr><td>1</td><td>蜜罐: 攻击者"登录成功" 用户=anmol 口令=[口令已隐藏] 来源=193.32.162.x</td><td>85</td></tr><tr><td>2</td><td>XK-LAB: 同一来源 5 分钟内蜜罐 SSH 会话 &gt;=20 次（自动化爆破/刮削）来源=193.32.162.x</td><td>29</td></tr><tr><td>3</td><td>蜜罐: 攻击者"登录成功" 用户=root 口令=[口令已隐藏] 来源=94.154.32.x</td><td>22</td></tr><tr><td>4</td><td>Suricata: Alert - XK-LAB SSH client fingerprint libssh/libssh2 (automated bruteforce toolchain)</td><td>13</td></tr><tr><td>5</td><td>蜜罐: 攻击者"登录成功" 用户=root 口令=[口令已隐藏] 来源=147.90.234.x</td><td>6</td></tr></table>
+<h2>6. 本周变化</h2>
+<p>只写真能算的。算不出来的写「未接入 + 原因」，不编基准、不给自造的百分比。</p>
+<table><tr><th>项</th><th>本周（2026-W44）</th><th>上一周（10-19 ~ 10-25）</th><th>变化</th></tr><tr><td>封禁留痕条数</td><td>0</td><td>0</td><td>0</td></tr><tr><td>封禁 IP 数（去重）</td><td>0</td><td>0</td><td>0</td></tr><tr><td>24h 告警</td><td>170,277</td><td>未接入</td><td>—</td></tr><tr><td>蜜罐连接</td><td>260</td><td>未接入</td><td>—</td></tr></table>
+<p><b>为什么大部分是「未接入」</b>：<code>alerts.stats24h</code> 只有 24 小时桶、<code>geo</code> 固定 24h、<code>honeypot</code> 只有服务端累计值 —— 公开端点<b>没有</b>日/周粒度聚合，所以「较上周」只在 <code>audit.blocks[].createdAt</code> 上能诚实计算。</p>
+<blockquote>注意：上一周留痕为 0 条，既可能是那一周确实没有封禁，也可能是留痕文件只保留了最近一段（当前文件内共 0 条）。这一行读作「留痕文件里的上一周」，不是「上周真实封禁数」。</blockquote>
+<h2>7. 取数状态（失败项与原因原文）</h2>
+<table><tr><th>端点</th><th>状态</th><th>错误原文</th></tr><tr><td><code>/api/public/audit</code></td><td>成功（generatedAt=2026-10-26 06:02:27）</td><td>—</td></tr><tr><td><code>/api/public/honeypot</code></td><td>成功（generatedAt=2026-10-26 06:02:27）</td><td>—</td></tr><tr><td><code>/api/public/geo</code></td><td>成功（generatedAt=2026-10-26 06:02:29）</td><td>—</td></tr><tr><td><code>/api/public/alerts</code></td><td>成功（generatedAt=2026-10-26 06:03:01）</td><td>—</td></tr></table>
+<h2>8. 已知限制 / 口径变更</h2>
+<ul><li>本报告<b>没有</b>读 srv2 的 <code>/var/log/nginx</code>，也不需要该权限；所有数字来自公开只读端点。</li><li>端点缓存 45s；同一分钟重复跑结果可能相同。</li><li>「本周」按本机时区的 ISO 周（周一 00:00 起）现算；端点自身不提供周窗口。</li><li>口径变更：无（首次生成）。</li></ul>
+<p>---</p>
+<p>*生成器：<code>scripts/weekly-report.py</code>（python3 标准库，无第三方依赖），只读、不处置、不部署。*</p>
+</main></body></html>
