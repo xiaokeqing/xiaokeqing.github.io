@@ -135,7 +135,7 @@ head1 "⑥ 产物里的公开端点必须全部属于已上线白名单"
 #   后端 DailyReportController 已实现（本仓库外，同批交付）；**这是预登记** —— 本轮不发布、不 push，
 #   线上还没实测过 200。上线后请先 curl 一次 /api/public/daily.js 确认（未生成时也应是 200 + available:false），
 #   再保持它在白名单里。站点 /status/ 的「今日日报」卡引用它；取不到时卡片写「未生成」而非填 0。
-ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password daily stream metrics"
+ALLOWED="ask kb overview alerts latest honeypot audit geo webstats tts stories story home deploy eval ip password daily stream metrics attack"
 FOUND=$(grep -rhoE '/api/public/[a-zA-Z0-9_-]+' "$PUB" 2>/dev/null | sed 's|/api/public/||' | sort -u | tr '\n' ' ')
 BAD=""
 for e in $FOUND; do
@@ -401,6 +401,9 @@ new_page_gate samples 样本分析页
 # ★2026-10-18：日报订阅说明页（/subscribe/）。数据契约同上；data-xk-ssr 用路由名 subscribe。
 #   这一页**没有表单、没有 input、不提交任何邮箱** —— 只有一条 mailto: 链接（隐私边界写死在页面正文里）。
 new_page_gate subscribe 日报订阅页
+# ★2026-11-08：ATT&CK 覆盖页（/attack/）。判据同上；data-xk-ssr 用路由名 attack
+#   （手写 section 页，数据来自 data/attack.json，由 scripts/attack-coverage.py 从 Wazuh 真实告警聚合）。
+new_page_gate attack ATT&CK覆盖页
 
 # ---------- ⑭ 外链共享运行时（2026-10-18：每页内联 136KB JS + 16KB CSS → 外链共享文件）----------
 # 背景：改前 10 页每页都内联同一份外壳 CSS/JS，页均 158–253KB，二次访问一个字节都省不下来。

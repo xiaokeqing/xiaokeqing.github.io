@@ -49,11 +49,11 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 工具台 <em class="ops-en">TOOLS</em></span>
-      <span class="sync" id="tpsSync">● 9 个工具 · 数据各在各的页面取</span>
+      <span class="sync" id="tpsSync">● 10 个工具 · 数据各在各的页面取</span>
     </div>
     <div class="screen-bd tps-bd">
-      <p class="tps-lead">这里是入口页，<b>9 个工具全在这一页能点到</b>。数据要么来自这台机器上真实跑着的东西（蜜罐、检测规则、CVE 清单），要么来自每天定时抓一次的官方源。每个工具页都会写明<b>数据什么时候抓的</b>、<b>抓不到时是什么样</b>——抓不到就写「读不到」，不补数、不估算。</p>
-      <p class="tps-note">分三组：<b>每天顺手用</b>（CVE / 密码）、<b>看得见现在的机器</b>（噪音 / 样本 / IP / 弱口令）、<b>攻防演练</b>（红队 / 紫队 / 日报订阅）。</p>
+      <p class="tps-lead">这里是入口页，<b>10 个工具全在这一页能点到</b>。数据要么来自这台机器上真实跑着的东西（蜜罐、检测规则、CVE 清单），要么来自每天定时抓一次的官方源。每个工具页都会写明<b>数据什么时候抓的</b>、<b>抓不到时是什么样</b>——抓不到就写「读不到」，不补数、不估算。</p>
+      <p class="tps-note">分三组：<b>每天顺手用</b>（CVE / 密码）、<b>看得见现在的机器</b>（噪音 / 样本 / ATT&amp;CK / IP / 弱口令）、<b>攻防演练</b>（红队 / 紫队 / 日报订阅）。</p>
       <p class="tps-group">① 每天顺手用</p>
       <div class="tps-grid">
 
@@ -97,6 +97,13 @@
           <p>蜜罐抓到的文件样本，以及"抓不到文件但行为可复现"的三条：哪个 IP 打了几千次 SSH、拿什么账号口令、有没有进到执行命令那一步。文件样本 0 条时也照写 0 条。</p>
           <div class="kv"><span>文件样本 <b>0 条（如实）</b></span><span>行为样本 <b>3 条</b></span><span>留存方案 <b>3 条</b></span></div>
           <span class="go">进入 → /samples/</span>
+        </a>
+
+        <a class="tps-card" href="/attack/">
+          <h3>ATT&amp;CK 覆盖<span class="en">ATT&amp;CK</span></h3>
+          <p>7 天真实告警按战术 × 技术铺成矩阵，每格给条数。同时把"规则压根没带 <code>mitre.id</code>"的那部分单列出来，不塞进任何技术里充数。</p>
+          <div class="kv"><span>窗口 <b>7 天</b></span><span>已映射 <b>49.8%</b></span><span>技术 <b>10 个</b></span></div>
+          <span class="go">进入 → /attack/</span>
         </a>
 
         <a class="tps-card" href="/ip/">

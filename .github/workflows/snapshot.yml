@@ -25,7 +25,7 @@
 #
 # 【抓哪 12 个端点】
 #   就是仓库里已入库的 12 个文件（一一对应，不多不少）：
-#     home.js alerts.js alerts5.js geo.js metrics.js stories.js webstats.js
+#     home.js alerts.js geo.js metrics.js stories.js webstats.js
 #     password.js kb.js deploy.js eval.js daily/index.json
 #   抓取失败的端点只打 ::warning:: 并【保留旧文件】，不整轮失败 —— 快照新旧不一致
 #   比"一条都刷不上"危害小得多（assert ⑥ 只按白名单认端点名，文件内容不参与断言）。
@@ -87,7 +87,7 @@ jobs:
         run: |
           set -uo pipefail
           OK=0; BAD=0
-          for p in home.js alerts.js alerts5.js geo.js metrics.js stories.js \
+          for p in home.js alerts.js geo.js metrics.js stories.js \
                    webstats.js password.js kb.js deploy.js eval.js daily/index.json; do
             out="static/api/public/$p"
             mkdir -p "$(dirname "$out")"
