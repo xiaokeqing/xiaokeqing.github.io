@@ -1,0 +1,321 @@
+{{- /* /samples-pipeline/ 样本流水线（M4）=========================================
+   数据：data/samples.json，构建期由 scripts/samples-stats.py ssh 到 secagent-srv2 采集。
+   页面只讲「落盘 → 去重 → 静态判定 → 情报标记 → 归档」五步的真实数量与状态：
+   走到哪、哪步没接、哪步按站主决定不做。取不到的字段一律写「未取到」，不补 0。
+   边界：不列原始文件名、不给样本下载、不出现样本哈希清单、不外链情报、零页面 JS。
+   ============================================================================ */ -}}
+{{- $s := hugo.Data.samples | default dict -}}
+{{- $d := $s.dionaea | default dict -}}
+{{- $cw := $s.cowrie | default dict -}}
+{{- $dd := $s.dedupe | default dict -}}
+{{- $sc := $s.scanner | default dict -}}
+{{- $files := $d.files -}}
+{{- $bytes := $d.bytes -}}
+{{- $mib := "" -}}
+{{- with $bytes }}{{ $mib = printf "%.1f MiB" (div (float .) 1048576) }}{{ end -}}
+{{- $gen := "" -}}
+{{- with $s.generatedAt }}{{ $gen = replace (replace . "T" " ") "Z" " UTC" }}{{ end -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 色板走 tokens.css 的 --xk-*，不新开一套配色 */
+.sp-back{display:inline-block;margin:0 0 10px;font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.03em;color:var(--xk-ink-lede,rgba(255,255,255,.55));text-decoration:none}
+.sp-back:hover{color:var(--xk-cyan,#7FD4D8)}
+.sp-bd{display:flex;flex-direction:column;gap:14px;min-width:0}
+.sp-lead{margin:0;font-size:19px;line-height:1.75;color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.sp-lead em{font-style:normal;color:var(--xk-warn,#E8B45A)}
+.sp-lead .ok{color:var(--xk-ok,#6FD3A0)}
+.sp-sub{margin:9px 0 0;font-size:13px;line-height:1.95;color:var(--xk-ink-lede,rgba(255,255,255,.62))}
+.sp-sub b{color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.sp-sub code,.sp-note code,.sp-desc code,.sp-truth code,.sp-next code,.sp-cap code{font-family:var(--xk-mono,ui-monospace,Consolas,monospace);font-size:11.5px;color:var(--xk-ok,#bfe3d0);background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.sp-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:12px 0 0;padding:0;list-style:none}
+.sp-kpi{min-width:0;padding:8px 11px;border:1px solid var(--xk-cyan-line-18,rgba(255,255,255,.12));border-radius:8px;background:rgba(0,0,0,.22)}
+.sp-kpi .k{display:block;font:11px/1.5 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.06em;color:var(--xk-ink-lede,rgba(255,255,255,.5))}
+.sp-kpi .v{display:block;margin-top:2px;font:600 17px/1.35 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-title,#eaf6ff);white-space:nowrap;font-variant-numeric:tabular-nums}
+.sp-kpi .v.warn{color:var(--xk-warn,#E8B45A)}
+.sp-kpi .v.ok{color:var(--xk-ok,#6FD3A0)}
+/* 五阶段：桌面横排（箭头在缝里），窄屏竖排（箭头朝下）。纯 CSS，无图标字体。 */
+.sp-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:24px;margin:13px 0 0;padding:0;list-style:none}
+.sp-step{position:relative;display:flex;flex-direction:column;gap:5px;min-width:0;padding:11px 12px 12px;border:1px solid rgba(255,255,255,.11);border-radius:10px;background:rgba(0,0,0,.26)}
+.sp-step::after{content:"";position:absolute;top:50%;right:-16px;width:9px;height:9px;border-top:2px solid rgba(127,212,216,.5);border-right:2px solid rgba(127,212,216,.5);transform:translateY(-50%) rotate(45deg)}
+.sp-step:last-child::after{display:none}
+.sp-idx{font:600 10.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.1em;color:var(--xk-ink-lede,rgba(255,255,255,.38))}
+.sp-name{font:600 14px/1.5 var(--xk-ink-title,#eaf6ff)}
+.sp-num{font:600 15px/1.45 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-title,#eaf6ff);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.sp-st{align-self:flex-start;padding:1px 7px;border-radius:999px;font:600 10.5px/1.7 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.06em;border:1px solid rgba(255,255,255,.2)}
+.sp-st.ok{color:var(--xk-ok,#6FD3A0);border-color:rgba(111,211,160,.4);background:rgba(111,211,160,.08)}
+.sp-st.off{color:var(--xk-warn,#E8B45A);border-color:rgba(232,180,90,.4);background:rgba(232,180,90,.08)}
+.sp-st.no{color:rgba(255,255,255,.58);border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.04)}
+.sp-desc{font:12px/1.78 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.6));overflow-wrap:anywhere}
+.sp-desc b{color:var(--xk-ink-title,rgba(255,255,255,.85));font-weight:600}
+/* 静态判定未部署：单独一块硬口径，不和别的说明混在一起 */
+.sp-truth{margin:12px 0 0;padding:10px 13px;border:1px solid rgba(232,180,90,.34);border-radius:8px;background:rgba(232,180,90,.07);font-size:13px;line-height:1.9;color:var(--xk-ink-lede,rgba(255,255,255,.76))}
+.sp-truth b{color:var(--xk-warn,#E8B45A);font-weight:600}
+.sp-next{margin:10px 0 0;padding:10px 13px;border:1px dashed rgba(127,212,216,.3);border-radius:8px;font-size:12.5px;line-height:1.9;color:var(--xk-ink-lede,rgba(255,255,255,.66))}
+.sp-next b{color:var(--xk-ink-title,rgba(255,255,255,.86));font-weight:600}
+/* 两张小表：并排，窄屏上下；表内可横向滚动，不撑破页面 */
+.sp-tables{display:grid;grid-template-columns:1fr 1fr;gap:14px;min-width:0;margin:12px 0 0}
+.sp-tables h3{margin:0 0 7px;font:600 12.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-title,rgba(255,255,255,.85))}
+.sp-scroll{overflow-x:auto;min-width:0}
+.sp-table{width:100%;border-collapse:collapse;font:12.5px/1.7 var(--xk-mono,ui-monospace,Consolas,monospace)}
+.sp-table th,.sp-table td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--xk-line,rgba(255,255,255,.09));white-space:nowrap}
+.sp-table th{font-size:11px;letter-spacing:.04em;font-weight:600;color:var(--xk-ink-lede,rgba(255,255,255,.6));background:rgba(255,255,255,.03)}
+.sp-table td{color:var(--xk-ink-title,#eaf6ff);font-variant-numeric:tabular-nums}
+.sp-table td.n{text-align:right}
+.sp-table th.n{text-align:right}
+.sp-table tbody tr:hover{background:rgba(127,212,216,.06)}
+.sp-cap{margin:8px 0 0;font-size:12px;line-height:1.85;color:var(--xk-ink-lede,rgba(255,255,255,.5))}
+.sp-note{margin:10px 0 0;font-size:12.5px;line-height:1.9;color:var(--xk-ink-lede,rgba(255,255,255,.55))}
+.sp-note b{color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.sp-note a{color:var(--xk-ok,#bfe3d0);text-decoration:none}
+.sp-note a:hover{text-decoration:underline}
+.sp-md{margin:0;padding:2px 0 0;font-size:13px;line-height:1.95;color:var(--xk-ink-lede,rgba(255,255,255,.72))}
+.sp-md ul{margin:0;padding-left:20px}
+.sp-md li{margin:3px 0}
+.sp-md b{color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.sp-md a{color:var(--xk-ok,#bfe3d0);text-decoration:none}
+.sp-md a:hover{text-decoration:underline}
+@media (max-width:1180px){
+  .sp-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sp-flow{grid-template-columns:1fr;gap:18px}
+  .sp-step{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:9px}
+  .sp-step::after{right:auto;top:auto;bottom:-14px;left:22px;transform:rotate(135deg)}
+  .sp-desc{flex:1 1 100%}
+}
+@media (max-width:900px){
+  .sp-tables{grid-template-columns:1fr}
+}
+/* 窄屏：模块头右侧的说明条换到第二行，不然标题会被挤断字（"五阶/段"） */
+@media (max-width:700px){
+  .mod-hd{flex-wrap:wrap;row-gap:3px}
+  .mod-hd .tag{flex:1 1 100%;margin-left:0;order:2;font-size:11.5px;line-height:1.6}
+}
+@media (max-width:520px){
+  .sp-idx{flex:0 0 100%}
+  .sp-lead{font-size:17px}
+  .sp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sp-kpi{padding:7px 9px}
+  .sp-kpi .v{font-size:15px}
+  .sp-step{padding:10px 11px}
+  .sp-table th,.sp-table td{padding:6px 8px}
+}
+</style>
+</head>
+<body class="is-view xk-has-idcard" data-skin="warm" data-phone="v1">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" "samples-pipeline") }}
+<main class="main" id="content" data-xk-ssr="samples-pipeline">
+<section class="view on" id="v-samples-pipeline">
+  <a class="sp-back" href="/samples/">← 样本分析 /samples/</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 样本流水线 <em class="ops-en">SAMPLE-PIPELINE</em></span>
+      <span class="sync">{{ with $gen }}● 采集 {{ . }} · 构建期读 data/samples.json，不 fetch{{ else }}● 未读到 data/samples.json{{ end }}</span>
+    </div>
+    <div class="screen-bd sp-bd">
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>一句话<span class="tag">五步走到哪一步</span></div>
+        <div class="mod-bd">
+          {{- if $d.files }}
+          <p class="sp-lead">
+            这条链现在<em>只走完第 ① 步</em>：<em>{{ lang.FormatNumber 0 $files }} 个文件</em>、{{ with $mib }}<em>{{ . }}</em>{{ else }}未取到{{ end }}
+            停在 dionaea 的 <code>bistreams</code> 里；去重、静态判定、情报标记、归档都没有在跑。
+          </p>
+          <p class="sp-sub">
+            ② 链路上没有去重步骤 —— 唯一数只是采集脚本事后对全量文件算了一遍 <code>sha256</code>；
+            ③ 静态判定<b>未部署</b> —— 主机上 <code>yara</code> 与 <code>clamscan</code> 都没有；
+            ④ 情报标记按站主决定<b>不接外链</b>（外部 key 与配额是硬门槛）；
+            ⑤ 归档没做 —— 只有两个日期目录，没有留存副本、没有保留期。
+            下面每一格都写清「数量 / 状态 / 一句话」。
+          </p>
+          <ul class="sp-kpis">
+            <li class="sp-kpi"><span class="k">落盘文件</span><span class="v">{{ lang.FormatNumber 0 $files }}</span></li>
+            <li class="sp-kpi"><span class="k">占用</span><span class="v">{{ with $mib }}{{ . }}{{ else }}未取到{{ end }}</span></li>
+            <li class="sp-kpi"><span class="k">sha256 唯一</span><span class="v ok">{{ with $dd.unique }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }}</span></li>
+            <li class="sp-kpi"><span class="k">重复件</span><span class="v warn">{{ with $dd.duplicates }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }}</span></li>
+            <li class="sp-kpi"><span class="k">近 7 天新增</span><span class="v">{{ with $d.d7 }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }}</span></li>
+            <li class="sp-kpi"><span class="k">可判定 PE/ELF</span><span class="v warn">{{ if ne $s.samplesReadable nil }}{{ lang.FormatNumber 0 $s.samplesReadable }}{{ else }}未取到{{ end }}</span></li>
+          </ul>
+          {{- else }}
+          <p class="sp-lead">读不到 <code>data/samples.json</code>，这一页只讲流程，不显示任何数量。</p>
+          <p class="sp-sub">先跑 <code>python scripts/samples-stats.py</code> 生成快照，再重新构建。取不到就是取不到，不补 0。</p>
+          {{- end }}
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>五阶段<span class="tag">横排 = 链的顺序 · 绿=在跑 / 黄=没接或没做</span></div>
+        <div class="mod-bd">
+          <ol class="sp-flow">
+            <li class="sp-step">
+              <span class="sp-idx">① 落盘</span>
+              <b class="sp-name">蜜罐写盘</b>
+              <span class="sp-num">{{ if $files }}{{ lang.FormatNumber 0 $files }} 件{{ else }}未取到{{ end }}</span>
+              <span class="sp-st ok">{{ if $files }}在跑{{ else }}未取到{{ end }}</span>
+              <span class="sp-desc">
+                {{ if $files }}dionaea <code>bistreams</code> 按日期目录落盘：{{ with $d.byDay }}{{ $p := slice }}{{ range . }}{{ $p = $p | append (printf "%s 共 %s 件" .date (lang.FormatNumber 0 .n)) }}{{ end }}{{ delimit $p "、" }}{{ end }}。
+                Cowrie downloads 另有 {{ with $cw.files }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 个文件（{{ with $cw.bytes }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 字节）。
+                {{ else }}没读到 bistreams 的数量。{{ end }}
+              </span>
+            </li>
+            <li class="sp-step">
+              <span class="sp-idx">② 去重</span>
+              <b class="sp-name">按 sha256 去重</b>
+              <span class="sp-num">{{ with $dd.unique }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 唯一{{ with $dd.duplicates }} / {{ lang.FormatNumber 0 . }} 重复{{ end }}</span>
+              <span class="sp-st off">未接入</span>
+              <span class="sp-desc">
+                链路上<b>没有去重这一步</b>，重复件照旧落盘。上面这个唯一数是采集脚本把全量文件算了一遍
+                <code>sha256</code> 之后的事后统计；Cowrie 的文件名本身就是 sha256，天然按内容命名。
+              </span>
+            </li>
+            <li class="sp-step">
+              <span class="sp-idx">③ 静态判定</span>
+              <b class="sp-name">YARA / ClamAV</b>
+              <span class="sp-num">{{ if eq $sc.available true }}已装{{ else }}0 次扫描{{ end }}</span>
+              <span class="sp-st no">{{ if eq $sc.available true }}在跑{{ else }}未部署{{ end }}</span>
+              <span class="sp-desc">
+                {{ with $sc.note }}{{ . }}。{{ end }}落盘的 {{ if $files }}{{ lang.FormatNumber 0 $files }}{{ else }}那批{{ end }} 个文件经
+                <code>file</code> 判定全是 ASCII text / CSV text / 空文件 —— <b>0 个 PE、0 个 ELF</b>。
+                没有可判定的对象，但这不等于以后不会有。
+              </span>
+            </li>
+            <li class="sp-step">
+              <span class="sp-idx">④ 情报标记</span>
+              <b class="sp-name">外部情报</b>
+              <span class="sp-num">0 条</span>
+              <span class="sp-st off">未接入</span>
+              <span class="sp-desc">
+                站主明确<b>不做外链情报</b>：外部 key 与配额是硬门槛。没有情报源就没有标定，
+                页面也不假装有 —— 这一格永远是 0，不是「还没跑到」。
+              </span>
+            </li>
+            <li class="sp-step">
+              <span class="sp-idx">⑤ 归档</span>
+              <b class="sp-name">留存与索引</b>
+              <span class="sp-num">无保留策略</span>
+              <span class="sp-st no">未做</span>
+              <span class="sp-desc">
+                bistreams 下只有日期目录，更早的没有留存副本；没有归档盘、没有保留期、没有索引文件。
+                要回答「上个月的样本还在不在」，现在答不了。
+              </span>
+            </li>
+          </ol>
+
+          <div class="sp-truth">
+            <b>静态判定未部署。</b>
+            主机上 <code>command -v yara clamscan</code> 都是空；Wazuh manager 的
+            <code>ossec.conf</code> 只监控 dionaea 的 json / log / errors 三个文件，<b>没有盯 bistreams</b>。
+            所以第 ③ 步不是「扫了没命中」，是「一次都没扫过」——这两个说法在这一页不能混。
+          </div>
+          <div class="sp-next">
+            <b>下一步建议（还没做）：</b>
+            ① 装 <code>yara</code> 或 <code>clamav</code>，先对历史 bistreams 做<b>只读</b>扫描，只出命中清单；
+            ② 再上一条只扫新增文件的定时任务，把命中写进快照；
+            ③ 命中稳定之后才讨论是否联动 Wazuh 处置 —— 现在直接改 Wazuh 配置会动到告警口径，先不要动。
+          </div>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>两个分布<span class="tag">Top 类型 + 大小分桶 · 同一批文件</span></div>
+        <div class="mod-bd">
+          <div class="sp-tables">
+            <div>
+              <h3>按内容类型 Top</h3>
+              <div class="sp-scroll">
+                <table class="sp-table">
+                  <thead><tr><th>类型</th><th class="n">件数</th><th class="n">字节</th><th class="n">占比</th></tr></thead>
+                  <tbody>
+                  {{- with $d.byExt }}
+                    {{- range . }}
+                    {{- $label := .ext -}}
+                    {{- if eq .ext "(empty)" }}{{ $label = "空文件" }}{{ else if eq .ext "txt" }}{{ $label = "ASCII text" }}{{ else if eq .ext "csv" }}{{ $label = "CSV text" }}{{ end }}
+                    <tr>
+                      <td>{{ $label }}</td>
+                      <td class="n">{{ lang.FormatNumber 0 .n }}</td>
+                      <td class="n">{{ lang.FormatNumber 0 .bytes }}</td>
+                      <td class="n">{{ if and $files (gt $files 0) }}{{ printf "%.1f%%" (div (mul (float .n) 100.0) (float $files)) }}{{ else }}—{{ end }}</td>
+                    </tr>
+                    {{- end }}
+                  {{- else }}
+                    <tr><td colspan="4">未取到</td></tr>
+                  {{- end }}
+                  </tbody>
+                </table>
+              </div>
+              <p class="sp-cap">
+                dionaea 的文件名<b>不带扩展名</b>（<code>服务-源-端口-时间-随机6位</code>），按扩展名统计只会剩一行
+                「(无扩展名)」；所以这张表按 <code>file</code> 判定的<b>内容类型</b>分组。全部是文本，没有可执行文件。
+              </p>
+            </div>
+            <div>
+              <h3>按大小分桶</h3>
+              <div class="sp-scroll">
+                <table class="sp-table">
+                  <thead><tr><th>桶</th><th class="n">件数</th><th class="n">字节</th><th class="n">占比</th></tr></thead>
+                  <tbody>
+                  {{- with $d.bySize }}
+                    {{- range . }}
+                    <tr>
+                      <td>{{ .bucket }}</td>
+                      <td class="n">{{ lang.FormatNumber 0 .n }}</td>
+                      <td class="n">{{ lang.FormatNumber 0 .bytes }}</td>
+                      <td class="n">{{ if and $files (gt $files 0) }}{{ printf "%.1f%%" (div (mul (float .n) 100.0) (float $files)) }}{{ else }}—{{ end }}</td>
+                    </tr>
+                    {{- end }}
+                  {{- else }}
+                    <tr><td colspan="4">未取到</td></tr>
+                  {{- end }}
+                  </tbody>
+                </table>
+              </div>
+              <p class="sp-cap">
+                桶边界：<code>&lt;1K</code> / <code>1K–10K</code> / <code>10K–100K</code> / <code>100K–1M</code> / <code>&gt;1M</code>（1K = 1024 字节）。
+                这一批里没有任何文件超过 10K —— 蜜罐收到的多是探测串、SQL 错误回显和空连接。
+              </p>
+            </div>
+          </div>
+          <p class="sp-note">
+            <b>两份数据是同一批文件</b>：先 <code>find</code> 出一份文件清单固定快照，再在清单上做类型、大小、去重统计，
+            不会出现「类型加起来比总数多」的错位。蜜罐还在收，重跑脚本数字会变。
+          </p>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>口径 · 这些数从哪来<span class="tag">先看这块，再看数字</span></div>
+        <div class="mod-bd">
+          <div class="sp-md">
+            <ul>
+              <li><b>数据源</b>：<code>ssh secagent-srv2</code> 只读采集 —— dionaea <code>/opt/dionaea/var/lib/dionaea/bistreams</code>（按日期目录）、Cowrie <code>/opt/cowrie/dl</code>（compose 挂载的 downloads）。</li>
+              <li><b>触发</b>：手动跑 <code>python scripts/samples-stats.py</code> 写 <code>data/samples.json</code>；页面构建期读 <code>hugo.Data.samples</code>，SSR 直出，不 fetch、不连库、零页面 JS。</li>
+              <li><b>采集时刻</b>：{{ with $gen }}{{ . }}{{ else }}未取到{{ end }}。这是那一刻的快照，不是「现在」。</li>
+              <li><b>不公开原始样本</b>：只写类型、件数、字节；不列文件名、不给下载链接、不列样本哈希，页面里一个样本字节都没有。</li>
+              <li><b>不外链情报</b>：第 ④ 步按站主决定不做，外部 key 与配额是硬门槛；页面不向任何第三方发请求。</li>
+              <li><b>不编数</b>：取不到的字段写 <code>null</code>，页面显示「未取到」，不补 0。Cowrie 近 7 天 0 是<b>真实 0</b>（4 个文件的时间都在 2026-10-18），不是没取到。</li>
+            </ul>
+            <p class="sp-note" style="margin-top:10px">
+              相关：<a href="/samples/">样本分析 /samples/</a> ·
+              <a href="/alerts/">实时看板</a> ·
+              <a href="/status/">运行状态</a> ·
+              <a href="/attack/">ATT&amp;CK 覆盖</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+{{ partial "xk-demo/site-foot.html" . }}
+</body>
+</html>

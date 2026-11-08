@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-11-08T15:27:01Z",
+  "source": {
+    "host": "secagent-srv2",
+    "dionaea": "/opt/dionaea/var/lib/dionaea/bistreams",
+    "cowrie": "/opt/cowrie/dl"
+  },
+  "dionaea": {
+    "files": 18960,
+    "bytes": 23051892,
+    "d7": 18960,
+    "d7Bytes": 23051892,
+    "byExt": [
+      {
+        "ext": "txt",
+        "n": 18923,
+        "bytes": 23005687
+      },
+      {
+        "ext": "csv",
+        "n": 34,
+        "bytes": 46205
+      },
+      {
+        "ext": "(empty)",
+        "n": 3,
+        "bytes": 0
+      }
+    ],
+    "bySize": [
+      {
+        "bucket": "<1K",
+        "n": 5347,
+        "bytes": 2410660
+      },
+      {
+        "bucket": "1K-10K",
+        "n": 13613,
+        "bytes": 20641232
+      }
+    ],
+    "byService": [
+      {
+        "service": "mssqld",
+        "n": 17937,
+        "bytes": 22677267
+      },
+      {
+        "service": "mysqld",
+        "n": 549,
+        "bytes": 100854
+      },
+      {
+        "service": "smbd",
+        "n": 474,
+        "bytes": 273771
+      }
+    ],
+    "byDay": [
+      {
+        "date": "2026-11-07",
+        "n": 10377,
+        "bytes": 14252775
+      },
+      {
+        "date": "2026-11-08",
+        "n": 8583,
+        "bytes": 8799117
+      }
+    ]
+  },
+  "cowrie": {
+    "files": 4,
+    "bytes": 140,
+    "d7": 0,
+    "d7Bytes": 0
+  },
+  "total": {
+    "files": 18964,
+    "bytes": 23052032
+  },
+  "dedupe": {
+    "unique": 17070,
+    "duplicates": 1890
+  },
+  "scanner": {
+    "available": false,
+    "tool": null,
+    "note": "yara 与 clamscan 均未安装（command -v 无输出）；Wazuh manager 的 ossec.conf 未监控 bistreams"
+  },
+  "samplesReadable": 0,
+  "notes": []
+}
