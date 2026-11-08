@@ -403,7 +403,7 @@ new_page_gate samples 样本分析页
 new_page_gate subscribe 日报订阅页
 # ★2026-11-08：ATT&CK 覆盖页（/attack/）。判据同上；data-xk-ssr 用路由名 attack
 #   （手写 section 页，数据来自 data/attack.json，由 scripts/attack-coverage.py 从 Wazuh 真实告警聚合）。
-new_page_gate attack ATT&CK覆盖页
+new_page_gate attack "ATT&CK覆盖页"
 new_page_gate trend 每日留存页
 # ★2026-11-08：蜜罐会话回放（/session/）与样本流水线（/samples-pipeline/）。
 #   两者数据都来自构建期快照（data/sessions/index.json、data/samples.json），页面不 fetch。
