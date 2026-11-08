@@ -1,0 +1,210 @@
+{{- /* /session/ 蜜罐会话回放（M3-B）=================================================
+   数据：data/sessions/index.json，构建期由 scripts/honeypot-sessions.py 从 srv2 生成。
+   实测 Cowrie 没开 output_ttylog（tty 目录只有 .gitignore），cowrie.command.input
+   也是 0 条，所以这里不做假终端：一次会话一行，展开是连接/登录/断开的真实事件时间线。
+   IP 在脚本里已遮成 a.b.c.x；页面不出现完整地址、不提供样本下载、不含口令。
+   JS 只做「点开时逐行亮起」，无 JS 时 SSR 全亮可读。
+   ============================================================================ */ -}}
+{{- $v := "session" -}}
+{{- $d := hugo.Data.sessions.index -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+/* 色板全部走 tokens.css 的 --xk-*，不新开一套配色 */
+.ss-back{display:inline-block;margin:0 0 10px;font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.03em;color:var(--xk-ink-lede,rgba(255,255,255,.55));text-decoration:none}
+.ss-back:hover{color:var(--xk-cyan,#7FD4D8)}
+.ss-bd{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ss-lead{margin:0;font-size:19px;line-height:1.75;color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.ss-lead em{font-style:normal;color:var(--xk-warn,#E8B45A)}
+.ss-lead .ok{color:var(--xk-ok,#6FD3A0)}
+.ss-sub{margin:9px 0 0;font-size:13px;line-height:1.95;color:var(--xk-ink-lede,rgba(255,255,255,.62))}
+.ss-sub b{color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.ss-sub code{font-family:var(--xk-mono,ui-monospace,Consolas,monospace);font-size:11.5px;color:var(--xk-ok,#bfe3d0);background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.ss-kpis{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;padding:0;list-style:none}
+.ss-kpi{flex:1 1 132px;min-width:0;padding:8px 11px;border:1px solid var(--xk-cyan-line-18,rgba(255,255,255,.12));border-radius:8px;background:rgba(0,0,0,.22)}
+.ss-kpi .k{display:block;font:11px/1.5 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.06em;color:var(--xk-ink-lede,rgba(255,255,255,.5))}
+.ss-kpi .v{display:block;margin-top:2px;font:600 17px/1.35 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-title,#eaf6ff);white-space:nowrap}
+.ss-kpi .v.warn{color:var(--xk-warn,#E8B45A)}
+.ss-kpi .v.ok{color:var(--xk-ok,#6FD3A0)}
+.ss-note{margin:10px 0 0;font-size:12.5px;line-height:1.9;color:var(--xk-ink-lede,rgba(255,255,255,.55))}
+.ss-note b{color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.ss-note code{font-family:var(--xk-mono,ui-monospace,Consolas,monospace);font-size:11.5px;color:var(--xk-ok,#bfe3d0);background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+.ss-note a{color:var(--xk-ok,#bfe3d0);text-decoration:none}
+.ss-note a:hover{text-decoration:underline}
+/* 「这站没开 ttylog」的硬口径，单独一块，不和别的说明混在一起 */
+.ss-truth{margin:12px 0 0;padding:10px 13px;border:1px solid rgba(232,180,90,.34);border-radius:8px;background:rgba(232,180,90,.07);font-size:13px;line-height:1.9;color:var(--xk-ink-lede,rgba(255,255,255,.74))}
+.ss-truth b{color:var(--xk-warn,#E8B45A);font-weight:600}
+.ss-truth code{font-family:var(--xk-mono,ui-monospace,Consolas,monospace);font-size:11.5px;color:var(--xk-ok,#bfe3d0);background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
+/* 会话行 */
+.ss-list{margin:12px 0 0;border-top:1px solid var(--xk-cyan-line-12,rgba(255,255,255,.1))}
+.ss-sess{border-bottom:1px solid var(--xk-cyan-line-12,rgba(255,255,255,.1));min-width:0}
+.ss-sess>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:10px 4px;cursor:pointer;list-style:none;outline:none}
+.ss-sess>summary::-webkit-details-marker{display:none}
+.ss-sess>summary:focus-visible{box-shadow:inset 0 0 0 2px rgba(127,212,216,.45);border-radius:6px}
+.ss-sess[open]>summary{background:rgba(127,212,216,.05)}
+.ss-idx{font:600 11px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.35));letter-spacing:.04em}
+.ss-time{font:600 13px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-title,#eaf6ff);font-variant-numeric:tabular-nums}
+.ss-ip{font:12.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-cyan,#cfe9f5);font-variant-numeric:tabular-nums}
+.ss-geo{font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.52))}
+.ss-geo b{margin-left:5px;font-weight:600;color:var(--xk-ink-title,rgba(255,255,255,.8))}
+.ss-dur{font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.45))}
+.ss-cnt{font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-warn,rgba(232,180,90,.85))}
+.ss-tail{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 12px;min-width:0}
+.ss-arrow{margin-left:auto;font:11px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.4));transition:transform .15s ease}
+.ss-sess[open] .ss-arrow{transform:rotate(90deg)}
+.ss-body{padding:2px 4px 14px;min-width:0}
+.ss-meta{font:11px/1.8 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.42));overflow-wrap:anywhere}
+.ss-meta code{color:var(--xk-ink-title,rgba(255,255,255,.72))}
+/* 事件面板：看起来像终端，但内容是事件，不是伪造的输出 */
+.ss-term{margin:8px 0 0;padding:10px 12px;border:1px solid rgba(127,212,216,.18);border-radius:8px;background:rgba(4,10,13,.62);min-width:0;overflow-x:auto}
+.ss-line{display:block;font:12.5px/1.95 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.8));white-space:pre-wrap;overflow-wrap:anywhere}
+.ss-line .ss-ts{display:inline-block;min-width:62px;margin-right:8px;color:var(--xk-ink-lede,rgba(255,255,255,.38));font-variant-numeric:tabular-nums}
+.ss-line .ss-k{display:inline-block;min-width:56px;margin-right:8px;font-size:10.5px;letter-spacing:.08em;color:var(--xk-cyan,#7FD4D8)}
+.ss-line.ss-connect .ss-k{color:var(--xk-cyan,#7FD4D8)}
+.ss-line.ss-client{opacity:.72}
+.ss-line.ss-client .ss-k{color:rgba(255,255,255,.35)}
+.ss-line.ss-login .ss-k{color:var(--xk-ok,#6FD3A0)}
+.ss-line.ss-close .ss-k{color:var(--xk-warn,#E8B45A)}
+.ss-line.ss-cmd{color:#d8ffe9}
+.ss-line.ss-cmd .ss-k{color:var(--xk-ok,#6FD3A0)}
+/* 逐行亮起：默认全亮（无 JS 可读），JS 播时先把未到的行压暗 */
+.ss-term.is-playing .ss-line{opacity:.14}
+.ss-term.is-playing .ss-line.on{opacity:1;transition:opacity .14s ease}
+.ss-foot{margin:8px 0 0;font-size:12px;line-height:1.85;color:var(--xk-ink-lede,rgba(255,255,255,.42))}
+.ss-foot code{font-family:var(--xk-mono,ui-monospace,Consolas,monospace);font-size:11px}
+.ss-empty{padding:12px 0;font-size:13px;line-height:1.8;color:var(--xk-ink-lede,rgba(255,255,255,.5))}
+@media (max-width:720px){
+  .ss-lead{font-size:17px}
+  .ss-sess>summary{gap:3px 9px;padding:9px 2px}
+  .ss-arrow{display:none}
+  .ss-line{font-size:11.5px}
+  .ss-line .ss-ts{min-width:54px;margin-right:6px}
+  .ss-line .ss-k{min-width:48px;margin-right:6px}
+  .ss-term{padding:9px 10px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ss-arrow{transition:none}
+  .ss-term.is-playing .ss-line{opacity:1}
+}
+</style>
+</head>
+<body class="is-view xk-has-idcard" data-skin="warm" data-phone="v1">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="session">
+<section class="view on" id="v-session">
+  <a class="ss-back" href="/alerts/">← 实时告警 /alerts/</a>
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 蜜罐会话 <em class="ops-en">HONEYPOT-SESSIONS</em></span>
+      <span class="sync">{{ with $d }}● {{ len .sessions }} 个会话 · 快照 {{ .generatedAt }}{{ else }}● 未读到 data/sessions/index.json{{ end }}</span>
+    </div>
+    <div class="screen-bd ss-bd">
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>一句话<span class="tag">真实会话 · 不伪造终端</span></div>
+        <div class="mod-bd">
+          {{- with $d }}
+          <p class="ss-lead">
+            最近 <em>{{ .windowDays }} 天</em>，Cowrie 接了 <em>{{ lang.FormatNumber 0 .stats.connects }}</em> 次 SSH 连接、记下
+            <em>{{ lang.FormatNumber 0 .stats.logins }}</em> 条登录成功事件，但命令输入是
+            <em>{{ .stats.commands }}</em> 条。
+          </p>
+          <p class="ss-sub">
+            所以这一页<b>没有终端录像</b>：Cowrie 的 <code>output_ttylog</code> 没开，原始字节流从未落盘；
+            攻击者登录成功后 1–5 秒内就断开，也没敲下一条命令。下面每条会话能核对的，
+            只有连接、SSH 客户端指纹、登录、断开这几个真实事件。
+          </p>
+          <ul class="ss-kpis">
+            <li class="ss-kpi"><span class="k">窗口</span><span class="v">{{ .windowDays }} 天</span></li>
+            <li class="ss-kpi"><span class="k">SSH 连接</span><span class="v">{{ lang.FormatNumber 0 .stats.connects }}</span></li>
+            <li class="ss-kpi"><span class="k">登录成功事件</span><span class="v">{{ lang.FormatNumber 0 .stats.logins }}</span></li>
+            <li class="ss-kpi"><span class="k">登录失败</span><span class="v">{{ .stats.loginFails }}</span></li>
+            <li class="ss-kpi"><span class="k">命令输入</span><span class="v warn">{{ .stats.commands }}</span></li>
+            <li class="ss-kpi"><span class="k">ttylog</span><span class="v warn">{{ if .ttylog.available }}已开{{ else }}未开启{{ end }}</span></li>
+          </ul>
+          <p class="ss-note">
+            <b>口径</b>：登录成功按 <code>cowrie.login.success</code> 事件计数 —— 同一会话里客户端反复认证会记多条
+            （本次窗口单会话最多 5 条），所以它略高于连接数；<b>连接数才是会话数</b>。统计覆盖 {{ .stats.files }} 个轮转日志文件。
+          </p>
+          <p class="ss-note">
+            <b>样本</b>：<code>downloads/</code> 里共 {{ .downloads.files }} 个文件、{{ .downloads.bytes }} 字节，
+            最新 {{ .downloads.newest }}，最近 7 天新增 {{ .downloads.recent }} 个。数量太少且不可信，
+            这一页不提供任何样本下载。ttylog 探针结果：{{ .ttylog.note }}。
+          </p>
+          {{- else }}
+          <p class="ss-lead">读不到 <code>data/sessions/index.json</code>，这一页不显示任何会话。</p>
+          <p class="ss-sub">先跑 <code>python scripts/honeypot-sessions.py</code> 生成快照，再重新构建。</p>
+          {{- end }}
+        </div>
+      </div>
+
+      {{- with $d }}
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>会话时间线<span class="tag">最近 {{ len .sessions }} 条 · 点开逐行回放</span></div>
+        <div class="mod-bd">
+          <div class="ss-truth">
+            <b>这站没开 ttylog 回放，下面是命令流。</b>
+            这句是 B 方案的固定口径；实际命中的会话里命令流是空的（<code>cowrie.command.input</code> = 0 条，
+            登录成功即断），所以展开后只有事件节点，没有可回放的命令与输出。
+          </div>
+
+          <div class="ss-list">
+            {{- range $i, $s := .sessions }}
+            <details class="ss-sess" id="s-{{ $s.id }}">
+              <summary>
+                <span class="ss-idx">{{ printf "%02d" (add $i 1) }}</span>
+                <span class="ss-time" title="{{ $s.start }}">{{ $s.t }}</span>
+                <span class="ss-ip">{{ $s.ip }}</span>
+                <span class="ss-tail">
+                  <span class="ss-geo">{{ $s.countryName }}<b>{{ $s.country }}</b></span>
+                  <span class="ss-dur">{{ with $s.duration }}{{ printf "%.1f s" (div (float .) 1000) }}{{ else }}—{{ end }}</span>
+                  <span class="ss-cnt">{{ len $s.commands }} 条命令</span>
+                </span>
+                <span class="ss-arrow" aria-hidden="true">▸</span>
+              </summary>
+              <div class="ss-body">
+                <div class="ss-meta">会话 <code>{{ $s.id }}</code> · {{ $s.start }}（北京时间）
+                  {{- with $s.client }} · 客户端 <code>{{ . }}</code>{{ end }}</div>
+                <div class="ss-term" role="log" aria-label="会话 {{ $s.id }} 事件">
+                  {{- range $s.events }}
+                  <span class="ss-line ss-{{ .kind }}"><span class="ss-ts">{{ with .t }}{{ . }}{{ else }}·{{ end }}</span><span class="ss-k">{{ if eq .kind "connect" }}CONNECT{{ else if eq .kind "client" }}CLIENT{{ else if eq .kind "login" }}LOGIN{{ else if eq .kind "fail" }}FAIL{{ else if eq .kind "close" }}CLOSE{{ else if eq .kind "cmd" }}CMD{{ else }}{{ .kind }}{{ end }}</span>{{ .text }}</span>
+                  {{- end }}
+                  {{- if not $s.commands }}
+                  <span class="ss-line ss-cmd"><span class="ss-ts">·</span><span class="ss-k">CMD</span>0 条：本会话没有记录到 cowrie.command.input</span>
+                  {{- end }}
+                </div>
+                <p class="ss-foot">没有 ttylog：终端输出字节流从未落盘，这里还原不出屏幕；上面是该会话全部可核事件。
+                  口令与用户名已剔除，来源地址只保留 <code>a.b.c.x</code>。</p>
+              </div>
+            </details>
+            {{- end }}
+          </div>
+
+          <p class="ss-note">
+            快照由 <code>scripts/honeypot-sessions.py</code> 在构建期生成（本页直接读
+            <code>data/sessions/index.json</code>，SSR，不 fetch）；只取最后 {{ len .sessions }} 个
+            「有登录且有断开」的完整会话，更早的不在快照里。
+            相关：<a href="/attack/">ATT&amp;CK 覆盖</a> ·
+            <a href="/alerts/">实时告警</a> ·
+            <a href="/status/">运行状态</a>
+          </p>
+        </div>
+      </div>
+      {{- end }}
+
+    </div>
+  </div>
+</section>
+</main>
+{{ partial "xk-demo/site-foot.html" . }}
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+<script src="{{ (resources.Get "js/session-replay.js" | minify | fingerprint).RelPermalink }}"></script>
+</body>
+</html>
