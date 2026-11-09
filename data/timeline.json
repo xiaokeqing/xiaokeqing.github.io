@@ -9,7 +9,7 @@
       "tag": "采集面",
       "problem": "Suricata 侧只读 <code>event_type=alert</code>：能看见「有人在扫我」，看不见被测端口、TLS SNI、JA3 指纹。跨机链路只有 <b>约 2 Mbps</b>，<b>8 MB</b> 要传 <b>6 分钟</b>。",
       "judgment": "告警是结论，原始事件才是证据。要回答「扫描面有多大」必须接全事件；但链路带宽有限，不能无限灌，得给内存和传输都设上限。",
-      "action": "把「一次性读尾部」改成按<b>字节偏移</b>增量读取，每类事件进 <b>50000 条</b>有界环；启动回填 <b>20000</b> 行；跨机同步改成 <code>tail | gzip | ssh</code>。",
+      "action": "把「一次性读尾部」改成按<b>字节偏移</b>增量读取，每类事件进 <b>50000 条</b>有界环；启动回填 <b>20000</b> 行；跨机同步改成 <code>tail | gzip -1 | ssh | gunzip</code>。",
       "result": "同一段 <b>8 MB</b> 从 <b>6 分钟</b>降到 <b>20 秒</b>；线上 60 分钟 top-ports 看到 <b>2222:1524</b>、<b>80:1391</b>、<b>1433:352</b>，JA3 指纹 <b>49</b> 个。",
       "source": "Amadeus §38.1–38.3、§38.7（2026-11-06 深夜）",
       "retro": "我会先把链路带宽和单条事件大小量清楚，再决定全量摄取的上限；不会先接全量、再靠有界环兜底。"
@@ -31,7 +31,7 @@
       "sort": "2026-11-07T23:00:00+08:00",
       "title": "隧道 >1 KB 就掉到 ~600 B/s：把实时接口改成构建期快照",
       "tag": "架构",
-      "problem": "公网经 CF 隧道取数据，响应体超过 <b>~3 KB</b> 吞吐掉到 <b>~600 B/s</b>；<code>home.js</code> <b>36 KB</b> 跑 <b>60 秒</b>只下到 <b>3 KB</b>，<code>alerts.js</code> <b>16 KB</b> 直接 <code>connection reset</code>。",
+      "problem": "公网经 CF 隧道取数据，响应体超过 <b>1 KB</b> 吞吐就掉到 <b>~600 B/s</b>；<code>home.js</code> <b>36 KB</b> 跑 <b>60 秒</b>只下到 <b>3 KB</b>，<code>alerts.js</code> <b>16 KB</b> 直接 <code>connection reset</code>。",
       "judgment": "静态站不该把「每次打开页面」押在实时穿隧道的接口上。公开只读数据是低频变化的聚合结果，构建期抓一次就够。",
       "action": "12 个公开只读端点落成 <code>static/api/public/*.js</code> 构建期快照；后来 <code>/ip/</code> 改三级取数（静态快照 → 同源反代 → 直连），总预算 <b>26 秒</b>，10 个热点 IP 快照共 <b>45,604 B</b>。",
       "result": "快照后 <code>alerts.js</code> <b>17,256 B / 1.13 s</b>、<code>home.js</code> <b>38,774 B / 1.17 s</b>；Vercel 上 <code>alerts.js</code> <b>17,944 B / 0.26 s</b>（<code>X-Vercel-Cache: HIT</code>），页面从转圈变秒开。",
@@ -53,14 +53,14 @@
     {
       "date": "2026-11-08",
       "sort": "2026-11-08T20:00:00+08:00",
-      "title": "MTTD/MTTR 没有样本：显示「未取到」，不补 0",
+      "title": "MTTD/MTTR 没有数据时：显示「未取到」，不补 0",
       "tag": "口径",
-      "problem": "指标卡要展示 MTTD/MTTR，但公开可见化还没做完（<code>/api/sec/metrics/summary</code> 未登录 <b>401</b>）；没有可用样本时，前端如果补 0，会让人误以为「响应时间为 0」。",
+      "problem": "指标卡要展示 MTTD/MTTR，但公开可见化还没做完（<code>/api/sec/metrics/summary</code> 未登录 <b>401</b>）；没有数据时，前端如果补 0，会让人误以为「响应时间为 0」。",
       "judgment": "0 是一个测量结果，不是「没测到」。没有数据就写「不适用 / 未取到」并给原因；不能为了让卡片好看补 0。",
       "action": "统一口径：聚合接口取不到返回 <code>available:false</code> + <code>reason</code>，前端显示「未取到」；聚合数保留源告警 id；不把 mock 当真实。",
-      "result": "指标卡不会显示假的 0；截至文档，公开可见化仍未完成，所以页面只能标「未取到 / 不适用」。（无量化：文档没有给出 MTTD/MTTR 的可用样本数）",
+      "result": "口径定为：取不到就显示「未取到」，不补 0；截至文档，公开可见化仍未完成，页面上没有可引用的 MTTD/MTTR 数字。（无量化：文档没有给出可用样本数）",
       "source": "项目交接 §5②、§10 第 3 条；Amadeus §41.6；README 口径",
-      "retro": "我会先把指标口径和可用样本定清楚，再上卡片；不会用 0 代替「没测到」。"
+      "retro": "我会先把指标口径和「无数据」的展示定清楚，再上卡片；不会用 0 代替「没测到」。"
     },
     {
       "date": "2026-11-09",
@@ -79,7 +79,7 @@
       "sort": "2026-11-09T15:00:00+08:00",
       "title": "桑基图 canvas=null：方案说「已完成」，页面没画出来",
       "tag": "验证",
-      "problem": "桑基图原方案用 ECharts 懒加载，文档写「代码已完成」，但实际渲染出来 <code>canvas=null</code>——图根本没画。",
+      "problem": "桑基图原方案用 ECharts 懒加载，方案写「代码已完成」，但实际渲染出来 <code>canvas=null</code>——图根本没画。",
       "judgment": "「代码写完」不等于「页面画出来」。为一张图引 <b>1 MB</b> 第三方库不划算；能用 <b>约 4 KB</b> SVG 手画，就不该上库。",
       "action": "重写成纯 SVG：零第三方、零网络请求；删除 <code>assets/js/vendor/echarts.min.js</code>（<b>1,034,102 B</b>）和 <code>data-echarts</code> 属性。",
       "result": "图正常渲染：1440 下 <b>h=360 / w=1318 / paths=12</b>，390 下 <b>h=300 / w=332</b>；体积约 <b>4 KB</b>。",

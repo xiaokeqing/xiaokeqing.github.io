@@ -283,7 +283,14 @@
 
   var hourlyAsked = false;
   function loadHourlyFromAlerts(){
-    if(hourlyAsked || !window.__xkViz){ return; }
+    if(hourlyAsked){ return; }
+    /* xk-viz.js 是 defer 加载的，本页内联脚本先跑时 __xkViz 还没就绪 —— 以前靠"日报接口回来得晚"
+       侥幸躲过，2026-11-09 把热力从接口解耦后就必须自己重试，否则 24 格永远是「—」。 */
+    if(!window.__xkViz){
+      loadHourlyFromAlerts.n = (loadHourlyFromAlerts.n || 0) + 1;
+      if(loadHourlyFromAlerts.n <= 30){ setTimeout(loadHourlyFromAlerts, 200); }
+      return;
+    }
     hourlyAsked = true;
     fetch('/api/public/alerts.js', { cache: 'no-cache' }) /* 同源静态快照，里面有 stats24h.trend；不要再打 demo 域 */
       .then(function(r){ return r.ok ? r.json() : null; })
