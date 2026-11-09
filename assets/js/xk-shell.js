@@ -28,10 +28,14 @@ const tcursor = document.createElement('div');
 tcursor.innerHTML = '<span class="tcursor"></span>';
 let feedSeen = {};
 function feedCap(){
+  /* 2026-11-09：非 /alerts/ 页没有 #termFeed（/daily/ /lab/ /more/ 等），
+     但公共脚本仍会走到这里 —— 先判空，别把 getComputedStyle(null) 抛成 pageerror。 */
+  if (!termFeed) return 2;
   const lh = parseFloat(getComputedStyle(termFeed).lineHeight) || 22.8;
   return Math.max(2, Math.floor((termFeed.clientHeight - 20) / lh) - 1);
 }
 function feedRow(it){
+  if (!termFeed) return;   /* 同上 */
   const el = document.createElement('div');
   el.className = 'tl lv-' + (it.cls || 'dns');   /* ★R2：行左 2px 级别色条（颜色映射在 CSS 里，复用既有类型色的变量，不新增色值） */
   el.innerHTML = `<span class="ts">${xkEsc(it.ts)}</span> <span class="tg ${it.cls}">${xkEsc(it.tag)}</span> ${xkEsc(it.text)}`;
@@ -85,6 +89,7 @@ if (termFeed) termFeed.addEventListener('click', function (e) {
   feedDetailShow(row.__d);
 });
 function feedTrim(){
+  if (!termFeed) return;   /* 同上：没有实时流容器就什么都不用修剪 */
   const cap = feedCap();
   while(termFeed.querySelectorAll('.tl').length > cap) termFeed.removeChild(termFeed.querySelector('.tl'));
   termFeed.appendChild(tcursor);
