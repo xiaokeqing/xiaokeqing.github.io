@@ -17,7 +17,10 @@
 {{ partial "xk-demo/shell-style.html" . }}
   <style>
     /* 正文排版：暖玻璃底上的可读性（字号/行距沿用旧博客，颜色换暖灰） */
-    .xk-article{max-width:min(1180px,100%);margin:0 auto;padding:26px 30px 30px;color:var(--txt);
+    /* 2026-11-09：正文行宽从 1083px 收到 ~720px。实测在 1083px 下一行 66.7 个汉字（远远超过
+       中文正文 30–45 字的舒适区），收到 max-width:780px 后约 44 字/行。宽表不再撑破版面：
+       表格统一可横向滚（见下条），超 12 行的表由 assets/js/xk-note.js 折成 <details>。 */
+    .xk-article{max-width:min(780px,100%);margin:0 auto;padding:26px 30px 30px;color:var(--txt);
       background:rgba(10,12,16,.40);border:1px solid var(--line);border-radius:14px;
       backdrop-filter:blur(6px);overflow-wrap:anywhere;
       font:15.5px/1.85 var(--sans);text-shadow:0 1px 10px rgba(10,8,5,.55)}
@@ -47,7 +50,44 @@
     .xk-article blockquote{margin:16px 0;padding:10px 16px;border-left:3px solid var(--acc);
       background:rgba(255,246,235,.05);border-radius:0 10px 10px 0;color:var(--mut)}
     .xk-article table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+    /* 表格不再撑破正文列：宽表在本列内横向滚（桌面也一样，否则 6 列表格会把 780px 的列顶开） */
+    .xk-article table{display:block;overflow-x:auto;max-width:100%}
     .xk-article th,.xk-article td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+
+    /* 长表格折叠（assets/js/xk-note.js 注入） */
+    .xk-fold{margin:16px 0;border:1px solid var(--line);border-radius:10px;background:rgba(255,246,235,.04)}
+    .xk-fold > summary{cursor:pointer;padding:9px 14px;font:13px var(--mono);color:var(--acc);
+      list-style:none;outline:none}
+    .xk-fold > summary::-webkit-details-marker{display:none}
+    .xk-fold > summary::before{content:'▸ ';color:var(--mut)}
+    .xk-fold[open] > summary::before{content:'▾ '}
+    .xk-fold > summary:hover{background:rgba(255,246,235,.05)}
+    .xk-fold > table{margin:0;border:0;border-top:1px solid var(--line);border-radius:0}
+
+    /* 右侧目录：只在宽屏出现（正文 780 + 目录 220 + 间距），窄屏完全不建 */
+    .xk-note-layout{display:grid;grid-template-columns:minmax(0,780px);gap:22px;
+      justify-content:center;align-items:start}
+    @media (min-width:1180px){
+      html.xk-has-toc .xk-note-layout{grid-template-columns:minmax(0,780px) 220px}
+    }
+    .xk-toc{position:sticky;top:66px;max-height:calc(100vh - 96px);overflow:auto;
+      border:1px solid var(--line);border-radius:12px;padding:12px 12px 14px;
+      background:rgba(10,12,16,.42);backdrop-filter:blur(6px);font:12.5px/1.7 var(--sans)}
+    .xk-toc[hidden]{display:none}
+    .xk-toc-hd{display:flex;justify-content:space-between;align-items:center;gap:8px;
+      font:11.5px var(--mono);letter-spacing:.08em;color:var(--mut);padding-bottom:8px;
+      border-bottom:1px solid var(--line);margin-bottom:8px}
+    .xk-toc-tg{cursor:pointer;background:none;border:1px solid var(--line);border-radius:99px;
+      color:var(--mut);font:11px var(--mono);padding:2px 9px}
+    .xk-toc-tg:hover{color:var(--acc);border-color:var(--acc)}
+    .xk-toc-list{list-style:none;margin:0;padding:0}
+    .xk-toc-list li{margin:0}
+    .xk-toc-h3{padding-left:12px}
+    .xk-toc-list a{display:block;padding:3px 6px;border-radius:6px;color:var(--mut);
+      text-decoration:none;border-left:2px solid transparent}
+    .xk-toc-list a:hover{color:var(--txt);background:rgba(255,246,235,.05)}
+    .xk-toc-list a.on{color:var(--acc);border-left-color:var(--acc);background:rgba(143,216,230,.08)}
+    @media (max-width:1179px){ .xk-toc{display:none} }
     .xk-article th{background:rgba(255,246,235,.06);font-weight:600}
     .xk-article img{max-width:100%;height:auto;border-radius:10px;border:1px solid var(--line)}
     .xk-article hr{border:0;border-top:1px solid var(--line);margin:28px 0}
@@ -68,6 +108,7 @@
       <span class="sub">{{ .File.BaseFileName }}</span>
     </div>
     <div class="screen-bd">
+      <div class="xk-note-layout">
       <article class="xk-article">
         <h1>{{ .Title }}</h1>
         <div class="xk-note-meta">
@@ -78,6 +119,9 @@
         {{ .Content }}
         <a class="xk-note-back" href="/posts/">← 回到笔记列表</a>
       </article>
+      {{- /* 目录由 assets/js/xk-note.js 从 h2/h3 现场生成；这里只留一个空壳，窄屏不用 */}}
+      <nav class="xk-toc" id="xkToc" aria-label="本页目录" hidden></nav>
+      </div>
     </div>
   </div>
 </main>
@@ -89,5 +133,9 @@
        api-bind 那 66 KB 按它自己的注释也是「其余四页 → 0 个请求」，纯属白下载 ⇒ 不再引入。
        真正需要数据绑定的是 /alerts/ /ai/ /daily/ /more/ /posts/ 列表与 /room/，那些页面各自还留着。 */}}
 <script src="/js/xk-realtime.js" defer></script>
+{{- /* 2026-11-09：正文目录 + 长表格折叠。走 Hugo Pipes（minify+fingerprint），
+       放 static/js 会被断言「新 JS 必须走资源管道」判死。 */}}
+{{ $note := resources.Get "js/xk-note.js" | minify | fingerprint }}
+<script src="{{ $note.RelPermalink }}" defer></script>
 </body>
 </html>
