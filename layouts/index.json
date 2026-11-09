@@ -1,9 +1,13 @@
 {{/*
-  笔记索引（/index.json）—— SPA 的笔记阅读与 Ctrl+K 搜索都用它
+  笔记索引（/index.json）—— 只给 SPA"换视图不跳页"就地渲染用
   ---------------------------------------------------------------------------
   为什么不在浏览器里 fetch 每篇文章的 HTML：
     · 点笔记要"换视图不跳页"，fetch HTML 会带来一次额外往返与解析；
-    · 索引里已经带了 Hugo 渲染好的正文与纯文本，第一次打开阅读页只发一个请求。
+    · 索引里已经带了 Hugo 渲染好的正文（content），第一次打开阅读页只发一个请求。
+  2026-11-09 瘦身：删掉 text 字段（每篇 4000 字纯文本，全站合计 243 KB）。
+    检索根本不读它——Ctrl+K 走的是 /index-lite.json（见 assets/js/xk-search-lazy.js），
+    本索引只有 app.js:1080 loadIndex() 在"要点开一篇"时读，且只读 content/summary/title 等。
+    留着等于每次点笔记多下载 243 KB。
   内容全部来自本仓库的 Markdown，不引入任何第三方搜索服务。
 */}}
 {{- $notes := slice -}}
@@ -19,7 +23,6 @@
       "wordCount" $p.WordCount
       "readingTime" $p.ReadingTime
       "content" $p.Content
-      "text" ($p.Plain | truncate 4000)
   ) -}}
 {{- end -}}
 {{- dict "generatedAt" (now.Format "2006-01-02 15:04:05") "count" (len $notes) "notes" $notes | jsonify -}}
