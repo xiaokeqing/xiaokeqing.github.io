@@ -6,6 +6,33 @@
 {{- end -}}
 {{- $rows = sort $rows "date" "desc" -}}
 {{- $n := len $rows -}}
+{{- /* 顶部大数字：全部从 data/rollup/*.json 现算，取不到就留 -1（页面写「未取到」），不补 0。 */ -}}
+{{- $latest := dict -}}
+{{- $latestTotal := -1 -}}
+{{- if gt $n 0 -}}
+  {{- $latest = index $rows 0 -}}
+  {{- with $latest.alerts24h -}}{{ if .available }}{{ $latestTotal = int .total }}{{ end }}{{ end -}}
+{{- end -}}
+{{- $prev := dict -}}
+{{- $prevTotal := -1 -}}
+{{- if gt $n 1 -}}
+  {{- $prev = index $rows 1 -}}
+  {{- with $prev.alerts24h -}}{{ if .available }}{{ $prevTotal = int .total }}{{ end }}{{ end -}}
+{{- end -}}
+{{- $cmpOK := and (ge $latestTotal 0) (ge $prevTotal 0) -}}
+{{- $delta := 0 -}}
+{{- $deltaPct := 0.0 -}}
+{{- if $cmpOK -}}
+  {{- $delta = sub $latestTotal $prevTotal -}}
+  {{- if gt $prevTotal 0 -}}{{- $deltaPct = mul (div (float $delta) (float $prevTotal)) 100 -}}{{- end -}}
+{{- end -}}
+{{- $barMax := 1 -}}
+{{- if gt $latestTotal $barMax }}{{ $barMax = $latestTotal }}{{ end -}}
+{{- if gt $prevTotal $barMax }}{{ $barMax = $prevTotal }}{{ end -}}
+{{- $wLatest := 0.0 -}}
+{{- $wPrev := 0.0 -}}
+{{- if gt $latestTotal 0 }}{{ $wLatest = mul (div (float $latestTotal) (float $barMax)) 100 }}{{ end -}}
+{{- if gt $prevTotal 0 }}{{ $wPrev = mul (div (float $prevTotal) (float $barMax)) 100 }}{{ end -}}
 <!DOCTYPE html>
 <html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
 <head>
@@ -21,20 +48,45 @@
 .tr-md ul{margin:0;padding-left:20px}
 .tr-md li{margin:2px 0}
 .tr-note{padding:10px 16px 14px;opacity:.7;font-size:13px;margin:0}
-.tr-calwrap{display:flex;align-items:flex-start;overflow-x:auto;padding-bottom:2px}
-.tr-wd{display:flex;flex-direction:column;gap:4px;margin-right:5px;flex:0 0 auto}
-.tr-wd i{height:15px;line-height:15px;font-size:10px;font-style:normal;color:rgba(234,246,255,.42);text-align:right}
+.tr-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tr-stat{display:flex;flex-direction:column;gap:2px;min-width:0;padding:14px 18px 13px;border:1px solid var(--xk-line,rgba(255,255,255,.09));border-radius:12px;background:rgba(255,255,255,.025)}
+.tr-stat-l{font:11.5px/1.5 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.08em;color:rgba(234,246,255,.55)}
+.tr-stat-n{display:flex;align-items:baseline;gap:6px;white-space:nowrap;font:600 32px/1.15 var(--xk-mono,ui-monospace,Consolas,monospace);font-variant-numeric:tabular-nums;color:var(--xk-ink-title,#eaf6ff)}
+.tr-stat-n b{font:inherit;color:inherit}
+.tr-stat-n em{font-style:normal;font-size:15px;font-weight:400;color:rgba(234,246,255,.55)}
+.tr-stat-sub{font-size:12px;line-height:1.6;color:rgba(234,246,255,.45)}
+.tr-calwrap{display:flex;align-items:flex-start;overflow-x:auto;max-width:100%;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.tr-wd{display:flex;flex-direction:column;gap:4px;margin-right:7px;flex:0 0 auto}
+.tr-wd i{height:22px;line-height:22px;font-size:10.5px;font-style:normal;color:rgba(234,246,255,.42);text-align:right}
 .tr-cal{display:flex;gap:4px}
 .tr-week{display:flex;flex-direction:column;gap:4px}
-.tr-cal i{display:block;width:15px;height:15px;border-radius:3px;background:rgba(127,212,216,.06);box-shadow:inset 0 0 0 1px rgba(127,212,216,.10)}
-.tr-cal i[data-lv="1"]{background:rgba(127,212,216,.22);box-shadow:none}
-.tr-cal i[data-lv="2"]{background:rgba(127,212,216,.38);box-shadow:none}
-.tr-cal i[data-lv="3"]{background:rgba(127,212,216,.55);box-shadow:none}
-.tr-cal i[data-lv="4"]{background:rgba(127,212,216,.72);box-shadow:none}
-.tr-cal i[data-lv="5"]{background:rgba(127,212,216,.92);box-shadow:none}
-.tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:transparent;box-shadow:none}
+/* xk.css 里有 `body .tr-cal i`（用 --vz-cal 变量压到 15px）；页内样式更晚加载，
+   这里同样加 body 前缀提升到同特异性，靠加载顺序覆盖回 22px，不改全局样式表。 */
+body .tr-cal i{display:block;box-sizing:border-box;width:22px;height:22px;border-radius:4px;background:rgba(127,212,216,.06);box-shadow:inset 0 0 0 1px rgba(127,212,216,.10)}
+body .tr-cal i[data-lv="1"]{background:rgba(127,212,216,.22);box-shadow:none}
+body .tr-cal i[data-lv="2"]{background:rgba(127,212,216,.38);box-shadow:none}
+body .tr-cal i[data-lv="3"]{background:rgba(127,212,216,.55);box-shadow:none}
+body .tr-cal i[data-lv="4"]{background:rgba(127,212,216,.72);box-shadow:none}
+body .tr-cal i[data-lv="5"]{background:rgba(127,212,216,.92);box-shadow:none}
+body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:transparent;box-shadow:none}
 .tr-cal-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--xk-ink-lede,rgba(255,255,255,.6));margin:10px 0 14px}
-.tr-cal-legend i{display:block;width:13px;height:13px;border-radius:3px}
+.tr-cal-legend i{display:block;width:14px;height:14px;border-radius:4px}
+.tr-cmp{padding:14px 16px 16px}
+.tr-cmp-line{margin:0 0 12px;font-size:13px;line-height:1.75;color:var(--xk-ink-lede,rgba(255,255,255,.72))}
+.tr-cmp-line b{color:var(--xk-ink-title,#eaf6ff);font-weight:600;font-variant-numeric:tabular-nums}
+.tr-cmp-line b.up{color:#7FD4D8}
+.tr-cmp-line b.down{color:#E8B45A}
+.tr-cmp-bars{display:flex;flex-direction:column;gap:8px}
+.tr-cmp-row{display:grid;grid-template-columns:auto minmax(48px,1fr) auto;align-items:center;gap:10px}
+.tr-cmp-k{font:11px/1.4 var(--xk-mono,ui-monospace,Consolas,monospace);color:rgba(234,246,255,.5);white-space:nowrap}
+.tr-cmp-track{display:block;height:12px;border-radius:99px;background:rgba(127,212,216,.08);overflow:hidden}
+.tr-cmp-track i{display:block;height:100%;border-radius:99px;background:rgba(127,212,216,.45)}
+.tr-cmp-track i.latest{background:rgba(127,212,216,.85)}
+.tr-cmp-v{font:600 12px/1.4 var(--xk-mono,ui-monospace,Consolas,monospace);font-variant-numeric:tabular-nums;color:var(--xk-ink-title,#eaf6ff);white-space:nowrap}
+@media (max-width:640px){.tr-stats{grid-template-columns:1fr}}
+@media (max-width:520px){.tr-cmp-row{grid-template-columns:minmax(0,1fr) auto;row-gap:5px}.tr-cmp-k{grid-column:1/-1}}
+/* 窄屏：热力图标题不被超长 .src 挤成 0 宽（.ch 是 nowrap flex） */
+@media (max-width:640px){.tr-calmod > .ch{flex-wrap:wrap;row-gap:2px}.tr-calmod > .ch b{flex:0 0 auto;margin-right:10px}.tr-calmod > .ch .src{flex:1 1 100%;white-space:normal;overflow-wrap:anywhere}}
 .tr-table{width:100%;border-collapse:collapse;font:13px/1.7 var(--xk-mono,ui-monospace,Consolas,monospace)}
 .tr-table th,.tr-table td{padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--xk-line,rgba(255,255,255,.09))}
 .tr-table th{font-weight:600;font-size:11.5px;letter-spacing:.04em;color:var(--xk-ink-lede,rgba(255,255,255,.62));background:rgba(255,255,255,.03)}
@@ -55,6 +107,49 @@
 
   <div class="screen-bd">
     <a class="tr-back" href="/alerts/">← 实时看板 /alerts/</a>
+
+    <div class="tr-stats">
+      <div class="tr-stat">
+        <div class="tr-stat-l">已留存</div>
+        <div class="tr-stat-n"><b>{{ $n }}</b><em>天</em></div>
+        <div class="tr-stat-sub">每天 08:20 自动落一行</div>
+      </div>
+      <div class="tr-stat">
+        <div class="tr-stat-l">最新一天</div>
+        <div class="tr-stat-n">{{ if ge $latestTotal 0 }}<b>{{ lang.FormatNumber 0 $latestTotal }}</b><em>条</em>{{ else }}<b>未取到</b>{{ end }}</div>
+        <div class="tr-stat-sub">每天 08:20 自动落一行</div>
+      </div>
+    </div>
+
+    {{- if ge $n 2 }}
+    <div class="mod">
+      <div class="ch"><b>两日对比</b><span class="src">最新一天 vs 前一天 · 24h 告警总数</span></div>
+      <div class="tr-cmp">
+        <p class="tr-cmp-line">
+          {{- if $cmpOK -}}
+            最新一天 <b>{{ $latest.date }}</b> 比前一天（{{ $prev.date }}）
+            {{- if gt $delta 0 }} 增加 <b class="up">+{{ lang.FormatNumber 0 $delta }} 条（+{{ printf "%.1f" $deltaPct }}%）</b>
+            {{- else if lt $delta 0 }} 减少 <b class="down">{{ lang.FormatNumber 0 (math.Abs $delta) }} 条（{{ printf "%.1f" $deltaPct }}%）</b>
+            {{- else }} 持平（±0 条 / 0.0%）{{- end -}}
+          {{- else -}}
+            有 24h 总数没取到，只画已取到的那天，不计算增减。
+          {{- end -}}
+        </p>
+        <div class="tr-cmp-bars">
+          <div class="tr-cmp-row">
+            <span class="tr-cmp-k">{{ $latest.date }} · 最新</span>
+            <span class="tr-cmp-track"><i class="latest" style="width:{{ printf "%.1f" $wLatest }}%"></i></span>
+            <b class="tr-cmp-v">{{ if ge $latestTotal 0 }}{{ lang.FormatNumber 0 $latestTotal }} 条{{ else }}未取到{{ end }}</b>
+          </div>
+          <div class="tr-cmp-row">
+            <span class="tr-cmp-k">{{ $prev.date }} · 前一天</span>
+            <span class="tr-cmp-track"><i style="width:{{ printf "%.1f" $wPrev }}%"></i></span>
+            <b class="tr-cmp-v">{{ if ge $prevTotal 0 }}{{ lang.FormatNumber 0 $prevTotal }} 条{{ else }}未取到{{ end }}</b>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{- end }}
 
     <div class="mod">
       <div class="ch"><b>一句话</b><span class="src">每天 08:20 自动落一行，只增不改</span></div>
@@ -99,7 +194,7 @@
   {{- $days = $days | append $cell -}}
 {{- end -}}
 {{- $lead := (index $days 0).pts -}}
-<div class="mod">
+<div class="mod tr-calmod">
   <div class="ch"><b>日历热力图</b><span class="src">一格 = 一天 · 越深 = 当天 24h 告警越多 · 已存 {{ len $dates }} 天</span></div>
   <div class="tr-calwrap">
   <div class="tr-wd" aria-hidden="true"><i>一</i><i></i><i>三</i><i></i><i>五</i><i></i><i>日</i></div>
