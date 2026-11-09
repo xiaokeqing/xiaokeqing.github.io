@@ -36,8 +36,14 @@
    排版审计把它判成本站唯一 P0（a scrollWidth=507 / clientWidth=310）。
    窄屏改成允许换行：宁可标签高一点，也不要把字裁掉。 */
 @media (max-width:720px){
-  .smp-toc-l a{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.6;border-radius:12px}
+  .smp-toc-l a{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.6;border-radius:12px;
+    overflow-wrap:anywhere}
 }
+/* ★2026-11-09 复核补强：以上三条文字面（索引/导语/口径）都可能是没有空格的整串
+   （索引标签来自 h2 全文，导语是 plainify 后的文本），CJK 能断行但长英文/URL/hash
+   不能 —— 那种串会顶出卡片、再被 .mod 的 overflow:hidden 裁掉，和上面的老 P0 同一类。
+   统一允许在任意处断行，宁可多换一行，不把字裁掉。 */
+.smp-lead,.smp-note-p{overflow-wrap:anywhere}
 /* 正文（Markdown 渲染结果）：字段是 <li>，来源标记是 <blockquote> */
 .smp-md{font-size:13px;line-height:1.95;color:rgba(255,255,255,.8);min-width:0;overflow-wrap:anywhere}
 .smp-md p{margin:0 0 10px}
