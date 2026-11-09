@@ -1,0 +1,1 @@
+{"generatedAt":"2026-11-10 00:06:34","cacheSeconds":60,"date":"2026-11-10","window":"告警与来源国家 = 过去 24 小时（Wazuh 窗口）；蜜罐 = 最近 800 条蜜罐告警（非 24h 时间窗）；封禁/解封 = 全量处置留痕（不限 24h）","available":false,"reason":"not_generated","note":"今日日报未生成（不是读不到其它数据）","masked":false,"notice":"观测到的来源地址，未经验证，仅供参考","removalContact":"https://xiaokeqing.cn/"}
