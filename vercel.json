@@ -10,6 +10,9 @@
       "TZ": "Asia/Shanghai"
     }
   },
+  "rewrites": [
+    { "source": "/api/public/ip.js", "destination": "https://demo.xiaokeqing.cn/api/public/ip.js" }
+  ],
   "headers": [
     { "source": "/css/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
     { "source": "/js/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },

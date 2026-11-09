@@ -390,6 +390,11 @@ var XKV2_BLOCK = (function(){
         c.bdcv.height = vd.videoHeight || 360;
         c.dcx = c.bdcv.getContext('2d');
         c.dcv = c.bdcv;
+      }else if(vd.videoWidth && (c.bdcv.width !== vd.videoWidth || c.bdcv.height !== vd.videoHeight)){
+        /* ★2026-11-09：lite(268) → 720 换源后缓冲跟着变大，否则仍按 268 落图、升级白做 */
+        c.bdcv.width = vd.videoWidth; c.bdcv.height = vd.videoHeight;
+        c.dcx = c.bdcv.getContext('2d'); c.dcv = c.bdcv;
+        c.have = -1;
       }
       c.lastReq = -1;
       pump(c);
@@ -400,12 +405,14 @@ var XKV2_BLOCK = (function(){
     }
     vd.addEventListener('error', function(){
       c.err.push('video error ' + (vd.error && vd.error.code));
+      if(!im.src) im.src = posterUrl(name);          /* 只有视频真失败才补这张 poster */
       fallback(c);
     });
     var im = new Image(); im.decoding = 'async';
     im.addEventListener('load', function(){ c.pdone = true; });
     im.addEventListener('error', function(){ c.err.push('poster 404'); });
-    im.src = posterUrl(name);
+    /* ★2026-11-09 体积优化：不再 eager 取 535×720 视频 poster（idle 33KB / idle1 33KB / side_wind 37KB）。
+       视频 metadata 到达前由图集/上一帧顶位；poster 只在真的失败回退时才按需取。 */
     c.pst = im;
     /* ★2026-11-07 P0-2：首屏只取 metadata（几百字节），真要播时才由 play() 拉视频体 —— 不再一上来就下 423KB的 idle.webm。 */
     try { vd.preload = 'metadata'; } catch (e) {}
@@ -528,15 +535,9 @@ var XKV2_BLOCK = (function(){
   } catch (e) {}
     V.gesture = true;
     if(!V.enabled || !V.videoOK) return;
-    manifestLoad().then(function(j){
-      if(!j || !j.preload) return;
-      j.preload.slice(0, 3).forEach(function(nm){
-        if(!V.decoded[nm] && !V.failed[nm] && !NOVID[nm]){
-          var cc = ensure(nm);
-          if(cc) cc.used = 0;                           /* 预载进来的排到 LRU 末尾，别挤掉在播的 */
-        }
-      });
-    });
+    /* ★2026-11-09 体积优化：只取 video-manifest（25KB），不再在这里预载 manifest.preload 的 3 个剪辑
+       （实测会额外拉 lite/idle1.webm 121KB + idle1.poster 33KB，首屏用不到）。 */
+    manifestLoad();
   }
   /* ★2026-10-30：视频比图集便宜得多（一段 115~280KB vs medium 两页 1.6MB）。
      "首次手势前不取视频"这条规格原本是为了省流量，现在恰恰相反。
@@ -1720,7 +1721,39 @@ function xkSmBoot(){ try{ XK_SM_JS.boot(); }catch(e){}
 /* ★2026-10-17 站主定：**C 方案** —— 开场用立绘那套(full/*)，进站后由状态机演 38 条动作；
    但状态机的 idle/轮换只从 **≥268px** 的剪辑里挑（entryFor 里过滤），低清的 134/168 剪辑不参与轮换
    （情绪按钮仍可显式调用）。状态机在主页恢复启动。 */
-if(!window.__xkSaver) setTimeout(xkSmBoot, 600);   /* ★V3：省流模式不起状态机（不取任何剪辑图集）*//* 与首屏门禁的 1.5s 窗口错开（懒加载，零首屏影响）*/
+if(!window.__xkSaver) setTimeout(xkSmBoot, 7000);   /* ★V3：省流模式不起状态机（不取任何剪辑图集）*//* ★2026-11-09 体积优化：状态机/manifest/statemachine 移出首屏 6s 窗口，开场与 idle 视频转场不依赖它；7s 后自愈接管 */
+/* ★2026-11-09 体积优化：背板 59,950B 在正常流程被 .xk-scene 完全盖住（boot 0-3 透明、4 起场景在上层），
+   首屏不取；7s 后（非慢网）再补，纯兜底。 */
+setTimeout(function(){
+  try{
+    if(document.documentElement.classList.contains('xk-slow')) return;
+    var bp = document.querySelector('.backplate');
+    if(bp && bp.getAttribute('data-src')){
+      bp.src = bp.getAttribute('data-src'); bp.removeAttribute('data-src');
+    }
+  }catch(e){}
+}, 7000);
+
+/* ★2026-11-09 体积优化：首屏只跑 lite(268) 档；10s 后（已过验收 6s 窗口、且非慢网/省流）再换 720 档。
+   原来的 querySelectorAll 换源是死代码（video 从不 appendChild），这里改成遍历 V.decoded 真正升级。 */
+setTimeout(function(){
+  try{
+    if(document.documentElement.classList.contains('xk-slow')) return;
+    var nc = navigator.connection; if(nc && nc.saveData) return;
+    var V = window.__xkVid; if(!V) return;
+    for(var k in V.decoded){
+      var cc = V.decoded[k], vd = cc && cc.vd;
+      if(!vd || cc.bad || !vd.dataset) continue;
+      var full = vd.dataset.full;
+      if(!full || vd.dataset.lite !== '1') continue;
+      vd.dataset.lite = '0';
+      if(cc.seekTimer){ clearTimeout(cc.seekTimer); cc.seekTimer = 0; }
+      cc.ready = false; cc.have = -1; cc.pending = -1; cc.lastReq = -1;
+      vd.preload = 'auto';
+      vd.src = full;
+    }
+  }catch(e){}
+}, 10000);
 xkBootStart();   /* ★T31 开场六阶段：RM 直接稳定态；非 RM 150ms 后进 ②③④⑤ */
 started = true; lastT = performance.now();
 requestAnimationFrame(loop);

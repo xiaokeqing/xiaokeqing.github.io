@@ -101,13 +101,13 @@
           {{- if eq $v "monitor" }}
           {{- /* ★V2/V3（2026-11-07）：纯 CSS 两图，数据只吃上面同一份 stats24h；空壳由 xk-viz.js 填充 */}}
           <div class="vz-grid">
-            <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时告警热力<span class="tag">/alerts · stats24h.trend</span></div>
+            <div class="mod"><div class="mod-hd vz-hd">24 小时告警热力<span class="tag">/alerts · stats24h.trend</span></div>
               <div class="mod-bd">
                 <div class="vz-heat" data-vz-heat role="img" aria-label="24 小时告警热力：取数中"></div>
                 <p class="vz-nt" data-vz-heatnote>取数中…（没有数据的小时写 —）</p>
               </div>
             </div>
-            <div class="mod"><div class="mod-hd"><span class="led"></span>严重度构成<span class="tag">24h · stats24h.bySeverity</span></div>
+            <div class="mod"><div class="mod-hd vz-hd">严重度构成<span class="tag">24h · stats24h.bySeverity</span></div>
               <div class="mod-bd">
                 <div data-vz-ring></div>
                 <p class="vz-nt" data-vz-ringnote>取数中…</p>
@@ -194,7 +194,7 @@
                  ⚠ 本文件由 _dev/gen-demo-pages.py 逐字同源生成，重跑生成器前先把本段并进生成器。 */ -}}
           <div class="sec-hd"><b>来源与分布</b><span>谁在打、打什么、打到什么程度</span></div>
           <div class="mod xk-sankey-card" data-xk-sankey>
-            <div class="mod-hd"><span class="led"></span>告警链路 · 来源 → 类型 → 严重度<span class="tag">/alerts · 5 分钟原始窗口</span></div>
+            <div class="mod-hd vz-hd">告警链路 · 来源 → 类型 → 严重度<span class="tag">/alerts · 5 分钟原始窗口</span></div>
             <div class="mod-bd">
               <div id="xkSankey" class="xk-sankey" role="img" aria-label="告警链路桑基图：取数中"></div>
               <p class="vz-nt" data-xk-sankey-note>取数中…（链路只按 5 分钟窗口的原始清单画，不拿 24h 聚合拼）</p>

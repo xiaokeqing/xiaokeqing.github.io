@@ -5,6 +5,15 @@
    数据只有一个来源：GET /api/public/ip?q=<ip>（后端 PublicIpProfileService 聚合
    告警 + 蜜罐会话 + 处置留痕 + GeoIP）。
 
+   取数路径（2026-11-09 起，三级，共用 26s 总预算）：
+     ① 静态快照 /api/public/ip/<ip>.js —— Vercel 上的真实静态文件（预先落盘的热点 IP），
+        命中就秒开；快照是冻结值，页面必须标明「非实时」；
+     ② 同源 /api/public/ip.js?q=<ip> —— vercel.json 的 rewrites 在 Vercel 边缘反代到
+        demo.xiaokeqing.cn（数据中心发起，绕开用户本机到 CF 隧道的丢包）；
+     ③ data-wb-api 基址直连 demo 域 —— 本地没代理 / 反代失败时的兜底。
+   三级都读不到就逐级列出原因（HTTP 码 / 超时）照实写读不到 —— 不补数、不造样例。
+   结果区第一行标明这次数据来自哪一级（来源：静态快照 / 实时接口）。
+
    三条口径直接写进页面，不做美化：
      · 取不到就写「读不到（原因）—— 不补数」：缺失项一律 null，不写 0、不估、不猜；
      · 只回答这一个 IP：不按网段/ASN 扩张，也不把别人的记录混进来；
@@ -63,6 +72,10 @@
 .ipp-note{margin:10px 0 0;font-size:13px;line-height:1.9;color:var(--xk-text-dim)}
 .ipp-note:first-child{margin-top:0}
 .ipp-note b{color:var(--xk-text-emph);font-weight:600}
+/* 数据来源条：结果区第一行——写清这次命中哪一级（快照不是实时值） */
+.ipp-src{margin:0 0 12px;padding:9px 11px;border:1px solid var(--xk-border-12);border-radius:8px;background:var(--xk-bg-26);font-size:12px;line-height:1.9;color:var(--xk-text-dim)}
+.ipp-src b{color:var(--xk-ink-strong);font-weight:600}
+.ipp-src code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--xk-ink-mint);word-break:break-all}
 .ipp-null{color:var(--warn)}
 .ipp-ok{color:var(--ok);font-weight:600}
 .ipp-bad{color:var(--bad);font-weight:600}
@@ -309,15 +322,98 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
 <script>
 (function () {
   'use strict';
-  /* 只做一件事：把 GET /api/public/ip?q=<ip> 的结果摊开。
+  /* 只做一件事：把 GET /api/public/ip?q=<ip> 的结果摊开。取数三级，见下面 fetchProfile。
      口径三条（与后端一致，任何一条不满足就不写数字）：
        1. 取不到就写「读不到（原因）—— 不补数」，绝不写 0 或"约"；
        2. 只展示 q 这一个地址的数据，不做任何扩张；
        3. 口令只渲染结构（backend 已经换成结构，页面原样显示，不再拼原文）。 */
-  var TIMEOUT = 26000;  /* 2026-11-09：接口经边缘代理转发（隧道 <1 KB/s），12s 会先超时；给到 26s，读不到仍照实说读不到 */
+  var TIMEOUT = 26000;  /* 2026-11-09：静态快照 → 同源反代 → demo 直连 三级共用 26s 总预算；读不到仍照实说读不到 */
   var RE_V4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
   var meta = document.querySelector('meta[name="wb-api"]');
-  var API = (document.documentElement.getAttribute('data-wb-api') || (meta && meta.getAttribute('content')) || '').replace(/\/+$/, ''); /* 2026-11-09：清空 meta 后回退 data-wb-api（/ip/ 没有静态快照，必须打真实接口） */
+  /* 回退基址：xk-boot 把 meta 清空后读 <html data-wb-api>；不硬编码域名 */
+  var API = (document.documentElement.getAttribute('data-wb-api') || (meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+  var IP_PATH = '/api/public/ip.js';  /* 同源路径：vercel.json 的 rewrites 反代到 demo 域，?q= 由边缘原样带过去 */
+  var SNAP_PATH = '/api/public/ip/';  /* 静态快照：/api/public/ip/<ip>.js —— Vercel 上的真实静态文件，命中秒开 */
+  /* 结果区/状态行的「来源」字样：三级各一个，别混用 */
+  var SRC_LABEL = { snapshot: '静态快照', proxy: '实时接口', direct: '实时接口（直连）' };
+
+  /* ============ 取数：静态快照 → 同源反代 → demo 直连（三级，共用 26s 总预算） ============
+     2026-11-09：经 CF 隧道取 >1KB 响应实测 25–40s 超时（srv1 本机 2.6s 就能读到），所以
+     第一级先打 Vercel 上的静态快照 /api/public/ip/<ip>.js（真实静态文件，命中就秒开；快照
+     是冻结值，页面必须标明"非实时"）。未命中（404/非约定响应）再打同源 /api/public/ip.js?q=
+     （vercel.json rewrites 反代到 demo 域，由 Vercel 数据中心发起，绕开用户本机到 CF 的丢包）；
+     仍失败则回退 data-wb-api 直连。三级都没拿到就逐级列出原因（HTTP 码 / 超时）如实写读不到。
+     三级共用 TIMEOUT 一个总预算，不会叠加成 3×26s。 */
+  function timeoutError() {
+    var e = new Error('超时 ' + Math.round(TIMEOUT / 1000) + 's 未返回');
+    e.name = 'TimeoutError';
+    return e;
+  }
+  function whyOf(res, json) {
+    if (!res.ok) {
+      var extra = json && (json.reason || json.message);
+      return 'HTTP ' + res.status + (extra ? '：' + String(extra).slice(0, 120) : '');
+    }
+    if (!json) return '响应不是 JSON（HTTP ' + res.status + '）';
+    if (json.code !== 200) return 'code=' + json.code + (json.message ? '：' + json.message : '');
+    if (!json.data) return '响应里没有 data';
+    return '不可用';
+  }
+  function fetchProfile(q, t0) {
+    var enc = encodeURIComponent(q);
+    var urls = [
+      { kind: 'snapshot', url: SNAP_PATH + enc + '.js' },      /* ① 静态快照（同源静态文件） */
+      { kind: 'proxy', url: IP_PATH + '?q=' + enc }            /* ② 同源反代（Vercel 边缘 → demo） */
+    ];
+    if (API) { urls.push({ kind: 'direct', url: API + IP_PATH + '?q=' + enc }); } /* ③ 直连兜底 */
+    var tried = [];
+    var i = 0;
+    function failed(msg) {
+      var e = new Error(msg);
+      e.name = 'FetchFailed';
+      e.attempts = tried;
+      return e;
+    }
+    function attempt() {
+      if (i >= urls.length) { return Promise.reject(failed('三级取数都没拿到数据')); }
+      var left = TIMEOUT - (Date.now() - t0);
+      if (left <= 0) { return Promise.reject(failed('总预算 ' + Math.round(TIMEOUT / 1000) + 's 用完')); }
+      var item = urls[i];
+      var init = { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store',
+                   headers: { 'Accept': 'application/json' } };
+      var ctrl = null, timer = null;
+      if (window.AbortController) {
+        ctrl = new AbortController();
+        init.signal = ctrl.signal;
+        timer = setTimeout(function () { ctrl.abort(); }, left);
+      }
+      return fetch(item.url, init).then(function (res) {
+        if (timer) clearTimeout(timer);
+        return res.text().then(function (text) {
+          var json = null;
+          try { json = JSON.parse(text); } catch (err) { json = null; }
+          /* 快照 404 / 反代 5xx / 非约定响应：记下这一级的原因，换下一级 */
+          if (res.ok && json && json.code === 200 && json.data) {
+            return { kind: item.kind, url: item.url, res: res, text: text, json: json };
+          }
+          tried.push({ kind: item.kind, url: item.url, why: whyOf(res, json) });
+          i++;
+          return attempt();
+        });
+      }, function (err) {
+        if (timer) clearTimeout(timer);
+        if (err && err.name === 'AbortError') {
+          /* 总预算耗尽：再换地址也只会立刻超时，直接把已试过的清单交回调用方 */
+          tried.push({ kind: item.kind, url: item.url, why: '超时 ' + Math.round(TIMEOUT / 1000) + 's 未返回' });
+          return Promise.reject(failed('取数超时：' + Math.round(TIMEOUT / 1000) + 's 内没读到'));
+        }
+        tried.push({ kind: item.kind, url: item.url, why: '请求没发出去或被拦下：' + ((err && err.message) || err) });
+        i++;
+        return attempt();
+      });
+    }
+    return attempt();
+  }
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -431,24 +527,51 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
     return out.length ? '<ul class="ipp-notes">' + out.join('') + '</ul>' : '';
   }
 
-  function renderError(status, json, raw) {
-    var reason = json && json.reason ? json.reason : ('HTTP ' + status);
-    var msg = json && json.message ? json.message : '';
-    var head = '<div class="ipp-cards">' +
-      card('查询结果', '<b class="ipp-bad">读不到</b>', '原因：' + esc(reason), 'na') +
-      '</div>';
-    return head +
-      '<p class="ipp-p" style="margin-top:12px"><b>读不到（' + esc(reason) + '）—— 不补数。</b> ' +
-      esc(msg || '服务端拒绝了这个查询') + '</p>' +
-      (msg ? '' : '<p class="ipp-note">原始响应片段：<code>' + esc(String(raw || '').slice(0, 200)) + '</code></p>');
+  /* 三级都失败：把每一级的原因逐条列出来（HTTP 码 / 超时 / 请求被拦），不补数 */
+  function renderFail(why, attempts) {
+    var html = ['<div class="ipp-cards">' + card('查询结果', '<b class="ipp-bad">读不到</b>',
+      '三级取数都没拿到数据', 'na') + '</div>'];
+    html.push('<p class="ipp-p" style="margin-top:12px"><b class="ipp-bad">读不到</b>（' +
+      esc(why) + '）—— <b>不补数</b>。</p>');
+    if (attempts && attempts.length) {
+      html.push('<div class="ipp-scroll"><table class="ipp-tbl"><thead><tr>' +
+        '<th>取数路径</th><th>结果</th></tr></thead><tbody>');
+      for (var i = 0; i < attempts.length; i++) {
+        var a = attempts[i];
+        html.push('<tr><td class="k">' + esc(SRC_LABEL[a.kind] || a.kind) +
+          '<br><code>' + esc(a.url) + '</code></td><td>' + esc(a.why) + '</td></tr>');
+      }
+      html.push('</tbody></table></div>');
+    }
+    html.push('<p class="ipp-note">这一页不会用任何本地估算值填空：三级都没拿到就照实写读不到。</p>');
+    return html.join('');
   }
 
-  function renderOk(d) {
+  /* 结果区第一行：这次数据来自哪一级（快照 / 反代 / 直连）+ 数据生成时刻 + 本次耗时 */
+  function renderSource(meta) {
+    var at = meta.snapshotAt || (meta.data && (meta.data.snapshotAt || meta.data.generatedAt)) || '';
+    var how = meta.kind === 'snapshot' ? '预存静态文件·非实时'
+      : (meta.kind === 'proxy' ? '同源·Vercel 边缘反代' : '直连 demo 域');
+    var html = '<p class="ipp-src">来源：<b>' + esc(SRC_LABEL[meta.kind] || meta.kind) + '</b>' +
+      ' <span class="ipp-na">（' + esc(how) + '）</span> · <code>' + esc(meta.url) + '</code>' +
+      (at ? ' · 数据生成于 <b>' + esc(at) + '</b>' : '') + ' · ' + esc(meta.ms) + ' ms';
+    if (meta.kind === 'snapshot') {
+      html += '<br><span class="ipp-null">这是提前存好的快照，落盘后不再更新</span>：' +
+        '窗口 168h 以生成时刻为界；要最新数据得等实时接口（未命中快照才会走到）。';
+    }
+    html += '</p>';
+    return html;
+  }
+
+  function renderOk(d, meta) {
     var src = (d && d.sources) || {};
     var idx = src.indexer || {}, aud = src.audit || {}, geo = src.geoip || {};
     var idxWhy = idx.status && idx.status !== 'OK'
       ? ('数据源状态 ' + idx.status) : null;
     var html = [];
+
+    /* 0. 来源条：这次命中的是哪一级。快照必须显式标明非实时，别把冻结值当实时值看 */
+    if (meta) { html.push(renderSource(meta)); }
 
     /* 1. 结论卡 */
     if (d.available === true) {
@@ -701,70 +824,46 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
     setTag('查询中');
     loadTimeline(q);
 
-    var init = { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store',
-                 headers: { 'Accept': 'application/json' } };
-    var ctrl = null, timer = null, t0 = Date.now();
-    if (window.AbortController) {
-      ctrl = new AbortController();
-      init.signal = ctrl.signal;
-      timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT);
-    }
-    var url = API + '/api/public/ip.js?q=' + encodeURIComponent(q);
-    fetch(url, init).then(function (res) {
-      return res.text().then(function (text) {
-        var json = null;
-        try { json = JSON.parse(text); } catch (e) { json = null; }
-        if (!res.ok) {
-          out.innerHTML = renderError(res.status, json, text);
-          setSync('读不到（HTTP ' + res.status + '）· 不补数 · ' + clock(new Date()));
-          setTag('读不到');
-          return;
+    var t0 = Date.now();
+    fetchProfile(q, t0).then(function (r) {
+      var d = r.json.data;
+      var ms = Date.now() - t0;
+      out.innerHTML = renderOk(d, { kind: r.kind, url: r.url, ms: ms, data: d,
+                                    snapshotAt: (r.json && r.json.snapshotAt) || '' });
+      /* ★2026-11-09 §七.4：结果区长表格默认折叠（>8 行才折，短表保持原样）。
+         折起后 summary 写清「展开哪张表 + 共几行」，既不吞信息也不让首屏被表淹没。 */
+      (function foldLongTables(root) {
+        if (!root) return;
+        var tabs = root.querySelectorAll('table');
+        for (var i = 0; i < tabs.length; i++) {
+          var t = tabs[i];
+          if (t.closest('details')) continue;
+          var body = t.tBodies && t.tBodies[0];
+          var rows = body ? body.rows.length : 0;
+          if (rows <= 8) continue;
+          var head = t.tHead && t.tHead.rows[0] ? t.tHead.rows[0] : null;
+          var label = head && head.cells.length ? String(head.cells[0].textContent || '').trim() : '';
+          var fold = document.createElement('details');
+          fold.className = 'ipp-fold';
+          var sm = document.createElement('summary');
+          sm.textContent = (label ? label + '：' : '') + '展开这张表（共 ' + rows + ' 行）';
+          t.parentNode.insertBefore(fold, t);
+          fold.appendChild(sm);
+          fold.appendChild(t);
         }
-        if (!json || json.code !== 200 || !json.data) {
-          out.innerHTML = renderError(res.status, json, text);
-          setSync('读不到（响应不是约定的 {code,message,data}）· 不补数 · ' + clock(new Date()));
-          setTag('读不到');
-          return;
-        }
-        var d = json.data;
-        out.innerHTML = renderOk(d);
-  /* ★2026-11-09 §七.4：结果区长表格默认折叠（>8 行才折，短表保持原样）。
-     折起后 summary 写清「展开哪张表 + 共几行」，既不吞信息也不让首屏被表淹没。 */
-  (function foldLongTables(root) {
-    if (!root) return;
-    var tabs = root.querySelectorAll('table');
-    for (var i = 0; i < tabs.length; i++) {
-      var t = tabs[i];
-      if (t.closest('details')) continue;
-      var body = t.tBodies && t.tBodies[0];
-      var rows = body ? body.rows.length : 0;
-      if (rows <= 8) continue;
-      var head = t.tHead && t.tHead.rows[0] ? t.tHead.rows[0] : null;
-      var label = head && head.cells.length ? String(head.cells[0].textContent || '').trim() : '';
-      var d = document.createElement('details');
-      d.className = 'ipp-fold';
-      var sm = document.createElement('summary');
-      sm.textContent = (label ? label + '：' : '') + '展开这张表（共 ' + rows + ' 行）';
-      t.parentNode.insertBefore(d, t);
-      d.appendChild(sm);
-      d.appendChild(t);
-    }
-  })(out);
-        var ms = Date.now() - t0;
-        setSync('已查 ' + esc(d.query || q) + ' · ' + (d.available === true ? '读到索引数据' : '索引读不到') +
-                ' · ' + clock(new Date()) + ' · ' + ms + ' ms');
-        setTag(d.available === true ? (d.events + ' 条事件') : '读不到');
-      });
+      })(out);
+      setSync('已查 ' + esc(d.query || q) + ' · ' + (d.available === true ? '读到索引数据' : '索引读不到') +
+              ' · 来源：' + SRC_LABEL[r.kind] + ' · ' + clock(new Date()) + ' · ' + ms + ' ms');
+      setTag(d.available === true ? (d.events + ' 条事件') : '读不到');
     }).catch(function (e) {
-      var why = (e && e.name === 'AbortError')
-        ? ('超时 ' + Math.round(TIMEOUT / 1000) + 's 未返回')
-        : ('请求没到源站或被浏览器拦下：' + ((e && e.message) || e));
-      out.innerHTML = '<p class="ipp-p"><b class="ipp-bad">读不到</b>（' + esc(why) +
-        '）—— <b>不补数</b>。</p><p class="ipp-note">这一页不会用任何本地估算值填空。</p>';
+      var why = (e && e.message) || String(e);
+      if (e && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
+        why = e.message || ('超时 ' + Math.round(TIMEOUT / 1000) + 's 未返回');
+      }
+      out.innerHTML = renderFail(why, e && e.attempts);
       setSync('读不到（' + why + '）· 不补数 · ' + clock(new Date()));
       setTag('读不到');
     }).then(function () {
-      if (timer) clearTimeout(timer);
       if (btn) { btn.disabled = false; }
     });
   }

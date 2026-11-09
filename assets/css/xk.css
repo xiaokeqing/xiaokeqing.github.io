@@ -1049,9 +1049,7 @@ pre{position:relative}
    远高于左栏实时流（≈356px），而 24h 卡在 .ops-live 之外 ⇒ 左栏下方被拉出 ~800px 空白（站主截图）。
    改法：作战室不再用"左窄右高"的侧栏布局——实时流占满一行，下面 5 张卡按窗口宽度自适应成 2~4 列栅格。 */
 #v-monitor .ops-live{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
-#v-monitor .ops-live > .ops-rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:stretch}
-#v-monitor .ops-live > .ops-rail > *{height:100%;align-self:stretch}
-
+#v-monitor .ops-live > .ops-rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;grid-auto-rows:min-content;align-items:start}
 /* ★2026-11-09 §七.1/§八：数据页分组标题（16px/600 + 左侧 2px 青色竖条） */
 .sec-hd{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px;padding-left:10px;border-left:2px solid rgba(127,212,216,.55)}
 .sec-hd b{font-size:16px;font-weight:600;letter-spacing:.2px;color:var(--fg)}
@@ -1066,3 +1064,84 @@ pre{position:relative}
 .ipp-fold>summary:hover{background:rgba(127,212,216,.06)}
 .ipp-fold[open]>summary{border-bottom:1px solid rgba(127,212,216,.12)}
 .ipp-fold>.ipp-scroll{margin:0 6px 8px}
+
+/* ============================================================================
+   ★2026-11-09 第二轮数据页排版打磨（站主指令，只动样式与结构容器）
+   ① 作战室卡片等高：外框撑满网格行，内容区吃剩余高度（不写死像素高度）。
+   ② 三张可视化卡统一标题行 .vz-hd：13px/600 + 左侧 2px 青竖条 + 右侧口径小字。
+   ③ 热力色阶/格子一套变量：/trend/ 日历格、/alerts/ 与 /daily/ 24 格热力条共用。
+   ④ 移动端（≤980）顶栏工具钮、页脚链接的命中区加高。
+   ============================================================================ */
+
+/* ---- ① 等高卡片：display:flex 列 + 内容区 flex:1 ---- */
+#v-monitor .ops-rail > *{
+  display:flex;flex-direction:column;height:auto;min-width:0;
+}
+/* 地理卡在两行里跨行：左两列的短卡各占一行，右侧地图占满两行 —— 比强行等高少一半空白 */
+#v-monitor .ops-rail > .card{grid-row:span 2;align-self:stretch}
+#v-monitor .ops-rail > * > .mod-bd{
+  flex:1 1 auto;min-height:0;
+}
+/* 地理卡：外框跟行高走，内部地图保持自身比例，说明文字接在地图之后 */
+#v-monitor .ops-rail > .card > .ch{flex:none}
+/* 地图原 margin-bottom:4px 与下方按钮 margin-top:6px 在块布局里会折叠成 6px；
+   父级改成 flex 后不再折叠会多出 4px，这里显式归零，保持改前行高与视觉间距 */
+#v-monitor .ops-rail > .card > .xk-geo-map{flex:0 0 auto;min-height:0;margin-bottom:0}
+
+/* ---- ② 可视化卡统一标题行 ---- */
+.mod-hd.vz-hd{
+  font-size:13px;font-weight:600;letter-spacing:.06em;
+  padding-left:13px;border-left:2px solid var(--acc);
+}
+.mod-hd.vz-hd .tag{font-weight:400;letter-spacing:.02em;color:var(--acc)}
+
+/* ---- ③ 热力条：一套变量（0 级 + 1–5 级）供日历格与 24 格条共用 ---- */
+:root{
+  --vz-heat-h:34px;        /* 24 格条高度（格内有 2 位小时数字，不能压到 15px） */
+  --vz-heat-r:3px;         /* 圆角与 /trend/ 日历格统一 */
+  --vz-heat-gap:3px;
+  --vz-cal:15px;           /* /trend/ 日历格边长 */
+  --vz-lv0:rgba(127,212,216,.06);
+  --vz-lv1:rgba(127,212,216,.22);
+  --vz-lv2:rgba(127,212,216,.38);
+  --vz-lv3:rgba(127,212,216,.55);
+  --vz-lv4:rgba(127,212,216,.72);
+  --vz-lv5:rgba(127,212,216,.92);
+}
+.vz-heat{gap:var(--vz-heat-gap)}
+.vz-c{
+  height:var(--vz-heat-h);border-radius:var(--vz-heat-r);
+  line-height:calc(var(--vz-heat-h) - 2px);
+  background:var(--vz-lv0);
+}
+.vz-c.l1{background:var(--vz-lv1)}
+.vz-c.l2{background:var(--vz-lv2)}
+.vz-c.l3{background:var(--vz-lv3)}
+.vz-c.l4{background:var(--vz-lv4)}
+.vz-c.l5{background:var(--vz-lv5)}
+.vz-c.l4,.vz-c.l5{color:var(--solid)}
+.vz-c.nd{background:none}
+/* /trend/ 的日历样式写在页内 <style> 里、且晚于本文件加载 ⇒ 用高一级选择器覆盖成同一套变量 */
+body .tr-cal i{
+  width:var(--vz-cal);height:var(--vz-cal);border-radius:var(--vz-heat-r);
+  background:var(--vz-lv0);box-shadow:inset 0 0 0 1px rgba(127,212,216,.10);
+}
+body .tr-cal i[data-lv="1"]{background:var(--vz-lv1);box-shadow:none}
+body .tr-cal i[data-lv="2"]{background:var(--vz-lv2);box-shadow:none}
+body .tr-cal i[data-lv="3"]{background:var(--vz-lv3);box-shadow:none}
+body .tr-cal i[data-lv="4"]{background:var(--vz-lv4);box-shadow:none}
+body .tr-cal i[data-lv="5"]{background:var(--vz-lv5);box-shadow:none}
+body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:transparent;box-shadow:none}
+
+/* ---- ④ 移动端命中区（1440 不受影响） ---- */
+@media (max-width:980px){
+  /* 顶栏工具钮：原 26px；用 button.xk-idcard-btn 提升一级特异性，压过后加载的 xk-idcard.css */
+  body.xk-has-idcard .dock .dock-tools button.xk-idcard-btn{
+    min-height:36px;padding:6px 10px;
+  }
+}
+/* 页脚链接：site-foot.html 不动，只在本文件加内边距；选择器特异性高于页内 <style> 的 .xk-foot a */
+footer.xk-foot > a,
+footer.xk-foot .xk-foot-q a{
+  display:inline-block;padding:6px 2px;min-height:32px;
+}
