@@ -1,0 +1,21 @@
+﻿feat: 一屏看板 + 去重复 + 全站删说明段 + 右侧常驻助手
+
+一屏看板（/alerts/）
+- body[data-xk-page=monitor] 下 .screen 固定为 calc(100vh-56px)，页脚隐藏，页面不再整页滚动
+- live tab 用 grid-template-rows:auto minmax(0,1fr) auto：KPI / (实时流+地图) / (24h 曲线+严重度) 一屏放下
+- 1440 实测：live 718/718、graph 718/718、matrix 718/718 均无滚动；stats 内容较长，面板内滚动
+
+去重复
+- 删除 stats 里重复的第二张地图（xkAtkMap canvas + 度量切换 + 底注）
+- 删除 stats 里的「数据可信度 · 三个入口」「数据统计 · 接口健康」两块（入口已在页脚与顶栏）
+
+全站删说明段（26 个模板，-1130 行）
+- api/attack/daily/detections/hunters/ip/noise/passwords/projects/purpleteam/redteam/samples/
+  samples-pipeline/status/subscribe/timeline/tools/trend/what/more 等页面删掉「口径/边界/为什么/读法」整段与折叠块
+- 只保留标题 + 数字/卡片 + 读取状态一行
+
+右侧常驻助手
+- 新增 partial xk-demo/assistant.html、assets/js/xk-assist.js、data/page-intro.json（16 页各一句）
+- 桌面常驻 300px，窄屏右下 44px 圆球 + 底部抽屉；介绍打字机，追问走 /api/public/ask
+
+断言 98/98。

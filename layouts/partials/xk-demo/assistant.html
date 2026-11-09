@@ -1,0 +1,94 @@
+{{- /* ============================================================================
+   全站右侧常驻助手「桐莉」（2026-11-09）
+   ----------------------------------------------------------------------------
+   为什么用 <template>：head-meta.html 是在 <head> 里被 include 的，直接吐
+   aside/button 会让浏览器提前结束 <head>、把后面的 <link> 全丢进 body。
+   放进 <template> 里既不合法性问题、也不占 DOM；assets/js/xk-assist.js 在
+   DOM 解析完后 clone 到 body 末尾再接管。禁用 JS 时整块不出现（本来也需要 JS）。
+   介绍文案：data/page-intro.json（16 个路径各一句 ≤26 字）；未收录的页面
+   退回「标题」兜底，不写死任何一页的数字。
+   样式：主规则追加在 assets/css/xk.css 末尾；主页不走 xk.css（它自带一整段
+   内联样式），所以 .IsHome 时在这里内联一份等价规则 —— 改样式时两处一起改。
+   ========================================================================== */ -}}
+{{- $key := .RelPermalink -}}
+{{- $intro := "" -}}
+{{- with index site.Data "page-intro" -}}
+  {{- with index . $key -}}{{- $intro = . -}}{{- end -}}
+{{- end -}}
+{{- if not $intro -}}
+  {{- if .IsHome -}}
+    {{- $intro = "先看这里：这个站是干什么的、怎么逛。" -}}
+  {{- else -}}
+    {{- $t := .Title | default "" -}}
+    {{- if $t -}}
+      {{- $intro = printf "「%s」——想聊这一页就问我。" (truncate 18 $t) -}}
+    {{- else -}}
+      {{- $intro = "这一页我也不太熟，点「问」一起看看。" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+<template id="xk-assist-tpl">
+{{- if .IsHome }}
+<style>
+.xk-assist{position:fixed;right:14px;top:60px;z-index:56;width:300px;max-height:calc(100vh - 80px);display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 46%),rgba(15,19,24,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line,rgba(255,246,235,.15));border-radius:14px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.18);color:var(--mut,#D2CBBD);font:14px/1.5 var(--sans,sans-serif);transition:opacity .18s ease,transform .18s ease,visibility .18s}
+.xk-assist *{box-sizing:border-box}
+body.xk-assist-closed .xk-assist{opacity:0;visibility:hidden;transform:translateX(18px);pointer-events:none}
+.xk-assist-hd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line,rgba(255,246,235,.15));background:rgba(255,255,255,.04)}
+.xk-assist-av{width:26px;height:26px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(127,212,216,.16);border:1px solid rgba(127,212,216,.38);color:var(--acc,#7FD4D8);font:13px/1 var(--sans,sans-serif)}
+.xk-assist-name{display:flex;align-items:center;gap:6px;flex:1;min-width:0;color:var(--txt,#FAF7F0);font-weight:600;font-size:14px;white-space:nowrap}
+.xk-assist-tag{font:12px/1.35 var(--mono,monospace);font-weight:400;color:var(--mut,#D2CBBD);border:1px solid var(--line,rgba(255,246,235,.15));border-radius:999px;padding:2px 7px;white-space:nowrap}
+.xk-assist-x{flex:none;width:24px;height:24px;padding:0;border:0;border-radius:6px;background:none;color:var(--mut,#D2CBBD);font-size:18px;line-height:1;cursor:pointer}
+.xk-assist-x:hover,.xk-assist-x:focus-visible{color:var(--txt,#FAF7F0);background:rgba(255,255,255,.08);outline:none}
+.xk-assist-bd{flex:1 1 auto;min-height:0;padding:12px;overflow:auto;-webkit-overflow-scrolling:touch}
+.xk-assist-say{margin:0;color:var(--txt,#FAF7F0);font-size:14px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
+.xk-assist-say.is-typing{cursor:pointer}
+.xk-assist-say.is-typing::after{content:"▍";color:var(--acc,#7FD4D8);margin-left:1px;animation:xk-assist-blink 1s step-end infinite}
+@keyframes xk-assist-blink{50%{opacity:0}}
+.xk-assist-skip{margin-top:6px;padding:2px 8px;border:1px solid var(--line,rgba(255,246,235,.15));border-radius:999px;background:none;color:var(--mut,#D2CBBD);font:12px var(--sans,sans-serif);cursor:pointer}
+.xk-assist-skip:hover,.xk-assist-skip:focus-visible{color:var(--txt,#FAF7F0);border-color:var(--line2,rgba(255,246,235,.28))}
+.xk-assist-skip[hidden]{display:none}
+.xk-assist-form{display:flex;gap:6px;margin-top:10px}
+.xk-assist-in{flex:1;min-width:0;padding:7px 9px;border:1px solid var(--line2,rgba(255,246,235,.28));border-radius:8px;background:rgba(6,10,14,.45);color:var(--txt,#FAF7F0);font:13px var(--sans,sans-serif)}
+.xk-assist-in::placeholder{color:var(--mut,#D2CBBD);opacity:.75}
+.xk-assist-in:focus{outline:none;border-color:var(--acc,#7FD4D8)}
+.xk-assist-go{flex:none;padding:0 12px;border:1px solid rgba(127,212,216,.38);border-radius:8px;background:rgba(127,212,216,.14);color:var(--acc,#7FD4D8);font:13px var(--sans,sans-serif);cursor:pointer}
+.xk-assist-go:hover:not(:disabled),.xk-assist-go:focus-visible{background:rgba(127,212,216,.24)}
+.xk-assist-go:disabled{opacity:.55;cursor:default}
+.xk-assist-ans{margin:10px 0 0;padding:8px 10px;border-left:2px solid var(--acc,#7FD4D8);border-radius:0 8px 8px 0;background:rgba(127,212,216,.08);color:var(--txt,#FAF7F0);font-size:13px;line-height:1.75;white-space:pre-wrap;word-break:break-word;max-height:30vh;overflow:auto}
+.xk-assist-ans.is-err{border-left-color:#E8837B;background:rgba(232,131,123,.10);color:#E8837B}
+.xk-assist-ft{margin:10px 0 0;color:var(--mut,#D2CBBD);opacity:.8;font:12px/1.35 var(--mono,monospace)}
+.xk-assist-fab{display:none;position:fixed;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:56;width:44px;height:44px;padding:0;align-items:center;justify-content:center;border:1px solid rgba(127,212,216,.42);border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 46%),rgba(15,19,24,.84);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--acc,#7FD4D8);font:14px var(--sans,sans-serif);cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.xk-assist-fab:hover,.xk-assist-fab:focus-visible{color:var(--txt,#FAF7F0);border-color:var(--acc,#7FD4D8);outline:none}
+/* 主页顶栏下方还有一条固定 hbar（top:52 / 高 32 / z 59，见 layouts/index.html），面板让到 92 */
+body.is-home .xk-assist{top:92px;max-height:calc(100vh - 112px)}
+@media (min-width:1180px){body.xk-assist-closed .xk-assist-fab{display:flex}}
+@media (max-width:1179.98px){
+  .xk-assist{top:auto;left:0;right:0;bottom:0;width:auto;height:60vh;max-height:none;border-radius:16px 16px 0 0;transform:translateY(100%);visibility:hidden;opacity:1}
+  .xk-assist::before{content:"";display:block;flex:none;width:40px;height:4px;margin:8px auto 0;border-radius:2px;background:rgba(255,255,255,.3)}
+  body.xk-assist-closed .xk-assist{transform:translateY(100%)}
+  body.xk-assist-open .xk-assist{transform:translateY(0);visibility:visible;pointer-events:auto}
+  .xk-assist-fab{display:flex}
+  body.xk-assist-open .xk-assist-fab{display:none}
+}
+@media (prefers-reduced-motion:reduce){.xk-assist,.xk-assist-say.is-typing::after{transition:none;animation:none}}
+</style>
+{{- end }}
+<aside class="xk-assist" id="xk-assist" aria-label="桐莉 · 本页介绍" data-intro="{{ $intro }}" data-path="{{ $key }}">
+  <div class="xk-assist-hd">
+    <span class="xk-assist-av" aria-hidden="true">桐</span>
+    <span class="xk-assist-name">桐莉<span class="xk-assist-tag">本页介绍</span></span>
+    <button type="button" class="xk-assist-x" aria-label="收起助手">×</button>
+  </div>
+  <div class="xk-assist-bd">
+    <p class="xk-assist-say"></p>
+    <button type="button" class="xk-assist-skip" hidden>跳过</button>
+    <form class="xk-assist-form" autocomplete="off">
+      <input class="xk-assist-in" type="text" maxlength="300" placeholder="问她这一页的事…" aria-label="向桐莉提问">
+      <button type="submit" class="xk-assist-go">问</button>
+    </form>
+    <p class="xk-assist-ans" aria-live="polite" hidden></p>
+    <p class="xk-assist-ft">来自 /api/public/ask · 只解释概念与防御</p>
+  </div>
+</aside>
+<button type="button" class="xk-assist-fab" id="xk-assist-fab" aria-label="打开桐莉助手" aria-expanded="false" aria-controls="xk-assist">桐</button>
+</template>
