@@ -668,7 +668,7 @@
     var cnt = document.getElementById('xkAskCount');
     var wired = false;
     var META = document.querySelector('meta[name="wb-api"]');
-    var API = ((META && META.getAttribute('content')) || '').replace(/\/+$/, '');
+    var API = (document.documentElement.getAttribute('data-wb-api') || (META && META.getAttribute('content')) || '').replace(/\/+$/, ''); /* 2026-11-09：meta 清空后回退 data-wb-api（登录/登出必须打真实接口） */
     var ASK_TIMEOUT = 20000, ASK_MAX = 600;
     /* ★③b：文案表**合并为一处**（§4 明确要求消除第二份会漂移的表）。
        与登录面共用 window.__xkL10N（③a 的五条契约文案）；此处只补**提问段独有**的四条。

@@ -511,7 +511,7 @@ python -X utf8 scripts/redteam/score-submissions.py --write</pre>
   var NA = '未探测';
   var TIMEOUT = 8000;
   var meta = document.querySelector('meta[name="wb-api"]');
-  var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+  var API = (document.documentElement.getAttribute('data-wb-api') || (meta && meta.getAttribute('content')) || '').replace(/\/+$/, ''); /* 2026-11-09：meta 已被 boot 清空，回退 data-wb-api（本页没有静态快照） */
   var EPS = [
     { p: '/api/eval/runs',  use: '历史 run 列表（本页数字的源头）' },
     { p: '/api/eval/cases', use: '用例清单（27 条定义）' }

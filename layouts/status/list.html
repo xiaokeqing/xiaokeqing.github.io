@@ -263,7 +263,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
   var NA = '未取到';
   var TIMEOUT = 20000;
   var meta = document.querySelector('meta[name="wb-api"]');
-  var API = ((meta && meta.getAttribute('content')) || '').replace(/\/+$/, '');
+  var API = (document.documentElement.getAttribute('data-wb-api') || (meta && meta.getAttribute('content')) || '').replace(/\/+$/, ''); /* 2026-11-09：meta 已被 boot 清空，回退 data-wb-api（本页没有静态快照） */
   var EPS = [
     { p: '/api/health',            use: '服务自述 + 构建 SHA' },
     { p: '/api/public/home.js',    use: '首页聚合（alerts + geo + honeypot）' },
