@@ -10,6 +10,8 @@
 <div class="bgshade" aria-hidden="true"></div>
 
 <!-- 导航：与首页共用 layouts/partials/xk-demo/dock.html（唯一来源，改导航只改那份） -->
+{{- /* ★2026-11-09 键盘用户第一个 Tab 跳过 dock 直达 <main id="content">；样式在 head-meta 内联（约 170B） */}}
+<a class="xk-skip" href="#content">跳到主要内容</a>
 {{ partial "xk-demo/dock.html" (dict "v" $v) }}
 
 <!-- HOLO 人物面板：左上角 -->

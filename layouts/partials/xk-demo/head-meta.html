@@ -99,6 +99,43 @@ if(location.search.indexOf('live=1')<0){m.setAttribute('content','');}}}catch(e)
 <meta name="twitter:title" content="{{ $ogTitle }}">
 <meta name="twitter:description" content="{{ $desc }}">
 <meta name="twitter:image" content="{{ $ogImg }}">
+{{- /* ★2026-11-09 无障碍 + 结构化数据（全站 xk-demo 页的 <head> 都在这里）。
+      ① .xk-skip 只能内联：xk-demo 页不引 assets/css/extended/site.css，样式表里那份收不到；
+      ② dock.html（nav）与 shell-views.html（#termFeed、/alerts/ 的 tab）不归本文件改，
+         所以 aria-label / aria-current / aria-live 用一段 defer 内联脚本补（约 0.5KB）；
+      ③ JSON-LD：文章页 BlogPosting，其余页 WebSite + 两级 BreadcrumbList。
+         已自带 ld+json 的两篇（front matter `type: post` → baseof/head.html）不经过本文件，不会重复。
+      jsonify（Hugo 内置）负责转义，printf 拼 <script> 防止 Hugo 再加工 JSON。 */ -}}
+<style>.xk-skip{position:absolute;left:-9999px}.xk-skip:focus{left:8px;top:8px;z-index:99;background:#0a0f12;color:#7fd4d8;padding:6px 10px;border-radius:8px}</style>
+<script>(function(){function f(){var d=document,n=d.querySelector('nav.dock');if(n){n.setAttribute('aria-label','站内主导航');var a=n.querySelector('a.on');if(a){a.setAttribute('aria-current','page');}}var t=d.getElementById('termFeed');if(t){t.setAttribute('aria-live','polite');t.setAttribute('aria-atomic','false');}if(!d.querySelector('.xk-skip')){var s=d.createElement('a');s.className='xk-skip';s.href='#content';s.textContent='跳到主要内容';d.body.insertBefore(s,d.body.firstChild);}}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',f);}else{f();}})();</script>
+{{- if and .IsPage (eq .Section "posts") }}
+  {{- $org := dict "@type" "Organization" "name" "xiaokeqing" "url" site.BaseURL -}}
+  {{- $ld := dict "@context" "https://schema.org" "@type" "BlogPosting"
+        "headline" .Title
+        "description" $desc
+        "datePublished" (.Date.Format "2006-01-02T15:04:05-07:00")
+        "dateModified" (.Lastmod.Format "2006-01-02T15:04:05-07:00")
+        "inLanguage" "zh-CN"
+        "author" $org
+        "publisher" $org
+        "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink)
+        "image" $ogImg
+        "url" .Permalink -}}
+  {{ printf "<script type=\"application/ld+json\">%s</script>" ($ld | jsonify) | safeHTML }}
+{{- else }}
+  {{- $siteLd := dict "@context" "https://schema.org" "@type" "WebSite"
+        "name" site.Title
+        "url" site.BaseURL
+        "description" $desc
+        "inLanguage" "zh-CN" -}}
+  {{ printf "<script type=\"application/ld+json\">%s</script>" ($siteLd | jsonify) | safeHTML }}
+  {{- $crumbName := cond .IsHome "首页" .Title -}}
+  {{- $crumb := dict "@context" "https://schema.org" "@type" "BreadcrumbList"
+        "itemListElement" (slice
+          (dict "@type" "ListItem" "position" 1 "name" "首页" "item" site.BaseURL)
+          (dict "@type" "ListItem" "position" 2 "name" $crumbName "item" .Permalink)) -}}
+  {{ printf "<script type=\"application/ld+json\">%s</script>" ($crumb | jsonify) | safeHTML }}
+{{- end }}
 {{- /* ★2026-11-08 首屏脚本收口（12 → 8）：ux（命令面板 / 阅读进度 / 复制按钮）、
        geo（攻击地理热力）、ticker（顶栏实时攻击轮播）三个独立 IIFE 合成一个指纹文件。
        行为不变：都是 defer、都在 DOM 解析完后按序执行；ticker 自己会判 html.xk-slow 与 #dockTicker。 */ -}}
