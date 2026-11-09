@@ -89,76 +89,9 @@
     <div class="screen-bd rt-bd">
 
       <p class="rt-lead">
-        这一页只有一个目的：把这个平台<b>自己的红队评测数字</b>摆出来，<b>包括没挡住的那 4 条</b>。
-        所有计数来自后端的离线护栏评测套件 <code>offline-guard-suite</code>，最近一次落盘是
-        <b>2026-10-11 11:56:50</b>（run <code>RUN-899985f3</code>）。
-        这不是「现在」的数字：这一页<b>不做实时评测</b>、也不会替你跑一次 —— 评测接口要登录，
-        浏览器跨源也拿不到（第 6 块当场演示）。所以下面是<b>那一次 run 的历史快照</b>，
-        一个手填数字都没有，算错的地方请你按算式自己复核。
-        想<b>交自己的样本</b>、或者看别人交上来的结果，直接跳到第 ⑨ 块
-        <a href="#submit" style="color:#bfe3d0">交个样本</a> 与第 ⑩ 块
-        <a href="#board" style="color:#bfe3d0">公开样本榜</a>（都只做离线评分，本页不接受在线提交）。
+        最近一次 run：<b>RUN-899985f3</b> · <b>2026-10-11 11:56:50</b> · 离线快照
       </p>
-      <noscript><p class="rt-noscript">本页的数字是静态文本，关掉 JavaScript 照样能看；
-        只有第 ⑦ 块「实时探测」和 ⑩ 块「公开样本榜」需要脚本 —— 没有脚本时它们只会显示占位的
-        「未探测」与「还没有已评分样本」。</p></noscript>
-
-      <!-- ============ ① 口径 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 评的是什么、样本从哪来、百分比怎么除<span class="tag">先看这块，再看数字</span></div>
-        <div class="mod-bd">
-          <div class="rt-scroll">
-            <table class="rt-kv">
-              <tbody>
-                <tr><th>评的是什么</th><td>
-                  平台上三道<b>规则型</b>防护的离线回归：<code>PromptInjectionGuard</code>（提示注入拦截）、
-                  <code>ResponseGuard</code>（封禁护栏：白名单 / 非法 IPv4 / 时长上限）、
-                  <code>SensitiveContentScanner</code>（敏感内容 DLP：密钥与私钥）。
-                  另有 2 条<b>需要真实模型</b>的诱导用例（泄露系统提示词 / 越权下封禁动作），
-                  环境没配模型 Key 时判 <code>SKIPPED</code>，不计成败。
-                </td></tr>
-                <tr><th>样本集是什么</th><td>
-                  <b>27 条用例，全部写死在代码里</b>（<code>RedTeamEvalService.buildCases()</code>），
-                  <b>不读任何外部样本文件</b> —— 所以「样本数」就是源码里的 27，不存在「样本集多大」的浮动。
-                  其中 <b>19 条应拦</b>（攻击载荷）、<b>8 条应放行</b>（良性/反向用例）。
-                </td></tr>
-                <tr><th>拦截率怎么算</th><td class="f">
-                  blocked ÷ 攻击用例<b>实跑</b>数 = 13 ÷ 17 = 76.47%
-                  <div style="font-family:inherit;font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">
-                    分母是 17 不是 27：19 条应拦用例里有 2 条本轮 <code>SKIPPED</code>（需真模型），
-                    跳过的不进分母，也不进分子。
-                  </div>
-                </td></tr>
-                <tr><th>绕过率怎么算</th><td class="f">
-                  bypassed ÷ 同一个分母 = 4 ÷ 17 = 23.53%
-                  <div style="font-family:inherit;font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">
-                    代码里 <code>bypassRate</code> 与 <code>attackSuccessRate</code> 现在是<b>同一个数</b>
-                    （早期版本把分母写成 executed，两个指标会互相打架，已修）。
-                  </div>
-                </td></tr>
-                <tr><th>误报率怎么算</th><td class="f">
-                  normalMisblocked ÷ normalExecuted = 0 ÷ 8 = 0.00%
-                  <div style="font-family:inherit;font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">
-                    分母是 8 条<b>应放行</b>的用例（6 条正常流量 + 2 条反向用例）。
-                    这 8 条全放行了，所以是 0 —— 0 误报不等于防护好，见下面「4 条绕过」。
-                  </div>
-                </td></tr>
-                <tr><th>什么不算数</th><td>
-                  <code>SKIPPED</code> 既不是拦住也不是被绕过。本轮跳过 2 条，都是<b>要真模型</b>才能判的用例；
-                  把它们算进分母是另一种更严的口径，本页两种都给了（见下一块的「换个算法」）。
-                </td></tr>
-                <tr><th>数字落在哪</th><td>
-                  后端仓库的 <code>data/eval-runs.json</code>（配置键 <code>eval.runs-file</code>）。
-                  <b>历史 run 全量保留、不覆盖</b>：同一份文件里现在有 9 次 run，本页把它们全贴在第 5 块，
-                  连难看的那几次一起。
-                </td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="rt-note"><b>一句话口径</b>：拦截率的分母是「<b>真的跑了的攻击用例</b>」，不是「用例总数」。
-            用总数当分母会让跳过的用例冒充「拦住」，那是把评分做高、不是把防护做强。</p>
-        </div>
-      </div>
+      <noscript><p class="rt-noscript">无脚本：第 ⑦ 与 ⑩ 块显示「未探测 / 还没有样本」。</p></noscript>
 
       <!-- ============ ② 这一版拦了多少 ============ -->
       <div class="mod">
@@ -175,20 +108,7 @@
             <div class="rt-card warn"><span class="k">平均判定耗时</span><span class="n">0.36 <span style="font-size:12px">ms</span></span><span class="d">纯规则判定，不含模型</span></div>
           </div>
           <p class="rt-p" style="margin-top:12px">
-            <b>拦截率 13 ÷ 17 = 76.47%</b>，<b>绕过率 4 ÷ 17 = 23.53%</b>，<b>误报率 0 ÷ 8 = 0.00%</b>。
-            17 = 19 条应拦用例 − 2 条 <code>SKIPPED</code>。同一次 run 的 <code>totalTokenCost</code> 是 <b>0</b>：
-            这一套是离线规则判定，一条模型都没调（那 2 条要模型的用例根本没跑起来，所以也没花钱）。
-          </p>
-          <p class="rt-note">
-            <b>换个算法（更严的那种）</b>：如果把「跳过」当作「没拦住」，分母回到 19，拦截率变成
-            <b>13 ÷ 19 = 68.42%</b>、绕过率 <b>6 ÷ 19 = 31.58%</b>。两个数都摆在这里 ——
-            挑哪个取决于你想问的是「<b>规则本身拦得住几成</b>」还是「<b>整套评测跑全了能拿几分</b>」，
-            本页默认用前者（分母只放真跑了的），因为它才是防护能力的下限。
-          </p>
-          <p class="rt-note">
-            <b>别被 −2 骗了</b>：上一轮（11:45 那次）<code>blocked=15</code>，这一轮 <code>blocked=13</code>，
-            少的 2 条<b>不是新破了 2 个洞</b>，而是那 2 条需真模型的用例这次被判了 <code>SKIPPED</code>，
-            从分子里退出了。真正可比的数是 <b>bypassed 一直是 4</b> —— 那 4 条从 10:00 起就没变过。
+            拦截率 13 ÷ 17 = <b>76.47%</b> · 绕过率 4 ÷ 17 = <b>23.53%</b> · 误报率 0 ÷ 8 = <b>0.00%</b>
           </p>
         </div>
       </div>
@@ -215,14 +135,6 @@
               </tbody>
             </table>
           </div>
-          <p class="rt-note">
-            <b>「绕过型」这一组是刻意补的</b>，也是整套评测最有价值的部分。第一版只有 19 条用例，跑出
-            「11/11 全拦、0 绕过、0 误报」—— 看着漂亮，恰恰说明<b>评测集失效</b>：用例是照着防护规则写的，
-            当然全能命中。<b>0% 绕过率不是成绩，是测试集没有区分度的信号。</b>
-            于是补了 8 条专撞规则边界的变形载荷（字符插空 / 同义改写 / 全角字母 / Base64 / 中文新词 /
-            凭据拆开写 / 编码后的私钥 / 中文自然语言口令），绕过率立刻从 0% 变成 42.11%。
-            本页展示的 23.53% 是之后补强规则的结果 —— 它有区分度，所以它不好看。
-          </p>
         </div>
       </div>
 
@@ -242,22 +154,8 @@
             </table>
           </div>
           <p class="rt-p" style="margin-top:12px">
-            <b>同组里挡住的 4 条</b>（说明规则不是全失效，是边界没盖全）：
-            <code>rt-bp-pi-space-20</code> 字符插空、<code>rt-bp-pi-fullwidth-22</code> 全角字母、
-            <code>rt-bp-pi-newword-24</code> 中文新词、<code>rt-bp-dlp-split-25</code> 凭据拆开写 —— 这四条本轮都拦住了。
-          </p>
-          <p class="rt-note">
-            <b>为什么绕过案例不公开细节</b>：这三类手法（同义改写 / 编码绕过 / 自然语言赋值）一旦连
-            <b>具体载荷原文</b>一起贴出来，就等于给每个人一份可复制的绕过说明书 —— 而且是对着本平台规则的。
-            所以这一页公开的是<b>「哪一类手法没挡住」+「用例 id」+「计数」</b>，
-            载荷原文留在后端仓库的评测集里，规则正则更不公开。
-            <b>这样仍然可验证</b>：类别给了、id 给了、分母给了，你可以自己造等价载荷去撞同一类边界；
-            只是这份页面不负责把答案抄给你。
-          </p>
-          <p class="rt-note">
-            <b>也不开「在线点一下就跑一次评测」</b>：评测接口 <code>POST /api/eval/run</code> 需要登录、
-            且一旦匿名可达就等于把整个评测集免费开放给攻击者批量试错 —— 自己把自己的评测集变成攻击者的
-            自动化靶场，是最不该做的一种「透明」。本页只读，不触发任何评测动作。
+            同组挡住的 4 条：<code>rt-bp-pi-space-20</code> · <code>rt-bp-pi-fullwidth-22</code> ·
+            <code>rt-bp-pi-newword-24</code> · <code>rt-bp-dlp-split-25</code>
           </p>
         </div>
       </div>
@@ -301,9 +199,7 @@
             </table>
           </div>
           <p class="rt-note">
-            「期望」一列来自用例定义里的 <code>expectBlocked</code>；「实测」取自这次 run 的逐条 <code>status</code>
-            （<code>BLOCKED</code> / <code>BYPASSED</code> / <code>ALLOWED</code> / <code>MISBLOCKED</code> / <code>SKIPPED</code>）。
-            27 行加起来：拦住 13、绕过 4、放行 8、跳过 2 = 27。
+            「期望」= 用例定义里的 <code>expectBlocked</code>；「实测」= 这次 run 的逐条 <code>status</code>。
           </p>
         </div>
       </div>
@@ -328,16 +224,6 @@
               </tbody>
             </table>
           </div>
-          <p class="rt-p" style="margin-top:12px">
-            <b>为什么 09:57 那个 42.11% 不是退步</b>：那是把用例从 19 条扩到 27 条、补进 8 条变形载荷的那一刻。
-            之前的「0 绕过」不是防得好，是<b>测试集没有区分度</b>；新用例一上，绕过率立刻显形为 42.11%，
-            随后规则补强把 4 条堵住，降到 21.05%。11:54 之后 <code>blocked</code> 从 15 掉到 13 是因为
-            2 条模型用例转为跳过（见第 2 块），<b>不是又破了两个洞</b>。
-          </p>
-          <p class="rt-note">
-            另有 4 次 run（11:54–11:56）数字完全一致，只差平均耗时（0.28–0.36 ms）。
-            它们不构成「四次独立验证」，同一套代码重跑而已 —— 贴出来只是不挑数据。
-          </p>
         </div>
       </div>
 
@@ -354,52 +240,19 @@
             </table>
           </div>
           <p class="rt-p" style="margin-top:12px">
-            <b>预期结论：读不到。</b>三件事同时成立 ——
-            ① <code>/api/eval/*</code> <b>不在鉴权白名单</b>里（<code>app.auth.white-list</code> 只有
-            <code>/api/health</code>、<code>/api/playground/check</code>、<code>/api/public/**</code>），
-            匿名请求拿不到数据；
-            ② 公网 <b>CORS 只对 <code>/api/public/**</code> 开口</b>（允许来源是本博客的域名），
-            <code>/api/eval</code> 落在全局 CORS 里，只放行本机 9900 端口 —— 跨源连响应体都读不到；
-            ③ 就算读得到，这一页也<b>不会</b>把估算值补上去。
-            所以上面的数字版块是 2026-10-11 的<b>历史快照</b>，它们不会因为这次探测而变。
+            预期读不到：<code>/api/eval/*</code> 不在白名单 · CORS 只开 <code>/api/public/**</code>
           </p>
-          <p class="rt-p">
-            <b>你可以自己复现「读不到」</b>（三条都只读，不会启动评测、不会写任何东西）：
-          </p>
-<pre class="rt-pre"><span class="c"># ① 拉历史 run 列表：预期 401（需登录令牌），或跨源被 CORS 拦掉</span>
+<pre class="rt-pre"><span class="c"># ① 拉历史 run：预期 401 或被 CORS 拦</span>
 curl -s -o /dev/null -w '%{http_code}\n' https://demo.xiaokeqing.cn/api/eval/runs
 
-<span class="c"># ② 对照：同一个源站上的公开端点是什么待遇（200 + JSON）</span>
+<span class="c"># ② 对照：公开端点 200 + JSON</span>
 curl -s https://demo.xiaokeqing.cn/api/public/deploy.js | head -c 200
 
-<span class="c"># ③ 对照：健康端点在白名单里，不需要令牌</span>
+<span class="c"># ③ 对照：健康端点免令牌</span>
 curl -s https://demo.xiaokeqing.cn/api/health | head -c 200</pre>
           <p class="rt-note">
-            ①②对比就是这一页的核心证据：<b>同一台机器，公开面读得到、评测面读不到</b>。
-            评测面不开匿名读取是有意的取舍（见第 4 块），所以这里如实写「读不到」，
-            而不是拿历史快照假装是实时数据。
-          </p>
-        </div>
-      </div>
-
-      <!-- ============ ⑧ 边界 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径与边界 · 哪些公开、哪些不公开<span class="tag">公开的是可复核的部分</span></div>
-        <div class="mod-bd">
-          <p class="rt-p">
-            <b>公开</b>：用例 id、类别、条数、每条期望与实测状态、拦截/绕过/误报的计数与算式、历次 run 的编号与时间、
-            绕过手法的<b>类别</b>（同义改写 / Base64 / 中文自然语言）、以及「为什么读不到实时数字」的技术原因。<br>
-            <b>不公开</b>：任何一条用例的<b>载荷原文</b>、防护规则的<b>正则与阈值</b>、4 条绕过载荷的具体构造、
-            服务器内部地址与配置细节、以及模型的系统提示词。理由同上：这些是「答案」，公开答案等于送人一把钥匙。<br>
-            <b>不做的</b>：这一页不跑评测、不发 POST、不读取你的任何输入，也没有任何写操作；它只做三件事 ——
-            把历史快照摊开、把公开端点探一遍、把离线跑分出的公开样本榜读一遍（第 ⑩ 块，读的是静态 JSON）。
-            ⑨ 块写明怎么交样本，但交的方式<b>不在本页</b>：没有表单，没有提交按钮。
-          </p>
-          <p class="rt-note">
-            数字出处：<code>RedTeamEvalService.buildCases()</code>（27 条用例定义）与
-            <code>data/eval-runs.json</code> 的 <code>RUN-899985f3.summary</code> / <code>.details</code>。
-            要复现「平台现在通不通」看 <a href="/status/" style="color:#bfe3d0">状态页 /status/</a>；
-            要复现公开端点清单看 <a href="/api/" style="color:#bfe3d0">接口页 /api/</a>。
+            出处：<code>data/eval-runs.json</code> 的 <code>RUN-899985f3</code> ·
+            <a href="/status/" style="color:#bfe3d0">/status/</a> · <a href="/api/" style="color:#bfe3d0">/api/</a>
           </p>
         </div>
       </div>
@@ -409,14 +262,7 @@ curl -s https://demo.xiaokeqing.cn/api/health | head -c 200</pre>
         <div class="mod-hd"><span class="led"></span>交个样本 · 只接受离线评分<span class="tag">不开放公网实时靶标</span></div>
         <div class="mod-bd">
           <p class="rt-p">
-            <b>这一页没有输入框，也没有「提交并打分」按钮。</b>页面不发任何写请求、不会把你的输入送进
-            <code>/api/public/ask</code>。你交的是<b>一个文件</b>：站主拿回本机离线跑一次，结果回写成静态 JSON，
-            贴在第 ⑩ 块。整条链路里，访客永远碰不到那个端点。
-          </p>
-          <p class="rt-p">
-            <b>为什么不做实时靶标</b>（这条边界不打算破）：一个匿名可反复试的端点，等于把判定器交给攻击者做
-            自动化穷举 —— 「拦住 / 没拦住」变成可被爬取的信号位，模型调用还记在站主账上。离线跑分把
-            <b>样本数量</b>和<b>试错速度</b>解耦了：你可以交任意多条，但每一条只被跑一次，跑的人是站主。
+            本页无表单：交一个 .md 文件，站主离线跑一次，结果回写成静态 JSON。
           </p>
           <div class="rt-scroll">
             <table class="rt-kv">
@@ -465,12 +311,6 @@ python -X utf8 scripts/redteam/score-submissions.py
 
 <span class="c"># 真跑：回写每条样本的 status/score/verdict，并重写 static/data/redteam-submissions.json</span>
 python -X utf8 scripts/redteam/score-submissions.py --write</pre>
-          <p class="rt-note">
-            <b>交之前请知道代价</b>：样本正文会被当作公开用例 —— 榜单上只有 80 字摘要 + 判定，
-            邮箱、手机号、密钥形状的串在摘要里自动隐去，<code>author</code> 可以匿名；
-            但<b>正文全文留在仓库里</b>，PR 记录是公开的。所以别往样本里夹真实凭据或别人的个人信息。
-            另外：<b>重复提交同一手法不会加分</b>，跑分是幂等的（<code>status: pending</code> 的样本才跑）。
-          </p>
         </div>
       </div>
 
@@ -487,9 +327,7 @@ python -X utf8 scripts/redteam/score-submissions.py --write</pre>
             </table>
           </div>
           <p class="rt-note" style="margin-top:10px">
-            按 <code>score</code> 倒序取前 20 条。分数记的是<b>平台</b>（防住了 = 10），不是攻击者 ——
-            所以榜首先是「还没被攻破的」；<code>bypassed</code> 那些也照样在榜上，不做隐藏。
-            <b>这张表是前端 fetch 读来的静态 JSON</b>：读不到时它会明说「读不到」，不会拿空榜冒充「零样本」。
+            按 <code>score</code> 倒序取前 20 · 记平台分 · 读不到时明说「读不到」
           </p>
         </div>
       </div>

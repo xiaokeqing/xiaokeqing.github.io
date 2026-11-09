@@ -86,7 +86,7 @@
       <div class="api-ent">
         <div class="hd">
           <b>公开端点清单</b>
-          <span class="s">17 个只读端点 · 每个都写了用途、返回字段和已知坑。本页就是清单本身，下面三块按需跳。</span>
+          <span class="s">17 个只读端点 · 按需跳读</span>
         </div>
         <div class="jump">
           <a href="#api-ep">端点表 ↓</a>
@@ -96,16 +96,8 @@
       </div>
 
       <p class="api-openapi">
-        <b>机器可读：</b><a href="https://demo.xiaokeqing.cn/api/openapi.json">/api/openapi.json</a>（OpenAPI 3.0，后端 <code>OpenApiSpec</code> 生成）
-        · <b>别名：</b><code>*.js</code>（每个 GET 都有同名 <code>.js</code>，响应体与不带后缀完全一致）
-        <br>
-        这份清单由<b>后端生成</b>，下面表格是<b>手写说明</b>，<b>两者不一致以 openapi.json 为准</b>；
-        手写表还没跟上的三条（<code>/api/public/ip</code>、<code>/password</code>、<code>/tts/say</code>）在清单里有。
-      </p>
-
-      <p class="api-lead">
-        这张表是给<b>想自己敲命令的人</b>看的：每个端点做什么、返回什么、有什么已知缺陷。
-        基址是 <code>https://demo.xiaokeqing.cn</code>，下面第三块那三条 curl 复制就能跑。
+        <b>机器可读：</b><a href="https://demo.xiaokeqing.cn/api/openapi.json">/api/openapi.json</a>（OpenAPI 3.0）· <b>别名：</b><code>*.js</code>（响应体一致）·
+        <b>两者不一致以 openapi.json 为准。</b>
       </p>
 
       <div class="mod" id="api-ep">
@@ -239,26 +231,13 @@
               </tbody>
             </table>
           </div>
-          <p class="api-foot">「字段」一列只写<b>已经核对过的键</b>，不是照抄设计稿；标了「当前 <code>available:false</code>」的字面意思是：端点通、数据那份文件还没配好，
-            这是<b>如实报告</b>，不是接口坏了。<br>
-            字段名来自两份交接文档交叉核对（10-15 的逐端点 schema 表 + 10-17 的现状表）：<code>/overview</code>、<code>/latest</code>、<code>/webstats</code>
-            三处两边记法有出入，已在「已知坑」里逐条标出 —— <b>写代码前先 curl 一次实际响应</b>，比信这张表稳。</p>
         </div>
       </div>
 
       <div class="mod" id="api-alias">
         <div class="mod-hd"><span class="led"></span>同一份数据的 <code>.js</code> 别名<span class="tag">边缘可缓存 · 不吃 20 次/分钟</span></div>
         <div class="mod-bd">
-          <p class="api-p">上面每个 <code>/api/public/*</code> 都有同名的 <code>.js</code> 别名（<code>/api/public/alerts.js</code> 这样）。它存在的理由是<b>缓存</b>：
-            Cloudflare 按扩展名决定要不要缓存，无扩展名的 <code>/api/public/alerts</code> 必然是 <code>cf-cache-status: DYNAMIC</code>、每次都回源（实测 0.94~2.60s）；
-            别名则命中边缘缓存，<b>而命中缓存的请求根本到不了源站，也就不吃公开面每 IP 20 次/分钟的限流</b> ——
-            一个 /alerts/ 页面一加载就并发打 9 个端点，刷两次就超额，站主看到的「读不到」多半是这个原因。
-            缓存时长各端点不同（多数 45 秒，<code>stories</code> 15 秒），响应带 <code>ETag</code>、放行 <code>Age</code>。</p>
-          <p class="api-p">两条纪律：<b>① 别给这些地址加随机 cache-buster</b>（<code>?cb=</code> / <code>?t=</code> / <code>Date.now()</code>）—— 那样每次都是新 URL，100% 回源；
-            <b>② <code>?q=</code> / <code>?src=</code> 这类语义参数是允许的</b>（它换来的是不同内容）。</p>
-          <p class="api-p">响应体是什么：现网前端（<code>api-bind.html</code>，1600 行）对别名一律走 <code>res.json()</code>，注释里写死了这条契约 ——
-            <b>「别名响应仍是 <code>application/json</code>，照常当 JSON 解析，别当脚本执行」</b>。另有旧文档说它是 <code>window.X = …</code> 的脚本形式、可直接
-            <code>&lt;script src&gt;</code> 引入，<i>与上述契约和现网前端口径不符</i>，本页按契约写。一条命令可自证：</p>
+          <p class="api-p">每个 <code>/api/public/*</code> 都有同名 <code>.js</code> 别名（如 <code>/api/public/alerts.js</code>），响应仍是 <code>application/json</code>，照常当 JSON 解析。</p>
           <pre class="api-pre"><span class="c"># -D - 把响应头一起打出来：看 content-type 是不是 application/json、体开头是不是 {</span>
 curl -s -D - https://demo.xiaokeqing.cn/api/public/home.js | head -c 300</pre>
         </div>
@@ -279,25 +258,12 @@ for i in 1 2 3; do curl -s -o /dev/null -w '%{http_code} ' "https://demo.xiaokeq
 <span class="c"># Windows PowerShell 等价写法：</span>
 <span class="c">#  Invoke-WebRequest -UseBasicParsing https://demo.xiaokeqing.cn/api/health | % Content</span>
 <span class="c">#  curl.exe -s -o NUL -w "%{http_code} " "https://demo.xiaokeqing.cn/api/public/kb?q=probe"</span></pre>
-          <p class="api-foot">三条都只读，不写库、不改状态、不触发任何处置动作。取不到的时候（断网、429、源站挂了）就是取不到 ——
-            这一页不打算替换成任何「样例值」，<a href="/status/">/status/</a> 那页才是「现在通不通」的实测表。</p>
         </div>
       </div>
 
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径与边界<span class="tag">公开面只读</span></div>
         <div class="mod-bd">
-          <p class="api-kv">
-            <b>① 只读。</b>所有公开端点都没有写操作；<code>ask</code> / <code>tts</code> 虽是 POST，语义仍是「问一句 / 合成一段」，不改任何状态。
-            要处置（封 IP、审批）得走受保护的自用面：管理员令牌 + 人工审批。<br>
-            <b>② 地址不全给。</b><code>geo</code> 与 <code>webstats</code> 的响应里<b>零 IP</b>；<code>alerts</code> / <code>story</code> 会带 IP，
-            但展示层统一掩成 <code>1.2.3.x</code>（<code>ask</code> 干脆自带 <code>clientIpMasked</code>）。<b><code>curl</code> 直取时可能看到未掩码的原文</b> ——
-            显示层掩码与接口原文不一致属于预期，原文只留在 srv1 日志里。<br>
-            <b>③ 失败说失败。</b>取不到就写「未取到 / 读不到」并带原因（<code>available:false</code> + <code>reason</code>），不补 0、不补样例值。<br>
-            <b>④ 不常驻。</b>没有 SSE / WebSocket，一次性返回；要新数据就再敲一次。
-          </p>
-          <p class="api-foot">要复现「现在通不通」的逐端点体检看 <a href="/status/">状态页 /status/</a>；站点范围与数据口径见
-            <a href="/what/">介绍页 /what/</a>。口径细节写在笔记里：
+          <p class="api-foot">相关：<a href="/status/">/status/</a> · <a href="/what/">/what/</a> ·
             <a href="/posts/public-api-rate-limit-owner-token/">公开接口防刷</a> ·
             <a href="/posts/verifiable-deploy-chain/">可验证的发布链</a></p>
         </div>

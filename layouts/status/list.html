@@ -68,13 +68,8 @@
     </div>
     <div class="screen-bd st-bd">
 
-      <p class="st-lead">
-        这一页<b>不写结论</b>：打开就把 8 个只读端点逐个打一遍，把 HTTP 状态、耗时、响应字节、PASS/FAIL
-        一行行贴出来，再摊开构建版本与数据新鲜度。每个数字都写着来源端点，<b>取不到就是「未取到」</b>——
-        没有样例值、没有补零、没有缓存外的美图。
-      </p>
-      <noscript><p class="st-noscript">本页所有数字都由浏览器前端 fetch 得到。你关掉了 JavaScript，所以下面只会出现占位的「未取到」——
-        这不是接口挂了，是这一页本来就靠它取数。</p></noscript>
+      <p class="st-lead">打开即体检 · 8 个只读端点</p>
+      <noscript><p class="st-noscript">需 JavaScript 取数；无脚本时全部显示「未取到」。</p></noscript>
 
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>站点存活 · 每 5 分钟<span class="tag">srv1 cron · /data/uptime.json</span></div>
@@ -105,17 +100,10 @@
                 <th>端点</th><th>用途</th><th>HTTP</th><th>耗时 ms</th><th>字节</th><th>判定</th><th>说明</th>
               </tr></thead>
               <tbody id="stBody">
-                <tr><td colspan="7" class="st-na">等待体检…（数据全部由前端 fetch 得到，脚本被禁用时这里不会出现任何数字）</td></tr>
+                <tr><td colspan="7" class="st-na">等待体检…</td></tr>
               </tbody>
             </table>
           </div>
-          <p class="st-note">
-            <b>口径</b>：基址来自 <code>&lt;meta name="wb-api"&gt;</code>，路径就是表格每一行自己写的；
-            <b class="st-pass">PASS</b> = HTTP 2xx 且响应能解析成 JSON（<code>.js</code> 别名还要求 <code>code=200</code>），
-            <b class="st-fail">FAIL</b> = 其它一切情况（超时、跨源失败、非 JSON、接口自报失败——此时 HTTP/字节可能显示「未取到」）。
-            耗时 = fetch 发起到响应体读完；字节 = 解码后的 UTF-8 字节数（跨源读不到压缩后传输量）。
-            接口带 <code>max-age=45s</code>，命中浏览器或边缘缓存时耗时会接近 0ms —— 所以「快」不等于「新」，新不新看下面第 3 块。
-          </p>
         </div>
       </div>
 
@@ -138,12 +126,6 @@
               </tbody>
             </table>
           </div>
-          <p class="st-note">
-            <b>为什么有的是「未取到」</b>：<code>deploy.js</code> 只端出源站上那份 release 信息里真的写了的键。
-            线上这份目前没有 <code>files</code> / <code>history</code>，所以那两行固定显示「未取到」而不是编造；
-            <code>builtAt</code> 会按 <code>publishedAt</code> → <code>switchedAt</code> → <code>build.buildTime</code> 的顺序找，
-            都找不到就照实说。最后一行是两处自述的交叉核对：<b>不一致说明前端与进程不是同一次发布</b>。
-          </p>
         </div>
       </div>
 
@@ -163,18 +145,6 @@
               </tbody>
             </table>
           </div>
-          <p class="st-note">
-            这张表不在浏览器里算，而是把 <b>srv2 上那个 timer 实际跑出来的结果</b>原样读出来：
-            <code>consistency-check.timer</code> 每 15 分钟跑一次，结果落在
-            <code>/opt/secagent/reports/ci/latest.json</code>（通过 <code>/reports/</code> 具名开放）。
-            <b>为什么不在页面里直接跑</b>：那些检查要 ssh 到服务器看文件与容器，浏览器做不到；
-            页面能做的是把自己能握的 8 个端点当场再打一遍（上面那张表），两者互相印证。
-            <code>site_integrity</code> 现在是**实测**：发布链在原子切换前往每个 release 目录写一份
-            <code>manifest.json</code>（文件数 / 总字节 / 整树内容哈希 / <code>index.html</code> 哈希），
-            巡检再把目录自己算一遍跟它比 —— 对得上 <code>ok</code>、对不上 <code>mismatch</code>；
-            只有清单改动之前切上去的老版本（目录里没有 <code>manifest.json</code>）才会显示 <code>skipped</code>，
-            重发一次即可补写。
-          </p>
         </div>
       </div>
 
@@ -187,20 +157,13 @@
               <tbody>
                 <tr><th>数据时间</th><td class="f">home.js · data.alerts.generatedAt</td><td class="v" id="stGen">未取到</td></tr>
                 <tr><th>缓存秒数</th><td class="f">home.js · data.alerts.cacheSeconds</td><td class="v" id="stCache">未取到</td></tr>
-                <tr><th>距今（本机时钟）</th><td class="f">页面按 generatedAt 现算（该值不带时区，按浏览者本地时间解析）</td><td class="v" id="stAge">未取到</td></tr>
+                <tr><th>距今（本机时钟）</th><td class="f">generatedAt · 现算</td><td class="v" id="stAge">未取到</td></tr>
                 <tr><th>服务端快照</th><td class="f">home.js · snapshotAt / cacheAgeSeconds</td><td class="v" id="stSnap">未取到</td></tr>
-                <tr><th>响应头 Age</th><td class="f">本次 home.js 响应的 Age 头（真实年龄 ≈ cacheAgeSeconds + Age）</td><td class="v" id="stAgeHdr">未取到</td></tr>
-                <tr><th>新鲜度判定</th><td class="f">age ≤ cacheSeconds + 2 秒容差</td><td class="v" id="stFresh">未取到</td></tr>
+                <tr><th>响应头 Age</th><td class="f">本次 home.js 响应的 Age 头</td><td class="v" id="stAgeHdr">未取到</td></tr>
+                <tr><th>新鲜度判定</th><td class="f">age ≤ cacheSeconds + 2</td><td class="v" id="stFresh">未取到</td></tr>
               </tbody>
             </table>
           </div>
-          <p class="st-note">
-            判定优先用服务端 <code>snapshotAt</code>（带时区、口径最硬），取不到才退回按 <code>generatedAt</code> 用本机时钟算；
-            两个都在秒级刷新，所以这行会随时间自己变旧 —— 这正是要你看的：<b>页面上的数字不是硬编码，它在变旧</b>。
-            接口带 <code>stale-while-revalidate=90</code>：边缘节点回源刷新期间会先把最多约两分钟的旧副本发给你，
-            所以「偏旧」通常不是接口挂了（刷新一次多半回到「新鲜」）；<code>cacheAgeSeconds + Age</code> 就是这份数据的真实年龄。
-            本机时钟如果比服务端快/慢，会出现负数或整小时级偏差，此时页面写「本机时钟早于服务端…」并<b>不判定</b>，而不是假装新鲜。
-          </p>
         </div>
       </div>
 
@@ -220,10 +183,7 @@
               </tbody>
             </table>
           </div>
-          <p class="st-note" id="stDailyNote">
-            正在读今日日报…<b>三种"没有"会写成三句话</b>：接口读不到 = 这一行说读不到；
-            今天没生成 = 「今日日报未生成（不是读不到其它数据）」；生成过但语音合成失败 = 文字版照样给，只缺音频。
-          </p>
+          <p class="st-note" id="stDailyNote">正在读今日日报…</p>
         </div>
       </div>
 
@@ -241,11 +201,6 @@ curl -s https://demo.xiaokeqing.cn/api/public/audit.js
 
 <span class="c"># ④ 今日日报：日期 / 告警总数 / Top1 来源 / 交付物链接（对应上面那张日报卡）</span>
 curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
-          <p class="st-note">
-            同一时刻在你自己的终端敲，数字应该和上面那几张表对得上；<b>对不上，问题就在这里，不是页面修图</b>。
-            取不到的时候（断网、401、429 限流、源站挂了），本页对应行就显示「未取到」并带上原因：
-            卡片不填 0，不拿别的时刻的数凑数，也不把旧缓存当新数据 —— 这正是这一页的意义。
-          </p>
         </div>
       </div>
 
@@ -783,8 +738,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
         if (anote2) { anote2.textContent = NA; anote2.className = 'st-na'; }
         var note = $('stDailyNote');
         if (note) {
-          note.innerHTML = '<b>读不到日报接口</b>（' + esc(why) + '）—— 这与「今日日报未生成」是两件事：'
-            + '前者是接口没通，后者是接口通了但今天还没生成。两种都不填 0。';
+          note.innerHTML = '<b>读不到日报接口</b>（' + esc(why) + '）· 与「今日未生成」不同';
         }
       });
   }
@@ -824,12 +778,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
         show('stUpOk', j.last_ok_at ? ciWhen(j.last_ok_at) : '—（部署以来还没成功过一次）', j.last_ok_at ? '' : 'st-na');
         var note = $('stUpNote');
         if (note) {
-          note.innerHTML = '<b>口径</b>：srv1 上 <code>uptime-probe.sh</code> 每 5 分钟各探一次，'
-            + '两侧都 2xx 才算一次成功；任一侧非 2xx（curl 超时/连不上 → 状态码 0）就记一次失败，成功立刻归零。'
-            + '连续 ≥3 次失败由脚本自己写 <code>/var/log/xk-uptime-alert.log</code>'
-            + '（<code>.env</code> 里有 <code>APP_ALERT_WEBHOOK</code> 时才另外 POST 一条）。'
-            + '本页只是把 <code>/opt/secagent/data/uptime.json</code> 原样读出来：读不到就是读不到，不补数。'
-            + '（每次发布切到新 release 目录后，最多 5 分钟 cron 会把它重新铺回去。）';
+          note.innerHTML = '<b>每 5 分钟各探一次</b> · 两侧都 2xx 才算成功';
         }
       })
       .catch(function (e) {
@@ -841,9 +790,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
         show('stUpOk', NA, 'st-na');
         var note = $('stUpNote');
         if (note) {
-          note.innerHTML = '<b>未取到（/data/uptime.json 读不到：' + esc(why) + '）—— 不补数</b>。'
-            + '这张卡只读 srv1 探活脚本落盘的那一份 JSON：拿不到就说拿不到，'
-            + '不拿上一次的数顶上，也不填 0 假装正常。';
+          note.innerHTML = '<b>未取到（/data/uptime.json：' + esc(why) + '）</b>';
         }
       });
   }

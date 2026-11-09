@@ -77,14 +77,6 @@
   <div class="screen-bd">
     <a class="tl-back" href="/">← 返回首页</a>
 
-    <div class="mod tl-intro">
-      <div class="tl-ch"><b>这一页怎么读</b><span>问题 → 判断 → 做了什么 → 结果</span></div>
-      <div class="tl-lede">
-        <p class="tl-lede-main">这一页只讲一件事：遇到问题时我怎么判断、怎么取舍、结果如何。每条都写清『当时的问题 → 判断 → 做了什么 → 结果数字』。</p>
-        <p class="tl-lede-sub">只写文档里有依据的事：计划不写成已做，没有数字就标「（无量化）」。每条末尾加一句「如果重来一次」，方便你看判断，而不是看功能。</p>
-      </div>
-    </div>
-
     <div class="tl-list">
     {{- range $i, $e := $entries }}
       <div class="tl-entry">
@@ -109,8 +101,8 @@
     </div>
 
     <div class="mod tl-outro">
-      <div class="tl-ch"><b>范围与口径</b><span>资料截至 {{ $t.updated | default "2026-11-09" }}</span></div>
-      <p>这页只回答「怎么判断」。功能清单看 <a href="/what/">/what/</a>，数据口径看 <a href="/attack/">/attack/</a> 与 <a href="/trend/">/trend/</a>；每条都留了文档依据，方便逐条核对。</p>
+      <p>相关：<a href="/what/">/what/</a> · <a href="/attack/">/attack/</a> · <a href="/trend/">/trend/</a>
+        · 资料截至 {{ $t.updated | default "2026-11-09" }}</p>
     </div>
   </div>
 </section>

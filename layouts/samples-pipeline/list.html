@@ -122,10 +122,7 @@
         <div class="mod-hd"><span class="led"></span>一句话<span class="tag">五步走到哪一步</span></div>
         <div class="mod-bd">
           {{- if $d.files }}
-          <p class="sp-lead">
-            蜜罐样本五步链路，目前只有第 ① 步「落盘」在跑：
-            <em>{{ lang.FormatNumber 0 $files }} 个文件</em>、{{ with $mib }}<em>{{ . }}</em>{{ else }}未取到{{ end }}。
-          </p>
+          <p class="sp-lead">五步链路 · 只有第 ① 步在跑</p>
           <ul class="sp-kpis">
             <li class="sp-kpi"><span class="k">落盘文件</span><span class="v">{{ lang.FormatNumber 0 $files }}</span></li>
             <li class="sp-kpi"><span class="k">占用</span><span class="v">{{ with $mib }}{{ . }}{{ else }}未取到{{ end }}</span></li>

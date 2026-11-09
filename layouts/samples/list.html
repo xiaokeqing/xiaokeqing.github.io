@@ -81,12 +81,11 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 真实恶意样本分析 <em class="ops-en">MALWARE SAMPLES</em></span>
-      <span class="sync">● 只写抓到的 · 抓不到就写未留存 · 不编样本、不编哈希</span>
+      <span class="sync">● 只写抓到的 · 抓不到写未留存</span>
     </div>
     <div class="screen-bd smp-bd">
       {{- $parts := split .Content "<h2" }}
       {{- if gt (len $parts) 1 }}
-      <p class="smp-lead">{{ index $parts 0 | plainify | strings.TrimSpace }}</p>
       <div class="mod smp-toc" id="smpToc" hidden>
         <div class="mod-hd"><span class="led"></span>页内索引<span class="tag">样本在前、缺口在后</span></div>
         <div class="mod-bd"><ul class="smp-toc-l"></ul></div>
@@ -105,12 +104,6 @@
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>样本分析</div>
         <div class="mod-bd smp-md">{{ .Content }}</div>
-      </div>
-      {{- end }}
-      {{- with .Params.note }}
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>核实口径 · 这一页为什么可信<span class="tag">可复核</span></div>
-        <div class="mod-bd"><div class="smp-note-p">{{ . | markdownify }}</div></div>
       </div>
       {{- end }}
     </div>

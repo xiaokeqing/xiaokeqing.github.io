@@ -133,3 +133,11 @@
 {{- $ex := resources.Get "js/xk-explain.js" | minify | fingerprint }}
 <script src="{{ $ex.RelPermalink }}" integrity="{{ $ex.Data.Integrity }}" defer></script>
 {{- end }}
+{{- /* ★2026-11-09：全站右侧常驻助手「桐莉」。标记以 <template> 形式放在 head 里
+       （head-meta 在 <head> 内被 include，直接吐 aside 会提前关掉 <head>）；脚本 defer，
+       解析完 clone 到 body 末尾。每页只多 1 个指纹外链，走资源管线、不放 static/js。
+       介绍文案 = data/page-intro.json（16 个路径），未收录页回退标题兜底。
+       样式追加在 assets/css/xk.css 末尾；主页自带内联样式，等价规则内联在 partial 里。 */ -}}
+{{ partial "xk-demo/assistant.html" . }}
+{{- $assist := resources.Get "js/xk-assist.js" | minify | fingerprint }}
+<script src="{{ $assist.RelPermalink }}" integrity="{{ $assist.Data.Integrity }}" defer></script>

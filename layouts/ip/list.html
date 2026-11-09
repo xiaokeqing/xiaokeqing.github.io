@@ -167,14 +167,8 @@
     </div>
     <div class="screen-bd ipp-bd">
 
-      <p class="ipp-lead">
-        输入一个 <b>IPv4 地址</b>，把<b>我们自己的告警 / 蜜罐 / 处置留痕</b>里跟它有关的记录摊开：
-        首末出现时间、事件数、行为类型、碰过哪些蜜罐端口、试过的口令<b>结构</b>、GeoIP 与封禁状态。
-        它<b>不是</b>全网情报库 —— 只回答「这个地址在这台机器上留下了什么」；
-        任何一项读不到就写 <b>读不到（原因）—— 不补数</b>，不按网段或 ASN 猜。
-      </p>
-      <noscript><p class="ipp-noscript">本页要发一次 GET 请求才能出结果，关掉 JavaScript 时只有一个输入框 ——
-        不会有任何数字。静态部分（口径、边界、复现命令）照常可读。</p></noscript>
+      <p class="ipp-lead">只查 IPv4 · 只看这台机器的记录</p>
+      <noscript><p class="ipp-noscript">需 JavaScript 发一次 GET；静态部分照常可读。</p></noscript>
 
       <!-- ============ ① 查询 ============ -->
       <div class="mod">
@@ -187,9 +181,7 @@
             <button class="ipp-go" id="ippGo" type="submit">查询</button>
           </form>
           <p class="ipp-hint">
-            只接受 IPv4 字面量（四段十进制，每段 0–255）。IPv6 / 域名 / 带端口 / 网段写法一律不查 ——
-            后端会直接 400，页面也不替它"猜一个最像的"。内网与保留地址同样拒答（原因见最后一块）。
-            查询会写进地址栏的 <code>?q=</code>，可以直接把这一页的链接发给别人复核。
+            只接受 IPv4 字面量 · 内网 / 保留地址拒答 · 查询写入 <code>?q=</code>
           </p>
         </div>
       </div>
@@ -199,8 +191,7 @@
         <div class="mod-hd"><span class="led"></span>结果 · 这个地址在本机的足迹<span class="tag" id="ippTag">未查询</span></div>
         <div class="mod-bd" id="ippOut">
           <p class="ipp-p ipp-na" id="ippEmpty">
-            还没查。上面输入一个 IPv4 后回车（或点「查询」）——
-            结果卡会逐项标出哪个数读到了、哪个读不到、以及读不到的原因。
+            还没查。输入一个 IPv4 后回车。
           </p>
         </div>
       </div>
@@ -210,85 +201,6 @@
         <div class="mod-hd"><span class="led"></span>攻击时间线 · 这个 IP 干过什么<span class="tag" id="ippTlTag">近 24h · 最多 200 条</span></div>
         <div class="mod-bd" id="ippTlOut">
           <p class="ipp-note ipp-na">正在探测时间线接口…</p>
-        </div>
-      </div>
-
-      <!-- ============ ③ 口径 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 每个数从哪来、哪些只是样本<span class="tag">先看这块，再看数字</span></div>
-        <div class="mod-bd">
-          <div class="ipp-scroll">
-            <table class="ipp-kv">
-              <tbody>
-                <tr><th>事件数 events</th><td>
-                  <b>精确值</b>，来自索引聚合（<code>track_total_hits</code>），窗口默认 <b>最近 168 小时（7 天）</b>。
-                  更早的记录这个端点<b>读不到</b>（不是"没发生"）—— 窗口外的历史不会出现在任何一项里。
-                </td></tr>
-                <tr><th>firstSeen / lastSeen</th><td>
-                  窗口内最早 / 最晚的一条记录的<b>时间戳</b>，同样来自索引聚合的 min/max，是精确值。
-                  只在这个 IP 的窗口内有记录时才给；没有就 null。
-                </td></tr>
-                <tr><th>威胁分 threat</th><td>
-                  把上面几项按<b>写死的权重</b>加起来：事件量 30 + 来源类型 25（蜜罐命中 9 / 扫描 6 /
-                  成功登录 10）+ 端口扇出 15 + 凭据尝试 15 + 已封禁 10 + 账号多样性 5，
-                  再除以<b>可用权重</b>折成 0–100。<b>启发式加权，不是 ML、不是概率</b>：
-                  没有训练集、没有模型，同样的输入永远同样的分数。没读到的因子<b>从分母里剔除</b>
-                  （分母不低于 45）而不是当 0 参与 —— 所以不同窗口、不同缺字段状态的分数不能直接比较。
-                  公式写死在后端 <code>ThreatScore</code>，页面只渲染，控制器与前端都不自己算分。
-                </td></tr>
-                <tr><th>byKind / ports / credStructure</th><td>
-                  <b>只基于最近取回的样本</b>（默认最多 300 条，见结果卡里
-                  <code>sources.indexer.sampled</code>）。样本被截断时
-                  <code>sources.indexer.truncated=true</code>，页面会把"这只是样本"写在卡片上 ——
-                  样本里的条数<b>不是</b>总量，别拿它跟 events 对齐。
-                </td></tr>
-                <tr><th>credStructure</th><td>
-                  只给<b>结构</b>："6 位·纯数字·弱口令"这种。后端从蜜罐日志里抽出
-                  <code>用户名 / 口令</code> 之后<b>立刻</b>换成结构描述，
-                  <b>原文字符一个都不进响应体</b>（出关闸门还会再隐一遍，双重保险）。
-                </td></tr>
-                <tr><th>geo</th><td>
-                  GeoIP 库的查询结果（国家 ISO2 + ASN + AS 组织）。库里查不到、或只有 ASN 没有国家，
-                  就写 <b>null</b> 并在 notes 里说明 —— <b>不按网段或经验补一个国家</b>。
-                </td></tr>
-                <tr><th>banned</th><td>
-                  应用侧处置留痕（<code>data/blocked-ips.json</code>）：封过几次、最后一次是什么时候、
-                  现在还封着没有。留痕文件读不到时 <code>banned=null</code>，而<b>不是</b>
-                  <code>count=0</code> —— "读不到"与"没封过"是两件事。
-                </td></tr>
-                <tr><th>为什么会有 null</th><td>
-                  三类：数据源没接入（<code>NOT_WIRED</code>）、接入但这次读失败（<code>QUERY_FAILED</code> /
-                  <code>UNREADABLE</code>）、源里确实没有这个地址的记录（<code>NOT_FOUND</code>）。
-                  三种都会写进 <code>notes[]</code> 与 <code>sources.*.status</code>，页面逐条贴出来。
-                </td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="ipp-note"><b>一句话口径</b>：宁可少给一个数，也不给一个看起来像真的数。
-            缺失一律 null + 原因；有数字就说明它是精确值还是样本。</p>
-        </div>
-      </div>
-
-      <!-- ============ ④ 边界 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>边界 · 不公开什么、拒答什么<span class="tag">公开的是可复核的部分</span></div>
-        <div class="mod-bd">
-          <p class="ipp-p">
-            <b>公开</b>：这个 IP 的首末时间、事件总数、行为类型计数、碰过的端口、口令<b>结构</b>、
-            GeoIP、封禁计数与状态、以及每个源接没接上。<br>
-            <b>不公开</b>：任何口令原文、应用侧日志原文、防护规则的正则与阈值、别的来源 IP 的数据
-            （同一个响应里<b>只有 q 这一个地址</b>的记录）。<br>
-            <b>拒答</b>：非 IPv4 字面量；内网 / 保留 / 链路地址（<code>10/8</code>、<code>192.168/16</code>、
-            <code>172.16/12</code>、<code>127/8</code>、<code>169.254/16</code>、<code>100.64/10</code> 等）。
-            后者在公开口径里统一写作「内网/未知」，多个不同的内网地址会共用同一个输入 ——
-            按 IP 查只会给出误导性的答案，所以直接 400。<br>
-            <b>不做的</b>：不封禁、不触发任何处置动作、不写任何文件；这个端点是一次纯读。
-          </p>
-          <p class="ipp-note">
-            同一套口径问「现在有什么告警」看 <a href="/alerts/" style="color:var(--xk-ink-mint)">/alerts/</a>；
-            看「哪个来源的故事完整」看 <a href="/status/" style="color:var(--xk-ink-mint)">/status/</a>；
-            端点清单看 <a href="/api/" style="color:var(--xk-ink-mint)">/api/</a>。
-          </p>
         </div>
       </div>
 
@@ -305,8 +217,9 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
 <span class="c"># ③ 对照：内网地址同样 400（不拿它去查内网主机的活动）</span>
 curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/ip?q=10.0.0.1'</pre>
           <p class="ipp-note">
-            响应外层统一是 <code>{code, message, data}</code>；缺失项的 <code>data.*</code> 是 null，
-            原因在 <code>data.notes[]</code> 里逐条写着 —— 页面上的「读不到（原因）」就是它的原文。
+            相关：<a href="/alerts/" style="color:var(--xk-ink-mint)">/alerts/</a> ·
+            <a href="/status/" style="color:var(--xk-ink-mint)">/status/</a> ·
+            <a href="/api/" style="color:var(--xk-ink-mint)">/api/</a>
           </p>
         </div>
       </div>
@@ -513,9 +426,7 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
       '<p class="ipp-threat-meta">' + meta + '</p>' +
       '<div class="ipp-scroll"><table class="ipp-tbl ipp-threat-tbl"><thead><tr>' +
       '<th>因子</th><th>权重</th><th>依据</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-      '<p class="ipp-note"><b>再强调一次</b>：威胁分是<b>启发式加权，不是概率模型，不同窗口不可直接比较</b>。' +
-      '它只回答「按这张写死的权重表，这个地址在我们这里有多可疑」，不是「有多大概率是攻击者」。</p>' +
-      '</div>';
+      '<p class="ipp-note">启发式加权 · 不是概率</p></div>';
   }
 
   function noteList(notes, sourceWhy) {
@@ -543,7 +454,6 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
       }
       html.push('</tbody></table></div>');
     }
-    html.push('<p class="ipp-note">这一页不会用任何本地估算值填空：三级都没拿到就照实写读不到。</p>');
     return html.join('');
   }
 
@@ -556,8 +466,7 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
       ' <span class="ipp-na">（' + esc(how) + '）</span> · <code>' + esc(meta.url) + '</code>' +
       (at ? ' · 数据生成于 <b>' + esc(at) + '</b>' : '') + ' · ' + esc(meta.ms) + ' ms';
     if (meta.kind === 'snapshot') {
-      html += '<br><span class="ipp-null">这是提前存好的快照，落盘后不再更新</span>：' +
-        '窗口 168h 以生成时刻为界；要最新数据得等实时接口（未命中快照才会走到）。';
+      html += '<br><span class="ipp-null">快照非实时</span>：窗口 168h 以生成时刻为界。';
     }
     html += '</p>';
     return html;
@@ -577,7 +486,7 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
     if (d.available === true) {
       html.push('<p class="ipp-p"><b>读到了</b>：这个地址在最近 ' + esc(d.window || '') +
         ' 窗口内留下了 <b>' + esc(d.events) + '</b> 条记录。' +
-        '<span class="ipp-na">（窗口外更早的记录读不到 —— 不补数）</span></p>');
+        '<span class="ipp-na">（窗口外不补数）</span></p>');
     } else {
       html.push('<p class="ipp-p"><b class="ipp-null">这次读不到索引数据</b>（' +
         esc(d.reason || 'DATA_SOURCE_UNAVAILABLE') + '）—— <b>不补数</b>。' +
@@ -713,7 +622,7 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
     if (d.available !== true) {
       out.innerHTML = '<p class="ipp-p"><b class="ipp-null">时间线读不到</b>（' +
         esc(d.reason || '数据源不可用') + '）—— <b>不补数</b>，不写 0。</p>' +
-        '<p class="ipp-note">这不是「这个 IP 没干过什么」，而是这次没有可画的事件。' +
+        '<p class="ipp-note">' +
         '窗口：' + esc(win.start || '—') + ' → ' + esc(win.end || '—') + '。</p>';
       m.hidden = false;
       return;
@@ -822,8 +731,7 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
     if (!out) return;
     if (!isV4(q)) {
       out.innerHTML = '<p class="ipp-p"><b class="ipp-bad">不是 IPv4 字面量</b>：' + esc(q) +
-        ' —— 不猜、不发请求。' +
-        '<span class="ipp-na">（四段十进制，每段 0–255；IPv6 / 域名 / 带端口 / 网段都不接受）</span></p>';
+        ' —— 不猜、不发请求。</p>';
       setSync('拒绝查询：输入不是 IPv4 字面量 · ' + clock(new Date()));
       setTag('输入非法');
       tlSeq++;

@@ -101,12 +101,7 @@
     </div>
     <div class="screen-bd cve-bd">
 
-      <p class="cve-lead">
-        这是<b>每日快照</b>，<b>不是实时</b>：抓取时刻 <b id="cveGenTop">读不到</b>。
-        数据只有两个来源，页面自己<b>不编也不补</b> —— CISA KEV（在野已被利用的漏洞清单）+ NVD（当日 CVSSv3 HIGH）。
-        每张卡里的文字都是<b>官方字段原样照抄</b>：缺字段就写「官方未给出」，<b>不推测版本、不推测影响范围</b>；
-        某个源这次没抓到，那一块就整块写「读不到（原因）—— 不补数」，<b>不会</b>把它渲染成「今天没有」。
-      </p>
+      <p class="cve-lead">每日快照 · 抓取时刻 <b id="cveGenTop">读不到</b></p>
 
       <div class="cve-stamp" id="cveStamp">
         <div class="c"><span class="k">抓取时刻 generatedAt</span><span class="n na" id="cveGenCell">读不到</span><span class="d">快照时间，不是实时</span></div>
@@ -115,8 +110,7 @@
         <div class="c"><span class="k">近 7 天 KEV / 今日 NVD HIGH</span><span class="n" id="cveCntCell">读取中</span><span class="d">近 7 天最多 40 条；NVD 最多 1 页 50 条</span></div>
       </div>
 
-      <noscript><p class="cve-noscript">本页要发一次同域请求读 <code>/data/cve-digest.json</code> 才有卡片和表格，
-        关掉 JavaScript 时这里只剩口径与数据源说明 —— <b>不会有任何数字</b>，也不会替你补。</p></noscript>
+      <noscript><p class="cve-noscript">需 JavaScript 读 <code>/data/cve-digest.json</code>，关闭后无数据</p></noscript>
 
       <!-- ============ ① 今日新增 KEV ============ -->
       <div class="mod">
@@ -142,9 +136,9 @@
         </div>
       </div>
 
-      <!-- ============ ④ 数据源与口径 ============ -->
+      <!-- ============ ④ 数据源 ============ -->
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>数据源与口径<span class="tag">先看这块，再看数字</span></div>
+        <div class="mod-hd"><span class="led"></span>数据源<span class="tag" id="cveGenFootWrap">抓取时刻 <span id="cveGenFoot">读不到</span></span></div>
         <div class="mod-bd">
           <div class="cve-scroll">
             <table class="cve-tbl cve-srctbl">
@@ -163,32 +157,12 @@
               </tbody>
             </table>
           </div>
-          <ul class="cve-notes">
-            <li><b>抓取时刻</b>：<span id="cveGenFoot">读不到</span> —— 就是快照里 <code>generatedAt</code> 的原文（+08:00）。
-              读不到时这里写「读不到」，<b>不拿你打开这一页的时间冒充</b>。</li>
-            <li><b>限速</b>：NVD 在没有 API key 时按 <b>5 次 / 30 秒</b> 限流，所以脚本只发 <b>1 次</b>请求、
-              取 <code>resultsPerPage=50</code> 的一页；遇到 429/503 最多等 7 秒重试 1 次，仍失败就记 <code>ok:false</code>
-              并照抄错误原文。CISA KEV 是一个整包 JSON（这次 <span id="cveKevCount">-</span> 条），一次取完。</li>
-            <li><b>为什么不是实时</b>：这是<b>静态站</b>。抓取发生在构建前，页面打开读的是<b>同一份</b>
-              <code>/data/cve-digest.json</code>；要更新得重跑 <code>scripts/cve/fetch-cve.py</code> 再重新构建发布。
-              所以「今日」指的是<b>快照那一天</b>（<span id="cveDayFoot">读不到</span>），不是你刷新页面的此刻。</li>
-            <li><b>KEV 口径</b>：<code>kevNew</code> = <code>dateAdded</code> 等于快照目标日的条目；
-              <code>kevRecent7d</code> = 目标日往前 7 天（含当天）、按 <code>dateAdded</code> 倒序、最多 40 条。
-              KEV 官方多在美东工作日更新，<b>周末/节假日没有新增是正常的「没有」</b>，与「抓取失败」是两件事。</li>
-            <li><b>NVD 口径</b>：<code>pubStartDate</code> = 当天 00:00Z、<code>pubEndDate</code> = 抓取时刻，
-              只保留 <code>cvssV3Severity=HIGH</code> 的一页。它是<b>当日新增且被打到 HIGH 的那部分</b>，
-              不是「全网高危全量」，也不是 CVSS 排行榜。</li>
-            <li><b>字段口径</b>：卡片与表格只照抄 JSON 里有的字段；<code>shortDescription</code> 在抓取时截到
-              <b>240 字符</b>，所以描述可能被截断 —— 要看全文，点 CVE 号去 NVD。</li>
-          </ul>
           <p class="cve-src">
-            产物：<code>static/data/cve-digest.json</code> ← <code>scripts/cve/fetch-cve.py</code>
-            （Python 3 stdlib，无第三方依赖）· 抓取器支持
-            <code>--dry-run</code> / <code>--date YYYY-MM-DD</code>（补跑）/ <code>--out</code> / <code>--timeout</code>。<br>
-            相关页面：<a href="/" style="color:#bfe3d0">主页</a> ·
-            <a href="/what/" style="color:#bfe3d0">这个站在干什么</a> ·
-            <a href="/api/" style="color:#bfe3d0">公开端点清单</a> ·
-            <a href="/status/" style="color:#bfe3d0">状态页</a>
+            产物：<code>static/data/cve-digest.json</code> ← <code>scripts/cve/fetch-cve.py</code><br>
+            相关：<a href="/">主页</a> ·
+            <a href="/what/">这个站在干什么</a> ·
+            <a href="/api/">公开端点清单</a> ·
+            <a href="/status/">状态页</a>
           </p>
         </div>
       </div>

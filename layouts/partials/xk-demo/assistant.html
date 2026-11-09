@@ -59,9 +59,12 @@ body.xk-assist-closed .xk-assist{opacity:0;visibility:hidden;transform:translate
 .xk-assist-ft{margin:10px 0 0;color:var(--mut,#D2CBBD);opacity:.8;font:12px/1.35 var(--mono,monospace)}
 .xk-assist-fab{display:none;position:fixed;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:56;width:44px;height:44px;padding:0;align-items:center;justify-content:center;border:1px solid rgba(127,212,216,.42);border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 46%),rgba(15,19,24,.84);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--acc,#7FD4D8);font:14px var(--sans,sans-serif);cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
 .xk-assist-fab:hover,.xk-assist-fab:focus-visible{color:var(--txt,#FAF7F0);border-color:var(--acc,#7FD4D8);outline:none}
-/* 主页顶栏下方还有一条固定 hbar（top:52 / 高 32 / z 59，见 layouts/index.html），面板让到 92 */
-body.is-home .xk-assist{top:92px;max-height:calc(100vh - 112px)}
-@media (min-width:1180px){body.xk-assist-closed .xk-assist-fab{display:flex}}
+/* 主页顶栏下方还有一条固定 hbar（top:52 / 高 32 / z 59，见 layouts/index.html），面板让到 92。
+   必须限定在 ≥1180：移动端抽屉要 top:auto，否则这条按特异性（0,2,1）压过媒体块里的 .xk-assist。 */
+@media (min-width:1180px){
+  body.is-home .xk-assist{top:92px;max-height:calc(100vh - 112px)}
+  body.xk-assist-closed .xk-assist-fab{display:flex}
+}
 @media (max-width:1179.98px){
   .xk-assist{top:auto;left:0;right:0;bottom:0;width:auto;height:60vh;max-height:none;border-radius:16px 16px 0 0;transform:translateY(100%);visibility:hidden;opacity:1}
   .xk-assist::before{content:"";display:block;flex:none;width:40px;height:4px;margin:8px auto 0;border-radius:2px;background:rgba(255,255,255,.3)}

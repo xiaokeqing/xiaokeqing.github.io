@@ -201,8 +201,6 @@
               <div class="nf-track"><span class="nf-bar" style="width:100%"></span><span class="t onbar">100% · 窗口内全部告警</span></div>
               <div class="nf-foot">
                 <span class="nf-keep">基准 100%</span>
-                <span class="nf-why">窗口：最近 24 小时（<code>{{ $s24.windowHours | default 24 }}h</code>，快照 {{ $ad.generatedAt | default "未取到" }}）。
-                  这是索引器按 <code>@timestamp</code> 数的全量，不是抽样。最后一小时只统计到快照时刻。</span>
               </div>
             </li>
 
@@ -216,9 +214,7 @@
               <div class="nf-track na"><span class="t">24 小时聚合数：快照没提供</span></div>
               <div class="nf-foot">
                 <span class="nf-keep">相邻保留率 —</span>
-                <span class="nf-why">理由：<b>同 IP 同规则在窗口内合并</b>。同一份快照的 5 分钟窗口里，
-                  <code>rawTotal</code> {{ lang.FormatNumber 0 $minRaw }} 条折成 <code>total</code> {{ lang.FormatNumber 0 $minTotal }} 组
-                  （行数保留 {{ printf "%.1f" $minPct }}%）。<span class="na">但这是列表行数，不是 24 小时的聚合条数 —— 不拿它乘 29 万。</span></span>
+                <span class="nf-why">5 分钟窗口：<code>rawTotal</code> {{ lang.FormatNumber 0 $minRaw }} → <code>total</code> {{ lang.FormatNumber 0 $minTotal }}（{{ printf "%.1f" $minPct }}%）</span>
               </div>
             </li>
 
@@ -232,9 +228,7 @@
               <div class="nf-track"><span class="nf-bar" style="width:{{ printf "%.2f" $evPct }}%"></span><span class="t onbar">保留 {{ printf "%.1f" $evPct }}%</span></div>
               <div class="nf-foot">
                 <span class="nf-keep">保留 {{ printf "%.1f" $evPct }}% · 压制 {{ lang.FormatNumber 0 $suppressed }} 条</span>
-                <span class="nf-why">理由：<b>低危 / 中危 / 提示默认不升级为事件</b>。
-                  LOW {{ lang.FormatNumber 0 $low }} + MEDIUM {{ lang.FormatNumber 0 $med }} + INFO {{ lang.FormatNumber 0 $info }} = {{ lang.FormatNumber 0 $suppressed }} 条，全部不进事件流；
-                  分级合计 {{ lang.FormatNumber 0 $sevSum }} 条 {{ if eq $sevSum $raw24 }}= 第 1 层的 {{ lang.FormatNumber 0 $raw24 }} 条，对得上{{ else }}<span class="nx-bad">≠ 第 1 层的 {{ lang.FormatNumber 0 $raw24 }} 条，对不上，不按比例画</span>{{ end }}。</span>
+                <span class="nf-why">LOW {{ lang.FormatNumber 0 $low }} + MEDIUM {{ lang.FormatNumber 0 $med }} + INFO {{ lang.FormatNumber 0 $info }} = {{ lang.FormatNumber 0 $suppressed }} 条</span>
               </div>
             </li>
 
@@ -248,8 +242,7 @@
               <div class="nf-track"><span class="nf-bar" style="width:{{ printf "%.2f" $evPct }}%"></span><span class="t onbar">{{ printf "%.1f" $evPct }}% · CRITICAL {{ lang.FormatNumber 0 $crit }} + HIGH {{ lang.FormatNumber 0 $high }}</span></div>
               <div class="nf-foot">
                 <span class="nf-keep">相邻保留率 100%</span>
-                <span class="nf-why">理由：<b>只把 CRITICAL + HIGH 两档进事件流与告警邮件</b>。
-                  严重 {{ lang.FormatNumber 0 $crit }} 条 + 高危 {{ lang.FormatNumber 0 $high }} 条，一条不少地进了事件流。</span>
+                <span class="nf-why">CRITICAL {{ lang.FormatNumber 0 $crit }} + HIGH {{ lang.FormatNumber 0 $high }} = {{ lang.FormatNumber 0 $events }} 条</span>
               </div>
             </li>
 
@@ -263,16 +256,10 @@
               <div class="nf-track"><span class="nf-bar" style="width:0"></span><span class="t">0 条走到执行</span></div>
               <div class="nf-foot">
                 <span class="nf-keep">相邻保留率 —（独立账本）</span>
-                <span class="nf-why">理由：<b>处置链是只读模式</b>（<code>readOnly={{ $au.readOnly }}</code>）：护栏拦下 <b>{{ lang.FormatNumber 0 $guard }}</b> 次、
-                  真封 <b>{{ lang.FormatNumber 0 $blockTotal }}</b> 个、生效 {{ lang.FormatNumber 0 $blockActive }} 个、执行动作 {{ lang.FormatNumber 0 $executed }} 条。
-                  这组数是独立的处置审计，不是上面 {{ lang.FormatNumber 0 $events }} 条事件的逐条处置。</span>
+                <span class="nf-why">护栏拦 {{ lang.FormatNumber 0 $guard }} 次 · 真封 {{ lang.FormatNumber 0 $blockTotal }} · 生效 {{ lang.FormatNumber 0 $blockActive }} · 执行 {{ lang.FormatNumber 0 $executed }}</span>
               </div>
             </li>
           </ol>
-
-          <p class="nx-note">读法：条形宽度 = <b>该层条数 ÷ 第 1 层总数</b>，五根条同一把尺子。
-            第 2 层没有 24h 数，所以没有条 —— 5 分钟的 200 → 22 只作样本，不按比例外推。
-            第 5 层是 0，条形就是 0：<b>不画一根假条把 98 次护栏拦截说成封禁</b>。</p>
         </div>
       </div>
 
@@ -285,12 +272,10 @@
           <p class="nx-lead">
             那周的告警面板里 <em>{{ printf "%.1f" (mul .noiseRatio 100) }}%</em> 是自家 agent 的心跳。</p>
           <p class="nx-leadsub">
-            分子分母都在快照里，可以自己除一遍：<b>{{ lang.FormatNumber 0 .heartbeat.count }} 条心跳 ÷ {{ lang.FormatNumber 0 .totalAlerts }} 条 alert</b>。
-            剩下的 {{ lang.FormatNumber 0 .signalAlerts }} 条是信号 —— <b>但这不等于"剩下的都是攻击"</b>（见下面的检测缺口）。</p>
-          <p class="nx-note">口径：只统计 <code>event_type = alert</code> 的事件；flow / http / ssh 这些
-            流量事件不进分母。这份摘要是 <b>{{ .source }}</b>，窗口 <b>{{ .window }}</b>，和上面的 24 小时漏斗<b>不是同一份窗口</b>，别相加。</p>
+            <b>{{ lang.FormatNumber 0 .heartbeat.count }} 条心跳 ÷ {{ lang.FormatNumber 0 .totalAlerts }} 条 alert</b>
+            ＝ 信号 {{ lang.FormatNumber 0 .signalAlerts }} 条</p>
           {{- else }}
-          <p class="nx-lead nx-miss">读不到 <code>static/data/noise-index.json</code>，这一块不显示数字。</p>
+          <p class="nx-lead nx-miss">读不到 <code>static/data/noise-index.json</code></p>
           {{- end }}
         </div>
       </div>
@@ -310,9 +295,8 @@
             <li><span class="sw sig"></span>信号（其余告警）<b>{{ lang.FormatNumber 0 .signalAlerts }}</b>
               <span class="m">条 · {{ printf "%.1f" (mul (sub 1.0 .noiseRatio) 100) }}%</span></li>
           </ul>
-          <p class="nx-note">占比 = 条数 ÷ alert 总数，用的是快照里的 <code>share</code>，页面不再除第二遍。</p>
           {{- else }}
-          <p class="nx-note nx-miss">没有快照，占比条留空 —— 不补数。</p>
+          <p class="nx-note nx-miss">没有快照，占比条留空</p>
           {{- end }}
         </div>
       </div>
@@ -353,45 +337,11 @@
         </div>
       </div>
 
-      <!-- ============ 口径与出处 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 这些数从哪来<span class="tag">先看这块，再看数字</span></div>
-        <div class="mod-bd">
-          <table class="nx-kv">
-            <tbody>
-              <tr><th>数据来源</th><td>仓库里的四份公开快照，<b>构建时直接读文件</b>：
-                <code>static/api/public/alerts.js</code>（24h 分级 / 5 分钟聚合）、
-                <code>static/api/public/home.js</code>（处置审计）、
-                <code>static/api/public/webstats.js</code>（同窗口站点请求
-                {{ with $req }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 条，只作对照，不混算）、
-                <code>static/data/noise-index.json</code>（心跳占比）。
-                页面 <b>不发 fetch、不调接口</b>，关掉 JavaScript 数字照常显示。</td></tr>
-              <tr><th>两个窗口</th><td>漏斗 = <b>最近 24 小时</b>（{{ $s24.windowHours | default 24 }}h，快照 {{ $ad.generatedAt | default "未取到" }}）；
-                心跳占比 = <b>{{ with $N }}{{ .window }}{{ else }}未取到{{ end }}</b> 的已核实摘要。
-                两份窗口不同，只并排看，不互相换算。</td></tr>
-              <tr><th>为什么心跳算噪音</th><td>
-                <code>sid {{ with $N }}{{ printf "%.0f" .heartbeat.sid }}{{ end }}</code> 是腾讯云 agent 每 5 分钟往
-                <code>{{ with $N }}{{ .heartbeat.dst }}{{ end }}</code> 发一次 <code>POST /ca_report.cgi</code> ——
-                固定的源、固定的目的、固定的语义，里面没有一个字节是攻击。它占满了告警列表。</td></tr>
-              <tr><th>不做的</th><td>不拿 5 分钟窗口的比例外推 24 小时；
-                不把"分级合计对不上"的数据强行画成比例；
-                不把护栏拦截（{{ lang.FormatNumber 0 $guard }} 次）说成封禁（{{ lang.FormatNumber 0 $blockTotal }} 个）；
-                取不到就写「未取到（原因）」。</td></tr>
-            </tbody>
-          </table>
-          {{- with $N }}
-          <ul class="nx-notes">
-            {{- range .notes }}<li>{{ . }}</li>{{ end }}
-          </ul>
-          {{- end }}
-          <p class="nx-note">相关页面：<a href="/attack/">ATT&amp;CK 覆盖</a> ·
-            <a href="/alerts/">当前告警</a> ·
-            <a href="/status/">状态页</a> ·
-            <a href="/api/">公开端点清单</a> ·
-            <a href="/posts/purple-team-self-attack-20261018/">紫队自测（攻击链复盘）</a></p>
-        </div>
-      </div>
-
+      <p class="nx-note">相关页面：<a href="/attack/">ATT&amp;CK 覆盖</a> ·
+        <a href="/alerts/">当前告警</a> ·
+        <a href="/status/">状态页</a> ·
+        <a href="/api/">公开端点清单</a> ·
+        <a href="/posts/purple-team-self-attack-20261018/">紫队自测（攻击链复盘）</a></p>
     </div>
   </div>
 </section>

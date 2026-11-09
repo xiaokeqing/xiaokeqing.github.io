@@ -152,16 +152,6 @@ body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:
     {{- end }}
 
     <div class="mod">
-      <div class="ch"><b>一句话</b><span class="src">每天 08:20 自动落一行，只增不改</span></div>
-      <div class="tr-md" style="padding:14px 16px">
-        <p><b>为什么要这一页：</b>Wazuh 只保留 7 天索引，站上的实时快照又是"覆盖写"——两者叠起来，
-        任何"这周比上周多还是少"的问题都答不了。所以每天把关键聚合抄一行进仓库，跟着版本一起存着。</p>
-        <p style="margin-bottom:0">当前已存 <b>{{ $n }}</b> 天{{ if lt $n 7 }}（不到一周，趋势还看不出东西，所以这里只列明细、不画曲线）{{ end }}。
-        往后每过一天多一行，不需要人工维护。</p>
-      </div>
-    </div>
-
-    <div class="mod">
           {{- /* ★2026-11-09 §三 日历热力图（GitHub 贡献图样式，纯 SSR）：
        一格 = 一天，列 = 一周（周一在上）；颜色按「24h 告警总数」在已存天数里相对高低分 5 档；
        没有留档的日子画虚线空格 —— 不用 0 级色，避免把「没留档」看成「那天没有告警」。 */ -}}
@@ -195,7 +185,7 @@ body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:
 {{- end -}}
 {{- $lead := (index $days 0).pts -}}
 <div class="mod tr-calmod">
-  <div class="ch"><b>日历热力图</b><span class="src">一格 = 一天 · 越深 = 当天 24h 告警越多 · 已存 {{ len $dates }} 天</span></div>
+  <div class="ch"><b>日历热力图</b><span class="src">一格 = 一天 · 已存 {{ len $dates }} 天</span></div>
   <div class="tr-calwrap">
   <div class="tr-wd" aria-hidden="true"><i>一</i><i></i><i>三</i><i></i><i>五</i><i></i><i>日</i></div>
   <div class="tr-cal" aria-label="每日告警总量日历">
@@ -223,11 +213,11 @@ body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:
     <i style="background:rgba(127,212,216,.55)"></i>
     <i style="background:rgba(127,212,216,.72)"></i>
     <i style="background:rgba(127,212,216,.92)"></i>多
-    <span style="margin-left:10px">虚线格 = 那天没有留档（页面不拿 0 补）</span>
+    <span style="margin-left:10px">虚线格 = 无留档</span>
   </div>
 </div>
 {{- end }}
-      <div class="ch"><b>逐日明细</b><span class="src">1 行 = 1 天 · 取抓取时刻的窗口口径</span></div>
+      <div class="ch"><b>逐日明细</b><span class="src">1 行 = 1 天</span></div>
       <div style="overflow-x:auto">
         <table class="tr-table" style="min-width:960px">
           <thead>
@@ -264,25 +254,11 @@ body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:
           </tbody>
         </table>
       </div>
-      <p class="tr-note">
-        「护栏拦截」是处置护栏按策略挡下的动作数；「蜜罐连接」取自蜜罐聚合窗口（近 800 条告警的样本），不是全天全量；
-        MTTD 只在 24 小时内有封禁记录时才给中位数，没有就直说「无封禁记录」。
-      </p>
     </div>
 
-    <div class="mod">
-      <div class="ch"><b>口径 · 这些数从哪来</b><span class="src">先看这块，再看数字</span></div>
-      <div class="tr-md" style="padding:14px 16px">
-        <ul>
-          <li><b>数据源</b>：仓库内 <code>static/api/public/*.js</code>（站上同源快照）+ <code>data/attack.json</code>，由 <code>scripts/rollup-daily.py</code> 每天读取。</li>
-          <li><b>触发</b>：<code>.github/workflows/rollup.yml</code>，每天 08:20（CST）一次，也可手动 Run workflow。</li>
-          <li><b>只增不改</b>：每天一个新文件 <code>data/rollup/YYYY-MM-DD.json</code>；同一天重跑覆盖当天那一行，不动历史。</li>
-          <li><b>不编数</b>：快照里没有的字段写 <code>null</code> 并登记进 <code>missing</code>，页面显示「未取到」，不补 0。</li>
-          <li><b>不存 IP</b>：只留聚合（国家计数、Top 来源），不落任何完整来源地址。</li>
-          <li><b>相关</b>：<a href="/attack/">ATT&amp;CK 覆盖</a> · <a href="/noise/">告警噪音指数</a> · <a href="/alerts/">实时看板</a></li>
-        </ul>
-      </div>
-    </div>
+    <p class="tr-note">
+      相关：<a href="/attack/">ATT&amp;CK 覆盖</a> · <a href="/noise/">告警噪音指数</a> · <a href="/alerts/">实时看板</a>
+    </p>
   </div>
 </section>
 </main>

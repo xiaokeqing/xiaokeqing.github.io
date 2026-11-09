@@ -52,12 +52,11 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-PROJECTS // 项目 <em class="ops-en">PROJECTS</em></span>
-      <span class="sync">● 纯静态说明 · 每一条都能在仓库里找到证据</span>
+      <span class="sync">● 纯静态 · 每条可回仓库核对</span>
     </div>
     <div class="screen-bd proj-bd">
       {{- $parts := split .Content "<h2" }}
       {{- if gt (len $parts) 1 }}
-      <p class="proj-lead">{{ index $parts 0 | plainify | strings.TrimSpace }}</p>
       {{- range after 1 $parts }}
       {{- $rest := replaceRE "(?s)^[^>]*>.*?</h2>" "" . }}
       <div class="mod">
@@ -71,12 +70,6 @@
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>项目清单</div>
         <div class="mod-bd proj-md">{{ .Content }}</div>
-      </div>
-      {{- end }}
-      {{- with .Params.note }}
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>核实口径 · 这页为什么可信<span class="tag">可复核</span></div>
-        <div class="mod-bd"><p class="proj-p">{{ . | markdownify }}</p></div>
       </div>
       {{- end }}
     </div>

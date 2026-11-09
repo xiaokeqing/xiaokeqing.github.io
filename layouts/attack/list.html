@@ -108,11 +108,6 @@
             <span class="ok">{{ printf "%.1f" .mappedPct }}%</span> 带 ATT&amp;CK 技术标签；
             <em>{{ lang.FormatNumber 0 .unmapped }}</em> 条<b>没有</b>。
           </p>
-          <p class="at-sub">
-            下面矩阵里的每个格子都是真实命中的条数，不是资产清单、不是"支持检测"的勾选表。
-            <b>未映射的 {{ lang.FormatNumber 0 .unmapped }} 条不摊进任何技术</b> —— 它们不是"没发生"，
-            而是 Wazuh 那条规则没写 <code>mitre.id</code>，所以这一页说不出它属于哪门哪派。
-          </p>
           <ul class="at-kpis">
             <li class="at-kpi"><span class="k">窗口</span><span class="v">{{ .windowDays }} 天</span></li>
             <li class="at-kpi"><span class="k">总告警</span><span class="v">{{ lang.FormatNumber 0 .total }}</span></li>
@@ -122,13 +117,11 @@
             <li class="at-kpi"><span class="k">技术</span><span class="v">{{ len .techniques }} 个</span></li>
           </ul>
           <p class="at-note">
-            「未映射」= <code>must_not exists rule.mitre.id</code> 的告警条数。
-            <b>Wazuh 规则未带 mitre.id，未计入任何技术</b>；所以"已映射 + 未映射 = 总数"，
-            而矩阵里各技术的条数相加会 ≥ 已映射（一条告警可同时带多个技术）。
+            未映射 = <code>rule.mitre.id</code> 缺失 · 一条告警可带多个技术
           </p>
           {{- else }}
-          <p class="at-lead">读不到 <code>data/attack.json</code>，这一页不显示任何数字。</p>
-          <p class="at-sub">先跑 <code>python scripts/attack-coverage.py</code> 生成快照，再重新构建。</p>
+          <p class="at-lead">读不到 <code>data/attack.json</code></p>
+          <p class="at-sub">先跑 <code>scripts/attack-coverage.py</code> 再构建</p>
           {{- end }}
         </div>
       </div>
@@ -173,11 +166,6 @@
             </div>
             {{- end }}
           </div>
-          <p class="at-note">
-            行序按战术条数降序；同一技术可出现在多个战术行（例如 Valid Accounts 同时被
-            Initial Access / Persistence / Privilege Escalation / Defense Evasion / Lateral Movement 引用），
-            因为一条告警可以带多个战术，所以<b>各战术条数相加会大于已映射告警数</b>。
-          </p>
           {{- else }}
           <p class="at-empty">无数据。</p>
           {{- end }}
@@ -232,24 +220,12 @@
             </div>
           </div>
           <p class="at-note">
-            <b>Suricata 没有 ATT&amp;CK 字段，这张表是人工对照，映射不上的一律单列。</b>
-            数据取 srv2 宿主机的 <code>/opt/suricata/logs/eve.json*</code>（只读 <code>event_type=alert</code>，
-            按 <code>alert.category</code> 计数）；对照表写死在 <code>scripts/attack-coverage.py</code>，
-            表里没有的 category 进「未映射」，不按签名猜、不摊进任何战术或技术。
-            本块与上面的 Wazuh 是两套告警源，<b>条数不可相加</b>。
-          </p>
-          <p class="at-note">
             实际覆盖：{{ .observedFrom }} → {{ .observedTo }}（{{ .files }} 个文件，约
             {{ printf "%.2f" (div (float .bytes) 1073741824.0) }} GB 解压后）· 映射率
             {{ printf "%.2f" .mappedPct }}% · {{ with .coverage }}{{ . }}{{ end }}
           </p>
           {{- else }}
-          <p class="at-lead">未取到 Suricata 数据（{{ .reason }}）。</p>
-          <p class="at-sub">
-            这一块降级为空，<b>Wazuh 的矩阵和口径不受影响</b>；修好 srv2 取数后重跑
-            <code>python scripts/attack-coverage.py</code> 即可。Suricata 没有 ATT&amp;CK 字段，本来也只能人工对照，
-            所以这里宁可留空，也不编一张表出来。
-          </p>
+          <p class="at-lead">未取到 Suricata 数据（{{ .reason }}）</p>
           {{- end }}
           {{- else }}
           <p class="at-empty">data/attack.json 里没有 suricata 块（旧快照）；重跑脚本后本块会出现。</p>
@@ -257,44 +233,13 @@
         </div>
       </div>
 
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 这些数从哪来<span class="tag">先看这块，再看数字</span></div>
-        <div class="mod-bd">
-          <table class="at-tbl">
-            <tbody>
-              <tr><th>数据源</th><td>srv2 上 Wazuh 索引器的 <code>wazuh-alerts-*</code>；宿主机
-                <code>127.0.0.1:9200</code> 不通（索引器只在容器网内），所以走
-                <code>ssh → docker exec wazuh.indexer → curl https://[indexer]:9200</code>。</td></tr>
-              <tr><th>窗口</th><td>{{ with $d }}{{ .windowDays }} 天（= 索引保留上限），
-                <code>@timestamp gte now-{{ .windowDays }}d</code>；不是采样，是窗口内全量聚合。{{ end }}</td></tr>
-              <tr><th>聚合口径</th><td><code>rule.mitre.id</code> terms（技术）、
-                <code>rule.mitre.tactic</code> terms（战术）；未映射 =
-                <code>must_not exists rule.mitre.id</code>；总数取同一查询的
-                <code>hits.total</code>。</td></tr>
-              <tr><th>名称</th><td>技术名优先用脚本内置的 ATT&amp;CK 名称表（离线写死，不联网）；
-                表里没有的才退回告警自带的 <code>rule.mitre.technique</code>。
-                战术名是 Wazuh 输出里的原名，页面按内置表映射回 <code>TA00xx</code>。</td></tr>
-              <tr><th>Suricata 口径</th><td>srv2 宿主机 <code>/opt/suricata/logs/eve.json*</code>（含轮转件，
-                只读 <code>event_type=alert</code>，按 <code>alert.category</code> 计数）；
-                Suricata 不输出 ATT&amp;CK 字段，战术来自脚本里 <b>人工写死的 category → 战术对照表</b>，
-                表外/留空的一律进「未映射」。取数失败只把 <code>suricata.available</code> 置 false，
-                整页照常构建。</td></tr>
-              <tr><th>生成</th><td><code>scripts/attack-coverage.py</code> →
-                <code>data/attack.json</code>（本页构建时直接读，SSR，不 fetch）+
-                <code>static/api/public/attack.js</code>（同内容公开快照）。
-                快照时间：{{ with $d }}<b>{{ .generatedAt }}</b>{{ else }}—{{ end }}。</td></tr>
-              <tr><th>不做的</th><td>不做单元格明细弹层（点格子直接去 <a href="/alerts/">/alerts/</a> 看板）；
-                不把未映射算进任何技术；不把"技术上支持"当成"真实命中"。</td></tr>
-            </tbody>
-          </table>
-          <p class="at-note">相关：<a href="/alerts/">实时告警</a> ·
-            <a href="/session/">蜜罐会话</a> ·
-            <a href="/noise/">告警噪音指数</a> ·
-            <a href="/status/">运行状态</a> ·
-            <a href="/api/">公开端点清单</a></p>
-        </div>
-      </div>
+      <p class="at-note">相关：<a href="/alerts/">实时告警</a> ·
+        <a href="/session/">蜜罐会话</a> ·
+        <a href="/noise/">告警噪音指数</a> ·
+        <a href="/status/">运行状态</a> ·
+        <a href="/api/">公开端点清单</a></p>
 
+    </div>
     </div>
   </div>
 </section>

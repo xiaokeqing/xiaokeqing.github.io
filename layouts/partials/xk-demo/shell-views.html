@@ -121,18 +121,6 @@
 
         <!-- 视图 4：数据统计 -->
         <div class="ops-tab" data-pane="stats">
-          {{- /* ★2026-11-07 信息架构重排：这三张原来只埋在 /more/ 里。搬到「数据统计」页顶做入口卡，
-                 点击仍跳原页 —— 不复制内容、不改原页，只把入口放到用户看得到的地方。 */ -}}
-          <div class="mod xk-ent">
-            <div class="mod-hd"><span class="led"></span>数据可信度 · 三个入口<span class="tag">点开看证据</span></div>
-            <div class="mod-bd">
-              <div class="xk-ent-grid">
-                <a class="xk-ent-card" href="/noise/"><b>告警噪音指数</b><span>29 万条告警里 94.9% 是心跳噪音 —— 降噪被量化成几个能复核的数。</span><em>看噪音 →</em></a>
-                <a class="xk-ent-card" href="/ip/"><b>这个 IP 干过什么</b><span>个人版 IP 档案：命中过哪条规则、打过哪些端点、最近出现时间。</span><em>查 IP →</em></a>
-                <a class="xk-ent-card" href="/passwords/"><b>高频弱口令</b><span>蜜罐里被尝试最多的口令，只给结构统计、不列明文。</span><em>看口令 →</em></a>
-              </div>
-            </div>
-          </div>
           <div class="sec-hd"><b>拦截与处置</b><span>封禁 / 访问量 / 处置动作，全部来自只读快照</span></div>
           <div class="mod"><div class="mod-hd"><span class="led"></span>7×24 访问统计 · 按整点聚合<span class="tag">/webstats · 零 IP</span></div>
             <div class="mod-bd"><div class="bars anim">
@@ -187,24 +175,6 @@
               </div>
             </div>
           </div>
-          <div class="mod xk-atkmap-card" data-xk-atkmap>
-            <div class="mod-hd"><span class="led"></span>攻击来源地图 · 国家气泡<span class="tag">/geo · 质心</span></div>
-            <div class="xk-atkmap-bar">
-              <div class="xk-atkmap-metrics" role="group" aria-label="度量切换">
-                <button type="button" class="on" data-xk-metric="count" aria-pressed="true">告警次数</button>
-                <button type="button" data-xk-metric="ip" aria-pressed="false">独立 IP</button>
-              </div>
-              <span class="xk-atkmap-scale" data-xk-atkmap-scale><i></i>气泡大小 = √度量值 · 色温 = 相对量级</span>
-            </div>
-            <div class="xk-atkmap-stage">
-              <canvas id="xkAtkMap" role="img"
-                aria-label="攻击来源地图：底图为 1 度陆地点阵；气泡落点是各国质心，不是攻击者真实坐标（GeoIP 只到国家/省）"></canvas>
-              <p class="xk-atkmap-msg sk" data-xk-atkmap-msg>取数中…</p>
-              <div class="xk-atkmap-tip" data-xk-atkmap-tip aria-hidden="true"></div>
-            </div>
-            <p class="xk-atkmap-foot">落点：<b>国家质心</b>，不是攻击者真实坐标（GeoIP 只到国家/省）；<span data-xk-atkmap-src>取数中…</span> · 底图 Natural Earth 1:110m（公有领域）。</p>
-          </div>
-
           <div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>
             <div class="mod-bd">
               <div class="stats">
@@ -234,25 +204,6 @@
                 <li><i class="lg purp"></i>—<b>—</b></li>
                 <li><i class="lg ok"></i>—<b>—</b></li>
               </ul>
-            </div>
-          </div>
-          <div class="mod" data-xk-block="apihealth"><div class="mod-hd"><span class="led"></span>数据统计 · 接口健康<span class="tag">/api/health + 本页真实请求</span></div>
-            <div class="mod-bd">
-              <div class="stats">
-                <div class="stat"><div class="n sk" data-ih-k="health">—</div><div class="l">后端 /api/health</div></div>
-                <div class="stat"><div class="n sk" data-ih-k="count">—</div><div class="l">本次实测端点</div></div>
-                <div class="stat"><div class="n sk" data-ih-k="p50">—</div><div class="l">中位延迟 P50</div></div>
-                <div class="stat"><div class="n sk" data-ih-k="max">—</div><div class="l">最慢端点</div></div>
-              </div>
-              <ul class="geo" data-ih-list style="margin-top:12px">
-              <li><span class="cc">alerts</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="alerts">取数中…</span></li>
-              <li><span class="cc">overview</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="overview">取数中…</span></li>
-              <li><span class="cc">geo</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="geo">取数中…</span></li>
-              <li><span class="cc">honeypot</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="honeypot">取数中…</span></li>
-              <li><span class="cc">audit</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="audit">取数中…</span></li>
-              <li><span class="cc">webstats</span><span class="bar"><i style="width:0%"></i></span><span data-ih-v="webstats">取数中…</span></li>
-              </ul>
-              <p class="attk-note" data-ih-note>取数中…</p>
             </div>
           </div>
           <div class="mod" data-xk-block="deploy"><div class="mod-hd"><span class="led"></span>部署可追溯 · 版本时间轴<span class="tag">/deploy</span></div>

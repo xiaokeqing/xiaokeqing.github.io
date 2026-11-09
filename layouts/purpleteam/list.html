@@ -75,60 +75,11 @@
     </div>
     <div class="screen-bd pt-bd">
 
-      <p class="pt-lead">
-        红队问「能不能打进去」，蓝队问「有没有看见」，紫队问的是<b>两者对不对得上</b>：
-        我打出去的这一下，<b>是不是恰好那一条规则该响</b>；打完之后<b>日志里到底有没有它</b>。
-        这一页把这件事做成一张可执行的设计稿 —— 三条攻击、每条一个明确的预期 SID、一套 grep 验证方法，
-        再把<b>还没验的部分写成「未验证」</b>，而不是写成「命中 0」。
-      </p>
-
-      <!-- ============ ① 口径 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 数字从哪来、什么算验过<span class="tag">先看这块，再看数字</span></div>
-        <div class="mod-bd">
-          <div class="pt-scroll">
-            <table class="pt-kv">
-              <tbody>
-                <tr><th>规则在哪</th><td>
-                  <code>detections/suricata/xk-lab.rules</code>（7 条生效 + 1 条抑制型默认注释，SID <code>1000101–1000108</code>）、
-                  <code>detections/wazuh/xk-lab_rules.xml</code>（3 条，<code>100400/100401/100402</code>）。
-                  两份都<b>只做了语法验证</b>：一次性 <code>--rm</code> 容器里 <code>suricata -T</code> 与
-                  <code>wazuh-analysisd -t</code>，都是 exit 0，生产影响为零。
-                </td></tr>
-                <tr><th>基线分母</th><td class="f">
-                  srv2 <code>/opt/suricata/logs/eve.json</code>，2026-10-11 09:23 ~ 2026-10-18 12:00 UTC，
-                  共 <b>1,471,376</b> 行：alert 293,482 / flow 612,516 / http 283,796 / ssh 142,926 / dns 132,086 / tls 6,801。
-                  <div style="font-family:inherit;font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">
-                    阈值全部是从这份基线里统计出来的窗口分布，不是拍脑袋定的；改阈值前先重跑计数。
-                  </div>
-                </td></tr>
-                <tr><th>什么算「验过」</th><td>
-                  一次自测只算成立，必须同时满足三件事：①规则文件<b>真的在生产规则目录里且被加载</b>；
-                  ②发起攻击后 <code>grep</code> 到对应 <code>signature_id</code> / <code>rule.id</code>；
-                  ③<b>负样本对照不报</b>（只打单端口的源不该触发「多端口」规则）。
-                  缺第①条，<code>grep</code> 返回 0 说明的是<b>没加载</b>，不是<b>没命中</b> —— 这两种结论完全相反。
-                </td></tr>
-                <tr><th>本篇不引什么</th><td>
-                  <code>docs/Amadeus-项目总文档-20261017.md</code> 的 §19 记的是 2026-10-18 的站点改动
-                  （首屏聚合五块 / 发布链假失败 / 手机顶栏），<b>里面没有任何 SID 与检测口径</b>，
-                  所以本页的数字一律不引它，只引 <code>detections/README.md</code> 与它引用的 eve.json 计数。
-                </td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="pt-note"><b>一句话口径</b>：紫队自测的产物不是「拦住了多少」，而是
-            <b>「哪条规则该响 / 实际响没响 / 没响是因为规则没加载还是真的没匹配上」</b>这三件事分开记录。</p>
-        </div>
-      </div>
-
       <!-- ============ ② 三条可测攻击 ============ -->
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>三条可测攻击 · 各一条发起命令<span class="tag">靶场自打 · 走内网</span></div>
         <div class="mod-bd">
-          <p class="pt-p">
-            靶场的公网入口已整体撤下，SSH 面是蜜罐 <code>:2222</code>，所以要<b>先 SSH 隧道进去或用内网机器发起</b>。
-            这三条选的是「行为维度」而不是「载荷维度」—— 因为真实攻击里对方最爱伪装的东西（banner、UA）最不可靠。
-          </p>
+          <p class="pt-p">公网入口已撤 · SSH 面为蜜罐 <code>:2222</code> · 需内网发起。</p>
           <div class="pt-scroll">
             <table class="pt-tbl">
               <thead><tr><th>#</th><th>攻击</th><th>发起命令（示例）</th><th>预期命中</th><th>为什么是它</th></tr></thead>
@@ -157,9 +108,7 @@
               </tbody>
             </table>
           </div>
-          <p class="pt-note"><b>负样本必须一起跑</b>：只打单端口、打几千次也不该触发 1000104 / 100401。
-            真实对照就在基线里 —— <code>179.63.84.194</code> 的 2,752 次全落在 1433 一个口上，规则设计上它不该被「多端口」规则报出来。
-            只测「该响的响了」是自欺，还要测「不该响的没响」。</p>
+          <p class="pt-note"><b>负样本同跑</b>：单端口打几千次也不触发 1000104 / 100401。</p>
         </div>
       </div>
 
@@ -185,11 +134,6 @@
               </tbody>
             </table>
           </div>
-          <p class="pt-note">
-            <b>为什么 1000103 是 10/300s 而不是 20/300s</b>：20 抓的是脉冲型源（29 次/5min 那种），
-            10 抓的是「稳、慢、持久」的源。真实源里 ≥20 的窗口只占 2.9%，用 20 会把大部分慢速爆破漏掉 ——
-            这不是阈值写错，是<b>精度与覆盖率的分层取舍</b>，自测时要按你想验的那一层选阈值。
-          </p>
         </div>
       </div>
 
@@ -216,11 +160,6 @@ grep '"dest_port":2222' /opt/suricata/logs/eve.json | grep '"event_type":"flow"'
 <span class="c"># Wazuh：alerts.json 一行一个 JSON</span>
 grep '"id":"100400"' /var/ossec/logs/alerts/alerts.json | tail -n 3
 grep -c '"id":"100401"' /var/ossec/logs/alerts/alerts.json</pre>
-          <p class="pt-note">
-            <b>判读规则</b>：<code>grep -c</code> 非 0 且 <code>src_ip</code> 是自己 → 规则真的响了；
-            为 0 但规则已加载 → 规则没匹配上（要去看阈值和方向）；
-            为 0 且规则没加载 → <b>未验证</b>，不是「没命中」。
-          </p>
         </div>
       </div>
 
@@ -242,21 +181,15 @@ grep -c '"id":"100401"' /var/ossec/logs/alerts/alerts.json</pre>
             </table>
           </div>
           <p class="pt-p" style="margin-top:12px">
-            <b>所以答案是：看不见。</b> 不是平台没看见我，是<b>还没把眼睛装上去</b> ——
-            两份规则文件仍在 <code>detections/</code> 旁路目录，没进 <code>/var/ossec/etc/rules/</code> 与
-            <code>/opt/suricata/rules/</code>，也没 reload 过 suricata / wazuh-analysisd。
-            这一栏留白不是偷懒，是<b>此刻唯一诚实的写法</b>：没有非 0 的 grep，就没有「命中」这个词。
+            <b>结论：看不见。</b>两份规则仍在 <code>detections/</code> 旁路目录，没进生产规则目录、没 reload。
           </p>
-          <p class="pt-note">
-            填这一栏的顺序：①部署两份文件 → ②<code>suricata -T</code> / <code>wazuh-analysisd -t</code> 通过后 reload →
-            ③按上面三条打 → ④grep 记数（含负样本对照）→ ⑤只把有 grep 支撑的行改成「命中」或「没命中」。
-          </p>
+          <p class="pt-note">①部署 → ②<code>-T</code> 校验后 reload → ③打三条 → ④grep 记数 → ⑤改表</p>
         </div>
       </div>
 
       <!-- ============ ⑥ 三个已踩的坑 ============ -->
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>三个已踩的坑 · 自测前先记住<span class="tag">都是实测撞出来的，不是推的</span></div>
+        <div class="mod-hd"><span class="led"></span>三个已踩的坑<span class="tag">均为实测</span></div>
         <div class="mod-bd">
           <div class="pt-scroll">
             <table class="pt-kv">
@@ -286,24 +219,12 @@ grep -c '"id":"100401"' /var/ossec/logs/alerts/alerts.json</pre>
         </div>
       </div>
 
-      <!-- ============ ⑦ 边界 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>边界 · 这一页公开什么、不公开什么<span class="tag">公开的是可复核的部分</span></div>
-        <div class="mod-bd">
-          <p class="pt-p">
-            <b>公开</b>：规则 id、判据（窗口 / 阈值 / 端口组）、每条规则背后的<b>真实计数与窗口分布</b>、
-            发起命令的形状、验证用的 grep、以及「未部署 ⇒ 未验证」这个结论本身。<br>
-            <b>不公开</b>：生产环境的完整规则文件内容、真实服务器地址之外的内部拓扑、蜜罐真实口令与凭据、
-            以及任何还没部署就宣称「已生效」的说法 —— 最后这条不是安全问题，是诚信问题。
-          </p>
-          <p class="pt-note">
-            数字出处：<code>detections/README.md</code>（§0 侦察表、§1/§2 规则表、§3 语法验证、§4 边界）
-            与它引用的 <code>/opt/suricata/logs/eve.json</code> 统计。
-            规则本体在 <code>detections/suricata/xk-lab.rules</code> 与 <code>detections/wazuh/xk-lab_rules.xml</code>。
-            配套笔记见 <a href="/posts/purple-team-self-attack-20261018/" style="color:#bfe3d0">《我打的攻击，我的平台能看见吗》</a>。
-          </p>
-        </div>
-      </div>
+      <!-- ============ ⑦ 出处 ============ -->
+      <p class="pt-note">
+        出处：<code>detections/README.md</code>（§0 侦察表、§1/§2 规则表、§3 语法验证、§4 边界）·
+        规则本体 <code>detections/suricata/xk-lab.rules</code> / <code>detections/wazuh/xk-lab_rules.xml</code> ·
+        配套笔记 <a href="/posts/purple-team-self-attack-20261018/" style="color:#bfe3d0">《我打的攻击，我的平台能看见吗》</a>
+      </p>
 
     </div>
   </div>

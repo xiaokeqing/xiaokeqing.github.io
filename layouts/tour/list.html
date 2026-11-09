@@ -106,34 +106,11 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 3 分钟看懂这个站 <em class="ops-en">TOUR</em></span>
-      <span class="sync">{{ with $al.generatedAt }}● 快照 {{ . }} · 构建期直出，不 fetch{{ else }}● 未读到 data/tour.json{{ end }}</span>
+      <span class="sync">{{ with $al.generatedAt }}● 快照 {{ . }}{{ else }}● 未读到 data/tour.json{{ end }}</span>
     </div>
     <div class="screen-bd tu-bd">
 
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>这一页是什么<span class="tag">给面试官 / 来访工程师</span></div>
-        <div class="mod-bd">
-          <p class="tu-lead">这是给来访者的一条 3 分钟路径：按顺序点五个地方，就能看完这个站做了什么、数字怎么来的。</p>
-          <p class="tu-sub">
-            五步都指向站内已有页面，不另开演示环境；卡片上的数字取自构建期快照，
-            和点进去看到的页面是<b>同一套口径</b>——不是为这一页单独准备的一份数。
-          </p>
-        </div>
-      </div>
-
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>为什么有这一页<span class="tag">固定路线，不靠访客自己翻</span></div>
-        <div class="mod-bd">
-          <p class="tu-md">
-            面试官不会自己慢慢翻。站里十几个页面，每页都在解释自己的口径，第一次来的人很容易点进
-            <code>/alerts/</code> 就被实时流带走，三分钟后只记得「哦，有很多告警」。
-            所以这里不解释指标，只给一条固定路线：<b>五步、五个链接、每步一句「看点」和一句「为什么值得看」</b>。
-            3 分钟走完，剩下的再回导航按兴趣翻。
-          </p>
-        </div>
-      </div>
-
-      <div class="tu-path-hd"><span class="k">五步路径</span><span class="k2">按顺序点 · 约 3 分钟 · 每步都停在一个「能自己复核的数字」上</span></div>
+      <div class="tu-path-hd"><span class="k">五步路径</span><span class="k2">按顺序点 · 约 3 分钟</span></div>
       <ol class="tu-steps">
 
         <li class="tu-step">
@@ -141,7 +118,6 @@
             <div class="mod-hd"><span class="led"></span><span class="tu-n">01</span><b class="tu-name">实时看板</b><span class="tag">/alerts/</span></div>
             <div class="mod-bd">
               <p class="tu-look"><b>看点</b>过去 24 小时真实告警总量、逐小时热力、严重度构成、实时流。</p>
-              <p class="tu-why"><b>为什么值得看</b>总量、严重度、热力全部来自同一份 <code>stats24h</code> 快照，打开就是那一刻的口径；实时流是 5 分钟窗口的另一份快照。两个口径分开标，不混着算。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $al.total24h | default "未取到" }}</div><div class="l">24 小时告警</div></li>
                 <li class="stat"><div class="n">{{ $al.critical | default "未取到" }}</div><div class="l">其中严重 CRITICAL</div></li>
@@ -158,7 +134,6 @@
             <div class="mod-hd"><span class="led"></span><span class="tu-n">02</span><b class="tu-name">真实样本</b><span class="tag">/samples-pipeline/</span></div>
             <div class="mod-bd">
               <p class="tu-look"><b>看点</b>蜜罐收到的 1.8 万+ 个文件，为什么一个可执行样本都没有。</p>
-              <p class="tu-why"><b>为什么值得看</b>18,960 个文件全是文本或空文件，<code>file</code> 判定 0 个 PE / 0 个 ELF；YARA 与 ClamAV 根本没装，所以页面写的是「一次都没扫过」，不是「扫了没命中」——这两句话不能混。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $sp.files | default "未取到" }}</div><div class="l">落盘文件（dionaea）</div></li>
                 <li class="stat"><div class="n">{{ with $sp.mib }}{{ . }}<em> MiB</em>{{ else }}未取到{{ end }}</div><div class="l">合计体积</div></li>
@@ -174,14 +149,13 @@
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">03</span><b class="tu-name">处置与时效</b><span class="tag">/alerts/ → 数据统计</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>封禁链路、护栏拦下的动作数、MTTD / MTTR 口径。</p>
-              <p class="tu-why"><b>为什么值得看</b>护栏拦下 98 个动作、真正执行 0 个、累计封禁 0 个 IP：链路的每一步都留审计痕迹，被拦下的和放行的分开计数；MTTD / MTTR 样本不足就写「未取到」，不拿 0 冒充中位数。</p>
+              <p class="tu-look"><b>看点</b>封禁链路、护栏拦下的动作数、MTTD / MTTR。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $au.blockedByGuard | default "未取到" }}</div><div class="l">护栏拦下的动作</div></li>
                 <li class="stat"><div class="n">{{ $au.blockTotal | default "未取到" }}</div><div class="l">累计封禁 IP（真实 0）</div></li>
                 <li class="stat"><div class="n">{{ $me.alertsInWindow | default "未取到" }}</div><div class="l">24h 参与统计的告警</div></li>
               </ul>
-              <p class="tu-flag"><b>MTTD / MTTR：未取到。</b>24 小时窗口内可配对样本为 0，<code>metrics.js</code> 的 <code>available=false</code>、<code>reason="{{ $me.mttdReason | default "样本不足" }}"</code>；页面按真实状态写「未取到」，不补 0。</p>
+              <p class="tu-flag"><b>MTTD / MTTR：未取到</b>（24h 可配对样本 0，不补 0）</p>
               <p class="tu-src">数字 ← static/api/public/home.js · data.audit.summary；static/api/public/metrics.js · 快照 {{ $au.generatedAt | default "未取到" }}</p>
               <a class="tu-go" href="/alerts/">打开 /alerts/ 并切到「数据统计」 <span aria-hidden="true">→</span></a>
             </div>
@@ -192,8 +166,7 @@
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">04</span><b class="tu-name">ATT&amp;CK 覆盖</b><span class="tag">/attack/</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>真实告警里有多少带 ATT&amp;CK 技术标签，未映射的单列，不摊派。</p>
-              <p class="tu-why"><b>为什么值得看</b>5 天 1,512,896 条告警只有 49.3% 能对上技术，767,057 条未映射单列一栏；不硬凑覆盖率，也不把未映射的塞进「最近的战术」——覆盖率先难看，才可信。</p>
+              <p class="tu-look"><b>看点</b>真实告警里有多少带 ATT&amp;CK 技术标签，未映射的单列。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $at.total | default "未取到" }}</div><div class="l">告警（{{ $at.windowDays | default "未取到" }} 天窗口）</div></li>
                 <li class="stat"><div class="n">{{ $at.mappedPct | default "未取到" }}</div><div class="l">带技术标签</div></li>
@@ -209,8 +182,7 @@
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">05</span><b class="tu-name">威胁情报</b><span class="tag">/ip/?q=</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>任意一个攻击源 IP 的完整档案：时间线、端口、弱口令、判定依据。</p>
-              <p class="tu-why"><b>为什么值得看</b>365,875 条带来源 IP 的告警压成 796 个来源桶；随便填一个源 IP，能看到它什么时候来、敲了哪些端口、试了哪些弱口令、凭什么判定它是攻击源。</p>
+              <p class="tu-look"><b>看点</b>任意一个攻击源 IP 的完整档案：时间线、端口、弱口令。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $ge.withSourceIp | default "未取到" }}</div><div class="l">带来源 IP 的告警（{{ $ge.window | default "24h" }}）</div></li>
                 <li class="stat"><div class="n">{{ $ge.sourceBuckets | default "未取到" }}</div><div class="l">聚成的来源桶</div></li>
@@ -223,66 +195,13 @@
 
       </ol>
 
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 这些数字怎么来的<span class="tag">可逐项核对</span></div>
-        <div class="mod-bd">
-          <p class="tu-md">
-            数字全部取自仓库里已有的只读快照：<code>static/api/public/*.js</code> 与 <code>data/*.json</code>。
-            构建期用 <code>E:\DeepSeek1\work\gen_tour_data.py</code> 把要用的字段汇总成 <code>data/tour.json</code>，
-            Hugo 用 <code>hugo.Data.tour</code> 直出 HTML —— 页面不 fetch、不连库，打开时不会出现「取数中」。
-          </p>
-          <table class="tu-tbl">
-            <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
-            <thead><tr><th>页面上的数</th><th>来源文件 · 字段</th><th>快照时刻</th></tr></thead>
-            <tbody>
-              <tr>
-                <td class="v c1">{{ $al.total24h | default "未取到" }}</td>
-                <td class="c2">static/api/public/alerts.js · <code>data.stats24h.total</code>（24h）<br>{{ $al.critical | default "未取到" }} / {{ $al.high | default "未取到" }} ← <code>bySeverity.CRITICAL / HIGH</code></td>
-                <td class="c3">{{ $al.generatedAt | default "未取到" }}</td>
-              </tr>
-              <tr>
-                <td class="v c1">{{ $sp.files | default "未取到" }}</td>
-                <td class="c2">data/samples.json · <code>dionaea.files</code>；体积 <code>dionaea.bytes</code>；可执行 <code>samplesReadable</code></td>
-                <td class="c3">{{ $sp.generatedAt | default "未取到" }}</td>
-              </tr>
-              <tr>
-                <td class="v c1">{{ $au.blockedByGuard | default "未取到" }}</td>
-                <td class="c2">static/api/public/home.js · <code>data.audit.summary.blockedByGuard</code>；封禁 <code>blockTotal</code>；执行 <code>executedActions</code></td>
-                <td class="c3">{{ $au.generatedAt | default "未取到" }}</td>
-              </tr>
-              <tr>
-                <td class="v c1">{{ $at.total | default "未取到" }}</td>
-                <td class="c2">data/attack.json · <code>total</code>（{{ $at.windowDays | default "未取到" }} 天）；<code>mappedPct</code>；<code>unmapped</code></td>
-                <td class="c3">{{ $at.generatedAt | default "未取到" }}</td>
-              </tr>
-              <tr>
-                <td class="v c1">{{ $ge.withSourceIp | default "未取到" }}</td>
-                <td class="c2">static/api/public/geo.js · <code>data.coverage.withSourceIp</code>；<code>sourceBuckets</code></td>
-                <td class="c3">{{ $ge.generatedAt | default "未取到" }}</td>
-              </tr>
-              <tr>
-                <td class="v c1">未取到</td>
-                <td class="c2">static/api/public/metrics.js · <code>data.mttd.available=false</code>、<code>reason="{{ $me.mttdReason | default "样本不足" }}"</code></td>
-                <td class="c3">{{ $me.generatedAt | default "未取到" }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p class="tu-note">
-            <b>两个 0 不是一回事</b>：封禁 0 是审计留痕里的真实 0（真没有封禁记录），MTTD / MTTR 的 0 是「没样本、算不出来」，所以分别写成「0」和「未取到」。
-          </p>
-          <p class="tu-note">
-            <b>不跨文件相加</b>：alerts.js 的 24h 总量 {{ $al.total24h | default "未取到" }}，geo.js 的 <code>coverage.totalAlerts</code>
-            是 {{ $ge.totalAlerts | default "未取到" }} —— 两次快照相隔几秒，本页不把两者相加，也不强行对齐；每张卡只引自己那一份。
-          </p>
-          <p class="tu-note">
-            相关：<a href="/alerts/">实时看板</a> ·
-            <a href="/samples-pipeline/">样本流水线</a> ·
-            <a href="/attack/">ATT&amp;CK 覆盖</a> ·
-            <a href="/ip/">IP 情报</a> ·
-            <a href="/status/">运行状态</a>
-          </p>
-        </div>
-      </div>
+      <p class="tu-note">
+        相关：<a href="/alerts/">实时看板</a> ·
+        <a href="/samples-pipeline/">样本流水线</a> ·
+        <a href="/attack/">ATT&amp;CK 覆盖</a> ·
+        <a href="/ip/">IP 情报</a> ·
+        <a href="/status/">运行状态</a>
+      </p>
 
     </div>
   </div>
