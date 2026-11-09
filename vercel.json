@@ -38,6 +38,10 @@
     {
       "source": "/api/public/daily.js",
       "destination": "https://demo.xiaokeqing.cn/api/public/daily.js"
+    },
+    {
+      "source": "/api/public/daily/(.*)",
+      "destination": "https://demo.xiaokeqing.cn/api/public/daily/$1"
     }
   ],
   "headers": [

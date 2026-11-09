@@ -1,0 +1,425 @@
+{
+  "meta": {
+    "script": "scripts/hunters-dossiers.py",
+    "generatedAt": "2026-11-09 14:02:11",
+    "window": "24h",
+    "windowHours": 24,
+    "candidates": 124,
+    "sourceCount": 10,
+    "limit": 10,
+    "displayLimit": 5,
+    "selected": 5,
+    "stageOrder": [
+      "alerts",
+      "decoyPorts",
+      "honeypotLogins",
+      "auditActions"
+    ],
+    "stageLabels": {
+      "alerts": "告警",
+      "decoyPorts": "诱饵端口",
+      "honeypotLogins": "蜜罐登录",
+      "auditActions": "处置审计"
+    },
+    "sortKey": "sum(stages.alerts + decoyPorts + honeypotLogins + auditActions) 降序；并列时告警数降序、IP 升序",
+    "stats24h": {
+      "available": true,
+      "total": 366939,
+      "bySeverity": {
+        "CRITICAL": 10050,
+        "HIGH": 88910,
+        "MEDIUM": 1456,
+        "LOW": 266523,
+        "INFO": 0
+      },
+      "trend": [
+        {
+          "time": "14:00",
+          "count": 12443
+        },
+        {
+          "time": "15:00",
+          "count": 12512
+        },
+        {
+          "time": "16:00",
+          "count": 12628
+        },
+        {
+          "time": "17:00",
+          "count": 12249
+        },
+        {
+          "time": "18:00",
+          "count": 12762
+        },
+        {
+          "time": "19:00",
+          "count": 15028
+        },
+        {
+          "time": "20:00",
+          "count": 16997
+        },
+        {
+          "time": "21:00",
+          "count": 26053
+        },
+        {
+          "time": "22:00",
+          "count": 24973
+        },
+        {
+          "time": "23:00",
+          "count": 11753
+        },
+        {
+          "time": "00:00",
+          "count": 12014
+        },
+        {
+          "time": "01:00",
+          "count": 16965
+        },
+        {
+          "time": "02:00",
+          "count": 17810
+        },
+        {
+          "time": "03:00",
+          "count": 17541
+        },
+        {
+          "time": "04:00",
+          "count": 17252
+        },
+        {
+          "time": "05:00",
+          "count": 12632
+        },
+        {
+          "time": "06:00",
+          "count": 12094
+        },
+        {
+          "time": "07:00",
+          "count": 12244
+        },
+        {
+          "time": "08:00",
+          "count": 24564
+        },
+        {
+          "time": "09:00",
+          "count": 12097
+        },
+        {
+          "time": "10:00",
+          "count": 11918
+        },
+        {
+          "time": "11:00",
+          "count": 12045
+        },
+        {
+          "time": "12:00",
+          "count": 12298
+        },
+        {
+          "time": "13:00",
+          "count": 17357
+        },
+        {
+          "time": "14:00",
+          "count": 710
+        }
+      ],
+      "windowHours": 24,
+      "state": "ok",
+      "reason": "OK",
+      "note": "24 小时聚合已取到（按 @timestamp 时间范围聚合，不受取数窗口影响）"
+    },
+    "alertsGeneratedAt": "2026-11-09 14:01:48",
+    "notes": [
+      "这是自动挑选，不是人工认定；排序只看四阶段的记录数，不评价动机。",
+      "缺口字段显示「未取到」，不补 0；没记录不等于没发生。",
+      "页面展示的 IP 一律打码，完整 IP 只出现在 /ip/?q= 的链接参数里。",
+      "独立 IP 档案的窗口可能是 168h，与上方 24h 四阶段不同口径，只作补充、不相加。"
+    ]
+  },
+  "hunters": [
+    {
+      "rank": 1,
+      "srcIp": "77.239.124.2",
+      "ipMasked": "77.239.xx.xx",
+      "severityMax": "HIGH",
+      "severityMaxLabel": "高危",
+      "stages": {
+        "alerts": 9876,
+        "decoyPorts": 4,
+        "honeypotLogins": 8709,
+        "auditActions": 0
+      },
+      "stageList": [
+        {
+          "key": "alerts",
+          "label": "告警",
+          "count": 9876,
+          "hasData": true
+        },
+        {
+          "key": "decoyPorts",
+          "label": "诱饵端口",
+          "count": 4,
+          "hasData": true
+        },
+        {
+          "key": "honeypotLogins",
+          "label": "蜜罐登录",
+          "count": 8709,
+          "hasData": true
+        },
+        {
+          "key": "auditActions",
+          "label": "处置审计",
+          "count": 0,
+          "hasData": false
+        }
+      ],
+      "stagesWithData": 3,
+      "stageTotal": 18589,
+      "firstSeen": "2026-11-08 14:10:10",
+      "lastSeen": "2026-11-09 04:55:55",
+      "gaps": [
+        "auditActions"
+      ],
+      "gapText": "处置审计：无记录",
+      "coverageText": "告警有记录；诱饵端口有记录；蜜罐登录有记录；处置审计未取到",
+      "conclusion": "四阶段走通 3 段，缺处置审计（该阶段无记录）。",
+      "dossier": null
+    },
+    {
+      "rank": 2,
+      "srcIp": "143.110.250.251",
+      "ipMasked": "143.110.xx.xx",
+      "severityMax": "HIGH",
+      "severityMaxLabel": "高危",
+      "stages": {
+        "alerts": 3243,
+        "decoyPorts": 4,
+        "honeypotLogins": 2993,
+        "auditActions": 0
+      },
+      "stageList": [
+        {
+          "key": "alerts",
+          "label": "告警",
+          "count": 3243,
+          "hasData": true
+        },
+        {
+          "key": "decoyPorts",
+          "label": "诱饵端口",
+          "count": 4,
+          "hasData": true
+        },
+        {
+          "key": "honeypotLogins",
+          "label": "蜜罐登录",
+          "count": 2993,
+          "hasData": true
+        },
+        {
+          "key": "auditActions",
+          "label": "处置审计",
+          "count": 0,
+          "hasData": false
+        }
+      ],
+      "stagesWithData": 3,
+      "stageTotal": 6240,
+      "firstSeen": "2026-11-09 08:35:59",
+      "lastSeen": "2026-11-09 14:02:05",
+      "gaps": [
+        "auditActions"
+      ],
+      "gapText": "处置审计：无记录",
+      "coverageText": "告警有记录；诱饵端口有记录；蜜罐登录有记录；处置审计未取到",
+      "conclusion": "四阶段走通 3 段，缺处置审计（该阶段无记录）。",
+      "dossier": null
+    },
+    {
+      "rank": 3,
+      "srcIp": "185.182.194.194",
+      "ipMasked": "185.182.xx.xx",
+      "severityMax": "CRITICAL",
+      "severityMaxLabel": "严重",
+      "stages": {
+        "alerts": 3571,
+        "decoyPorts": 711,
+        "honeypotLogins": 0,
+        "auditActions": 0
+      },
+      "stageList": [
+        {
+          "key": "alerts",
+          "label": "告警",
+          "count": 3571,
+          "hasData": true
+        },
+        {
+          "key": "decoyPorts",
+          "label": "诱饵端口",
+          "count": 711,
+          "hasData": true
+        },
+        {
+          "key": "honeypotLogins",
+          "label": "蜜罐登录",
+          "count": 0,
+          "hasData": false
+        },
+        {
+          "key": "auditActions",
+          "label": "处置审计",
+          "count": 0,
+          "hasData": false
+        }
+      ],
+      "stagesWithData": 2,
+      "stageTotal": 4282,
+      "firstSeen": "2026-11-08 16:40:10",
+      "lastSeen": "2026-11-09 14:01:07",
+      "gaps": [
+        "honeypotLogins",
+        "auditActions"
+      ],
+      "gapText": "蜜罐登录：无记录、处置审计：无记录",
+      "coverageText": "告警有记录；诱饵端口有记录；蜜罐登录未取到；处置审计未取到",
+      "conclusion": "四阶段走通 2 段，缺蜜罐登录、处置审计（均无记录）。",
+      "dossier": {
+        "generatedAt": "2026-11-09 20:27:17",
+        "window": "168h",
+        "windowHours": 168,
+        "events": 5563,
+        "ports": [
+          {
+            "port": 1433,
+            "count": 100
+          }
+        ],
+        "byKind": [
+          {
+            "name": "SQL注入",
+            "count": 200
+          },
+          {
+            "name": "其他",
+            "count": 100
+          }
+        ]
+      }
+    },
+    {
+      "rank": 4,
+      "srcIp": "139.59.24.80",
+      "ipMasked": "139.59.xx.xx",
+      "severityMax": "HIGH",
+      "severityMaxLabel": "高危",
+      "stages": {
+        "alerts": 1707,
+        "decoyPorts": 2,
+        "honeypotLogins": 1583,
+        "auditActions": 0
+      },
+      "stageList": [
+        {
+          "key": "alerts",
+          "label": "告警",
+          "count": 1707,
+          "hasData": true
+        },
+        {
+          "key": "decoyPorts",
+          "label": "诱饵端口",
+          "count": 2,
+          "hasData": true
+        },
+        {
+          "key": "honeypotLogins",
+          "label": "蜜罐登录",
+          "count": 1583,
+          "hasData": true
+        },
+        {
+          "key": "auditActions",
+          "label": "处置审计",
+          "count": 0,
+          "hasData": false
+        }
+      ],
+      "stagesWithData": 3,
+      "stageTotal": 3292,
+      "firstSeen": "2026-11-09 08:37:23",
+      "lastSeen": "2026-11-09 09:00:15",
+      "gaps": [
+        "auditActions"
+      ],
+      "gapText": "处置审计：无记录",
+      "coverageText": "告警有记录；诱饵端口有记录；蜜罐登录有记录；处置审计未取到",
+      "conclusion": "四阶段走通 3 段，缺处置审计（该阶段无记录）。",
+      "dossier": null
+    },
+    {
+      "rank": 5,
+      "srcIp": "176.120.22.97",
+      "ipMasked": "176.120.xx.xx",
+      "severityMax": "CRITICAL",
+      "severityMaxLabel": "严重",
+      "stages": {
+        "alerts": 2949,
+        "decoyPorts": 3,
+        "honeypotLogins": 0,
+        "auditActions": 0
+      },
+      "stageList": [
+        {
+          "key": "alerts",
+          "label": "告警",
+          "count": 2949,
+          "hasData": true
+        },
+        {
+          "key": "decoyPorts",
+          "label": "诱饵端口",
+          "count": 3,
+          "hasData": true
+        },
+        {
+          "key": "honeypotLogins",
+          "label": "蜜罐登录",
+          "count": 0,
+          "hasData": false
+        },
+        {
+          "key": "auditActions",
+          "label": "处置审计",
+          "count": 0,
+          "hasData": false
+        }
+      ],
+      "stagesWithData": 2,
+      "stageTotal": 2952,
+      "firstSeen": "2026-11-08 17:54:08",
+      "lastSeen": "2026-11-09 14:02:01",
+      "gaps": [
+        "honeypotLogins",
+        "auditActions"
+      ],
+      "gapText": "蜜罐登录：无记录、处置审计：无记录",
+      "coverageText": "告警有记录；诱饵端口有记录；蜜罐登录未取到；处置审计未取到",
+      "conclusion": "四阶段走通 2 段，缺蜜罐登录、处置审计（均无记录）。",
+      "dossier": null
+    }
+  ]
+}

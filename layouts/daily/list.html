@@ -218,7 +218,7 @@
     return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function esc(s){ return String(s === null || s === undefined ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function url(name){ return API + '/api/public/daily/' + name; }
+  function url(name){ return '/api/public/daily/' + name; } /* 同源：vercel rewrites 反代到 demo，静态同名文件优先 */
   function stamp(){ var d = new Date(); return d.toTimeString().slice(0,8); }
 
   /* ---------- 今天的这一份 ---------- */
@@ -285,7 +285,7 @@
   function loadHourlyFromAlerts(){
     if(hourlyAsked || !window.__xkViz){ return; }
     hourlyAsked = true;
-    fetch(API + '/api/public/alerts?w=5', { cache: 'no-cache' })
+    fetch('/api/public/alerts.js', { cache: 'no-cache' }) /* 同源静态快照，里面有 stats24h.trend；不要再打 demo 域 */
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(a){
         var s = a && (a.stats24h || (a.data && a.data.stats24h));
@@ -302,7 +302,7 @@
     var tag = $('dyTodayTag');
     tag.textContent = '读取中…';
     $('dySync').textContent = '● 请求 /api/public/daily.js …';
-    fetch(API + '/api/public/daily.js', { cache: 'no-cache' })
+    fetch('/api/public/daily.js', { cache: 'no-cache' })
       .then(function(r){ if(!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
       .then(function(j){
         renderToday(j);
@@ -352,7 +352,7 @@
     archLoaded = true;
     var body = $('dyArchBody'), hint = $('dyArchHint'), btn = $('dyLoad');
     btn.disabled = true; hint.textContent = '正在读归档索引…';
-    fetch(API + '/api/public/daily/index.json', { cache: 'no-cache' })
+    fetch('/api/public/daily/index.json', { cache: 'no-cache' })
       .then(function(r){ if(!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); })
       .then(function(j){
         var days = (j && j.days) || [];
@@ -379,6 +379,9 @@
   $('dyRun').addEventListener('click', loadToday);
   $('dyLoad').addEventListener('click', loadArchive);
   loadToday();
+  /* 2026-11-09：热力格不再依赖日报接口是否成功 —— alerts.js 是同源静态快照，
+     即使 /api/public/daily.js 挂了，24 小时桶也该照实画出来（取不到才留 —）。 */
+  loadHourlyFromAlerts();
   /* ★2026-10-30 站主口径：归档不再等点击 —— 索引端点 600 秒缓存且一次给全（排除了
      "被限流"与"那天没生成"分不清的老问题），进页面就自己加载；按钮留着当"重试"。 */
   loadArchive();

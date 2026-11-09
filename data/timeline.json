@@ -1,0 +1,102 @@
+{
+  "updated": "2026-11-09",
+  "scope": "只取 Amadeus 项目总文档、项目交接、接手文档与 README 里明确写过的事实；没有数字的写「（无量化）」，计划不写成已做。",
+  "entries": [
+    {
+      "date": "2026-11-06",
+      "sort": "2026-11-06T23:30:00+08:00",
+      "title": "只看告警，看不见「怎么被打」",
+      "tag": "采集面",
+      "problem": "Suricata 侧只读 <code>event_type=alert</code>：能看见「有人在扫我」，看不见被测端口、TLS SNI、JA3 指纹。跨机链路只有 <b>约 2 Mbps</b>，<b>8 MB</b> 要传 <b>6 分钟</b>。",
+      "judgment": "告警是结论，原始事件才是证据。要回答「扫描面有多大」必须接全事件；但链路带宽有限，不能无限灌，得给内存和传输都设上限。",
+      "action": "把「一次性读尾部」改成按<b>字节偏移</b>增量读取，每类事件进 <b>50000 条</b>有界环；启动回填 <b>20000</b> 行；跨机同步改成 <code>tail | gzip | ssh</code>。",
+      "result": "同一段 <b>8 MB</b> 从 <b>6 分钟</b>降到 <b>20 秒</b>；线上 60 分钟 top-ports 看到 <b>2222:1524</b>、<b>80:1391</b>、<b>1433:352</b>，JA3 指纹 <b>49</b> 个。",
+      "source": "Amadeus §38.1–38.3、§38.7（2026-11-06 深夜）",
+      "retro": "我会先把链路带宽和单条事件大小量清楚，再决定全量摄取的上限；不会先接全量、再靠有界环兜底。"
+    },
+    {
+      "date": "2026-11-07",
+      "sort": "2026-11-07T10:00:00+08:00",
+      "title": "首屏 1798 KB：先砍「看不见的部分」",
+      "tag": "性能",
+      "problem": "首页首屏 <b>1798 KB</b>，其中 <b>834 KB</b> 是 <code>idle.boot.webp</code>、<b>423 KB</b> 是 720 视频；访客还没看到内容，先等下载。",
+      "judgment": "首屏不该为「完整动画」付全款。先保住打开速度，再谈效果；能延后的延后，能换格式的换格式，但要接受代价。",
+      "action": "五连刀：用 <b>10.6 KB</b> 的 <code>opening.poster.webp</code> 顶掉大图；视频可用时不取 <b>464 KB</b> 的 boot 中档图集；<code>preload=metadata</code>；首屏走 <b>268 lite</b> 视频省 <b>308 KB</b>；开屏 <b>275 KB / 24 帧</b>图集换 <b>10.6 KB</b> 单帧。",
+      "result": "首屏 <b>1798 KB → 751 KB</b>；代价是开屏「探身」动画没了。到 11-09，整页线上口径再从 <b>806.5 → 590.5 KB</b>（<b>−27%</b>，请求 <b>23 → 19</b>）——两个数不是同一把尺，文档分别标了「首屏 + 2.5 s」和「整页线上」。",
+      "source": "Amadeus §41.1–41.2、§45.1",
+      "retro": "我会先给首屏资源逐项称重，再动刀；不会先凭感觉换图。"
+    },
+    {
+      "date": "2026-11-07",
+      "sort": "2026-11-07T23:00:00+08:00",
+      "title": "隧道 >1 KB 就掉到 ~600 B/s：把实时接口改成构建期快照",
+      "tag": "架构",
+      "problem": "公网经 CF 隧道取数据，响应体超过 <b>~3 KB</b> 吞吐掉到 <b>~600 B/s</b>；<code>home.js</code> <b>36 KB</b> 跑 <b>60 秒</b>只下到 <b>3 KB</b>，<code>alerts.js</code> <b>16 KB</b> 直接 <code>connection reset</code>。",
+      "judgment": "静态站不该把「每次打开页面」押在实时穿隧道的接口上。公开只读数据是低频变化的聚合结果，构建期抓一次就够。",
+      "action": "12 个公开只读端点落成 <code>static/api/public/*.js</code> 构建期快照；后来 <code>/ip/</code> 改三级取数（静态快照 → 同源反代 → 直连），总预算 <b>26 秒</b>，10 个热点 IP 快照共 <b>45,604 B</b>。",
+      "result": "快照后 <code>alerts.js</code> <b>17,256 B / 1.13 s</b>、<code>home.js</code> <b>38,774 B / 1.17 s</b>；Vercel 上 <code>alerts.js</code> <b>17,944 B / 0.26 s</b>（<code>X-Vercel-Cache: HIT</code>），页面从转圈变秒开。",
+      "source": "Amadeus §41.8、§42.2、§45.2；接手 §4",
+      "retro": "我会在页面接实时接口之前先量一次隧道吞吐，再决定是否走构建期快照；不会等页面转圈了才怀疑链路。"
+    },
+    {
+      "date": "2026-11-08",
+      "sort": "2026-11-08T14:00:00+08:00",
+      "title": "Wazuh 403：不是没数据，是少四个权限",
+      "tag": "排障",
+      "problem": "<code>/api/public/indices</code> 一直返回 MOCK；直查 Elasticsearch 报 <b>403 no permissions for [indices:monitor/settings/get]</b>。",
+      "judgment": "不是索引没数据，是只读角色少权限。先按报错里的权限名补齐最小集合，再谈数据源；不要一上来就猜索引坏了。",
+      "action": "只读角色原来只有 <code>read/search/scroll</code>，补 <code>indices:monitor/settings/get</code>、<code>indices:monitor/stats</code>、<code>cluster:monitor/state</code>、<code>cluster:monitor/stats</code> 四个权限。",
+      "result": "<code>mode</code> <b>MOCK → REAL</b>，7 个日索引合计 <b>1,566,439</b> 条；教训是 <code>_cat/indices</code> 还需要 <code>cluster:monitor/state</code>。",
+      "source": "Amadeus §42.4（2026-11-08）",
+      "retro": "我会先按接口报错里的权限名补齐最小权限，再去怀疑数据源；不会先猜索引坏了。"
+    },
+    {
+      "date": "2026-11-08",
+      "sort": "2026-11-08T20:00:00+08:00",
+      "title": "MTTD/MTTR 没有样本：显示「未取到」，不补 0",
+      "tag": "口径",
+      "problem": "指标卡要展示 MTTD/MTTR，但公开可见化还没做完（<code>/api/sec/metrics/summary</code> 未登录 <b>401</b>）；没有可用样本时，前端如果补 0，会让人误以为「响应时间为 0」。",
+      "judgment": "0 是一个测量结果，不是「没测到」。没有数据就写「不适用 / 未取到」并给原因；不能为了让卡片好看补 0。",
+      "action": "统一口径：聚合接口取不到返回 <code>available:false</code> + <code>reason</code>，前端显示「未取到」；聚合数保留源告警 id；不把 mock 当真实。",
+      "result": "指标卡不会显示假的 0；截至文档，公开可见化仍未完成，所以页面只能标「未取到 / 不适用」。（无量化：文档没有给出 MTTD/MTTR 的可用样本数）",
+      "source": "项目交接 §5②、§10 第 3 条；Amadeus §41.6；README 口径",
+      "retro": "我会先把指标口径和可用样本定清楚，再上卡片；不会用 0 代替「没测到」。"
+    },
+    {
+      "date": "2026-11-09",
+      "sort": "2026-11-09T10:00:00+08:00",
+      "title": "ATT&CK 覆盖：窗口从 7 天改 5 天，未映射单列",
+      "tag": "数据口径",
+      "problem": "Wazuh 索引只保留 <b>5 天</b>，ATT&CK 页却按 <b>7 天</b>口径写；窗口内 <b>1,512,896</b> 条告警里只有 <b>745,839</b> 条（<b>49.30%</b>）带 <code>rule.mitre.id</code>，剩下 <b>767,057</b> 条没映射。",
+      "judgment": "页面窗口必须跟索引保留期一致；没映射的不能摊到已映射技术上，否则覆盖率是假的。",
+      "action": "ATT&CK 页从 7 天改 5 天；未映射 <b>767,057</b> 条单列；Suricata 侧单独算 <b>308,378</b> 条 / <b>92.12%</b>；Cowrie 会话页读磁盘日志，不受索引保留影响，仍保留真实 7 天。",
+      "result": "5 天窗口 <b>1,512,896</b> 条、<b>49.30%</b> 带技术标签、<b>767,057</b> 条未映射单列；Cowrie 仍是真实 7 天 <b>406,410</b> 连接 / <b>412,331</b> 登录。旧 7 天数字（1,804,148 / 899,198 / 904,950）只作对照，不混用。",
+      "source": "Amadeus §43.6；接手 §5 第 2、5 条",
+      "retro": "我会先确认索引保留窗口，再定页面口径；不会让 7 天和 5 天混在一个数字里。"
+    },
+    {
+      "date": "2026-11-09",
+      "sort": "2026-11-09T15:00:00+08:00",
+      "title": "桑基图 canvas=null：方案说「已完成」，页面没画出来",
+      "tag": "验证",
+      "problem": "桑基图原方案用 ECharts 懒加载，文档写「代码已完成」，但实际渲染出来 <code>canvas=null</code>——图根本没画。",
+      "judgment": "「代码写完」不等于「页面画出来」。为一张图引 <b>1 MB</b> 第三方库不划算；能用 <b>约 4 KB</b> SVG 手画，就不该上库。",
+      "action": "重写成纯 SVG：零第三方、零网络请求；删除 <code>assets/js/vendor/echarts.min.js</code>（<b>1,034,102 B</b>）和 <code>data-echarts</code> 属性。",
+      "result": "图正常渲染：1440 下 <b>h=360 / w=1318 / paths=12</b>，390 下 <b>h=300 / w=332</b>；体积约 <b>4 KB</b>。",
+      "source": "Amadeus §44.1（2026-11-09）",
+      "retro": "我会先验证 canvas 真的存在，再相信「代码已完成」；不会把方案当交付。"
+    },
+    {
+      "date": "2026-11-09",
+      "sort": "2026-11-09T20:00:00+08:00",
+      "title": "Cowrie 0 条命令：没有回放，就写没有回放",
+      "tag": "诚实",
+      "problem": "蜜罐 Cowrie 7 天记录 <b>406,410</b> 次 SSH 连接、<b>412,331</b> 次登录，但命令输入是 <b>0</b> 条；<code>/session/</code> 页面没有终端回放。",
+      "judgment": "没有 ttylog 就没有终端回放。0 条命令是真实的 0（Cowrie 已在 srv2 打开 <code>output_ttylog</code>），不是「没取到」；不能为了页面好看造一段回放。",
+      "action": "页面如实写「当前没有命令回放」，保留连接/登录数；等真实攻击者敲命令后才有回放。",
+      "result": "7 天 <b>406,410</b> 连接 / <b>412,331</b> 登录；命令 <b>0</b> 条；回放 <b>0</b> 段。连接数有据，回放内容（无量化）。",
+      "source": "接手 §9 第 6 条；Amadeus §43.6",
+      "retro": "我会先确认 ttylog 是否真的在写，再承诺终端回放；不会用示例命令伪造一段「攻击现场」。"
+    }
+  ]
+}

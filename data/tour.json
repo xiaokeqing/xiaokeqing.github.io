@@ -1,0 +1,56 @@
+{
+  "_note": "构建期从既存快照汇总；取不到的字段一律 null，页面写「未取到」，不补 0。",
+  "alerts": {
+    "total24h": "366,939",
+    "total24hRaw": 366939,
+    "critical": "10,050",
+    "high": "88,910",
+    "windowHours": 24,
+    "generatedAt": "2026-11-09 14:01:48"
+  },
+  "samples": {
+    "files": "18,960",
+    "filesRaw": 18960,
+    "bytes": "23,051,892",
+    "bytesRaw": 23051892,
+    "mib": "22.0",
+    "executables": "0",
+    "executablesRaw": 0,
+    "exts": [
+      "txt",
+      "csv",
+      "(empty)"
+    ],
+    "generatedAt": "2026-11-08T15:27:01Z"
+  },
+  "metrics": {
+    "mttdAvailable": false,
+    "mttdReason": "样本不足",
+    "mttrAvailable": false,
+    "alertsInWindow": "1,198",
+    "generatedAt": "2026-11-09 14:02:04"
+  },
+  "audit": {
+    "blockedByGuard": "98",
+    "blockedByGuardRaw": 98,
+    "blockTotal": "0",
+    "blockTotalRaw": 0,
+    "executedActions": "0",
+    "generatedAt": "2026-11-09 14:01:52"
+  },
+  "attack": {
+    "windowDays": 5,
+    "total": "1,512,896",
+    "mapped": "745,839",
+    "unmapped": "767,057",
+    "mappedPct": "49.3%",
+    "generatedAt": "2026-11-09T13:01:51+08:00"
+  },
+  "geo": {
+    "withSourceIp": "365,875",
+    "sourceBuckets": "796",
+    "totalAlerts": "366,946",
+    "window": "24h",
+    "generatedAt": "2026-11-09 14:01:53"
+  }
+}

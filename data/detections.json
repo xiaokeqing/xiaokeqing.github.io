@@ -1,0 +1,412 @@
+{
+  "generator": "scripts/detections-catalog.py",
+  "schema": 1,
+  "sources": [
+    "detections/suricata/xk-lab.rules",
+    "detections/wazuh/xk-lab_rules.xml",
+    "detections/wazuh/cowrie_rules.xml"
+  ],
+  "sums": {
+    "rules_total": 16,
+    "suricata_alert": 7,
+    "wazuh_total": 9,
+    "with_mitre": 8
+  },
+  "suricata": {
+    "file": "detections/suricata/xk-lab.rules",
+    "rules": [
+      {
+        "action": "alert",
+        "attack": null,
+        "classtype": "attempted-recon",
+        "dst": "$HOME_NET",
+        "dst_port": "any",
+        "enabled": true,
+        "engine": "suricata",
+        "metadata": {
+          "confidence": "high",
+          "evidence_count": "75390"
+        },
+        "mitre": [],
+        "msg": "XK-LAB SSH client fingerprint Go SSH library (botnet/bruteforce toolchain)",
+        "observable": "SSH 客户端 banner（ssh.software）",
+        "proto": "ssh",
+        "rev": 1,
+        "severity": "attempted-recon · rev 1",
+        "sid": 1000101,
+        "status": "enabled",
+        "threshold": null,
+        "topic": "SSH 客户端指纹：Go 语言 SSH 库（僵尸网络/爆破工具的默认 banner）"
+      },
+      {
+        "action": "alert",
+        "attack": null,
+        "classtype": "attempted-recon",
+        "dst": "$HOME_NET",
+        "dst_port": "any",
+        "enabled": true,
+        "engine": "suricata",
+        "metadata": {
+          "confidence": "medium",
+          "evidence_count": "38955"
+        },
+        "mitre": [],
+        "msg": "XK-LAB SSH client fingerprint libssh/libssh2 (automated bruteforce toolchain)",
+        "observable": "SSH 客户端 banner（ssh.software）",
+        "proto": "ssh",
+        "rev": 1,
+        "severity": "attempted-recon · rev 1",
+        "sid": 1000102,
+        "status": "enabled",
+        "threshold": null,
+        "topic": "SSH 客户端指纹：libssh / libssh2（自动化爆破框架的默认库）"
+      },
+      {
+        "action": "alert",
+        "attack": null,
+        "classtype": "attempted-recon",
+        "dst": "$HOME_NET",
+        "dst_port": "2222",
+        "enabled": true,
+        "engine": "suricata",
+        "metadata": {
+          "confidence": "high",
+          "evidence_count": "142979",
+          "old_threshold": "10/300s_spam_677per24h",
+          "window_3600s_count": "120"
+        },
+        "mitre": [],
+        "msg": "XK-LAB honeypot SSH 2222 sustained burst from same source (>=120/3600s)",
+        "observable": "TCP 目标端口 2222 的 SYN",
+        "proto": "tcp",
+        "rev": 2,
+        "severity": "attempted-recon · rev 2 · 阈值 120/3600s（同源）",
+        "sid": 1000103,
+        "status": "enabled",
+        "threshold": {
+          "count": 120,
+          "seconds": 3600,
+          "track": "by_src",
+          "type": "both"
+        },
+        "topic": "Cowrie 诱捕端口 2222：同一源 60 分钟内 >=120 次连接（≈2/min 持续，刮削/爆破）"
+      },
+      {
+        "action": "alert",
+        "attack": null,
+        "classtype": "attempted-recon",
+        "dst": "$HOME_NET",
+        "dst_port": "[21,22,23,1433,2222,3306,6379,9080,27017]",
+        "enabled": true,
+        "engine": "suricata",
+        "metadata": {
+          "confidence": "high",
+          "evidence_count": "53"
+        },
+        "mitre": [],
+        "msg": "XK-LAB multi-decoy-port sweep from single source (>=3 hits/60s)",
+        "observable": "TCP 目标端口 [21,22,23,1433,2222,3306,6379,9080,27017] 的 SYN",
+        "proto": "tcp",
+        "rev": 1,
+        "severity": "attempted-recon · rev 1 · 阈值 3/60s（同源）",
+        "sid": 1000104,
+        "status": "enabled",
+        "threshold": {
+          "count": 3,
+          "seconds": 60,
+          "track": "by_src",
+          "type": "both"
+        },
+        "topic": "多诱捕端口顺序扫描：同一源 60 秒内 >=3 次 SYN 落到诱捕端口组"
+      },
+      {
+        "action": "alert",
+        "attack": null,
+        "classtype": "attempted-recon",
+        "dst": "$HOME_NET",
+        "dst_port": "any",
+        "enabled": true,
+        "engine": "suricata",
+        "metadata": {
+          "confidence": "high",
+          "evidence_count": "262"
+        },
+        "mitre": [],
+        "msg": "XK-LAB HTTP probe for exposed secret file (.env family/.git/config/web.config)",
+        "observable": "HTTP 请求路径（http.uri）",
+        "proto": "http",
+        "rev": 1,
+        "severity": "attempted-recon · rev 1",
+        "sid": 1000105,
+        "status": "enabled",
+        "threshold": null,
+        "topic": "HTTP 敏感文件探测：.env 家族 / .git/config / web.config"
+      },
+      {
+        "action": "alert",
+        "attack": null,
+        "classtype": "attempted-recon",
+        "dst": "$HOME_NET",
+        "dst_port": "any",
+        "enabled": true,
+        "engine": "suricata",
+        "metadata": {
+          "confidence": "low",
+          "evidence_count": "394"
+        },
+        "mitre": [],
+        "msg": "XK-LAB known recon/pentest tool User-Agent",
+        "observable": "HTTP User-Agent（http.user_agent）",
+        "proto": "http",
+        "rev": 1,
+        "severity": "attempted-recon · rev 1",
+        "sid": 1000106,
+        "status": "enabled",
+        "threshold": null,
+        "topic": "已知测绘/渗透工具 UA 指纹（UA 只是线索，故单独成一条低优先级规则）"
+      },
+      {
+        "action": "alert",
+        "attack": null,
+        "classtype": "attempted-recon",
+        "dst": "$HOME_NET",
+        "dst_port": "[1433,3306,6379,9200,27017]",
+        "enabled": true,
+        "engine": "suricata",
+        "metadata": {
+          "confidence": "high",
+          "evidence_count": "6760"
+        },
+        "mitre": [],
+        "msg": "XK-LAB inbound connection to database port (lab exposes no public DB)",
+        "observable": "TCP 目标端口 [1433,3306,6379,9200,27017] 的 SYN",
+        "proto": "tcp",
+        "rev": 1,
+        "severity": "attempted-recon · rev 1",
+        "sid": 1000107,
+        "status": "enabled",
+        "threshold": null,
+        "topic": "外部源直连数据库端口（实验室对外不提供任何 DB 服务）"
+      },
+      {
+        "action": "pass",
+        "attack": null,
+        "classtype": null,
+        "dst": "x.x.x.x",
+        "dst_port": "80",
+        "enabled": false,
+        "engine": "suricata",
+        "metadata": {},
+        "mitre": [],
+        "msg": "XK-LAB suppress cloud-agent metadata POST to x.x.x.x:80 (FP baseline)",
+        "observable": "出站 TCP → 目标端口 80（flow:established）",
+        "proto": "tcp",
+        "rev": 1,
+        "severity": "rev 1",
+        "sid": 1000108,
+        "status": "commented",
+        "threshold": null,
+        "topic": "【抑制型】云监控元数据上报：x.x.x.x:80 的 POST（opt-in，默认不启用）"
+      }
+    ],
+    "summary": {
+      "alert": 7,
+      "classtypes": {
+        "attempted-recon": 7
+      },
+      "commented": 1,
+      "enabled": 7,
+      "pass": 1,
+      "sid_max": 1000107,
+      "sid_max_all": 1000108,
+      "sid_min": 1000101,
+      "sid_min_all": 1000101,
+      "total": 8,
+      "with_mitre": 0,
+      "with_threshold": 2
+    }
+  },
+  "threshold_conf": {
+    "active": 1,
+    "commented": 2,
+    "file": "detections/suricata/threshold.conf"
+  },
+  "wazuh": {
+    "rules": [
+      {
+        "attack": "T1595",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/cowrie_rules.xml",
+        "frequency": null,
+        "level": 3,
+        "mitre": [
+          "T1595"
+        ],
+        "msg": "蜜罐: 新的 SSH 连接来自 $(src_ip)",
+        "observable": "Cowrie 事件 cowrie.session.connect",
+        "severity": "L3",
+        "sid": 100100,
+        "timeframe": null,
+        "topic": null
+      },
+      {
+        "attack": "T1110",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/cowrie_rules.xml",
+        "frequency": null,
+        "level": 5,
+        "mitre": [
+          "T1110"
+        ],
+        "msg": "蜜罐: 登录失败 用户=$(username) 口令=[口令已隐藏] 来源=$(src_ip)",
+        "observable": "Cowrie 事件 cowrie.login.failed",
+        "severity": "L5",
+        "sid": 100101,
+        "timeframe": null,
+        "topic": null
+      },
+      {
+        "attack": "T1110",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/cowrie_rules.xml",
+        "frequency": null,
+        "level": 10,
+        "mitre": [
+          "T1110"
+        ],
+        "msg": "蜜罐: 攻击者\"登录成功\" 用户=$(username) 口令=[口令已隐藏] 来源=$(src_ip)",
+        "observable": "Cowrie 事件 cowrie.login.success",
+        "severity": "L10",
+        "sid": 100102,
+        "timeframe": null,
+        "topic": null
+      },
+      {
+        "attack": "T1059",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/cowrie_rules.xml",
+        "frequency": null,
+        "level": 10,
+        "mitre": [
+          "T1059"
+        ],
+        "msg": "蜜罐: 攻击者执行命令 \"$(input)\" 来源=$(src_ip)",
+        "observable": "Cowrie 事件 cowrie.command.input",
+        "severity": "L10",
+        "sid": 100103,
+        "timeframe": null,
+        "topic": null
+      },
+      {
+        "attack": null,
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/cowrie_rules.xml",
+        "frequency": null,
+        "level": 3,
+        "mitre": [],
+        "msg": "蜜罐: SSH 客户端版本 $(version) 来源=$(src_ip)",
+        "observable": "Cowrie 事件 cowrie.client.version",
+        "severity": "L3",
+        "sid": 100104,
+        "timeframe": null,
+        "topic": null
+      },
+      {
+        "attack": "T1110",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/cowrie_rules.xml",
+        "frequency": 3,
+        "level": 12,
+        "mitre": [
+          "T1110"
+        ],
+        "msg": "蜜罐: 检测到 SSH 暴力破解（300 秒内 3 次失败）来源=$(src_ip)",
+        "observable": "父规则 100101",
+        "severity": "L12 · 3 次/300s",
+        "sid": 100110,
+        "timeframe": 300,
+        "topic": null
+      },
+      {
+        "attack": "T1110",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/xk-lab_rules.xml",
+        "frequency": 20,
+        "level": 10,
+        "mitre": [
+          "T1110"
+        ],
+        "msg": "XK-LAB: 同一来源 5 分钟内蜜罐 SSH 会话 >=20 次（自动化爆破/刮削）来源=$(src_ip)",
+        "observable": "父规则 100100",
+        "severity": "L10 · 20 次/300s",
+        "sid": 100400,
+        "timeframe": 300,
+        "topic": "同一来源 5 分钟内 >=20 次蜜罐 SSH 会话"
+      },
+      {
+        "attack": "T1595",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/xk-lab_rules.xml",
+        "frequency": 3,
+        "level": 12,
+        "mitre": [
+          "T1595"
+        ],
+        "msg": "XK-LAB: 同一来源 60 秒内触及 >=3 个不同蜜罐端口（横向探测）来源=$(src_ip) 当前端口=$(dst_port)",
+        "observable": "父组 dionaea",
+        "severity": "L12 · 3 次/60s",
+        "sid": 100401,
+        "timeframe": 60,
+        "topic": "同一来源 60 秒内触及 >=3 个【不同】蜜罐端口"
+      },
+      {
+        "attack": "T1110.001",
+        "enabled": true,
+        "engine": "wazuh",
+        "file": "detections/wazuh/xk-lab_rules.xml",
+        "frequency": null,
+        "level": 12,
+        "mitre": [
+          "T1110.001"
+        ],
+        "msg": "XK-LAB: 蜜罐 MSSQL 收到登录凭据尝试（已进入认证阶段）来源=$(src_ip) 用户凭据=[已隐藏]",
+        "observable": "字段 credentials · 父规则 100301",
+        "severity": "L12",
+        "sid": 100402,
+        "timeframe": null,
+        "topic": "蜜罐 MSSQL 收到登录凭据（已进入认证阶段）"
+      }
+    ],
+    "summary": {
+      "files": 2,
+      "levels": {
+        "10": 3,
+        "12": 3,
+        "3": 2,
+        "5": 1
+      },
+      "mitre_ids": [
+        "T1059",
+        "T1110",
+        "T1110.001",
+        "T1595"
+      ],
+      "per_file": {
+        "detections/wazuh/cowrie_rules.xml": 6,
+        "detections/wazuh/xk-lab_rules.xml": 3
+      },
+      "sid_max": 100402,
+      "sid_min": 100100,
+      "total": 9,
+      "with_mitre": 8
+    }
+  }
+}
