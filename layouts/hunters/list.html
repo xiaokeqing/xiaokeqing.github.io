@@ -106,13 +106,9 @@
 
   <div class="screen-bd">
     <div class="mod">
-      <div class="mod-hd"><span class="led"></span>一句话<span class="tag">自动挑选 · 不编动机</span></div>
+      <div class="mod-hd"><span class="led"></span>一句话<span class="tag">自动挑选</span></div>
       <div class="mod-bd">
-        <p class="hk-lead">每天从 <em>{{ lang.FormatNumber 0 $m.candidates }}</em> 个候选里挑 <em>{{ len $hs }}</em> 个最凶的，把它们的四阶段（告警 / 诱饵端口 / 蜜罐登录 / 处置审计）摊开——不用你输入 IP。</p>
-        <p class="hk-sub">
-          排序只看四阶段的记录数总和（降序），不评估动机、不排“危险人物榜”；
-          并列时按告警数降序、IP 升序。
-        </p>
+        <p class="hk-lead">每天从 <em>{{ lang.FormatNumber 0 $m.candidates }}</em> 个候选里挑 <em>{{ len $hs }}</em> 个最凶的，四阶段记录摊开。</p>
         <ul class="hk-kpis">
           <li class="hk-kpi"><span class="k">窗口</span><span class="v">{{ $m.window }}</span></li>
           <li class="hk-kpi"><span class="k">候选源</span><span class="v">{{ lang.FormatNumber 0 $m.candidates }}</span></li>
@@ -165,7 +161,7 @@
           {{- with .byKind }}
           <span>手法 <b>{{ range $i, $k := . }}{{ if $i }}、{{ end }}{{ $k.name }} {{ lang.FormatNumber 0 $k.count }}{{ end }}</b></span>
           {{- end }}
-          <span class="hk-dnote">快照 {{ .generatedAt }}，窗口与上方 24h 不同，不相加</span>
+          <span class="hk-dnote">快照 {{ .generatedAt }} · 168h 独立窗口</span>
         </div>
         {{- end }}
 
@@ -177,39 +173,17 @@
 
         <div class="hk-foot">
           <a class="hk-link" href="/ip/?q={{ .srcIp }}">看完整档案 →</a>
-          <span class="hk-fnote">链接里是完整 IP，页面展示已打码</span>
+          <span class="hk-fnote">链接含完整 IP</span>
         </div>
       </div>
     </article>
     {{- else }}
     <div class="mod">
       <div class="mod-hd"><span class="led"></span>未取到</div>
-      <div class="mod-bd"><p class="hk-sub">data/hunters.json 里没有可展示的源；先跑 <code>python scripts/hunters-dossiers.py</code> 再构建。</p></div>
+      <div class="mod-bd"><p class="hk-sub">读不到 data/hunters.json 里可展示的源。</p></div>
     </div>
     {{- end }}
 
-    <div class="mod">
-      <div class="mod-hd"><span class="led"></span>口径 · 这些数从哪来<span class="tag">先看这块，再看卡片</span></div>
-      <div class="mod-bd">
-        <ul class="hk-cal">
-          <li><b>数据源</b>：<code>static/api/public/stories.js</code>（快照 <code>{{ $m.generatedAt }}</code>，窗口 <code>{{ $m.window }}</code> / {{ $m.windowHours }}h）。
-            页头的 24h 告警总量取自 <code>static/api/public/alerts.js</code>{{ if $s.available }}（快照 <code>{{ $m.alertsGeneratedAt }}</code>，{{ lang.FormatNumber 0 $s.total }} 条）{{ end }}。
-            卡片里的四阶段计数、首次 / 最近出现时间、缺口，全部来自 stories.js 的 <code>data.sources[]</code>，本页不再另算。</li>
-          <li><b>排序</b>：{{ $m.sortKey }}。
-            快照接口本身只给 <code>data.limit = {{ $m.limit }}</code> 个源，这一页再收窄到 {{ $m.displayLimit }} 个，保证一屏读完；
-            所以“只有这 5 个”是展示上限，不是“全世界只有 5 个攻击者”。</li>
-          <li><b>自动，不是认定</b>：这是脚本按计数自动挑选，不是人工认定、不是通缉令；
-            四阶段里没有“意图”这一栏，所以本页也不写动机。</li>
-          <li><b>缺口不补 0</b>：某个阶段没记录时卡片显示「未取到」，并列出缺哪一段；
-            没记录不等于没发生，也不等于 0 次。</li>
-          <li><b>脱敏</b>：卡片上的 IP 只保留前两段（例如 <code>{{ (index $hs 0).ipMasked }}</code>），后两段固定为 <code>xx</code>；
-            完整 IP 只放进「看完整档案」的链接参数，由 /ip/ 页自己处理展示。</li>
-          <li><b>补充档案</b>：<code>static/api/public/ip/&lt;ip&gt;.js</code> 的窗口通常是 168h，只在存在快照时标出，不与 24h 四阶段相加；
-            「手法」（byKind）只有独立档案才有，没有快照的源不补、不猜。</li>
-          <li><b>相关</b>：<a href="/ip/">IP 档案查询 /ip/</a> · <a href="/alerts/">实时告警 /alerts/</a></li>
-        </ul>
-      </div>
-    </div>
   </div>
 </section>
 </main>

@@ -49,17 +49,16 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 工具台 <em class="ops-en">TOOLS</em></span>
-      <span class="sync" id="tpsSync">● 10 个工具 · 数据各在各的页面取</span>
+      <span class="sync" id="tpsSync">● 10 个工具</span>
     </div>
     <div class="screen-bd tps-bd">
-      <p class="tps-lead">这里是入口页，<b>10 个工具全在这一页能点到</b>。数据要么来自这台机器上真实跑着的东西（蜜罐、检测规则、CVE 清单），要么来自每天定时抓一次的官方源。每个工具页都会写明<b>数据什么时候抓的</b>、<b>抓不到时是什么样</b>——抓不到就写「读不到」，不补数、不估算。</p>
-      <p class="tps-note">分三组：<b>每天顺手用</b>（CVE / 密码）、<b>看得见现在的机器</b>（噪音 / 样本 / ATT&amp;CK / IP / 弱口令）、<b>攻防演练</b>（红队 / 紫队 / 日报订阅）。</p>
+      <p class="tps-lead"><b>10 个安全工具都在这一页</b>，点进去直接用。</p>
       <p class="tps-group">① 每天顺手用</p>
       <div class="tps-grid">
 
         <a class="tps-card" href="/tools/cve/">
           <h3>CVE 每日速递<span class="en">CVE-DIGEST</span></h3>
-          <p>每天把 CISA KEV（已被在野利用的漏洞清单）和当日高危 CVE 摊开，每条给四行：影响什么软件 / 漏洞是什么 / 在野利用了吗 / 我该做什么。中文解读只照抄官方字段，缺字段就写「官方未给出」。</p>
+          <p>每天把 CISA KEV 与当日高危 CVE 摊开，每条四行。</p>
           <div class="kv">
             <span>源 <b>CISA KEV</b></span>
             <span><b>NVD</b> CVE API 2.0</span>
@@ -71,11 +70,11 @@
 
         <a class="tps-card" href="/tools/password/">
           <h3>你的密码在攻击者字典里吗<span class="en">PASSWORD-CHECK</span></h3>
-          <p>密码不出浏览器：本地算 SHA-256，只把前 5 位十六进制发出去（k-匿名，与 HIBP 同一套隐私标准），后端只回这个前缀下被真实尝试过多少次。数据来自这台机器的蜜罐在过去收到的爆破口令——攻击者此刻正在用的词表。</p>
+          <p>密码不出浏览器：只发 5 位前缀，问它被爆破过几次。</p>
           <div class="kv">
             <span>隐私 <b>只发 5 位前缀</b></span>
             <span>数据 <b>自家蜜罐口令结构</b></span>
-            <span>口径 <b>不回收明文</b></span>
+            <span>明文 <b>不回收</b></span>
           </div>
           <span class="go">进入 → /tools/password/</span>
         </a>
@@ -87,36 +86,36 @@
 
         <a class="tps-card" href="/noise/">
           <h3>告警噪音指数<span class="en">NOISE</span></h3>
-          <p>把 7 天 29 万条告警里"其实是自家 agent 心跳"的那部分算出来：当前 <b>94.86%</b> 是噪音。这一页存在的意义不是好看，是回答"这套检测现在有多少是有效信号"。</p>
+          <p>把告警里属于自家心跳的那部分单独算出来。</p>
           <div class="kv"><span>样本 <b>293,482 条</b></span><span>心跳 sid <b>2013031</b></span><span>刷新 <b>静态快照</b></span></div>
           <span class="go">进入 → /noise/</span>
         </a>
 
         <a class="tps-card" href="/samples/">
           <h3>样本与行为分析<span class="en">SAMPLES</span></h3>
-          <p>蜜罐抓到的文件样本，以及"抓不到文件但行为可复现"的三条：哪个 IP 打了几千次 SSH、拿什么账号口令、有没有进到执行命令那一步。文件样本 0 条时也照写 0 条。</p>
-          <div class="kv"><span>文件样本 <b>0 条（如实）</b></span><span>行为样本 <b>3 条</b></span><span>留存方案 <b>3 条</b></span></div>
+          <p>蜜罐抓到的文件，以及可复现的攻击行为。</p>
+          <div class="kv"><span>文件样本 <b>0 条</b></span><span>行为样本 <b>3 条</b></span><span>留存方案 <b>3 条</b></span></div>
           <span class="go">进入 → /samples/</span>
         </a>
 
         <a class="tps-card" href="/attack/">
           <h3>ATT&amp;CK 覆盖<span class="en">ATT&amp;CK</span></h3>
-          <p>7 天真实告警按战术 × 技术铺成矩阵，每格给条数。同时把"规则压根没带 <code>mitre.id</code>"的那部分单列出来，不塞进任何技术里充数。</p>
+          <p>7 天告警按战术 × 技术铺成矩阵，每格给条数。</p>
           <div class="kv"><span>窗口 <b>7 天</b></span><span>已映射 <b>49.8%</b></span><span>技术 <b>10 个</b></span></div>
           <span class="go">进入 → /attack/</span>
         </a>
 
         <a class="tps-card" href="/ip/">
           <h3>IP 情报查询<span class="en">IP-PROFILE</span></h3>
-          <p>输入一个公网 IP，聚合它在告警、蜜罐、封禁留痕里的全部痕迹：首次/最近出现、事件数、端口、口令结构、归属地、是否被拦过，再给一个启发式威胁分（<b>不是概率模型</b>）。</p>
+          <p>输入公网 IP，看它在本站留下的全部痕迹。</p>
           <div class="kv"><span>端点 <b>/api/public/ip</b></span><span>口令 <b>只给结构</b></span><span>威胁分 <b>启发式</b></span></div>
           <span class="go">进入 → /ip/</span>
         </a>
 
         <a class="tps-card" href="/passwords/">
           <h3>弱口令统计<span class="en">PASSWORDS</span></h3>
-          <p>蜜罐收到的爆破口令，按"长度/字符类/账号"统计成表，只给结构与次数，<b>永远不给明文</b>。用来回答：攻击者现在在猜什么形状的密码。</p>
-          <div class="kv"><span>日志 690,971 行</span><span>唯一哈希 6,055</span><span>口径 <b>已脱敏</b></span></div>
+          <p>爆破口令按长度、字符类、账号统计。</p>
+          <div class="kv"><span>日志 690,971 行</span><span>唯一哈希 6,055</span><span>展示 <b>已脱敏</b></span></div>
           <span class="go">进入 → /passwords/</span>
         </a>
 
@@ -127,40 +126,25 @@
 
         <a class="tps-card" href="/redteam/">
           <h3>红队评测<span class="en">REDTEAM</span></h3>
-          <p>27 条固定的攻击/应放行用例，对自家 AI 问答公开面做评测：这轮 25 条执行、13 条拦下、<b>4 条绕过（23.53%）</b>、误报 0/8。也接受提交样本——但只做离线评分，不开放公网实时靶标。</p>
+          <p>27 条攻击用例，评测自家 AI 问答的拦截。</p>
           <div class="kv"><span>用例 <b>27 条</b></span><span>误报 <b>0/8</b></span><span>提交 <b>只离线评分</b></span></div>
           <span class="go">进入 → /redteam/</span>
         </a>
 
         <a class="tps-card" href="/purpleteam/">
           <h3>紫队演练<span class="en">PURPLE-TEAM</span></h3>
-          <p>自己打自己：按攻击链复现一次真实入侵路径（扫描→爆破→登录→留痕），记录每步命中了哪条检测规则、哪一步漏了。结论写成笔记，不美化。</p>
+          <p>复现一次完整入侵链，看每步命中了哪条规则。</p>
           <div class="kv"><span>攻击链 <b>分段复盘</b></span><span>关联 <b>Wazuh/Suricata</b></span><span>产出 <b>检测缺口</b></span></div>
           <span class="go">进入 → /purpleteam/</span>
         </a>
 
         <a class="tps-card" href="/subscribe/">
           <h3>日报与订阅<span class="en">DIGEST</span></h3>
-          <p>每天一封摘要：24 小时告警量、Top 来源国、最凶的 IP、蜜罐连接数、封禁与护栏拦截数。未配置邮件时会落盘成 <code>.eml</code> 文件——不假装发出去过。</p>
+          <p>每天一封摘要：邮件，或落盘成 <code>.eml</code>。</p>
           <div class="kv"><span>投放 <b>邮件 / 落盘</b></span><span>语音播报 <b>可选</b></span><span>状态 <b>在 /status/ 看</b></span></div>
           <span class="go">进入 → /subscribe/</span>
         </a>
 
-      </div>
-      <div class="mod" style="margin-top:2px">
-        <div class="mod-hd">
-          <span class="t">口径与边界</span>
-          <span class="sync">为什么这两个值得放在"工具"里</span>
-        </div>
-        <div class="mod-bd">
-          <p class="tps-lead" style="font-size:13px;color:rgba(255,255,255,.76)">两个工具的共同点是：<b>数据别人没有</b>，或者<b>口径别人不敢写</b>。</p>
-          <ul class="tps-list">
-            <li><b>CVE 速递</b>用官方清单做唯一事实源，解读只允许搬运字段——宁可写「官方未给出」，也不替官方补版本号和影响范围。</li>
-            <li><b>密码自查</b>的独特之处是「这串口令昨晚刚被人用来爆破我的服务器」——公开泄露库给不了这个时间戳；反过来，它也永远不会告诉你"你的密码已泄露"，只告诉你"这个前缀下有多少次真实尝试"。</li>
-            <li>两个页面都不读内部事件数据、不返回明文口令、不引第三方脚本；取不到数据时统一显示「读不到（原因）—— 不补数」。</li>
-          </ul>
-          <p class="tps-note" id="tpsStatus" style="margin-top:10px">● 状态位：数据由各工具页自己取，这里不做二次聚合，所以不会出现"仪表盘很好看但数字是假的"。</p>
-        </div>
       </div>
     </div>
   </div>

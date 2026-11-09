@@ -62,6 +62,18 @@
   .dt-name{min-width:190px}
   .dt-md{font-size:14px;line-height:1.85}
 }
+/* 「让桐莉讲讲这段」：assets/js/xk-explain.js 注入，前缀 .xk-ex 只在本页生效。
+   .ch 原本单行两端对齐；加 flex-wrap 让按钮在窄屏换到下一行，不挤爆标题。 */
+.mod > .ch{flex-wrap:wrap;row-gap:3px}
+.xk-ex-btn{flex:none;padding:0 4px;border:0;border-radius:4px;background:none;color:var(--acc,#7FD4D8);font:12px/1.7 var(--mono,ui-monospace,Consolas,monospace);letter-spacing:.02em;white-space:nowrap;cursor:pointer}
+.xk-ex-btn:hover,.xk-ex-btn:focus-visible{background:rgba(127,212,216,.14)}
+.xk-ex-btn:disabled{color:rgba(255,255,255,.38);background:none;cursor:default}
+/* .mod 自身没有内边距（正文各块自己带 16px），答案块也对齐到 16px */
+.mod > .xk-ex-panel{margin:9px 16px 12px;padding:1px 0 1px 11px;border-left:2px solid rgba(127,212,216,.55)}
+.xk-ex-tag{display:block;margin:0 0 3px;font:11px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:rgba(255,255,255,.5)}
+.xk-ex-body{margin:0;font-size:13.5px;line-height:1.9;color:var(--xk-ink-title,#eaf6ff);white-space:pre-wrap;overflow-wrap:anywhere}
+.xk-ex-panel.is-err{border-left-color:rgba(232,180,90,.65)}
+.xk-ex-panel.is-err .xk-ex-body{color:#E8B45A}
 </style>
 </head>
 <body class="is-view xk-has-idcard" data-skin="warm" data-phone="v1">
@@ -79,12 +91,10 @@
     <a class="dt-back" href="/alerts/">← 实时看板 /alerts/</a>
 
     <div class="mod">
-      <div class="ch"><b>一句话</b><span class="src">构建期从规则文件现算，不抄文档</span></div>
+      <div class="ch"><b>一句话</b><span class="src">data/detections.json · 构建期现算</span></div>
       <div class="dt-md" style="padding:14px 16px">
         <p>这个站有 <b>{{ $n }}</b> 条自研检测规则（Suricata <b>{{ $sa }}</b> 条 / Wazuh <b>{{ $wt }}</b> 条），
         命中什么、凭什么判定、怎么验证的，都在这一页。</p>
-        <p class="dt-tagline" style="margin-bottom:0">规则文件在仓库的 <code>detections/</code> 下；本页只展示 msg 与元数据，
-        不贴任何匹配内容原文、真实来源地址、口令或主机名。</p>
       </div>
       <div class="dt-stats">
         <div><b>{{ $n }}</b><span>自研规则</span></div>
@@ -164,84 +174,14 @@
       </details>
 
       <p class="dt-note">
-        「名称」= 规则文件里的 <code>msg</code>（Suricata）/ <code>description</code>（Wazuh），上方中文小标题取自规则上方的注释；
-        「严重度」Suricata 侧只有 <code>classtype</code> 与 <code>rev</code>（本仓库没有 <code>classification.config</code>，
-        所以不给 priority 百分比），Wazuh 侧是 <code>level</code> 与 <code>frequency/timeframe</code>。
-        表里最后一行 sid 1000108 是一条抑制型 <code>pass</code> 规则，默认注释、不计入上面的 {{ $n }} 条。
+        <b>数据</b>：7 天 <code>eve.json</code> 1,471,376 行（alert 293,482）· 快照 2026-10-11 09:23 ~ 10-18 12:00 UTC<br>
+        <b>名称</b>取自规则 <code>msg</code>；sid 1000108 是抑制型 <code>pass</code> 规则，默认注释、未计入总数。
       </p>
     </div>
 
-    <div class="mod">
-      <div class="ch"><b>口径 · 规则怎么来的</b><span class="src">先数流量，再写规则</span></div>
-      <div class="dt-md" style="padding:14px 16px">
-        <ul>
-          <li><b>先统计真实流量，再决定写什么</b>：7 天 <code>eve.json</code> 共 <b>1,471,376</b> 行
-          （2026-10-11 09:23 ~ 10-18 12:00 UTC），其中 alert 293,482 / flow 612,516 / http 283,796 /
-          ssh 142,926 / dns 132,086 / tls 6,801。</li>
-          <li><b>每条规则钉住证据</b>：规则文件里每条规则上方都写着「为什么写 / 依据的观测计数 / 预期误报」，
-          证据是原始日志里的行；本页只取其中可公开的元数据。</li>
-          <li><b>没有证据就不写</b>：132,086 条 DNS 事件里没有观测到可归因的 C2 域名，
-          所以这个仓库没有「DGA / 僵尸网络回连」规则 —— 不拿看起来像监控的规则凑数。</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="mod">
-      <div class="ch"><b>口径 · 怎么验证的</b><span class="src">语法验证 + 离线回放 + 改前改后</span></div>
-      <div class="dt-md" style="padding:14px 16px">
-        <ul>
-          <li><b>Suricata 语法验证</b>：一次性容器跑 <code>suricata -T -S</code>（<code>jasonish/suricata</code> 8.0.7，
-          <code>--network none</code>、<code>--rm</code>），输出
-          <code>Configuration provided was successfully loaded</code>，exit 0；另有 3 条 SYN-only 方向提示（<code>W:</code>），
-          与预期一致。</li>
-          <li><b>Wazuh 语法验证</b>：一次性容器跑 <code>wazuh-analysisd -t</code>（<code>wazuh-manager:4.9.2</code>），
-          exit 0；并与「删掉规则文件再跑一次」的对照结果一致。</li>
-          <li><b>离线 pcap 回放</b>：1000103 做过阈值边界回放（<code>suricata -r</code>）：120 次 SYN / 600 秒 → 恰好 1 条；
-          119 次 → 0 条；按旧阈值 10 次 / 300 秒 → 0 条。</li>
-          <li><b>改前 / 改后实测</b>：1000103 调阈值、100110 把聚合口径改成同源、<code>threshold.conf</code> 加
-          <code>suppress</code>，README 里都留了改前与改后的计数。</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="mod">
-      <div class="ch"><b>口径 · 没做的 / 未接入</b><span class="src">取不到就写「未接入」，不补 0</span></div>
-      <div class="dt-md" style="padding:14px 16px">
-        <ul>
-          <li><b>未接入 CI</b>：上面的 <code>-T</code> / <code>-t</code> 都是手工跑的一次性容器命令，
-          仓库的流水线（部署 / 每日留存 / 快照）没有把规则语法验证做成构建门禁。</li>
-          <li><b>未做长期回归</b>：README 记录的是单次验证与调参记录，不是持续跑分的命中率曲线。</li>
-          <li><b>本页不读线上实例</b>：数据是构建期从仓库文件算出来的快照（<code>data/detections.json</code>），
-          本页正文不请求线上检测接口，刷新不改变数字。</li>
-          <li><b>未展示</b>：匹配内容原文、真实来源地址、口令、主机名、内网地址一律不进页面；规则描述里的
-          <code>$(src_ip)</code> 一类是 Wazuh 字段占位符，不是真实值。</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="mod">
-      <div class="ch"><b>口径 · 计数与出处</b><span class="src">数字对不上时，以文件为准</span></div>
-      <div class="dt-md" style="padding:14px 16px">
-        <ul>
-          <li><b>Suricata {{ $sa }} 条</b> = 规则文件里 <code>alert</code> 动作行；另有 1 条抑制型 <code>pass</code> 规则
-          （sid 1000108）默认注释，不计入。</li>
-          <li><b>Wazuh {{ $wt }} 条</b> = <code>&lt;rule id=</code> 元素数（cowrie 6 + xk-lab 3），
-          sid 区间 {{ int $ws.sid_min }}–{{ int $ws.sid_max }}。</li>
-          <li><b>抑制配置</b>：<code>threshold.conf</code> 另有 {{ int ($th.active | default 0) }} 条生效的 <code>suppress</code>
-          与 {{ int ($th.commented | default 0) }} 条注释态（1 条语法示例、1 条 opt-in）；抑制对象是第三方规则
-          （sid 2013031）产生的自家心跳噪声，不是自研规则，所以不进上面的表。</li>
-          <li><b>两处出处口径不一致（如实写）</b>：规则文件头注释写「只做语法验证，未在任何生产实例上启用」，
-          而 <code>detections/README.md</code> 的状态行写「已部署并在生产生效」、§5 还有 reload 后的生效记录。
-          两处对不上，本页只陈述验证记录，不替任何一方下结论。</li>
-          <li><b>出处</b>：本页所有数字由 <code>scripts/detections-catalog.py</code> 在构建期从
-          <code>detections/suricata/xk-lab.rules</code>、<code>detections/suricata/threshold.conf</code>、
-          <code>detections/wazuh/xk-lab_rules.xml</code>、<code>detections/wazuh/cowrie_rules.xml</code> 现算，
-          产物是 <code>data/detections.json</code>，页面不手填、不引 README 的结论。</li>
-        </ul>
-        <p style="margin:12px 0 0"><a class="dt-back" href="/attack/" style="margin:0">→ ATT&amp;CK 覆盖</a>
-        &nbsp;·&nbsp; <a class="dt-back" href="/noise/" style="margin:0">→ 告警噪音指数</a></p>
-      </div>
-    </div>
+    <p class="dt-note" style="padding-top:0">
+      <a href="/attack/">→ ATT&amp;CK 覆盖</a> &nbsp;·&nbsp; <a href="/noise/">→ 告警噪音指数</a>
+    </p>
   </div>
 </section>
 </main>

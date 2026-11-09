@@ -52,46 +52,37 @@
       <div class="mr-hd">
         <div class="mr-eyebrow">XK-LAB // MORE · ALL INDEX</div>
         <h1 class="mr-h1">全部索引</h1>
-        <p class="mr-lede">顶栏只保留 7 项（实时看板 / 安全日报 / 笔记 / 演练场 / AI 问答 / 工具台 / 运行状态），主页点左上角 XK-LAB 回；其余 19 个 section 页收在每页页脚的「全部页面」一行。这一页按四组给出全部索引，写清每一页的去向。</p>
-        {{- /* ★2026-11-07 信息架构重排：这一页从「12 个功能都埋在这儿」降级成「全部索引」。
-               上提的去向写在页顶，名字仍链回原页（索引不残），后面的「→」指新入口。 */ -}}
-        <div class="mr-up">
-          <b>入口在哪（点名字回原页，点箭头那一头去新入口）：</b>
-          <p><a href="/noise/">告警噪音指数</a> / <a href="/passwords/">高频弱口令</a> / <a href="/samples/">样本分析</a> → <a href="/alerts/">实时看板</a> 页顶三张入口卡</p>
-          <p><a href="/api/">公开端点清单</a> → 就是本页表格（诊断与复现用，不占顶栏）；<a href="/status/">状态页</a> → 顶栏最右「运行状态」</p>
-          <p><a href="/reports/">周报与月报</a> → <a href="/daily/">安全日报</a> 页顶「周报与月报」两张卡</p>
-          <p><a href="/redteam/">红队攻防榜</a> / <a href="/purpleteam/">紫队演练</a> / <a href="/lab/">靶场</a> → <a href="/lab/">演练场</a> 的三个分区（公网入口已撤、仅站主 SSH 隧道；顶栏「演练场」）</p>
-        </div>
+        <p class="mr-lede">站内全部页面的索引，按四组排开。</p>
       </div>
 
       <div class="mr-g" id="g-evidence">
         <div class="mr-g-hd"><h2>证据与样本</h2></div>
         <div class="mr-cards">
-          <a class="mr-card" href="/samples/"><b>真实样本分析</b><p>三条打进来的攻击链，逐条给原始日志片段与判断依据。</p><span class="mr-tags"><span class="mr-tag">样本</span><span class="mr-tag">攻击链</span></span></a>
-          <a class="mr-card" href="/session/"><b>蜜罐会话回放</b><p>把攻击者在蜜罐里敲过的命令按会话回放出来 —— 看得到"他在干什么"，而不是只看到一行行告警。IP 一律遮成 a.b.c.x。</p><span class="mr-tags"><span class="mr-tag">会话</span><span class="mr-tag">回放</span></span></a>
-            <a class="mr-card" href="/samples-pipeline/"><b>样本流水线</b><p>恶意样本从落盘、去重、静态判定到归档的五阶段真实数字；不公开原始样本、不外链情报，取不到就写未取到。</p><span class="mr-tags"><span class="mr-tag">样本</span><span class="mr-tag">流水线</span></span></a>
-            <a class="mr-card" href="/trend/"><b>每日留存</b><p>每天 08:20 把 24h 告警、严重度分布、Top 来源、护栏拦截、ATT&CK 覆盖率固化成一行，只增不改 —— 用来回答「这周比上周多还是少」这种趋势问题。</p><span class="mr-tags"><span class="mr-tag">趋势</span><span class="mr-tag">只增不改</span></span></a>
-            <a class="mr-card" href="/attack/"><b>ATT&amp;CK 覆盖</b><p>7 天真实告警按战术 × 技术铺成矩阵，同时写明有多少条规则根本没带 mitre.id。</p><span class="mr-tags"><span class="mr-tag">ATT&amp;CK</span><span class="mr-tag">映射率</span></span></a>
-            <a class="mr-card" href="/detections/"><b>自研检测规则</b><p>仓库里 16 条规则（Suricata 7 / Wazuh 9）逐条列出「名字、判什么、怎么验、归到哪个 ATT&amp;CK」，构建期从规则文件现算，不抄文档。</p><span class="mr-tags"><span class="mr-tag">规则</span><span class="mr-tag">可验证</span></span></a>
-            <a class="mr-card" href="/hunters/"><b>攻击者追踪档案</b><p>从 124 个候选源里挑出四阶段（告警 / 诱饵端口 / 蜜罐登录 / 处置审计）走得最远的 5 个，IP 打码、缺口照实写。</p><span class="mr-tags"><span class="mr-tag">追踪</span><span class="mr-tag">打码</span></span></a>
-            <a class="mr-card" href="/timeline/"><b>技术决策时间线</b><p>8 条「问题 → 判断 → 做了什么 → 结果」，每条都带文档章节与行号，讲清为什么这么改、如果重来会怎么做。</p><span class="mr-tags"><span class="mr-tag">决策</span><span class="mr-tag">可追溯</span></span></a>
+          <a class="mr-card" href="/samples/"><b>真实样本分析</b><p>三条打进来的攻击链，附原始日志片段。</p><span class="mr-tags"><span class="mr-tag">样本</span><span class="mr-tag">攻击链</span></span></a>
+          <a class="mr-card" href="/session/"><b>蜜罐会话回放</b><p>按会话回放攻击者在蜜罐里敲过的命令。</p><span class="mr-tags"><span class="mr-tag">会话</span><span class="mr-tag">回放</span></span></a>
+            <a class="mr-card" href="/samples-pipeline/"><b>样本流水线</b><p>样本从落盘到归档的五阶段真实数字。</p><span class="mr-tags"><span class="mr-tag">样本</span><span class="mr-tag">流水线</span></span></a>
+            <a class="mr-card" href="/trend/"><b>每日留存</b><p>每天一行，固化 24h 告警与覆盖率。</p><span class="mr-tags"><span class="mr-tag">趋势</span><span class="mr-tag">只增不改</span></span></a>
+            <a class="mr-card" href="/attack/"><b>ATT&amp;CK 覆盖</b><p>7 天告警按战术 × 技术铺成矩阵。</p><span class="mr-tags"><span class="mr-tag">ATT&amp;CK</span><span class="mr-tag">映射率</span></span></a>
+            <a class="mr-card" href="/detections/"><b>自研检测规则</b><p>16 条自研规则：名字、判什么、怎么验。</p><span class="mr-tags"><span class="mr-tag">规则</span><span class="mr-tag">可验证</span></span></a>
+            <a class="mr-card" href="/hunters/"><b>攻击者追踪档案</b><p>从 124 个候选里挑出四阶段走得最远的 5 个。</p><span class="mr-tags"><span class="mr-tag">追踪</span><span class="mr-tag">打码</span></span></a>
+            <a class="mr-card" href="/timeline/"><b>技术决策时间线</b><p>8 条技术决策：问题、判断、结果。</p><span class="mr-tags"><span class="mr-tag">决策</span><span class="mr-tag">可追溯</span></span></a>
         </div>
       </div>
 
       <div class="mr-g" id="g-machine">
         <div class="mr-g-hd"><h2>这台机器本身</h2></div>
         <div class="mr-cards">
-          <a class="mr-card" href="/tour/"><b>3 分钟看懂这个站</b><p>一条按顺序的五站路径，用这一步的真实数字讲清这个站到底做了什么 —— 面试/访客先看这页。</p><span class="mr-tags"><span class="mr-tag">导览</span><span class="mr-tag">五站</span></span></a>
-          <a class="mr-card" href="/status/"><b>状态</b><p>8 个端点的存活与耗时，每一次探测的时间与结果都写出来。</p><span class="mr-tags"><span class="mr-tag">巡检</span><span class="mr-tag">16 项</span></span></a>
-          <a class="mr-card" href="/what/"><b>这是什么</b><p>三分钟讲清整套东西怎么运转：采集、聚合、展示分别在哪儿。</p><span class="mr-tags"><span class="mr-tag">架构</span><span class="mr-tag">说明</span></span></a>
-          <a class="mr-card" href="/projects/"><b>项目记录</b><p>5 个可核实的小项目，每个都附代码位置与验证方式。</p><span class="mr-tags"><span class="mr-tag">项目</span><span class="mr-tag">可核实</span></span></a>
+          <a class="mr-card" href="/tour/"><b>3 分钟看懂这个站</b><p>五站路径，用真实数字讲这个站做了什么。</p><span class="mr-tags"><span class="mr-tag">导览</span><span class="mr-tag">五站</span></span></a>
+          <a class="mr-card" href="/status/"><b>状态</b><p>8 个端点的存活与耗时。</p><span class="mr-tags"><span class="mr-tag">巡检</span><span class="mr-tag">16 项</span></span></a>
+          <a class="mr-card" href="/what/"><b>这是什么</b><p>整个站怎么运转：采集、聚合、展示。</p><span class="mr-tags"><span class="mr-tag">架构</span><span class="mr-tag">说明</span></span></a>
+          <a class="mr-card" href="/projects/"><b>项目记录</b><p>5 个可核实的小项目，附代码位置。</p><span class="mr-tags"><span class="mr-tag">项目</span><span class="mr-tag">可核实</span></span></a>
         </div>
       </div>
 
       <div class="mr-g" id="g-tools">
         <div class="mr-g-hd"><h2>顺手的小工具</h2></div>
         <div class="mr-cards">
-          <a class="mr-card" href="/tools/"><b>工具台</b><p>CVE 查询、口令强度、单位换算这类自用小工具，全部本地算、不上传。</p><span class="mr-tags"><span class="mr-tag">离线</span><span class="mr-tag">自用</span></span></a>
+          <a class="mr-card" href="/tools/"><b>工具台</b><p>CVE 查询、口令自查等自用小工具。</p><span class="mr-tags"><span class="mr-tag">离线</span><span class="mr-tag">自用</span></span></a>
         </div>
       </div>
     </div>

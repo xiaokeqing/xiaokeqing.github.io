@@ -102,24 +102,19 @@
     <div class="screen-bd dy-bd">
 
       <p class="dy-lead">
-        这是站点后端每天生成的一份<b>安全日报</b>：过去 24 小时的告警、按严重程度的分布、来源国家 Top5、
-        蜜罐抓到的东西，以及被护栏拦下的动作。文字版、Markdown、语音三种形态都在，
-        来源 IP 显示成什么样<b>由后端决定</b>（响应里的 <code>masked</code> 字段就是这次的口径），前端不改写、不补全。
+        每天 08:10 生成一份<b>安全日报</b>：过去 24 小时的告警、来源与拦截。
       </p>
-      <noscript><p class="dy-note">这一页的数字都由浏览器前端 fetch 得到。你关掉了 JavaScript，所以只会看到占位的「—」——
-        这不是接口挂了，是这一页本来就靠它取数。</p></noscript>
+      <noscript><p class="dy-note">这一页的数字由浏览器取数，需要开启 JavaScript。</p></noscript>
 
       {{- /* ★2026-11-07 信息架构重排：「周报与月报」从 /more/ 的卡片提到本页页顶。
              内容不在本仓库构建（srv2 nginx alias + autoindex），所以这里只给入口，不假装有列表。 */ -}}
       <div class="mod" id="dy-reports">
-        <div class="mod-hd dy-rep-hd"><span class="led"></span>周报与月报 · 按周 / 按月归档<span class="tag">周一 / 每月 1 日 06:00</span></div>
+        <div class="mod-hd dy-rep-hd"><span class="led"></span>周报与月报<span class="tag">每周一 · 每月 1 日</span></div>
         <div class="mod-bd">
           <div class="dy-rep">
-            <a class="dy-rep-card" href="/reports/"><b>周报</b><span>每周一 06:00 汇总上一周：告警量、来源、蜜罐、被拦下的动作，HTML + Markdown 两种。</span><em>打开 /reports/ →</em></a>
-            <a class="dy-rep-card" href="/reports/"><b>月报</b><span>每月 1 日 06:00 汇总上个月整月；首份 <code>monthly-2026-10</code> 已生成。</span><em>打开 /reports/ →</em></a>
+            <a class="dy-rep-card" href="/reports/"><b>周报</b><span>每周一 06:00 汇总上一周的告警、来源与拦截。</span><em>打开 /reports/ →</em></a>
+            <a class="dy-rep-card" href="/reports/"><b>月报</b><span>每月 1 日 06:00 汇总上月。</span><em>打开 /reports/ →</em></a>
           </div>
-          <p class="dy-note">两份都落在站外目录 <code>/reports/</code>（srv2 上 nginx 直接给目录页，不在本仓库构建），
-            口径与这里的日报一致：只读、不处置、不补 0。</p>
         </div>
       </div>
 
@@ -146,10 +141,10 @@
             （DailyReportController 只给按严重度与国家），所以 24 格如实走「—」分支，
             不拿 24h 合计均摊、不编 0。等后端契约补上 byHour 再自动画。 */}}
       <div class="vz-grid">
-        <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时告警热力<span class="tag">按整点 · 日报契约未含</span></div>
+        <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时告警热力<span class="tag">按整点</span></div>
           <div class="mod-bd">
             <div class="vz-heat" data-vz-heat role="img" aria-label="24 小时告警热力：日报接口未含按小时数据"></div>
-            <p class="vz-nt" data-vz-heatnote>取数中…（没有数据的小时写 —）</p>
+            <p class="vz-nt" data-vz-heatnote>取数中…</p>
           </div>
         </div>
         <div class="mod"><div class="mod-hd"><span class="led"></span>严重度构成<span class="tag">24h · alertsBySeverity</span></div>
@@ -165,7 +160,7 @@
         <div class="mod-bd">
           <div class="dy-archbar">
             <button class="dy-run" id="dyLoad" type="button">加载归档</button>
-            <span class="dy-hint" id="dyArchHint">点一下才去读归并索引（一个请求，不是按天逐个探）</span>
+            <span class="dy-hint" id="dyArchHint">点一下才加载，一次请求。</span>
           </div>
           <div class="dy-scroll">
             <table class="dy-tbl">
@@ -173,23 +168,8 @@
               <tbody id="dyArchBody"><tr><td colspan="6" class="dy-na">还没加载 —— 点上面的「加载归档」。</td></tr></tbody>
             </table>
           </div>
-          <p class="dy-note">📅 周报由 <code>weekly-report.timer</code>（周一 06:00）生成、📆 月报由 <code>monthly-report.timer</code>（每月 1 日 06:00）生成，
-            都落在站外 <a href="/reports/">/reports/</a>（入口在页顶「周报与月报」那张卡）；首份 <code>monthly-2026-10</code>：整月 1,976,893 条告警、覆盖 13/31 天。</p>
-          <p class="dy-note" id="dyArchNote">归档由后端一次给全（<code>/api/public/daily/index.json</code>）：扫一遍当天的日报目录，有几份、哪天缺件，由服务端回答。</p>
-        </div>
-      </div>
-
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 这些数字怎么来的</div>
-        <div class="mod-bd">
-          <ul class="dy-rules">
-            <li><b>告警</b>：Wazuh 的过去 24 小时窗口（<code>/api/public/alerts</code> 的 <code>stats24h</code>），不是"今天 0 点到现在"。</li>
-            <li><b>来源国家</b>：同一批 24 小时告警按来源 IP 做地理位置聚合，只显示有足量样本的国家（<code>/api/public/geo</code> 同一套聚合器）。</li>
-            <li><b>蜜罐</b>：Cowrie 最近 800 条蜜罐告警（<b>不是</b>时间窗），样本量写在卡片上，不当作全量。</li>
-            <li><b>护栏拦截</b>：处置审计留痕的全量累计（<code>data/response-audit.json</code>），不是 24 小时。</li>
-            <li><b>没生成的日子</b>：显示「未生成」，不给 0 —— <code>0</code> 会被读成"那天一个告警都没有"，那是另一回事。</li>
-            <li><b>刷新</b>：接口自身缓存 60 秒；页面上的时刻是服务器给的时间，不是你点刷新的时间。</li>
-          </ul>
+          <p class="dy-note">月报首份 <code>monthly-2026-10</code>：1,976,893 条告警、覆盖 13/31 天。</p>
+          <p class="dy-note" id="dyArchNote">最近 30 天的日报归档，点「加载归档」读取。</p>
         </div>
       </div>
 
@@ -235,7 +215,7 @@
       tag.textContent = '未生成';
       note.innerHTML = '<b>今天的日报还没生成</b>（' + esc(j && j.reason || 'not_generated') + '）' +
         (j && j.note ? '：' + esc(j.note) : '') +
-        '。这是"还没跑"，不是"今天没告警"——上一次生成见下面的归档。';
+        '。已生成的见下方归档。';
       if(window.__xkViz){ window.__xkViz({sev:null}); }
       return;
     }
@@ -254,7 +234,7 @@
     $('dyHoney').innerHTML = '连接 ' + n(h.connections) + ' · 登录 ' + n(h.logins) +
       '<small>失败 ' + n(h.loginFails) + ' · 样本 ' + n(h.sampled) + ' 条蜜罐告警</small>';
     var w = j.worstSource || {};
-    $('dyWorst').innerHTML = esc(w.ip || '—') + (w.attempts !== null && w.attempts !== undefined ? '<small>' + n(w.attempts) + ' 次尝试 · ' + (j.masked === true ? 'IP 已掩码' : '完整地址（后端口径）') + '</small>' : '');
+    $('dyWorst').innerHTML = esc(w.ip || '—') + (w.attempts !== null && w.attempts !== undefined ? '<small>' + n(w.attempts) + ' 次尝试 · ' + (j.masked === true ? 'IP 已掩码' : '完整地址') + '</small>' : '');
     $('dySpeech').innerHTML = (j.speechChars ? n(j.speechChars) + ' 字日语摘要' : '—') + '<small>点下面的「听语音」直接播</small>';
 
     var f = j.files || {}, out = '';
@@ -271,8 +251,7 @@
     acts.innerHTML = out || '<a class="off">这一份没有可下载的文件</a>';
 
     tag.textContent = j.date || '';
-    note.innerHTML = '服务器时间 <b>' + esc(j.generatedAt || '—') + '</b>，接口缓存 ' + n(j.cacheSeconds) + ' 秒。' +
-      '口径：<b>' + esc(j.window || '—') + '</b>' +
+    note.innerHTML = '服务器时间 <b>' + esc(j.generatedAt || '—') + '</b> · 缓存 ' + n(j.cacheSeconds) + ' 秒 · 窗口 <b>' + esc(j.window || '—') + '</b>' +
       (j.note ? '<br>' + esc(j.note) : '');
     if(window.__xkViz){ window.__xkViz({sev:j.alertsBySeverity || null, total:j.alertTotal}); }
     /* ★2026-11-07：日报契约里没有"按小时"字段，但这页的热力格不该永远是「—」。
@@ -300,7 +279,7 @@
         /* 只补热力：total/sev 保持日报自己的口径，避免两套数字在一页里打架 */
         window.__xkViz({ trend: s.trend });
         var nt = document.querySelector('[data-vz-heatnote]');
-        if(nt){ nt.textContent = '按整点 · 后台实时聚合（' + (s.windowHours || 24) + 'h 窗口）· 与上面日报的统计日不同'; }
+        if(nt){ nt.textContent = '按整点 · 后台实时聚合 ' + (s.windowHours || 24) + 'h（与日报统计日不同）'; }
       })
       .catch(function(){});
   }
@@ -317,8 +296,7 @@
       })
       .catch(function(e){
         $('dyTodayTag').textContent = '未取到';
-        $('dyNote').innerHTML = '<b>接口没响应</b>：' + esc(e.message) +
-          '。这不是"今天没告警"，是这一页没拿到数据 —— 归档照旧可翻。';
+        $('dyNote').innerHTML = '<b>接口没响应</b>（' + esc(e.message) + '），归档仍可翻。';
         $('dySync').textContent = '● 取数失败 ' + stamp();
         if(window.__xkViz){ window.__xkViz({sev:null}); }
       });
@@ -369,9 +347,7 @@
           body.innerHTML = days.map(row).join('');
         }
         hint.textContent = '共 ' + n(j.count) + ' 份 · 索引缓存 ' + n(j.cacheSeconds) + ' 秒';
-        $('dyArchNote').innerHTML = '一次请求拿全（<code>/api/public/daily/index.json</code>），不再按日期逐个试探 —— ' +
-          '那样会撞上公网端点 20 次/分钟的限流，而且"被限流"与"那天没生成"在页面上分不清。' +
-          '每行的「全文 / MD / 语音」直接指向 <code>/api/public/daily/</code> 的文件。';
+        $('dyArchNote').innerHTML = '一次请求拿全 <code>/api/public/daily/index.json</code>；每行文件直接指向当天的日报。';
         btn.disabled = false; btn.textContent = '重新加载';
         archLoaded = false;
       })

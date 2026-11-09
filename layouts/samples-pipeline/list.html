@@ -114,7 +114,7 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 样本流水线 <em class="ops-en">SAMPLE-PIPELINE</em></span>
-      <span class="sync">{{ with $gen }}● 采集 {{ . }} · 构建期读 data/samples.json，不 fetch{{ else }}● 未读到 data/samples.json{{ end }}</span>
+      <span class="sync">{{ with $gen }}● 快照 {{ . }} · data/samples.json{{ else }}● 未读到 data/samples.json{{ end }}</span>
     </div>
     <div class="screen-bd sp-bd">
 
@@ -123,15 +123,8 @@
         <div class="mod-bd">
           {{- if $d.files }}
           <p class="sp-lead">
-            这条链现在<em>只走完第 ① 步</em>：<em>{{ lang.FormatNumber 0 $files }} 个文件</em>、{{ with $mib }}<em>{{ . }}</em>{{ else }}未取到{{ end }}
-            停在 dionaea 的 <code>bistreams</code> 里；去重、静态判定、情报标记、归档都没有在跑。
-          </p>
-          <p class="sp-sub">
-            ② 链路上没有去重步骤 —— 唯一数只是采集脚本事后对全量文件算了一遍 <code>sha256</code>；
-            ③ 静态判定<b>未部署</b> —— 主机上 <code>yara</code> 与 <code>clamscan</code> 都没有；
-            ④ 情报标记按站主决定<b>不接外链</b>（外部 key 与配额是硬门槛）；
-            ⑤ 归档没做 —— 只有两个日期目录，没有留存副本、没有保留期。
-            下面每一格都写清「数量 / 状态 / 一句话」。
+            蜜罐样本五步链路，目前只有第 ① 步「落盘」在跑：
+            <em>{{ lang.FormatNumber 0 $files }} 个文件</em>、{{ with $mib }}<em>{{ . }}</em>{{ else }}未取到{{ end }}。
           </p>
           <ul class="sp-kpis">
             <li class="sp-kpi"><span class="k">落盘文件</span><span class="v">{{ lang.FormatNumber 0 $files }}</span></li>
@@ -142,8 +135,7 @@
             <li class="sp-kpi"><span class="k">可判定 PE/ELF</span><span class="v warn">{{ if ne $s.samplesReadable nil }}{{ lang.FormatNumber 0 $s.samplesReadable }}{{ else }}未取到{{ end }}</span></li>
           </ul>
           {{- else }}
-          <p class="sp-lead">读不到 <code>data/samples.json</code>，这一页只讲流程，不显示任何数量。</p>
-          <p class="sp-sub">先跑 <code>python scripts/samples-stats.py</code> 生成快照，再重新构建。取不到就是取不到，不补 0。</p>
+          <p class="sp-lead">读不到 <code>data/samples.json</code>（快照未生成）。</p>
           {{- end }}
         </div>
       </div>
@@ -158,8 +150,8 @@
               <span class="sp-num">{{ if $files }}{{ lang.FormatNumber 0 $files }} 件{{ else }}未取到{{ end }}</span>
               <span class="sp-st ok">{{ if $files }}在跑{{ else }}未取到{{ end }}</span>
               <span class="sp-desc">
-                {{ if $files }}dionaea <code>bistreams</code> 按日期目录落盘：{{ with $d.byDay }}{{ $p := slice }}{{ range . }}{{ $p = $p | append (printf "%s 共 %s 件" .date (lang.FormatNumber 0 .n)) }}{{ end }}{{ delimit $p "、" }}{{ end }}。
-                Cowrie downloads 另有 {{ with $cw.files }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 个文件（{{ with $cw.bytes }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 字节）。
+                {{ if $files }}dionaea <code>bistreams</code>：{{ with $d.byDay }}{{ $p := slice }}{{ range . }}{{ $p = $p | append (printf "%s 共 %s 件" .date (lang.FormatNumber 0 .n)) }}{{ end }}{{ delimit $p "、" }}{{ end }}；
+                Cowrie downloads {{ with $cw.files }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 个文件 / {{ with $cw.bytes }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 字节。
                 {{ else }}没读到 bistreams 的数量。{{ end }}
               </span>
             </li>
@@ -168,10 +160,7 @@
               <b class="sp-name">按 sha256 去重</b>
               <span class="sp-num">{{ with $dd.unique }}{{ lang.FormatNumber 0 . }}{{ else }}未取到{{ end }} 唯一{{ with $dd.duplicates }} / {{ lang.FormatNumber 0 . }} 重复{{ end }}</span>
               <span class="sp-st off">未接入</span>
-              <span class="sp-desc">
-                链路上<b>没有去重这一步</b>，重复件照旧落盘。上面这个唯一数是采集脚本把全量文件算了一遍
-                <code>sha256</code> 之后的事后统计；Cowrie 的文件名本身就是 sha256，天然按内容命名。
-              </span>
+              <span class="sp-desc">无去重步骤；唯一数是事后对全量文件算 <code>sha256</code> 得出。</span>
             </li>
             <li class="sp-step">
               <span class="sp-idx">③ 静态判定</span>
@@ -179,9 +168,7 @@
               <span class="sp-num">{{ if eq $sc.available true }}已装{{ else }}0 次扫描{{ end }}</span>
               <span class="sp-st no">{{ if eq $sc.available true }}在跑{{ else }}未部署{{ end }}</span>
               <span class="sp-desc">
-                {{ with $sc.note }}{{ . }}。{{ end }}落盘的 {{ if $files }}{{ lang.FormatNumber 0 $files }}{{ else }}那批{{ end }} 个文件经
-                <code>file</code> 判定全是 ASCII text / CSV text / 空文件 —— <b>0 个 PE、0 个 ELF</b>。
-                没有可判定的对象，但这不等于以后不会有。
+                {{ with $sc.note }}{{ . }}。{{ end }}已判定的 {{ if $files }}{{ lang.FormatNumber 0 $files }}{{ else }}那批{{ end }} 个文件全为文本：<b>0 个 PE、0 个 ELF</b>。
               </span>
             </li>
             <li class="sp-step">
@@ -189,35 +176,16 @@
               <b class="sp-name">外部情报</b>
               <span class="sp-num">0 条</span>
               <span class="sp-st off">未接入</span>
-              <span class="sp-desc">
-                站主明确<b>不做外链情报</b>：外部 key 与配额是硬门槛。没有情报源就没有标定，
-                页面也不假装有 —— 这一格永远是 0，不是「还没跑到」。
-              </span>
+              <span class="sp-desc">未接入外部情报源。</span>
             </li>
             <li class="sp-step">
               <span class="sp-idx">⑤ 归档</span>
               <b class="sp-name">留存与索引</b>
               <span class="sp-num">无保留策略</span>
               <span class="sp-st no">未做</span>
-              <span class="sp-desc">
-                bistreams 下只有日期目录，更早的没有留存副本；没有归档盘、没有保留期、没有索引文件。
-                要回答「上个月的样本还在不在」，现在答不了。
-              </span>
+              <span class="sp-desc">只有日期目录，无归档、无保留期。</span>
             </li>
           </ol>
-
-          <div class="sp-truth">
-            <b>静态判定未部署。</b>
-            主机上 <code>command -v yara clamscan</code> 都是空；Wazuh manager 的
-            <code>ossec.conf</code> 只监控 dionaea 的 json / log / errors 三个文件，<b>没有盯 bistreams</b>。
-            所以第 ③ 步不是「扫了没命中」，是「一次都没扫过」——这两个说法在这一页不能混。
-          </div>
-          <div class="sp-next">
-            <b>下一步建议（还没做）：</b>
-            ① 装 <code>yara</code> 或 <code>clamav</code>，先对历史 bistreams 做<b>只读</b>扫描，只出命中清单；
-            ② 再上一条只扫新增文件的定时任务，把命中写进快照；
-            ③ 命中稳定之后才讨论是否联动 Wazuh 处置 —— 现在直接改 Wazuh 配置会动到告警口径，先不要动。
-          </div>
         </div>
       </div>
 
@@ -248,10 +216,7 @@
                   </tbody>
                 </table>
               </div>
-              <p class="sp-cap">
-                dionaea 的文件名<b>不带扩展名</b>（<code>服务-源-端口-时间-随机6位</code>），按扩展名统计只会剩一行
-                「(无扩展名)」；所以这张表按 <code>file</code> 判定的<b>内容类型</b>分组。全部是文本，没有可执行文件。
-              </p>
+
             </div>
             <div>
               <h3>按大小分桶</h3>
@@ -274,37 +239,8 @@
                   </tbody>
                 </table>
               </div>
-              <p class="sp-cap">
-                桶边界：<code>&lt;1K</code> / <code>1K–10K</code> / <code>10K–100K</code> / <code>100K–1M</code> / <code>&gt;1M</code>（1K = 1024 字节）。
-                这一批里没有任何文件超过 10K —— 蜜罐收到的多是探测串、SQL 错误回显和空连接。
-              </p>
+              <p class="sp-cap">分桶：<code>&lt;1K</code> / <code>1K–10K</code> / <code>10K–100K</code> / <code>100K–1M</code> / <code>&gt;1M</code>（1K = 1024 字节）。</p>
             </div>
-          </div>
-          <p class="sp-note">
-            <b>两份数据是同一批文件</b>：先 <code>find</code> 出一份文件清单固定快照，再在清单上做类型、大小、去重统计，
-            不会出现「类型加起来比总数多」的错位。蜜罐还在收，重跑脚本数字会变。
-          </p>
-        </div>
-      </div>
-
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>口径 · 这些数从哪来<span class="tag">先看这块，再看数字</span></div>
-        <div class="mod-bd">
-          <div class="sp-md">
-            <ul>
-              <li><b>数据源</b>：<code>ssh secagent-srv2</code> 只读采集 —— dionaea <code>/opt/dionaea/var/lib/dionaea/bistreams</code>（按日期目录）、Cowrie <code>/opt/cowrie/dl</code>（compose 挂载的 downloads）。</li>
-              <li><b>触发</b>：手动跑 <code>python scripts/samples-stats.py</code> 写 <code>data/samples.json</code>；页面构建期读 <code>hugo.Data.samples</code>，SSR 直出，不 fetch、不连库、零页面 JS。</li>
-              <li><b>采集时刻</b>：{{ with $gen }}{{ . }}{{ else }}未取到{{ end }}。这是那一刻的快照，不是「现在」。</li>
-              <li><b>不公开原始样本</b>：只写类型、件数、字节；不列文件名、不给下载链接、不列样本哈希，页面里一个样本字节都没有。</li>
-              <li><b>不外链情报</b>：第 ④ 步按站主决定不做，外部 key 与配额是硬门槛；页面不向任何第三方发请求。</li>
-              <li><b>不编数</b>：取不到的字段写 <code>null</code>，页面显示「未取到」，不补 0。Cowrie 近 7 天 0 是<b>真实 0</b>（4 个文件的时间都在 2026-10-18），不是没取到。</li>
-            </ul>
-            <p class="sp-note" style="margin-top:10px">
-              相关：<a href="/samples/">样本分析 /samples/</a> ·
-              <a href="/alerts/">实时看板</a> ·
-              <a href="/status/">运行状态</a> ·
-              <a href="/attack/">ATT&amp;CK 覆盖</a>
-            </p>
           </div>
         </div>
       </div>
