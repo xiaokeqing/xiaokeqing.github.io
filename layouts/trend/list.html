@@ -21,6 +21,17 @@
 .tr-md ul{margin:0;padding-left:20px}
 .tr-md li{margin:2px 0}
 .tr-note{padding:10px 16px 14px;opacity:.7;font-size:13px;margin:0}
+.tr-cal{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
+.tr-week{display:flex;flex-direction:column;gap:4px}
+.tr-cal i{display:block;width:15px;height:15px;border-radius:3px;background:rgba(127,212,216,.06);box-shadow:inset 0 0 0 1px rgba(127,212,216,.10)}
+.tr-cal i[data-lv="1"]{background:rgba(127,212,216,.22);box-shadow:none}
+.tr-cal i[data-lv="2"]{background:rgba(127,212,216,.38);box-shadow:none}
+.tr-cal i[data-lv="3"]{background:rgba(127,212,216,.55);box-shadow:none}
+.tr-cal i[data-lv="4"]{background:rgba(127,212,216,.72);box-shadow:none}
+.tr-cal i[data-lv="5"]{background:rgba(127,212,216,.92);box-shadow:none}
+.tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:transparent;box-shadow:none}
+.tr-cal-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--xk-ink-lede,rgba(255,255,255,.6));margin:10px 0 14px}
+.tr-cal-legend i{display:block;width:13px;height:13px;border-radius:3px}
 .tr-table{width:100%;border-collapse:collapse;font:13px/1.7 var(--xk-mono,ui-monospace,Consolas,monospace)}
 .tr-table th,.tr-table td{padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--xk-line,rgba(255,255,255,.09))}
 .tr-table th{font-weight:600;font-size:11.5px;letter-spacing:.04em;color:var(--xk-ink-lede,rgba(255,255,255,.62));background:rgba(255,255,255,.03)}
@@ -53,6 +64,68 @@
     </div>
 
     <div class="mod">
+          {{- /* ★2026-11-09 §三 日历热力图（GitHub 贡献图样式，纯 SSR）：
+       一格 = 一天，列 = 一周（周一在上）；颜色按「24h 告警总数」在已存天数里相对高低分 5 档；
+       没有留档的日子画虚线空格 —— 不用 0 级色，避免把「没留档」看成「那天没有告警」。 */ -}}
+{{- $roll := hugo.Data.rollup -}}
+{{- $dates := slice -}}
+{{- range $k, $v := $roll -}}{{- $dates = $dates | append $k -}}{{- end -}}
+{{- $dates = sort $dates -}}
+{{- if gt (len $dates) 0 }}
+{{- $t0 := time.AsTime (index $dates 0) -}}
+{{- $now := now -}}
+{{- $max := 0 -}}
+{{- range $dates -}}{{- $r := index $roll . -}}{{- $tot := 0 -}}
+  {{- with $r.alerts24h }}{{ if .available }}{{ $tot = .total }}{{ end }}{{ end -}}
+  {{- if gt $tot $max }}{{ $max = $tot }}{{ end -}}
+{{- end -}}
+{{- $span := int (div (sub $now.Unix $t0.Unix) 86400) -}}
+{{- $days := slice -}}
+{{- range seq 0 $span -}}
+  {{- $d := $t0.AddDate 0 0 . -}}
+  {{- $key := $d.Format "2006-01-02" -}}
+  {{- $r := index $roll $key -}}
+  {{- $cell := dict "key" $key "lv" 0 "total" 0 "pts" (int (math.Mod (add (int $d.Weekday) 6) 7)) -}}
+  {{- if $r -}}
+    {{- $tot := 0 -}}{{- with $r.alerts24h }}{{ if .available }}{{ $tot = .total }}{{ end }}{{ end -}}
+    {{- $lv := 1 -}}
+    {{- if gt $max 0 }}{{ $lv = add 1 (int (math.Floor (mul 4.999 (div (float $tot) (float $max))))) }}{{ end -}}
+    {{- if gt $lv 5 }}{{ $lv = 5 }}{{ end -}}
+    {{- $cell = dict "key" $key "lv" $lv "total" $tot "pts" $cell.pts -}}
+  {{- end -}}
+  {{- $days = $days | append $cell -}}
+{{- end -}}
+{{- $lead := (index $days 0).pts -}}
+<div class="mod">
+  <div class="ch"><b>日历热力图</b><span class="src">一格 = 一天 · 越深 = 当天 24h 告警越多 · 已存 {{ len $dates }} 天</span></div>
+  <div class="tr-cal" aria-label="每日告警总量日历">
+    <div class="tr-week">
+      {{- range seq 1 $lead }}<i data-gap="1" title="这个月的头几天没有留档"></i>{{ end }}
+      {{- $idx := add $lead 0 -}}
+      {{- range $i, $c := $days -}}
+        {{- if ne $i 0 -}}{{ if eq (int (math.Mod $idx 7)) 0 }}</div><div class="tr-week">{{ end }}{{- end -}}
+        {{- if gt $c.lv 0 -}}
+          <i data-lv="{{ $c.lv }}" title="{{ $c.key }} · 24h 告警 {{ lang.FormatNumber 0 $c.total }} 条"></i>
+        {{- else -}}
+          <i data-gap="1" title="{{ $c.key }} · 没有留档（不是那天没有告警）"></i>
+        {{- end -}}
+        {{- $idx = add $idx 1 -}}
+      {{- end -}}
+      {{- $tail := int (math.Mod $idx 7) -}}
+      {{- if gt $tail 0 }}{{- range seq $tail 6 }}<i data-gap="1" title="以后的日期"></i>{{ end }}{{- end }}
+    </div>
+  </div>
+  <div class="tr-cal-legend">少
+    <i style="background:rgba(127,212,216,.06);box-shadow:inset 0 0 0 1px rgba(127,212,216,.10)"></i>
+    <i style="background:rgba(127,212,216,.22)"></i>
+    <i style="background:rgba(127,212,216,.38)"></i>
+    <i style="background:rgba(127,212,216,.55)"></i>
+    <i style="background:rgba(127,212,216,.72)"></i>
+    <i style="background:rgba(127,212,216,.92)"></i>多
+    <span style="margin-left:10px">虚线格 = 那天没有留档（页面不拿 0 补）</span>
+  </div>
+</div>
+{{- end }}
       <div class="ch"><b>逐日明细</b><span class="src">1 行 = 1 天 · 取抓取时刻的窗口口径</span></div>
       <div style="overflow-x:auto">
         <table class="tr-table" style="min-width:960px">
