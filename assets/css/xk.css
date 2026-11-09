@@ -1050,6 +1050,12 @@ pre{position:relative}
    改法：作战室不再用"左窄右高"的侧栏布局——实时流占满一行，下面 5 张卡按窗口宽度自适应成 2~4 列栅格。 */
 #v-monitor .ops-live{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 #v-monitor .ops-live > .ops-rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;grid-auto-rows:min-content;align-items:start}
+/* 页脚密集链接：移动端给命中区补高度（视觉上仍是行内文字） */
+@media (max-width:980px){
+  .xk-foot a{display:inline-block;padding:6px 8px;line-height:1.5}
+  .xk-foot{line-height:1.9}
+}
+
 /* ★2026-11-09 §七.1/§八：数据页分组标题（16px/600 + 左侧 2px 青色竖条） */
 .sec-hd{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px;padding-left:10px;border-left:2px solid rgba(127,212,216,.55)}
 .sec-hd b{font-size:16px;font-weight:600;letter-spacing:.2px;color:var(--fg)}

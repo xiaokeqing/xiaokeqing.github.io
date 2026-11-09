@@ -236,6 +236,16 @@
 <div id="xk-views" hidden aria-hidden="true"></div>
 {{- /* 页脚兜底：顶栏只放 9 项，其余页面都在这一行（主页是整屏 CRT，页脚在文档流末尾、被 body overflow:hidden 裁掉，
       但 DOM 与读屏器仍在；内容页可见）。 */}}
+<style>
+/* 移动端点击区（2026-11-09）：主页自己有一套内联 dock，别的页面的 CSS 盖不到这里。
+   目标：顶栏工具按钮 ≥32px、页脚链接 ≥28px、右上头像按钮 ≥32px。 */
+@media (max-width:980px){
+  .dock .xk-idcard-btn{min-height:32px;padding:6px 10px}
+  .dock .xk-idcard-av{min-width:32px;min-height:32px}
+  .xk-allpages{min-height:30px;padding:5px 8px}
+}
+.site-foot a, footer a{display:inline-block;padding:6px 8px}
+</style>
 {{ partial "xk-demo/site-foot.html" . }}
 {{ partial "xk-demo/idcard.html" . }}
   {{- /* ★批次A-P1（站主 2026-10-16）：宿主页**按需加载**统一播放器 `/js/kurisu-player.js`
