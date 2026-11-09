@@ -37,11 +37,12 @@
           <button data-tab="matrix">威胁矩阵</button>
           <button data-tab="stats">数据统计</button>
         </nav>
-        <span class="sync">● 取数中… · 全部来自 /api/public/* 只读端点</span>
+        <span class="sync">● 同步中 · 同源只读快照</span>
       </div>
       <div class="screen-bd">
 
-        <!-- 视图 1：实时攻击 -->
+        <!-- 视图 1：实时攻击（★2026-11-09：KPI 与实时流收进本面板，切到其它 tab 不再重复出现） -->
+        <div class="ops-tab on" data-pane="live">
         <div class="ops-hero" id="opsHero" aria-live="polite">
           {{- /* ★2026-11-06 慢网口径「先给最快的东西」：首屏三个数字先用构建期快照（data/ops-snapshot.json），接口回来后再覆盖。 */ -}}
 {{- /* ★2026-11-07 修 deprecation WARN：site.Data → hugo.Data（Hugo 0.156+ 命名空间；部署钉 0.167.0，netlify.toml 已固定）。 */ -}}
@@ -49,11 +50,11 @@
           <div class="oh-cell"><b id="ohBlocked">{{ if and $snap $snap.blockedByGuard }}{{ lang.FormatNumberCustom 0 (float $snap.blockedByGuard) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计拦截</span></div>
           <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计封禁 IP</span></div>
           <div class="oh-cell"><b id="ohHoney">{{ if and $snap $snap.honeyConnections }}{{ lang.FormatNumberCustom 0 (float $snap.honeyConnections) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>蜜罐连接</span></div>
-          <div class="oh-line" id="ohLine">{{ if $snap }}快照 {{ $snap.generatedAt }} · 正在同步最新{{ else }}战报载入中…{{ end }}</div>
+          <div class="oh-line" id="ohLine">{{ if $snap }}快照 {{ $snap.generatedAt }} · 正在同步最新{{ else }}正在读取快照…{{ end }}</div>
         </div>
         <div class="ops-live">
             <div class="term">
-              <div class="term-hd"><span>实时攻击流</span><span class="term-path">GET /api/public/alerts · 只读聚合（5 分钟窗口）</span><button class="feed-pause" id="feedPause" type="button" aria-pressed="false" title="暂停/继续追加新行（取数不受影响）">暂停</button><span class="term-live"><i></i>LIVE</span></div>
+              <div class="term-hd"><span>实时攻击流</span><span class="term-path" title="GET /api/public/alerts · 只读聚合（5 分钟窗口）">5 分钟窗口</span><button class="feed-pause" id="feedPause" type="button" aria-pressed="false" title="暂停/继续追加新行（取数不受影响）">暂停</button><span class="term-live"><i></i>LIVE</span></div>
               <div class="term-bd" id="termFeed"></div>
             </div>
             <div class="ops-rail">
@@ -117,6 +118,8 @@
           </div>
         </div>
 
+        </div>
+
         <!-- 视图 2：攻击图谱 -->
         <div class="ops-tab" data-pane="graph">
           <div class="mod"><div class="mod-hd"><span class="led"></span>实时攻击路径 · 攻击者 → 本站传感器<span class="tag">数据 /alerts + /honeypot</span></div>
@@ -169,6 +172,7 @@
               </div>
             </div>
           </div>
+          <div class="sec-hd"><b>拦截与处置</b><span>封禁 / 访问量 / 处置动作，全部来自只读快照</span></div>
           <div class="mod"><div class="mod-hd"><span class="led"></span>7×24 访问统计 · 按整点聚合<span class="tag">/webstats · 零 IP</span></div>
             <div class="mod-bd"><div class="bars anim">
               <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i>
@@ -179,6 +183,22 @@
               <i style="--i:20"></i><i style="--i:21"></i><i style="--i:22"></i><i style="--i:23"></i>
               <i style="--i:24"></i><i style="--i:25"></i><i style="--i:26"></i><i style="--i:27"></i>
             </div></div>
+          </div>
+          {{- /* ★2026-11-09 告警链路桑基图（手写 SVG，零依赖，约 4 KB）：
+                 数据只吃 xk-bind 已取到的 window.XK_FEED（/alerts 的 5 分钟窗口原始聚合清单）——
+                 这是全站唯一带「来源×类型×严重度」联合分布的真实数据；24h 聚合是分维度独立统计，
+                 拼不成链路，所以不画 24h 版（口径纪律：不拼接、不虚构关系）。
+                 echarts（约 1 MB，assets/js/vendor/echarts.min.js，指纹+一年缓存）只在本卡
+                 进入视口时才注入；慢网（html.xk-slow / xk-saver）不自动加载，给手动按钮并标清体积。
+                 图取不到不影响本页任何数字；数据未取到时照实写原因，不画样例链路。
+                 ⚠ 本文件由 _dev/gen-demo-pages.py 逐字同源生成，重跑生成器前先把本段并进生成器。 */ -}}
+          <div class="sec-hd"><b>来源与分布</b><span>谁在打、打什么、打到什么程度</span></div>
+          <div class="mod xk-sankey-card" data-xk-sankey>
+            <div class="mod-hd"><span class="led"></span>告警链路 · 来源 → 类型 → 严重度<span class="tag">/alerts · 5 分钟原始窗口</span></div>
+            <div class="mod-bd">
+              <div id="xkSankey" class="xk-sankey" role="img" aria-label="告警链路桑基图：取数中"></div>
+              <p class="vz-nt" data-xk-sankey-note>取数中…（链路只按 5 分钟窗口的原始清单画，不拿 24h 聚合拼）</p>
+            </div>
           </div>
           <div class="grid32">
             <div class="mod"><div class="mod-hd"><span class="led"></span>来源 TOP5<span class="tag">/geo</span></div>

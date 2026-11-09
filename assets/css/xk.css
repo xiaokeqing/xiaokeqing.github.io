@@ -800,7 +800,7 @@ html.xk-phone-emote-wait .phone-scr{background-image:none}
 #v-monitor .oh-cell{display:flex;flex-direction:column;justify-content:center;gap:6px;
   min-height:96px;padding:16px 18px;border-radius:14px;
   background:rgba(12,18,22,.72);border:1px solid rgba(127,211,227,.18)}
-#v-monitor .oh-cell b{font:600 30px/1.1 var(--mono,ui-monospace,Consolas,monospace);letter-spacing:.5px}
+#v-monitor .oh-cell b{font:600 30px/1.1 var(--mono,ui-monospace,Consolas,monospace);letter-spacing:.5px;font-variant-numeric:tabular-nums}
 #v-monitor .oh-cell span{font-size:var(--fs-xs);opacity:.75}
 #v-monitor .oh-line{grid-column:1 / -1;min-height:0;padding:2px 2px 0;font-size:var(--fs-xs);opacity:.72}
 
@@ -946,7 +946,11 @@ html.xk-rail-collapsed .xk-rail-toggle:focus-visible {
 .vz-c.l4,.l5{color:var(--solid)}
 .vz-c.nd{background:none;border-style:dashed;opacity:.5}
 .vz-c:hover{border-color:var(--line2)}
-.vz-nt{margin:8px 0 0;font-size:var(--fs-xs);line-height:var(--lh-body);color:var(--mut)}
+.vz-nt{margin:8px 0 0;font-size:14px;line-height:var(--lh-body);color:var(--mut)}
+/* ★2026-11-09 告警链路桑基图容器（高度给 ECharts；窄屏略矮） */
+.xk-sankey{width:100%;height:360px;display:block}
+.xk-sankey-card .mod-bd{padding-top:4px}
+@media (max-width:640px){.xk-sankey{height:300px}}
 .vz-rw{display:flex;align-items:center;gap:16px}
 .vz-r{position:relative;flex:none;width:112px;height:112px}
 .vz-d{position:absolute;inset:0;border-radius:50%;background:var(--g,var(--line));mask:radial-gradient(closest-side,#0000 60%,#000 61%)}
@@ -1047,3 +1051,8 @@ pre{position:relative}
 #v-monitor .ops-live{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 #v-monitor .ops-live > .ops-rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:stretch}
 #v-monitor .ops-live > .ops-rail > *{height:100%;align-self:stretch}
+
+/* ★2026-11-09 §七.1/§八：数据页分组标题（16px/600 + 左侧 2px 青色竖条） */
+.sec-hd{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px;padding-left:10px;border-left:2px solid rgba(127,212,216,.55)}
+.sec-hd b{font-size:16px;font-weight:600;letter-spacing:.2px;color:var(--fg)}
+.sec-hd span{font-size:12px;color:var(--mut)}

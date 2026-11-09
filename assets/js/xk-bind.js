@@ -743,6 +743,8 @@
       });
     }
     if (window.__xkRenderFeed) window.__xkRenderFeed();
+    /* ★2026-11-09：桑基图钩子（assets/js/xk-sankey.js 注册；没加载就没这个函数，跳过） */
+    if (window.__xkSankeyFeed) { try { window.__xkSankeyFeed(); } catch (e) { /* 图挂了不影响绑定 */ } }
   }
 
   /* ---------------------------------------------------------------- ★R2 收敛收口：主页这两处写入绑定已撤掉
@@ -2356,12 +2358,15 @@
     var nav = document.getElementById('opsTabs');
     if (!nav) return;
     var last = activePane(), pending = null;
-    /* ★LIVE-HIDE：切到任何 `[data-pane]` 都把「实时攻击」那坨收起来（CSS :has 的 JS 兜底） */
+    /* ★LIVE-HIDE：切到「非 live」的 `[data-pane]` 才收起实时攻击那坨。
+       ★2026-11-09：实时攻击自身现在也是 `[data-pane="live"]`（KPI 与实时流收进同一面板），
+       旧判据「只要有面板在 on 就隐藏」会把 live 面板自己隐藏掉（切回实时攻击一片空白）。 */
     function syncLive() {
+      var pane = document.querySelector('.ops-tab.on[data-pane]');
       var live = document.querySelector('.ops-live');
       if (!live) return;
-      var onPane = !!document.querySelector('.ops-tab.on[data-pane]');
-      live.style.display = onPane ? 'none' : '';
+      var hide = !!(pane && pane.getAttribute('data-pane') !== 'live');
+      live.style.display = hide ? 'none' : '';
     }
     syncLive();
     var obs = new MutationObserver(function () {

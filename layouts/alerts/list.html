@@ -32,6 +32,9 @@
 {{- /* ★V2/V3（2026-11-07）：24h 热力 + 严重度环。不吃新端点，只读 xk-bind 已取到的 stats24h；
      同步加载（不加 defer）→ 首帧先画「—」骨架，数据回来后由 xk-bind 调 window.__xkViz 补画。 */}}
 <script src="{{ (resources.Get "js/xk-viz.js" | minify | fingerprint).RelPermalink }}"></script>
+{{- /* ★2026-11-09：告警链路桑基图（数据统计 tab）。本脚本仅 ~6KB 常驻；
+     echarts（~1MB）由它按视口/慢网口径懒加载，不走 CDN。 */ -}}
+<script src="{{ (resources.Get "js/xk-sankey.js" | minify | fingerprint).RelPermalink }}" defer></script>
 <script src="/js/xk-realtime.js" defer></script>
 </body>
 </html>
