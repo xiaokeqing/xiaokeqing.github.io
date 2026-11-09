@@ -1,5 +1,66 @@
-{{/*
-  404 页面：仍然走同一个外壳（背景层 + 胶囊导航在），由前端路由把 #content 换成"找不到"视图。
-  这样访客输错地址时导航还在、还能一键回到站内，不会看到一个孤立的白页。
-*/}}
-{{ define "main" }}{{ end }}
+<!DOCTYPE html>
+{{- /* ============================================================================
+     404 页（2026-11-09）：**极简独立页，不套整站外壳**
+     ----------------------------------------------------------------------------
+     为什么不再 define "main" 走 baseof：
+     套壳版产物 99,239 B —— 整站 head-meta + 外壳 CSS/JS + 内联运行时全带上了，
+     而访客在这个页面上唯一的动作就是点一个入口走人。这里改成完整 <html> 文档
+     （无 define 块 ⇒ Hugo 不套 baseof），零外链、零脚本，体积压到几 KB。
+     ★别把 baseof / head-meta / shell-* 的 include 加回来：那会直接顶破 25.6KB。
+     ★断言的 ⑤/⑦ 两条（不得把 localhost 当 URL、不得引第三方资源）对这里同样成立：
+       所以 CSS 全内联、不引任何外部文件，也不出现 localhost 字样。
+     ============================================================================ */ -}}
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/png" sizes="128x128" href="/favicon-128.png">
+<title>404 · xiaokeqing</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;min-height:100vh;padding:32px 24px;background:#0a0f12;color:#d7e3e9;
+ text-align:center;overflow-wrap:anywhere;
+ font:16px/1.7 "Segoe UI","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ background-image:radial-gradient(70% 55% at 50% 0%,rgba(127,212,216,.08),transparent 72%)}
+main{width:100%;max-width:34rem}
+.brand{display:inline-block;padding:6px 0;text-decoration:none;color:#7fd4d8;
+ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ font-size:13px;letter-spacing:.24em}
+.brand::before{content:"";display:inline-block;width:6px;height:6px;margin-right:10px;
+ border-radius:50%;background:#7fd4d8;box-shadow:0 0 8px #7fd4d8;vertical-align:1px}
+.code{margin:26px 0 10px;color:#eef3f6;font-weight:600;line-height:1;letter-spacing:.06em;
+ text-shadow:0 0 32px rgba(127,212,216,.18);
+ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ font-size:clamp(56px,13vw,96px)}
+.code span{color:#7fd4d8}
+h1{margin:0 0 6px;font-size:20px;font-weight:600;letter-spacing:.02em}
+p{margin:0;font-size:14px;color:#9fb0ba}
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:28px 0 0}
+nav a{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:9px 16px;
+ border:1px solid rgba(226,236,242,.18);border-radius:999px;background:rgba(54,51,46,.24);
+ color:#7fd4d8;font-size:14px;text-decoration:none;transition:border-color .2s,color .2s}
+nav a span{color:#6f828c;font-size:12px}
+nav a:hover,nav a:focus-visible{border-color:#7fd4d8;color:#eaf6ff;outline:none}
+footer{width:100%;max-width:34rem;margin-top:34px;padding-top:18px;border-top:1px solid rgba(226,236,242,.12);
+ color:#6f828c;font-size:12px;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<a class="brand" href="/">XK-LAB</a>
+<main>
+  <div class="code" aria-hidden="true">4<span>0</span>4</div>
+  <h1>这个地址不存在（404）</h1>
+  <p>可能是链接过期或拼错</p>
+  <nav aria-label="站内入口">
+    <a href="/">主页<span>→</span></a>
+    <a href="/alerts/">告警大屏<span>→</span></a>
+    <a href="/posts/">安全笔记<span>→</span></a>
+  </nav>
+</main>
+<footer>xiaokeqing · 公网安全观测站</footer>
+</body>
+</html>
