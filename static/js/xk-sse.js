@@ -66,6 +66,8 @@
     var kind = String(d.kind || '').toLowerCase();
     var text = (d.rule || '告警') + ' ← ' + (d.src || '—') + (d.count > 1 ? ' ×' + d.count : '');
     window.__xkFeedPush({ ts: ts, cls: CLS[kind] || 'dns', tag: '[' + (d.sev || kind || '事件') + ']', text: text });
+    /* 地图脉冲：只有后端给了 cc 才闪；没有就不画（不本地猜国家） */
+    if (d.cc && window.__xkGeoPulse) { window.__xkGeoPulse(d.cc, d.sev); }
   }
 
   function open() {

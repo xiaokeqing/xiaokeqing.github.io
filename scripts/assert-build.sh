@@ -393,6 +393,7 @@ new_page_gate tools/cve CVE每日速递页
 new_page_gate tour "3 分钟导览页"
 new_page_gate detections "自研检测规则页"
 new_page_gate hunters "攻击者追踪档案页"
+new_page_gate timeline "技术决策时间线页"
 new_page_gate tools 工具台
 new_page_gate tools/password 密码自查页
 # ★2026-10-18：告警噪音指数页（/noise/）。纯静态快照：数字全来自 /data/noise-index.json，

@@ -263,6 +263,9 @@
           + it.name + '</text></g>';
         placed.push(i);
       });
+      /* 实时脉冲层：上面这堆是聚合气泡（快照），这一层只放"刚发生的事件"，
+         由 window.__xkGeoPulse(cc) 推进来；没有 cc 就不画 —— 不猜国家。 */
+      H += '<g id="xkGeoPulse" pointer-events="none"></g>';
       H += '</svg>';
       box.innerHTML = H;
       state.groups = {};
@@ -386,4 +389,55 @@
         if (note) note.textContent = '地理数据未取到（' + (e && e.message ? e.message : '网络错误') + '）· 这里不编数据';
       });
   }
+
+  /* ---------- 实时脉冲：每条带 cc 的事件在来源国闪一下 ----------
+     触发方：static/js/xk-sse.js（SSE alert 帧，后端已带 cc）与任何想复用的脚本。
+     没有 cc（后端取不到国家）就不画 —— 这一层不做 IP→国家的本地猜测。
+     画法：SMIL 三个 animate（半径 4→26、透明度 .85→0、内圈填充渐隐），1.1s 后移除节点，
+     不引 rAF 循环、不常驻计时器（页面隐藏也不会堆积）。 */
+  var pulseCount = 0;
+  window.__xkGeoPulse = function (cc, sev) {
+    if (!cc || !/^[A-Za-z]{2}$/.test(String(cc))) { return false; }
+    /* box 原本只在 init() 里声明；这个入口是全局的，必须自己取一次（否则 ReferenceError） */
+    var box = doc.getElementById('xkGeoMap');
+    if (!box) { return false; }
+    var layer = box.querySelector('#xkGeoPulse');
+    var svg = box.querySelector('svg');
+    if (!layer || !svg) { return false; }
+    var c = C[String(cc).toUpperCase()];
+    if (!c) { return false; }
+    var vb = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+    if (vb.length !== 4 || !vb[2]) { return false; }
+    var p = proj(c[0], c[1], vb[2], vb[3]);
+    var hot = String(sev || '').toUpperCase() === 'CRITICAL' || String(sev || '') === '严重';
+    var stroke = hot ? '255,120,120' : '127,212,216';
+    if (pulseCount++ > 64) { layer.innerHTML = ''; pulseCount = 0; }
+    var g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', 'translate(' + p[0] + ',' + p[1] + ')');
+    var ring = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    ring.setAttribute('r', '4');
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', 'rgba(' + stroke + ',.95)');
+    ring.setAttribute('stroke-width', hot ? '2.2' : '1.6');
+    ring.setAttribute('opacity', '0.9');
+    var dot = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('r', '2.6');
+    dot.setAttribute('fill', 'rgba(' + stroke + ',.95)');
+    g.appendChild(ring); g.appendChild(dot);
+    layer.appendChild(g);
+    /* 用 rAF 自己推进（SMIL 在部分浏览器/无头环境下不跑，实测半径停在 4 不动）；
+       1.1s 内半径 4→26、外圈透明度 0.9→0，结束后摘掉节点并停掉这一条动画。 */
+    var t0 = 0, DUR = 1100;
+    function step(now) {
+      if (!t0) { t0 = now; }
+      var k = Math.min(1, (now - t0) / DUR);
+      ring.setAttribute('r', (4 + 22 * k).toFixed(2));
+      ring.setAttribute('opacity', (0.9 * (1 - k)).toFixed(3));
+      dot.setAttribute('opacity', (1 - k).toFixed(3));
+      if (k < 1 && g.parentNode) { requestAnimationFrame(step); }
+      else if (g.parentNode) { g.parentNode.removeChild(g); }
+    }
+    requestAnimationFrame(step);
+    return true;
+  };
 })();
