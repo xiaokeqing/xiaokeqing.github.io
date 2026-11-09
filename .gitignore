@@ -120,3 +120,6 @@ static/kurisu/voice/bank.json.bak-*
 # API å¿«ç…§å¿…é¡»å…¥åº“ï¼ˆ.gitignore çš„ public/ è§„åˆ™ä¼šåæ‰å®ƒï¼‰
 !static/api/public/
 !static/api/public/**
+
+# Ò»´ÎĞÔĞŞ²¹½Å±¾£¨2026-11-09 ÎóÌá½»ºóÇåÀí£©
+_fix_after.py
