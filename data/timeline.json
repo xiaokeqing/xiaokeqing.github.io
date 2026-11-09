@@ -43,7 +43,7 @@
       "sort": "2026-11-08T14:00:00+08:00",
       "title": "Wazuh 403：不是没数据，是少四个权限",
       "tag": "排障",
-      "problem": "<code>/api/public/indices</code> 一直返回 MOCK；直查 Elasticsearch 报 <b>403 no permissions for [indices:monitor/settings/get]</b>。",
+      "problem": "公开索引接口（<code>indices</code>）一直返回 MOCK；直查 Elasticsearch 报 <b>403 no permissions for [indices:monitor/settings/get]</b>。",
       "judgment": "不是索引没数据，是只读角色少权限。先按报错里的权限名补齐最小集合，再谈数据源；不要一上来就猜索引坏了。",
       "action": "只读角色原来只有 <code>read/search/scroll</code>，补 <code>indices:monitor/settings/get</code>、<code>indices:monitor/stats</code>、<code>cluster:monitor/state</code>、<code>cluster:monitor/stats</code> 四个权限。",
       "result": "<code>mode</code> <b>MOCK → REAL</b>，7 个日索引合计 <b>1,566,439</b> 条；教训是 <code>_cat/indices</code> 还需要 <code>cluster:monitor/state</code>。",

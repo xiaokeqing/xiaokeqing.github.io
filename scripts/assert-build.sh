@@ -390,6 +390,9 @@ new_page_gate passwords 弱口令统计页
 new_page_gate tools/cve CVE每日速递页
 # ★2026-10-18：口令自查页（/tools/password/）。判据同上；data-xk-ssr 用路由名 password
 #   （后端名 /api/public/password 的最后一段），不是目录名，所以两种写法都在 pat 里认。
+new_page_gate tour "3 分钟导览页"
+new_page_gate detections "自研检测规则页"
+new_page_gate hunters "攻击者追踪档案页"
 new_page_gate tools 工具台
 new_page_gate tools/password 密码自查页
 # ★2026-10-18：告警噪音指数页（/noise/）。纯静态快照：数字全来自 /data/noise-index.json，

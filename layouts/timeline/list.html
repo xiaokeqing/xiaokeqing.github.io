@@ -1,0 +1,123 @@
+{{- /* /timeline/ 技术决策时间线：数据来自 data/timeline.json，构建期 SSR 直出，零页面 JS。
+   口径：只抄文档里明确写过的事实与数字；没有数字写「（无量化）」，计划不写成已做。
+   骨架与 partial 顺序照 layouts/trend/list.html。 */ -}}
+{{- $t := hugo.Data.timeline | default dict -}}
+{{- $entries := $t.entries | default slice -}}
+{{- $entries = sort $entries "sort" "asc" -}}
+{{- $n := len $entries -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+.tl-back{display:inline-block;margin:0 0 2px;font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.03em;color:var(--xk-ink-lede,rgba(255,255,255,.55));text-decoration:none}
+.tl-back:hover{color:var(--xk-cyan,#7FD4D8)}
+.tl-ch{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:11px 16px;border-bottom:1px solid var(--xk-line,rgba(255,255,255,.09))}
+.tl-ch b{font:600 12px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.04em;color:var(--xk-ink-title,#eaf6ff)}
+.tl-ch span{margin-left:auto;font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.62));min-width:0;overflow-wrap:anywhere}
+.tl-lede{padding:14px 16px 16px;color:var(--xk-ink-lede,rgba(255,255,255,.72))}
+.tl-lede p{margin:0 0 9px}
+.tl-lede p:last-child{margin-bottom:0}
+.tl-lede-main{font-size:14.5px;line-height:1.95;color:var(--xk-ink-title,#eaf6ff)}
+.tl-lede-sub{font-size:13px;line-height:1.85;opacity:.72}
+.tl-list{position:relative;display:flex;flex-direction:column;gap:14px}
+.tl-list::before{content:"";position:absolute;left:7px;top:12px;bottom:12px;width:1px;background:linear-gradient(180deg,rgba(127,212,216,.55),rgba(127,212,216,.08) 70%,rgba(127,212,216,0))}
+.tl-entry{position:relative;padding-left:26px;min-width:0}
+.tl-dot{position:absolute;left:3px;top:22px;width:9px;height:9px;border-radius:50%;background:var(--xk-cyan,#7FD4D8);box-shadow:0 0 0 3px rgba(127,212,216,.14),0 0 12px rgba(127,212,216,.35)}
+.tl-item{min-width:0}
+.tl-hd{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 10px;padding:14px 16px 11px;border-bottom:1px solid var(--xk-line,rgba(255,255,255,.09));background:linear-gradient(180deg,rgba(127,212,216,.055),transparent)}
+.tl-date{font:11.5px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.04em;color:var(--xk-cyan,#7FD4D8);white-space:nowrap}
+.tl-title{flex:1 1 260px;min-width:0;margin:0;font-size:16px;line-height:1.5;font-weight:600;color:var(--xk-ink-title,#eaf6ff);overflow-wrap:anywhere}
+.tl-tag{font:11px/1.6 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.66));border:1px solid var(--xk-line,rgba(255,255,255,.12));border-radius:999px;padding:1px 8px;white-space:nowrap}
+.tl-body{padding:2px 16px 4px}
+.tl-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px dashed var(--xk-line,rgba(255,255,255,.09))}
+.tl-row:last-child{border-bottom:0}
+.tl-k{font:11.5px/1.7 var(--xk-mono,ui-monospace,Consolas,monospace);letter-spacing:.08em;color:var(--xk-cyan,#7FD4D8);white-space:nowrap}
+.tl-v{min-width:0;font-size:14px;line-height:1.9;color:var(--xk-ink-lede,rgba(255,255,255,.72));overflow-wrap:anywhere;word-break:break-word}
+.tl-v b{color:var(--xk-ink-title,#eaf6ff);font-weight:600}
+.tl-v code{font-family:var(--xk-mono,ui-monospace,Consolas,monospace);font-size:.92em;color:#cfeff1;background:rgba(127,212,216,.08);border:1px solid rgba(127,212,216,.14);border-radius:4px;padding:0 4px;white-space:normal;overflow-wrap:anywhere}
+.tl-src{margin:0;padding:9px 16px 0;font:11.5px/1.7 var(--xk-mono,ui-monospace,Consolas,monospace);color:var(--xk-ink-lede,rgba(255,255,255,.62));opacity:.62;overflow-wrap:anywhere}
+.tl-retro{margin:10px 16px 16px;padding:10px 12px;border-left:2px solid rgba(127,212,216,.55);background:rgba(127,212,216,.05);font-size:13.5px;line-height:1.85;color:var(--xk-ink-lede,rgba(255,255,255,.72))}
+.tl-retro b{color:var(--xk-cyan,#7FD4D8);font-weight:600}
+.tl-outro{padding:14px 16px;font-size:13px;line-height:1.85;color:var(--xk-ink-lede,rgba(255,255,255,.72))}
+.tl-outro p{margin:0}
+.tl-outro a{color:var(--xk-cyan,#7FD4D8);text-decoration:none}
+.tl-outro a:hover{text-decoration:underline}
+@media (max-width:560px){
+  .tl-entry{padding-left:17px}
+  .tl-list::before{left:3px}
+  .tl-dot{left:0;top:18px;width:8px;height:8px}
+  .tl-hd{padding:12px 14px 10px;gap:6px 8px}
+  .tl-title{flex:1 1 100%;font-size:15.5px}
+  .tl-body{padding:0 14px 2px}
+  .tl-row{grid-template-columns:1fr;gap:3px;padding:9px 0}
+  .tl-k{font-size:11px}
+  .tl-v{font-size:13.5px;line-height:1.85}
+  .tl-src{padding:8px 14px 0;font-size:11px}
+  .tl-retro{margin:9px 14px 14px;padding:9px 11px;font-size:13px}
+  .tl-lede{padding:12px 14px 14px}
+  .tl-lede-main{font-size:14px}
+  .tl-ch{padding:10px 14px}
+}
+</style>
+</head>
+<body class="is-view xk-has-idcard" data-skin="warm" data-phone="v1">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" "timeline") }}
+
+<main id="content" data-xk-ssr="timeline">
+<section class="screen">
+  <div class="screen-hd">
+    <span class="dot"></span><b>XK-LAB</b><span class="sep">//</span><b>技术决策时间线</b>
+    <span class="tag">DECISION LOG</span>
+    <span class="sync">● {{ $n }} 条 · 2026-11-06 → 2026-11-09</span>
+  </div>
+
+  <div class="screen-bd">
+    <a class="tl-back" href="/">← 返回首页</a>
+
+    <div class="mod tl-intro">
+      <div class="tl-ch"><b>这一页怎么读</b><span>问题 → 判断 → 做了什么 → 结果</span></div>
+      <div class="tl-lede">
+        <p class="tl-lede-main">这一页只讲一件事：遇到问题时我怎么判断、怎么取舍、结果如何。每条都写清『当时的问题 → 判断 → 做了什么 → 结果数字』。</p>
+        <p class="tl-lede-sub">只写文档里有依据的事：计划不写成已做，没有数字就标「（无量化）」。每条末尾加一句「如果重来一次」，方便你看判断，而不是看功能。</p>
+      </div>
+    </div>
+
+    <div class="tl-list">
+    {{- range $i, $e := $entries }}
+      <div class="tl-entry">
+        <span class="tl-dot" aria-hidden="true"></span>
+        <article class="mod tl-item" id="entry-{{ add $i 1 }}">
+          <div class="tl-hd">
+            <time class="tl-date" datetime="{{ $e.date }}">{{ $e.date }}</time>
+            <h2 class="tl-title">{{ $e.title }}</h2>
+            {{- with $e.tag }}<span class="tl-tag">{{ . }}</span>{{ end }}
+          </div>
+          <div class="tl-body">
+            <div class="tl-row"><span class="tl-k">问题</span><div class="tl-v">{{ $e.problem | safeHTML }}</div></div>
+            <div class="tl-row"><span class="tl-k">判断</span><div class="tl-v">{{ $e.judgment | safeHTML }}</div></div>
+            <div class="tl-row"><span class="tl-k">做了什么</span><div class="tl-v">{{ $e.action | safeHTML }}</div></div>
+            <div class="tl-row"><span class="tl-k">结果</span><div class="tl-v">{{ $e.result | safeHTML }}</div></div>
+          </div>
+          {{- with $e.source }}<p class="tl-src">依据：{{ . }}</p>{{ end }}
+          <p class="tl-retro"><b>如果重来一次，</b>{{ $e.retro }}</p>
+        </article>
+      </div>
+    {{- end }}
+    </div>
+
+    <div class="mod tl-outro">
+      <div class="tl-ch"><b>范围与口径</b><span>资料截至 {{ $t.updated | default "2026-11-09" }}</span></div>
+      <p>这页只回答「怎么判断」。功能清单看 <a href="/what/">/what/</a>，数据口径看 <a href="/attack/">/attack/</a> 与 <a href="/trend/">/trend/</a>；每条都留了文档依据，方便逐条核对。</p>
+    </div>
+  </div>
+</section>
+</main>
+
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+{{ partial "xk-demo/site-foot.html" . }}
+</body>
+</html>
