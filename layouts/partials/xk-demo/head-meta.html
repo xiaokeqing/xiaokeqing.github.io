@@ -125,3 +125,11 @@
 {{- $kpi := resources.Get "js/xk-kpi.js" | minify | fingerprint }}
 <script src="{{ $kpi.RelPermalink }}" integrity="{{ $kpi.Data.Integrity }}" defer></script>
 {{- end }}
+{{- /* ★2026-11-09：「让桐莉讲讲这段」（assets/js/xk-explain.js）—— /tour/ 与 /detections/ 的
+       每个 .mod 小节挂一个按钮，点开调站内公开问答 POST /api/public/ask，答案正文用 textContent
+       落在小节下方，并标「AI 生成」。只给这两页引，其余页面不加载、不多付请求。
+       同样必须走资源管线（static/js/ 会被 scripts/assert-build.sh 断言拦下）。 */ -}}
+{{- if or (eq .Type "tour") (eq .Type "detections") }}
+{{- $ex := resources.Get "js/xk-explain.js" | minify | fingerprint }}
+<script src="{{ $ex.RelPermalink }}" integrity="{{ $ex.Data.Integrity }}" defer></script>
+{{- end }}

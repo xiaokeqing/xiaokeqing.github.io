@@ -84,6 +84,17 @@
   .tu-stats{grid-template-columns:1fr}
   .tu-tbl{font-size:11.5px}
 }
+/* 「让桐莉讲讲这段」：assets/js/xk-explain.js 注入，前缀 .xk-ex 只在本页生效。
+   标题行本来就 flex，这里允许换行——390 下按钮整颗落到标题下方，不跟 .tag 抢同一行。 */
+.mod-hd{flex-wrap:wrap;row-gap:3px}
+.xk-ex-btn{flex:none;padding:0 4px;border:0;border-radius:4px;background:none;color:var(--acc,#7FD4D8);font:12px/1.7 var(--mono,ui-monospace,Consolas,monospace);letter-spacing:.02em;white-space:nowrap;cursor:pointer}
+.xk-ex-btn:hover,.xk-ex-btn:focus-visible{background:rgba(127,212,216,.14)}
+.xk-ex-btn:disabled{color:var(--fg-faint,#8A9DA8);background:none;cursor:default}
+.xk-ex-panel{margin:10px 0 0;padding:1px 0 1px 11px;border-left:2px solid rgba(127,212,216,.55)}
+.xk-ex-tag{display:block;margin:0 0 3px;font:11px/1.6 var(--mono,ui-monospace,Consolas,monospace);color:var(--fg-faint,#8A9DA8)}
+.xk-ex-body{margin:0;font-size:13px;line-height:1.9;color:var(--fg,#D7E3E9);white-space:pre-wrap;overflow-wrap:anywhere}
+.xk-ex-panel.is-err{border-left-color:rgba(232,180,90,.65)}
+.xk-ex-panel.is-err .xk-ex-body{color:var(--warn,#E8B45A)}
 </style>
 </head>
 <body class="is-view xk-has-idcard" data-skin="warm" data-phone="v1">
