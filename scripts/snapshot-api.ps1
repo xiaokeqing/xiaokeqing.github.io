@@ -12,7 +12,7 @@ $tgz = Join-Path $tmpRoot 'xksnap.tgz'
 $stamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 
 $paths = @(
-  'alerts.js', 'home.js', 'geo.js', 'metrics.js', 'stories.js', 'password.js', 'webstats.js'
+  'alerts.js', 'home.js', 'geo.js', 'metrics.js', 'stories.js', 'password.js', 'webstats.js', 'daily.js'
 )
 
 # 热点 IP 清单：由仓库里的 scripts/snapshot-ips.py 在 srv2 上跑（不在 ssh 行里塞多行 python）

@@ -87,7 +87,7 @@ jobs:
         run: |
           set -uo pipefail
           OK=0; BAD=0
-          for p in home.js alerts.js geo.js metrics.js stories.js \
+          for p in home.js alerts.js geo.js metrics.js stories.js daily.js \
                    webstats.js password.js kb.js deploy.js eval.js daily/index.json; do
             out="static/api/public/$p"
             mkdir -p "$(dirname "$out")"

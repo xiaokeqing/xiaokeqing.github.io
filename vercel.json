@@ -34,6 +34,10 @@
     {
       "source": "/api/health",
       "destination": "https://demo.xiaokeqing.cn/api/health"
+    },
+    {
+      "source": "/api/public/daily.js",
+      "destination": "https://demo.xiaokeqing.cn/api/public/daily.js"
     }
   ],
   "headers": [
