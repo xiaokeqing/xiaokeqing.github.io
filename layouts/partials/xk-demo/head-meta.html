@@ -118,3 +118,10 @@
        行为不变：都是 defer、都在 DOM 解析完后按序执行；ticker 自己会判 html.xk-slow 与 #dockTicker。 */ -}}
 {{- $uxBundle := slice (resources.Get "js/xk-ux.js") (resources.Get "js/xk-geo.js") (resources.Get "js/xk-ticker.js") | resources.Concat "js/xk-ux-geo-ticker.js" | minify | fingerprint -}}
 <script src="{{ $uxBundle.RelPermalink }}" defer></script>
+{{- /* ★2026-11-09：/alerts/ 顶部 KPI 卡的 24h 迷你趋势线 + 环比（assets/js/xk-kpi.js）。
+       只给 /alerts/ 引：其余六页的 ops-hero 在隐藏 tab 里，没必要为它多付两次快照请求。
+       必须走 Hugo 资源管线（resources.Get | minify | fingerprint）—— 放 static/js/ 会被断言拦下。 */ -}}
+{{- if eq .Type "alerts" }}
+{{- $kpi := resources.Get "js/xk-kpi.js" | minify | fingerprint }}
+<script src="{{ $kpi.RelPermalink }}" integrity="{{ $kpi.Data.Integrity }}" defer></script>
+{{- end }}

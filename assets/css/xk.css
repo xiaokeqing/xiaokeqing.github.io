@@ -88,7 +88,7 @@
   .view{display:none}.view.on{display:block}
 
   /* 监测中心：一整块大屏幕 */
-  .screen{background:var(--panel);border:1px solid var(--line2);border-radius:16px;overflow:hidden;
+  .screen{background:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 46%),var(--panel);border:1px solid var(--line2);border-top-color:rgba(255,255,255,.45);border-radius:16px;overflow:hidden;
     box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
   .screen-hd{display:flex;align-items:center;gap:12px;padding:13px 20px;flex-wrap:wrap;
     background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
@@ -100,7 +100,7 @@
   .screen-bd table{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
 .screen-bd{padding:18px;display:flex;flex-direction:column;gap:16px}
 
-  .mod{background:rgba(10,13,17,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  .mod{background:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 46%),rgba(15,19,24,.76);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;overflow:hidden;
     box-shadow:0 6px 20px rgba(0,0,0,.18)}
   .mod-hd{display:flex;align-items:center;gap:8px;padding:9px 15px;border-bottom:1px solid var(--line);
     font:var(--fs-xs) var(--mono);color:var(--mut);letter-spacing:.1em}
@@ -290,7 +290,7 @@
 
 
   /* 笔记 / 靶场 / 关于 */
-  .card{background:var(--panel);border:1px solid var(--line2);border-radius:14px;margin-bottom:16px;overflow:hidden;
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 46%),var(--panel);border:1px solid var(--line2);border-top-color:rgba(255,255,255,.45);border-bottom-color:rgba(0,0,0,.30);border-radius:14px;margin-bottom:16px;overflow:hidden;
     box-shadow:0 14px 44px rgba(0,0,0,.35);backdrop-filter:blur(4px)}
   .card-hd{display:flex;align-items:center;gap:8px;padding:9px 15px;border-bottom:1px solid var(--line);
     font:var(--fs-xs) var(--mono);color:var(--mut);letter-spacing:.09em;background:var(--panel2)}
@@ -622,7 +622,7 @@
     .notes-q:focus{border-color:var(--acc)}
     .notes-q::placeholder{color:var(--mut)}
     .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:15px}
-    .note-card{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--line);
+    .note-card{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--line);border-top-color:rgba(255,255,255,.40);background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 46%),rgba(22,25,30,.50);
       border-radius:12px;background:rgba(20,22,26,.42);text-decoration:none;color:inherit;
       transition:border-color .18s ease,transform .18s ease}
     .note-card:hover{border-color:var(--line2);transform:translateY(-1px)}
@@ -679,7 +679,7 @@
   .bglite{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:0;transition:opacity .45s ease;background:center/cover no-repeat url(/kurisu/scene/bg/light_high.webp)}
   html.xk-lite .bglite{opacity:.5}
   @media (prefers-reduced-motion:reduce){.bglite{transition:none}}
-  .bgshade{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,10,14,var(--shade)),rgba(8,10,14,var(--shade)))}
+  .bgshade{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,10,14,calc(var(--shade)*0.35)) 0%,rgba(8,10,14,var(--shade)))}
   body.is-home .bg,body.is-home .bgshade,body.is-home .bglite{display:none}
 
 /* ★P8-A（站主 2026-10-16）：内容页右列 = 手机（替掉 .holo）；主页无手机 */
@@ -800,7 +800,7 @@ html.xk-phone-emote-wait .phone-scr{background-image:none}
 #v-monitor .oh-cell{display:flex;flex-direction:column;justify-content:center;gap:6px;
   min-height:96px;padding:16px 18px;border-radius:14px;
   background:rgba(12,18,22,.72);border:1px solid rgba(127,211,227,.18)}
-#v-monitor .oh-cell b{font:600 30px/1.1 var(--mono,ui-monospace,Consolas,monospace);letter-spacing:.5px;font-variant-numeric:tabular-nums}
+#v-monitor .oh-cell b{font:600 30px/1.1 var(--mono,ui-monospace,Consolas,monospace);letter-spacing:.5px;font-variant-numeric:tabular-nums;text-shadow:0 0 16px rgba(243,234,217,.22)}
 #v-monitor .oh-cell span{font-size:var(--fs-xs);opacity:.75}
 #v-monitor .oh-line{grid-column:1 / -1;min-height:0;padding:2px 2px 0;font-size:var(--fs-xs);opacity:.72}
 
@@ -1151,3 +1151,41 @@ footer.xk-foot > a,
 footer.xk-foot .xk-foot-q a{
   display:inline-block;padding:6px 2px;min-height:32px;
 }
+
+/* ==========================================================================
+   /alerts/ 顶部 KPI：24h 迷你趋势线 + 与上一份日报的环比（2026-11-09）
+   —— 只挂在 #v-monitor 的第一张 .oh-cell 上；无数据时元素带 [hidden]。
+      颜色口径：涨 #F2A15A（暖色）/ 跌 #7FD4D8（青）；
+      折线 rgba(127,212,216,.9)，面积渐变同色 12% → 0。
+   ========================================================================== */
+#v-monitor .oh-cell.xk-kpi-cell{flex-direction:row;align-items:center;justify-content:space-between;gap:14px}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-main{display:flex;flex-direction:column;gap:5px;min-width:0}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-num{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;min-width:0}
+#v-monitor .oh-cell.xk-kpi-cell span{margin-top:0}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-win{
+  display:inline-block;margin:0;padding:1px 5px;
+  border:1px solid rgba(127,212,216,.30);border-radius:999px;
+  color:#B9DEE2;font:500 10px/1.45 var(--mono,ui-monospace,Consolas,monospace);
+  letter-spacing:.02em;opacity:.72;vertical-align:middle;white-space:nowrap;
+}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-delta{
+  margin:0;font:500 11px/1.35 var(--mono,ui-monospace,Consolas,monospace);
+  letter-spacing:.01em;color:var(--mut,#D2CBBD);
+}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-delta.xk-kpi-up{color:#F2A15A}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-delta.xk-kpi-down{color:#7FD4D8}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-delta.xk-kpi-flat{color:var(--mut,#D2CBBD);opacity:.62}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-spark{flex:0 0 auto;width:120px;height:32px;line-height:0;opacity:.96}
+#v-monitor .oh-cell.xk-kpi-cell .xk-kpi-spark svg{display:block;width:120px;height:32px;overflow:visible}
+#v-monitor .oh-cell .xk-kpi-spark[hidden],
+#v-monitor .oh-cell .xk-kpi-delta[hidden],
+#v-monitor .oh-cell .xk-kpi-win[hidden]{display:none}
+/* 三列被挤窄的中等视口：趋势线落到数字下方，避免 120px 固定宽度顶出卡片 */
+@media (min-width:721px) and (max-width:1100px){
+  #v-monitor .oh-cell.xk-kpi-cell{flex-direction:column;align-items:flex-start;gap:8px}
+  #v-monitor .oh-cell.xk-kpi-cell .xk-kpi-spark{align-self:flex-end}
+}
+
+/* ===== 2026-11-09 A5/A8：统一卡片内高光与笔记卡 hover（光与材质） ===== */
+.mod,.screen,.note-card,.xk-ent-card,.xk-ai-cache,.ops-hero{box-shadow:0 12px 30px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.16)}
+.note-card:hover{border-color:rgba(127,212,216,.45);transform:translateY(-2px);box-shadow:0 14px 32px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.09)}

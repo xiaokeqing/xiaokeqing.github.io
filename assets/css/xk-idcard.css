@@ -386,3 +386,15 @@ body.xk-has-idcard .xk-idcard .xk-idcard-hidden{display:none !important}
   body.xk-has-idcard .main{padding-top:176px}
   body.xk-has-idcard .dock{row-gap:0}
 }
+
+/* ===== 2026-11-09 站主口径：顶栏按"首页那套"统一（不要每项一个胶囊框） =====
+   首页内联 dock 的观感：透明底、暖灰字 rgb(210,203,189)、13px、无边框；
+   当前项只换文字色（青），hover 只给一层很淡的白。 */
+body.xk-has-idcard .dock a{background:none;border:0;color:#D2CBBD;font-size:13px;font-weight:400;letter-spacing:0}
+body.xk-has-idcard .dock a:not(.brand):hover{background:rgba(255,255,255,.05);border-radius:8px;color:#EAF6FF}
+body.xk-has-idcard .dock a.on,body.xk-has-idcard .dock a.is-on{background:none;border:0;color:#7FD4D8;font-weight:500}
+body.xk-has-idcard .dock .brand{color:#D2CBBD;font-size:13px}
+body.xk-has-idcard .dock .brand:hover{color:#EAF6FF;background:none}
+/* 右侧工具（声音/登录）也去掉框，只留文字 + 极淡 hover */
+body.xk-has-idcard .dock .dock-tools a,body.xk-has-idcard .dock .dock-tools button{background:none;border:0;color:#C9C2B4;font-size:12.5px}
+body.xk-has-idcard .dock .dock-tools a:hover,body.xk-has-idcard .dock .dock-tools button:hover{background:rgba(255,255,255,.06);border-radius:8px;color:#EAF6FF}

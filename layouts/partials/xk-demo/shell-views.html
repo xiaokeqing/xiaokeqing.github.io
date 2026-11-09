@@ -47,7 +47,14 @@
           {{- /* ★2026-11-06 慢网口径「先给最快的东西」：首屏三个数字先用构建期快照（data/ops-snapshot.json），接口回来后再覆盖。 */ -}}
 {{- /* ★2026-11-07 修 deprecation WARN：site.Data → hugo.Data（Hugo 0.156+ 命名空间；部署钉 0.167.0，netlify.toml 已固定）。 */ -}}
 {{- $snap := hugo.Data.ops_snapshot -}}{{- $fmt := "" -}}{{- with $snap }}{{ if .blockedByGuard }}{{ $fmt = lang.FormatNumberCustom 0 (float .blockedByGuard) "," "." -1 -1 }}{{ end }}{{ end -}}
-          <div class="oh-cell"><b id="ohBlocked">{{ if and $snap $snap.blockedByGuard }}{{ lang.FormatNumberCustom 0 (float $snap.blockedByGuard) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计拦截</span></div>
+          <div class="oh-cell xk-kpi-cell" id="ohKpiCell">
+            <div class="xk-kpi-main">
+              <div class="xk-kpi-num"><b id="ohBlocked">{{ if and $snap $snap.blockedByGuard }}{{ lang.FormatNumberCustom 0 (float $snap.blockedByGuard) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span class="xk-kpi-win" id="xkKpiWin" hidden></span></div>
+              <span>累计拦截</span>
+              <p class="xk-kpi-delta" id="xkKpiDelta" hidden></p>
+            </div>
+            <div class="xk-kpi-spark" id="xkKpiSpark" hidden></div>
+          </div>
           <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计封禁 IP</span></div>
           <div class="oh-cell"><b id="ohHoney">{{ if and $snap $snap.honeyConnections }}{{ lang.FormatNumberCustom 0 (float $snap.honeyConnections) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>蜜罐连接</span></div>
           <div class="oh-line" id="ohLine">{{ if $snap }}快照 {{ $snap.generatedAt }} · 正在同步最新{{ else }}正在读取快照…{{ end }}</div>
