@@ -1307,3 +1307,12 @@ body.xk-assist-closed .xk-assist{opacity:0;visibility:hidden;transform:translate
   body.xk-assist-open .xk-assist-fab{display:none}
 }
 @media (prefers-reduced-motion:reduce){.xk-assist,.xk-assist-say.is-typing::after{transition:none;animation:none}}
+
+/* 大屏：地图卡内滚动收敛，避免与底部「严重度」卡叠在一起 */
+body[data-xk-page="monitor"] #xkGeoCard{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+body[data-xk-page="monitor"] #xkGeoCard > .ch{flex:0 0 auto}
+body[data-xk-page="monitor"] #xkGeoMap{flex:1 1 auto;min-height:0;height:auto !important;overflow:hidden}
+body[data-xk-page="monitor"] #xkGeoTip{position:absolute}
+body[data-xk-page="monitor"] .live-foot{flex:0 0 auto}
+body[data-xk-page="monitor"] .live-main{min-height:0}
+body[data-xk-page="monitor"] .main{padding-top:56px}
