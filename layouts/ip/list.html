@@ -786,8 +786,19 @@ curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/
       init.signal = ctrl.signal;
       timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT);
     }
-    var url = API + '/api/public/story.js?id=' + encodeURIComponent(q) + '&hours=24';
-    fetch(url, init).then(function (res) {
+    /* 同源反代优先（vercel.json 有 rewrite）：浏览器不再直连 demo 域，
+       反代不可用（本地静态检查）时再退回 data-wb-api 基址 */
+    var tlPath = '/api/public/story.js?id=' + encodeURIComponent(q) + '&hours=24';
+    var urls = [tlPath], tried = 0;
+    if (API) { urls.push(API + tlPath); }
+    var fetchNext = function () {
+      var u = urls[tried++];
+      return fetch(u, init).catch(function (e) {
+        if (tried < urls.length) { return fetchNext(); }
+        throw e;
+      });
+    };
+    fetchNext().then(function (res) {
       return res.text().then(function (text) {
         if (seq !== tlSeq) return;
         var json = null;

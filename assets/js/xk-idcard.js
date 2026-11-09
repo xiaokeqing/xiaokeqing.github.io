@@ -843,7 +843,10 @@
       var self = false;
       try { self = !!(window.__xkLogin && window.__xkLogin.state === 'logged-in'); } catch (e) { }
       var cid = cidGet();
-      var url = API + (self ? '/api/user/ask' : '/api/public/ask');
+      /* 同源优先（vercel.json 已反代 /api/public/ask 与 /api/user/*）：浏览器不直连 demo 域；
+         本地静态检查时同源会失败，catch 里再退回 data-wb-api 基址。 */
+      var askPath = (self ? '/api/user/ask' : '/api/public/ask');
+      var url = askPath;
       var payload = { question: q };
       if (self && cid) { payload.conversationId = cid; }     /* ★多轮：只有登录面有；body **只**这两个键 */
       var to = self ? selfTimeout() : ASK_TIMEOUT;
@@ -857,13 +860,23 @@
       var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, to);
       var t0 = Date.now();
       /* ★必须走 __xkAdmin.fetch：它负责"只在目标是 wb-api 同源时才带 X-User-Token"（③a 红线） */
-      adminApi.fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        mode: 'cors', credentials: 'omit', cache: 'no-store',
-        signal: ctrl ? ctrl.signal : undefined,
-        body: JSON.stringify(payload)
-      }).then(function (res) {
+      (function () {
+        var postIt = function (u) {
+          return adminApi.fetch(u, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            mode: 'cors', credentials: 'omit', cache: 'no-store',
+            signal: ctrl ? ctrl.signal : undefined,
+            body: JSON.stringify(payload)
+          });
+        };
+        /* 同源优先（vercel.json 已反代 /api/public/ask 与 /api/user/*）：浏览器不直连 demo 域；
+           同源不可用（本地/预览）时退回 data-wb-api 基址。 */
+        return postIt(url).catch(function (err) {
+          if (API) { D2.url = API + askPath; return postIt(API + askPath); }
+          throw err;
+        });
+      })().then(function (res) {
         clearTimeout(timer);
         var status = res.status, ra = res.headers.get('Retry-After');
         return res.json().catch(function () { return null; }).then(function (body) {

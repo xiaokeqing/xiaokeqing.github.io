@@ -264,6 +264,18 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
   var TIMEOUT = 20000;
   var meta = document.querySelector('meta[name="wb-api"]');
   var API = (document.documentElement.getAttribute('data-wb-api') || (meta && meta.getAttribute('content')) || '').replace(/\/+$/, ''); /* 2026-11-09：meta 已被 boot 清空，回退 data-wb-api（本页没有静态快照） */
+  /* 同源优先：vercel.json 已把 /api/health、/api/public/audit.js 反代到 demo；
+     本地静态检查时同源会 404，这里再退回 data-wb-api 基址。 */
+  function epFetch(path, init) {
+    return fetch(path, init).then(function (res) {
+      if ((res.status === 404 || res.status === 405) && API) { return fetch(API + path, init); }
+      return res;
+    }).catch(function (e) {
+      if (API) { return fetch(API + path, init); }
+      throw e;
+    });
+  }
+
   var EPS = [
     { p: '/api/health',            use: '服务自述 + 构建 SHA' },
     { p: '/api/public/home.js',    use: '首页聚合（alerts + geo + honeypot）' },
@@ -342,7 +354,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
       init.signal = ctrl.signal;
       timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT);
     }
-    return fetch(API + ep.p, init).then(function (res) {
+    return epFetch(ep.p, init).then(function (res) {
       out.status = res.status;
       out.ageHdr = res.headers.get('age');
       return res.text().then(function (text) {
@@ -679,7 +691,7 @@ curl -s https://demo.xiaokeqing.cn/api/public/daily.js</pre>
   }
   function renderDaily() {
     if (!window.fetch) { show('stDailyDate', NA + '（浏览器不支持 fetch）'); return; }
-    fetch(API + '/api/public/daily.js', { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' })
+    epFetch('/api/public/daily.js', { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();

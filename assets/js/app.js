@@ -1689,7 +1689,7 @@
   function askApi(question) {
     var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, ASK_TIMEOUT_MS);
-    return fetch(API + '/api/public/ask', {
+    return fetch('/api/public/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       mode: 'cors',
@@ -1697,6 +1697,17 @@
       cache: 'no-store',
       signal: ctrl ? ctrl.signal : undefined,
       body: JSON.stringify({ question: String(question).slice(0, ASK_MAX_CHARS), speakJa: speakJaWanted() })
+    }).catch(function (err) {
+      /* 同源反代不可用（本地 / 预览环境）→ 退回 data-wb-api 基址直连 */
+      if (API) {
+        return fetch(API + '/api/public/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors', credentials: 'omit', cache: 'no-store',
+          body: JSON.stringify({ question: String(question).slice(0, ASK_MAX_CHARS), speakJa: speakJaWanted() })
+        });
+      }
+      throw err;
     }).then(function (res) {
       clearTimeout(timer);
       return res.json().catch(function () { return null; }).then(function (body) {
