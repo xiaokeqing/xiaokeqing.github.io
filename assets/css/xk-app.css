@@ -172,7 +172,7 @@
   #xk-app .ops-tab{display:none}
   #xk-app .ops-tab.on{display:block;animation:opsfade .35s ease}
   @keyframes opsfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  #xk-app .ops-live{display:grid;grid-template-columns:1fr 296px;gap:14px;margin-bottom:14px}
+  #xk-app .ops-live{display:grid;grid-template-columns:1fr 296px;gap:14px;margin-bottom:14px;align-items:start}
   #xk-app .term{background:#12100D;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
   #xk-app .term-hd{display:flex;gap:10px;align-items:center;padding:8px 13px;border-bottom:1px solid var(--line);
     font:12.5px var(--mono);color:var(--txt)}

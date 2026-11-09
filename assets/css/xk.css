@@ -145,7 +145,7 @@
   .ops-tab{display:none}
   .ops-tab.on{display:block;animation:opsfade .35s ease}
   @keyframes opsfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .ops-live{display:grid;grid-template-columns:1fr 296px;gap:14px;margin-bottom:14px}
+  .ops-live{display:grid;grid-template-columns:1fr 296px;gap:14px;margin-bottom:14px;align-items:start}
   /* ★LIVE-HIDE（2026-10-18）：「实时攻击」那一坨（刷流 + 右栏）不属于任何 `.ops-tab`，
      所以切到攻击图谱/威聑矩阵/数据统计时它照样在页面上摆着，看起来就是“全堆成一页”。
      有 :has 就用 CSS 隐藏；没有的话 watchTabs 里还有一行 JS 兜底。 */
@@ -1040,3 +1040,10 @@ pre{position:relative}
 .xk-views .ch, .ops-rail .ch, .screen-bd .ch{display:flex;align-items:baseline;gap:10px;min-width:0}
 .xk-views .ch>b, .ops-rail .ch>b, .screen-bd .ch>b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .xk-views .ch>span.src, .ops-rail .ch>span.src, .screen-bd .ch>span.src{margin-left:auto;flex:0 0 auto;white-space:nowrap}
+
+/* ★2026-11-09：原来 `.ops-live` 是 1fr/296px，右栏（威胁等级+TOP+地图+处置+蜜罐 ≈1476px）
+   远高于左栏实时流（≈356px），而 24h 卡在 .ops-live 之外 ⇒ 左栏下方被拉出 ~800px 空白（站主截图）。
+   改法：作战室不再用"左窄右高"的侧栏布局——实时流占满一行，下面 5 张卡按窗口宽度自适应成 2~4 列栅格。 */
+#v-monitor .ops-live{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+#v-monitor .ops-live > .ops-rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:stretch}
+#v-monitor .ops-live > .ops-rail > *{height:100%;align-self:stretch}
