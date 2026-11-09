@@ -1,45 +1,45 @@
 {
- "generatedAt": "2026-11-08T23:30:26+08:00",
- "windowDays": 7,
- "total": 1812272,
- "mapped": 903111,
- "unmapped": 909161,
- "mappedPct": 49.83,
+ "generatedAt": "2026-11-09T13:01:51+08:00",
+ "windowDays": 5,
+ "total": 1512896,
+ "mapped": 745839,
+ "unmapped": 767057,
+ "mappedPct": 49.3,
  "tactics": [
   {
    "id": "TA0006",
    "name": "Credential Access",
-   "count": 494435
+   "count": 399007
   },
   {
    "id": "TA0043",
    "name": "Reconnaissance",
-   "count": 399894
+   "count": 340182
   },
   {
    "id": "TA0005",
    "name": "Defense Evasion",
-   "count": 8050
+   "count": 6148
   },
   {
    "id": "TA0004",
    "name": "Privilege Escalation",
-   "count": 8050
+   "count": 6148
   },
   {
    "id": "TA0001",
    "name": "Initial Access",
-   "count": 7808
+   "count": 5891
   },
   {
    "id": "TA0003",
    "name": "Persistence",
-   "count": 7808
+   "count": 5891
   },
   {
    "id": "TA0008",
    "name": "Lateral Movement",
-   "count": 4501
+   "count": 3308
   },
   {
    "id": "TA0007",
@@ -49,21 +49,21 @@
   {
    "id": "TA0040",
    "name": "Impact",
-   "count": 39
+   "count": 29
   }
  ],
  "techniques": [
   {
    "id": "T1110",
    "name": "Brute Force",
-   "count": 431278,
+   "count": 360497,
    "tactics": [
     "TA0006"
    ],
    "cells": [
     {
      "tactic": "TA0006",
-     "count": 431278,
+     "count": 360497,
      "alpha": 0.42
     }
    ]
@@ -71,14 +71,14 @@
   {
    "id": "T1595",
    "name": "Active Scanning",
-   "count": 399894,
+   "count": 340182,
    "tactics": [
     "TA0043"
    ],
    "cells": [
     {
      "tactic": "TA0043",
-     "count": 399894,
+     "count": 340182,
      "alpha": 0.42
     }
    ]
@@ -86,7 +86,7 @@
   {
    "id": "T1110.001",
    "name": "Password Guessing",
-   "count": 63110,
+   "count": 38463,
    "tactics": [
     "TA0006",
     "TA0008"
@@ -94,20 +94,20 @@
    "cells": [
     {
      "tactic": "TA0006",
-     "count": 63110,
-     "alpha": 0.37
+     "count": 38463,
+     "alpha": 0.36
     },
     {
      "tactic": "TA0008",
-     "count": 25,
-     "alpha": 0.16
+     "count": 18,
+     "alpha": 0.15
     }
    ]
   },
   {
    "id": "T1078",
    "name": "Valid Accounts",
-   "count": 7808,
+   "count": 5891,
    "tactics": [
     "TA0005",
     "TA0001",
@@ -118,27 +118,27 @@
    "cells": [
     {
      "tactic": "TA0005",
-     "count": 7808,
+     "count": 5891,
      "alpha": 0.31
     },
     {
      "tactic": "TA0001",
-     "count": 7808,
+     "count": 5891,
      "alpha": 0.31
     },
     {
      "tactic": "TA0003",
-     "count": 7808,
+     "count": 5891,
      "alpha": 0.31
     },
     {
      "tactic": "TA0004",
-     "count": 7808,
+     "count": 5891,
      "alpha": 0.31
     },
     {
      "tactic": "TA0008",
-     "count": 3783,
+     "count": 2817,
      "alpha": 0.29
     }
    ]
@@ -146,7 +146,7 @@
   {
    "id": "T1021",
    "name": "Remote Services",
-   "count": 3783,
+   "count": 2817,
    "tactics": [
     "TA0005",
     "TA0001",
@@ -157,27 +157,27 @@
    "cells": [
     {
      "tactic": "TA0005",
-     "count": 3783,
+     "count": 2817,
      "alpha": 0.29
     },
     {
      "tactic": "TA0001",
-     "count": 3783,
+     "count": 2817,
      "alpha": 0.29
     },
     {
      "tactic": "TA0008",
-     "count": 3783,
+     "count": 2817,
      "alpha": 0.29
     },
     {
      "tactic": "TA0003",
-     "count": 3783,
+     "count": 2817,
      "alpha": 0.29
     },
     {
      "tactic": "TA0004",
-     "count": 3783,
+     "count": 2817,
      "alpha": 0.29
     }
    ]
@@ -185,22 +185,22 @@
   {
    "id": "T1021.002",
    "name": "SMB/Windows Admin Shares",
-   "count": 693,
+   "count": 473,
    "tactics": [
     "TA0008"
    ],
    "cells": [
     {
      "tactic": "TA0008",
-     "count": 693,
-     "alpha": 0.25
+     "count": 473,
+     "alpha": 0.24
     }
    ]
   },
   {
    "id": "T1548.003",
    "name": "Sudo and Sudo Caching",
-   "count": 242,
+   "count": 257,
    "tactics": [
     "TA0005",
     "TA0004"
@@ -208,12 +208,12 @@
    "cells": [
     {
      "tactic": "TA0005",
-     "count": 242,
+     "count": 257,
      "alpha": 0.22
     },
     {
      "tactic": "TA0004",
-     "count": 242,
+     "count": 257,
      "alpha": 0.22
     }
    ]
@@ -230,34 +230,34 @@
     {
      "tactic": "TA0006",
      "count": 47,
-     "alpha": 0.17
+     "alpha": 0.18
     },
     {
      "tactic": "TA0007",
      "count": 47,
-     "alpha": 0.17
+     "alpha": 0.18
     }
    ]
   },
   {
    "id": "T1565.001",
    "name": "Stored Data Manipulation",
-   "count": 39,
+   "count": 29,
    "tactics": [
     "TA0040"
    ],
    "cells": [
     {
      "tactic": "TA0040",
-     "count": 39,
-     "alpha": 0.17
+     "count": 29,
+     "alpha": 0.16
     }
    ]
   },
   {
    "id": "T1021.004",
    "name": "SSH",
-   "count": 25,
+   "count": 18,
    "tactics": [
     "TA0006",
     "TA0008"
@@ -265,13 +265,13 @@
    "cells": [
     {
      "tactic": "TA0006",
-     "count": 25,
-     "alpha": 0.16
+     "count": 18,
+     "alpha": 0.15
     },
     {
      "tactic": "TA0008",
-     "count": 25,
-     "alpha": 0.16
+     "count": 18,
+     "alpha": 0.15
     }
    ]
   }
@@ -284,22 +284,22 @@
  "suricata": {
   "available": true,
   "reason": "",
-  "windowDays": 7,
-  "total": 332655,
-  "mapped": 306361,
-  "unmapped": 26294,
-  "mappedPct": 92.1,
+  "windowDays": 5,
+  "total": 308378,
+  "mapped": 284077,
+  "unmapped": 24301,
+  "mappedPct": 92.12,
   "byCategory": [
    {
     "category": "Attempted Information Leak",
-    "count": 306171,
+    "count": 283912,
     "tactic": "TA0043",
     "tacticName": "Reconnaissance",
     "mapped": true
    },
    {
     "category": "Misc activity",
-    "count": 15155,
+    "count": 13498,
     "tactic": "",
     "tacticName": "",
     "mapped": false,
@@ -307,45 +307,45 @@
    },
    {
     "category": "Misc Attack",
-    "count": 6411,
+    "count": 5424,
     "tactic": "",
     "tacticName": "",
     "mapped": false,
     "why": "DROP/Spamhaus/CINS 信誉名单命中，只知道来源坏"
    },
    {
-    "category": "Generic Protocol Command Decode",
-    "count": 2502,
-    "tactic": "",
-    "tacticName": "",
-    "mapped": false,
-    "why": "STREAM/HTTP 解析异常，是引擎观察不是攻击阶段"
-   },
-   {
     "category": "Potentially Bad Traffic",
-    "count": 2168,
+    "count": 2963,
     "tactic": "",
     "tacticName": "",
     "mapped": false,
     "why": "同桶混有端口扫描与 webshell 上传，跨战术不摊派"
    },
    {
-    "category": "Detection of a Network Scan",
-    "count": 63,
-    "tactic": "TA0043",
-    "tacticName": "Reconnaissance",
-    "mapped": true
+    "category": "Generic Protocol Command Decode",
+    "count": 2364,
+    "tactic": "",
+    "tacticName": "",
+    "mapped": false,
+    "why": "STREAM/HTTP 解析异常，是引擎观察不是攻击阶段"
    },
    {
     "category": "Attempted Administrator Privilege Gain",
-    "count": 60,
+    "count": 54,
     "tactic": "TA0004",
     "tacticName": "Privilege Escalation",
     "mapped": true
    },
    {
+    "category": "Detection of a Network Scan",
+    "count": 52,
+    "tactic": "TA0043",
+    "tacticName": "Reconnaissance",
+    "mapped": true
+   },
+   {
     "category": "Not Suspicious Traffic",
-    "count": 56,
+    "count": 51,
     "tactic": "",
     "tacticName": "",
     "mapped": false,
@@ -353,16 +353,9 @@
    },
    {
     "category": "Web Application Attack",
-    "count": 53,
+    "count": 49,
     "tactic": "TA0001",
     "tacticName": "Initial Access",
-    "mapped": true
-   },
-   {
-    "category": "A Network Trojan was detected",
-    "count": 6,
-    "tactic": "TA0011",
-    "tacticName": "Command and Control",
     "mapped": true
    },
    {
@@ -373,8 +366,15 @@
     "mapped": true
    },
    {
+    "category": "A Network Trojan was detected",
+    "count": 3,
+    "tactic": "TA0011",
+    "tacticName": "Command and Control",
+    "mapped": true
+   },
+   {
     "category": "",
-    "count": 2,
+    "count": 1,
     "tactic": "",
     "tacticName": "",
     "mapped": false,
@@ -382,7 +382,7 @@
    },
    {
     "category": "Attempted User Privilege Gain",
-    "count": 2,
+    "count": 1,
     "tactic": "TA0004",
     "tacticName": "Privilege Escalation",
     "mapped": true
@@ -392,52 +392,41 @@
    {
     "id": "TA0043",
     "name": "Reconnaissance",
-    "count": 306234,
+    "count": 283964,
     "categories": [
      {
       "category": "Attempted Information Leak",
-      "count": 306171
+      "count": 283912
      },
      {
       "category": "Detection of a Network Scan",
-      "count": 63
+      "count": 52
      }
     ]
    },
    {
     "id": "TA0004",
     "name": "Privilege Escalation",
-    "count": 62,
+    "count": 55,
     "categories": [
      {
       "category": "Attempted Administrator Privilege Gain",
-      "count": 60
+      "count": 54
      },
      {
       "category": "Attempted User Privilege Gain",
-      "count": 2
+      "count": 1
      }
     ]
    },
    {
     "id": "TA0001",
     "name": "Initial Access",
-    "count": 53,
+    "count": 49,
     "categories": [
      {
       "category": "Web Application Attack",
-      "count": 53
-     }
-    ]
-   },
-   {
-    "id": "TA0011",
-    "name": "Command and Control",
-    "count": 6,
-    "categories": [
-     {
-      "category": "A Network Trojan was detected",
-      "count": 6
+      "count": 49
      }
     ]
    },
@@ -451,45 +440,56 @@
       "count": 6
      }
     ]
+   },
+   {
+    "id": "TA0011",
+    "name": "Command and Control",
+    "count": 3,
+    "categories": [
+     {
+      "category": "A Network Trojan was detected",
+      "count": 3
+     }
+    ]
    }
   ],
   "unmappedCategories": [
    {
     "category": "Misc activity",
-    "count": 15155,
+    "count": 13498,
     "why": "信息类签名（SSH 版本串/Go UA），无攻击阶段语义"
    },
    {
     "category": "Misc Attack",
-    "count": 6411,
+    "count": 5424,
     "why": "DROP/Spamhaus/CINS 信誉名单命中，只知道来源坏"
    },
    {
-    "category": "Generic Protocol Command Decode",
-    "count": 2502,
-    "why": "STREAM/HTTP 解析异常，是引擎观察不是攻击阶段"
-   },
-   {
     "category": "Potentially Bad Traffic",
-    "count": 2168,
+    "count": 2963,
     "why": "同桶混有端口扫描与 webshell 上传，跨战术不摊派"
    },
    {
+    "category": "Generic Protocol Command Decode",
+    "count": 2364,
+    "why": "STREAM/HTTP 解析异常，是引擎观察不是攻击阶段"
+   },
+   {
     "category": "Not Suspicious Traffic",
-    "count": 56,
+    "count": 51,
     "why": "签名自述非可疑，不映射"
    },
    {
     "category": "",
-    "count": 2,
+    "count": 1,
     "why": "告警本身没有 category 字段"
    }
   ],
-  "observedFrom": "2026-11-05 00:00",
-  "observedTo": "2026-11-08 23:30",
+  "observedFrom": "2026-11-06 00:00",
+  "observedTo": "2026-11-09 13:01",
   "files": 4,
-  "bytes": 1299979081,
-  "coverage": "窗口 7 天；可读日志 4 个文件（约 1.21 GB），实际覆盖 2026-11-05 00:00 → 2026-11-08 23:30（约 4.0 天）",
+  "bytes": 1179732678,
+  "coverage": "窗口 5 天；可读日志 4 个文件（约 1.10 GB），实际覆盖 2026-11-06 00:00 → 2026-11-09 13:01（约 3.5 天）",
   "note": "Suricata 没有 ATT&CK 字段：本块是 13 条 category 的人工对照（7 条映射到 5 个战术），表外/留空的 category 一律进未映射；与上面 Wazuh 是两套数据源，条数不可相加。",
   "source": {
    "system": "Suricata eve.json*",
