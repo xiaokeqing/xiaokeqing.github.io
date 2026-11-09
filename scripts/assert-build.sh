@@ -632,10 +632,15 @@ fi
 # ---------- ⑥ 慢网分档与门页（2026-11-05 新增回归项） ----------
 head1 "慢网分档（xk-slow）与门页"
 
-if grep -q "xk-slow" "$PUB/alerts/index.html"; then
-  ok "alerts/index.html 带慢网判定（head 里的 xk-slow 脚本在位）"
+# 2026-11-09：慢网判定从 head 内联搬进 assets/js/xk-boot.js（去 CSP unsafe-inline 的前置），
+#   所以这里接受两种形态：仍是内联；或引用了指纹化的 /js/xk-boot.min.*.js 且该文件里确实有 xk-slow。
+BOOT_JS=$(ls "$PUB"/js/xk-boot.min.*.js 2>/dev/null | head -n 1)
+if grep -q "js/xk-boot.min." "$PUB/alerts/index.html" && [ -n "$BOOT_JS" ] && grep -q "xk-slow" "$BOOT_JS"; then
+  ok "alerts/index.html 引用 /js/xk-boot.min.*.js，且该文件里有 xk-slow 判定（慢网降档仍在）"
+elif grep -q "xk-slow" "$PUB/alerts/index.html"; then
+  ok "alerts/index.html 带慢网判定（head 里的 xk-slow 内联在位）"
 else
-  no "alerts/index.html 里没有 xk-slow 判定 —— 慢网不再降档，会白拉 400+ KB"
+  no "alerts/index.html 既没有 xk-slow 内联、也没有可用的 /js/xk-boot.min.*.js —— 慢网不再降档，会白拉 400+ KB"
 fi
 
 if grep -qh "slow-placeholder" "$PUB/js/xk-shell.min."*.js 2>/dev/null; then
