@@ -246,21 +246,30 @@
 
       var max = 1;
       items.forEach(function (it) { if (it.n > max) max = it.n; });
-      var placed = [];
+      var placed = [], labeled = [];
       items.forEach(function (it, i) {
         var c = C[it.code] || C[it.name];
         if (!c) return;
         var p = proj(c[0], c[1], w, h);
-        var r = 4 + 20 * Math.sqrt(it.n / max);
+        var r = 4 + 15 * Math.sqrt(it.n / max);
         var op = 0.28 + 0.5 * Math.sqrt(it.n / max);
         var label = it.name + ' · ' + fmtN(it.n);
+        /* ★2026-11-09 治"地图一坨"：欧洲那几个国家质心只差几像素，名字会互相压。
+           规则：气泡照画；文字只在"离已放文字的点 >= 30px"时画，且贴右边缘时改放左侧。
+           没放文字的国家仍可 hover/点击（aria-label 完整）。 */
+        var crowded = labeled.some(function (q) {
+          var dx = q[0] - p[0], dy = q[1] - p[1];
+          return (dx * dx + dy * dy) < (30 * 30);
+        });
+        var tX = p[0] + r + 4, anchor = 'start';
+        if (p[0] > w - 56) { tX = p[0] - r - 4; anchor = 'end'; }
+        var txt = crowded ? '' : '<text x="' + tX + '" y="' + (p[1] + 4) + '" text-anchor="' + anchor
+          + '" fill="rgba(232,240,242,.9)" font-size="11">' + it.name + '</text>';
+        if (!crowded) labeled.push(p);
         H += '<g class="xk-geo-g" data-i="' + i + '" data-name="' + it.name + '" tabindex="0" role="button" '
           + 'aria-label="' + label + '，点击查看明细">'
           + '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + r + '" fill="rgba(127,212,216,' + op.toFixed(2) + ')" '
-          + 'stroke="rgba(127,212,216,.85)" stroke-width="1"/>'
-          + '<text x="' + (p[0] + r + 4) + '" y="' + (p[1] + 4) + '" fill="rgba(232,240,242,.9)" font-size="11">'
-          /* 气泡旁只写国家名（窄栏里带数字会互相压字）；次数/占比进 hover 提示与下方按钮 */
-          + it.name + '</text></g>';
+          + 'stroke="rgba(127,212,216,.85)" stroke-width="1"/>' + txt + '</g>';
         placed.push(i);
       });
       /* 实时脉冲层：上面这堆是聚合气泡（快照），这一层只放"刚发生的事件"，

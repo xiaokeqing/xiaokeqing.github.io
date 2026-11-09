@@ -1189,3 +1189,41 @@ footer.xk-foot .xk-foot-q a{
 /* ===== 2026-11-09 A5/A8：统一卡片内高光与笔记卡 hover（光与材质） ===== */
 .mod,.screen,.note-card,.xk-ent-card,.xk-ai-cache,.ops-hero{box-shadow:0 12px 30px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.16)}
 .note-card:hover{border-color:rgba(127,212,216,.45);transform:translateY(-2px);box-shadow:0 14px 32px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.09)}
+
+
+/* ============================================================================
+   ★2026-11-09 「大屏」改造（站主：一团糟 / 地图一坨 / 没用的文字太多）
+   实时页 = 顶部四个数 + 左实时流 + 右地图 + 底部两块图，其余解释收进 <details>。
+   ========================================================================== */
+#v-monitor .live-main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px;margin-top:14px;align-items:stretch}
+#v-monitor .live-main > .term{min-height:430px}
+#v-monitor .live-main > .card{display:flex;flex-direction:column;min-height:430px;margin:0}
+#v-monitor .live-main > .card .xk-geo-map{flex:1 1 auto;min-height:260px}
+#v-monitor .live-foot{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;margin-top:14px}
+#v-monitor .live-foot > .mod{margin:0}
+#v-monitor .oh-sub{display:block;margin-top:6px;font-size:11px;line-height:1.5;font-style:normal;color:rgba(214,228,233,.55)}
+#v-monitor .ops-hero{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:14px;align-items:stretch}
+#v-monitor .ops-hero > .oh-cell{min-width:0}
+@media (max-width:1100px){#v-monitor .ops-hero{grid-template-columns:1fr 1fr}}
+#v-monitor .xk-meta{margin-top:14px;font-size:12px;line-height:1.7;color:rgba(214,228,233,.58)}
+#v-monitor .xk-meta > summary{cursor:pointer;color:rgba(214,228,233,.72);list-style:none}
+#v-monitor .xk-meta > summary::-webkit-details-marker{display:none}
+#v-monitor .xk-meta > summary::before{content:"▸ ";color:rgba(127,212,216,.8)}
+#v-monitor .xk-meta[open] > summary::before{content:"▾ "}
+#v-monitor .xk-meta ul{margin:8px 0 0 18px;padding:0}
+@media (max-width:1100px){
+  #v-monitor .live-main,#v-monitor .live-foot{grid-template-columns:1fr}
+  #v-monitor .live-main > .term,#v-monitor .live-main > .card{min-height:0}
+}
+
+/* 严重度横条（替代环形图） */
+.vz-bars{display:flex;flex-direction:column;gap:10px;margin-top:2px}
+.vz-bars .vb{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px}
+.vz-bars .vb-l{font-size:12px;color:rgba(214,228,233,.78)}
+.vz-bars .vb-t{position:relative;height:8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+.vz-bars .vb-f{display:block;height:100%;border-radius:4px;background:rgba(127,212,216,.75)}
+.vz-bars .vb-f.vb-严重{background:rgba(255,120,120,.85)}
+.vz-bars .vb-f.vb-高危{background:rgba(240,178,96,.85)}
+.vz-bars .vb-f.vb-中危{background:rgba(127,212,216,.75)}
+.vz-bars .vb-f.vb-低危{background:rgba(150,170,180,.6)}
+.vz-bars .vb-n{font-size:12px;color:rgba(232,240,242,.9);font-variant-numeric:tabular-nums}

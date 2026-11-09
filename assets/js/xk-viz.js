@@ -33,6 +33,52 @@
     if (nt) nt.textContent = txt;
   }
 
+
+  /* ★2026-11-09 大屏改造：严重度只有 4 档，环形图信息量低 ⇒ 改成 4 行横条 + 数字。
+     数据同一份 stats24h.bySeverity；取不到就整块留一句"取数中"，不画 0 条。 */
+  function bars(done, sev, total) {
+    var el = document.querySelector('[data-vz-bars]');
+    var nt = document.querySelector('[data-vz-barsnote]');
+    if (!el) return;
+    el.textContent = '';
+    if (!done || !sev) {
+      if (nt) nt.textContent = '取数中…';
+      return;
+    }
+    var DEF = [['CRITICAL', '严重'], ['HIGH', '高危'], ['MEDIUM', '中危'], ['LOW', '低危']];
+    var rows = [], sum = 0, maxv = 0;
+    DEF.forEach(function (d) {
+      var v = sev[d[0]];
+      if (v == null) return;
+      v = Number(v) || 0;
+      rows.push([d[1], v]);
+      sum += v;
+      if (v > maxv) maxv = v;
+    });
+    if (!rows.length) {
+      if (nt) nt.textContent = '未取到分级数据';
+      return;
+    }
+    if (!sum) sum = 1;
+    rows.forEach(function (r) {
+      var w = maxv ? Math.max(2, Math.round(100 * r[1] / maxv)) : 0;
+      var pct = total ? (100 * r[1] / total) : null;
+      var row = document.createElement('div');
+      row.className = 'vb';
+      var lab = document.createElement('span'); lab.className = 'vb-l'; lab.textContent = r[0];
+      var track = document.createElement('span'); track.className = 'vb-t';
+      var fill = document.createElement('i');
+      fill.style.width = w + '%';
+      fill.className = 'vb-f vb-' + r[0];
+      track.appendChild(fill);
+      var num = document.createElement('span'); num.className = 'vb-n';
+      num.textContent = fmt(r[1]) + (pct != null ? ' · ' + pct.toFixed(1) + '%' : '');
+      row.appendChild(lab); row.appendChild(track); row.appendChild(num);
+      el.appendChild(row);
+    });
+    if (nt) nt.textContent = '共 ' + fmt(total || sum) + ' 条（INFO 不计入分级）';
+  }
+
   function ring(done, sev, total) {
     var el = document.querySelector('[data-vz-ring]'), nt = document.querySelector('[data-vz-ringnote]');
     if (!el) return;
@@ -70,6 +116,7 @@
     opt = opt || {}; drew++;
     heat(true, 'trend' in opt ? opt.trend : window.XK24H);
     ring(true, 'sev' in opt ? opt.sev : window.XK_SEV24, 'total' in opt ? opt.total : window.XK_TOT24);
+    bars(true, 'sev' in opt ? opt.sev : window.XK_SEV24, 'total' in opt ? opt.total : window.XK_TOT24);
   };
   /* 首帧：数据没到 → 24 个 — 灰格 + 空环，绝不先写 0 */
   heat(false, null); ring(false, null, null);

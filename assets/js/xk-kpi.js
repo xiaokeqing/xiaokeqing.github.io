@@ -18,6 +18,9 @@
   var win = document.getElementById('xkKpiWin');
   var delta = document.getElementById('xkKpiDelta');
   var spark = document.getElementById('xkKpiSpark');
+  var sevC = document.getElementById('ohSevCritical');
+  var sevH = document.getElementById('ohSevHigh');
+  var guard = document.getElementById('ohGuardNote');
   if (!cell || !win || !delta || !spark) return;
 
   var NS = 'http://www.w3.org/2000/svg';
@@ -183,3 +186,48 @@
     }
   }).catch(hideAll);
 })();
+
+
+  /* ★2026-11-09 大屏改造：四个数同一份 alerts.js —— 严重 / 高危 / 护栏说明 */
+  (function () {
+    var f = function (n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+    fetch('/api/public/alerts.js', { credentials: 'same-origin' }).then(function (r) { return r && r.ok ? r.json() : null; }).then(function (d) {
+      var s24 = d && d.data && d.data.stats24h;
+      if (!s24 || s24.available !== true) return;
+      var sev = s24.bySeverity || {};
+      var big = document.getElementById('ohBlocked');
+      if (big && s24.total != null) big.textContent = f(s24.total);
+      var _c = document.getElementById('ohSevCritical');
+      var _h = document.getElementById('ohSevHigh');
+      var _g = document.getElementById('ohGuardNote');
+      if (_c && sev.CRITICAL != null) _c.textContent = f(sev.CRITICAL);
+      if (_h && sev.HIGH != null) _h.textContent = f(sev.HIGH);
+      /* 严重度横条：自己画（不依赖 xk-viz 的初始化时序） */
+      var box = document.querySelector('[data-vz-bars]');
+      if (box) {
+        var nt = document.querySelector('[data-vz-barsnote]');
+        var DEF = [['CRITICAL','严重'],['HIGH','高危'],['MEDIUM','中危'],['LOW','低危']];
+        var maxv = 0;
+        DEF.forEach(function (d) { var v = Number(sev[d[0]] || 0); if (v > maxv) maxv = v; });
+        box.textContent = '';
+        DEF.forEach(function (d) {
+          var v = Number(sev[d[0]] || 0);
+          var row = document.createElement('div'); row.className = 'vb';
+          var l = document.createElement('span'); l.className = 'vb-l'; l.textContent = d[1];
+          var t = document.createElement('span'); t.className = 'vb-t';
+          var i2 = document.createElement('i'); i2.className = 'vb-f vb-' + d[1];
+          i2.style.width = (maxv ? Math.max(2, Math.round(100 * v / maxv)) : 0) + '%';
+          t.appendChild(i2);
+          var n = document.createElement('span'); n.className = 'vb-n';
+          n.textContent = f(v) + (s24.total ? ' · ' + (100 * v / s24.total).toFixed(1) + '%' : '');
+          row.appendChild(l); row.appendChild(t); row.appendChild(n);
+          box.appendChild(row);
+        });
+        if (nt) nt.textContent = '共 ' + f(s24.total || 0) + ' 条（INFO 不计入分级）';
+      }
+      if (_g) {
+        var blocked = (d.data && d.data.audit && d.data.audit.summary && d.data.audit.summary.blockedByGuard) || 0;
+        if (blocked) _g.textContent = '处置策略未启用 · 护栏已拦 ' + f(blocked) + ' 次';
+      }
+    }).catch(function () { });
+  })();

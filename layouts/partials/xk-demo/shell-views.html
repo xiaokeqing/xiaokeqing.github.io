@@ -43,88 +43,42 @@
 
         <!-- 视图 1：实时攻击（★2026-11-09：KPI 与实时流收进本面板，切到其它 tab 不再重复出现） -->
         <div class="ops-tab on" data-pane="live">
-        <div class="ops-hero" id="opsHero" aria-live="polite">
-          {{- /* ★2026-11-06 慢网口径「先给最快的东西」：首屏三个数字先用构建期快照（data/ops-snapshot.json），接口回来后再覆盖。 */ -}}
-{{- /* ★2026-11-07 修 deprecation WARN：site.Data → hugo.Data（Hugo 0.156+ 命名空间；部署钉 0.167.0，netlify.toml 已固定）。 */ -}}
-{{- $snap := hugo.Data.ops_snapshot -}}{{- $fmt := "" -}}{{- with $snap }}{{ if .blockedByGuard }}{{ $fmt = lang.FormatNumberCustom 0 (float .blockedByGuard) "," "." -1 -1 }}{{ end }}{{ end -}}
-          <div class="oh-cell xk-kpi-cell" id="ohKpiCell">
-            <div class="xk-kpi-main">
-              <div class="xk-kpi-num"><b id="ohBlocked">{{ if and $snap $snap.blockedByGuard }}{{ lang.FormatNumberCustom 0 (float $snap.blockedByGuard) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span class="xk-kpi-win" id="xkKpiWin" hidden></span></div>
-              <span>累计拦截</span>
-              <p class="xk-kpi-delta" id="xkKpiDelta" hidden></p>
+          <div class="ops-hero" id="opsHero" aria-live="polite">
+{{- /* 首屏四个数：先渲染构建期快照，接口回来覆盖 */ -}}
+{{- $snap := hugo.Data.ops_snapshot -}}
+            <div class="oh-cell xk-kpi-cell" id="ohKpiCell">
+              <div class="xk-kpi-main">
+                <div class="xk-kpi-num"><b id="ohBlocked">{{ if and $snap $snap.blockedByGuard }}{{ lang.FormatNumberCustom 0 (float $snap.blockedByGuard) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span class="xk-kpi-win" id="xkKpiWin" hidden></span></div>
+                <span>24 小时告警</span>
+                <p class="xk-kpi-delta" id="xkKpiDelta" hidden></p>
+              </div>
+              <div class="xk-kpi-spark" id="xkKpiSpark" hidden></div>
             </div>
-            <div class="xk-kpi-spark" id="xkKpiSpark" hidden></div>
+            <div class="oh-cell"><b id="ohSevCritical">—</b><span>严重</span></div>
+            <div class="oh-cell"><b id="ohSevHigh">—</b><span>高危</span></div>
+            <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}0{{ end }}</b><span>真封 IP</span><em class="oh-sub" id="ohGuardNote">处置策略未启用 · 护栏已拦 98 次</em></div>
           </div>
-          <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>累计封禁 IP</span></div>
-          <div class="oh-cell"><b id="ohHoney">{{ if and $snap $snap.honeyConnections }}{{ lang.FormatNumberCustom 0 (float $snap.honeyConnections) "," "." -1 -1 }}{{ else }}—{{ end }}</b><span>蜜罐连接</span></div>
-          <div class="oh-line" id="ohLine">{{ if $snap }}快照 {{ $snap.generatedAt }} · 正在同步最新{{ else }}正在读取快照…{{ end }}</div>
-        </div>
-        <div class="ops-live">
+
+          <div class="live-main">
             <div class="term">
-              <div class="term-hd"><span>实时攻击流</span><span class="term-path" title="GET /api/public/alerts · 只读聚合（5 分钟窗口）">5 分钟窗口</span><button class="feed-pause" id="feedPause" type="button" aria-pressed="false" title="暂停/继续追加新行（取数不受影响）">暂停</button><span class="term-live"><i></i>LIVE</span></div>
+              <div class="term-hd"><span>正在发生</span><span class="term-path" title="GET /api/public/alerts · 只读聚合（5 分钟窗口）">近 5 分钟</span><button class="feed-pause" id="feedPause" type="button" aria-pressed="false" title="暂停/继续追加新行（取数不受影响）">暂停</button><span class="term-live"><i></i>LIVE</span></div>
               <div class="term-bd" id="termFeed"></div>
             </div>
-            <div class="ops-rail">
-              <div class="mod" data-xk-mod="threat"><div class="mod-hd"><span class="led"></span>威胁等级</div>
-                <div class="mod-bd"><div class="threat"><span class="lv">—</span><span class="trend">取数中…</span></div></div>
-              </div>
-              <div class="mod" data-xk-mod="geotop"><div class="mod-hd"><span class="led"></span>TOP 攻击来源<span class="tag">/geo</span></div>
-                <div class="mod-bd">
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                </div>
-              </div>
-              <!-- xk-geo-card -->
 <section class="card" id="xkGeoCard">
-  <div class="ch"><b>攻击来源地理分布</b><span class="src">/api/public/geo · 快照</span></div>
+  <div class="ch"><b>攻击来自哪里</b><span class="src">24h · 点击国家看明细</span></div>
   <div id="xkGeoMap" class="xk-geo-map"></div>
   <div id="xkGeoTip" class="xk-geo-tip" hidden></div>
-  <p class="note" id="xkGeoNote">取数中…</p>
 </section>
-<!-- xk-metrics-card -->
-              {{- /* 处置时效（MTTD / MTTR）：数据来自 /api/public/metrics（脱敏聚合，不含 IP）；
-                     口径见 docs/Amadeus-项目总文档 的「处置时效」一节。样本 <3 时如实写"样本不足"，不写 0。 */ -}}
-              <div class="mod" id="xkMetricsCard"><div class="mod-hd"><span class="led"></span>处置时效<span class="tag">MTTD / MTTR · 24h</span></div>
-                <div class="mod-bd">
-                  <div class="row"><span class="k">MTTD · 从告警到处置</span><span class="chip" id="xkMtTtd">取数中…</span></div>
-                  <div class="row"><span class="k">MTTR · 从封禁到恢复</span><span class="chip" id="xkMtTtr">取数中…</span></div>
-                  <p class="vz-nt" id="xkMtNote">样本足够时给中位数；不足 3 个样本就写「样本不足」，不写 0。</p>
-                </div>
-              </div>
-<div class="mod" data-xk-mod="honey"><div class="mod-hd"><span class="led"></span>蜜罐捕获凭据<span class="tag">已脱敏 · 只给结构</span></div>
-                <div class="mod-bd">
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                  <div class="row"><span class="k sk">—</span><span class="chip sk">—</span></div>
-                </div>
-              </div>
-            </div>
-          <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时攻击时序<span class="tag">/alerts · stats24h</span></div>
-            <div class="mod-bd"><canvas id="spark24" class="spark24"></canvas></div>
           </div>
-          {{- if eq $v "monitor" }}
-          {{- /* ★V2/V3（2026-11-07）：纯 CSS 两图，数据只吃上面同一份 stats24h；空壳由 xk-viz.js 填充 */}}
-          <div class="vz-grid">
-            <div class="mod"><div class="mod-hd vz-hd">24 小时告警热力<span class="tag">/alerts · stats24h.trend</span></div>
-              <div class="mod-bd">
-                <div class="vz-heat" data-vz-heat role="img" aria-label="24 小时告警热力：取数中"></div>
-                <p class="vz-nt" data-vz-heatnote>取数中…（没有数据的小时写 —）</p>
-              </div>
-            </div>
-            <div class="mod"><div class="mod-hd vz-hd">严重度构成<span class="tag">24h · stats24h.bySeverity</span></div>
-              <div class="mod-bd">
-                <div data-vz-ring></div>
-                <p class="vz-nt" data-vz-ringnote>取数中…</p>
-              </div>
-            </div>
-          </div>
-          {{- end }}
-          </div>
-        </div>
 
+          <div class="live-foot">
+            <div class="mod"><div class="mod-hd"><span class="led"></span>24 小时攻击量<span class="tag">每小时</span></div>
+              <div class="mod-bd"><canvas id="spark24" class="spark24"></canvas></div>
+            </div>
+            <div class="mod"><div class="mod-hd"><span class="led"></span>严重度<span class="tag">过去 24 小时</span></div>
+              <div class="mod-bd"><div class="vz-bars" data-vz-bars></div><p class="vz-nt" data-vz-barsnote>取数中…</p></div>
+            </div>
+          </div>
         </div>
 
         <!-- 视图 2：攻击图谱 -->
