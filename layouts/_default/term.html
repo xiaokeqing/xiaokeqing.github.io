@@ -1,2 +1,9 @@
-{{/* 分类/标签具体条目页：外壳统一由 baseof 提供 */}}
-{{ define "main" }}{{ end }}
+{{- /* 分类 / 标签**条目页**（/categories/<term>/、/tags/<term>/）：与总览页同一份暖色 CRT 外壳，
+      卡片逐属性照抄 /posts/ 的 .note-card，不再套 baseof（这里没有 define "main"）。
+
+   ★为什么内容在 shared partial 里：Hugo 0.167（本机与 CI 同版本）实测，
+     当 layouts/_default/taxonomy.html 也存在时，kind=term 的页面会被 taxonomy.html
+     抢去渲染（删掉 taxonomy.html 才用本文件）；把两个文件写成同一份薄壳、
+     由 partial 按 .Kind 分支，才能保证换 Hugo 版本/换文件也不会掉回旧科技模式外壳。
+   正文：layouts/partials/xk-demo/terms-page.html */ -}}
+{{- partial "xk-demo/terms-page.html" . -}}

@@ -1,2 +1,10 @@
-{{/* 分类/标签总览页：外壳统一由 baseof 提供 */}}
-{{ define "main" }}{{ end }}
+{{- /* 分类 / 标签**总览页**：整套暖色 CRT 外壳（顶栏 dock + 右侧人物面板 + 暖色卡片），
+      与 /posts/ 同一套，不再套 baseof（本文件里没有 define "main"，所以 baseof 不参与）。
+
+   ★为什么这里只有一行调用：Hugo 0.167（本机与 CI 同版本）实测的模板查找里，
+     只要 layouts/_default/taxonomy.html 存在，kind=term 的页面**也**由它渲染
+     （把 taxonomy.html 删掉才轮到 _default/term.html；layouts/tags/term.html 这种按
+      taxonomy 名的目录模板则优先）。所以总览页与条目页共用一个文档 partial，
+     两者差异由 partial 内部的 .Kind 分支决定 —— 无论 Hugo 选中哪个文件，页面都一样。
+   正文：layouts/partials/xk-demo/terms-page.html */ -}}
+{{- partial "xk-demo/terms-page.html" . -}}

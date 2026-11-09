@@ -1,0 +1,15 @@
+{{- /* ============================================================================
+   note-card.html —— /posts/ 列表里那张笔记卡的**唯一实现**。
+   2026-11-09：分类 / 标签的 term 页要求与 /posts/ 视觉完全一致，所以把
+   layouts/partials/xk-demo/shell-views.html 里 v-notes 的 .note-card 标记抽出到这里，
+   逐属性照抄（href / data-cat / data-txt / nc-top / nc-cat / dt / nc-tt / nc-ds / nc-ft / nc-tag / nc-rt）。
+   改卡片只改这一处；shell-views.html 那边仍是内联原样，未动（并行任务在改它所在的文件）。
+   入参：一个 content Page（需要 .RelPermalink / .Title / .Params / .Date / .ReadingTime / .Summary）。
+   ============================================================================ */ -}}
+{{- $p := . -}}
+<a class="note-card" href="{{ $p.RelPermalink }}" data-cat="{{ delimit ($p.Params.categories | default slice) "," }}" data-txt="{{ $p.Title }} {{ with $p.Params.summary }}{{ . }}{{ end }} {{ with $p.Params.description }}{{ . }}{{ end }} {{ delimit ($p.Params.tags | default slice) " " }}">
+  <div class="nc-top"><span class="nc-cat">{{ delimit ($p.Params.categories | default (slice "未分类")) " · " }}</span><span class="dt">{{ $p.Date.Format "2006-01-02" }}</span></div>
+  <div class="nc-tt">{{ $p.Title }}</div>
+  <div class="nc-ds">{{ with $p.Params.summary }}{{ . }}{{ else }}{{ with $p.Params.description }}{{ . }}{{ else }}{{ $p.Summary }}{{ end }}{{ end }}</div>
+  <div class="nc-ft">{{ range $p.Params.tags }}<span class="nc-tag">{{ . }}</span>{{ end }}<span class="nc-rt">{{ $p.ReadingTime }} min</span></div>
+</a>

@@ -1,0 +1,102 @@
+{{- /* ============================================================================
+   terms-page.html —— 分类 / 标签两类页面的**同一份**暖色 CRT 外壳文档（2026-11-09）。
+   为什么两处的模板都要调它：Hugo 0.167（本机与 CI 同版本）实测的模板查找里，
+   layouts/_default/taxonomy.html 存在时，kind=term 的页面**也会**由它渲染
+   （删掉 taxonomy.html 才轮到 _default/term.html）。所以
+   layouts/_default/taxonomy.html 与 layouts/_default/term.html 是同一份 3 行薄壳，
+   两处都调到本文件；总览页 / 条目页的差异由这里的 .Kind 分支决定，不靠模板文件名。
+
+   本文件是完整 HTML 文档（没有 {{ "define" }}），不进 baseof，结构与 /posts/list.html 同构：
+     head-meta → shell-style → shell-chrome(dock) → main[data-xk-ssr=notes]
+     → section.view.on#v-notes（卡片）→ site-foot → idcard → shell-script。
+   旧的科技模式外壳（xk-side / xk-toprow / navpill / spa-*）在这条链上根本不出现。
+   用法：{{ partial "xk-demo/terms-page.html" . }}（入参 = 当前 Page）。
+   ============================================================================ */ -}}
+{{- $p := . -}}
+{{- $plural := $p.Section | default "categories" -}}
+{{- $isTags := eq $plural "tags" -}}
+{{- $cnt := cond $isTags "标签" "分类" -}}
+{{- $cntEn := cond $isTags "TAGS" "CATEGORIES" -}}
+{{- $sect := printf "/%s/" $plural -}}
+{{- $isTerm := eq $p.Kind "term" -}}
+{{- $termName := $p.Data.Term | default $p.Title -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" $p }}
+  <script src="/js/xk-saver.js"></script>
+{{ partial "xk-demo/shell-style.html" $p }}
+<style>
+/* 分类 / 标签页：只补页头与空态两处；卡片、网格、间距全部用 xk.css 既有的
+   .card / .card-hd / .notes-grid / .note-card / .nc-* —— 与 /posts/ 同一套观感，
+   不另起一套（/more/ 的 mr-* 是手写卡，这里不跟）。颜色全走 tokens.css 的 --xk-* 令牌。 */
+.terms-hd{padding:18px 2px 14px}
+.terms-eyebrow{font:var(--fs-2xs)/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--xk-ink-eyebrow)}
+.terms-h1{margin:8px 0 10px;font-size:var(--fs-xl);line-height:var(--lh-tight);font-weight:600;color:var(--xk-ink-title)}
+.terms-cnt{font:var(--fs-sm) var(--mono);color:var(--acc);font-weight:400;white-space:nowrap}
+.terms-lede{margin:0;max-width:86ch;font-size:var(--fs-sm);line-height:var(--lh-body);color:var(--xk-ink-lede)}
+.terms-lede code{font:var(--fs-2xs) var(--mono);color:var(--acc)}
+.terms-lede a{color:var(--acc);text-decoration:none;border-bottom:1px dotted var(--xk-cyan-line-26)}
+.terms-lede a:hover,.terms-lede a:focus-visible{color:var(--xk-cyan);border-bottom-color:var(--xk-cyan-line-55)}
+.terms-n{margin-left:auto;font-size:11px;color:var(--acc)}   /* 与 /posts/ 卡头右侧那撮小字同款 */
+.terms-empty{padding:28px 15px;text-align:center;color:var(--mut);font-size:var(--fs-sm)}
+@media (max-width:980px){.terms-hd{padding:8px 2px 12px}.terms-h1{font-size:24px}}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" "notes") }}
+<main class="main" id="content" data-xk-ssr="notes">
+  <section class="view on" id="v-notes">
+{{- if $isTerm }}
+    <header class="terms-hd">
+      <div class="terms-eyebrow">XK-LAB // NOTES · {{ $cntEn }}</div>
+      <h1 class="terms-h1">{{ $termName }} <span class="terms-cnt">{{ len $p.Pages }} 篇</span></h1>
+      <p class="terms-lede">这一{{ $cnt }}下的全部笔记，卡片与 <a href="/posts/">/posts/</a> 列表同一套标记：日期 / 标题 / 摘要 / 标签 / 阅读时长都取自 front matter。<a href="{{ $sect }}">← 返回全部{{ $cnt }}</a></p>
+    </header>
+    <div class="card">
+      <div class="card-hd"><span class="led"></span>INDEX · 全部笔记<span class="terms-n">{{ $cnt }} · {{ len $p.Pages }} 篇</span></div>
+      <div class="notes-grid">
+      {{- with $p.Pages.ByDate.Reverse }}
+        {{- range . }}
+        {{ partial "xk-demo/note-card.html" . }}
+        {{- end }}
+      {{- else }}
+        <div class="terms-empty">这一{{ $cnt }}下还没有笔记。</div>
+      {{- end }}
+      </div>
+    </div>
+{{- else }}
+    <header class="terms-hd">
+      <div class="terms-eyebrow">XK-LAB // NOTES · {{ $cntEn }} · TAXONOMY</div>
+      <h1 class="terms-h1">{{ $cnt }} <span class="terms-cnt">{{ len $p.Data.Terms }} 个</span></h1>
+      <p class="terms-lede">按{{ $cnt }}归档：每张卡是一个{{ $cnt }}，卡头的数字是该{{ $cnt }}下的笔记篇数（构建时从 front matter 的 <code>{{ $plural }}</code> 现算，不是手填）；点卡片进入该类笔记列表。</p>
+    </header>
+    <div class="card">
+      <div class="card-hd"><span class="led"></span>全部{{ $cnt }}<span class="terms-n">按名称排序 · {{ len $p.Data.Terms }} 个</span></div>
+      <div class="notes-grid">
+      {{- range $p.Data.Terms.Alphabetical }}
+        {{- $t := . }}
+        <a class="note-card" href="{{ $t.Page.RelPermalink }}">
+          <div class="nc-top"><span class="nc-cat">{{ $cnt }}</span><span class="dt">{{ $t.Count }} 篇</span></div>
+          <div class="nc-tt">{{ $t.Term }}</div>
+          {{- with $t.Page.Pages.ByDate.Reverse }}
+          <div class="nc-ds">最新：{{ (index . 0).Title }}</div>
+          {{- end }}
+          <div class="nc-ft"><span class="nc-rt">→ 全部 {{ $t.Count }} 篇</span></div>
+        </a>
+      {{- end }}
+      {{- if eq (len $p.Data.Terms) 0 }}
+        <div class="terms-empty">还没有{{ $cnt }}。</div>
+      {{- end }}
+      </div>
+    </div>
+{{- end }}
+  </section>
+</main>
+{{ partial "xk-demo/site-foot.html" $p }}
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" $p }}
+{{ partial "xk-demo/shell-script.html" $p }}
+<script src="/js/xk-realtime.js" defer></script>
+</body>
+</html>
