@@ -164,24 +164,7 @@
 
       
 
-      <div class="lab-grid">
-        <div class="mod lab-card">
-          <h3>为什么不对公网开</h3>
-          <ul>
-            <li><b>公开靶场等于送人一台免费跳板</b>：扫描器几小时内就会找到它；</li>
-            <li>2026-10-17 我试过用口令页护住 <code>lab.xiaokeqing.cn</code>，第二天云厂商就按「对外暴露高危漏洞站」发了告警；</li>
-            <li>所以干脆把公网入口整条摘掉，<b>只保留内网 + SSH 隧道</b>，云侧扫不到、也不该扫。</li>
-          </ul>
-        </div>
-        <div class="mod lab-card">
-          <h3>边界怎么定的</h3>
-          <p class="lab-kv">
-            <b>网络：</b>容器在 <code>labnet</code>（<code>--internal</code>）里，没有默认网关，容器内 <code>wget</code> 外网直接失败；<br>
-            <b>入口：</b>nginx 只监听 <code>127.0.0.1:8081~8087</code>，Cloudflare 隧道里已没有 lab 这条 ingress；<br>
-            <b>资源：</b>各自 <code>--memory</code> 限额 + <code>--cpus 1</code>，挂 <code>unless-stopped</code>，跑挂了只影响它自己。
-          </p>
-        </div>
-      </div>
+      
 
       
 
