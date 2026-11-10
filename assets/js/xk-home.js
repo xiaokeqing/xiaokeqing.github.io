@@ -160,7 +160,7 @@ function xkTransStart(t){
   }
 }
 const CLIPS = {
-  opening:  {src:'/kurisu/full/opening.poster.webp', frames:1, interval:33.33, cols:1, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:null, bootFrames:1, vid:'opening'},  /* ★2026-11-07 P0-1：开屏不再取 275KB 的 24 帧 boot 图集（也不取 1MB 的 hi），直接用 10.6KB 单帧；人脸/构图与动画首帧一致，随后 0.6s 内由视频档接管 */
+  opening:  {src:'/kurisu/full/opening.boot.webp', frames:24, interval:33.33, cols:8, cw:380, ch:290, fit:'screen',  next:'idle', bootSrc:null, bootFrames:1, vid:'opening'},  /* ★2026-11-07 P0-1：开屏不再取 275KB 的 24 帧 boot 图集（也不取 1MB 的 hi），直接用 10.6KB 单帧；人脸/构图与动画首帧一致，随后 0.6s 内由视频档接管 */
   idle:     {src:'/kurisu/full/idle.hi.webp',     frames:60, interval:42,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/idle.boot.webp',     bootFrames:24, vid:'idle'},
   speaking: {src:'/kurisu/full/speaking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/speaking.boot.webp', bootFrames:24, vid:'speaking_long'},
   thinking: {src:'/kurisu/full/thinking.hi.webp', frames:45, interval:68,    cols:8, cw:476, ch:640, fit:'anchor', bootSrc:'/kurisu/full/thinking.boot.webp', bootFrames:24, vid:'thinking_to_key_point'}
