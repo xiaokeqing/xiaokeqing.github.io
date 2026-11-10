@@ -6,10 +6,8 @@
 {{- /* ★2026-11-07 站主口径：「除了登录和声音剩下的按钮全删了」——工具区只留 声音 + 登录。
       #xkSndBtn 与 #xkLoginBtn 必须保留：assets/js/xk-idcard.js 第 66 行
       if (!av || !cv || !cap || !panel || !snd || !login) { return; } 硬依赖这两个 id。*/ -}}
-{{- /* 顶栏中段：实时攻击 ticker（数据复用 /api/public/alerts，慢网不拉、失败静默隐藏）。
-      ★2026-11-08：脚本标签从这里移到 head-meta 的 ux/geo/ticker 合并包（首屏脚本 12 → 8），
-      这里只留容器；ticker 脚本自己会判 #dockTicker 是否存在。 */ -}}
-<div class="dock-ticker" id="dockTicker" aria-live="off" hidden></div>
+{{- /* 顶栏中段：实时攻击 ticker —— ★2026-11-10 站主要求删除（「193.32.162.20 异常请求 这是啥玩意」），
+      容器与脚本一并移除；assets/js/xk-realtime.js 里已有 `if (!#dockTicker) return` 的判据，不会报错。 */ -}}
 
 <div class="dock-tools" id="dockTools" role="group" aria-label="站点工具">
   {{- /* ★2026-11-08 站主口径：头像并入顶栏右侧工具区，顺序 头像 → 声音 → 登录。
