@@ -231,3 +231,34 @@
       }
     }).catch(function () { });
   })();
+
+
+/* ★2026-11-10 真封数字：同源 /api/public/audit.js（vercel rewrites 反代到 demo）
+   —— 取 summary.blockActive/blockTotal 与本窗口最近的封禁记录到期时间。
+   取不到就保持 SSR 文案，不写 0、不猜。 */
+(function () {
+  'use strict';
+  var ips = document.getElementById('ohIps');
+  var note = document.getElementById('ohGuardNote');
+  if (!ips || !note) return;
+  fetch('/api/public/audit.js', { credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      var d = j && j.data;
+      var s = d && d.summary;
+      if (!s || typeof s.blockActive !== 'number') return;
+      var act = s.blockActive;
+      var tot = typeof s.blockTotal === 'number' ? s.blockTotal : 0;
+      ips.textContent = String(act);
+      var blocks = (d.blocks || []).filter(function (b) { return !b.unblocked; });
+      var latest = blocks[0];
+      if (act > 0 && latest && latest.expiresAt) {
+        note.textContent = '最近封 ' + latest.ip + ' · 到期 ' + String(latest.expiresAt).slice(11, 16) + ' · 累计 ' + tot;
+      } else if (tot > 0) {
+        note.textContent = '当前无生效封禁 · 累计 ' + tot + ' 次';
+      } else {
+        note.textContent = '本窗口没有命中的自动封禁';
+      }
+    })
+    .catch(function () {});
+})();

@@ -54,7 +54,7 @@
             </div>
             <div class="oh-cell"><b id="ohSevCritical">—</b><span>严重</span></div>
             <div class="oh-cell"><b id="ohSevHigh">—</b><span>高危</span></div>
-            <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}0{{ end }}</b><span>真封 IP</span><em class="oh-sub" id="ohGuardNote">处置策略未启用 · 护栏已拦 98 次</em></div>
+            <div class="oh-cell"><b id="ohIps">{{ if and $snap (isset $snap "blockTotal") }}{{ lang.FormatNumberCustom 0 (float $snap.blockTotal) "," "." -1 -1 }}{{ else }}0{{ end }}</b><span>真封 IP</span><em class="oh-sub" id="ohGuardNote">自动封禁已启用 · 每 60 秒评估</em></div>
           </div>
 
           <div class="live-main">
