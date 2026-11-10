@@ -1332,8 +1332,8 @@ body[data-xk-page="monitor"] .ops-tab[data-pane="sys"] .mod + .mod{margin-top:12
 body[data-xk-page="monitor"] .ops-tab[data-pane="sys"]{overflow:auto}
 
 /* 2026-11-10 四个入口提到导航后，页面内 tab 行不再显示 */
-body[data-xk-page="monitor"] .ops-tabs#opsTabs{display:flex;gap:6px;flex-wrap:wrap;background:none;border:0;padding:0 0 8px;margin:0;overflow:visible}
-body[data-xk-page="monitor"] .ops-tabs#opsTabs button{padding:4px 11px;font-size:12px;line-height:1.5;border-radius:999px;border:1px solid rgba(127,212,216,.18);background:rgba(255,255,255,.03);color:rgba(214,228,233,.75)}
+body[data-xk-page="monitor"] .ops-tabs#opsTabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-start;background:none;border:0;padding:0 0 8px;margin:0;overflow:visible}
+body[data-xk-page="monitor"] .ops-tabs#opsTabs button{flex:0 0 auto;padding:4px 11px;font-size:12px;line-height:1.5;border-radius:999px;border:1px solid rgba(127,212,216,.18);background:rgba(255,255,255,.03);color:rgba(214,228,233,.75)}
 body[data-xk-page="monitor"] .ops-tabs#opsTabs button.on{background:rgba(127,212,216,.15);border-color:rgba(127,212,216,.45);color:#eaf6ff}
 /* 2026-11-10 手机底部按钮排删除（声音开关在顶栏，其余无实际用途） */
 .phone-btns{display:none !important}

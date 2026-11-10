@@ -86,9 +86,7 @@
         </div>
 <div class="ops-tab" data-pane="source"><div class="mod-hd"><span class="led"></span>来源 TOP5<span class="tag">/geo</span></div>
 <div class="attk" id="attkGrid"></div>
-<div class="mod-bd graphwrap"><canvas id="atkGraph"></canvas>
-              <div class="graph-legend"><span><i class="lg red"></i>攻击来源</span><span><i class="lg teal"></i>蜜罐传感器</span><span><i class="lg dot"></i>实时命中</span></div>
-            </div>
+
 <div class="mod xk-sankey-card" data-xk-sankey>
             <div class="mod-hd vz-hd">告警链路 · 来源 → 类型 → 严重度<span class="tag">/alerts · 5 分钟原始窗口</span></div>
             <div class="mod-bd">
@@ -109,17 +107,15 @@
             </div>
           </div>
 
-          <div class="mod"><div class="mod-hd"><span class="led"></span>实时攻击路径 · 攻击者 → 本站传感器<span class="tag">数据 /alerts + /honeypot</span></div>
-            
-          </div>
+          
           <!-- xk-ipjump -->
           {{- /* 点个 IP 看它干过什么：跳到 /ip/?q=<IP>（那页有 /api/public/story 的攻击时间线）。
                  不额外拉接口：Top 来源直接复用本页 /alerts + /geo 已有的快照数据，由 xk-ipjump.js 填。 */ -}}
           
           
-            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">护栏拦截（/audit）</div></div>
-            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">蜜罐交互</div></div>
-            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">来源网段 24h（/geo）</div></div>
+            
+            
+            
           <div class="xk-statgrid" id="xkStatGrid" aria-label="数据统计 · 四个维度">
             <section class="mod xk-stat" data-xk-stat="type">
               <div class="mod-hd"><span class="led"></span>攻击类型 · Top 5<span class="tag">/alerts · stats.byType</span></div>
