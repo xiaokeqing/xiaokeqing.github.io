@@ -10,6 +10,18 @@
       "TZ": "Asia/Shanghai"
     }
   },
+  "redirects": [
+    {
+      "source": "/alerts",
+      "destination": "/hud/",
+      "permanent": true
+    },
+    {
+      "source": "/alerts/(.*)",
+      "destination": "/hud/",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/public/ip.js",

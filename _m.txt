@@ -1,4 +1,5 @@
-﻿feat(hud): 第二屏三块接上真数据（攻击者 Top5 / 弱口令 / 访问类别）
+﻿fix(hud): 第二屏弱口令依赖 home.js，pull() 完成后补渲染 renderS2
 
-- assets/js/xk-hud.js renderS2(): 弱口令改读 home.js 的 honeypot.topCredentials（password.js 快照 253 B 常为空），访问改为 webstats 的 topCategories（原来读 w.hours 无字段）
-- 实测：#hudHunters=Top5 四阶段、#hudPwd=caixinyi6/hupu6…、#hudWeb=other408/other-404 151/dotenv56…；断言 99/99
+- 现象：/hud/ 第二屏「弱口令」空，但 home.js 里确实有 honeypot.topCredentials
+- 根因：pullS2() 与 pull() 并行，renderS2 跑时 ST.home 还是 null
+- 修法：pull().then 里 renderSys() 之后补一次 renderS2()（try/catch 兜住）
