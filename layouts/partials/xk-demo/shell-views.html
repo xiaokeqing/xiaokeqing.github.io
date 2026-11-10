@@ -82,40 +82,7 @@
                  2×2 四卡：攻击类型 Top5 / 三源占比 / 国家 Top5 / 端口 Top5。
                  条与数字全部由 assets/js/xk-stats.js 按真实快照填；取不到就整卡一行「未取到（原因）」，
                  不写 0、不补样例。端口这份快照没有字段 ⇒ 只写原因，不拿别的数据凑。 */ -}}
-          <div class="xk-statgrid" id="xkStatGrid" aria-label="数据统计 · 四个维度">
-            <section class="mod xk-stat" data-xk-stat="type">
-              <div class="mod-hd"><span class="led"></span>攻击类型 · Top 5<span class="tag">/alerts · stats.byType</span></div>
-              <div class="mod-bd">
-                <div class="vz-bars" data-xk-stat-bars></div>
-                <p class="vz-nt" data-xk-stat-note>取数中…</p>
-                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
-              </div>
-            </section>
-            <section class="mod xk-stat" data-xk-stat="source">
-              <div class="mod-hd"><span class="led"></span>三源占比<span class="tag">/alerts · stats.bySource</span></div>
-              <div class="mod-bd">
-                <div class="vz-bars" data-xk-stat-bars></div>
-                <p class="vz-nt" data-xk-stat-note>取数中…</p>
-                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
-              </div>
-            </section>
-            <section class="mod xk-stat" data-xk-stat="country">
-              <div class="mod-hd"><span class="led"></span>攻击来源国家 · Top 5<span class="tag">/geo · byCountry · 24h</span></div>
-              <div class="mod-bd">
-                <div class="vz-bars" data-xk-stat-bars></div>
-                <p class="vz-nt" data-xk-stat-note>取数中…</p>
-                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
-              </div>
-            </section>
-            <section class="mod xk-stat" data-xk-stat="port">
-              <div class="mod-hd"><span class="led"></span>目标端口 · Top 5<span class="tag">/alerts · stats.topPorts</span></div>
-              <div class="mod-bd">
-                <div class="vz-bars" data-xk-stat-bars></div>
-                <p class="vz-nt" data-xk-stat-note>取数中…</p>
-                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
-              </div>
-            </section>
-          </div>
+          
         </div>
 <div class="ops-tab" data-pane="source"><div class="mod-hd"><span class="led"></span>来源 TOP5<span class="tag">/geo</span></div>
 <div class="attk" id="attkGrid"></div>
@@ -153,15 +120,44 @@
             <div class="stat"><div class="n sk" data-count="">—</div><div class="l">护栏拦截（/audit）</div></div>
             <div class="stat"><div class="n sk" data-count="">—</div><div class="l">蜜罐交互</div></div>
             <div class="stat"><div class="n sk" data-count="">—</div><div class="l">来源网段 24h（/geo）</div></div>
-          </div>
-        
-          <div class="mod"><div class="mod-hd"><span class="led"></span>告警类型矩阵 · 每格是服务端给的类型标签<span class="tag">/alerts · stats.byType</span></div>
-            <div class="mod-bd">
-              <div class="attk-lg" id="attkLg"><span><i class="lg warn"></i>hot · 有命中</span><span><i class="lg red"></i>fire · 命中 ≥ 峰值的 60%</span><span class="tt-cur" id="attkLgMsg" aria-live="polite">hover / 键盘聚焦格子：这一行显示占比与最近一条真实告警</span></div>
-              <p class="attk-note">每格的数字是本站 <code class="k">/api/public/alerts</code> 的 <code class="k">stats.byType</code> 真实计数（类型标签由服务端给，前端不编 ATT&amp;CK 映射）；命中越多颜色越热。取不到就把整块标成读不到，不补样例值。</p></div>
+          <div class="xk-statgrid" id="xkStatGrid" aria-label="数据统计 · 四个维度">
+            <section class="mod xk-stat" data-xk-stat="type">
+              <div class="mod-hd"><span class="led"></span>攻击类型 · Top 5<span class="tag">/alerts · stats.byType</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
+            <section class="mod xk-stat" data-xk-stat="source">
+              <div class="mod-hd"><span class="led"></span>三源占比<span class="tag">/alerts · stats.bySource</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
+            <section class="mod xk-stat" data-xk-stat="country">
+              <div class="mod-hd"><span class="led"></span>攻击来源国家 · Top 5<span class="tag">/geo · byCountry · 24h</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
+            <section class="mod xk-stat" data-xk-stat="port">
+              <div class="mod-hd"><span class="led"></span>目标端口 · Top 5<span class="tag">/alerts · stats.topPorts</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
           </div>
         </div>
-<div class="ops-tab" data-pane="ops"><div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>
+        
+          
+        <div class="ops-tab" data-pane="ops"><div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>
             <div class="mod-bd">
               <div class="stats">
                 <div class="stat"><div class="n sk" data-ban="total">—</div><div class="l">累计封禁 blockTotal</div></div>

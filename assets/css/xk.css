@@ -1196,7 +1196,7 @@ footer.xk-foot .xk-foot-q a{
    实时页 = 顶部四个数 + 左实时流 + 右地图 + 底部两块图，其余解释收进 <details>。
    ========================================================================== */
 #v-monitor .live-main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px;margin-top:14px;align-items:stretch}
-#v-monitor .live-main > .term{min-height:430px}
+#v-monitor .live-main > .term{min-height:0}
 #v-monitor .live-main > .card{display:flex;flex-direction:column;min-height:430px;margin:0}
 #v-monitor .live-main > .card .xk-geo-map{flex:1 1 auto;min-height:260px}
 #v-monitor .live-foot{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;margin-top:14px}
@@ -1369,4 +1369,17 @@ body[data-xk-page="monitor"] .ops-tabs#opsTabs{display:none !important}
 /* live 面板从「三行一屏」变四行：统计卡接在趋势/严重度下面。
    auto 行在高约束的 grid 里量不出来（hero/live-main 会被压成 0 高、内容透到下一块），
    用 max-content 让每块按内容撑开；视口不够时面板内滚，不裁切。 */
-body[data-xk-page="monitor"] .ops-tab.on[data-pane="live"]{grid-template-rows:repeat(4,max-content);overflow:auto;overscroll-behavior:contain}
+body[data-xk-page="monitor"] .ops-tab.on[data-pane="live"]{grid-template-rows:auto auto auto;align-content:start;overflow:hidden;height:100%;overscroll-behavior:contain}
+
+/* ★2026-11-10 大屏定案：live pane 三行固定，地图卡不再撑破行高 */
+body[data-xk-page="monitor"] .ops-tab.on[data-pane="live"]{grid-template-rows:auto 430px auto;align-content:start;overflow:hidden;height:100%}
+body[data-xk-page="monitor"] .live-main{height:430px;min-height:0}
+body[data-xk-page="monitor"] #xkGeoCard{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+body[data-xk-page="monitor"] #xkGeoCard .geo-chips,body[data-xk-page="monitor"] #xkGeoCard .geo-legend{flex:0 0 auto}
+body[data-xk-page="monitor"] #xkGeoMap{flex:1 1 auto;min-height:0;height:auto!important;overflow:hidden}
+body[data-xk-page="monitor"] .live-main > .term{height:100%;min-height:0;overflow:hidden}
+body[data-xk-page="monitor"] .live-foot{min-height:0}
+body[data-xk-page="monitor"] #xkGeoCard{overflow:hidden!important}
+body[data-xk-page="monitor"] #xkGeoMap{height:290px!important;max-height:290px!important;overflow:hidden}
+body[data-xk-page="monitor"] .live-foot .vb{padding:2px 0;min-height:0}
+body[data-xk-page="monitor"] .live-foot .mod-bd,body[data-xk-page="monitor"] .live-foot .card{padding-bottom:6px}
