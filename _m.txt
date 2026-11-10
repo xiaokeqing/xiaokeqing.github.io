@@ -1,0 +1,5 @@
+﻿fix(hud): /hud/ 三处渲染缺口修好（日志行、真封数、首句播报）+ 地图质心点
+
+- assets/js/xk-hud.js: renderLog 首屏必填（按 data-key 判断，不再要求容器为空）、row() 类名补 rw（与样式/验收口径一致）、renderAudit 走 audit.js 失败时用 home.audit.summary 兜底、首轮 pull() 结束调 speak(facts[0])、新增 CEN/proj/drawDots 画 7 国质心 + 本站 + window.__hudPulse 脉冲、byType/bySource 标签改 label||key（原来读 typeLabel 得 undefined）
+- layouts/hud/list.html: 样本文件读 site.Data.samples.total.files（原读 .files 恒为「未取到」）；body 加 data-samples
+- 实测 1920/1440/390：#hudLog .rw=15、#hudBlocks=14、#hudDots circle=16、undef 标签 0、pageerror 0、sw==iw；断言 99/99

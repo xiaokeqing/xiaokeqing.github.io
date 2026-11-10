@@ -283,15 +283,18 @@
           '<span class="hsev">' + (x.severityMax || '') + '</span><div class="hst">' + bar + '</div></div>';
       }).join('');
     }
+    /* 弱口令：优先用 home.js 的蜜罐 topCredentials（password.js 快照常为空） */
+    var hp = ST.home && ST.home.data && ST.home.data.honeypot;
     var p = ST.pwd && ST.pwd.data;
-    if (p) {
-      var list = (p.top || p.passwords || p.items || []).slice(0, 6);
-      bars(q('#hudPwd'), list.map(function (x) { return { k: x.password || x.value || x.pwd, n: x.count || x.tries || 0 }; }), null, '');
-    }
+    var plist = (hp && hp.topCredentials) || (p && (p.top || p.passwords || p.items)) || [];
+    bars(q('#hudPwd'), plist.slice(0, 6).map(function (x) {
+      return { k: (x.key || x.password || x.value || '').split(' / ')[0], n: x.count || x.tries || 0 };
+    }), null, '');
     var w = ST.web && ST.web.data;
-    if (w && w.hours) {
-      bars(q('#hudWeb'), w.hours.slice(0, 12).map(function (x) { return { k: x.hour || x.time, n: x.count || x.hits || 0 }; }), null, '');
-    }
+    var wl = (w && (w.topCategories || w.hours)) || [];
+    bars(q('#hudWeb'), wl.slice(0, 6).map(function (x) {
+      return { k: x.category || x.name || x.hour || x.time, n: x.count || x.hits || 0 };
+    }), null, '');
   }
 
   /* ---------- 轮询 + SSE ---------- */
