@@ -1,5 +1,14 @@
-﻿fix(hud): 第二屏弱口令依赖 home.js，pull() 完成后补渲染 renderS2
+﻿feat(nav): 删掉「工具台」整页，按功能拆成 情报 / 自查 / 覆盖 三个入口
 
-- 现象：/hud/ 第二屏「弱口令」空，但 home.js 里确实有 honeypot.topCredentials
-- 根因：pullS2() 与 pull() 并行，renderS2 跑时 ST.home 还是 null
-- 修法：pull().then 里 renderSys() 之后补一次 renderS2()（try/catch 兜住）
+站主：我想删掉工具台，把功能分类一下放到导航栏。
+- 新增 layouts/{intel,check,coverage}/list.html + content/{intel,check,coverage}/_index.md
+  · /intel/    ：IP 情报查询 · 攻击者追踪档案 · CVE 每日速递
+  · /check/    ：密码自查 · 弱口令统计
+  · /coverage/ ：ATT&CK 覆盖 · 告警噪音 · 样本分析 · 样本流水线 · 自研规则
+- nav（dock.html，首页与全站共用一份）：实时看板 · 安全日报 · 情报 · 自查 · 覆盖 · 演练场 · 笔记 · AI 问答
+- 删 layouts/tools/list.html 与 content/tools/_index.md；/tools/ 301 → /intel/（vercel.json）
+- 页脚去掉「工具台」链接；assert 门从 tools 改成 intel/check/coverage 三条（99 → 101）
+- /hud/ 攻击类型不再只有 4 行：按告警标题二次归类（蜜罐登录/SSH 爆破/端口扫描/数据库探测/Web 探测/网络流量/未归类）
+  合计仍等于窗口总数，不重复摊派
+
+实测三页 200、卡片 3/2/5、导航 9 项、sw==iw、pageerror 0；断言 101/101

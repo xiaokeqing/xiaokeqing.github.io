@@ -97,6 +97,21 @@
   }, 25000);
 
   /* ---------- 渲染 ---------- */
+  /* 规则标题 → 攻击类型。后端 stats.byType 只有 OTHER/BRUTE_FORCE/SQL_INJECTION/SCAN 四类，
+     OTHER 会吃掉一多半；这里按标题关键词再分一层，分不出来的明确写「未归类」。 */
+  function kType(t) {
+    var s = String(t || '');
+    /* 顺序要紧：一条标题常常同时含「蜜罐」和「SSH」，要先判更具体的那个 */
+    if (/登录成功|login success|logged in/i.test(s)) return '蜜罐登录成功';
+    if (/\bMSSQL\b|MySQL|数据库探测|database port/i.test(s)) return '数据库探测';
+    if (/SQL\s*注入|sqli|SQL_INJECTION|SQL Injection/i.test(s)) return 'SQL 注入';
+    if (/SSH[\s\S]*?(爆破|暴力|brute)|brute|暴力破解/i.test(s)) return 'SSH 爆破';
+    if (/sweep|端口扫描|port sweep|scan/i.test(s)) return '端口扫描';
+    if (/\.env|\.git|web\.config|路径穿越|probe|HTTP\b/i.test(s)) return 'Web 探测';
+    if (/蜜罐|honeypot|decoy/i.test(s)) return '蜜罐诱捕';
+    if (/DNS|TLS|flow|Suricata/i.test(s)) return '网络流量';
+    return '未归类';
+  }
   function renderTop() {
     var a = ST.alerts && ST.alerts.data; if (!a) return;
     var s = a.stats24h || {}, sv = s.bySeverity || {};
@@ -119,7 +134,21 @@
       bars(q('#hudHourList'), last8.map(function (x) { return { k: x.time, n: x.count }; }), null, '');
     }
     if (a.stats) {
-      bars(q('#hudTypeList'), (a.stats.byType || []).slice(0, 5).map(function (x) { return { k: x.label || x.key, n: x.count }; }), function () { return 'rgba(240,178,96,.6)'; }, '');
+      /* ★2026-11-10 站主：其他 142 条占满，为什么不能分出来。「后端只给 4 个 type」所以这里
+         按「规则标题」再细分一层：用 list[] 的 count 汇总，未命中的归「未归类」并如实显示，
+         不做二次摊派。分类规则写死在 kType() 里，改了要同步改文案。 */
+      var seeds = (a.list || []).map(function (x) { return { k: kType(x.title || x.rule || ''), n: x.count || 1 }; });
+      var agg = {}, tot2 = 0;
+      seeds.forEach(function (x) { agg[x.k] = (agg[x.k] || 0) + x.n; tot2 += x.n; });
+      var rows = Object.keys(agg).map(function (k) { return { k: k, n: agg[k] }; })
+        .sort(function (p, q) { return q.n - p.n; }).slice(0, 8);
+      if (rows.length >= 3) {
+        var sum2 = rows.reduce(function (s, x) { return s + x.n; }, 0);
+        if (tot2 > sum2) rows.push({ k: '未归类', n: tot2 - sum2 });
+        bars(q('#hudTypeList'), rows, function () { return 'rgba(240,178,96,.6)'; }, '');
+      } else {
+        bars(q('#hudTypeList'), (a.stats.byType || []).slice(0, 5).map(function (x) { return { k: x.label || x.key, n: x.count }; }), function () { return 'rgba(240,178,96,.6)'; }, '');
+      }
       bars(q('#hudSrcList'), (a.stats.bySource || []).slice(0, 4).map(function (x) { return { k: x.label || x.key, n: x.count }; }), null, '');
     }
     renderSevBars(sv);

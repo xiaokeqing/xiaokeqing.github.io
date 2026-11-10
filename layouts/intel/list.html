@@ -1,0 +1,78 @@
+{{- /* ============================================================================
+   /intel/ = 情报入口（2026-11-10 站主要求：删掉工具台，按功能分类放进导航栏）
+   ----------------------------------------------------------------------------
+   这一页只做「选入口」：不重复取数、不写第二套口径。
+   每张卡片的数字能静态读到的就静态读（hugo.Data），读不到就不写数——
+   点进去的那一页才是唯一数据来源。
+   ============================================================================ */ -}}
+{{- $v := "intel" -}}
+{{- $atk := hugo.Data.attack -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+.tl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.tl-card{display:block;padding:16px 18px;border:1px solid var(--xk-cyan-line-18,rgba(127,212,216,.18));border-radius:10px;background:rgba(8,12,16,.45);text-decoration:none;transition:border-color .18s,transform .18s}
+.tl-card:hover,.tl-card:focus-visible{border-color:var(--xk-cyan-line-34,rgba(127,212,216,.34));transform:translateY(-1px)}
+.tl-card b{display:block;font-size:16px;line-height:1.4;color:var(--xk-ink-title,#eaf6ff);margin-bottom:6px}
+.tl-card b em{font-style:normal;font-size:10.5px;letter-spacing:.14em;color:var(--xk-ink-faint,rgba(255,255,255,.42));margin-left:8px}
+.tl-card p{margin:0 0 10px;font-size:13px;line-height:1.85;color:var(--xk-ink-lede,rgba(255,255,255,.62))}
+.tl-card .kv{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px;font-size:12px;color:var(--xk-ink-faint,rgba(255,255,255,.5))}
+.tl-card .kv b{display:inline;font-size:12.5px;margin:0;color:var(--xk-ink,#e6f0f4)}
+.tl-card .go{font:12px/1.6 var(--xk-mono,Consolas,monospace);color:var(--xk-cyan,#7FD4D8)}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="intel">
+<section class="view on" id="v-intel">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 情报 <em class="ops-en">INTEL</em></span>
+      <span class="sync">● 三个入口 · 数据在各自页面取</span>
+    </div>
+    <div class="screen-bd">
+
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>查一个 IP，或者看今天的漏洞</div>
+        <div class="mod-bd">
+          <div class="tl-grid">
+
+            <a class="tl-card" href="/ip/">
+              <b>IP 情报查询<em>IP-PROFILE</em></b>
+              <p>输入一个公网 IP，返回它在本站留下的全部痕迹：告警条数与类型、蜜罐登录与口令结构、封禁记录、扫过的端口、首次/最近出现时间。</p>
+              <span class="go">进入 /ip/ →</span>
+            </a>
+
+            <a class="tl-card" href="/hunters/">
+              <b>攻击者追踪档案<em>HUNTERS</em></b>
+              <p>当天最凶的五个来源，四个阶段（告警 / 诱饵端口 / 蜜罐登录 / 处置）一路摊开；不评估动机，不排危险人物榜。</p>
+              <span class="go">进入 /hunters/ →</span>
+            </a>
+
+            <a class="tl-card" href="/tools/cve/">
+              <b>CVE 每日速递<em>CVE-DIGEST</em></b>
+              <p>每天把 CISA KEV（已被在野利用）和当日高危 CVE 摊开，每条四行：影响什么软件 / 漏洞是什么 / 在野利用了吗 / 我该做什么。中文解读只搬官方字段，缺字段就写「官方未给出」。</p>
+              {{- with $atk }}
+              <span class="kv"><span>ATT&amp;CK 已映射 <b>{{ .mappedPct }}%</b></span><span>窗口 <b>{{ .windowDays }} 天</b></span></span>
+              {{- end }}
+              <span class="go">进入 /tools/cve/ →</span>
+            </a>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+{{ partial "xk-demo/site-foot.html" . }}
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

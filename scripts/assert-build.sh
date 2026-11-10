@@ -400,7 +400,9 @@ new_page_gate tour "3 分钟导览页"
 new_page_gate detections "自研检测规则页"
 new_page_gate hunters "攻击者追踪档案页"
 new_page_gate timeline "技术决策时间线页"
-new_page_gate tools 工具台
+new_page_gate intel 情报入口
+new_page_gate check 自查入口
+new_page_gate coverage 覆盖入口
 new_page_gate tools/password 密码自查页
 # ★2026-10-18：告警噪音指数页（/noise/）。纯静态快照：数字全来自 /data/noise-index.json，
 #   页面只做一次同域 fetch，不调接口；data-xk-ssr 用路由名 noise（与 section 同名）。

@@ -1,0 +1,83 @@
+{{- /* /coverage/ = 检测面入口（2026-11-10 站主：删掉工具台，按功能分类进导航） */ -}}
+{{- $v := "coverage" -}}
+{{- $atk := hugo.Data.attack -}}
+{{- $smp := hugo.Data.samples -}}
+{{- $det := hugo.Data.detections -}}
+<!DOCTYPE html>
+<html lang="{{ site.Language.Lang | default `zh-CN` }}" data-xk-kurisu-mode="video">
+<head>
+{{ partial "xk-demo/head-meta.html" . }}
+{{ partial "xk-demo/shell-style.html" . }}
+<style>
+.tl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.tl-card{display:block;padding:16px 18px;border:1px solid var(--xk-cyan-line-18,rgba(127,212,216,.18));border-radius:10px;background:rgba(8,12,16,.45);text-decoration:none;transition:border-color .18s,transform .18s}
+.tl-card:hover,.tl-card:focus-visible{border-color:var(--xk-cyan-line-34,rgba(127,212,216,.34));transform:translateY(-1px)}
+.tl-card b{display:block;font-size:16px;line-height:1.4;color:var(--xk-ink-title,#eaf6ff);margin-bottom:6px}
+.tl-card b em{font-style:normal;font-size:10.5px;letter-spacing:.14em;color:var(--xk-ink-faint,rgba(255,255,255,.42));margin-left:8px}
+.tl-card p{margin:0 0 10px;font-size:13px;line-height:1.85;color:var(--xk-ink-lede,rgba(255,255,255,.62))}
+.tl-card .kv{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px;font-size:12px;color:var(--xk-ink-faint,rgba(255,255,255,.5))}
+.tl-card .kv b{display:inline;font-size:12.5px;margin:0;color:var(--xk-ink,#e6f0f4)}
+.tl-card .go{font:12px/1.6 var(--xk-mono,Consolas,monospace);color:var(--xk-cyan,#7FD4D8)}
+</style>
+</head>
+<body data-skin="warm" data-phone="v1" class="xk-has-idcard">
+{{ partial "xk-demo/shell-chrome.html" (dict "v" $v) }}
+<main class="main" id="content" data-xk-ssr="coverage">
+<section class="view on" id="v-coverage">
+  <div class="screen">
+    <div class="screen-hd">
+      <span class="led"></span>
+      <span class="t">XK-LAB // 覆盖 <em class="ops-en">COVERAGE</em></span>
+      <span class="sync">● 五块 · 这台机器到底能看见什么</span>
+    </div>
+    <div class="screen-bd">
+      <div class="mod">
+        <div class="mod-hd"><span class="led"></span>检测面</div>
+        <div class="mod-bd">
+          <div class="tl-grid">
+
+            <a class="tl-card" href="/attack/">
+              <b>ATT&amp;CK 覆盖<em>ATTACK</em></b>
+              <p>7 天真实告警按战术 × 技术铺成矩阵，每格给条数。没带技术标签的单独列出，不摊派到任何技术里。</p>
+              {{- with $atk }}<span class="kv"><span>窗口 <b>{{ .windowDays }} 天</b></span><span>已映射 <b>{{ .mappedPct }}%</b></span><span>未映射 <b>{{ lang.FormatNumber 0 .unmapped }}</b></span></span>{{- end }}
+              <span class="go">进入 /attack/ →</span>
+            </a>
+
+            <a class="tl-card" href="/noise/">
+              <b>告警噪音指数<em>NOISE</em></b>
+              <p>把告警里「自家 agent 心跳」那部分单拎出来，量化到底有多少是噪音、多少是真的。</p>
+              <span class="go">进入 /noise/ →</span>
+            </a>
+
+            <a class="tl-card" href="/samples/">
+              <b>样本与行为分析<em>SAMPLES</em></b>
+              <p>蜜罐抓到的文件样本，以及三条可复现的攻击链：谁打了、拿什么账号、走到哪一步。</p>
+              {{- with $smp }}<span class="kv"><span>文件样本 <b>{{ .total.files }}</b></span><span>占用 <b>{{ .total.readable }}</b></span></span>{{- end }}
+              <span class="go">进入 /samples/ →</span>
+            </a>
+
+            <a class="tl-card" href="/samples-pipeline/">
+              <b>样本流水线<em>PIPELINE</em></b>
+              <p>落盘 → 去重 → 静态判定 → 情报标记 → 归档，五步走到哪一步，如实标注「未接入」而不是假装跑完。</p>
+              <span class="go">进入 /samples-pipeline/ →</span>
+            </a>
+
+            <a class="tl-card" href="/detections/">
+              <b>自研检测规则<em>DETECTIONS</em></b>
+              <p>本站自己写的 Suricata / Wazuh 规则清单：命中什么、凭什么判定、怎么验证的。</p>
+              <span class="go">进入 /detections/ →</span>
+            </a>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+{{ partial "xk-demo/site-foot.html" . }}
+<div id="xk-views" hidden aria-hidden="true"></div>
+{{ partial "xk-demo/idcard.html" . }}
+{{ partial "xk-demo/shell-script.html" . }}
+</body>
+</html>

@@ -20,6 +20,16 @@
       "source": "/alerts/(.*)",
       "destination": "/hud/",
       "permanent": true
+    },
+    {
+      "source": "/tools",
+      "destination": "/intel/",
+      "permanent": true
+    },
+    {
+      "source": "/tools/",
+      "destination": "/intel/",
+      "permanent": true
     }
   ],
   "rewrites": [

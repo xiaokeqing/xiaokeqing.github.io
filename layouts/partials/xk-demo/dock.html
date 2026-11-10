@@ -15,8 +15,11 @@
   <a class="brand" href="/" aria-label="返回首页 XK-LAB">XK-LAB</a>
   <a href="/hud/" class="{{ if eq $v "monitor" }}on{{ end }}">实时看板</a>
   <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
+  <a href="/intel/" class="{{ if eq $v "intel" }}on{{ end }}">情报</a>
+  <a href="/check/" class="{{ if eq $v "check" }}on{{ end }}">自查</a>
+  <a href="/coverage/" class="{{ if eq $v "coverage" }}on{{ end }}">覆盖</a>
+  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">演练场</a>
   <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
   <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
-  <a href="/tools/" class="{{ if eq $v "tools" }}on{{ end }}">工具台</a>
   {{ partial "xk-demo/dock-tools.html" . }}
 </nav>
