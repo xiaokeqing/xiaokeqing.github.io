@@ -373,7 +373,11 @@ new_page_gate() {
   # 注意：grep -c 数的是「行」，minify 后整页是一行 → 必须用 -o 再 wc -l 数「出现次数」
   ext_css=$(grep -oE '/css/xk[^"> ]*\.css' "$f" | wc -l | tr -d ' ')
   ext_js=$(grep -oE '/js/xk[^"> ]*\.js' "$f" | wc -l | tr -d ' ')
-  if [ "$sz" -gt 8000 ] && grep -qE "$pat" "$f" && [ "${ext_css:-0}" -ge 2 ] && [ "${ext_js:-0}" -ge 2 ]; then
+  # ★2026-11-10：允许内联样式。本机到 CDN 链路对大文件只有 1–6 KB/s，
+  # 大屏页把 tokens+xk-hud 内联进 HTML 后不再有外链 CSS ⇒ 内联 <style> 也算合规。
+  inline_css=0
+  grep -qE '<style[^>]*>[^<]{200,}' "$f" && inline_css=1
+  if [ "$sz" -gt 8000 ] && grep -qE "$pat" "$f" && { [ "${ext_css:-0}" -ge 2 ] || [ "$inline_css" -eq 1 ]; } && [ "${ext_js:-0}" -ge 2 ]; then
     ok "$route/index.html $sz 字节 > 8000（非骨架），data-xk-ssr=${route##*/} 在位，外链 $ext_css CSS / $ext_js JS（$name）"
   else
     no "$route/index.html 不合格：$sz 字节（需 >8000 非骨架）；data-xk-ssr=${route##*/} $(grep -qE "$pat" "$f" && echo 在位 || echo 缺失)；外链 $ext_css CSS / $ext_js JS（各需 ≥2）（$name）"

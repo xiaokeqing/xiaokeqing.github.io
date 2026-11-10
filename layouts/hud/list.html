@@ -10,9 +10,8 @@
 <meta name="description" content="公网安全观测站大屏：24 小时告警、来源国家、严重度构成、实时事件流、攻击者档案与处置记录，数据 5 秒刷新。">
 {{ partial "xk-demo/head-meta.html" . }}
 {{ $hud := resources.Get "js/xk-hud.js" | minify | fingerprint }}
-<link rel="stylesheet" href="{{ (resources.Get "css/tokens.css" | minify | fingerprint).RelPermalink }}">
-{{- $hudcss := resources.Get "css/xk-hud.css" | minify | fingerprint }}
-<link rel="stylesheet" href="{{ $hudcss.RelPermalink }}">
+{{- /* 内联样式：本机到 Vercel 的链路对大文件只有 1–6 KB/s，外链 CSS 会让整页长时间无样式 */ -}}
+<style>{{ (resources.Get "css/tokens.css" | minify).Content | safeCSS }}{{ (resources.Get "css/xk-hud.css" | minify).Content | safeCSS }}</style>
 
 </head>
 <body data-xk-page="hud" data-xk-ssr="hud" data-samples="{{ (index site.Data "samples").total.files }}">
