@@ -201,7 +201,7 @@
   /* 三态/四态用同一元素表达（不新增节点）：取数中（SSR 初始文案）/ 重试中 / 被限流 / 读不到＋原因 */
   function setSyncState(text) {
     var el = document.querySelector('.screen-hd .sync');
-    if (el) el.textContent = '● ' + text + ' · 全部来自 /api/public/*.js 只读别名';
+    if (el) el.textContent = '● ' + text;
   }
 
   /* ★B3：端点 → 可缓存别名（契约 §2）================================================
@@ -427,17 +427,12 @@
       el.textContent = '● ' + (lastSync ? '刚同步 ' + clockOf(lastSync) + ' · ' : '') +
         parts.filter(degraded).length + ' 个端点本次返回降级值（对应字段已写"读不到"）· 不补数、不编造';
     } else if (lastSync) {
-      /* ★B3：时间一律取后端 snapshotAt（**不是**"收到响应的时刻"）；各端点快照不同就照实写区间。
-         "边缘缓存龄" = cacheAgeSeconds + 响应头 Age（Age 由后端在别名路径放行）。 */
+      /* ★B3：时间一律取后端 snapshotAt（**不是**"收到响应的时刻"）；各端点快照不同就照实写区间。 */
       var t = '● 刚刚同步 ' + clockOf(lastSync);
       if (lastSnapMin && Math.abs(lastSync - lastSnapMin) > 1000) {
-        t = '● 数据时刻 ' + clockOf(lastSnapMin) + ' — ' + clockOf(lastSync) + '（各端点 snapshotAt 不同，取范围）';
-      } else {
-        t += lastSnapGa ? '（端点 generatedAt 兜底：本批响应没有 snapshotAt）' : '（后端 snapshotAt）';
+        t = '● 数据时刻 ' + clockOf(lastSnapMin) + ' — ' + clockOf(lastSync);
       }
-      if (lastAgeS) t += ' · 边缘缓存龄 ' + lastAgeS + 's';
-      el.textContent = t + ' · 全部来自 /api/public/*.js 只读别名' +
-        (lastViaOld ? '（有端点走了旧路径回落：别名 404）' : '');
+      el.textContent = t + (lastViaOld ? '（有端点走了旧路径回落：别名 404）' : '');
     } else if (parts.length) {
       el.textContent = '● ' + NA + '（' + errShort(parts) + '）· 不补数、不编造';
     }

@@ -122,38 +122,6 @@
         </div>
       </div>
 
-      <!-- ============ ④ 数据来源 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>数据来源<span class="tag">两份 · 分开计数</span></div>
-        <div class="mod-bd">
-          <p class="pwd-p">
-            <b>① 蜜罐真实爆破口令</b>：最近 <b>24 小时</b> SSH / Web 登录尝试里的 <code>password</code> 字段，
-            就地 SHA-256、按前 5 位分桶，只写「hash + 次数 + 最后出现时间」。<br>
-            <b>② 公开弱口令榜</b>：rockyou / SecLists 一类，单独标成 <code>listed[]</code>，不混进「被真实尝试过」。
-          </p>
-          <p class="pwd-note">
-            相关：<a href="/passwords/" style="color:#bfe3d0">/passwords/</a> 弱口令统计 ·
-            <a href="/ip/" style="color:#bfe3d0">/ip/</a> 这个 IP 干过什么 ·
-            <a href="/api/" style="color:#bfe3d0">/api/</a> 公开端点清单
-          </p>
-        </div>
-      </div>
-
-      <!-- ============ ⑥ 自己复核 ============ -->
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>自己复核 · 三条 curl<span class="tag">只读 · 不触发处置</span></div>
-        <div class="mod-bd">
-<pre class="pwd-pre"><span class="c"># ① 查一个前缀（a1b2c 换成你自己算出来的前 5 位）</span>
-curl -s 'https://demo.xiaokeqing.cn/api/public/password?p=a1b2c' | head -c 800
-
-<span class="c"># ② 对照：非法前缀 → 400 + 机读 reason（不是 500，也不是空对象）</span>
-curl -s -o /dev/null -w '%{http_code}\n' 'https://demo.xiaokeqing.cn/api/public/password?p=A1B2C'
-
-<span class="c"># ③ 自己算前 5 位（口令只进本机的 sha256sum，不上网）</span>
-printf '%s' 'example-password' | sha256sum | cut -c1-5</pre>
-        </div>
-      </div>
-
     </div>
   </div>
 </section>

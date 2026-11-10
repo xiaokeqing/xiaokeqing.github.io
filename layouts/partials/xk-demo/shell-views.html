@@ -77,6 +77,45 @@
               <div class="mod-bd"><div class="vz-bars" data-vz-bars></div><p class="vz-nt" data-vz-barsnote>取数中…</p></div>
             </div>
           </div>
+
+          {{- /* ★2026-11-10 数据统计（站主：只有四种为什么还要做个统计图 → 为什么不多加几条）
+                 2×2 四卡：攻击类型 Top5 / 三源占比 / 国家 Top5 / 端口 Top5。
+                 条与数字全部由 assets/js/xk-stats.js 按真实快照填；取不到就整卡一行「未取到（原因）」，
+                 不写 0、不补样例。端口这份快照没有字段 ⇒ 只写原因，不拿别的数据凑。 */ -}}
+          <div class="xk-statgrid" id="xkStatGrid" aria-label="数据统计 · 四个维度">
+            <section class="mod xk-stat" data-xk-stat="type">
+              <div class="mod-hd"><span class="led"></span>攻击类型 · Top 5<span class="tag">/alerts · stats.byType</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
+            <section class="mod xk-stat" data-xk-stat="source">
+              <div class="mod-hd"><span class="led"></span>三源占比<span class="tag">/alerts · stats.bySource</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
+            <section class="mod xk-stat" data-xk-stat="country">
+              <div class="mod-hd"><span class="led"></span>攻击来源国家 · Top 5<span class="tag">/geo · byCountry · 24h</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
+            <section class="mod xk-stat" data-xk-stat="port">
+              <div class="mod-hd"><span class="led"></span>目标端口 · Top 5<span class="tag">/alerts · stats.topPorts</span></div>
+              <div class="mod-bd">
+                <div class="vz-bars" data-xk-stat-bars></div>
+                <p class="vz-nt" data-xk-stat-note>取数中…</p>
+                <p class="xk-stat-miss" data-xk-stat-empty hidden></p>
+              </div>
+            </section>
+          </div>
         </div>
 <div class="ops-tab" data-pane="source"><div class="mod-hd"><span class="led"></span>来源 TOP5<span class="tag">/geo</span></div>
 <div class="attk" id="attkGrid"></div>

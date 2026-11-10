@@ -1347,3 +1347,26 @@ body[data-xk-page="monitor"] .ops-tabs#opsTabs{display:none !important}
 .tps-card b,.tps-card strong{font-size:13.5px!important;margin:0!important}
 .tps-card p{margin:0!important;font-size:12px!important;line-height:1.5!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tps-card .tps-tags,.tps-card .tags{margin:2px 0 0!important}
+
+/* ==========================================================================
+   2026-11-10 /alerts/ 数据统计：2×2 四卡（攻击类型 / 三源 / 国家 / 端口）
+   —— 站主：严重度只有四档太窄，多加几条维度。条沿用 .vz-bars，不引新字体/图标。
+      取不到时整卡只留一行「未取到（原因）」，不出现 0 宽条，也不写 0。
+   ========================================================================== */
+.xk-statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0;min-width:0}
+.xk-statgrid > .mod{margin:0;min-width:0}
+.xk-stat .mod-hd{padding:8px 13px}
+.xk-stat .mod-hd .tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54%}
+.xk-stat .mod-bd{padding:10px 13px 12px}
+.xk-stat .vz-bars{gap:7px;margin-top:0}
+.xk-stat .vz-bars .vb{grid-template-columns:118px minmax(0,1fr) auto;gap:8px;min-height:19px}
+.xk-stat .vz-bars .vb-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xk-stat .vz-bars .vb-n{white-space:nowrap}
+.xk-stat .vz-nt{margin:8px 0 0;font-size:12px;line-height:1.5}
+.xk-stat-miss{margin:0;font-size:13px;line-height:1.6;color:var(--mut)}
+.xk-stat-miss[hidden]{display:none}
+@media (max-width:1100px){.xk-statgrid{grid-template-columns:1fr}}
+/* live 面板从「三行一屏」变四行：统计卡接在趋势/严重度下面。
+   auto 行在高约束的 grid 里量不出来（hero/live-main 会被压成 0 高、内容透到下一块），
+   用 max-content 让每块按内容撑开；视口不够时面板内滚，不裁切。 */
+body[data-xk-page="monitor"] .ops-tab.on[data-pane="live"]{grid-template-rows:repeat(4,max-content);overflow:auto;overscroll-behavior:contain}

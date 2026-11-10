@@ -102,7 +102,7 @@
       '（<b>同前缀桶合计</b>，不是"你这一个口令被试了 ' + esc(d.bucketCount) + ' 次"）。' +
       (d.bucketLastSeen ? '这个桶最后一次出现是 <b>' + esc(d.bucketLastSeen) + '</b>。' : '') + '</p>' +
       countsRow(d) +
-      '<p class="pwd-p"><b>该做什么</b>：如果这是你在用的口令（<b>请不要在这里输入常用口令</b>，见页面下方说明），' +
+      '<p class="pwd-p"><b>该做什么</b>：如果这是你在用的口令（<b>请不要在这里输入常用口令</b>），' +
       '立刻换掉；换的地方优先是邮箱、银行、公司账号 —— 它们一旦被撞开，损失比一个小论坛大得多。' +
       '同一个口令不要在多处复用。</p>' +
       '<p class="pwd-note">命中只说明「这个口令被攻击者试过」，<b>不说明</b>它是谁的、也不说明哪个账号中招 —— ' +
@@ -142,7 +142,7 @@
     return '<p class="pwd-p"><b class="pwd-null">读不到（' + esc(reasonOf(d, status)) + '）—— 不补数。</b></p>' +
       '<p class="pwd-p">' + esc(d && d.notes ? d.notes : '后端这次没有给出原因文本。') + '</p>' +
       '<p class="pwd-note">「读不到」<b>不等于</b>「没查到」，也<b>不等于</b>「安全」：这一页不会用任何本地估算值填空。' +
-      '稍后再试；如果一直这样，说明字典索引还没生成（见下方「数据从哪来」）。</p>';
+      '稍后再试；如果一直这样，说明字典索引还没生成。</p>';
   }
   function reasonOf(d, status) {
     if (d && d.notes) {
@@ -176,9 +176,8 @@
     var out = $('pwdOut'), btn = $('pwdGo'), box = $('pwdQ');
     if (!out) { return; }
     if (typeof pw !== 'string' || pw.length === 0) {
-      out.innerHTML = '<p class="pwd-p"><b class="pwd-null">还没输入口令</b>：上面输入框里敲一个（<b>别敲常用口令</b>，' +
-        '见页面下方说明），再点「检查」。</p>';
-      setSync('待检查（本地算 hash，只发 5 位前缀）');
+      out.innerHTML = '<p class="pwd-p"><b class="pwd-null">还没输入口令</b>：上面输入框里敲一个（<b>别敲常用口令</b>），再点「检查」。</p>';
+      setSync('待检查');
       setTag('未检查');
       return;
     }
@@ -288,5 +287,5 @@
      预填过的输入框一律清掉（浏览器"记住密码"不归本页管，但本页自己不留）。 */
   var initial = $('pwdQ');
   if (initial) { initial.value = ''; }
-  setSync('待检查（本地算 hash，只发 5 位前缀）');
+  setSync('待检查');
 })();

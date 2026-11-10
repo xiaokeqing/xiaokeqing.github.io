@@ -38,7 +38,6 @@
     greet_welcome_back: '欢迎回来。数据已经更新过了。',
     greet_first: '我是 Amadeus 助手。顶栏是七个入口，全部页面在内容页页脚。',
     greet_back: '又见面了。',
-    nav_home: '这里是主页。顶栏七个入口：实时看板 / 安全日报 / 笔记 / 演练场 / AI 问答 / 工具台 / 运行状态；右下角可以打开全部页面。',
     nav_monitor: '监测中心：实时攻击流、威胁等级、攻击来源分布、蜜罐捕获的登录尝试，还有自动拦截记录。数字从后端直接读，取不到的地方会直接标出来。',
     nav_ai: 'AI 问答：可以问安全概念和防御做法，回答会附上出处。涉及站内事件数据的会直接拒答，这个面只解释公开知识。',
     nav_what: '介绍页：这是什么、能干什么，每个数字都标了来源。',
@@ -51,10 +50,10 @@
   };
   window.__xkLineZh = LINE_ZH;
   var GROUP_OF = { greet_first: 'greeting', greet_back: 'greeting', tab_return: 'idle_banter',
-    nav_home: 'page_intro', nav_monitor: 'page_intro', nav_ai: 'page_intro', nav_notes: 'page_intro',
+    nav_monitor: 'page_intro', nav_ai: 'page_intro', nav_notes: 'page_intro',
     fallback_no_data: 'fallback', fallback_offline: 'fallback', fallback_throttled: 'fallback' };
   window.__xkLineGroup = GROUP_OF;   /* 统一播放器那边要用"这句属于哪个组"（与 bank 的 trigger 同源约定） */
-  var EMO_LINE = { normal: 'nav_home', happy: 'greet_back', sided_thinking: 'nav_ai',
+  var EMO_LINE = { normal: 'greet_back', happy: 'greet_back', sided_thinking: 'nav_ai',
     sided_surprised: 'nav_monitor', sad: 'fallback_no_data', blush: 'greet_first',
     angry: 'fallback_throttled', disappointed: 'fallback_no_data' };
 
@@ -949,7 +948,7 @@
       if (!t || !t.getAttribute) { return; }
       if (t.id === 'xkIdClose') { closePanel(); return; }
       var emo = t.getAttribute('data-emo');
-      if (emo) { setEmo(emo); speak(EMO_LINE[emo] || 'nav_home', '情绪：' + labelOf(emo)); return; }
+      if (emo) { setEmo(emo); speak(EMO_LINE[emo] || 'greet_back', '情绪：' + labelOf(emo)); return; }
       var act = t.getAttribute('data-act');
       if (act) {
         var can = (typeof window.xkmPlayClip === 'function');
@@ -1003,7 +1002,7 @@
     for (k = 0; k < EMOS8.length; k++) { if (EMOS8[k][0] === D.emo) { i = k; } }
     var e = EMOS8[(i + 1) % EMOS8.length];
     setEmo(e[0]);
-    speak(EMO_LINE[e[0]] || 'nav_home', '情绪：' + e[1]);
+    speak(EMO_LINE[e[0]] || 'greet_back', '情绪：' + e[1]);
   }
   av.addEventListener('pointerdown', function () {
     longDone = false;
@@ -1024,7 +1023,7 @@
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && D.panel) { closePanel(); } });
 
   /* ---------- 进入栏目 ⇒ 固定一句介绍（同栏目 10 分钟内不重复念） ---------- */
-  var ENTRY_LINE = { home: 'nav_home', monitor: 'nav_monitor', notes: 'nav_notes', ai: 'nav_ai' };
+  var ENTRY_LINE = { monitor: 'nav_monitor', notes: 'nav_notes', ai: 'nav_ai' };
   (function entry() {
     var p = location.pathname, name = '';
     if (/^\/ai/.test(p)) { name = 'ai'; }

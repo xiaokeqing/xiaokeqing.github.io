@@ -124,6 +124,10 @@
 {{- if eq .Type "alerts" }}
 {{- $kpi := resources.Get "js/xk-kpi.js" | minify | fingerprint }}
 <script src="{{ $kpi.RelPermalink }}" integrity="{{ $kpi.Data.Integrity }}" defer></script>
+{{- /* ★2026-11-10：数据统计四卡（类型 / 三源 / 国家 / 端口）。同 /alerts/ 同源只读快照，
+        取不到就整卡写「未取到（原因）」。同样必须走 Hugo 资源管线（static/js/ 会被断言拦）。 */ -}}
+{{- $st := resources.Get "js/xk-stats.js" | minify | fingerprint }}
+<script src="{{ $st.RelPermalink }}" integrity="{{ $st.Data.Integrity }}" defer></script>
 {{- end }}
 {{- /* ★2026-11-09：「让桐莉讲讲这段」（assets/js/xk-explain.js）—— /tour/ 与 /detections/ 的
        每个 .mod 小节挂一个按钮，点开调站内公开问答 POST /api/public/ask，答案正文用 textContent
