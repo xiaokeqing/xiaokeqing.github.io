@@ -180,9 +180,9 @@
       var cc = String(x.country || '').toUpperCase(), c = CEN[cc]; if (!c) return;
       var p = proj(c[0], c[1]);
       var cx = Math.max(40, Math.min(960, p[0])), cy = Math.max(12, Math.min(492, p[1]));
-      var r = (3 + 11 * Math.sqrt((x.count || 0) / max)).toFixed(1);
+      var r = (3.5 + 12 * Math.sqrt((x.count || 0) / max)).toFixed(1);
       var label = seen.some(function (s) { return Math.abs(s[0] - cx) < 90 && Math.abs(s[1] - cy) < 22; }) ? '' :
-        '<text x="' + cx + '" y="' + (cy - 9) + '" fill="rgba(214,228,233,.8)" font-size="10" text-anchor="middle">' +
+        '<text x="' + cx + '" y="' + (cy - 11) + '" fill="rgba(220,236,241,.92)" font-size="12.5" text-anchor="middle">' +
         (x.countryName || cc) + ' ' + fmt(x.count) + '</text>';
       if (label) seen.push([cx, cy]);
       out += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="rgba(111,211,216,.16)" stroke="rgba(111,211,216,.5)"/>' +

@@ -52,22 +52,6 @@
 
   <div class="cols">
     <div class="col">
-      <div class="blk" id="hudSev"><h3>严重度构成 <em>SEVERITY · 24H</em></h3><div id="hudSevList"></div></div>
-      <div class="blk" id="hudType"><h3>攻击类型 Top5 <em>TYPE · 5MIN</em></h3><div id="hudTypeList"></div></div>
-      <div class="blk" id="hudSrc"><h3>三源占比 <em>SOURCE · 5MIN</em></h3><div id="hudSrcList"></div></div>
-      <div class="blk" id="hudCty"><h3>来源国家 Top7 <em>GEO · 24H</em></h3><div id="hudCtyList"></div></div>
-      <div class="blk" id="hudSys"><h3>体系与质量 <em>SYSTEM</em></h3>
-        <div class="br"><span class="bl">自研规则</span><span class="bt"><i style="width:38%;background:rgba(111,211,216,.5)"></i></span><span class="bv">16 条</span></div>
-        <div class="br"><span class="bl">ATT&CK 覆盖</span><span class="bt"><i style="width:49%;background:rgba(240,178,96,.5)"></i></span><span class="bv" id="hudAtkPct">—</span></div>
-        <div class="br"><span class="bl">样本文件</span><span class="bt"><i style="width:22%;background:rgba(111,211,216,.35)"></i></span><span class="bv">{{ with site.Data.samples }}{{ with .total }}{{ .files }} 件{{ else }}未取到{{ end }}{{ else }}未取到{{ end }}</span></div>
-        <div class="br"><span class="bl">蜜罐连接</span><span class="bt"><i style="width:30%;background:rgba(111,211,216,.35)"></i></span><span class="bv" id="hudHoneyConn">—</span></div>
-        <div class="br"><span class="bl">蜜罐登录</span><span class="bt"><i style="width:30%;background:rgba(255,120,120,.35)"></i></span><span class="bv" id="hudHoneyLogin">—</span></div>
-        <div class="br"><span class="bl">归档日报</span><span class="bt"><i style="width:24%;background:rgba(111,211,216,.35)"></i></span><span class="bv" id="hudArchive">—</span></div>
-        <div class="br"><span class="bl">端口 Top5</span><span class="bt"><i style="width:2%;background:rgba(150,170,180,.3)"></i></span><span class="bv" style="color:var(--t3)">NO DATA</span></div>
-      </div>
-    </div>
-
-    <div class="col">
       <div class="blk" id="hudMap">
         <h3>攻击来自哪里 <em>GEO · 24H</em></h3>
         <svg viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" aria-label="世界地图：攻击来源国家">
@@ -80,6 +64,31 @@
       <div class="blk" id="hudLog">
         <h3>正在发生 <em>INBOUND · 近 5 分钟</em></h3>
         <div id="hudLogList"></div>
+      </div>
+<div id="hudChat">
+  <canvas class="av" id="hudAv" width="132" height="132" aria-hidden="true"></canvas>
+  <div class="txt">
+    <div class="nm">牧濑 红莉栖<em>AMADEUS / HOLO-LINK</em></div>
+    <p id="hudLine">数据加载中——她把真实数据读出来念给你听。</p>
+  </div>
+  <div class="foot"><span id="hudSt">STANDBY</span><span id="hudStTag">等待事件</span></div>
+</div>
+    </div>
+  </div>
+
+  <div class="row3">
+      <div class="blk" id="hudSev"><h3>严重度构成 <em>SEVERITY · 24H</em></h3><div id="hudSevList"></div></div>
+      <div class="blk" id="hudType"><h3>攻击类型 Top5 <em>TYPE · 5MIN</em></h3><div id="hudTypeList"></div></div>
+      <div class="blk" id="hudSrc"><h3>三源占比 <em>SOURCE · 5MIN</em></h3><div id="hudSrcList"></div></div>
+      <div class="blk" id="hudCty"><h3>来源国家 Top7 <em>GEO · 24H</em></h3><div id="hudCtyList"></div></div>
+      <div class="blk" id="hudSys"><h3>体系与质量 <em>SYSTEM</em></h3>
+        <div class="br"><span class="bl">自研规则</span><span class="bt"><i style="width:38%;background:rgba(111,211,216,.5)"></i></span><span class="bv">16 条</span></div>
+        <div class="br"><span class="bl">ATT&CK 覆盖</span><span class="bt"><i style="width:49%;background:rgba(240,178,96,.5)"></i></span><span class="bv" id="hudAtkPct">—</span></div>
+        <div class="br"><span class="bl">样本文件</span><span class="bt"><i style="width:22%;background:rgba(111,211,216,.35)"></i></span><span class="bv">{{ with site.Data.samples }}{{ with .total }}{{ .files }} 件{{ else }}未取到{{ end }}{{ else }}未取到{{ end }}</span></div>
+        <div class="br"><span class="bl">蜜罐连接</span><span class="bt"><i style="width:30%;background:rgba(111,211,216,.35)"></i></span><span class="bv" id="hudHoneyConn">—</span></div>
+        <div class="br"><span class="bl">蜜罐登录</span><span class="bt"><i style="width:30%;background:rgba(255,120,120,.35)"></i></span><span class="bv" id="hudHoneyLogin">—</span></div>
+        <div class="br"><span class="bl">归档日报</span><span class="bt"><i style="width:24%;background:rgba(111,211,216,.35)"></i></span><span class="bv" id="hudArchive">—</span></div>
+        <div class="br"><span class="bl">端口 Top5</span><span class="bt"><i style="width:2%;background:rgba(150,170,180,.3)"></i></span><span class="bv" style="color:var(--t3)">NO DATA</span></div>
       </div>
     </div>
   </div>
@@ -106,14 +115,7 @@
   </div>
 </div>
 
-<div id="hudChat">
-  <canvas class="av" id="hudAv" width="132" height="132" aria-hidden="true"></canvas>
-  <div class="txt">
-    <div class="nm">牧濑 红莉栖<em>AMADEUS / HOLO-LINK</em></div>
-    <p id="hudLine">数据加载中——她把真实数据读出来念给你听。</p>
-  </div>
-  <div class="foot"><span id="hudSt">STANDBY</span><span id="hudStTag">等待事件</span></div>
-</div>
+>
 
 {{ partial "xk-demo/site-foot.html" . }}
 <script src="{{ $hud.RelPermalink }}" integrity="{{ $hud.Data.Integrity }}" defer></script>
