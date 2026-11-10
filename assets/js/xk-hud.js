@@ -252,8 +252,7 @@
     if (ST.deploy && ST.deploy.data && ST.deploy.data.build) setTxt('hudSha', (ST.deploy.data.build.sha || '').slice(0, 7));
   }
 
-  function drawSpark(pts) {
-    var svg = q('#hudSpark'); if (!svg) return;
+  function drawSpark(pts) {    var svg = q('#hudSpark'); if (!svg) return;
     var W = 900, H = 120, max = Math.max.apply(null, pts.concat([1])), min = 0;
     var step = W / Math.max(1, pts.length - 1);
     var line = pts.map(function (v, i) {
@@ -298,6 +297,58 @@
   }
 
   /* ---------- 轮询 + SSE ---------- */
+
+  /* ---------- 陆地轮廓（构建期生成的 SVG，运行期只取一次） ---------- */
+  (function () {
+    var g = d.getElementById('hudLand'); if (!g) return;
+    fetch('/images/crt/world-land.svg').then(function (r) { return r.text(); }).then(function (t) {
+      var box = d.createElement('div'); box.innerHTML = t;
+      var svg = box.querySelector('svg'); if (svg) g.innerHTML = svg.innerHTML;
+    }).catch(function () {});
+  })();
+
+  /* ---------- 角色：真素材精灵动画（会眨眼、会说话，按事件换表情） ----------
+     素材：/kurisu/avatar/<emotion>.{idle,speaking}.webp（每个格子 132px，8 列）
+       idle     3 帧 / 170ms；speaking 40 帧 / 41ms（manifest.json 的 emotions.* 口径） */
+  (function () {
+    var cv = d.getElementById('hudAv'); if (!cv || !cv.getContext) return;
+    var ctx = cv.getContext('2d'), CELL = 132, COLS = 8;
+    ctx.imageSmoothingQuality = 'high';
+    var EMO = ['normal', 'happy', 'angry', 'sad', 'blush', 'disappointed', 'sided_thinking', 'sided_surprised'];
+    var cache = {}, cur = 'normal', t0 = performance.now(), speakUntil = 0;
+    function url(e, k) { return '/kurisu/avatar/' + e + '.' + k + '.webp'; }
+    function img(u) { if (!cache[u]) { var m = new Image(); m.src = u; cache[u] = m; } return cache[u]; }
+    function geom(k) { return k === 'speaking' ? { f: 40, ms: 41 } : { f: 3, ms: 170 }; }
+    EMO.forEach(function (e) { img(url(e, 'idle')); });
+    img(url('normal', 'speaking'));
+    function tick() {
+      var now = performance.now(), k = now < speakUntil ? 'speaking' : 'idle', g = geom(k), im = img(url(cur, k));
+      if (im.complete && im.naturalWidth) {
+        var i = Math.floor((now - t0) / g.ms) % g.f, sx = (i % COLS) * CELL, sy = Math.floor(i / COLS) * CELL;
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(im, sx, sy, CELL, CELL, 0, 0, cv.width, cv.height);
+      }
+      requestAnimationFrame(tick);
+    }
+    window.__hudChar = {
+      emotion: function (e) { if (EMO.indexOf(e) >= 0 && e !== cur) { cur = e; t0 = performance.now(); } },
+      speak: function (ms) { speakUntil = performance.now() + (ms || 1600); }
+    };
+    var last = '';
+    setInterval(function () {
+      var el = d.getElementById('hudLine'); if (!el) return;
+      var t = el.textContent || '';
+      if (t !== last) { if (t.length > last.length) window.__hudChar.speak(Math.min(5200, t.length * 70)); last = t; }
+      var e = 'normal';
+      if (/封禁|拦下|处置|暴力/.test(t)) e = 'angry';
+      else if (/最猛|峰值|高峰/.test(t)) e = 'sided_surprised';
+      else if (/建议|可以|应该|看哪/.test(t)) e = 'sided_thinking';
+      else if (/成功|恢复|正常/.test(t)) e = 'happy';
+      window.__hudChar.emotion(e);
+    }, 1200);
+    requestAnimationFrame(tick);
+  })();
+
   function pull() {
     return Promise.all([
       J('/api/public/alerts.js'), J('/api/public/geo.js'), J('/api/public/audit.js'),

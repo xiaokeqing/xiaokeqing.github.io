@@ -18,6 +18,16 @@
 </head>
 <body data-xk-page="hud" data-xk-ssr="hud" data-samples="{{ (index site.Data "samples").total.files }}">
 <div id="photo"></div><div id="bgfx"></div><div id="vig"></div>
+<nav class="hudnav" aria-label="站点导航">
+  <b>XK-LAB</b>
+  <a class="on" href="/hud/">实时看板</a>
+  <a href="/daily/">安全日报</a>
+  <a href="/posts/">笔记</a>
+  <a href="/ai/">AI 问答</a>
+  <a href="/tools/">工具台</a>
+  <span class="sp"></span>
+  <a href="/alerts/?tab=source">详细数据</a>
+</nav>
 <div class="wrap">
   <div class="strip">
     <span>XK-LAB // <b>OPS-ROOM</b></span>
@@ -27,7 +37,6 @@
     <span>索引保留 5 天</span>
     <span style="margin-left:auto" id="hudSync">同步 —</span>
     <span id="clock">—</span>
-    <a href="/daily/">安全日报</a><a href="/posts/">笔记</a><a href="/ai/">AI 问答</a><a href="/tools/">工具台</a>
   </div>
 
   <div class="band" id="hudBand">
@@ -98,7 +107,7 @@
 </div>
 
 <div id="hudChat">
-  <div class="av" aria-hidden="true"></div>
+  <canvas class="av" id="hudAv" width="132" height="132" aria-hidden="true"></canvas>
   <div class="txt">
     <div class="nm">牧濑 红莉栖<em>AMADEUS / HOLO-LINK</em></div>
     <p id="hudLine">数据加载中——她把真实数据读出来念给你听。</p>
