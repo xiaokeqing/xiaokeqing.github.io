@@ -2604,3 +2604,40 @@
     if (btn && !btn.classList.contains('on')) btn.click();
   } catch (e) {}
 })();
+
+/* 2026-11-10 切 tab / 首屏时把面板滚回顶部（固定行高时会把 KPI 卡顶出可视区） */
+(function(){
+  try {
+    var reset = function(){ var p = document.querySelector('.ops-tab.on'); if (p) p.scrollTop = 0; };
+    window.addEventListener('load', function(){ setTimeout(reset, 30); });
+    document.addEventListener('click', function(e){
+      var t = e.target && e.target.closest && e.target.closest('#opsTabs button');
+      if (t) setTimeout(reset, 20);
+    }, true);
+  } catch (e) {}
+})();
+
+/* 2026-11-10 兜底：切视图的旧逻辑在拿不到目标容器时会把所有 .view 的 on 全摘掉（关声音后整页空白就是这么来的），
+   这里保证任何时候至少有一个视图可见，且默认落在 #v-monitor。 */
+(function(){
+  try {
+    var fix = function(){
+      var views = document.querySelectorAll('.view');
+      if (!views.length) return;
+      var on = document.querySelector('.view.on');
+      if (on) return;
+      var mon = document.getElementById('v-monitor') || views[0];
+      if (mon && mon.classList) mon.classList.add('on');
+    };
+    fix();
+    window.addEventListener('load', fix);
+    window.addEventListener('hashchange', function(){ setTimeout(fix, 0); });
+    document.addEventListener('click', function(e){
+      var t = e.target && e.target.closest && e.target.closest('#xkSndBtn, #xkLoginBtn');
+      if (t) setTimeout(fix, 0);
+    }, true);
+    var mo = new MutationObserver(function(){ fix(); });
+    var main = document.querySelector('.main');
+    if (main) mo.observe(main, { childList: true, subtree: false, attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+})();
