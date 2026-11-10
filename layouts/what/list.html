@@ -17,25 +17,11 @@
 /* 本页专用：只用外壳已有的色板变量，不加新配色 */
 .what-bd{display:flex;flex-direction:column;gap:14px}
 
-.what-lead{font-size:15px;line-height:1.75;color:rgba(255,255,255,.86);margin:0}
-.what-lead b{color:#cfe9f5;font-weight:600}
-.what-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-@media (max-width:980px){.what-grid{grid-template-columns:1fr}}
-.what-card{padding:14px 15px}
-
-.what-card h3{margin:0 0 8px;font-size:14px;color:#cfe9f5;font-weight:600}
-.what-card p{margin:0;font-size:14px;line-height:1.8;color:rgba(255,255,255,.78)}
-.what-kv{margin:0;font-size:14px;line-height:1.8;color:rgba(255,255,255,.8)}
-.what-kv code,.what-card code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#bfe3d0;background:rgba(120,200,160,.1);padding:1px 5px;border-radius:4px}
-.what-kv b{color:#e8f3f8}
 .what-tbl{width:100%;border-collapse:collapse;font-size:13px}
 .what-tbl th,.what-tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
 .what-tbl th{color:rgba(255,255,255,.55);font-weight:500;font-size:13px}
 .what-tbl td code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#bfe3d0}
 .what-pre{margin:0;padding:11px 12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow-x:auto;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.85;color:#d7e7ef}
-.what-pre .c{color:rgba(255,255,255,.45)}
-.what-p{margin:0 0 1em;font-size:15px;line-height:1.75;color:rgba(255,255,255,.74)}
-.what-p b{color:#eaf6ff;font-weight:600}
 .what-foot{font-size:13px;color:rgba(255,255,255,.5);line-height:1.9;margin:2px 0 0}
 .what-foot a{color:#bfe3d0}
 </style>
@@ -49,39 +35,11 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 这是什么 <em class="ops-en">WHAT-IS-THIS</em></span>
-      <span class="sync">● 纯静态 · 数字可 curl 复核</span>
     </div>
     <div class="screen-bd what-bd">
 
-      <div class="what-grid">
-        <div class="mod what-card">
-          <h3>① 看攻击实况</h3>
-          <p>实时攻击流（5 分钟窗口聚合）、攻击图谱（攻击者 → 四阶段粒子流）、威胁矩阵（14 个 ATT&CK 手法格）、
-             数据统计（来源国 / ASN / 规则命中）。数据源：<code>/alerts</code> <code>/stories</code> <code>/geo</code> <code>/webstats</code>。</p>
-        </div>
-        <div class="mod what-card">
-          <h3>② 看处置链</h3>
-          <p>护栏拦下了多少动作、真正执行了几个、封过哪些地址、蜜罐被连了多少次、攻击者拿什么口令撞的。
-             数据源：<code>/audit</code> <code>/honeypot</code>。地址一律打码到前三段。</p>
-        </div>
-        <div class="mod what-card">
-          <h3>③ 直接问它</h3>
-          <p>「AI 问答」页是对着<b>本站自己的知识库</b>检索后作答，引用到条目；检索不到就明说检索不到，
-             不编造。问答接口同样有频率限制，公开面只做解释、不做取证判决。</p>
-        </div>
-      </div>
-
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>另外还有一台隔离靶场<span class="tag">凭口令进入</span></div>
-        <div class="mod-bd">
-          <p class="what-p">练习靶场（Pikachu）：独立内网 · 禁止出网 · 每日重置 · 口令门禁（仅站主）。</p>
-          <p class="what-foot">链路：<code>lab.xiaokeqing.cn</code> → Cloudflare 隧道 → nginx <code>auth_request</code>
-            → 口令页 → 签名 Cookie（24h）→ 容器</p>
-        </div>
-      </div>
-
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>指标与端点<span class="tag">可复核</span></div>
+        <div class="mod-hd"><span class="led"></span>指标与端点</div>
         <div class="mod-bd">
           <table class="what-tbl">
             <thead><tr><th>指标</th><th>端点 / 字段</th><th>备注</th></tr></thead>
@@ -99,8 +57,7 @@
       <div class="mod">
         <div class="mod-hd"><span class="led"></span>直接 curl<span class="tag">/api/public/*</span></div>
         <div class="mod-bd">
-          <pre class="what-pre"><span class="c"># 全部只读，返回 JSON，字段同上表</span>
-curl -s https://demo.xiaokeqing.cn/api/health | head -c 200
+          <pre class="what-pre">curl -s https://demo.xiaokeqing.cn/api/health | head -c 200
 curl -s https://demo.xiaokeqing.cn/api/public/audit | head -c 400
 curl -s https://demo.xiaokeqing.cn/api/public/honeypot | head -c 400</pre>
         </div>

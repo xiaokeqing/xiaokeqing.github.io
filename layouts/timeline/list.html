@@ -93,8 +93,6 @@
             <div class="tl-row"><span class="tl-k">做了什么</span><div class="tl-v">{{ $e.action | safeHTML }}</div></div>
             <div class="tl-row"><span class="tl-k">结果</span><div class="tl-v">{{ $e.result | safeHTML }}</div></div>
           </div>
-          {{- with $e.source }}<p class="tl-src">依据：{{ . }}</p>{{ end }}
-          <p class="tl-retro"><b>如果重来一次，</b>{{ $e.retro }}</p>
         </article>
       </div>
     {{- end }}

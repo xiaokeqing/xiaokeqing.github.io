@@ -123,3 +123,5 @@ static/kurisu/voice/bank.json.bak-*
 
 # 一次性修补脚本（2026-11-09 误提交后清理）
 _fix_after.py
+
+public-*/

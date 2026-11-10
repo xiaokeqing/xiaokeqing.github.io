@@ -97,17 +97,17 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // CVE 每日速递 <em class="ops-en">CVE-DIGEST</em></span>
-      <span class="sync" id="cveSync">● 每日快照（不是实时）· 读不到就写读不到</span>
+      <span class="sync" id="cveSync">● 每日快照</span>
     </div>
     <div class="screen-bd cve-bd">
 
-      <p class="cve-lead">每日快照 · 抓取时刻 <b id="cveGenTop">读不到</b></p>
+      <p class="cve-lead">抓取时刻 <b id="cveGenTop">读不到</b></p>
 
       <div class="cve-stamp" id="cveStamp">
-        <div class="c"><span class="k">抓取时刻 generatedAt</span><span class="n na" id="cveGenCell">读不到</span><span class="d">快照时间，不是实时</span></div>
-        <div class="c"><span class="k">快照目标日 targetDay</span><span class="n na" id="cveDayCell">读不到</span><span class="d">KEV 的「今日」按这一天的 dateAdded 算</span></div>
-        <div class="c"><span class="k">今日新增 KEV</span><span class="n" id="cveNewCell">读取中</span><span class="d">dateAdded == targetDay</span></div>
-        <div class="c"><span class="k">近 7 天 KEV / 今日 NVD HIGH</span><span class="n" id="cveCntCell">读取中</span><span class="d">近 7 天最多 40 条；NVD 最多 1 页 50 条</span></div>
+        <div class="c"><span class="k">抓取时刻 generatedAt</span><span class="n na" id="cveGenCell">读不到</span></div>
+        <div class="c"><span class="k">快照目标日 targetDay</span><span class="n na" id="cveDayCell">读不到</span></div>
+        <div class="c"><span class="k">今日新增 KEV</span><span class="n" id="cveNewCell">读取中</span></div>
+        <div class="c"><span class="k">近 7 天 KEV / 今日 NVD HIGH</span><span class="n" id="cveCntCell">读取中</span></div>
       </div>
 
       <noscript><p class="cve-noscript">需 JavaScript 读 <code>/data/cve-digest.json</code>，关闭后无数据</p></noscript>
@@ -145,12 +145,12 @@
               <thead><tr><th>数据源</th><th>URL（官方原始地址）</th><th>这次的状态</th></tr></thead>
               <tbody>
                 <tr>
-                  <td class="wrap">CISA KEV<br><span class="cve-na">在野已被利用的漏洞清单</span></td>
+                  <td class="wrap">CISA KEV</td>
                   <td class="mono"><code>https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json</code></td>
                   <td class="wrap" id="cveHealthKev">读取中</td>
                 </tr>
                 <tr>
-                  <td class="wrap">NVD CVE API 2.0<br><span class="cve-na">当日 CVSSv3 HIGH</span></td>
+                  <td class="wrap">NVD CVE API 2.0</td>
                   <td class="mono"><code>https://services.nvd.nist.gov/rest/json/cves/2.0</code></td>
                   <td class="wrap" id="cveHealthNvd">读取中</td>
                 </tr>
@@ -158,7 +158,6 @@
             </table>
           </div>
           <p class="cve-src">
-            产物：<code>static/data/cve-digest.json</code> ← <code>scripts/cve/fetch-cve.py</code><br>
             相关：<a href="/">主页</a> ·
             <a href="/what/">这个站在干什么</a> ·
             <a href="/api/">公开端点清单</a> ·

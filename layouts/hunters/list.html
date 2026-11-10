@@ -106,7 +106,7 @@
 
   <div class="screen-bd">
     <div class="mod">
-      <div class="mod-hd"><span class="led"></span>一句话<span class="tag">自动挑选</span></div>
+      <div class="mod-hd"><span class="led"></span>一句话</div>
       <div class="mod-bd">
         <p class="hk-lead">每天 <em>{{ lang.FormatNumber 0 $m.candidates }}</em> 个候选挑 <em>{{ len $hs }}</em> 个</p>
         <ul class="hk-kpis">
@@ -147,7 +147,6 @@
           {{- end }}
         </div>
 
-        <p class="hk-say"><span class="hk-lab">结论</span>{{ .conclusion }}</p>
         {{- with .gapText }}
         <p class="hk-gap"><span class="hk-lab">缺口</span>{{ . }}</p>
         {{- end }}

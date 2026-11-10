@@ -91,11 +91,6 @@
     <a class="dt-back" href="/alerts/">← 实时看板 /alerts/</a>
 
     <div class="mod">
-      <div class="ch"><b>一句话</b><span class="src">data/detections.json · 构建期现算</span></div>
-      <div class="dt-md" style="padding:14px 16px">
-        <p>这个站有 <b>{{ $n }}</b> 条自研检测规则（Suricata <b>{{ $sa }}</b> 条 / Wazuh <b>{{ $wt }}</b> 条），
-        命中什么、凭什么判定、怎么验证的，都在这一页。</p>
-      </div>
       <div class="dt-stats">
         <div><b>{{ $n }}</b><span>自研规则</span></div>
         <div><b>{{ $sa }}</b><span>Suricata</span></div>
@@ -105,7 +100,7 @@
     </div>
 
     <div class="mod">
-      <div class="ch"><b>规则清单</b><span class="src">1 行 = 1 条 · 点标题栏折叠</span></div>
+      <div class="ch"><b>规则清单</b></div>
 
       <details class="dt-fold" open>
         <summary>
@@ -173,9 +168,6 @@
         </div>
       </details>
 
-      <p class="dt-note">
-        <b>数据</b>：7 天 <code>eve.json</code> 1,471,376 行（alert 293,482）· 快照 2026-10-11 09:23 ~ 10-18 12:00 UTC
-      </p>
     </div>
 
     <p class="dt-note" style="padding-top:0">

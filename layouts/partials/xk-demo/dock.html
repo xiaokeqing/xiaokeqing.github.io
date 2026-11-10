@@ -13,17 +13,13 @@
 {{- $v := .v -}}
 <nav class="dock{{ if .wait }} dock--wait{{ end }}" id="dock" aria-label="站点导航">
   <a class="brand" href="/" aria-label="返回首页 XK-LAB">XK-LAB</a>
-  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">实时看板</a>
+  <a href="/alerts/" class="{{ if eq $v "monitor" }}on{{ end }}">大屏</a>
+  <a href="/alerts/?tab=source" class="{{ if eq $v "source" }}on{{ end }}">攻击来源</a>
+  <a href="/alerts/?tab=ops" class="{{ if eq $v "ops" }}on{{ end }}">处置记录</a>
+  <a href="/alerts/?tab=sys" class="{{ if eq $v "sys" }}on{{ end }}">系统状态</a>
   <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
-  <a href="/trend/" class="{{ if eq $v "trend" }}on{{ end }}">趋势</a>
-  <a href="/attack/" class="{{ if eq $v "attack" }}on{{ end }}">ATT&CK</a>
-  <a href="/detections/" class="{{ if eq $v "detections" }}on{{ end }}">检测规则</a>
-  <a href="/hunters/" class="{{ if eq $v "hunters" }}on{{ end }}">攻击者</a>
-  <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
   <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>
   <a href="/tools/" class="{{ if eq $v "tools" }}on{{ end }}">工具台</a>
-  <a href="/lab/" class="{{ if eq $v "lab" }}on{{ end }}">演练场</a>
-  <a href="/status/" class="{{ if eq $v "status" }}on{{ end }}">状态</a>
-  <a href="/more/" class="{{ if eq $v "more" }}on{{ end }}">全部</a>
+  <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
   {{ partial "xk-demo/dock-tools.html" . }}
 </nav>

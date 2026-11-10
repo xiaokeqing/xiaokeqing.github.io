@@ -100,14 +100,9 @@
     <div class="screen-bd at-bd">
 
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>一句话<span class="tag">真实告警 · 不编数</span></div>
+        <div class="mod-hd"><span class="led"></span>一句话</div>
         <div class="mod-bd">
           {{- with $d }}
-          <p class="at-lead">
-            最近 <em>{{ .windowDays }} 天</em> {{ lang.FormatNumber 0 .total }} 条告警里，
-            <span class="ok">{{ printf "%.1f" .mappedPct }}%</span> 带 ATT&amp;CK 技术标签；
-            <em>{{ lang.FormatNumber 0 .unmapped }}</em> 条<b>没有</b>。
-          </p>
           <ul class="at-kpis">
             <li class="at-kpi"><span class="k">窗口</span><span class="v">{{ .windowDays }} 天</span></li>
             <li class="at-kpi"><span class="k">总告警</span><span class="v">{{ lang.FormatNumber 0 .total }}</span></li>
@@ -116,9 +111,6 @@
             <li class="at-kpi"><span class="k">未映射</span><span class="v warn">{{ lang.FormatNumber 0 .unmapped }}</span></li>
             <li class="at-kpi"><span class="k">技术</span><span class="v">{{ len .techniques }} 个</span></li>
           </ul>
-          <p class="at-note">
-            未映射 = <code>rule.mitre.id</code> 缺失 · 一条告警可带多个技术
-          </p>
           {{- else }}
           <p class="at-lead">读不到 <code>data/attack.json</code></p>
           <p class="at-sub">先跑 <code>scripts/attack-coverage.py</code> 再构建</p>
@@ -127,7 +119,7 @@
       </div>
 
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>战术 × 技术矩阵<span class="tag">格内数字 = 该战术下该技术的告警条数</span></div>
+        <div class="mod-hd"><span class="led"></span>战术 × 技术矩阵</div>
         <div class="mod-bd">
           {{- with $d }}
           <div class="at-legend">
@@ -173,7 +165,7 @@
       </div>
 
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>Suricata 侧 · 按 classtype 手工映射<span class="tag">无 ATT&amp;CK 字段 · 人工对照</span></div>
+        <div class="mod-hd"><span class="led"></span>Suricata 侧 · 按 classtype 手工映射</div>
         <div class="mod-bd">
           {{- $s := $d.suricata }}
           {{- with $s }}

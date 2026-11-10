@@ -112,18 +112,16 @@ body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:
       <div class="tr-stat">
         <div class="tr-stat-l">已留存</div>
         <div class="tr-stat-n"><b>{{ $n }}</b><em>天</em></div>
-        <div class="tr-stat-sub">每天 08:20 自动落一行</div>
       </div>
       <div class="tr-stat">
         <div class="tr-stat-l">最新一天</div>
         <div class="tr-stat-n">{{ if ge $latestTotal 0 }}<b>{{ lang.FormatNumber 0 $latestTotal }}</b><em>条</em>{{ else }}<b>未取到</b>{{ end }}</div>
-        <div class="tr-stat-sub">每天 08:20 自动落一行</div>
       </div>
     </div>
 
     {{- if ge $n 2 }}
     <div class="mod">
-      <div class="ch"><b>两日对比</b><span class="src">最新一天 vs 前一天 · 24h 告警总数</span></div>
+      <div class="ch"><b>两日对比</b></div>
       <div class="tr-cmp">
         <p class="tr-cmp-line">
           {{- if $cmpOK -}}
@@ -185,7 +183,7 @@ body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:
 {{- end -}}
 {{- $lead := (index $days 0).pts -}}
 <div class="mod tr-calmod">
-  <div class="ch"><b>日历热力图</b><span class="src">一格 = 一天 · 已存 {{ len $dates }} 天</span></div>
+  <div class="ch"><b>日历热力图</b></div>
   <div class="tr-calwrap">
   <div class="tr-wd" aria-hidden="true"><i>一</i><i></i><i>三</i><i></i><i>五</i><i></i><i>日</i></div>
   <div class="tr-cal" aria-label="每日告警总量日历">
@@ -217,7 +215,7 @@ body .tr-cal i[data-gap="1"]{border:1px dashed rgba(127,212,216,.30);background:
   </div>
 </div>
 {{- end }}
-      <div class="ch"><b>逐日明细</b><span class="src">1 行 = 1 天</span></div>
+      <div class="ch"><b>逐日明细</b></div>
       <div style="overflow-x:auto">
         <table class="tr-table" style="min-width:960px">
           <thead>

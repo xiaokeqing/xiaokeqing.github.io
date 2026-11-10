@@ -110,20 +110,18 @@
     </div>
     <div class="screen-bd tu-bd">
 
-      <div class="tu-path-hd"><span class="k">五步路径</span><span class="k2">按顺序点 · 约 3 分钟</span></div>
+      <div class="tu-path-hd"><span class="k">五步路径</span></div>
       <ol class="tu-steps">
 
         <li class="tu-step">
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">01</span><b class="tu-name">实时看板</b><span class="tag">/alerts/</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>过去 24 小时真实告警总量、逐小时热力、严重度构成、实时流。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $al.total24h | default "未取到" }}</div><div class="l">24 小时告警</div></li>
                 <li class="stat"><div class="n">{{ $al.critical | default "未取到" }}</div><div class="l">其中严重 CRITICAL</div></li>
                 <li class="stat"><div class="n">{{ $al.high | default "未取到" }}</div><div class="l">其中高危 HIGH</div></li>
               </ul>
-              <p class="tu-src">数字 ← static/api/public/alerts.js · data.stats24h · 快照 {{ $al.generatedAt | default "未取到" }}</p>
               <a class="tu-go" href="/alerts/">打开 /alerts/ <span aria-hidden="true">→</span></a>
             </div>
           </div>
@@ -133,13 +131,11 @@
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">02</span><b class="tu-name">真实样本</b><span class="tag">/samples-pipeline/</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>蜜罐收到的 1.8 万+ 个文件，为什么一个可执行样本都没有。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $sp.files | default "未取到" }}</div><div class="l">落盘文件（dionaea）</div></li>
                 <li class="stat"><div class="n">{{ with $sp.mib }}{{ . }}<em> MiB</em>{{ else }}未取到{{ end }}</div><div class="l">合计体积</div></li>
                 <li class="stat"><div class="n">{{ $sp.executables | default "未取到" }}</div><div class="l">可判定 PE / ELF</div></li>
               </ul>
-              <p class="tu-src">数字 ← data/samples.json · dionaea.files / bytes / samplesReadable · 快照 {{ $sp.generatedAt | default "未取到" }}</p>
               <a class="tu-go" href="/samples-pipeline/">打开 /samples-pipeline/ <span aria-hidden="true">→</span></a>
             </div>
           </div>
@@ -149,14 +145,12 @@
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">03</span><b class="tu-name">处置与时效</b><span class="tag">/alerts/ → 数据统计</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>封禁链路、护栏拦下的动作数、MTTD / MTTR。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $au.blockedByGuard | default "未取到" }}</div><div class="l">护栏拦下的动作</div></li>
                 <li class="stat"><div class="n">{{ $au.blockTotal | default "未取到" }}</div><div class="l">累计封禁 IP（真实 0）</div></li>
                 <li class="stat"><div class="n">{{ $me.alertsInWindow | default "未取到" }}</div><div class="l">24h 参与统计的告警</div></li>
               </ul>
               <p class="tu-flag"><b>MTTD / MTTR：未取到</b>（24h 可配对样本 0，不补 0）</p>
-              <p class="tu-src">数字 ← static/api/public/home.js · data.audit.summary；static/api/public/metrics.js · 快照 {{ $au.generatedAt | default "未取到" }}</p>
               <a class="tu-go" href="/alerts/">打开 /alerts/ 并切到「数据统计」 <span aria-hidden="true">→</span></a>
             </div>
           </div>
@@ -166,13 +160,11 @@
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">04</span><b class="tu-name">ATT&amp;CK 覆盖</b><span class="tag">/attack/</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>真实告警里有多少带 ATT&amp;CK 技术标签，未映射的单列。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $at.total | default "未取到" }}</div><div class="l">告警（{{ $at.windowDays | default "未取到" }} 天窗口）</div></li>
                 <li class="stat"><div class="n">{{ $at.mappedPct | default "未取到" }}</div><div class="l">带技术标签</div></li>
                 <li class="stat"><div class="n">{{ $at.unmapped | default "未取到" }}</div><div class="l">未映射（单列）</div></li>
               </ul>
-              <p class="tu-src">数字 ← data/attack.json · total / mappedPct / unmapped · 快照 {{ $at.generatedAt | default "未取到" }}</p>
               <a class="tu-go" href="/attack/">打开 /attack/ <span aria-hidden="true">→</span></a>
             </div>
           </div>
@@ -182,12 +174,10 @@
           <div class="mod">
             <div class="mod-hd"><span class="led"></span><span class="tu-n">05</span><b class="tu-name">威胁情报</b><span class="tag">/ip/?q=</span></div>
             <div class="mod-bd">
-              <p class="tu-look"><b>看点</b>任意一个攻击源 IP 的完整档案：时间线、端口、弱口令。</p>
               <ul class="stats tu-stats">
                 <li class="stat"><div class="n">{{ $ge.withSourceIp | default "未取到" }}</div><div class="l">带来源 IP 的告警（{{ $ge.window | default "24h" }}）</div></li>
                 <li class="stat"><div class="n">{{ $ge.sourceBuckets | default "未取到" }}</div><div class="l">聚成的来源桶</div></li>
               </ul>
-              <p class="tu-src">数字 ← static/api/public/geo.js · data.coverage.withSourceIp / sourceBuckets · 快照 {{ $ge.generatedAt | default "未取到" }}</p>
               <a class="tu-go" href="/ip/?q=">打开 /ip/?q= <span aria-hidden="true">→</span></a>
             </div>
           </div>

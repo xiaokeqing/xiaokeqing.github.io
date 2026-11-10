@@ -139,5 +139,5 @@
        介绍文案 = data/page-intro.json（16 个路径），未收录页回退标题兜底。
        样式追加在 assets/css/xk.css 末尾；主页自带内联样式，等价规则内联在 partial 里。 */ -}}
 {{ partial "xk-demo/assistant.html" . }}
-{{- $assist := resources.Get "js/xk-assist.js" | minify | fingerprint }}
+{{- $assist := resources.Get "js/xk-intro.js" | minify | fingerprint }}
 <script src="{{ $assist.RelPermalink }}" integrity="{{ $assist.Data.Integrity }}" defer></script>

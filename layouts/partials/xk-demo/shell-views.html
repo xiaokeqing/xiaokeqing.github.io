@@ -32,17 +32,15 @@
         <span class="led"></span>
         <span class="t">XK-LAB // 作战室 <em class="ops-en">OPS-ROOM</em></span>
         <nav class="ops-tabs" id="opsTabs">
-          <button data-tab="live" class="on">实时攻击</button>
-          <button data-tab="graph">攻击图谱</button>
-          <button data-tab="matrix">威胁矩阵</button>
-          <button data-tab="stats">数据统计</button>
+          <button data-tab="live" class="on">总览</button>
+          <button data-tab="graph">来源分析</button>
+          <button data-tab="stats">处置记录</button>
+<button data-tab="sys">系统状态</button>
         </nav>
         <span class="sync">● 同步中 · 同源只读快照</span>
       </div>
       <div class="screen-bd">
-
-        <!-- 视图 1：实时攻击（★2026-11-09：KPI 与实时流收进本面板，切到其它 tab 不再重复出现） -->
-        <div class="ops-tab on" data-pane="live">
+<div class="ops-tab on" data-pane="live">
           <div class="ops-hero" id="opsHero" aria-live="polite">
 {{- /* 首屏四个数：先渲染构建期快照，接口回来覆盖 */ -}}
 {{- $snap := hugo.Data.ops_snapshot -}}
@@ -80,18 +78,20 @@
             </div>
           </div>
         </div>
-
-        <!-- 视图 2：攻击图谱 -->
-        <div class="ops-tab" data-pane="graph">
-          <div class="mod"><div class="mod-hd"><span class="led"></span>实时攻击路径 · 攻击者 → 本站传感器<span class="tag">数据 /alerts + /honeypot</span></div>
-            <div class="mod-bd graphwrap"><canvas id="atkGraph"></canvas>
+<div class="ops-tab" data-pane="source"><div class="mod-hd"><span class="led"></span>来源 TOP5<span class="tag">/geo</span></div>
+<div class="attk" id="attkGrid"></div>
+<div class="mod-bd graphwrap"><canvas id="atkGraph"></canvas>
               <div class="graph-legend"><span><i class="lg red"></i>攻击来源</span><span><i class="lg teal"></i>蜜罐传感器</span><span><i class="lg dot"></i>实时命中</span></div>
             </div>
+<div class="mod xk-sankey-card" data-xk-sankey>
+            <div class="mod-hd vz-hd">告警链路 · 来源 → 类型 → 严重度<span class="tag">/alerts · 5 分钟原始窗口</span></div>
+            <div class="mod-bd">
+              <div id="xkSankey" class="xk-sankey" role="img" aria-label="告警链路桑基图：取数中"></div>
+              <p class="vz-nt" data-xk-sankey-note>取数中…（链路只按 5 分钟窗口的原始清单画，不拿 24h 聚合拼）</p>
+            </div>
           </div>
-          <!-- xk-ipjump -->
-          {{- /* 点个 IP 看它干过什么：跳到 /ip/?q=<IP>（那页有 /api/public/story 的攻击时间线）。
-                 不额外拉接口：Top 来源直接复用本页 /alerts + /geo 已有的快照数据，由 xk-ipjump.js 填。 */ -}}
-          <div class="mod" id="modIpJump"><div class="mod-hd"><span class="led"></span>点个 IP，看它干过什么<span class="tag">/ip/ · 攻击时间线</span></div>
+<div class="mod-hd"><span class="led"></span>7×24 访问统计 · 按整点聚合<span class="tag">/webstats · 零 IP</span></div>
+<div class="mod" id="modIpJump"><div class="mod-hd"><span class="led"></span>点个 IP，看它干过什么<span class="tag">/ip/ · 攻击时间线</span></div>
             <div class="mod-bd">
               <form class="ipjump-form" id="ipjumpForm" action="/ip/" method="get">
                 <input class="ipjump-in" id="ipjumpInput" name="q" type="text" inputmode="decimal"
@@ -102,80 +102,27 @@
               <p class="vz-nt" id="ipjumpNote">只接受公网 IPv4；列表取本站观测到的 Top 来源，点一下直接跳。</p>
             </div>
           </div>
-          <div class="stats">
-            <div class="stat"><div class="n sk" data-count="">—</div><div class="l">24h 告警</div></div>
+
+          <div class="mod"><div class="mod-hd"><span class="led"></span>实时攻击路径 · 攻击者 → 本站传感器<span class="tag">数据 /alerts + /honeypot</span></div>
+            
+          </div>
+          <!-- xk-ipjump -->
+          {{- /* 点个 IP 看它干过什么：跳到 /ip/?q=<IP>（那页有 /api/public/story 的攻击时间线）。
+                 不额外拉接口：Top 来源直接复用本页 /alerts + /geo 已有的快照数据，由 xk-ipjump.js 填。 */ -}}
+          
+          
             <div class="stat"><div class="n sk" data-count="">—</div><div class="l">护栏拦截（/audit）</div></div>
             <div class="stat"><div class="n sk" data-count="">—</div><div class="l">蜜罐交互</div></div>
             <div class="stat"><div class="n sk" data-count="">—</div><div class="l">来源网段 24h（/geo）</div></div>
           </div>
-        </div>
-
-        <!-- 视图 3：威胁矩阵 -->
-        <div class="ops-tab" data-pane="matrix">
+        
           <div class="mod"><div class="mod-hd"><span class="led"></span>告警类型矩阵 · 每格是服务端给的类型标签<span class="tag">/alerts · stats.byType</span></div>
-            <div class="mod-bd"><div class="attk" id="attkGrid"></div>
+            <div class="mod-bd">
               <div class="attk-lg" id="attkLg"><span><i class="lg warn"></i>hot · 有命中</span><span><i class="lg red"></i>fire · 命中 ≥ 峰值的 60%</span><span class="tt-cur" id="attkLgMsg" aria-live="polite">hover / 键盘聚焦格子：这一行显示占比与最近一条真实告警</span></div>
               <p class="attk-note">每格的数字是本站 <code class="k">/api/public/alerts</code> 的 <code class="k">stats.byType</code> 真实计数（类型标签由服务端给，前端不编 ATT&amp;CK 映射）；命中越多颜色越热。取不到就把整块标成读不到，不补样例值。</p></div>
           </div>
         </div>
-
-        <!-- 视图 4：数据统计 -->
-        <div class="ops-tab" data-pane="stats">
-          <div class="sec-hd"><b>拦截与处置</b><span>封禁 / 访问量 / 处置动作，全部来自只读快照</span></div>
-          <div class="mod"><div class="mod-hd"><span class="led"></span>7×24 访问统计 · 按整点聚合<span class="tag">/webstats · 零 IP</span></div>
-            <div class="mod-bd"><div class="bars anim">
-              <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i>
-              <i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i>
-              <i style="--i:8"></i><i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i>
-              <i style="--i:12"></i><i style="--i:13"></i><i style="--i:14"></i><i style="--i:15"></i>
-              <i style="--i:16"></i><i style="--i:17"></i><i style="--i:18"></i><i style="--i:19"></i>
-              <i style="--i:20"></i><i style="--i:21"></i><i style="--i:22"></i><i style="--i:23"></i>
-              <i style="--i:24"></i><i style="--i:25"></i><i style="--i:26"></i><i style="--i:27"></i>
-            </div></div>
-          </div>
-          {{- /* ★2026-11-09 告警链路桑基图（手写 SVG，零依赖，约 4 KB）：
-                 数据只吃 xk-bind 已取到的 window.XK_FEED（/alerts 的 5 分钟窗口原始聚合清单）——
-                 这是全站唯一带「来源×类型×严重度」联合分布的真实数据；24h 聚合是分维度独立统计，
-                 拼不成链路，所以不画 24h 版（口径纪律：不拼接、不虚构关系）。
-                 echarts（约 1 MB，assets/js/vendor/echarts.min.js，指纹+一年缓存）只在本卡
-                 进入视口时才注入；慢网（html.xk-slow / xk-saver）不自动加载，给手动按钮并标清体积。
-                 图取不到不影响本页任何数字；数据未取到时照实写原因，不画样例链路。
-                 ⚠ 本文件由 _dev/gen-demo-pages.py 逐字同源生成，重跑生成器前先把本段并进生成器。 */ -}}
-          <div class="sec-hd"><b>来源与分布</b><span>谁在打、打什么、打到什么程度</span></div>
-          <div class="mod xk-sankey-card" data-xk-sankey>
-            <div class="mod-hd vz-hd">告警链路 · 来源 → 类型 → 严重度<span class="tag">/alerts · 5 分钟原始窗口</span></div>
-            <div class="mod-bd">
-              <div id="xkSankey" class="xk-sankey" role="img" aria-label="告警链路桑基图：取数中"></div>
-              <p class="vz-nt" data-xk-sankey-note>取数中…（链路只按 5 分钟窗口的原始清单画，不拿 24h 聚合拼）</p>
-            </div>
-          </div>
-          <div class="grid32">
-            <div class="mod"><div class="mod-hd"><span class="led"></span>来源 TOP5<span class="tag">/geo</span></div>
-              <ul class="mod-bd geo">
-                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
-                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
-                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
-                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
-                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
-              </ul>
-            </div>
-            <div class="mod" data-xk-block="stories"><div class="mod-hd"><span class="led"></span>攻击故事线 · 候选来源<span class="tag" data-story-tag>/stories</span></div>
-              <div class="mod-bd">
-                <div data-story-list>
-                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                </div>
-                <div data-story-detail hidden>
-                  <div class="row"><span class="k" data-story-head>—</span><span data-story-meta>—</span><span class="chip" data-story-chip>—</span></div>
-                  <div data-story-tl></div>
-                </div>
-                <p class="attk-note" data-story-note>点上面任一条来源 → 载入它的四段时间线（点了才请求一次，不轮询）。</p>
-              </div>
-            </div>
-          </div>
-          <div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>
+<div class="ops-tab" data-pane="ops"><div class="mod" data-xk-block="bans"><div class="mod-hd"><span class="led"></span>处置成果 · 封禁榜<span class="tag">/audit · IP 已打码</span></div>
             <div class="mod-bd">
               <div class="stats">
                 <div class="stat"><div class="n sk" data-ban="total">—</div><div class="l">累计封禁 blockTotal</div></div>
@@ -195,18 +142,38 @@
               <p class="attk-note" data-ban-note>取数中…</p>
             </div>
           </div>
-          <div class="mod"><div class="mod-hd"><span class="led"></span>告警来源分布 · 按传感器类型<span class="tag">/overview · bySource</span></div>
-            <div class="mod-bd proto">
-              <div class="donut donut-svg"><svg id="donutSvg" viewBox="0 0 118 118" role="img" aria-label="告警来源分布"></svg><span class="donut-c">—</span></div>
-              <ul class="proto-lg">
-                <li><i class="lg teal"></i>—<b>—</b></li>
-                <li><i class="lg warn"></i>—<b>—</b></li>
-                <li><i class="lg purp"></i>—<b>—</b></li>
-                <li><i class="lg ok"></i>—<b>—</b></li>
-              </ul>
+<div class="mod" data-xk-block="ops"><div class="mod-hd"><span class="led"></span>处置运维 · 处置动作<span class="tag">/audit · IP 已打码</span></div>
+            <div class="mod-bd">
+              <div data-vh-ops-tl>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+              </div>
+              <p class="attk-note" data-vh-ops-note>处置动作来自 /audit.actions（封禁/解封留痕，最近 8 条；IP 走打码口径）；取不到写"读不到 + 原因"，不补 0。</p>
             </div>
           </div>
-          <div class="mod" data-xk-block="deploy"><div class="mod-hd"><span class="led"></span>部署可追溯 · 版本时间轴<span class="tag">/deploy</span></div>
+<div class="mod" data-xk-block="stories"><div class="mod-hd"><span class="led"></span>攻击故事线 · 候选来源<span class="tag" data-story-tag>/stories</span></div>
+              <div class="mod-bd">
+                <div data-story-list>
+                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                  <div class="row"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
+                </div>
+                <div data-story-detail hidden>
+                  <div class="row"><span class="k" data-story-head>—</span><span data-story-meta>—</span><span class="chip" data-story-chip>—</span></div>
+                  <div data-story-tl></div>
+                </div>
+                <p class="attk-note" data-story-note>点上面任一条来源 → 载入它的四段时间线（点了才请求一次，不轮询）。</p>
+              </div>
+            </div></div>
+<div class="ops-tab" data-pane="sys">
+<div class="mod" data-xk-block="deploy"><div class="mod-hd"><span class="led"></span>部署可追溯 · 版本时间轴<span class="tag">/deploy</span></div>
             <div class="mod-bd">
               <div class="stats">
                 <div class="stat"><div class="n sk" data-vh-deploy="release">—</div><div class="l">当前版本</div></div>
@@ -227,26 +194,57 @@
               <p class="attk-note" data-vh-deploy-note>版本时间轴取自 /api/public/deploy 的 history（发布链真实产物，最近 8 次）；取不到写"读不到 + 原因"，不补样例值。</p>
             </div>
           </div>
-          <div class="mod" data-xk-block="ops"><div class="mod-hd"><span class="led"></span>处置运维 · 处置动作<span class="tag">/audit · IP 已打码</span></div>
-            <div class="mod-bd">
-              <div data-vh-ops-tl>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-                <div class="row xk-tl" data-tl="ops"><span class="k">—</span><span>取数中…</span><span class="chip">—</span></div>
-              </div>
-              <p class="attk-note" data-vh-ops-note>处置动作来自 /audit.actions（封禁/解封留痕，最近 8 条；IP 走打码口径）；取不到写"读不到 + 原因"，不补 0。</p>
+
+          
+          <div class="mod">
+            <div class="mod-bd"><div class="bars anim">
+              <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i>
+              <i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i>
+              <i style="--i:8"></i><i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i>
+              <i style="--i:12"></i><i style="--i:13"></i><i style="--i:14"></i><i style="--i:15"></i>
+              <i style="--i:16"></i><i style="--i:17"></i><i style="--i:18"></i><i style="--i:19"></i>
+              <i style="--i:20"></i><i style="--i:21"></i><i style="--i:22"></i><i style="--i:23"></i>
+              <i style="--i:24"></i><i style="--i:25"></i><i style="--i:26"></i><i style="--i:27"></i>
+            </div></div>
+          </div>
+          {{- /* ★2026-11-09 告警链路桑基图（手写 SVG，零依赖，约 4 KB）：
+                 数据只吃 xk-bind 已取到的 window.XK_FEED（/alerts 的 5 分钟窗口原始聚合清单）——
+                 这是全站唯一带「来源×类型×严重度」联合分布的真实数据；24h 聚合是分维度独立统计，
+                 拼不成链路，所以不画 24h 版（口径纪律：不拼接、不虚构关系）。
+                 echarts（约 1 MB，assets/js/vendor/echarts.min.js，指纹+一年缓存）只在本卡
+                 进入视口时才注入；慢网（html.xk-slow / xk-saver）不自动加载，给手动按钮并标清体积。
+                 图取不到不影响本页任何数字；数据未取到时照实写原因，不画样例链路。
+                 ⚠ 本文件由 _dev/gen-demo-pages.py 逐字同源生成，重跑生成器前先把本段并进生成器。 */ -}}
+          
+          
+          <div class="grid32">
+            <div class="mod">
+              <ul class="mod-bd geo">
+                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
+                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
+                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
+                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
+                <li><span class="cc">—</span><span class="bar"><i style="width:0%"></i></span><span>—</span></li>
+              </ul>
+            </div>
+            
+          </div>
+          
+          <div class="mod"><div class="mod-hd"><span class="led"></span>告警来源分布 · 按传感器类型<span class="tag">/overview · bySource</span></div>
+            <div class="mod-bd proto">
+              <div class="donut donut-svg"><svg id="donutSvg" viewBox="0 0 118 118" role="img" aria-label="告警来源分布"></svg><span class="donut-c">—</span></div>
+              <ul class="proto-lg">
+                <li><i class="lg teal"></i>—<b>—</b></li>
+                <li><i class="lg warn"></i>—<b>—</b></li>
+                <li><i class="lg purp"></i>—<b>—</b></li>
+                <li><i class="lg ok"></i>—<b>—</b></li>
+              </ul>
             </div>
           </div>
+          
+          
         </div>
-
-      </div>
-    </div>
-  </section>
+</section>
 
   <!-- AI 问答：纯对话 -->
 

@@ -89,7 +89,7 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-LAB // 你的密码在攻击者字典里吗 <em class="ops-en">PASSWORD-CHECK</em></span>
-      <span class="sync" id="pwdSync">● 待检查（本地算 hash，只发 5 位前缀）</span>
+      <span class="sync" id="pwdSync">● 待检查</span>
     </div>
     <div class="screen-bd pwd-bd">
 
@@ -98,12 +98,11 @@
       <!-- ============ ① 醒目警告：别输入常用口令 ============ -->
       <p class="pwd-warnbox">
         <b>⚠ 不要在这里输入你的常用密码。</b>要试，请用旧口令 / 示例口令。
-        这一页不保存、不上传、不记录你输入的内容。
       </p>
 
       <!-- ============ ② 检查 ============ -->
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>查一次<span class="tag">本地 SHA-256 · 只发 5 位 hex · 只读 GET</span></div>
+        <div class="mod-hd"><span class="led"></span>查一次</div>
         <div class="mod-bd">
           <form class="pwd-form" id="pwdForm" method="get" action="" autocomplete="off">
             <input class="pwd-in" id="pwdQ" name="p" type="password"

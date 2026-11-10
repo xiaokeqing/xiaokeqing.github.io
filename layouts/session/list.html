@@ -106,18 +106,13 @@
     <div class="screen-bd ss-bd">
 
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>一句话<span class="tag">真实会话 · 不伪造终端</span></div>
+        <div class="mod-hd"><span class="led"></span>一句话</div>
         <div class="mod-bd">
           {{- with $d }}
           <p class="ss-lead">
             最近 <em>{{ .windowDays }} 天</em>，Cowrie 接了 <em>{{ lang.FormatNumber 0 .stats.connects }}</em> 次 SSH 连接、记下
             <em>{{ lang.FormatNumber 0 .stats.logins }}</em> 条登录成功事件，但命令输入是
             <em>{{ .stats.commands }}</em> 条。
-          </p>
-          <p class="ss-sub">
-            所以这一页<b>没有终端录像</b>：Cowrie 的 <code>output_ttylog</code> 没开，原始字节流从未落盘；
-            攻击者登录成功后 1–5 秒内就断开，也没敲下一条命令。下面每条会话能核对的，
-            只有连接、SSH 客户端指纹、登录、断开这几个真实事件。
           </p>
           <ul class="ss-kpis">
             <li class="ss-kpi"><span class="k">窗口</span><span class="v">{{ .windowDays }} 天</span></li>
@@ -127,15 +122,6 @@
             <li class="ss-kpi"><span class="k">命令输入</span><span class="v warn">{{ .stats.commands }}</span></li>
             <li class="ss-kpi"><span class="k">ttylog</span><span class="v warn">{{ if .ttylog.available }}已开{{ else }}未开启{{ end }}</span></li>
           </ul>
-          <p class="ss-note">
-            <b>口径</b>：登录成功按 <code>cowrie.login.success</code> 事件计数 —— 同一会话里客户端反复认证会记多条
-            （本次窗口单会话最多 5 条），所以它略高于连接数；<b>连接数才是会话数</b>。统计覆盖 {{ .stats.files }} 个轮转日志文件。
-          </p>
-          <p class="ss-note">
-            <b>样本</b>：<code>downloads/</code> 里共 {{ .downloads.files }} 个文件、{{ .downloads.bytes }} 字节，
-            最新 {{ .downloads.newest }}，最近 7 天新增 {{ .downloads.recent }} 个。数量太少且不可信，
-            这一页不提供任何样本下载。ttylog 探针结果：{{ .ttylog.note }}。
-          </p>
           {{- else }}
           <p class="ss-lead">读不到 <code>data/sessions/index.json</code>，这一页不显示任何会话。</p>
           <p class="ss-sub">先跑 <code>python scripts/honeypot-sessions.py</code> 生成快照，再重新构建。</p>
@@ -145,14 +131,8 @@
 
       {{- with $d }}
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>会话时间线<span class="tag">最近 {{ len .sessions }} 条 · 点开逐行回放</span></div>
+        <div class="mod-hd"><span class="led"></span>会话时间线</div>
         <div class="mod-bd">
-          <div class="ss-truth">
-            <b>这站没开 ttylog 回放，下面是命令流。</b>
-            这句是 B 方案的固定口径；实际命中的会话里命令流是空的（<code>cowrie.command.input</code> = 0 条，
-            登录成功即断），所以展开后只有事件节点，没有可回放的命令与输出。
-          </div>
-
           <div class="ss-list">
             {{- range $i, $s := .sessions }}
             <details class="ss-sess" id="s-{{ $s.id }}">
@@ -178,17 +158,12 @@
                   <span class="ss-line ss-cmd"><span class="ss-ts">·</span><span class="ss-k">CMD</span>0 条：本会话没有记录到 cowrie.command.input</span>
                   {{- end }}
                 </div>
-                <p class="ss-foot">没有 ttylog：终端输出字节流从未落盘，这里还原不出屏幕；上面是该会话全部可核事件。
-                  口令与用户名已剔除，来源地址只保留 <code>a.b.c.x</code>。</p>
               </div>
             </details>
             {{- end }}
           </div>
 
           <p class="ss-note">
-            快照由 <code>scripts/honeypot-sessions.py</code> 在构建期生成（本页直接读
-            <code>data/sessions/index.json</code>，SSR，不 fetch）；只取最后 {{ len .sessions }} 个
-            「有登录且有断开」的完整会话，更早的不在快照里。
             相关：<a href="/attack/">ATT&amp;CK 覆盖</a> ·
             <a href="/alerts/">实时告警</a> ·
             <a href="/status/">运行状态</a>

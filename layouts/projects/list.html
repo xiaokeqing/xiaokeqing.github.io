@@ -52,7 +52,6 @@
     <div class="screen-hd">
       <span class="led"></span>
       <span class="t">XK-PROJECTS // 项目 <em class="ops-en">PROJECTS</em></span>
-      <span class="sync">● 纯静态 · 每条可回仓库核对</span>
     </div>
     <div class="screen-bd proj-bd">
       {{- $parts := split .Content "<h2" }}
@@ -60,8 +59,7 @@
       {{- range after 1 $parts }}
       {{- $rest := replaceRE "(?s)^[^>]*>.*?</h2>" "" . }}
       <div class="mod">
-        <div class="mod-hd"><span class="led"></span>{{ replaceRE "(?s)^[^>]*>(.*?)</h2>.*$" "$1" . | plainify }}
-          <span class="tag">项目记录</span></div>
+        <div class="mod-hd"><span class="led"></span>{{ replaceRE "(?s)^[^>]*>(.*?)</h2>.*$" "$1" . | plainify }}</div>
         <div class="mod-bd proj-md">{{ $rest | safeHTML }}</div>
       </div>
       {{- end }}

@@ -1316,3 +1316,34 @@ body[data-xk-page="monitor"] #xkGeoTip{position:absolute}
 body[data-xk-page="monitor"] .live-foot{flex:0 0 auto}
 body[data-xk-page="monitor"] .live-main{min-height:0}
 body[data-xk-page="monitor"] .main{padding-top:56px}
+
+/* 大屏模式：/alerts/?full=1 —— 只留数据，隐藏导航/助手/页脚（xk-full 由 xk-bind.js 打） */
+body.xk-full .dock,body.xk-full #xk-assist,body.xk-full #xk-assist-fab,
+body.xk-full .holo,body.xk-full .phone,body.xk-full .holo-bubble,
+body.xk-full .xk-foot,body.xk-full .xk-rail-toggle,body.xk-full .xk-skip{display:none !important}
+body.xk-full .main{padding:10px 12px !important;margin:0 !important;max-width:none !important}
+body.xk-full .screen{height:calc(100vh - 20px) !important;border-radius:14px}
+body.xk-full .screen-hd .sync{font-size:11px}
+body.xk-full{overflow:hidden}
+
+/* 大屏：live 面板里地图卡不再挤在右列，改成「实时流量 + 趋势」两栏，地图移到来源分析 */
+body[data-xk-page="monitor"] .ops-tab.on[data-pane="live"]{grid-template-rows:auto minmax(0,1fr) auto}
+body[data-xk-page="monitor"] .ops-tab[data-pane="sys"] .mod + .mod{margin-top:12px}
+body[data-xk-page="monitor"] .ops-tab[data-pane="sys"]{overflow:auto}
+
+/* 2026-11-10 四个入口提到导航后，页面内 tab 行不再显示 */
+body[data-xk-page="monitor"] .ops-tabs#opsTabs{display:none !important}
+/* 2026-11-10 手机底部按钮排删除（声音开关在顶栏，其余无实际用途） */
+.phone-btns{display:none !important}
+
+/* 2026-11-10 工具台-紧凑：10 张卡不再一人占半屏 */
+.tool-grid,.tools-grid,.tg-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important;gap:10px!important}
+.tool-card,.tools-grid > *, .tg-grid > *{padding:12px 14px!important;min-height:0!important}
+.tool-card h3,.tool-card b,.tools-grid h3,.tg-grid h3{margin:0 0 4px!important;font-size:14px!important}
+.tool-card p,.tools-grid p,.tg-grid p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0!important;font-size:12px!important;line-height:1.5!important}
+/* 2026-11-10 工具台-紧凑：10 张卡不再一人占半屏（真实类名 tps-grid/tps-card） */
+.tps-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))!important;gap:10px!important;margin:0 0 14px!important}
+.tps-card{padding:11px 13px!important;min-height:0!important;gap:5px!important}
+.tps-card b,.tps-card strong{font-size:13.5px!important;margin:0!important}
+.tps-card p{margin:0!important;font-size:12px!important;line-height:1.5!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tps-card .tps-tags,.tps-card .tags{margin:2px 0 0!important}

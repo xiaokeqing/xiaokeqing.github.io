@@ -2590,3 +2590,22 @@
   /* ★T22：/ai/ 不轮询（有 embedding 成本）—— 只在用户点话题词 / 按 Enter 时请求一次 */
   if (SSR === 'ai') { bindAiTabs(); bindKb(); }   /* ★P2：先挂分区 tab（切 tab 不发请求），再挂知识库检索 */
 })();
+
+/* 大屏模式：?full=1 → 隐藏导航/助手/页脚，只留数据 */
+(function(){
+  try {
+    var q = location.search || '';
+    if (/[?&]full=1(&|$)/.test(q)) document.documentElement.classList.add('xk-full');
+    if (document.documentElement.classList.contains('xk-full')) document.body.classList.add('xk-full');
+  } catch (e) {}
+})();
+
+/* 2026-11-10 导航四入口：/alerts/?tab=source|ops|sys 直接打开对应面板 */
+(function(){
+  try {
+    var m = /[?&]tab=(source|ops|sys)(?:&|$)/.exec(location.search || '');
+    var want = m ? m[1] : 'live';
+    var btn = document.querySelector('#opsTabs button[data-tab="' + (want === 'live' ? 'live' : want) + '"]');
+    if (btn && !btn.classList.contains('on')) btn.click();
+  } catch (e) {}
+})();
