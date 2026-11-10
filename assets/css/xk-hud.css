@@ -9,52 +9,57 @@ html,body{margin:0;background:#050a0e;color:var(--t1);font:13px/1.5 "Segoe UI","
 .wrap{position:relative;z-index:3;max-width:1920px;margin:0 auto;padding:8px 16px 40px}
 .navrow{margin-bottom:6px}
 /* 顶条 */
-.strip{display:flex;gap:18px;align-items:center;font:11px/1.4 Consolas,monospace;color:var(--t3);border-bottom:1px solid var(--ln);padding-bottom:5px;flex-wrap:wrap}
+.strip{display:flex;gap:18px;align-items:center;font:12px/1.4 Consolas,monospace;color:var(--t3);border-bottom:1px solid var(--ln);padding-bottom:5px;flex-wrap:wrap}
 .strip b{color:var(--c);font-weight:600}
+.strip a{color:rgba(214,228,233,.5);text-decoration:none;font-size:11.5px;margin-left:12px}
+.strip a:hover{color:var(--c)}
 /* 指标带 */
-.band{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;margin:10px 0 12px}
-.kpi{border-left:2px solid var(--ln);padding:2px 0 2px 8px;min-width:0}
-.kpi b{display:block;font:600 18px/1.2 Consolas,monospace;letter-spacing:.02em;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.band{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px;margin:14px 0 16px}
+.kpi{border-left:2px solid var(--ln);padding:2px 0 2px 10px;min-width:0}
+.kpi b{display:block;font:600 30px/1.15 Consolas,monospace;letter-spacing:.01em;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi.k2 b{color:var(--r)}.kpi.k3 b{color:var(--o)}
-.kpi span{display:block;font-size:10.5px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi i{display:block;font:9px/1.3 Consolas,monospace;color:var(--t3);letter-spacing:.14em;font-style:normal}
+.kpi span{display:block;font-size:12px;color:var(--t2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi i{display:block;font:10px/1.3 Consolas,monospace;color:var(--t3);letter-spacing:.14em;font-style:normal}
 /* 三列 */
-.cols{display:grid;grid-template-columns:28fr 46fr 26fr;gap:16px;align-items:start}
+.cols{display:grid;grid-template-columns:26fr 48fr 26fr;gap:16px;align-items:start}
 .col{display:flex;flex-direction:column;gap:12px;min-width:0}
 .blk{min-width:0}
-.blk>h3{margin:0 0 5px;font:600 12px/1.3 "Segoe UI","Microsoft YaHei",sans-serif;color:var(--t1);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.blk>h3 em{font:9px/1 Consolas,monospace;color:var(--t3);letter-spacing:.16em;font-style:normal}
-.br{display:grid;grid-template-columns:96px minmax(0,1fr) 66px;gap:8px;align-items:center;font-size:11.5px;line-height:1.75;color:var(--t2);min-width:0}
+.blk>h3{margin:0 0 6px;font:600 13.5px/1.3 "Segoe UI","Microsoft YaHei",sans-serif;color:var(--t1);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.blk>h3 em{font:10px/1 Consolas,monospace;color:var(--t3);letter-spacing:.16em;font-style:normal}
+.br{display:grid;grid-template-columns:104px minmax(0,1fr) 72px;gap:8px;align-items:center;font-size:12.5px;line-height:1.8;color:var(--t2);min-width:0}
 .br .bl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .br .bt{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
 .br .bt i{display:block;height:100%;width:0;background:rgba(111,211,216,.55);transition:width .8s cubic-bezier(.2,.7,.2,1)}
-.br .bv{text-align:right;font:11px/1 Consolas,monospace;color:var(--t1);white-space:nowrap}
+.br .bv{text-align:right;font:12px/1 Consolas,monospace;color:var(--t1);white-space:nowrap}
 /* 地图 */
-#hudMap{border:1px solid var(--ln);border-radius:2px;padding:4px;position:relative}
-#hudMap svg{display:block;width:100%;height:auto;aspect-ratio:2/1}
+#hudMap{position:relative;margin:-6px 0 0}
+#hudMap svg{display:block;width:100%;height:auto;aspect-ratio:16/10}
+.foot2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-top:16px}
+@media (max-width:1100px){.foot2{grid-template-columns:1fr}}
 .cl{fill:none;stroke:rgba(111,211,216,.34);stroke-width:.6}
 .gl{stroke:rgba(111,211,216,.09);stroke-width:.5}
 .dot{fill:rgba(111,211,216,.5)}
-.lab{fill:rgba(225,238,242,.8);font:9.5px "Segoe UI","Microsoft YaHei",sans-serif}
+.lab{fill:rgba(225,238,242,.86);font:11.5px "Segoe UI","Microsoft YaHei",sans-serif}
 .arc{fill:none;stroke:rgba(111,211,216,.30);stroke-dasharray:3 7;animation:dash 7s linear infinite}
 @keyframes dash{to{stroke-dashoffset:-200}}
 @keyframes pulse{0%{r:3;opacity:.85}100%{r:24;opacity:0}}
 .pu{fill:none;stroke:var(--o);stroke-width:1;animation:pulse 1.1s ease-out forwards}
 /* 日志 */
-#hudLogList{max-height:298px;overflow:hidden;font:10.5px/1.72 Consolas,monospace}
-.lg{display:grid;grid-template-columns:44px 2px 62px minmax(0,1fr);gap:6px;align-items:center;color:var(--t2);white-space:nowrap}
+#hudLogList{max-height:520px;overflow:hidden;font:11.5px/1.8 Consolas,monospace}
+/* 注意：站内 xk.css 里还有一个 .lg（9px 圆点），这里必须显式覆盖 width/height，否则整行被压成 9px */
+.lg{display:grid;width:auto;height:auto;min-width:0;grid-template-columns:52px 2px 74px minmax(0,1fr);gap:7px;align-items:center;color:var(--t2);white-space:nowrap}
 .lg>i{height:12px;display:block}
 .lg>b.t{color:var(--t3);font-weight:400}
 .lg>b.ip{color:rgba(197,214,220,.9);font-weight:400;overflow:hidden;text-overflow:ellipsis}
 .lg>span{overflow:hidden;text-overflow:ellipsis}
 .lg.new{animation:slidein .45s ease both}
 @keyframes slidein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-/* 助手浮层 */
-#hudChat{position:fixed;right:16px;top:96px;width:300px;z-index:9;border:1px solid var(--ln);background:rgba(6,13,17,.86);backdrop-filter:blur(3px);padding:8px 10px;display:grid;grid-template-columns:64px minmax(0,1fr);gap:9px}
-#hudChat .av{width:64px;height:78px;background:url('/kurisu/avatar/normal.idle.webp') 0 0/800% 300%;filter:saturate(.9)}
-#hudChat .nm{font:600 12px/1.3 "Segoe UI","Microsoft YaHei";color:var(--t1)}
+/* 助手浮层（右下角，与演示一致） */
+#hudChat{position:fixed;right:18px;bottom:18px;width:320px;z-index:9;border:1px solid var(--ln);background:rgba(6,13,17,.88);backdrop-filter:blur(3px);padding:9px 11px;display:grid;grid-template-columns:68px minmax(0,1fr);gap:10px}
+#hudChat .av{width:68px;height:84px;background:url('/kurisu/avatar/normal.idle.webp') 0 0/800% 300%;filter:saturate(.9)}
+#hudChat .nm{font:600 12.5px/1.3 "Segoe UI","Microsoft YaHei";color:var(--t1)}
 #hudChat .nm em{font:9px/1 Consolas;color:var(--t3);letter-spacing:.14em;font-style:normal;margin-left:6px}
-#hudLine{margin:5px 0 0;font-size:11.5px;line-height:1.55;color:rgba(228,240,244,.88);min-height:34px}
+#hudLine{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:rgba(228,240,244,.9);min-height:38px}
 #hudChat .foot{display:flex;justify-content:space-between;font:9px/1 Consolas,monospace;color:var(--t3);margin-top:6px;grid-column:1/-1;letter-spacing:.1em}
 /* 第二屏 */
 .s2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:26px;padding-right:0}
