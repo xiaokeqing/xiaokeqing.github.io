@@ -91,7 +91,7 @@
         <a class="lab-sec on" href="#range">
           <span class="n">分区三</span>
           <b>靶场</b>
-          <span class="s">7 台容器靶场跑在内网，只开 SSH 隧道；说明就在本页往下。</span>
+          <span class="s">7 台容器靶场跑在内网，只开 SSH 隧道。</span>
           <em>看本页靶场 ↓</em>
         </a>
       </div>
@@ -100,11 +100,6 @@
         <span class="lab-dot off"></span>
         <div>
           <p class="t2">七台靶场 · 内网在线（公网入口已撤）</p>
-          <p class="s2">Pikachu、DVWA、OWASP Juice Shop、WebGoat、WebWolf、DVNA、DSVW 跑在独立的内网网络 <code>labnet</code> 里：禁出网、单独 IP、各自限内存限核；
-            公网已经没有入口——要用只能从我这边开一条 SSH 隧道进去。</p>
-        </div>
-        <div class="lab-cta">
-          <a class="lab-btn primary" href="#how">怎么进去 →</a>
         </div>
       </div>
 
@@ -167,25 +162,7 @@
         </div>
       </div>
 
-      <div class="mod" id="how">
-        <div class="mod-hd"><span class="led"></span>怎么进去<span class="tag">只有我能开</span></div>
-        <div class="mod-bd">
-          <p class="lab-kv">七个靶场只监听服务器自己的 <code>127.0.0.1</code>，公网没有任何路径能到它们。要练的时候我在这边做一条隧道：</p>
-          <pre class="lab-pre"><span class="c"># 在我本机执行（七个端口一次全带出来）</span>
-ssh -N -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8083:127.0.0.1:8083 \
-       -L 8084:127.0.0.1:8084 -L 8085:127.0.0.1:8085 -L 8086:127.0.0.1:8086 \
-       -L 8087:127.0.0.1:8087 secagent-srv2
-<span class="c"># 然后浏览器打开</span>
-http://127.0.0.1:8081/   <span class="c"># Pikachu</span>
-http://127.0.0.1:8082/   <span class="c"># DVWA（首次进要点 Create/Reset Database）</span>
-http://127.0.0.1:8083/   <span class="c"># Juice Shop</span>
-http://127.0.0.1:8084/   <span class="c"># WebGoat（webgoat-user / webgoat）</span>
-http://127.0.0.1:8087/   <span class="c"># WebWolf（同一套账号；会自动跳到 /WebWolf/）</span>
-http://127.0.0.1:8085/   <span class="c"># DVNA（admin / admin123）</span>
-http://127.0.0.1:8086/   <span class="c"># DSVW（无认证）</span></pre>
-          <p class="lab-foot">关掉 ssh 就断，不留常开入口；容器本身也出不了网，打穿它拿不到任何东西。</p>
-        </div>
-      </div>
+      
 
       <div class="lab-grid">
         <div class="mod lab-card">
@@ -206,20 +183,7 @@ http://127.0.0.1:8086/   <span class="c"># DSVW（无认证）</span></pre>
         </div>
       </div>
 
-      <div class="mod">
-        <div class="mod-hd"><span class="led"></span>你也想练怎么办<span class="tag">不用来敲我这台</span></div>
-        <div class="mod-bd">
-          <p class="lab-kv">六条命令在你自己机器上起同款（装了 Docker 就行；WebWolf 和 WebGoat 是同一个镜像里的两套应用，一条命令带两个端口）：</p>
-          <pre class="lab-pre">docker run -d --name pikachu  -p 8081:80   area39/pikachu:latest
-docker run -d --name dvwa     -p 8082:80   vulnerables/web-dvwa:latest
-docker run -d --name juice    -p 8083:3000 bkimminich/juice-shop:latest
-docker run -d --name webgoat  -p 8084:8080 -p 8087:9090 webgoat/webgoat:latest
-docker run -d --name dvna     -p 8085:9090 appsecco/dvna:sqlite
-docker run -d --name dsvw     -p 8086:8000 appsecco/dsvw:latest
-<span class="c"># 然后开 http://127.0.0.1:8081 ~ :8087（8087 = WebWolf，要等 WebGoat 容器起来后约 30 秒）</span></pre>
-          <p class="lab-foot">这一页已经把能看的部分都写出来了；真要动手，自己起一台更安全——我这台不对公网开放。</p>
-        </div>
-      </div>
+      
 
     </div>
   </div>
