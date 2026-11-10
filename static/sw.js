@@ -9,7 +9,7 @@
      DOM 由页面侧的 assets/js/xk-ux.js 插一行「当前离线，显示的是缓存版本」（SW 碰不到 DOM，只负责通知）。
    注意：这个 SW 不做预缓存清单（站点 240MB 级），只在访问时顺带存，避免装一次就吞配额。
    改 VER ⇒ activate 里会把旧版本的两个 cache 一起删掉（v1 的缓存不会被 v2 复用）。 */
-const VER = 'xk-v2';
+const VER = 'xk-v3';
 const IMG_MAX = 60;           /* 最多留 60 张图片，超过按 LRU 丢 */
 const HTML_TIMEOUT = 3000;    /* HTML network-first 的等待上限（毫秒），到点回缓存 */
 const CACHE_HTML = VER + '-html';
