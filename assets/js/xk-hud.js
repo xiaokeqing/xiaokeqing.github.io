@@ -305,6 +305,8 @@
     ]).then(function (r) {
       ST.alerts = r[0]; ST.geo = r[1]; ST.audit = r[2]; ST.atk = r[3]; ST.home = r[4]; ST.daily = r[5]; ST.deploy = r[6];
       renderTop(); renderGeo(); renderAudit(); renderSys();
+      /* 第二屏的弱口令依赖 home.js 的 honeypot，pullS2 可能先跑完，这里补渲染一次 */
+      try { renderS2(); } catch (e) {}
       buildFacts();
       setTxt('hudSync', '同步 ' + new Date().toTimeString().slice(0, 8));
     });
