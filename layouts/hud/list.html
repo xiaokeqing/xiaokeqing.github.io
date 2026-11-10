@@ -1,0 +1,127 @@
+{{- /* XK-LAB 大屏（一屏 HUD + 第二屏证据）★2026-11-10
+   数据全部来自同源快照 /api/public/*.js；助手是浮层，滚动到第二屏仍在。
+*/ -}}
+<!doctype html>
+<html lang="zh-CN" data-xk-theme="tech">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作战室 · 大屏 · XK-LAB</title>
+<meta name="description" content="公网安全观测站大屏：24 小时告警、来源国家、严重度构成、实时事件流、攻击者档案与处置记录，数据 5 秒刷新。">
+{{ partial "xk-demo/head-meta.html" . }}
+{{ $hud := resources.Get "js/xk-hud.js" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ (resources.Get "css/tokens.css" | minify | fingerprint).RelPermalink }}">
+<link rel="stylesheet" href="{{ (resources.Get "css/xk.css" | minify | fingerprint).RelPermalink }}">
+{{- $hudcss := resources.Get "css/xk-hud.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $hudcss.RelPermalink }}">
+
+</head>
+<body data-xk-page="hud" data-xk-ssr="hud" data-samples="{{ (index site.Data "samples").total.files }}">
+<div id="photo"></div><div id="bgfx"></div><div id="vig"></div>
+<div class="wrap">
+  <div class="navrow"><nav class="hudnav">
+  <b>XK-LAB</b>
+  <a href="/hud/" class="on">实时看板</a>
+  <a href="/daily/">安全日报</a>
+  <a href="/posts/">笔记</a>
+  <a href="/ai/">AI 问答</a>
+  <a href="/tools/">工具台</a>
+  <span class="sp"></span>
+  <a href="/alerts/" class="sub">详细数据</a>
+</nav></div>
+  <div class="strip">
+    <span>XK-LAB // <b>OPS-ROOM</b></span>
+    <span>● 自动封禁 开启</span>
+    <span>● 健康检查 <b id="hudHealth">—</b></span>
+    <span>部署 <b id="hudSha">—</b></span>
+    <span>索引保留 5 天</span>
+    <span style="margin-left:auto" id="hudSync">同步 —</span>
+    <span id="clock">—</span>
+  </div>
+
+  <div class="band" id="hudBand">
+    <div class="kpi k1"><b id="hudTotal">—</b><span>24 小时告警</span><i>INBOUND 24H</i><span id="hudDelta" style="color:var(--t3);font-size:9.5px">—</span></div>
+    <div class="kpi k2"><b id="hudCrit">—</b><span>严重 <em id="hudCritP"></em></span><i>CRITICAL</i></div>
+    <div class="kpi k3"><b id="hudHigh">—</b><span>高危 <em id="hudHighP"></em></span><i>HIGH</i></div>
+    <div class="kpi"><b id="hudMed">—</b><span>中危 <em id="hudMedP"></em></span><i>MEDIUM</i></div>
+    <div class="kpi"><b id="hudLow">—</b><span>低危 <em id="hudLowP"></em></span><i>LOW</i></div>
+    <div class="kpi"><b id="hudBlocks">—</b><span>真封 IP</span><i>BLOCKED</i><span id="hudBlockSub" style="color:var(--t3);font-size:9.5px">—</span></div>
+    <div class="kpi"><b id="hudIps">—</b><span>可定位 IP</span><i>GEOLOCATED</i></div>
+    <div class="kpi"><b id="hudCountries">—</b><span>来源国家</span><i>COUNTRIES</i></div>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+      <div class="blk" id="hudSev"><h3>严重度构成 <em>SEVERITY · 24H</em></h3><div id="hudSevList"></div></div>
+      <div class="blk" id="hudType"><h3>攻击类型 Top5 <em>TYPE · 5MIN</em></h3><div id="hudTypeList"></div></div>
+      <div class="blk" id="hudSrc"><h3>三源占比 <em>SOURCE · 5MIN</em></h3><div id="hudSrcList"></div></div>
+      <div class="blk" id="hudCty"><h3>来源国家 Top7 <em>GEO · 24H</em></h3><div id="hudCtyList"></div></div>
+      <div class="blk" id="hudSys"><h3>体系与质量 <em>SYSTEM</em></h3>
+        <div class="br"><span class="bl">自研规则</span><span class="bt"><i style="width:38%;background:rgba(111,211,216,.5)"></i></span><span class="bv">16 条</span></div>
+        <div class="br"><span class="bl">ATT&CK 覆盖</span><span class="bt"><i style="width:49%;background:rgba(240,178,96,.5)"></i></span><span class="bv" id="hudAtkPct">—</span></div>
+        <div class="br"><span class="bl">样本文件</span><span class="bt"><i style="width:22%;background:rgba(111,211,216,.35)"></i></span><span class="bv">{{ with site.Data.samples }}{{ with .total }}{{ .files }} 件{{ else }}未取到{{ end }}{{ else }}未取到{{ end }}</span></div>
+        <div class="br"><span class="bl">蜜罐连接</span><span class="bt"><i style="width:30%;background:rgba(111,211,216,.35)"></i></span><span class="bv" id="hudHoneyConn">—</span></div>
+        <div class="br"><span class="bl">蜜罐登录</span><span class="bt"><i style="width:30%;background:rgba(255,120,120,.35)"></i></span><span class="bv" id="hudHoneyLogin">—</span></div>
+        <div class="br"><span class="bl">归档日报</span><span class="bt"><i style="width:24%;background:rgba(111,211,216,.35)"></i></span><span class="bv" id="hudArchive">—</span></div>
+        <div class="br"><span class="bl">端口 Top5</span><span class="bt"><i style="width:2%;background:rgba(150,170,180,.3)"></i></span><span class="bv" style="color:var(--t3)">NO DATA</span></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="blk" id="hudMap">
+        <h3>攻击来自哪里 <em>GEO · 24H</em></h3>
+        <svg viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" aria-label="世界地图：攻击来源国家">
+          <g id="hudGrat"></g><g id="hudLand"></g><g id="hudDots"></g><g id="hudArcs"></g>
+        </svg>
+      </div>
+      <div class="blk" id="hudSpk">
+        <h3>24 小时攻击量 <em>STATS24H · TREND · 25 BUCKETS</em></h3>
+        <svg id="hudSpark" viewBox="0 0 900 120" preserveAspectRatio="none" style="width:100%;height:120px;display:block"></svg>
+      </div>
+      <div class="blk" id="hudHour">
+        <h3>近 24 小时分布 <em>ALERTS · HOURLY</em></h3><div id="hudHourList"></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="blk" id="hudLog">
+        <h3>正在发生 <em>INBOUND · 近 5 分钟</em></h3>
+        <div id="hudLogList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="s2" id="hudS2">
+    <div class="blk"><h3>攻击者档案 Top5 <em>HUNTERS · 24H</em></h3><div id="hudHunters"></div></div>
+    <div class="blk"><h3>高频弱口令 <em>PASSWORD</em></h3><div id="hudPwd"></div></div>
+    <div class="blk"><h3>访问时段 <em>WEBSTATS</em></h3><div id="hudWeb"></div></div>
+  </div>
+
+  <div class="ticker">
+    规则 16（Suricata 7 / Wazuh 9）· ATT&CK 覆盖 <span id="hudAtkPct2">—</span> · 样本 · PE/ELF 0 · 会话 406,410 · 登录 412,331 · 命令 0 ·
+    MTTD / MTTR NO DATA · 端口 Top5 NO DATA · 累计封禁 <span id="hudBlockSub2">—</span> · 归档 23 份 · 保留 5 天
+  </div>
+</div>
+
+<div id="hudChat">
+  <div class="av" aria-hidden="true"></div>
+  <div class="txt">
+    <div class="nm">牧濑 红莉栖<em>AMADEUS / HOLO-LINK</em></div>
+    <p id="hudLine">数据加载中——她把真实数据读出来念给你听。</p>
+  </div>
+  <div class="foot"><span id="hudSt">STANDBY</span><span id="hudStTag">等待事件</span></div>
+</div>
+
+{{ partial "xk-demo/site-foot.html" . }}
+<script src="{{ $hud.RelPermalink }}" integrity="{{ $hud.Data.Integrity }}" defer></script>
+<script>
+(function(){
+  var el=document.getElementById('clock');
+  function tick(){ if(el) el.textContent=new Date().toTimeString().slice(0,8); }
+  tick(); setInterval(tick,1000);
+  var chat=document.getElementById('hudChat');
+  if(chat) chat.addEventListener('click',function(){ if(innerWidth<1181) chat.classList.toggle('open'); });
+})();
+</script>
+</body>
+</html>

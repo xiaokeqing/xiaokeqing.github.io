@@ -13,7 +13,7 @@
 {{- $v := .v -}}
 <nav class="dock{{ if .wait }} dock--wait{{ end }}" id="dock" aria-label="站点导航">
   <a class="brand" href="/" aria-label="返回首页 XK-LAB">XK-LAB</a>
-  <a href="/alerts/" class="{{ if in (slice "monitor" "source" "ops" "sys") $v }}on{{ end }}">大屏</a>
+  <a href="/hud/" class="{{ if eq $v "monitor" }}on{{ end }}">实时看板</a>
   <a href="/daily/" class="{{ if eq $v "daily" }}on{{ end }}">安全日报</a>
   <a href="/posts/" class="{{ if eq $v "notes" }}on{{ end }}">笔记</a>
   <a href="/ai/" class="{{ if eq $v "ai" }}on{{ end }}">AI 问答</a>

@@ -370,8 +370,9 @@ new_page_gate() {
     return
   fi
   sz=$(stat -c %s "$f")
-  ext_css=$(grep -coE '/css/xk[^"> ]*\.css' "$f")
-  ext_js=$(grep -coE '/js/xk[^"> ]*\.js' "$f")
+  # 注意：grep -c 数的是「行」，minify 后整页是一行 → 必须用 -o 再 wc -l 数「出现次数」
+  ext_css=$(grep -oE '/css/xk[^"> ]*\.css' "$f" | wc -l | tr -d ' ')
+  ext_js=$(grep -oE '/js/xk[^"> ]*\.js' "$f" | wc -l | tr -d ' ')
   if [ "$sz" -gt 8000 ] && grep -qE "$pat" "$f" && [ "${ext_css:-0}" -ge 2 ] && [ "${ext_js:-0}" -ge 2 ]; then
     ok "$route/index.html $sz 字节 > 8000（非骨架），data-xk-ssr=${route##*/} 在位，外链 $ext_css CSS / $ext_js JS（$name）"
   else
@@ -381,6 +382,7 @@ new_page_gate() {
 head1 "⑬ 新页产物契约（存在 + >8000 字节非骨架 + data-xk-ssr + 共享运行时外链）"
 new_page_gate what 介绍页
 new_page_gate lab 靶场说明页
+new_page_gate hud 大屏页
 new_page_gate api 公开端点清单页
 new_page_gate status 状态页
 new_page_gate redteam 红队评测页
