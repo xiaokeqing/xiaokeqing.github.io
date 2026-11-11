@@ -99,3 +99,106 @@ html,body{margin:0;background:#050a0e;color:var(--t1);font:13px/1.5 "Segoe UI","
 @media (max-width:1500px){.row3{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:1100px){.row3{grid-template-columns:1fr}}
 .row3 .blk{margin:0}
+
+/* ===== 2026-11-11 底部各块换形态：堆叠条 / 排名列 / 数字块 / 点阵 / 标签云 / 竖柱 / 环形 ===== */
+.sevstack{display:flex;height:16px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.05);margin:6px 0 10px}
+.sevstack i{display:block;height:100%}
+.sevlegend{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+.svl{display:grid;grid-template-columns:8px 1fr auto auto;gap:6px;align-items:center;font-size:11.5px;color:var(--t2)}
+.svl em{width:8px;height:8px;border-radius:2px}
+.svl b{color:var(--t1);font-weight:600}
+.svl s{text-decoration:none;color:var(--t3);font-size:11px;min-width:52px;text-align:right}
+
+.rank{display:grid;grid-template-columns:20px 1fr 84px 44px 62px;gap:8px;align-items:center;
+  font-size:11.5px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.rank .rk{color:var(--t3);font-size:10px;text-align:center}
+.rank .rn{color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .rb{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.rank .rb i{display:block;height:100%;background:rgba(111,211,216,.7)}
+.rank .rp{color:var(--t3);text-align:right;font-size:11px}
+.rank .rv{color:var(--t1);text-align:right;font-weight:600}
+
+.numgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.ng{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:4px;padding:7px 9px}
+.ng b{display:block;font-size:19px;font-weight:600;color:#d7ecf0;line-height:1.2}
+.ng span{display:block;font-size:11px;color:var(--t2);margin-top:2px}
+.ng i{font-style:normal;font-size:9.5px;color:var(--t3)}
+
+.hrow{display:grid;grid-template-columns:18px 1fr 54px 64px 60px;gap:8px;align-items:center;
+  font-size:11.5px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.hrow .hi{color:var(--t3);font-size:10px;text-align:center}
+.hrow .hip{color:var(--t2);font-family:var(--mono,monospace)}
+.hrow .hsv{font-size:9.5px;color:#f0b260;letter-spacing:.04em}
+.hrow .hsv.c{color:#ff7878}
+.hdots{display:flex;gap:3px}
+.hdots .hd{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.12)}
+.hdots .hd.on{background:rgba(111,211,216,.85)}
+.hrow .hsum{text-align:right;color:var(--t1);font-weight:600}
+
+.tags{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;margin-top:4px}
+.tags span{color:var(--t2);line-height:1.1}
+.tags span s{text-decoration:none;color:var(--t3);font-size:9.5px;margin-left:3px}
+
+.colbar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:96px;margin-top:6px}
+.cb{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:3px}
+.cb b{font-size:10px;color:var(--t2)}
+.cb i{width:100%;background:linear-gradient(180deg,rgba(111,211,216,.75),rgba(111,211,216,.18));border-radius:2px}
+.cb span{font-size:9px;color:var(--t3);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.donutwrap{position:relative;width:104px;height:104px;margin:2px auto 6px}
+.donut{width:104px;height:104px;transform:none}
+.dcenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dcenter b{font-size:15px;color:#d7ecf0}
+.dcenter span{font-size:9px;color:var(--t3)}
+.dnlegend{display:flex;flex-direction:column;gap:3px}
+.dnl{display:grid;grid-template-columns:8px 1fr auto;gap:6px;align-items:center;font-size:11px;color:var(--t2)}
+.dnl em{width:8px;height:8px;border-radius:2px}
+.dnl b{color:var(--t1)}
+
+/* ===== 2026-11-11 科技感强化：等宽数字 / 三色高亮 / L 角标 / 发光 / 扫描线 ===== */
+.row3 .blk, #hudS2 .blk, #hudMap, #hudLog, #hudChat{
+  position:relative;
+  background:linear-gradient(180deg,rgba(12,22,26,.62),rgba(6,12,15,.72));
+  border:1px solid rgba(111,211,216,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px rgba(0,0,0,.25);
+}
+.row3 .blk::before, #hudS2 .blk::before{
+  content:"";position:absolute;left:-1px;top:-1px;width:14px;height:14px;
+  border-left:1.5px solid rgba(111,211,216,.55);border-top:1.5px solid rgba(111,211,216,.55);
+}
+.row3 .blk::after, #hudS2 .blk::after{
+  content:"";position:absolute;right:-1px;bottom:-1px;width:14px;height:14px;
+  border-right:1.5px solid rgba(111,211,216,.35);border-bottom:1.5px solid rgba(111,211,216,.35);
+}
+.row3 .blk h3, #hudS2 .blk h3{
+  font-size:12px;letter-spacing:.06em;color:#b9d8dd;
+  border-left:2px solid rgba(111,211,216,.7);padding-left:7px;
+}
+.row3 .blk h3 em, #hudS2 .blk h3 em{opacity:.55;font-size:9.5px;letter-spacing:.12em}
+.sevstack i{box-shadow:0 0 8px -2px currentColor}
+.sevstack i:nth-child(1){box-shadow:0 0 10px -2px rgba(255,120,120,.75)}
+.sevstack i:nth-child(2){box-shadow:0 0 10px -2px rgba(240,178,96,.7)}
+.rank .rb i, .colbar .cb i, .donut circle{filter:drop-shadow(0 0 3px rgba(111,211,216,.35))}
+.sevlegend .svl b, .rank .rv, .hrow .hsum, .ng b, .cb b, .tags span s{
+  font-variant-numeric:tabular-nums;font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;
+}
+.ng b{color:#dff3f6;text-shadow:0 0 12px rgba(111,211,216,.28)}
+.ng{background:linear-gradient(180deg,rgba(111,211,216,.06),rgba(111,211,216,.01));border-color:rgba(111,211,216,.12)}
+.ng b#hudAtkPct{color:#f0b260;text-shadow:0 0 12px rgba(240,178,96,.3)}
+.ng b#hudHoneyLogin{color:#ff9d9d;text-shadow:0 0 12px rgba(255,120,120,.25)}
+.hdots .hd.on{box-shadow:0 0 6px rgba(111,211,216,.8)}
+.tags span{transition:color .2s}
+.tags span:hover{color:#8ee6ea}
+.dcenter b{font-variant-numeric:tabular-nums;text-shadow:0 0 14px rgba(111,211,216,.35)}
+.donutwrap::after{
+  content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:1px dashed rgba(111,211,216,.14);animation:xkSpin 26s linear infinite;
+}
+@keyframes xkSpin{to{transform:rotate(360deg)}}
+/* 整点分布横条（24h 桶） */
+#hudHourList{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+#hudHourList .hb{display:grid;grid-template-columns:46px minmax(0,1fr) 68px;align-items:center;gap:8px;
+  font-size:10.5px;line-height:1.55;color:var(--t3);font-variant-numeric:tabular-nums}
+#hudHourList .hbw{display:block;height:7px;background:rgba(255,255,255,.055);overflow:hidden}
+#hudHourList .hbw > i{display:block;height:100%;background:linear-gradient(90deg,rgba(111,211,216,.45),rgba(111,211,216,.9))}
+#hudHourList .hb b{color:var(--t2);font-weight:500;text-align:right}

@@ -34,6 +34,8 @@
   </div>
 </aside>
 <!-- ★P8-A（站主 2026-10-16）：手机 = 页面级右列常驻件（替掉 .holo）；外壳 300×618（1:2.06） -->
+{{- /* 站主 2026-11-11：手机只在 /ai/ 页面出现，别的页面不要 */ -}}
+{{- if eq $v "ai" }}
 <aside class="phone live" id="phone" aria-label="手机里的桐莉栖">
   <div class="phone-scr">
     <div class="phone-island" aria-hidden="true"></div>
@@ -50,6 +52,8 @@
     <div class="phone-home" aria-hidden="true"></div>
   </div>
 </aside>
+{{- end }}
+
 <div class="holo-bubble" id="holoBubble" title="展开面板"><canvas id="bubbleCanvas" width="132" height="132"></canvas></div>
 
 

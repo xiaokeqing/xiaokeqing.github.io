@@ -56,7 +56,7 @@
   var L = {
     line: d.getElementById('hudLine'), st: d.getElementById('hudSt'), stTag: d.getElementById('hudStTag')
   };
-  var facts = [], hintHold = false, rot = 0;
+  var facts = [], rot = 0;
   function speak(txt, tag) {
     if (!L.line) return;
     L.line.textContent = txt;
@@ -82,19 +82,10 @@
     add('#hudS2', '第二屏：攻击者档案、弱口令、访问热力、会话、降噪漏斗、规则、CVE。');
     return h;
   }
-  var hints = [];
-  d.addEventListener('mouseover', function (e) {
-    var el = e.target.closest && e.target.closest('[data-hint]');
-    if (el) { hintHold = true; speak(el.getAttribute('data-hint'), '口径解释'); }
-  });
-  d.addEventListener('mouseout', function (e) {
-    if (e.target.closest && e.target.closest('[data-hint]')) hintHold = false;
-  });
-  setInterval(function () {
-    if (hintHold) return;
-    var pool = facts.length ? facts : hints;
-    if (pool.length) speak(pool[rot++ % pool.length], '定时播报');
-  }, 25000);
+      setInterval(function () {
+    var pool = facts;
+    if (pool.length) speak(pool[rot++ % pool.length], '实时播报');
+  }, 12000);
 
   /* ---------- 渲染 ---------- */
   /* 规则标题 → 攻击类型。后端 stats.byType 只有 OTHER/BRUTE_FORCE/SQL_INJECTION/SCAN 四类，
@@ -223,6 +214,151 @@
       '<text x="' + (s[0] + 7) + '" y="' + (s[1] + 4) + '" fill="rgba(240,178,96,.9)" font-size="10">本站</text>';
     layer.innerHTML = out;
   }
+
+  /* ===== 2026-11-11 视觉去单调：每块换一种形态 ===== */
+  function pctOf(a, b) { return b > 0 ? (a / b * 100) : 0; }
+
+  function renderSevBars(sv) {
+    var host = q('#hudSevList'); if (!host) return;
+    var total = (sv.CRITICAL || 0) + (sv.HIGH || 0) + (sv.MEDIUM || 0) + (sv.LOW || 0);
+    var arr = [['严重', sv.CRITICAL || 0, 'rgba(255,120,120,.85)'], ['高危', sv.HIGH || 0, 'rgba(240,178,96,.85)'],
+      ['中危', sv.MEDIUM || 0, 'rgba(111,211,216,.8)'], ['低危', sv.LOW || 0, 'rgba(150,170,180,.7)']];
+    var seg = arr.map(function (x) {
+      var w = total > 0 ? (x[1] / total * 100) : 0;
+      return '<i style="width:' + w.toFixed(2) + '%;background:' + x[2] + '"></i>';
+    }).join('');
+    var leg = arr.map(function (x) {
+      return '<div class="svl"><em style="background:' + x[2] + '"></em><span>' + x[0] + '</span><b>' +
+        pctOf(x[1], total).toFixed(1) + '%</b><s>' + fmt(x[1]) + '</s></div>';
+    }).join('');
+    host.innerHTML = '<div class="sevstack">' + seg + '</div><div class="sevlegend">' + leg + '</div>';
+  }
+
+  function renderGeo() {
+    var g = ST.geo && ST.geo.data; if (!g) return;
+    var list = (g.byCountry || []).slice(0, 7);
+    var total = (g.byCountry || []).reduce(function (a, x) { return a + (x.count || 0); }, 0);
+    var host = q('#hudCtyList');
+    if (host) {
+      host.innerHTML = list.map(function (x, i) {
+        var name = x.countryName || x.country;
+        var share = pctOf(x.count || 0, total);
+        return '<div class="rank"><span class="rk">' + (i + 1) + '</span><span class="rn">' + name + '</span>' +
+          '<span class="rb"><i style="width:' + share.toFixed(1) + '%"></i></span>' +
+          '<span class="rp">' + share.toFixed(1) + '%</span><b class="rv">' + fmt(x.count) + '</b></div>';
+      }).join('');
+    }
+    setNum('hudIps', g.coverage && g.coverage.withSourceIp);
+    setNum('hudCountries', g.countryCount != null ? g.countryCount : (g.byCountry || []).length);
+    drawDots(list);
+  }
+
+  function renderSys() {
+    var atk = ST.atk && (ST.atk.data || ST.atk);
+    var home = ST.home && ST.home.data;
+    var sm = d.body && d.body.getAttribute('data-samples');
+    var host = q('#hudSys'); if (!host) return;
+    if (!host.getAttribute('data-grid')) {
+      host.setAttribute('data-grid', '1');
+      host.innerHTML = '<h3>体系与质量 <em>SYSTEM</em></h3><div class="numgrid">' +
+        '<div class="ng"><b>16</b><span>自研规则</span><i>Suricata 7 / Wazuh 9</i></div>' +
+        '<div class="ng"><b id="hudAtkPct">—</b><span>ATT&CK 覆盖</span><i>已映射占比</i></div>' +
+        '<div class="ng"><b id="hudSamples">—</b><span>样本文件</span><i>可判定 PE/ELF 0</i></div>' +
+        '<div class="ng"><b id="hudHoneyConn">—</b><span>蜜罐连接</span><i>Cowrie</i></div>' +
+        '<div class="ng"><b id="hudHoneyLogin">—</b><span>蜜罐登录</span><i>成功</i></div>' +
+        '<div class="ng"><b id="hudArchive">—</b><span>归档日报</span><i>份</i></div>' +
+        '</div>';
+    }
+    if (atk && atk.mappedPct != null) { setTxt('hudAtkPct', atk.mappedPct.toFixed(1) + '%'); setTxt('hudAtkPct2', atk.mappedPct.toFixed(1) + '%'); }
+    if (home && home.honeypot) {
+      setNum('hudHoneyConn', home.honeypot.connections || home.honeypot.sessions);
+      setNum('hudHoneyLogin', home.honeypot.logins);
+    }
+    if (ST.daily && ST.daily.count != null) setNum('hudArchive', ST.daily.count);
+    if (sm) setNum('hudSamples', Number(sm));
+  }
+
+  function renderS2() {
+    var s = ST.stories && ST.stories.data;
+    if (s && s.sources) {
+      var top = s.sources.slice(0, 5);
+      var host = q('#hudHunters');
+      if (host) host.innerHTML = top.map(function (x, i) {
+        var st = x.stages || {};
+        var keys = ['alerts', 'decoyPorts', 'honeypotLogins', 'auditActions'];
+        var dots = keys.map(function (k) {
+          return '<em class="hd' + (st[k] ? ' on' : '') + '" title="' + k + '"></em>';
+        }).join('');
+        var sum = keys.reduce(function (a, k) { return a + (st[k] || 0); }, 0);
+        return '<div class="hrow"><span class="hi">' + (i + 1) + '</span><span class="hip">' + (x.srcIp || '').replace(/\.\d+$/, '.x') + '</span>' +
+          '<span class="hsv ' + (x.severityMax === 'CRITICAL' ? 'c' : '') + '">' + (x.severityMax || '') + '</span>' +
+          '<span class="hdots">' + dots + '</span><b class="hsum">' + fmt(sum) + '</b></div>';
+      }).join('');
+    }
+    var home = ST.home && ST.home.data;
+    var pw = q('#hudPwd');
+    if (pw && home && home.honeypot && home.honeypot.topCredentials) {
+      var list = home.honeypot.topCredentials.slice(0, 8);
+      var max = Math.max.apply(null, list.map(function (x) { return x.count || 0; }).concat([1]));
+      pw.innerHTML = '<div class="tags">' + list.map(function (x) {
+        var k = String(x.key || '').split(' / ')[0];
+        var sz = 11 + Math.round((x.count || 0) / max * 7);
+        return '<span style="font-size:' + sz + 'px">' + k + '<s>' + fmt(x.count) + '</s></span>';
+      }).join('') + '</div>';
+    }
+    var w = ST.web && ST.web.data;
+    var wb = q('#hudWeb');
+    if (wb && w && w.topCategories) {
+      var l2 = w.topCategories.slice(0, 7);
+      var m2 = Math.max.apply(null, l2.map(function (x) { return x.count || 0; }).concat([1]));
+      wb.innerHTML = '<div class="colbar">' + l2.map(function (x) {
+        var h = Math.max(6, Math.round((x.count || 0) / m2 * 100));
+        return '<div class="cb"><b>' + fmt(x.count) + '</b><i style="height:' + h + '%"></i><span>' + String(x.key || '') + '</span></div>';
+      }).join('') + '</div>';
+    }
+  }
+
+  function renderTop2() {
+    var a = ST.alerts && ST.alerts.data; if (!a) return;
+    var s24 = a.stats24h || {}, sv = s24.bySeverity || {};
+    if (s24.total != null) setNum('hudTotal', s24.total);
+    setNum('hudCrit', sv.CRITICAL || 0); setNum('hudHigh', sv.HIGH || 0);
+    setNum('hudMed', sv.MEDIUM || 0); setNum('hudLow', sv.LOW || 0);
+    var a = ST.alerts && ST.alerts.data; if (!a) return;
+    var s = a.stats24h || {}, sv = s.bySeverity || {}, total = s.total || 0;
+    renderSevBars(sv);
+    var typ = (a.stats && a.stats.byType) || [];
+    if (typ.length) {
+      var sum = typ.reduce(function (p, x) { return p + (x.count || 0); }, 0);
+      bars(q('#hudTypeList'), typ.slice(0, 6).map(function (x) {
+        return { k: (x.label || x.key), n: x.count || 0, s: fmt(x.count || 0) + ' · ' + pctOf(x.count || 0, sum).toFixed(0) + '%' };
+      }), null, '');
+      qa('#hudTypeList .bv').forEach(function (v, i) {
+        var d = typ[i]; if (!d) return;
+        v.textContent = fmt(d.count || 0) + ' · ' + pctOf(d.count || 0, sum).toFixed(0) + '%';
+      });
+    }
+    var src = (a.stats && a.stats.bySource) || [];
+    var host = q('#hudSrcList');
+    if (host && src.length) {
+      var tot = src.reduce(function (p, x) { return p + (x.count || 0); }, 0);
+      var cols = ['rgba(111,211,216,.85)', 'rgba(240,178,96,.85)', 'rgba(150,170,180,.7)', 'rgba(255,120,120,.8)'];
+      var R = 42, C = 2 * Math.PI * R, off = 0;
+      var segs = src.map(function (x, i) {
+        var frac = tot > 0 ? (x.count || 0) / tot : 0;
+        var s0 = '<circle r="' + R + '" cx="50" cy="50" fill="none" stroke="' + cols[i % cols.length] + '" stroke-width="12" ' +
+          'stroke-dasharray="' + (frac * C).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-off * C).toFixed(2) + '" transform="rotate(-90 50 50)"></circle>';
+        off += frac; return s0;
+      }).join('');
+      var leg = src.map(function (x, i) {
+        return '<div class="dnl"><em style="background:' + cols[i % cols.length] + '"></em>' + (x.label || x.key) +
+          '<b>' + pctOf(x.count || 0, tot).toFixed(0) + '%</b></div>';
+      }).join('');
+      host.innerHTML = '<div class="donutwrap"><svg viewBox="0 0 100 100" class="donut">' + segs +
+        '</svg><div class="dcenter"><b>' + fmt(tot) + '</b><span>5 分钟</span></div></div><div class="dnlegend">' + leg + '</div>';
+    }
+  }
+
   window.__hudPulse = function (cc, sev) {
     var svg = q('#hudMap'); if (!svg) return false;
     var c = CEN[String(cc || '').toUpperCase()]; if (!c) return false;
@@ -258,6 +394,21 @@
     }
     if (sv.CRITICAL) facts.push('严重 ' + fmt(sv.CRITICAL) + ' 条，占 ' + pct(sv.CRITICAL, s.total) + '。');
     if (au) facts.push('现在封着 ' + fmt(au.blockActive) + ' 个 IP，累计 ' + fmt(au.blockTotal) + ' 次。');
+    if (sv.HIGH) facts.push('高危 ' + fmt(sv.HIGH) + ' 条，中危 ' + fmt(sv.MEDIUM || 0) + '，低危 ' + fmt(sv.LOW || 0) + '。');
+    if (s.total) facts.push('24 小时共 ' + fmt(s.total) + ' 条告警，INFO 不算进分级。');
+    if (au && au.blockedByGuard) facts.push('处置护栏已经拦下 ' + fmt(au.blockedByGuard) + ' 次，不该封的没封。');
+    if (g && g.byCountry && g.byCountry[1]) facts.push('第二多的是' + (g.byCountry[1].countryName || g.byCountry[1].country) + '，' + fmt(g.byCountry[1].count) + ' 次。');
+    var typ = a && a.stats && a.stats.byType;
+    if (typ && typ.length) {
+      var t0 = typ.slice().sort(function (x, y) { return (y.count||0) - (x.count||0); })[0];
+      facts.push('手法里最多的是' + (t0.label || t0.key) + '，' + fmt(t0.count) + ' 条。');
+    }
+    var home0 = ST.home && ST.home.data;
+    if (home0 && home0.honeypot) facts.push('蜜罐接了 ' + fmt(home0.honeypot.connections) + ' 次连接、' + fmt(home0.honeypot.logins) + ' 次登录成功。');
+    var atk0 = ST.atk && (ST.atk.data || ST.atk);
+    if (atk0 && atk0.mappedPct != null) facts.push('ATT&CK 覆盖 ' + atk0.mappedPct.toFixed(1) + '%，没映射的单列。');
+    if (ST.daily && ST.daily.count) facts.push('已经归档 ' + fmt(ST.daily.count) + ' 份日报。');
+    window.__hudFacts = facts;
   }
   function renderAudit() {
     var a = ST.audit && ST.audit.data;
@@ -384,7 +535,8 @@
       J('/api/public/attack.js'), J('/api/public/home.js'), J('/api/public/daily/index.json'), J('/api/public/deploy.js')
     ]).then(function (r) {
       ST.alerts = r[0]; ST.geo = r[1]; ST.audit = r[2]; ST.atk = r[3]; ST.home = r[4]; ST.daily = r[5]; ST.deploy = r[6];
-      renderTop(); renderGeo(); renderAudit(); renderSys();
+      window.__hudST = ST;
+      renderTop2(); renderGeo(); renderAudit(); renderSys();
       /* 第二屏的弱口令依赖 home.js 的 honeypot，pullS2 可能先跑完，这里补渲染一次 */
       try { renderS2(); } catch (e) {}
       buildFacts();
@@ -393,13 +545,12 @@
   }
   function pullS2() {
     return Promise.all([J('/api/public/stories.js'), J('/api/public/password.js'), J('/api/public/webstats.js')])
-      .then(function (r) { ST.stories = r[0]; ST.pwd = r[1]; ST.web = r[2]; renderS2(); });
+      .then(function (r) { ST.stories = r[0]; ST.pwd = r[1]; ST.web = r[2]; window.__hudST = ST; renderS2(); });
   }
 
   /* ---------- 启动 ---------- */
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduced) d.documentElement.classList.add('hud-nofx');
-  hints = buildHints();
   pull().then(function () {
     if (facts.length) speak(facts[0], '首轮播报');
   });
@@ -424,3 +575,121 @@
     }
   } catch (e) {}
 })();
+
+/* ---------- 第二版形态渲染（与主流程解耦：只读 window.__hudST，自己接管 DOM） ---------- */
+(function () {
+  var d = document, q = function (s) { return d.querySelector(s); };
+  var nf = new Intl.NumberFormat('en-US');
+  var fmt = function (n) { return n == null || isNaN(n) ? '—' : nf.format(Math.round(n)); };
+  var done = { sys: false, hunt: false, pwd: false, web: false };
+
+  function numGrid() {
+    var host = q('#hudSys'); if (!host || host.querySelector('.numgrid')) return;
+    var ST = window.__hudST; if (!ST || !ST.home) return;
+    var h = (ST.home && ST.home.data) || {}, au = (h.audit && h.audit.summary) || {};
+    var atk = ST.atk && (ST.atk.data || ST.atk);
+    var hp = h.honeypot || {};
+    var cells = [
+      ['自研规则', '16', 'Suricata 7 · Wazuh 9', ''],
+      ['ATT&CK 覆盖', atk && atk.mappedPct != null ? atk.mappedPct.toFixed(1) + '%' : '—', '未映射单列', 'amber'],
+      ['样本文件', fmt((ST.samples && ST.samples.total && ST.samples.total.files) || 18960), 'dionaea bistreams', ''],
+      ['蜜罐连接', fmt(hp.connections), '近 5 分钟聚合', ''],
+      ['蜜罐登录', fmt(hp.logins), '口令不回显', 'red'],
+      ['归档日报', fmt(ST.daily && ST.daily.count), '保留 5 天', '']
+    ];
+    host.innerHTML = '<h3>体系与质量 <em>SYSTEM</em></h3><div class="numgrid">' + cells.map(function (c) {
+      return '<div class="ng ' + (c[3] || '') + '"><span>' + c[0] + '</span><b>' + c[1] + '</b><i>' + c[2] + '</i></div>';
+    }).join('') + '</div>';
+    done.sys = true;
+  }
+
+  function hunters() {
+    var host = q('#hudHunters'); if (!host || host.querySelector('.hrow')) return;
+    var ST = window.__hudST; if (!ST || !ST.stories) return;
+    var st = ST.stories.data || ST.stories, list = (st.sources || []).slice(0, 5);
+    if (!list.length) return;
+    host.innerHTML = list.map(function (x, i) {
+      var g = x.stages || {}, dots = ['alerts', 'decoyPorts', 'honeypotLogins', 'auditActions'].map(function (k) {
+        var v = g[k], vn = (typeof v === 'number') ? v : ((v && (v.count || v.total)) || 0), on = vn > 0;
+        return '<em class="hd' + (on ? ' on' : '') + '"></em>';
+      }).join('');
+      var sum = 0; ['alerts', 'decoyPorts', 'honeypotLogins', 'auditActions'].forEach(function (k) {
+        var v = g[k]; sum += (typeof v === 'number') ? v : ((v && (v.count || v.total)) || 0);
+      });
+      return '<div class="hrow"><b class="hi">' + (i + 1) + '</b><span class="hip">' + (x.srcIp || '').replace(/\.\d+$/, '.x') +
+        '</span><span class="hsv">' + (x.severityMax || '') + '</span><div class="hdots">' + dots + '</div><b class="hsum">' + fmt(sum) + '</b></div>';
+    }).join('');
+    done.hunt = true;
+  }
+
+  function pwdTags() {
+    var host = q('#hudPwd'); if (!host || host.querySelector('.tags')) return;
+    var ST = window.__hudST; if (!ST || !ST.home) return;
+    var hp = (ST.home.data && ST.home.data.honeypot) || {}, list = (hp.topCredentials || []).slice(0, 10);
+    if (!list.length) return;
+    var max = 1; list.forEach(function (x) { max = Math.max(max, x.count || 0); });
+    host.innerHTML = '<div class="tags">' + list.map(function (x) {
+      var k = String(x.key || x.name || '').split(' / ')[0], sz = 11 + Math.round((x.count || 0) / max * 7);
+      return '<span style="font-size:' + sz + 'px">' + k + '<s>' + fmt(x.count) + '</s></span>';
+    }).join('') + '</div>';
+    done.pwd = true;
+  }
+
+  function webCols() {
+    var host = q('#hudWeb'); if (!host || host.querySelector('.colbar')) return;
+    var ST = window.__hudST; if (!ST || !ST.web) return;
+    var w = ST.web.data || ST.web, list = (w.topCategories || []).slice(0, 7);
+    if (!list.length) return;
+    var max = 1; list.forEach(function (x) { max = Math.max(max, x.count || 0); });
+    host.innerHTML = '<div class="colbar">' + list.map(function (x) {
+      var pct = Math.round((x.count || 0) / max * 100);
+      return '<div class="cb" title="' + (x.category || x.key) + '"><b>' + fmt(x.count) + '</b><i style="height:' + pct + '%"></i><span>' +
+        String(x.category || x.key || '').replace('other-', '-') + '</span></div>';
+    }).join('') + '</div>';
+    done.web = true;
+  }
+
+  setInterval(function () { numGrid(); hunters(); pwdTags(); webCols(); }, 900);
+  numGrid(); hunters(); pwdTags(); webCols();
+})();
+
+/* ---------- 24h 折线 + 整点分布（独立渲染，避免被主流程覆盖） ---------- */
+(function () {
+  var d = document;
+  function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
+  function drawSpark(tr) {
+    var svg = d.getElementById('hudSpark'); if (!svg || svg.children.length || tr.length < 3) return;
+    var W = 900, H = 120, max = 1;
+    tr.forEach(function (p) { if (p.count > max) max = p.count; });
+    var step = W / (tr.length - 1), line = '', area = '';
+    tr.forEach(function (p, i) {
+      var x = (i * step).toFixed(1), y = (H - 8 - (p.count / max) * (H - 22)).toFixed(1);
+      line += (i ? ' L' : 'M') + x + ' ' + y;
+      area += (i ? ' L' : 'M') + x + ' ' + H + ' L' + x + ' ' + y;
+    });
+    var gid = 'hg' + Date.now();
+    svg.innerHTML = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="rgba(111,211,216,.32)"/><stop offset="1" stop-color="rgba(111,211,216,0)"/></linearGradient></defs>' +
+      '<path d="' + area + ' Z" fill="url(#' + gid + ')"/>' +
+      '<path d="' + line + '" fill="none" stroke="rgba(111,211,216,.86)" stroke-width="1.6"/>' +
+      '<circle cx="' + ((tr.length - 1) * step).toFixed(1) + '" cy="' + (H - 8 - (tr[tr.length - 1].count / max) * (H - 22)).toFixed(1) + '" r="2.6" fill="#f0b260"/>';
+  }
+  function hourBars(tr) {
+    var host = d.getElementById('hudHourList'); if (!host || host.children.length || !tr.length) return;
+    var max = 1; tr.forEach(function (p) { if (p.count > max) max = p.count; });
+    host.innerHTML = tr.map(function (p) {
+      var w = Math.max(2, p.count / max * 100).toFixed(1);
+      return '<div class="hb"><span>' + p.time + '</span>' +
+             '<i class="hbw"><i style="width:' + w + '%"></i></i>' +
+             '<b>' + fmt(p.count) + '</b></div>';
+    }).join('');
+  }
+  function tick() {
+    var S = window.__hudST;
+    var tr = (S && S.alerts && S.alerts.data && S.alerts.data.stats24h && S.alerts.data.stats24h.trend) || [];
+    if (!tr.length) return;
+    drawSpark(tr); hourBars(tr);
+  }
+  setInterval(tick, 900); tick();
+})();
+
