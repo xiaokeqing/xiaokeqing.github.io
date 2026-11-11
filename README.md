@@ -49,8 +49,8 @@ Cloudflare Tunnel / CDN
 | # | 指标 | 实测值 | 出处 |
 |---|---|---|---|
 | 1 | 告警量级 | 24h 被分析告警 **78,130** 条（含源 IP 75,127；已定位 30,263；排除本机 44,003、内网 861） | §3 实测数字 |
-| 2 | 后端单元测试 | **<!--N:tests-->903<!--/N-->** 例 / 0 失败 / 4 跳过（`mvn -o test`） | §19.2、§19.11 |
-| 3 | 构建断言 | **<!--N:assert-->90<!--/N-->** 项（`scripts/assert-build.sh`，全过才允许发布） | §20.1 |
+| 2 | 后端单元测试 | **<!--N:tests-->933<!--/N-->** 例 / 0 失败 / 4 跳过（`mvn -o test`） | §19.2、§19.11 |
+| 3 | 构建断言 | **<!--N:assert-->101<!--/N-->** 项（`scripts/assert-build.sh`，全过才允许发布） | §20.1 |
 | 4 | 门禁 SSR 契约 | **9** 页（`_dev/check-ssr-contract.py`：home/monitor/notes/ai/test/what/lab/status/api） | §20.1 |
 | 5 | 隔离靶场 | **7** 台（Pikachu / DVWA / Juice Shop / WebGoat / DVNA / DSVW + WebWolf） | §19.9 |
 
@@ -91,7 +91,7 @@ hugo version                                  # 需 extended；CI 钉 0.167.0
 
 python scripts/gen-og-image.py                  # 生成 OG 分享图 1200×630（_dev/gen-demo-pages.py 已停用，跑会直接退出）
 hugo --gc --minify --cleanDestinationDir
-bash scripts/assert-build.sh                  # <!--N:assert-->90<!--/N--> 项断言，全过才允许发布
+bash scripts/assert-build.sh                  # <!--N:assert-->101<!--/N--> 项断言，全过才允许发布
 python _dev/check-ssr-contract.py public      # SSR 契约 9 页
 hugo server --bind 0.0.0.0 --port 1313        # 本地预览
 
@@ -111,4 +111,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-site-to-
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnel%20%2B%20CDN-F38020?logo=cloudflare&logoColor=white)
 ![Nginx](https://img.shields.io/badge/nginx-reverse%20proxy-009639?logo=nginx&logoColor=white)
 ![No third-party assets](https://img.shields.io/badge/third--party%20JS%2Ffont%2FCDN-0-brightgreen)
-![Tests](https://img.shields.io/badge/build%20assertions-90%2F90-brightgreen)
+![Tests](https://img.shields.io/badge/build%20assertions-101%2F101-brightgreen)
