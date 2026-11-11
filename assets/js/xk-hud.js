@@ -695,3 +695,26 @@
   setInterval(tick, 900); tick();
 })();
 
+/* ---------- HUD 播报历史（新在最上、最多 6 条；源文本仍是 #hudLine，角色动画逻辑不变） ---------- */
+(function () {
+  var d = document, host = d.getElementById('hudLines'), src = d.getElementById('hudLine');
+  if (!host || !src) return;
+  var last = '', MAX = 6;
+  function stamp() { var n = new Date(); return ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2) + ':' + ('0' + n.getSeconds()).slice(-2); }
+  function push(text) {
+    text = (text || '').replace(/\s+/g, ' ').trim();
+    if (!text || text === last) return;
+    if (/数据加载中/.test(text)) return;          /* 占位句不进历史 */
+    if (host.children.length === 1 && /数据加载中/.test(host.children[0].textContent)) host.removeChild(host.children[0]);
+    last = text;
+    var el = d.createElement('div');
+    el.className = 'say new';
+    el.innerHTML = '<time>' + stamp() + '</time>' + text.replace(/[<>&]/g, function (c) { return ({'<':'&lt;','>':'&gt;','&':'&amp;'})[c]; });
+    host.insertBefore(el, host.firstChild);
+    while (host.children.length > MAX) host.removeChild(host.lastChild);
+    setTimeout(function () { el.classList.remove('new'); }, 600);
+  }
+  push(src.textContent.trim());
+  setInterval(function () { push(src.textContent); }, 600);
+})();
+
