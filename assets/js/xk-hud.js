@@ -536,6 +536,8 @@
     ]).then(function (r) {
       ST.alerts = r[0]; ST.geo = r[1]; ST.audit = r[2]; ST.atk = r[3]; ST.home = r[4]; ST.daily = r[5]; ST.deploy = r[6];
       window.__hudST = ST;
+      /* ★日志列表必须在这里重画：事件流播报区靠 MutationObserver 镜像它，漏了它播报区就没内容 */
+      try { renderLog((ST.alerts && ST.alerts.data && ST.alerts.data.list) || []); } catch (e) {}
       renderTop2(); renderGeo(); renderAudit(); renderSys();
       /* 第二屏的弱口令依赖 home.js 的 honeypot，pullS2 可能先跑完，这里补渲染一次 */
       try { renderS2(); } catch (e) {}
@@ -695,26 +697,49 @@
   setInterval(tick, 900); tick();
 })();
 
-/* ---------- HUD 播报历史（新在最上、最多 6 条；源文本仍是 #hudLine，角色动画逻辑不变） ---------- */
+/* ---------- HUD 播报区 = 实时攻击事件流（谁在打、什么类型、什么时候），新在最上 ---------- */
 (function () {
-  var d = document, host = d.getElementById('hudLines'), src = d.getElementById('hudLine');
-  if (!host || !src) return;
-  var last = '', MAX = 6;
-  function stamp() { var n = new Date(); return ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2) + ':' + ('0' + n.getSeconds()).slice(-2); }
-  function push(text) {
-    text = (text || '').replace(/\s+/g, ' ').trim();
-    if (!text || text === last) return;
-    if (/数据加载中/.test(text)) return;          /* 占位句不进历史 */
-    if (host.children.length === 1 && /数据加载中/.test(host.children[0].textContent)) host.removeChild(host.children[0]);
-    last = text;
-    var el = d.createElement('div');
-    el.className = 'say new';
-    el.innerHTML = '<time>' + stamp() + '</time>' + text.replace(/[<>&]/g, function (c) { return ({'<':'&lt;','>':'&gt;','&':'&amp;'})[c]; });
-    host.insertBefore(el, host.firstChild);
+  var d = document, host = d.getElementById('hudLines'), log = d.getElementById('hudLogList');
+  if (!host) return;
+  var MAX = 8, seen = {}, last = '';
+  function nowStr() { return new Date().toTimeString().slice(0, 8); }
+  function push(t, body) {
+    if (!body) return;
+    var key = t + '|' + body;
+    if (seen[key]) return;
+    seen[key] = 1;
+    var it = d.createElement('div');
+    it.className = 'say';
+    it.innerHTML = '<em>' + t + '</em><span>' + body + '</span>';
+    host.insertBefore(it, host.firstChild);
     while (host.children.length > MAX) host.removeChild(host.lastChild);
-    setTimeout(function () { el.classList.remove('new'); }, 600);
+    var line = d.getElementById('hudLine');
+    if (line) line.textContent = body;   /* 触发角色口型/表情 */
   }
-  push(src.textContent.trim());
-  setInterval(function () { push(src.textContent); }, 600);
+  function fromRow(el) {
+    var plain = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!plain) return;
+    var m = plain.match(/^(\d{2}:\d{2}:\d{2})\s*(.*)$/);
+    var t = m ? m[1] : nowStr(), body = m ? m[2] : plain;
+    if (!body || /^未知/.test(body)) return;             /* 无类型的原始事件不播 */
+    if (/其他 · Suricata/.test(body)) return;            /* Suricata 兜底类别不播 */
+    push(t, body.slice(0, 78));
+  }
+  function seed() {
+    if (!log || !log.children.length) return false;
+    Array.prototype.slice.call(log.children, 0, 6).reverse().forEach(fromRow);
+    return true;
+  }
+  if (!seed()) {
+    var n = 0, iv = setInterval(function () { if (seed() || ++n > 40) clearInterval(iv); }, 500);
+  }
+  if (log) {
+    new MutationObserver(function (mus) {
+      mus.forEach(function (mu) {
+        Array.prototype.forEach.call(mu.addedNodes, function (nd) {
+          if (nd.nodeType === 1 && nd.classList && nd.classList.contains('rw')) fromRow(nd);
+        });
+      });
+    }).observe(log, { childList: true });
+  }
 })();
-

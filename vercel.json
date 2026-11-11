@@ -64,6 +64,10 @@
     {
       "source": "/api/public/daily/(.*)",
       "destination": "https://demo.xiaokeqing.cn/api/public/daily/$1"
+    },
+    {
+      "source": "/api/public/stream",
+      "destination": "https://demo.xiaokeqing.cn/api/public/stream"
     }
   ],
   "headers": [
