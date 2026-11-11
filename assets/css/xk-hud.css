@@ -276,3 +276,12 @@ html,body{margin:0;background:#050a0e;color:var(--t1);font:13px/1.5 "Segoe UI","
 #hudChat .who{position:relative;flex:0 0 auto;z-index:2}
 #hudChat #hudLines{position:relative;z-index:1;margin-top:2px}
 #hudChat canvas#hudAv{flex:0 0 auto}
+
+/* ★2026-11-11 站主：日志流和播报是同一个东西，合成一块 —— 头像/名字压在列表上方一行 */
+#hudLog{display:flex;flex-direction:column;min-height:0}
+#hudLog .who{display:flex;align-items:center;gap:10px;padding:6px 0 8px;border-bottom:1px solid rgba(111,211,216,.10);margin-bottom:6px}
+#hudLog .who .av{width:46px;height:46px;border-radius:50%;flex:0 0 auto;background:rgba(10,20,24,.6)}
+#hudLog .who .nm{font-size:13px;color:#dfeaec;letter-spacing:.02em}
+#hudLog .who .nm em{display:block;font:9px/1.6 ui-monospace,Consolas,monospace;color:#6fb9c4;letter-spacing:.18em;font-style:normal}
+#hudLog .who .st{margin-left:auto;display:flex;gap:10px;font:9.5px/1 ui-monospace,Consolas,monospace;color:#7fd4d8;letter-spacing:.16em}
+#hudLogList{flex:1 1 auto;min-height:0;overflow:hidden}

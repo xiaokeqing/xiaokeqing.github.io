@@ -64,17 +64,14 @@
     <div class="col">
       <div class="blk" id="hudLog">
         <h3>正在发生 <em>INBOUND · 近 5 分钟</em></h3>
+        <div class="who">
+          <canvas class="av" id="hudAv" width="132" height="132" aria-hidden="true"></canvas>
+          <div class="nm">牧濑 红莉栖<em>AMADEUS / HOLO-LINK</em></div>
+          <div class="st"><span id="hudSt">STANDBY</span><span id="hudStTag">实时播报</span></div>
+        </div>
+        <p id="hudLine" hidden>数据加载中——她把真实数据读出来念给你听。</p>
         <div id="hudLogList"></div>
       </div>
-<div id="hudChat">
-  <canvas class="av" id="hudAv" width="132" height="132" aria-hidden="true"></canvas>
-  <div class="txt">
-    <div class="nm">牧濑 红莉栖<em>AMADEUS / HOLO-LINK</em></div>
-    <p id="hudLine" hidden>数据加载中——她把真实数据读出来念给你听。</p>
-    <div id="hudLines" class="hudlines" aria-live="polite" aria-relevant="additions"></div>
-  </div>
-  <div class="foot"><span id="hudSt">STANDBY</span><span id="hudStTag">等待事件</span></div>
-</div>
     </div>
   </div>
 

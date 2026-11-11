@@ -697,49 +697,29 @@
   setInterval(tick, 900); tick();
 })();
 
-/* ---------- HUD 播报区 = 实时攻击事件流（谁在打、什么类型、什么时候），新在最上 ---------- */
+/* ---------- 角色播报：日志流来一条新事件，她就念那条（不再另开一块列表） ---------- */
 (function () {
-  var d = document, host = d.getElementById('hudLines'), log = d.getElementById('hudLogList');
-  if (!host) return;
-  var MAX = 8, seen = {}, last = '';
-  function nowStr() { return new Date().toTimeString().slice(0, 8); }
-  function push(t, body) {
-    if (!body) return;
-    var key = t + '|' + body;
-    if (seen[key]) return;
-    seen[key] = 1;
-    var it = d.createElement('div');
-    it.className = 'say';
-    it.innerHTML = '<em>' + t + '</em><span>' + body + '</span>';
-    host.insertBefore(it, host.firstChild);
-    while (host.children.length > MAX) host.removeChild(host.lastChild);
-    var line = d.getElementById('hudLine');
-    if (line) line.textContent = body;   /* 触发角色口型/表情 */
-  }
-  function fromRow(el) {
+  var d = document, log = d.getElementById('hudLogList'), line = d.getElementById('hudLine');
+  if (!log || !line) return;
+  function say(el) {
     var plain = (el.textContent || '').replace(/\s+/g, ' ').trim();
     if (!plain) return;
     var m = plain.match(/^(\d{2}:\d{2}:\d{2})\s*(.*)$/);
-    var t = m ? m[1] : nowStr(), body = m ? m[2] : plain;
-    if (!body || /^未知/.test(body)) return;             /* 无类型的原始事件不播 */
-    if (/其他 · Suricata/.test(body)) return;            /* Suricata 兜底类别不播 */
-    push(t, body.slice(0, 78));
+    var body = m ? m[2] : plain;
+    if (!body || /^未知/.test(body) || /其他 · Suricata/.test(body)) return;
+    line.textContent = body.slice(0, 90);
   }
   function seed() {
-    if (!log || !log.children.length) return false;
-    Array.prototype.slice.call(log.children, 0, 6).reverse().forEach(fromRow);
+    if (!log.children.length) return false;
+    Array.prototype.slice.call(log.children, 0, 3).reverse().forEach(say);
     return true;
   }
-  if (!seed()) {
-    var n = 0, iv = setInterval(function () { if (seed() || ++n > 40) clearInterval(iv); }, 500);
-  }
-  if (log) {
-    new MutationObserver(function (mus) {
-      mus.forEach(function (mu) {
-        Array.prototype.forEach.call(mu.addedNodes, function (nd) {
-          if (nd.nodeType === 1 && nd.classList && nd.classList.contains('rw')) fromRow(nd);
-        });
+  if (!seed()) { var n = 0, iv = setInterval(function () { if (seed() || ++n > 40) clearInterval(iv); }, 500); }
+  new MutationObserver(function (mus) {
+    mus.forEach(function (mu) {
+      Array.prototype.forEach.call(mu.addedNodes, function (nd) {
+        if (nd.nodeType === 1 && nd.classList && nd.classList.contains('rw')) say(nd);
       });
-    }).observe(log, { childList: true });
-  }
+    });
+  }).observe(log, { childList: true });
 })();
