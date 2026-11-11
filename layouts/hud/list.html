@@ -108,6 +108,27 @@
     <div class="blk"><h3>攻击者档案 Top5 <em>HUNTERS · 24H</em></h3><div id="hudHunters"></div></div>
     <div class="blk"><h3>高频弱口令 <em>PASSWORD</em></h3><div id="hudPwd"></div></div>
     <div class="blk"><h3>访问时段 <em>WEBSTATS</em></h3><div id="hudWeb"></div></div>
+    <div class="blk" id="hudDet">
+      <h3>检测体系 <em>DETECTIONS</em></h3>
+      {{- $d := hugo.Data.detections -}}
+      {{- $a := hugo.Data.attack -}}
+      <div class="sg">
+        <div><b>{{ $d.sums.rules_total }}</b><span>自研规则</span><i>SURICATA {{ $d.sums.suricata_alert }} / WAZUH {{ $d.sums.wazuh_total }}</i></div>
+        <div><b>{{ $d.sums.with_mitre }}</b><span>带 ATT&amp;CK 编号</span><i>MITRE MAPPED</i></div>
+        <div><b>{{ $a.mappedPct }}%</b><span>ATT&amp;CK 已映射</span><i>{{ lang.FormatNumber 0 $a.mapped }} / {{ lang.FormatNumber 0 $a.total }}</i></div>
+        <div><b>{{ lang.FormatNumber 0 $a.unmapped }}</b><span>未映射（单列）</span><i>NO TECHNIQUE</i></div>
+      </div>
+    </div>
+    <div class="blk" id="hudSmp">
+      <h3>样本流水线 <em>SAMPLES</em></h3>
+      {{- $s := hugo.Data.samples -}}
+      <div class="sg">
+        <div><b>{{ lang.FormatNumber 0 $s.total.files }}</b><span>落盘样本</span><i>DIONAEA + COWRIE</i></div>
+        <div><b>{{ printf "%.1f" (div (float $s.total.bytes) 1048576.0) }} MiB</b><span>合计体积</span><i>ON DISK</i></div>
+        <div><b>{{ lang.FormatNumber 0 $s.dedupe.unique }}</b><span>sha256 唯一</span><i>重复 {{ lang.FormatNumber 0 $s.dedupe.duplicates }}</i></div>
+        <div><b>0</b><span>可执行 PE/ELF</span><i>SCANNER READABLE 0</i></div>
+      </div>
+    </div>
   </div>
 
   <div class="ticker">
@@ -115,8 +136,6 @@
     MTTD / MTTR NO DATA · 端口 Top5 NO DATA · 累计封禁 <span id="hudBlockSub2">—</span> · 归档 23 份 · 保留 5 天
   </div>
 </div>
-
->
 
 {{ partial "xk-demo/site-foot.html" . }}
 <script src="{{ $hud.RelPermalink }}" integrity="{{ $hud.Data.Integrity }}" defer></script>

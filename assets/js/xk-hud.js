@@ -661,12 +661,14 @@
     var svg = d.getElementById('hudSpark'); if (!svg || svg.children.length || tr.length < 3) return;
     var W = 900, H = 120, max = 1;
     tr.forEach(function (p) { if (p.count > max) max = p.count; });
-    var step = W / (tr.length - 1), line = '', area = '';
+    var step = W / (tr.length - 1), line = '', pts = [];
     tr.forEach(function (p, i) {
       var x = (i * step).toFixed(1), y = (H - 8 - (p.count / max) * (H - 22)).toFixed(1);
       line += (i ? ' L' : 'M') + x + ' ' + y;
-      area += (i ? ' L' : 'M') + x + ' ' + H + ' L' + x + ' ' + y;
+      pts.push([x, y]);
     });
+    /* 面积只在折线下方闭合一次，逐点拼会画成锯齿三角 */
+    var area = line + ' L' + pts[pts.length - 1][0] + ' ' + H + ' L' + pts[0][0] + ' ' + H + ' Z';
     var gid = 'hg' + Date.now();
     svg.innerHTML = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0" stop-color="rgba(111,211,216,.32)"/><stop offset="1" stop-color="rgba(111,211,216,0)"/></linearGradient></defs>' +
