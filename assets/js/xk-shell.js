@@ -851,6 +851,7 @@ XK_TIER.bindBody(BODY);   /* ★P0-①：手机面板上限中档（boot），�
 })();
 
 function makeBodyPlayer(canvas){
+  if (!canvas) return null;            /* ★2026-11-11：本页没有身体播放器画布时直接不建，避免 null.getContext 抛错整段脚本中止 */
   const ctx = canvas.getContext('2d');
   if (ctx) ctx.imageSmoothingQuality = 'high';
   /* ★2026-11-08（P0，站主截图：手机里两段身体、腰带出现两次）：
@@ -926,7 +927,10 @@ const phoneEl  = document.getElementById('phone');
 const phoneLineEl = document.getElementById('phoneLine');
 const phoneStateEl = document.getElementById('phoneState');
 /* 手机时间（演示用真实时钟） */
-function tickClock(){ const d=new Date();
+function tickClock(){
+  var _ck = document.getElementById('hkClock');
+  if (!_ck) return;
+ const d=new Date();
   document.getElementById('phoneClock').textContent = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 tickClock(); setInterval(tickClock, 20000);
 /* ★P0（站主 2026-10-16）：手机里的助手 —— 功能按钮 */
@@ -994,7 +998,8 @@ window.__xkSetEmo = function(n){
   }catch(e2){}
 };
 function setPhone(){
-  if(__xkPhoneDefer){ phoneStateEl.textContent = '连接中'; return; }
+  if(!phoneBody) return;                 /* ★2026-11-11：手机只在 /ai/ 页存在，其他页面没有 phoneCanvas */
+  if(__xkPhoneDefer){ if(phoneStateEl) phoneStateEl.textContent = '连接中'; return; }
   /* ★2026-11-08：E-mote 已接管这张 canvas 时，任何 render()/mood/speak/degrade 都不许再画 Sprite */
   if(window.__xkPhoneSpriteOff) return;
   /* ★P0-①：按 XK_TIER 当前的档取图（手机上 = boot 中档；降档后 = 静态 poster） */
@@ -1008,14 +1013,15 @@ function render(){
   if(document.body.classList.contains('holo-min') && !document.body.classList.contains('is-ai')) bubbleAv.set(EMOS[emo].idle);
   if(!document.body.classList.contains('is-home')) setPhone();
   const label = mode === 'speaking' ? 'SPEAKING' : (emo === 'sided_thinking' ? 'THINKING' : 'IDLE');
-  stateEl.textContent = label;
+  if(stateEl) stateEl.textContent = label;
   /* ★2026-11-08：E-mote 等待期显示「载入中」；三态标签仍是 mode-follow 的输入，不改大小写语义 */
   var waiting = !!(window.__xkPhoneSpriteOff && !window.__xkPhoneEmoteReady);
-  phoneStateEl.textContent = waiting ? '载入中' : (__xkPhoneDefer ? '连接中' : label);
-  holo.classList.toggle('live', mode === 'speaking' && !RM);
-  phoneEl.classList.toggle('live', mode === 'speaking' && !RM);
+  if(phoneStateEl) phoneStateEl.textContent = waiting ? '载入中' : (__xkPhoneDefer ? '连接中' : label);
+  if(holo) holo.classList.toggle('live', mode === 'speaking' && !RM);
+  if(phoneEl) phoneEl.classList.toggle('live', mode === 'speaking' && !RM);
 }
 function speak(html){
+  if(!sayEl || !phoneLineEl) return;   /* ★2026-11-11：只在有说话行/手机行的页面播报 */
   sayEl.style.opacity = 0;
   phoneLineEl.style.opacity = 0;
   setTimeout(()=>{ sayEl.innerHTML = html; sayEl.style.opacity = 1;
@@ -1033,8 +1039,9 @@ setTimeout(()=>{ mode = 'idle'; render(); }, 2600);
 const mqNarrow = matchMedia('(max-width:980px)');
 if (mqNarrow.matches) document.body.classList.add('holo-min');
 mqNarrow.addEventListener('change', e=>{ if(!e.matches) document.body.classList.remove('holo-min'); });
-document.getElementById('holoFold').onclick = ()=>{ document.body.classList.add('holo-min'); render(); };
-document.getElementById('holoBubble').onclick = ()=>document.body.classList.remove('holo-min');
+var _hf = document.getElementById('holoFold'), _hb = document.getElementById('holoBubble');
+if (_hf) _hf.onclick = ()=>{ document.body.classList.add('holo-min'); render(); };
+if (_hb) _hb.onclick = ()=>document.body.classList.remove('holo-min');
 
 /* ★2026-10-16 ①：/ai/ 首帧 render() 里的手机全身图集延到 1650ms（越过首屏 1.5s 窗口；
    实测请求落在 ~1755ms，距窗口边界留 ~255ms）+ 状态标签在这段里如实写'连接中'。

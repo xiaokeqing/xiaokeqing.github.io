@@ -144,7 +144,7 @@
     if (!url[name]) { return false; }
     D.emo = name; fi = 0;
     var g = im(url[name]);
-    if (g.complete && g.naturalWidth) { paint(); } else { g.addEventListener('load', paint, { once: true }); }
+    if (g.complete && g.naturalWidth) { paint(); } else if (g && g.addEventListener) { g.addEventListener('load', paint, { once: true }); }
     markPanel();
     /* 主页：全身画布也一起切（那份状态机在主页内联脚本里；其它页没有 ⇒ 只动头像） */
     if (typeof window.xkmSetEmotion === 'function') { try { window.xkmSetEmotion(name); } catch (e) { D.errors.push('xkm: ' + e); } }
@@ -333,9 +333,10 @@
       '</div>';
     var form = document.getElementById('xkLoginForm');
     var err = document.getElementById('xkLoginErr');
-    document.getElementById('xkLoginCancel').addEventListener('click', closeLogin);
-    lbox.addEventListener('click', function (ev) { if (ev.target === lbox) { closeLogin(); } });
-    form.addEventListener('submit', function (ev) {
+    var _lc = document.getElementById('xkLoginCancel'); if (_lc) _lc.addEventListener('click', closeLogin);
+    if (lbox) lbox.addEventListener('click', function (ev) { if (ev.target === lbox) { closeLogin(); } });
+    if (!form) return;
+form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       submitLogin(err);
     });
