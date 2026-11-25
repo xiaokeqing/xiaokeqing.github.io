@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-25",
+  "generatedAt": "2026-11-25 16:51:44",
+  "alerts24h": {
+    "total": 19620,
+    "cr": 1112,
+    "hi": 1975,
+    "me": 5171,
+    "lo": 11362,
+    "available": true
+  },
+  "guard": {
+    "blocked": 98,
+    "blockTotal": 3796,
+    "blockActive": 19
+  },
+  "honeypot": {
+    "connections": 281,
+    "logins": 238
+  },
+  "topCountries": [
+    {
+      "cc": "CN",
+      "name": "中国",
+      "count": 5702,
+      "share": 37.02
+    },
+    {
+      "cc": "SI",
+      "name": "斯洛文尼亚",
+      "count": 4851,
+      "share": 31.5
+    },
+    {
+      "cc": "NL",
+      "name": "荷兰",
+      "count": 1866,
+      "share": 12.12
+    },
+    {
+      "cc": "DE",
+      "name": "德国",
+      "count": 1421,
+      "share": 9.23
+    },
+    {
+      "cc": "US",
+      "name": "美国",
+      "count": 793,
+      "share": 5.15
+    }
+  ],
+  "metrics": {
+    "mttd": null,
+    "mttr": 60.0,
+    "blocks": 291,
+    "alerts": 1145
+  },
+  "web": {
+    "requests": 253
+  },
+  "redteam": {
+    "available": false
+  },
+  "missing": [],
+  "attack": {
+    "total": 1512896,
+    "unmapped": 767057,
+    "coveragePct": 49.3,
+    "techniques": 10
+  }
+}
